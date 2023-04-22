@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -188,15 +188,12 @@ public final class DfaPsiUtil {
     if (iteratedValue == null) return null;
 
     PsiType iteratedType = iteratedValue.getType();
-    if (iteratedValue instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)iteratedValue).resolve();
-      if (target instanceof PsiParameter && target.getParent() instanceof PsiForeachStatement) {
-        PsiForeachStatement targetLoop = (PsiForeachStatement)target.getParent();
-        if (PsiTreeUtil.isAncestor(targetLoop, loop, true) &&
-            !HighlightControlFlowUtil.isReassigned((PsiParameter)target, new HashMap<>())) {
-          iteratedType = inferLoopParameterTypeWithNullability(targetLoop);
-        }
-      }
+    if (iteratedValue instanceof PsiReferenceExpression refExpr && 
+        refExpr.resolve() instanceof PsiParameter parameter &&
+        parameter.getParent() instanceof PsiForeachStatement targetLoop &&
+        PsiTreeUtil.isAncestor(targetLoop, loop, true) &&
+        !HighlightControlFlowUtil.isReassigned(parameter, new HashMap<>())) {
+      iteratedType = inferLoopParameterTypeWithNullability(targetLoop);
     }
     return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());
   }
@@ -288,15 +285,11 @@ public final class DfaPsiUtil {
       expression = expressionParent;
       expressionParent = expressionParent.getParent();
     }
-    if(expressionParent instanceof PsiExpressionList) {
-      PsiExpressionList list = (PsiExpressionList)expressionParent;
-      PsiElement listParent = list.getParent();
-      if(listParent instanceof PsiMethodCallExpression) {
-        PsiMethod method = ((PsiMethodCallExpression)listParent).resolveMethod();
-        if(method != null) {
-          int expressionIndex = ArrayUtil.find(list.getExpressions(), expression);
-          return getLambdaParameterNullability(method, expressionIndex, parameterIndex);
-        }
+    if (expressionParent instanceof PsiExpressionList list && list.getParent() instanceof PsiMethodCallExpression call) {
+      PsiMethod method = call.resolveMethod();
+      if (method != null) {
+        int expressionIndex = ArrayUtil.find(list.getExpressions(), expression);
+        return getLambdaParameterNullability(method, expressionIndex, parameterIndex);
       }
     }
     return Nullability.UNKNOWN;
@@ -529,8 +522,7 @@ public final class DfaPsiUtil {
       (NullableFunction<PsiReference, PsiExpression>)psiReference -> {
         if (modificationRef.get()) return null;
         final PsiElement parent = psiReference.getElement().getParent();
-        if (parent instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        if (parent instanceof PsiAssignmentExpression assignmentExpression) {
           final IElementType operation = assignmentExpression.getOperationTokenType();
           if (assignmentExpression.getLExpression() == psiReference) {
             if (JavaTokenType.EQ.equals(operation)) {
@@ -570,8 +562,7 @@ public final class DfaPsiUtil {
       stack.add(expression);
       while (!stack.isEmpty()) {
         PsiExpression psiExpression = stack.pop();
-        if (psiExpression instanceof PsiPolyadicExpression) {
-          PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)psiExpression;
+        if (psiExpression instanceof PsiPolyadicExpression binaryExpression) {
           for (PsiExpression op : binaryExpression.getOperands()) {
             stack.push(op);
           }
@@ -615,10 +606,9 @@ public final class DfaPsiUtil {
    * @return a generified type, or original type if generification is not possible
    */
   public static PsiType tryGenerify(PsiExpression expression, PsiType type) {
-    if (!(type instanceof PsiClassType)) {
+    if (!(type instanceof PsiClassType classType)) {
       return type;
     }
-    PsiClassType classType = (PsiClassType)type;
     if (!classType.isRaw()) {
       return classType;
     }
@@ -711,13 +701,12 @@ public final class DfaPsiUtil {
     if (value instanceof String) return '"' + StringUtil.escapeStringCharacters((String)value) + '"';
     if (value instanceof Float) return value + "f";
     if (value instanceof Long) return value + "L";
-    if (value instanceof PsiField) {
-      PsiField field = (PsiField)value;
+    if (value instanceof PsiField field) {
       PsiClass containingClass = field.getContainingClass();
       return containingClass == null ? field.getName() : containingClass.getName() + "." + field.getName();
     }
-    if (value instanceof PsiType) {
-      return ((PsiType)value).getPresentableText();
+    if (value instanceof PsiType type) {
+      return type.getPresentableText();
     }
     return value.toString();
   }

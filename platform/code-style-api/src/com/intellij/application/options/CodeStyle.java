@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -437,8 +438,7 @@ public final class CodeStyle {
     if (project == null) return null;
     LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
     String indent = lineIndentProvider != null ? lineIndentProvider.getLineIndent(project, editor, language, offset) : null;
-    //noinspection StringEquality
-    if (indent == LineIndentProvider.DO_NOT_ADJUST) {
+    if (Strings.areSameInstance(indent, LineIndentProvider.DO_NOT_ADJUST)) {
       return allowDocCommit ? null : indent;
     }
     return indent != null ? indent : allowDocCommit ? getLineIndent(project, editor.getDocument(), offset) : null;

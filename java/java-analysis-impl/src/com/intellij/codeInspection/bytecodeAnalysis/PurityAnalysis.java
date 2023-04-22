@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -659,15 +659,12 @@ final class PuritySolver {
                 }
                 continue;
               }
-              if (dEffect instanceof EffectQuantum.ReturnChangeQuantum) {
-                EffectQuantum.ReturnChangeQuantum retChange = (EffectQuantum.ReturnChangeQuantum)dEffect;
-                if (retChange.key.equals(pKey)) {
-                  if (pEffects.returnValue != DataValue.LocalDataValue) {
-                    newEffects = delta = Effects.TOP_EFFECTS;
-                    break;
-                  }
-                  continue;
+              if (dEffect instanceof EffectQuantum.ReturnChangeQuantum retChange && retChange.key.equals(pKey)) {
+                if (pEffects.returnValue != DataValue.LocalDataValue) {
+                  newEffects = delta = Effects.TOP_EFFECTS;
+                  break;
                 }
+                continue;
               }
               if (dEffect instanceof EffectQuantum.FieldReadQuantum && ((EffectQuantum.FieldReadQuantum)dEffect).key.equals(pKey)) {
                 newEffects.addAll(pEffects.effects);
@@ -736,8 +733,7 @@ final class PuritySolver {
       if (effect == EffectQuantum.ThisChangeQuantum) {
         arg = data[0];
       }
-      else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
-        EffectQuantum.ParamChangeQuantum paramChange = ((EffectQuantum.ParamChangeQuantum)effect);
+      else if (effect instanceof EffectQuantum.ParamChangeQuantum paramChange) {
         arg = data[paramChange.n + shift];
       }
       if (arg == null || arg == DataValue.LocalDataValue) {

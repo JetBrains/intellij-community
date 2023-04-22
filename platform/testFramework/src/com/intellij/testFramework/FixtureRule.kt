@@ -25,7 +25,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -433,7 +433,7 @@ suspend fun Project.closeProjectAsync(save: Boolean = false) {
   }
 }
 
-suspend fun openProjectAsync(path: Path, vararg activities: ProjectPostStartupActivity): Project {
+suspend fun openProjectAsync(path: Path, vararg activities: ProjectActivity): Project {
   return ProjectUtil.openOrImportAsync(path)!!
     .withProjectAsync { project ->
       for (activity in activities) {
@@ -441,8 +441,9 @@ suspend fun openProjectAsync(path: Path, vararg activities: ProjectPostStartupAc
       }
     }
 }
-suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectPostStartupActivity) =
-  openProjectAsync(virtualFile.toNioPath(), *activities)
+suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectActivity): Project {
+  return openProjectAsync(virtualFile.toNioPath(), *activities)
+}
 
 class DisposeNonLightProjectsRule : ExternalResource() {
   override fun after() {

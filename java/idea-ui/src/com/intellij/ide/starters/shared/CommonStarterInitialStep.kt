@@ -17,20 +17,20 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.bindBooleanStorage
-import com.intellij.openapi.observable.util.joinCanonicalPath
+import com.intellij.openapi.observable.util.joinSystemDependentPath
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.UIBundle
-import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
-import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.annotations.Nls
 import java.io.File
@@ -49,7 +49,7 @@ abstract class CommonStarterInitialStep(
   protected val propertyGraph: PropertyGraph = PropertyGraph()
   protected val entityNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
   private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
-  private val canonicalPathProperty = locationProperty.joinCanonicalPath(entityNameProperty)
+  private val canonicalPathProperty = locationProperty.joinSystemDependentPath(entityNameProperty)
   protected val groupIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { starterContext.group }
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
   protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.lazyProperty { null }

@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.model.ModelBranch;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,11 +30,12 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
@@ -124,7 +127,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     if (myWorkspaceFileIndex != null) {
       return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
     }
-    return getRootIndex().getDirectoriesByPackageName(packageName, includeLibrarySources);
+    return getRootIndex(false).getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
   @Override
@@ -140,7 +143,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     }
 
     List<RootIndex> indices = ContainerUtil.append(ContainerUtil.map(branches, DirectoryIndexImpl::obtainBranchRootIndex),
-                                                   getRootIndex());
+                                                   getRootIndex(false));
     return new CollectionQuery<>(indices)
       .flatMapping(i -> i.getDirectoriesByPackageName(packageName, true))
       .filtering(scope::contains);
@@ -152,7 +155,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     if (branch != null) {
       return obtainBranchRootIndex(branch);
     }
-    return getRootIndex();
+    return getRootIndex(false);
   }
 
   private static final Key<Pair<Long, RootIndex>> BRANCH_ROOT_INDEX = Key.create("BRANCH_ROOT_INDEX");
@@ -167,7 +170,10 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     return pair.second;
   }
 
-  RootIndex getRootIndex() {
+  RootIndex getRootIndex(boolean forOrderEntryGraph) {
+    if (!forOrderEntryGraph && myWorkspaceFileIndex != null) {
+      LOG.error("Internal DirectoryIndex class must not be used directly to avoid long computations, use ProjectFileIndex API instead");
+    }
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
       myRootIndex = rootIndex = new RootIndex(myProject);
@@ -214,25 +220,30 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
 
   @NotNull
   @Override
-  public List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
+  public List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
     if (myProject.isDefault()) return Collections.emptyList();
-    return getRootIndex().getOrderEntries(info);
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true);
+      WorkspaceFileSetWithCustomData<?> fileSet = fileInfo.findFileSet(data -> true);
+      if (fileSet == null) return Collections.emptyList();
+      return getRootIndex(true).getOrderEntries(fileSet.getRoot());
+    }
+    
+    if (fileOrDir instanceof VirtualFileWindow) {
+      fileOrDir = ((VirtualFileWindow)fileOrDir).getDelegate();
+    }
+    fileOrDir = BackedVirtualFile.getOriginFileIfBacked(fileOrDir);
+    DirectoryInfo info = getInfoForFile(fileOrDir);
+    if (!(info instanceof DirectoryInfoImpl)) return Collections.emptyList();
+    return getRootIndex(true).getOrderEntries(((DirectoryInfoImpl)info).getRoot());
   }
 
   @Override
   @NotNull
   public Set<String> getDependentUnloadedModules(@NotNull Module module) {
     checkAvailability();
-    return getRootIndex().getDependentUnloadedModules(module);
-  }
-
-  @TestOnly
-  public void assertConsistency(DirectoryInfo info) {
-    List<OrderEntry> entries = getOrderEntries(info);
-    for (int i = 1; i < entries.size(); i++) {
-      assert RootIndex.BY_OWNER_MODULE.compare(entries.get(i - 1), entries.get(i)) <= 0;
-    }
+    return getRootIndex(true).getDependentUnloadedModules(module);
   }
 
   private void checkAvailability() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -139,8 +139,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
 
   private static boolean canImplementOverride(MethodHierarchyNodeDescriptor descriptor, MethodHierarchyBrowser methodHierarchyBrowser, boolean toImplement) {
     PsiElement psiElement = descriptor.getPsiClass();
-    if (!(psiElement instanceof PsiClass)) return false;
-    PsiClass psiClass = (PsiClass)psiElement;
+    if (!(psiElement instanceof PsiClass psiClass)) return false;
     if (psiClass instanceof PsiSyntheticClass) return false;
     PsiMethod baseMethod = methodHierarchyBrowser.getBaseMethod();
     if (baseMethod == null) return false;

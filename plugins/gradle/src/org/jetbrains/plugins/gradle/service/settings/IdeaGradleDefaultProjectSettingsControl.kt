@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleV
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.settings.IdeaGradleDefaultProjectSettingsControl.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.settings.IdeaGradleDefaultProjectSettingsControl.DistributionTypeItem.WRAPPER
+import org.jetbrains.plugins.gradle.service.settings.PlaceholderGroup.Companion.placeholderGroup
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.util.*
@@ -61,42 +62,42 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
             .columns(COLUMNS_SHORT)
             .bindItem(distributionTypeProperty)
         }
-        // TODO(@Pavel Porvatov) replace with visibleId and validation enableIf
-        // https://youtrack.jetbrains.com/issue/IDEA-310738/Kotlin-DSL-Cannot-disable-validation-for-invisible-components
-        placeholderGroup {
-          component(WRAPPER) {
-            row {
-              label(GradleBundle.message("gradle.project.settings.distribution.wrapper.version"))
-                .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-              cell(TextCompletionComboBox(null, TextCompletionComboBoxConverter.Default()))
-                .columns(8)
-                .applyToComponent { bindSelectedItem(gradleVersionProperty) }
-                .applyToComponent { bindCompletionVariants(gradleVersionsProperty) }
-                .trimmedTextValidation(CHECK_NON_EMPTY)
-                .validationInfo { validateGradleVersion(gradleVersion) }
-                .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
-                .enabledIf(autoSelectGradleVersionProperty.not())
-              checkBox(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.auto.select"))
-                .bindSelected(autoSelectGradleVersionProperty)
+        row {
+          placeholderGroup {
+            component(WRAPPER) {
+              row {
+                label(GradleBundle.message("gradle.project.settings.distribution.wrapper.version"))
+                  .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
+                cell(TextCompletionComboBox(null, TextCompletionComboBoxConverter.Default()))
+                  .columns(8)
+                  .applyToComponent { bindSelectedItem(gradleVersionProperty) }
+                  .applyToComponent { bindCompletionVariants(gradleVersionsProperty) }
+                  .trimmedTextValidation(CHECK_NON_EMPTY)
+                  .validationInfo { validateGradleVersion(gradleVersion) }
+                  .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
+                  .enabledIf(autoSelectGradleVersionProperty.not())
+                checkBox(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.auto.select"))
+                  .bindSelected(autoSelectGradleVersionProperty)
+              }
             }
-          }
-          component(LOCAL) {
-            row {
-              label(GradleBundle.message("gradle.project.settings.distribution.local.location"))
-                .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-              val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                .withPathToTextConvertor(::getPresentablePath)
-                .withTextToPathConvertor(::getCanonicalPath)
-              val title = GradleBundle.message("gradle.project.settings.distribution.local.location.dialog")
-              textFieldWithBrowseButton(title, null, fileChooserDescriptor)
-                .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
-                .bindText(gradleHomeProperty.toUiPathProperty())
-                .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
-                .validationInfo { validateGradleHome(gradleHome) }
-                .align(AlignX.FILL)
+            component(LOCAL) {
+              row {
+                label(GradleBundle.message("gradle.project.settings.distribution.local.location"))
+                  .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
+                val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                  .withPathToTextConvertor(::getPresentablePath)
+                  .withTextToPathConvertor(::getCanonicalPath)
+                val title = GradleBundle.message("gradle.project.settings.distribution.local.location.dialog")
+                textFieldWithBrowseButton(title, null, fileChooserDescriptor)
+                  .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
+                  .bindText(gradleHomeProperty.toUiPathProperty())
+                  .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
+                  .validationInfo { validateGradleHome(gradleHome) }
+                  .align(AlignX.FILL)
+              }
             }
-          }
-        }.bindSelectedComponent(distributionTypeProperty)
+          }.bindSelectedComponent(distributionTypeProperty)
+        }
       }
     }
     builder.onReset {

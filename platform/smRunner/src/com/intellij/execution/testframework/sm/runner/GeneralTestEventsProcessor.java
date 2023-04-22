@@ -72,6 +72,10 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     myEventPublisher.onRootPresentationAdded(myTestsRootProxy, rootName, comment, rootLocation);
   }
 
+  public void onSetNodeProperty(final @NotNull TestSetNodePropertyEvent event) {
+    logProblem("Event unsupported: " + event);
+  }
+
   protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
     return new SMTestProxy(testName, false, locationHint, metaInfo, false);
   }

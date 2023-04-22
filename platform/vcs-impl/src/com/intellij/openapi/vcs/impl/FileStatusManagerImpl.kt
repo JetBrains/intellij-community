@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
@@ -101,7 +102,7 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
     companion object {
       private fun refreshFileStatus(document: Document) {
         val file = FileDocumentManager.getInstance().getFile(document)
-        if (file == null || !file.isInLocalFileSystem) {
+        if (file?.isTrackable != true) {
           return
         }
 
@@ -205,7 +206,7 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       return
     }
 
-    if (file.fileSystem !is NonPhysicalFileSystem
+    if (file.isTrackable
         && cachedStatuses.get(file) == null) {
       return
     }
@@ -223,7 +224,7 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
     }
     val updatedFiles = ArrayList<VirtualFile>()
     for (file in toRefresh) {
-      val wasUpdated = file.fileSystem is NonPhysicalFileSystem
+      val wasUpdated = file.fileSystem is NonPhysicalFileSystem && file.isTrackable
                        || updateFileStatusFor(file)
       if (wasUpdated) {
         updatedFiles.add(file)
@@ -351,6 +352,9 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
     }
   }
 }
+
+private inline val VirtualFile.isTrackable: Boolean
+  get() = FileDocumentManagerBase.isTrackable(this)
 
 private fun isDocumentModified(virtualFile: VirtualFile): Boolean {
   return if (virtualFile.isDirectory) false else FileDocumentManager.getInstance().isFileModified(virtualFile)

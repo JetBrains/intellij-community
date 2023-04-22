@@ -31,7 +31,6 @@ import java.awt.*;
 */
 public class NavBarBorder implements Border {
   private static final Color BORDER_COLOR = JBColor.namedColor("NavBar.borderColor", new JBColor(Gray.xCD, Gray.x51));
-  private static final Insets NO_RUN_INSETS = JBUI.insets("NavBar.Breadcrumbs.itemInsets", JBUI.insets(4, 2));
   private static final JBValue BW = new JBValue.Float(1);
 
   @Override
@@ -49,7 +48,7 @@ public class NavBarBorder implements Border {
     var settings = UISettings.getInstance();
     if (ExperimentalUI.isNewUI() && settings.getShowNavigationBar()) {
       if (settings.getNavBarLocation() == NavBarLocation.TOP) {
-        return NO_RUN_INSETS;
+        return JBUI.CurrentTheme.NavBar.itemInsets();
       }
       else {
         return JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsets();

@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.resolveMainReference
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.isOverridable
@@ -116,7 +117,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
         fun createFromSimpleName(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             val varFactory = factory.varFactory
             if (expr is KtSimpleNameExpression) {
-                val target = expr.mainReference.resolve()
+                val target = expr.resolveMainReference()
                 if (target is KtCallableDeclaration) {
                     if (target is KtParameter && target.ownerFunction !is KtPrimaryConstructor ||
                         target is KtProperty && target.isLocal ||

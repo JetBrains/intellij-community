@@ -3,9 +3,9 @@ package com.intellij.facet
 
 import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-internal class FacetTypeFeatureCollector : ProjectPostStartupActivity {
+internal class FacetTypeFeatureCollector : ProjectActivity {
   override suspend fun execute(project: Project) {
     PluginFeatureService.instance.collectFeatureMapping(
       FacetManagerBase.FEATURE_TYPE,

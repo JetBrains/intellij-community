@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -132,8 +132,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
           element.delete();
         }
       }
-      if (usage instanceof MoveDirectoryUsageInfo) {
-        MoveDirectoryUsageInfo moveDirUsage = (MoveDirectoryUsageInfo)usage;
+      if (usage instanceof MoveDirectoryUsageInfo moveDirUsage) {
         PsiDirectory sourceDirectory = moveDirUsage.getSourceDirectory();
         if (sourceDirectory == null) continue;
         PsiJavaModule moduleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(sourceDirectory);

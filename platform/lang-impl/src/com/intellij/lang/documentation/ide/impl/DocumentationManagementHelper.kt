@@ -1,13 +1,14 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_TARGETS
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 
 @Service
 class DocumentationManagementHelper(private val project: Project) {

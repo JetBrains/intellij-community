@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -95,12 +95,10 @@ public final class MagicCompletionContributor extends CompletionContributor impl
       JavaResolveResult[] methods = getMethodCandidates(call, resolveHelper);
       for (JavaResolveResult resolveResult : methods) {
         PsiElement element = resolveResult.getElement();
-        if (!(element instanceof PsiMethod)) return Collections.emptyList();
-        PsiMethod method = (PsiMethod)element;
+        if (!(element instanceof PsiMethod method)) return Collections.emptyList();
         if (!resolveHelper.isAccessible(method, call, null)) continue;
         PsiElement argument = pos;
-        while (!(argument.getContext() instanceof PsiExpressionList)) argument = argument.getContext();
-        PsiExpressionList list = (PsiExpressionList)argument.getContext();
+        while (!(argument.getContext() instanceof PsiExpressionList list)) argument = argument.getContext();
         int i = ArrayUtil.indexOf(list.getExpressions(), argument);
         if (i == -1) continue;
         PsiParameter[] params = method.getParameterList().getParameters();

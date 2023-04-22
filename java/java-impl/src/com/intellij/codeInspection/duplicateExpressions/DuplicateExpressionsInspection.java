@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.*;
@@ -253,11 +253,8 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
   @Nullable
   private static PsiVariable findVariableByInitializer(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)parent;
-      if (PsiTreeUtil.isAncestor(variable.getInitializer(), expression, false)) {
-        return variable;
-      }
+    if (parent instanceof PsiVariable variable && PsiTreeUtil.isAncestor(variable.getInitializer(), expression, false)) {
+      return variable;
     }
     return null;
   }

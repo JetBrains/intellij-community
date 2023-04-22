@@ -862,6 +862,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree.getIgnoredState(project);
   }
 
+  @ApiStatus.Internal
+  public void setIgnoredStateForPoms(@NotNull List<String> pomPaths, boolean ignored) {
+    if (!isInitialized()) return;
+    myProjectsTree.setIgnoredStateForPoms(pomPaths, ignored);
+  }
+
   public void setIgnoredState(@NotNull List<MavenProject> projects, boolean ignored) {
     if (!isInitialized()) return;
     myProjectsTree.setIgnoredState(projects, ignored);

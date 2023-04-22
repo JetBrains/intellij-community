@@ -103,8 +103,8 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
 
   @Override
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-    if (propertyName == "text"
-        || ((propertyName == "font" || propertyName == "foreground")
+    if ("text".equals(propertyName)
+        || (("font".equals(propertyName) || "foreground".equals(propertyName))
             && oldValue != newValue
             && getClientProperty(BasicHTML.propertyKey) != null)) {
       super.firePropertyChange(propertyName, oldValue, newValue);

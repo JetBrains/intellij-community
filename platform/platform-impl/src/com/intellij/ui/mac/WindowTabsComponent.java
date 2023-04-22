@@ -55,15 +55,14 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Alexander Lobas
  */
 public class WindowTabsComponent extends JBTabsImpl {
+  private static final String TITLE_LISTENER_KEY = "TitleListener";
+
   private static final int TAB_HEIGHT = 30;
 
   private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
@@ -81,7 +80,7 @@ public class WindowTabsComponent extends JBTabsImpl {
   private final Disposable myParentDisposable;
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
 
-  public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
     super(project, IdeFocusManager.getInstance(project), parentDisposable);
     myNativeWindow = nativeWindow;
     myParentDisposable = parentDisposable;
@@ -91,6 +90,13 @@ public class WindowTabsComponent extends JBTabsImpl {
       public @NotNull UiDecoration getDecoration() {
         //noinspection UseDPIAwareInsets
         return new UiDecoration(JBFont.medium(), new Insets(-1, myDropInfo == null ? 0 : -1, -1, -1));
+      }
+    });
+
+    Disposer.register(myParentDisposable, () -> {
+      int count = getTabCount();
+      for (int i = 0; i < count; i++) {
+        removeTitleListener(getTabAt(i));
       }
     });
 
@@ -193,9 +199,30 @@ public class WindowTabsComponent extends JBTabsImpl {
     };
   }
 
-  public void createTabsForFrame(@NotNull IdeFrameImpl frame, IdeFrameImpl @NotNull [] tabFrames) {
+  private boolean isSameGroup(@NotNull WindowTabsComponent anotherComponent) {
+    if (this == anotherComponent) {
+      return true;
+    }
+
+    int count = getTabCount();
+    if (count != anotherComponent.getTabCount()) {
+      return false;
+    }
+
+    Set<Object> tabs = new HashSet<>();
+    Set<Object> anotherTabs = new HashSet<>();
+
+    for (int i = 0; i < count; i++) {
+      tabs.add(getTabAt(i).getObject());
+      anotherTabs.add(anotherComponent.getTabAt(i).getObject());
+    }
+
+    return tabs.equals(anotherTabs);
+  }
+
+  public void createTabsForFrame(IdeFrameImpl @NotNull [] tabFrames) {
     for (IdeFrameImpl tabFrame : tabFrames) {
-      createTabItem(tabFrame, -1, tabFrame == frame);
+      createTabItem(tabFrame, -1, tabFrame == myNativeWindow);
     }
 
     recalculateIndexes();
@@ -203,6 +230,10 @@ public class WindowTabsComponent extends JBTabsImpl {
     setSelectionChangeHandler((info, requestFocus, doChangeSelection) -> {
       IdeFrameImpl tabFrame = (IdeFrameImpl)info.getObject();
       if (tabFrame == myNativeWindow) {
+        TabInfo selectedInfo = getSelectedInfo();
+        if (selectedInfo != null && selectedInfo.getObject() == myNativeWindow) {
+          return ActionCallback.REJECTED;
+        }
         return doChangeSelection.run();
       }
       else {
@@ -229,6 +260,7 @@ public class WindowTabsComponent extends JBTabsImpl {
     for (int i = 0; i < count; i++) {
       TabInfo info = getTabAt(i);
       if (info.getObject() == tab) {
+        removeTitleListener(info);
         removeTab(info);
         recalculateIndexes();
         removed = true;
@@ -267,9 +299,14 @@ public class WindowTabsComponent extends JBTabsImpl {
 
     PropertyChangeListener listener = event -> info.setText((String)event.getNewValue()).setTooltipText((String)event.getNewValue());
     tabFrame.addPropertyChangeListener("title", listener);
-    Disposer.register(myParentDisposable, () -> tabFrame.removePropertyChangeListener("title", listener));
+    info.getComponent().putClientProperty(TITLE_LISTENER_KEY, listener);
 
     installTabDnd(info);
+  }
+
+  private static void removeTitleListener(@NotNull TabInfo info) {
+    PropertyChangeListener listener = (PropertyChangeListener)info.getComponent().getClientProperty(TITLE_LISTENER_KEY);
+    ((IdeFrameImpl)info.getObject()).removePropertyChangeListener("title", listener);
   }
 
   private void recalculateIndexes() {
@@ -381,6 +418,7 @@ public class WindowTabsComponent extends JBTabsImpl {
       ID tabGroup = Foundation.invoke(window, "tabGroup");
       ID tab = MacUtil.getWindowFromJavaWindow(tabFrame);
       Foundation.invoke(tabGroup, "addWindow:", tab);
+      Foundation.invoke(tabGroup, "setSelectedWindow:", tab);
 
       ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMove(tabFrame, target, -1));
     });
@@ -393,7 +431,6 @@ public class WindowTabsComponent extends JBTabsImpl {
     int oldIndex = myIndexes.get(movedFrame);
 
     recalculateIndexes();
-    select(info, true);
 
     if (oldIndex != newIndex) {
       moveTabToNewIndex(movedFrame, newIndex);
@@ -403,7 +440,7 @@ public class WindowTabsComponent extends JBTabsImpl {
   private void moveTabToNewIndex(@NotNull IdeFrameImpl movedFrame, int newIndex) {
     for (int i = 0, count = getTabCount(); i < count; i++) {
       IdeFrameImpl tabFrame = (IdeFrameImpl)getTabAt(i).getObject();
-      if (tabFrame != movedFrame) {
+      if (tabFrame != myNativeWindow) {
         WindowTabsComponent tabsComponent =
           Objects.requireNonNull(MacWinTabsHandlerV2.getTabsComponent(MacWinTabsHandlerV2.getTabsContainer(tabFrame)));
         tabsComponent.reorderTabs(myIndexes);
@@ -415,12 +452,14 @@ public class WindowTabsComponent extends JBTabsImpl {
       ID tabGroup = Foundation.invoke(window, "tabGroup");
       Foundation.invoke(tabGroup, "removeWindow:", window);
       Foundation.invoke(tabGroup, "insertWindow:atIndex:", window, newIndex);
+      Foundation.invoke(tabGroup, "setSelectedWindow:", window);
     });
   }
 
   private void moveTabToNewIndexOrWindow(@NotNull TabInfo info, boolean movedFromOut) {
     IdeFrameImpl movedFrame = (IdeFrameImpl)info.getObject();
     int newIndex = getDropInfoIndex();
+    assert newIndex != -1 : "Wrong Reordering";
 
     if (movedFromOut) {
       Foundation.executeOnMainThread(true, false, () -> {
@@ -428,6 +467,7 @@ public class WindowTabsComponent extends JBTabsImpl {
         ID tabGroup = Foundation.invoke(window, "tabGroup");
         ID tab = MacUtil.getWindowFromJavaWindow(movedFrame);
         Foundation.invoke(tabGroup, "insertWindow:atIndex:", tab, newIndex);
+        Foundation.invoke(tabGroup, "setSelectedWindow:", tab);
 
         ApplicationManager.getApplication()
           .invokeLater(() -> MacWinTabsHandlerV2.updateTabBarsAfterMove(movedFrame, myNativeWindow, newIndex));
@@ -436,7 +476,6 @@ public class WindowTabsComponent extends JBTabsImpl {
     else {
       info.setHidden(false);
       int oldIndex = getIndexOf(info);
-      select(info, true);
 
       if (oldIndex != newIndex) {
         reorderTab(info, newIndex);
@@ -591,7 +630,8 @@ public class WindowTabsComponent extends JBTabsImpl {
     @Override
     public @Nullable Image startDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
       Presentation presentation = content.getPresentation();
-      myDropTab = new TabInfo(new JLabel()).setText(presentation.getText());
+      myDropTab = new TabInfo(new JLabel()).setText(presentation.getText())
+        .setDefaultForeground(JBUI.CurrentTheme.MainWindow.Tab.foreground(true, false));
       return myDropImage = WindowTabsComponent.this.startDropOver(myDropTab, point);
     }
 
@@ -611,7 +651,7 @@ public class WindowTabsComponent extends JBTabsImpl {
     @Override
     public void add(@NotNull DockableContent<?> _content, @Nullable RelativePoint dropTarget) {
       WindowFrameDockableContent content = (WindowFrameDockableContent)_content;
-      moveTabToNewIndexOrWindow(content.myInfo, content.myTabsComponent != WindowTabsComponent.this);
+      moveTabToNewIndexOrWindow(content.myInfo, !isSameGroup(content.myTabsComponent));
     }
 
     @Override

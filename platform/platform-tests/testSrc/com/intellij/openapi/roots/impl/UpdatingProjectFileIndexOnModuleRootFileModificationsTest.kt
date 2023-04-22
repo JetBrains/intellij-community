@@ -5,12 +5,16 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_CONTENT
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.utils.vfs.getFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -158,11 +162,46 @@ class UpdatingProjectFileIndexOnModuleRootFileModificationsTest {
     fileIndex.assertInModule(movedFile, module, moduleDir)
   }
 
+  @Test
+  fun `delete and recreate source root`() {
+    PsiTestUtil.addContentRoot(module, moduleDir)
+    val fileInAnotherDir = projectModel.baseProjectDir.newVirtualFile("dir/source.txt")
+    val fileInAnotherDir2 = projectModel.baseProjectDir.newVirtualFile("dir2/source.txt")
+    val fileWithDifferentName = projectModel.baseProjectDir.newVirtualFile("module/temp.txt")
+    PsiTestUtil.addSourceRoot(module, projectModel.baseProjectDir.newVirtualFile("module/source.txt"))
+
+    fun findSourceRoot() = moduleDir.getFile("source.txt")
+    fun assertInModule() {
+      fileIndex.assertInModule(findSourceRoot(), module, moduleDir, IN_CONTENT or IN_SOURCE)
+    }
+    assertInModule()
+    
+    VfsTestUtil.deleteFile(findSourceRoot())
+    projectModel.baseProjectDir.newVirtualFile("module/source.txt")
+    assertInModule()
+
+    VfsTestUtil.deleteFile(findSourceRoot())
+    fileInAnotherDir.move(moduleDir)
+    assertInModule()
+
+    VfsTestUtil.deleteFile(findSourceRoot())
+    fileInAnotherDir2.copy(moduleDir)
+    assertInModule()
+
+    VfsTestUtil.deleteFile(findSourceRoot())
+    fileWithDifferentName.rename("source.txt")
+    assertInModule()
+  }
+
   private fun VirtualFile.rename(newName: String) {
     runWriteActionAndWait { rename(this@UpdatingProjectFileIndexOnModuleRootFileModificationsTest, newName) }
   }
 
   private fun VirtualFile.move(newParent: VirtualFile) {
     runWriteActionAndWait { move(this@UpdatingProjectFileIndexOnModuleRootFileModificationsTest, newParent) }
+  }
+  
+  private fun VirtualFile.copy(newParent: VirtualFile) {
+    runWriteActionAndWait { copy(this@UpdatingProjectFileIndexOnModuleRootFileModificationsTest, newParent, name) }
   }
 }

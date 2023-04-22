@@ -3,10 +3,10 @@ package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 
-private class GradleStartupActivity : ProjectPostStartupActivity {
+private class GradleStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     ExternalProjectsManager.getInstance(project).runWhenInitialized { GradleExtensionsSettings.load(project) }
   }

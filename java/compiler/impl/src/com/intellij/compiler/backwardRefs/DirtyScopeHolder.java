@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -271,8 +271,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
         fileChanged(file);
       }
       else {
-        if (event instanceof VFilePropertyChangeEvent) {
-          VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+        if (event instanceof VFilePropertyChangeEvent pce) {
           String propertyName = pce.getPropertyName();
           if (VirtualFile.PROP_NAME.equals(propertyName) || VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
             fileChanged(pce.getFile());
@@ -296,8 +295,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
         final Module module = getModuleForSourceContentFile(file);
         ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
       }
-      else if (event instanceof VFilePropertyChangeEvent) {
-        VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+      else if (event instanceof VFilePropertyChangeEvent pce) {
         String propertyName = pce.getPropertyName();
         if (VirtualFile.PROP_NAME.equals(propertyName) || VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
           final String path = pce.getFile().getPath();

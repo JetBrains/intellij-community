@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -179,8 +179,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       return isOptionalGetCall(e.getParent().getParent(), optionalRef);
     });
     if (!hasNoBadRefs) return ProblemType.NONE;
-    if (!hasOptionalReference.get() || !(lambdaCandidate instanceof PsiExpression)) return ProblemType.INFO;
-    PsiExpression expression = (PsiExpression)lambdaCandidate;
+    if (!hasOptionalReference.get() || !(lambdaCandidate instanceof PsiExpression expression)) return ProblemType.INFO;
     if (falseExpression != null) {
       // falseExpression == null is "consumer" case (to be replaced with ifPresent())
       if (!ExpressionUtils.isNullLiteral(falseExpression) &&
@@ -270,8 +269,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if (!(element instanceof PsiExpression)) return;
-      PsiExpression condition = (PsiExpression)element;
+      if (!(element instanceof PsiExpression condition)) return;
       PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
       if (optionalRef == null) return;
       PsiElement cond = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiConditionalExpression.class);
@@ -379,9 +377,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
                                         @Nullable PsiElement trueElement,
                                         @Nullable PsiElement falseElement) {
-        if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return ProblemType.NONE;
-        PsiExpression trueExpression = (PsiExpression)trueElement;
-        PsiExpression falseExpression = (PsiExpression)falseElement;
+        if(!(trueElement instanceof PsiExpression trueExpression) || !(falseElement instanceof PsiExpression falseExpression)) return ProblemType.NONE;
         PsiType trueType = trueExpression.getType();
         PsiType falseType = falseExpression.getType();
         if (trueType == null || falseType == null || !trueType.isAssignableFrom(falseType) || !isSimpleOrUnchecked(falseExpression)) {

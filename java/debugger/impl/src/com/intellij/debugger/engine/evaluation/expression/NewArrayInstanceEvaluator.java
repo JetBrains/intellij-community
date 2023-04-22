@@ -35,10 +35,9 @@ class NewArrayInstanceEvaluator implements Evaluator {
 //    throw new EvaluateException("Creating new array instances is not supported yet", true);
     DebugProcessImpl debugProcess = context.getDebugProcess();
     Object obj = myArrayTypeEvaluator.evaluate(context);
-    if (!(obj instanceof ArrayType)) {
+    if (!(obj instanceof ArrayType arrayType)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.array.type.expected"));
     }
-    ArrayType arrayType = (ArrayType)obj;
     int dimension;
     Object[] initialValues = null;
     if (myDimensionEvaluator != null) {
@@ -73,8 +72,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     ArrayType type = (ArrayType)arrayReference.referenceType();
     DebugProcessImpl debugProcess = context.getDebugProcess();
     try {
-      if (type.componentType() instanceof ArrayType) {
-        ArrayType componentType = (ArrayType)type.componentType();
+      if (type.componentType() instanceof ArrayType componentType) {
         int length = arrayReference.length();
         for (int idx = 0; idx < length; idx++) {
           Object value = values[idx];

@@ -22,6 +22,4 @@ public interface Loader {
                         BiConsumer<? super String, ? super InputStream> consumer) throws IOException;
 
   @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException;
-
-  boolean containsName(String name);
 }

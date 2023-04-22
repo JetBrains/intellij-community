@@ -43,7 +43,7 @@ public interface NavBarUI {
   /**
    * @deprecated Use {@link #getElementPadding(NavBarItem)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   Insets getElementPadding();
 
   Insets getElementPadding(NavBarItem item);

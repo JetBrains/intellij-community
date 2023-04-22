@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -155,8 +155,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   private class ClassNameSortKey implements Comparable {
     @Override
     public int compareTo(final Object o) {
-      if (!(o instanceof ClassNameSortKey)) return 0;
-      ClassNameSortKey rhs = (ClassNameSortKey) o;
+      if (!(o instanceof ClassNameSortKey rhs)) return 0;
       return getPosition() - rhs.getPosition();
     }
 

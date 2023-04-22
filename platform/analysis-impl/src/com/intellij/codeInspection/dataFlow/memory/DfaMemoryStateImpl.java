@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.memory;
 
@@ -80,7 +80,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaMemoryStateImpl copy = createCopy();
     copy.flushFields(new QualifierStatusMap(null, true));
     copy.emptyStack();
-    for (DfaValue value : getFactory().getValues().toArray(new DfaValue[0])) {
+    for (DfaValue value : getFactory().getValues().toArray(DfaValue.EMPTY_ARRAY)) {
       if (value instanceof DfaVariableValue var) {
         DfType type = copy.getDfType(var);
         DfType newType = type.correctForClosure();

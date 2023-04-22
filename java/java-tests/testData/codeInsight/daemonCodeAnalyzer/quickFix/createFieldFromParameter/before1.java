@@ -1,4 +1,4 @@
-// "Create field for parameter 'id'" "true"
+// "Create field for parameter 'id'" "true-preview"
 
 class Person {
     private String __fname, __lname, __street;

@@ -5,8 +5,9 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
-import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.AbstractWizard.MODIFIABLE_MODULE_MODEL_KEY
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
+import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
@@ -34,6 +35,12 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       setupSampleCodeWithOnBoardingTipsUI(builder)
     }
 
+    override fun setupAdvancedSettingsUI(builder: Panel) {
+      setupModuleNameUI(builder)
+      setupModuleContentRootUI(builder)
+      setupModuleFileLocationUI(builder)
+    }
+
     override fun setupProject(project: Project) {
       val builder = JavaModuleBuilder()
       val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
@@ -52,7 +59,8 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         builder.moduleJdk = if (sameSDK) null else sdk
       }
 
-      builder.commit(project)
+      val model = parent.context.getUserData(MODIFIABLE_MODULE_MODEL_KEY)
+      builder.commit(project, model)
     }
 
     init {

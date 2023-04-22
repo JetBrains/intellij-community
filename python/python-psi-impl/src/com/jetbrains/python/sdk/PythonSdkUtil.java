@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -62,6 +63,8 @@ public final class PythonSdkUtil {
   private static final String[] WIN_BINARY_NAMES = {"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
   private static final Predicate<Sdk> REMOTE_SDK_PREDICATE = PythonSdkUtil::isRemote;
 
+  private static final Key<PySkeletonHeader> CACHED_SKELETON_HEADER = Key.create("CACHED_SKELETON_HEADER");
+
   public static boolean isPythonSdk(@NotNull Sdk sdk) {
     return PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName());
   }
@@ -74,7 +77,12 @@ public final class PythonSdkUtil {
   private static PySkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull Sdk pythonSdk) {
     final VirtualFile skeletonsDir = findSkeletonsDir(pythonSdk);
     if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, file, false)) {
-      return PySkeletonHeader.readSkeletonHeader(VfsUtilCore.virtualToIoFile(file));
+      PySkeletonHeader skeletonHeader = file.getUserData(CACHED_SKELETON_HEADER);
+      if (skeletonHeader == null) {
+        skeletonHeader = PySkeletonHeader.readSkeletonHeader(VfsUtilCore.virtualToIoFile(file));
+        file.putUserData(CACHED_SKELETON_HEADER, skeletonHeader);
+      }
+      return skeletonHeader;
     }
     return null;
   }

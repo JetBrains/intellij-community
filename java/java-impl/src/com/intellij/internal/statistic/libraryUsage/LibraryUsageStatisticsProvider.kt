@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.libraryUsage
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.libraryJar.findJarVersion
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
@@ -15,10 +16,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
 
 internal class LibraryUsageStatisticsProvider(private val project: Project) : DaemonListener {
 
@@ -38,16 +37,19 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
 
       if (processedFilesService.isVisited(vFile)) continue
 
-      ReadAction.nonBlocking(Callable { processFile(vFile) })
-        .finishOnUiThread(ModalityState.any()) {
-          if (it != null && processedFilesService.visit(vFile)) {
-            LibraryUsageStatisticsStorageService.getInstance(project).increaseUsages(it)
-          }
+      StatisticsEventLogProviderUtil.getEventLogProvider("FUS").logger
+        .computeAsync { backgroundExecutor ->
+          ReadAction.nonBlocking(Callable { processFile(vFile) })
+            .finishOnUiThread(ModalityState.any()) {
+              if (it != null && processedFilesService.visit(vFile)) {
+                LibraryUsageStatisticsStorageService.getInstance(project).increaseUsages(it)
+              }
+            }
+            .inSmartMode(project)
+            .expireWith(processedFilesService)
+            .coalesceBy(vFile, processedFilesService)
+            .submit(backgroundExecutor)
         }
-        .inSmartMode(project)
-        .expireWith(processedFilesService)
-        .coalesceBy(vFile, processedFilesService)
-        .submit(boundedExecutor)
     }
   }
 
@@ -95,12 +97,5 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
           !isUnitTestMode && !isHeadlessEnvironment && StatisticsUploadAssistant.isSendAllowed()
         }
       }
-
-    private val boundedExecutor: ExecutorService by lazy {
-      AppExecutorUtil.createBoundedApplicationPoolExecutor(
-        /* name = */ "LibraryUsageStatisticsProvider",
-        /* maxThreads = */ 1,
-      )
-    }
   }
 }

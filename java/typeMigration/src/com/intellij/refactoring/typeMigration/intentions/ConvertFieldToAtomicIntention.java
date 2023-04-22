@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -69,7 +69,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     if (variable == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = variable.getType();
     String toType = myFromToMap.get(type);
-    if (toType == null) return IntentionPreviewInfo.EMPTY;
+    if (toType == null) toType = AtomicReference.class.getName();
     String variableName = variable.getName();
     String presentableText = StringUtil.getShortName(toType);
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, null,
@@ -118,7 +118,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     LOG.assertTrue(var != null);
 
     PsiType fromType = var.getType();
-    PsiClassType toType = getMigrationTargetType(project, element, fromType);
+    PsiClassType toType = getMigrationTargetType(element, fromType);
     if (toType == null) return;
 
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(var)) return;
@@ -162,14 +162,14 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   }
 
   @Nullable
-  private PsiClassType getMigrationTargetType(@NotNull Project project,
-                                              @NotNull PsiElement element,
-                                              @NotNull PsiType fromType) {
+  private PsiClassType getMigrationTargetType(@NotNull PsiElement element, @NotNull PsiType fromType) {
+    final Project project = element.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     PsiElementFactory factory = psiFacade.getElementFactory();
+    GlobalSearchScope scope = element.getResolveScope();
     String atomicQualifiedName = myFromToMap.get(fromType);
     if (atomicQualifiedName != null) {
-      PsiClass atomicClass = psiFacade.findClass(atomicQualifiedName, GlobalSearchScope.allScope(project));
+      PsiClass atomicClass = psiFacade.findClass(atomicQualifiedName, scope);
       if (atomicClass == null) {//show warning
         return null;
       }
@@ -177,7 +177,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     }
     else if (fromType instanceof PsiArrayType) {
       PsiClass atomicReferenceArrayClass =
-        psiFacade.findClass(AtomicReferenceArray.class.getName(), GlobalSearchScope.allScope(project));
+        psiFacade.findClass(AtomicReferenceArray.class.getName(), scope);
       if (atomicReferenceArrayClass == null) {//show warning
         return null;
       }
@@ -191,7 +191,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       return factory.createType(atomicReferenceArrayClass, factory.createSubstitutor(substitutor));
     }
     else {
-      PsiClass atomicReferenceClass = psiFacade.findClass(AtomicReference.class.getName(), GlobalSearchScope.allScope(project));
+      PsiClass atomicReferenceClass = psiFacade.findClass(AtomicReference.class.getName(), scope);
       if (atomicReferenceClass == null) {//show warning
         return null;
       }
@@ -211,6 +211,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     return false;
   }
 
+  @SuppressWarnings("IntentionDescriptionNotFoundInspection")
   public static class ConvertNonFinalLocalToAtomicFix extends ConvertFieldToAtomicIntention implements HighPriorityAction {
     private final PsiElement myContext;
 
@@ -231,11 +232,8 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
     @Override
     PsiVariable getVariable(PsiElement element) {
-      if(myContext instanceof PsiReferenceExpression && myContext.isValid()) {
-        PsiReferenceExpression ref = (PsiReferenceExpression)myContext;
-        if(PsiUtil.isAccessedForWriting(ref)) {
-          return ObjectUtils.tryCast(ref.resolve(), PsiLocalVariable.class);
-        }
+      if (myContext instanceof PsiReferenceExpression ref && myContext.isValid() && PsiUtil.isAccessedForWriting(ref)) {
+        return ObjectUtils.tryCast(ref.resolve(), PsiLocalVariable.class);
       }
       return null;
     }

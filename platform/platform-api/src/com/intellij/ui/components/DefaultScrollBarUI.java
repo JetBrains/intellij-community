@@ -537,16 +537,16 @@ class DefaultScrollBarUI extends ScrollBarUI {
     @Override
     public void propertyChange(PropertyChangeEvent event) {
       String name = event.getPropertyName();
-      if ("model" == name) {
+      if ("model".equals(name)) {
         BoundedRangeModel oldModel = (BoundedRangeModel)event.getOldValue();
         BoundedRangeModel newModel = (BoundedRangeModel)event.getNewValue();
         oldModel.removeChangeListener(this);
         newModel.addChangeListener(this);
       }
-      if ("model" == name || "orientation" == name || "componentOrientation" == name) {
+      if ("model".equals(name) || "orientation".equals(name) || "componentOrientation".equals(name)) {
         repaint();
       }
-      if ("opaque" == name || "visible" == name) {
+      if ("opaque".equals(name) || "visible".equals(name)) {
         myAnimationBehavior.onReset();
         myTrack.bounds.setBounds(0, 0, 0, 0);
         myThumb.bounds.setBounds(0, 0, 0, 0);

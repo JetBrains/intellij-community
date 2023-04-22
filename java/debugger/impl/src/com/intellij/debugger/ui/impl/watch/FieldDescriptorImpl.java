@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -207,12 +207,8 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
             setter = v -> object.setValue(field, v);
           }
         }
-        else {
-          ReferenceType refType = field.declaringType();
-          if (refType instanceof ClassType) {
-            ClassType classType = (ClassType)refType;
-            setter = v -> classType.setValue(field, v);
-          }
+        else if (field.declaringType() instanceof ClassType classType) {
+          setter = v -> classType.setValue(field, v);
         }
 
         if (setter != null) {

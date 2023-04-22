@@ -16,6 +16,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.TerminalTitleListener;
+import com.intellij.terminal.ui.TerminalWidgetKt;
+import com.intellij.util.ObjectUtils;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,14 +36,16 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
   public TerminalSessionEditor(Project project, @NotNull TerminalSessionVirtualFileImpl terminalFile) {
     myProject = project;
     myFile = terminalFile;
-    terminalFile.getTerminalWidget().moveDisposable(myWidgetParentDisposable);
+    TerminalWidgetKt.setNewParentDisposable(terminalFile.getTerminalWidget(), myWidgetParentDisposable);
 
     myListener = widget -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile);
       }, myProject.getDisposed());
     };
-    myFile.getTerminalWidget().addListener(myListener);
+    ObjectUtils.consumeIfNotNull(JBTerminalWidget.asJediTermWidget(myFile.getTerminalWidget()), widget -> {
+      widget.addListener(myListener);
+    });
 
     terminalFile.getTerminalWidget().getTerminalTitle().addTitleListener(new TerminalTitleListener() {
       @Override
@@ -59,12 +63,12 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
 
   @Override
   public @NotNull JComponent getComponent() {
-    return myFile.getTerminalWidget();
+    return myFile.getTerminalWidget().getComponent();
   }
 
   @Override
   public @NotNull JComponent getPreferredFocusedComponent() {
-    return myFile.getTerminalWidget();
+    return myFile.getTerminalWidget().getPreferredFocusableComponent();
   }
 
   @Override
@@ -98,7 +102,9 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
 
   @Override
   public void dispose() {
-    myFile.getTerminalWidget().removeListener(myListener);
+    ObjectUtils.consumeIfNotNull(JBTerminalWidget.asJediTermWidget(myFile.getTerminalWidget()), widget -> {
+      widget.removeListener(myListener);
+    });
     if (Boolean.TRUE.equals(myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
       ApplicationManager.getApplication().invokeLater(() -> {
         boolean disposedBefore = Disposer.isDisposed(myFile.getTerminalWidget());

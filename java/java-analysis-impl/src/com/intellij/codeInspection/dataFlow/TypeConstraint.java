@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
@@ -8,7 +8,10 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
@@ -437,8 +440,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
     public @Nullable TypeConstraint tryJoinExactly(TypeConstraint other) {
       if (isSuperConstraintOf(other)) return this;
       if (other.isSuperConstraintOf(this)) return other;
-      if (other instanceof Constrained) {
-        Constrained constrained = (Constrained)other;
+      if (other instanceof Constrained constrained) {
         if (myInstanceOf.equals(constrained.myInstanceOf)) {
           return joinWithConstrained(constrained);
         }
@@ -543,8 +545,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
     public @NotNull TypeConstraint meet(@NotNull TypeConstraint other) {
       if (this.isSuperConstraintOf(other)) return other;
       if (other.isSuperConstraintOf(this)) return this;
-      if (!(other instanceof Constrained)) return BOTTOM;
-      Constrained right = (Constrained)other;
+      if (!(other instanceof Constrained right)) return BOTTOM;
 
       Constrained result = this;
       for (Exact type : right.myInstanceOf) {
@@ -561,8 +562,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
     @Override
     public boolean isSuperConstraintOf(@NotNull TypeConstraint other) {
       if (other == BOTTOM) return true;
-      if (other instanceof Constrained) {
-        Constrained that = (Constrained)other;
+      if (other instanceof Constrained that) {
         if (!that.myNotInstanceOf.containsAll(myNotInstanceOf)) {
           if (that.myInstanceOf.isEmpty()) return false;
           for (Exact thisNotType : this.myNotInstanceOf) {
@@ -585,8 +585,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
           }
         }
         return true;
-      } else if (other instanceof Exact) {
-        Exact otherType = (Exact)other;
+      } else if (other instanceof Exact otherType) {
         for (Exact thisInstance : this.myInstanceOf) {
           if (!thisInstance.isAssignableFrom(otherType)) {
             return false;

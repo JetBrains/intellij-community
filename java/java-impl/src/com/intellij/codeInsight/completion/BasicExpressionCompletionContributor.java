@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -86,19 +86,16 @@ public final class BasicExpressionCompletionContributor {
     PsiScopesUtil.treeWalkUp(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if (element instanceof PsiLocalVariable) {
-          if (!matcher.prefixMatches(((PsiLocalVariable)element).getName())) {
+        if (element instanceof PsiLocalVariable var) {
+          if (!matcher.prefixMatches(var.getName())) {
             return true;
           }
 
-          final PsiExpression expression = ((PsiLocalVariable)element).getInitializer();
-          if (expression instanceof PsiTypeCastExpression) {
-            PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+          final PsiExpression expression = var.getInitializer();
+          if (expression instanceof PsiTypeCastExpression typeCastExpression) {
             final PsiExpression operand = typeCastExpression.getOperand();
-            if (operand != null) {
-              if (map.get(operand).contains(typeCastExpression.getType())) {
-                map.remove(operand);
-              }
+            if (operand != null && map.get(operand).contains(typeCastExpression.getType())) {
+              map.remove(operand);
             }
           }
         }
@@ -118,24 +115,15 @@ public final class BasicExpressionCompletionContributor {
 
   @NotNull
   private static LookupElement expressionToLookupElement(@NotNull PsiExpression expression) {
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression refExpr = (PsiReferenceExpression)expression;
-      if (!refExpr.isQualified()) {
-        final PsiElement target = refExpr.resolve();
-        if (target instanceof PsiVariable) {
-          final VariableLookupItem item = new VariableLookupItem((PsiVariable)target);
-          item.setSubstitutor(PsiSubstitutor.EMPTY);
-          return item;
-        }
-      }
+    if (expression instanceof PsiReferenceExpression refExpr && !refExpr.isQualified() && refExpr.resolve() instanceof PsiVariable var) {
+      final VariableLookupItem item = new VariableLookupItem(var);
+      item.setSubstitutor(PsiSubstitutor.EMPTY);
+      return item;
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (!call.getMethodExpression().isQualified()) {
-        final PsiMethod method = call.resolveMethod();
-        if (method != null) {
-          return new JavaMethodCallElement(method);
-        }
+    if (expression instanceof PsiMethodCallExpression call && !call.getMethodExpression().isQualified()) {
+      final PsiMethod method = call.resolveMethod();
+      if (method != null) {
+        return new JavaMethodCallElement(method);
       }
     }
 

@@ -3,9 +3,9 @@ package com.intellij.ide.wizard
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageAddAction
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageAddAction
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLanguageLoadAction
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData

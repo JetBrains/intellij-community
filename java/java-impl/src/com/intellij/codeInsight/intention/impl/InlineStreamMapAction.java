@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
@@ -44,8 +42,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiReferenceExpression)) return false;
     final PsiElement gParent = parent.getParent();
-    if (!(gParent instanceof PsiMethodCallExpression)) return false;
-    PsiMethodCallExpression curCall = (PsiMethodCallExpression)gParent;
+    if (!(gParent instanceof PsiMethodCallExpression curCall)) return false;
     if (!isMapCall(curCall)) return false;
     PsiMethodCallExpression nextCall = getNextExpressionToMerge(curCall);
     if(nextCall == null) return false;

@@ -24,6 +24,8 @@ import com.intellij.util.childScope
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.awt.Window
 import javax.swing.JComponent
 
@@ -119,6 +121,16 @@ internal suspend fun focusModel(project: Project): List<NavBarVmItem> {
     return emptyList()
   }
   return contextModel(ctx, project)
+}
+
+/**
+ * Use this API to dump current state of navigation bar in tests
+ * Currently used in Rider
+ */
+@TestOnly
+@Internal
+suspend fun dumpContextModel(ctx: DataContext, project: Project) : List<String> {
+  return contextModel(ctx, project).map { it.presentation.text }
 }
 
 private suspend fun contextModel(ctx: DataContext, project: Project): List<NavBarVmItem> {

@@ -8,8 +8,8 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.project.Project
+import git4idea.changes.GitChangeDiffData
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -18,7 +18,6 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewProcessMode
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangeDiffData
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
@@ -28,7 +27,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import java.util.function.Function
 import kotlin.properties.Delegates.observable
 
@@ -37,7 +35,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val detailsDataProvider: GHPRDetailsDataProvider,
                                 private val avatarIconsProvider: GHAvatarIconsProvider,
                                 private val repositoryDataService: GHPRRepositoryDataService,
-                                private val diffData: GHPRChangeDiffData,
+                                private val diffData: GitChangeDiffData,
                                 private val ghostUser: GHUser,
                                 private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
@@ -75,7 +73,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
 
     loadReviewThreads(viewer)
 
-    val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
+    val createCommentParametersHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath)
     val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
                                                            viewer, repositoryDataService.remoteCoordinates.repository,
                                                            reviewDataProvider,
@@ -85,7 +83,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
                                                                       createCommentParametersHelper, suggestedChangesHelper,
                                                                       ghostUser,
                                                                       currentUser)
-    val cumulative = diffData is GHPRChangeDiffData.Cumulative
+    val cumulative = diffData is GitChangeDiffData.Cumulative
     when (viewer) {
       is SimpleOnesideDiffViewer ->
         GHPRSimpleOnesideDiffViewerReviewThreadsHandler(reviewProcessModel, diffRangesModel, reviewThreadsModel, viewer, componentsFactory,
@@ -153,14 +151,11 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     if (!diffData.contains(originalCommitSha, thread.path)) return null
 
     val (side, line) = when (diffData) {
-      is GHPRChangeDiffData.Cumulative -> thread.side to thread.line - 1
-      is GHPRChangeDiffData.Commit -> {
-        val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk(thread.path, thread.diffHunk))
-        patchReader.readTextPatches()
-        val patchHunk = patchReader.textPatches[0].hunks.lastOrNull() ?: return null
-        val position = GHPatchHunkUtil.getHunkLinesCount(patchHunk) - 1
-        val (unmappedSide, unmappedLine) = GHPatchHunkUtil.findSideFileLineFromHunkLineIndex(patchHunk, position) ?: return null
-        diffData.mapPosition(originalCommitSha, unmappedSide, unmappedLine) ?: return null
+      is GitChangeDiffData.Cumulative -> {
+        thread.side to thread.line - 1
+      }
+      is GitChangeDiffData.Commit -> {
+        diffData.mapPosition(originalCommitSha, thread.side, thread.originalLine - 1) ?: return null
       }
     }
 

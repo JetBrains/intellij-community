@@ -58,6 +58,7 @@ import org.jdom.filter.AbstractFilter;
 import org.jdom.filter.Filter;
 import org.jdom.filter2.ElementFilter;
 import org.jdom.filter2.Filters;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -962,6 +963,13 @@ public class Element extends Content implements Parent, Serializable {
     if (attributes == null) {
       attributes = new AttributeList(this);
     }
+    return attributes;
+  }
+
+  @ApiStatus.Internal
+  public AttributeList initAttributeList(int attributeCount) {
+    assert attributes == null;
+    attributes = new AttributeList(this, attributeCount);
     return attributes;
   }
 

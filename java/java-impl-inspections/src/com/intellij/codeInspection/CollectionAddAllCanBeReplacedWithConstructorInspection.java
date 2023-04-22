@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -149,12 +149,11 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
                                                       @NotNull PsiLocalVariable referent,
                                                       @NotNull String previousMethodName) {
     final PsiElement sibling = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
-    if (sibling instanceof PsiExpressionStatement) {
-      final PsiExpression siblingExpression = ((PsiExpressionStatement)sibling).getExpression();
-      if (siblingExpression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression siblingMethodCall = (PsiMethodCallExpression)siblingExpression;
+    if (sibling instanceof PsiExpressionStatement expressionStatement) {
+      final PsiExpression siblingExpression = expressionStatement.getExpression();
+      if (siblingExpression instanceof PsiMethodCallExpression siblingMethodCall) {
         final PsiExpression qualifier = siblingMethodCall.getMethodExpression().getQualifierExpression();
-        if (qualifier instanceof PsiReferenceExpression && referent.isEquivalentTo(((PsiReferenceExpression)qualifier).resolve())) {
+        if (qualifier instanceof PsiReferenceExpression ref && referent.isEquivalentTo(ref.resolve())) {
           final PsiMethod method = siblingMethodCall.resolveMethod();
           if (method != null && method.getName().equals(previousMethodName)) {
             return true;
@@ -166,10 +165,9 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
   }
 
   private boolean isCollectionConstructor(PsiExpression initializer) {
-    if (!(initializer instanceof PsiNewExpression)) {
+    if (!(initializer instanceof PsiNewExpression newExpression)) {
       return false;
     }
-    final PsiNewExpression newExpression = (PsiNewExpression)initializer;
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     if (classReference == null) {
       return false;

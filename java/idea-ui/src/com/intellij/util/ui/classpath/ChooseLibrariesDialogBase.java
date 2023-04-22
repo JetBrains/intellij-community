@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.classpath;
 
 import com.intellij.ide.CommonActionsManager;
@@ -36,6 +36,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
@@ -121,7 +122,13 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   }
 
   protected void queueUpdateAndSelect(@NotNull final Library library) {
-    myModel.select(library, myTree, path -> {});
+    myModel.invalidateAsync().thenRun(() -> {
+      ((AsyncTreeModel)myTree.getModel()).accept(path -> {
+        return TreeVisitor.Action.CONTINUE; // traverse to update myParentsMap
+      }).onProcessed(path -> {
+        myModel.select(library, myTree, p -> {});
+      });
+    });
   }
 
   private boolean processSelection(final Processor<? super Library> processor) {
@@ -209,12 +216,10 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     }
     else if (element instanceof Module) {
       for (OrderEntry entry : ModuleRootManager.getInstance((Module)element).getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry) {
-          final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
-          if (LibraryTableImplUtil.MODULE_LEVEL.equals(libraryOrderEntry.getLibraryLevel())) {
-            final Library library = libraryOrderEntry.getLibrary();
-            result.add(library);
-          }
+        if (entry instanceof LibraryOrderEntry libraryOrderEntry &&
+            LibraryTableImplUtil.MODULE_LEVEL.equals(libraryOrderEntry.getLibraryLevel())) {
+          final Library library = libraryOrderEntry.getLibrary();
+          result.add(library);
         }
       }
     }
@@ -370,15 +375,14 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     @Override
     public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
       if (element instanceof Application) return new RootDescriptor(myProject);
-      if (element instanceof Project) return new ProjectDescriptor(myProject, (Project)element);
-      if (element instanceof Module) return new ModuleDescriptor(myProject, parentDescriptor, (Module)element);
-      if (element instanceof LibraryTable) {
-        final LibraryTable libraryTable = (LibraryTable)element;
+      if (element instanceof Project project) return new ProjectDescriptor(myProject, project);
+      if (element instanceof Module module) return new ModuleDescriptor(myProject, parentDescriptor, module);
+      if (element instanceof LibraryTable libraryTable) {
         return new LibraryTableDescriptor(myProject, parentDescriptor, libraryTable,
                                           getLibraryTableWeight(libraryTable),
                                           isAutoExpandLibraryTable(libraryTable));
       }
-      if (element instanceof Library) return createLibraryDescriptor(parentDescriptor, (Library)element);
+      if (element instanceof Library library) return createLibraryDescriptor(parentDescriptor, library);
       throw new AssertionError();
     }
 

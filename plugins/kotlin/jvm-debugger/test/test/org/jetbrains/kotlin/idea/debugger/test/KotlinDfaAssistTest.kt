@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.engine.dfaassist.DfaAssistTest
@@ -57,6 +57,19 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                 fun main() {
                     obj(5)
                 }""") { vm, frame -> frame.addVariable("x", MockValue.createValue(1, Integer::class.java, vm)) }
+    }
+
+    fun testSmartCast() {
+        doTest("""fun main() {
+                        test(object : ArrayList<String>(){}, -1)
+                    }
+                    
+                    fun test(any: Any, i: Int) {
+                        <caret>if (any is ArrayList<*>) {
+                            println(any.size > i/*TRUE*/)
+                        }
+                    }
+                    """) { vm, frame -> frame.addVariable("i", MockIntegerValue(vm, -1)) }
     }
 
     fun testWrapped() {

@@ -69,8 +69,8 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testScopeBased() {
-    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_SOURCE, null));
-    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
+    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.Scope.SOURCE, null));
+    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.Scope.LIBRARY, null));
     NamedScopeManager scopeManager = NamedScopeManager.getInstance(getProject());
     scopeManager.addScope(xScope);
     scopeManager.addScope(utilScope);
@@ -93,8 +93,8 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSharedScopeBased() {
-    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_ANY, null));
-    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
+    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.Scope.ANY, null));
+    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.Scope.LIBRARY, null));
     NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(getProject());
     scopeManager.addScope(xScope);
     scopeManager.addScope(utilScope);

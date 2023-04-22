@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -14,8 +14,6 @@ import com.intellij.ide.actions.WindowAction;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ide.DocumentationUtil;
-import com.intellij.lang.documentation.impl.DocumentationRequest;
-import com.intellij.lang.documentation.impl.ImplKt;
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
 import com.intellij.model.Pointer;
 import com.intellij.navigation.TargetPresentation;
@@ -43,6 +41,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.documentation.impl.DocumentationRequest;
+import com.intellij.platform.documentation.impl.ImplKt;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;

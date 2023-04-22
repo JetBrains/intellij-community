@@ -86,27 +86,16 @@ import java.awt.geom.Point2D;
 public interface Editor extends UserDataHolder {
   Editor[] EMPTY_ARRAY = new Editor[0];
 
-  /**
-   * Returns the document edited or viewed in the editor.
-   *
-   * @return the document instance.
-   */
+  /** Returns the document edited or viewed in the editor. */
   @NotNull Document getDocument();
 
-  /**
-   * Returns the value indicating whether the editor operates in viewer mode, with
-   * all modification actions disabled.
-   *
-   * @return {@code true} if the editor works as a viewer, {@code false} otherwise.
-   */
+  /** Returns whether the editor operates in viewer mode, with all modification actions disabled. */
   boolean isViewer();
 
   /**
    * Returns the component for the entire editor, including the scrollbars, error stripe, gutter
    * and other decorations. The component can be used, for example, for converting logical to
    * screen coordinates.
-   *
-   * @return the component instance.
    */
   @NotNull JComponent getComponent();
 
@@ -114,8 +103,6 @@ public interface Editor extends UserDataHolder {
    * Returns the component for the content area of the editor (the area displaying the document text).
    * The component can be used, for example, for converting logical to screen coordinates.
    * The instance is implementing {@link DataProvider}.
-   *
-   * @return the component instance.
    */
   @NotNull JComponent getContentComponent();
 
@@ -127,10 +114,7 @@ public interface Editor extends UserDataHolder {
    * Returns the selection model for the editor, which can be used to select ranges of text in
    * the document and retrieve information about the selection.
    * <p>
-   * To query or change selections for specific carets, {@link CaretModel} interface should be used.
-   *
-   * @return the selection model instance.
-   * @see #getCaretModel()
+   * To query or change selections for specific carets, see {@link #getCaretModel()}.
    */
   @NotNull SelectionModel getSelectionModel();
 
@@ -141,110 +125,75 @@ public interface Editor extends UserDataHolder {
    * <p>
    * See also {@link com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(Document, Project, boolean)}
    * {@link com.intellij.openapi.editor.ex.EditorEx#getFilteredDocumentMarkupModel()}.
-   *
-   * @return the markup model instance.
    */
   @NotNull MarkupModel getMarkupModel();
 
   /**
    * Returns the folding model for the document, which can be used to add, remove, expand
    * or collapse folded regions in the document.
-   *
-   * @return the folding model instance.
    */
   @NotNull FoldingModel getFoldingModel();
 
   /**
    * Returns the scrolling model for the document, which can be used to scroll the document
    * and retrieve information about the current position of the scrollbars.
-   *
-   * @return the scrolling model instance.
    */
   @NotNull ScrollingModel getScrollingModel();
 
   /**
    * Returns the caret model for the document, which can be used to add and remove carets to the editor, as well as to query and update
    * carets' and corresponding selections' positions.
-   *
-   * @return the caret model instance.
    */
   @NotNull CaretModel getCaretModel();
 
   /**
    * Returns the soft wrap model for the document, which can be used to get information about soft wraps registered
    * for the editor document at the moment and provides basic management functions for them.
-   *
-   * @return the soft wrap model instance.
    */
   @NotNull SoftWrapModel getSoftWrapModel();
 
   /**
-   * Returns the editor settings for this editor instance. Changes to these settings affect
-   * only the current editor instance.
-   *
-   * @return the settings instance.
+   * Returns the editor settings for this editor instance.
+   * Changes to these settings affect only the current editor instance.
    */
   @NotNull EditorSettings getSettings();
 
   /**
-   * Returns the editor color scheme for this editor instance. Changes to the scheme affect
-   * only the current editor instance.
-   *
-   * @return the color scheme instance.
+   * Returns the editor color scheme for this editor instance.
+   * Changes to the scheme affect only the current editor instance.
    */
   @NotNull EditorColorsScheme getColorsScheme();
 
-  /**
-   * Returns the height of a single line of text in the current editor font.
-   *
-   * @return the line height in pixels.
-   */
+  /** Returns the height of a single line of text in the current editor font, in pixels. */
   int getLineHeight();
 
   /**
-   * Maps a logical position in the editor to pixel coordinates.
-   *
-   * @param pos the logical position.
-   * @return the coordinates relative to the top left corner of the {@link #getContentComponent() content component}.
+   * Maps a logical position in the editor to pixel coordinates,
+   * relative to the top left corner of the {@linkplain #getContentComponent() content component}.
    */
   @NotNull Point logicalPositionToXY(@NotNull LogicalPosition pos);
 
-  /**
-   * Maps a logical position in the editor to the offset in the document.
-   *
-   * @param pos the logical position.
-   * @return the corresponding offset in the document.
-   */
+  /** Maps a logical position in the editor to the offset in the document. */
   int logicalPositionToOffset(@NotNull LogicalPosition pos);
 
   /**
    * Maps a logical position in the editor (the line and column ignoring folding) to
    * a visual position (with folded lines and columns not included in the line and column count).
-   *
-   * @param logicalPos the logical position.
-   * @return the corresponding visual position.
    */
   @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos);
 
   /**
-   * Maps a visual position in the editor to pixel coordinates.
-   *
-   * @param visible the visual position.
-   * @return the coordinates relative to the top left corner of the {@link #getContentComponent() content component}.
+   * Maps a visual position in the editor to pixel coordinates,
+   * relative to the top left corner of the {@linkplain #getContentComponent() content component}.
    */
   @NotNull Point visualPositionToXY(@NotNull VisualPosition visible);
 
-  /**
-   * Same as {@link #visualPositionToXY(VisualPosition)}, but returns a potentially more precise result.
-   */
+  /** Same as {@link #visualPositionToXY(VisualPosition)}, but returns a potentially more precise result. */
   @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition pos);
 
   /**
    * Maps a visual position in the editor (with folded lines and columns not included in the line and column count) to
    * a logical position (the line and column ignoring folding).
-   *
-   * @param visiblePos the visual position.
-   * @return the corresponding logical position.
    */
   @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos);
 
@@ -260,7 +209,6 @@ public interface Editor extends UserDataHolder {
    *
    * @param offset the offset in the document. Negative values are clamped to zero; values bigger than text length are clamped
    *               to the text length
-   * @return the corresponding logical position.
    */
   @NotNull LogicalPosition offsetToLogicalPosition(int offset);
 
@@ -273,7 +221,6 @@ public interface Editor extends UserDataHolder {
    * If there's a soft wrap at the given offset, the visual position of the line following the wrap will be returned.
    *
    * @param offset the offset in the document.
-   * @return the corresponding visual position.
    */
   @NotNull VisualPosition offsetToVisualPosition(int offset);
 
@@ -286,7 +233,6 @@ public interface Editor extends UserDataHolder {
    *                       This can make a difference in bidirectional text (see {@link LogicalPosition}, {@link VisualPosition})
    * @param beforeSoftWrap if {@code true}, the visual position at the line preceding the wrap will be returned,
    *                       otherwise - visual position at line following the wrap.
-   * @return the corresponding visual position.
    */
   @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap);
 
@@ -297,7 +243,6 @@ public interface Editor extends UserDataHolder {
    * @param beforeSoftWrap flag to resolve the ambiguity if there's a soft wrap at target offset.
    *                       If {@code true}, the visual line ending in the soft wrap will be returned,
    *                       otherwise the visual line following the wrap.
-   * @return the visual line.
    */
   default int offsetToVisualLine(int offset, boolean beforeSoftWrap) {
     return offsetToVisualPosition(offset, false /* doesn't matter if only visual line is needed */, beforeSoftWrap).line;
@@ -307,7 +252,6 @@ public interface Editor extends UserDataHolder {
    * Maps the pixel coordinates in the editor to a logical position.
    *
    * @param p the coordinates relative to the top left corner of the {@link #getContentComponent() content component}.
-   * @return the corresponding logical position.
    */
   @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p);
 
@@ -315,22 +259,17 @@ public interface Editor extends UserDataHolder {
    * Maps the pixel coordinates in the editor to a visual position.
    *
    * @param p the coordinates relative to the top left corner of the {@link #getContentComponent() content component}.
-   * @return the corresponding visual position.
    */
   @NotNull VisualPosition xyToVisualPosition(@NotNull Point p);
 
-  /**
-   * Same as {{@link #xyToVisualPosition(Point)}}, but allows specifying the point with higher precision.
-   */
+  /** Same as {{@link #xyToVisualPosition(Point)}}, but allows specifying the point with higher precision. */
   @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p);
 
   default @NotNull Point offsetToXY(int offset) {
     return offsetToXY(offset, false, false);
   }
 
-  /**
-   * @see #offsetToVisualPosition(int, boolean, boolean)
-   */
+  /** @see #offsetToVisualPosition(int, boolean, boolean) */
   default @NotNull Point offsetToXY(int offset, boolean leanForward, boolean beforeSoftWrap) {
     VisualPosition visualPosition = offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
     return visualPositionToXY(visualPosition);
@@ -340,9 +279,7 @@ public interface Editor extends UserDataHolder {
     return offsetToPoint2D(offset, false, false);
   }
 
-  /**
-   * @see #offsetToVisualPosition(int, boolean, boolean)
-   */
+  /** @see #offsetToVisualPosition(int, boolean, boolean) */
   default @NotNull Point2D offsetToPoint2D(int offset, boolean leanForward, boolean beforeSoftWrap) {
     VisualPosition visualPosition = offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
     return visualPositionToPoint2D(visualPosition);
@@ -372,8 +309,6 @@ public interface Editor extends UserDataHolder {
   /**
    * Adds a listener for receiving notifications about mouse clicks in the editor and
    * the mouse entering/exiting the editor.
-   *
-   * @param listener the listener instance.
    */
   void addEditorMouseListener(@NotNull EditorMouseListener listener);
 
@@ -381,9 +316,6 @@ public interface Editor extends UserDataHolder {
    * Adds a listener for receiving notifications about mouse clicks in the editor and
    * the mouse entering/exiting the editor.
    * The listener is removed when the given parent disposable is disposed.
-   *
-   * @param listener         the listener instance.
-   * @param parentDisposable the parent Disposable instance.
    */
   default void addEditorMouseListener(@NotNull EditorMouseListener listener, @NotNull Disposable parentDisposable) {
     addEditorMouseListener(listener);
@@ -393,94 +325,50 @@ public interface Editor extends UserDataHolder {
   /**
    * Removes a listener for receiving notifications about mouse clicks in the editor and
    * the mouse entering/exiting the editor.
-   *
-   * @param listener the listener instance.
    */
   void removeEditorMouseListener(@NotNull EditorMouseListener listener);
 
-  /**
-   * Adds a listener for receiving notifications about mouse movement in the editor.
-   *
-   * @param listener the listener instance.
-   */
+  /** Adds a listener for receiving notifications about mouse movement in the editor. */
   void addEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener);
 
   /**
    * Adds a listener for receiving notifications about mouse movement in the editor.
    * The listener is removed when the given parent disposable is disposed.
-   *
-   * @param listener         the listener instance.
-   * @param parentDisposable the parent Disposable instance.
    */
   default void addEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener, @NotNull Disposable parentDisposable) {
     addEditorMouseMotionListener(listener);
     Disposer.register(parentDisposable, () -> removeEditorMouseMotionListener(listener));
   }
 
-  /**
-   * Removes a listener for receiving notifications about mouse movement in the editor.
-   *
-   * @param listener the listener instance.
-   */
+  /** Removes a listener for receiving notifications about mouse movement in the editor. */
   void removeEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener);
 
-  /**
-   * Checks if this editor instance has been disposed.
-   *
-   * @return {@code true} if the editor has been disposed, {@code false} otherwise.
-   */
+  /** Returns whether this editor instance has been disposed. */
   boolean isDisposed();
 
-  /**
-   * Returns the project to which the editor is related.
-   *
-   * @return the project instance, or {@code null} if the editor is not related to any project.
-   */
+  /** Returns the project to which the editor is related, if any. */
   @Nullable Project getProject();
 
-  /**
-   * Returns the file being edited.
-   *
-   * @return file or {@code null} if the editor has no underlying virtual file.
-   */
+  /** Returns the file being edited, if any. */
   default VirtualFile getVirtualFile() {
     return null;
   }
 
-  /**
-   * Returns the insert/overwrite mode for the editor.
-   *
-   * @return {@code true} if the editor is in insert mode, {@code false} otherwise.
-   */
+  /** Returns whether the editor is in insert mode instead of overwrite mode. */
   boolean isInsertMode();
 
-  /**
-   * Returns the block selection mode for the editor.
-   *
-   * @return {@code true} if the editor uses column selection, {@code false} if it uses regular selection.
-   */
+  /** Returns whether the editor is in block selection mode instead of offset-based selection. */
   boolean isColumnMode();
 
-  /**
-   * Checks if the current editor instance is a one-line editor (used in a dialog control, for example).
-   *
-   * @return {@code true} if the editor is one-line, {@code false} otherwise.
-   */
+  /** Returns whether the editor is a one-line editor (used in a dialog control, for example). */
   boolean isOneLineMode();
 
-  /**
-   * Returns the gutter instance for the editor, which can be used to draw custom text annotations
-   * in the gutter.
-   *
-   * @return the gutter instance.
-   */
+  /** Returns the gutter instance for the editor, which can be used to draw custom text annotations in the gutter. */
   @NotNull EditorGutter getGutter();
 
   /**
-   * Returns the editor area (text, gutter, folding outline and so on) in which the specified
-   * mouse event occurred.
+   * Returns the editor area (text, gutter, folding outline and so on) in which the specified mouse event occurred.
    *
-   * @param e the mouse event for which the area is requested.
    * @return the editor area, or {@code null} if the event occurred over an unknown area.
    */
   @Nullable EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e);
@@ -495,21 +383,15 @@ public interface Editor extends UserDataHolder {
    */
   void setHeaderComponent(@Nullable JComponent header);
 
-  /**
-   * @return {@code true} if this editor has an active header component set up by {@link #setHeaderComponent(JComponent)}
-   */
+  /** Returns whether the editor has an active header component set up by {@link #setHeaderComponent(JComponent)}. */
   boolean hasHeaderComponent();
 
-  /**
-   * @return the component set by {@link #setHeaderComponent(JComponent)}, or {@code null} if no header is currently installed.
-   */
+  /** @return the component set by {@link #setHeaderComponent(JComponent)}, or {@code null} if no header is currently installed. */
   @Nullable JComponent getHeaderComponent();
 
   @NotNull IndentsModel getIndentsModel();
 
-  /**
-   * Returns the inlay model, which allows adding custom visual elements to the editor's representation.
-   */
+  /** Returns the inlay model, which allows adding custom visual elements to the editor's representation. */
   @NotNull InlayModel getInlayModel();
 
   @NotNull EditorKind getEditorKind();

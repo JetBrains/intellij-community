@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.ide.JavaUiBundle;
@@ -412,8 +412,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   @Override
   public void drop(DnDEvent aEvent) {
     final Object object = aEvent.getAttachedObject();
-    if (object instanceof PackagingElementDraggingObject) {
-      final PackagingElementDraggingObject draggingObject = (PackagingElementDraggingObject)object;
+    if (object instanceof PackagingElementDraggingObject draggingObject) {
       final PackagingElementNode<?> targetNode = draggingObject.getTargetNode();
       final CompositePackagingElement<?> targetElement = draggingObject.getTargetElement();
       if (targetElement == null || targetNode == null || !draggingObject.checkCanDrop()) return;

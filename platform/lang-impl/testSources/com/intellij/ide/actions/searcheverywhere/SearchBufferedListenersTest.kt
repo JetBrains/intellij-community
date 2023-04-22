@@ -344,7 +344,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
   private fun awaitShutdownNonBlocking(executorService: ScheduledExecutorService) {
     val eventQueue = Toolkit.getDefaultToolkit().systemEventQueue as IdeEventQueue
-    while (!executorService.awaitTermination(50, TimeUnit.MILLISECONDS)) {
+    while (!executorService.awaitTermination(10, TimeUnit.MILLISECONDS)) {
       val event = eventQueue.nextEvent
       eventQueue.dispatchEvent(event)
     }

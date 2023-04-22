@@ -204,8 +204,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                         resolutionFacade,
                         codeFragment,
                         analyzeOnlyReifiedInlineFunctions = false,
-                        analysisResult.bindingContext
-                    ).second
+                    )
                 } else {
                     // The IR Evaluator is sensitive to the analysis order of files in fragment compilation:
                     // The codeFragment must be passed _last_ to analysis such that the result is stacked at

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
@@ -151,7 +151,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     if (other instanceof DfNullConstantType) {
       return getNullability() != DfaNullability.NOT_NULL;
     }
-    if (!(other instanceof DfReferenceType)) return false;
+    if (!(other instanceof DfReferenceType type)) return false;
     if (!myNotValues.isEmpty()) {
       if (other instanceof DfReferenceConstantType) {
         if (myNotValues.contains(((DfReferenceConstantType)other).getValue())) {
@@ -165,7 +165,6 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       }
       else return false;
     }
-    DfReferenceType type = (DfReferenceType)other;
     if (isLocal() && !type.isLocal() && !getConstraint().isComparedByEquals()) return false;
     if (type.getNullability() != getNullability() && getNullability() != DfaNullability.UNKNOWN &&
         type.getNullability() != DfaNullability.NOT_NULL) return false;
@@ -194,11 +193,10 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   public DfType join(@NotNull DfType other) {
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
-    if (!(other instanceof DfReferenceType)) return TOP;
+    if (!(other instanceof DfReferenceType type)) return TOP;
     if (other instanceof DfNullConstantType || other instanceof DfEphemeralReferenceType) {
       return other.join(this);
     }
-    DfReferenceType type = (DfReferenceType)other;
     TypeConstraint constraint = getConstraint().join(type.getConstraint());
     if (constraint == TypeConstraints.BOTTOM) {
       throw new AssertionError("Join failed: " + this + " | " + other);
@@ -240,8 +238,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       return constraint == null ? null : new DfGenericObjectType(notValues, constraint, getNullability(),
                                                                  getMutability(), null, BOTTOM, isLocal());
     }
-    if (other instanceof DfGenericObjectType) {
-      DfGenericObjectType objectType = (DfGenericObjectType)other;
+    if (other instanceof DfGenericObjectType objectType) {
       Mutability otherMutability = objectType.getMutability();
       DfaNullability otherNullability = objectType.getNullability();
       Set<Object> otherNotValues = objectType.getRawNotValues();
@@ -304,8 +301,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     }
     if (isSuperType(other)) return other;
     if (other.isSuperType(this)) return this;
-    if (!(other instanceof DfReferenceType)) return BOTTOM;
-    DfReferenceType type = (DfReferenceType)other;
+    if (!(other instanceof DfReferenceType type)) return BOTTOM;
     TypeConstraint constraint = getConstraint().meet(type.getConstraint());
     if (constraint == TypeConstraints.BOTTOM) {
       return isSuperType(DfTypes.NULL) && other.isSuperType(DfTypes.NULL) ? DfTypes.NULL : BOTTOM;

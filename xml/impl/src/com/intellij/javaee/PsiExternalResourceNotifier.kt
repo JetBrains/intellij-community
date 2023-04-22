@@ -3,10 +3,10 @@ package com.intellij.javaee
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.psi.impl.PsiManagerEx
 
-private class PsiExternalResourceNotifier : ProjectPostStartupActivity {
+private class PsiExternalResourceNotifier : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.messageBus.simpleConnect().subscribe(ExternalResourceListener.TOPIC, ExternalResourceListener {
       if (!project.isDisposed) {

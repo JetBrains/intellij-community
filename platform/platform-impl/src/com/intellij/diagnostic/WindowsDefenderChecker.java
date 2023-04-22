@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.sun.jna.platform.win32.COM.COMException;
+import com.sun.jna.platform.win32.COM.Wbemcli;
 import com.sun.jna.platform.win32.COM.WbemcliUtil;
 import com.sun.jna.platform.win32.Ole32;
 import org.jetbrains.annotations.NotNull;
@@ -121,10 +122,15 @@ public class WindowsDefenderChecker {
       if (LOG.isDebugEnabled()) LOG.debug("RealTimeProtectionEnabled: " + rtProtection + " (" + rtProtection.getClass().getName() + ')');
       return Boolean.TRUE.equals(rtProtection);
     }
+    catch (COMException e) {
+      if (e.matchesErrorCode(Wbemcli.WBEM_E_INVALID_NAMESPACE)) return false;  // Windows Defender not installed
+      var message = "WMI Windows Defender check failed";
+      var hresult = e.getHresult();
+      if (hresult != null) message += " [0x" + Integer.toHexString(hresult.intValue()) + ']';
+      LOG.warn(message, e);
+      return null;
+    }
     catch (Exception e) {
-      if (e instanceof COMException ce && ce.matchesErrorCode(0x8004100e)) {  // WBEM_E_INVALID_NAMESPACE
-        return false;
-      }
       LOG.warn("WMI Windows Defender check failed", e);
       return null;
     }
@@ -169,7 +175,8 @@ public class WindowsDefenderChecker {
         return false;
       }
 
-      var command = new GeneralCommandLine(psh.getPath(), "-NonInteractive", "-Command", "(Get-AuthenticodeSignature '" + script + "').Status");
+      var scriptlet = "(Get-AuthenticodeSignature '" + script + "').Status";
+      var command = new GeneralCommandLine(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
       var output = run(command);
       if (output.getExitCode() != 0 || !"Valid".equals(output.getStdout().trim())) {
         LOG.info("validation failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
@@ -178,7 +185,7 @@ public class WindowsDefenderChecker {
 
       command = ExecUtil.sudoCommand(
         new GeneralCommandLine(Stream.concat(
-          Stream.of(psh.getPath(), "-ExecutionPolicy", "Bypass", "-NonInteractive", "-File", script.toString()),
+          Stream.of(psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
           paths.stream().map(Path::toString)
         ).toList()),
         ""
@@ -200,6 +207,7 @@ public class WindowsDefenderChecker {
   }
 
   private static ProcessOutput run(GeneralCommandLine command) throws ExecutionException {
+    command.getEnvironment().remove("PSModulePath");
     return ExecUtil.execAndGetOutput(
       command.withRedirectErrorStream(true).withWorkDirectory(PathManager.getTempPath()),
       POWERSHELL_COMMAND_TIMEOUT_MS);

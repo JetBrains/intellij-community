@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -224,8 +224,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
 
     @Override
     CharsetMatch extractCharsetMatch(LanguageLevel languageLevel, PsiCallExpression call) {
-      if (!(call instanceof PsiNewExpression)) return null;
-      PsiNewExpression newExpression = (PsiNewExpression)call;
+      if (!(call instanceof PsiNewExpression newExpression)) return null;
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null || argumentList.getExpressionCount() != myParameters.length) return null;
       PsiMethod method = call.resolveMethod();
@@ -244,8 +243,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
 
     @Override
     CharsetMatch extractCharsetMatch(LanguageLevel languageLevel, PsiCallExpression call) {
-      if (!(call instanceof PsiMethodCallExpression)) return null;
-      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)call;
+      if (!(call instanceof PsiMethodCallExpression methodCallExpression)) return null;
       if (!myMethodName.equals(methodCallExpression.getMethodExpression().getReferenceName())) return null;
       PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       if (argumentList.getExpressionCount() != myParameters.length) return null;

@@ -38,6 +38,7 @@ import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.terminal.ui.TerminalWidget;
+import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
@@ -48,6 +49,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.jediterm.terminal.RequestOrigin;
 import com.jediterm.terminal.ui.TerminalPanelListener;
@@ -68,7 +70,6 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public final class TerminalToolWindowManager implements Disposable {
   private final static Key<TerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
@@ -103,9 +104,8 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   public Set<JBTerminalWidget> getWidgets() {
-    return myContainerByWidgetMap.keySet().stream()
-      .map(widget -> JBTerminalWidget.asJediTermWidget(widget))
-      .collect(Collectors.toSet());
+    return ContainerUtil.map2SetNotNull(myContainerByWidgetMap.keySet(),
+                                        widget -> JBTerminalWidget.asJediTermWidget(widget));
   }
 
   private final List<Consumer<TerminalWidget>> myTerminalSetupHandlers = new CopyOnWriteArrayList<>();
@@ -219,12 +219,12 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   @NotNull
-  public Content newTab(@NotNull ToolWindow toolWindow, @Nullable JBTerminalWidget terminalWidget) {
+  public Content newTab(@NotNull ToolWindow toolWindow, @Nullable TerminalWidget terminalWidget) {
     return createNewTab(terminalWidget, myTerminalRunner, toolWindow, null, true, true);
   }
 
   @NotNull
-  private Content createNewTab(@Nullable JBTerminalWidget terminalWidget,
+  private Content createNewTab(@Nullable TerminalWidget terminalWidget,
                                @NotNull AbstractTerminalRunner<?> terminalRunner,
                                @NotNull ToolWindow toolWindow,
                                @Nullable TerminalTabState tabState,
@@ -259,22 +259,22 @@ public final class TerminalToolWindowManager implements Disposable {
   @NotNull
   private Content createTerminalContent(@NotNull AbstractTerminalRunner<?> terminalRunner,
                                         @NotNull ToolWindow toolWindow,
-                                        @Nullable JBTerminalWidget terminalWidget,
+                                        @Nullable TerminalWidget terminalWidget,
                                         @Nullable TerminalTabState tabState,
                                         boolean deferSessionStartUntilUiShown) {
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
 
     Content content = ContentFactory.getInstance().createContent(panel, null, false);
 
-    TerminalWidget widget = terminalWidget != null ? terminalWidget.asNewWidget() : null;
+    TerminalWidget widget = terminalWidget;
     if (widget == null) {
       String currentWorkingDir = terminalRunner.getCurrentWorkingDir(tabState);
-      widget = terminalRunner.createShellTerminalWidget(content, currentWorkingDir, deferSessionStartUntilUiShown);
+      widget = terminalRunner.startShellTerminalWidget(content, currentWorkingDir, deferSessionStartUntilUiShown);
       //TerminalArrangementManager.getInstance(myProject).assignCommandHistoryFile(terminalWidget, tabState);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {
-      terminalWidget.moveDisposable(content);
+      TerminalWidgetKt.setNewParentDisposable(terminalWidget, content);
     }
 
     if (tabState != null && tabState.myTabName != null) {
@@ -454,8 +454,8 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public void split(@NotNull JBTerminalWidget widget, boolean vertically) {
     TerminalContainer container = getContainer(widget);
-    String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, container.getContent().getDisplayName());
-    TerminalWidget newWidget = myTerminalRunner.createShellTerminalWidget(container.getContent(), workingDirectory, true);
+    String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget.asNewWidget(), container.getContent().getDisplayName());
+    TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), workingDirectory, true);
     setupTerminalWidget(myToolWindow, newWidget, container.getContent());
     container.split(!vertically, newWidget);
   }
@@ -561,6 +561,10 @@ public final class TerminalToolWindowManager implements Disposable {
   public static boolean isInTerminalToolWindow(@NotNull JBTerminalWidget widget) {
     DataContext dataContext = DataManager.getInstance().getDataContext(widget.getTerminalPanel());
     ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
+    return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
+  }
+
+  public static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
     return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
   }
 

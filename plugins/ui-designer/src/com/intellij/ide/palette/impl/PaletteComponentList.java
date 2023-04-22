@@ -6,7 +6,6 @@ import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -90,7 +89,7 @@ public final class PaletteComponentList extends JBList {
             PaletteItem item = items [index];
             ActionGroup group1 = item.getPopupActionGroup();
             if (group1 != null) {
-              ActionPopupMenu popupMenu1 = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group1);
+              ActionPopupMenu popupMenu1 = ActionManager.getInstance().createActionPopupMenu("PaletteComponentList", group1);
               popupMenu1.getComponent().show(comp, x, y);
             }
           }

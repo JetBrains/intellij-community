@@ -8,7 +8,6 @@ import com.intellij.mvstore.openOrRecreateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.icons.IconLoadMeasurer
-import com.intellij.util.ImageLoader
 import org.h2.mvstore.DataUtils
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
@@ -33,7 +32,6 @@ class SvgCacheMapper(
   @JvmField internal val scale: Float,
   @JvmField internal val isDark: Boolean,
   @JvmField internal val isStroke: Boolean,
-  @JvmField internal val docSize: ImageLoader.Dimension2DDouble? = null,
 ) {
   constructor(scale: Float) : this(scale = scale, isDark = false, isStroke = false)
 
@@ -66,14 +64,13 @@ class SvgCacheManager(dbFile: Path) {
     store.commit()
   }
 
-  fun loadFromCache(themeDigest: ByteArray, imageBytes: ByteArray, mapper: SvgCacheMapper): Image? {
+  fun loadFromCache(themeDigest: ByteArray, imageBytes: ByteArray, mapper: SvgCacheMapper): BufferedImage? {
     val key = getCacheKey(imageBytes = imageBytes, themeDigest = themeDigest)
     val map = getMap(mapper = mapper, classifierToMap = classifierToMap, store = store, mapBuilder = mapBuilder)
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
       val data = map.get(key) ?: return null
       val image = readImage(data)
-      mapper.docSize?.setSize((data.w / mapper.scale).toDouble(), (data.h / mapper.scale).toDouble())
       IconLoadMeasurer.svgCacheRead.end(start)
       return image
     }
@@ -115,7 +112,7 @@ private fun createImage(w: Int, h: Int, dataBuffer: DataBufferInt): BufferedImag
   return BufferedImage(colorModel, raster, false, null)
 }
 
-private fun readImage(value: ImageValue): Image {
+private fun readImage(value: ImageValue): BufferedImage {
   val dataBuffer = DataBufferInt(value.data, value.data.size)
   SunWritableRaster.makeTrackable(dataBuffer)
   return createImage(value.w, value.h, dataBuffer)

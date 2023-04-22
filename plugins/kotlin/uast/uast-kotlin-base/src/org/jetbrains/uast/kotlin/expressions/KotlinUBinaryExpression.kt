@@ -3,16 +3,19 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
 @ApiStatus.Internal
 class KotlinUBinaryExpression(
     override val sourcePsi: KtBinaryExpression,
     givenParent: UElement?
-) : KotlinAbstractUExpression(givenParent), UBinaryExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
+) : KotlinAbstractUExpression(givenParent), UBinaryExpression, KotlinUElementWithType, KotlinEvaluatableUElement,
+    UMultiResolvable {
 
     companion object {
         val BITWISE_OPERATORS = mapOf(
@@ -38,15 +41,15 @@ class KotlinUBinaryExpression(
     }
 
     override fun resolveOperator(): PsiMethod? {
-        baseResolveProviderService.resolveCall(sourcePsi)?.let { return it }
-        return when (sourcePsi.operationToken) {
-            KtTokens.EQ -> {
-                // array[index1, index2, ...] = v
-                (leftOperand as? UArrayAccessExpression)?.resolve() as? PsiMethod
-            }
-            else -> null
-        }
+        // array[index1, index2, ...] = v or ... += v
+        // NB: In the latter case, array getter is accessed first, hence the resolution points to that.
+        // To see if this binary operator can be resolved to array setter, use [UMultiResolvable#multiResolve] below.
+        ((leftOperand as? UArrayAccessExpression)?.resolve() as? PsiMethod)?.let { return it }
+        return baseResolveProviderService.resolveCall(sourcePsi)
     }
+
+    override fun multiResolve(): Iterable<ResolveResult> =
+        getResolveResultVariants(baseResolveProviderService, sourcePsi)
 
     override val operator: UastBinaryOperator
         get() = when (sourcePsi.operationToken) {

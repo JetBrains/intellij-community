@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl.storage;
 
@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -207,6 +206,9 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
       }
       catch (IOException e) {
         LOG.error(e);
+        // Index would be rebuilt, and exception would be logged with INFO severity
+        // in com.intellij.util.indexing.FileBasedIndexImpl.requestIndexRebuildOnException
+        throw new RuntimeException(e);
       }
     }
     return null;

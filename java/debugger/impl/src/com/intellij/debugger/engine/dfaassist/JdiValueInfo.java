@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
@@ -103,11 +103,10 @@ interface JdiValueInfo {
     if (constant != null) {
       return new PrimitiveConstant(constant);
     }
-    if (value instanceof StringReference) {
-      return new StringConstant(((StringReference)value).value());
+    if (value instanceof StringReference stringReference) {
+      return new StringConstant(stringReference.value());
     }
-    if (value instanceof ObjectReference) {
-      ObjectReference ref = (ObjectReference)value;
+    if (value instanceof ObjectReference ref) {
       ReferenceType type = ref.referenceType();
       if (!classLoaderFilter.test(type.classLoader())) return null;
       String name = type.name();

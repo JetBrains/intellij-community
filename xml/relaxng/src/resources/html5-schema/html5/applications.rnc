@@ -13,7 +13,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.spellcheck?
 		&	common.attrs.autocapitalize?
 		)
-		
+
 	common.attrs.other &= common.attrs.interact
 
 ## Editable Content: contenteditable
@@ -45,7 +45,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.autocapitalize?
 		&	common.attrs.enterkeyhint?
 		)
-		
+
 	common.attrs.other &= common.attrs.editing
 
 ## Hint expected data type: inputmode
@@ -210,7 +210,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		( common.inner.transparent.flow )
 	canvas.inner.phrasing =
 		( common.inner.phrasing )
-	
+
 	common.elem.flow |= canvas.elem.flow
 	common.elem.phrasing |= canvas.elem.phrasing
 
@@ -233,7 +233,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	summary.elem
 		,	common.inner.flow
 		)
-	
+
 	common.elem.flow |= details.elem
 
 ## Caption/summary for details element: <summary>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.vmOptions
 
 internal object VMOptionsParser {
@@ -40,21 +40,30 @@ internal object VMOptionsParser {
   internal fun parseXOptions(stderr: String): List<VMOption>? {
     val options = ArrayList<VMOption>()
     var currentOption: OptionBuilder? = null
-    val tailIndex = stderr.indexOf("These extra options are subject to change without notice.")
+    var tailIndex = stderr.indexOf("These extra options are subject to change without notice.")
+    if (tailIndex == -1) {
+      tailIndex = stderr.indexOf("The -X options are non-standard and subject to change without notice.")
+    }
     if (tailIndex == -1) return null
-    for (line in stderr.trimStart().substring(0, tailIndex).lines()) {
+    val separators = charArrayOf(' ', '<')
+    for (line in stderr.substring(0, tailIndex).trimStart().lines()) {
       val trimmed = line.trim()
-      if (trimmed.startsWith("-X")) {
+      val variant = when {
+        trimmed.startsWith("-X") -> VMOptionVariant.X
+        trimmed.startsWith("--") -> VMOptionVariant.DASH_DASH
+        else -> null
+      }
+      if (variant != null) {
         if (currentOption != null) {
           options.add(currentOption.build())
         }
-        val indexOfSpace = trimmed.indexOf(' ')
-        if (indexOfSpace != -1) {
-          currentOption = OptionBuilder(trimmed.substring(2, indexOfSpace))
-          currentOption.doc.add(trimmed.substring(indexOfSpace).trim())
+        val indexOfSeparator = trimmed.indexOfAny(separators)
+        if (indexOfSeparator != -1) {
+          currentOption = OptionBuilder(variant, trimmed.substring(2, indexOfSeparator))
+          currentOption.doc.add(trimmed.substring(indexOfSeparator).trim())
         }
         else {
-          currentOption = OptionBuilder(trimmed.substring(2))
+          currentOption = OptionBuilder(variant, trimmed.substring(2))
         }
       }
       else {
@@ -68,14 +77,13 @@ internal object VMOptionsParser {
     return options
   }
 
-  private class OptionBuilder(name: String) {
+  private class OptionBuilder(val variant: VMOptionVariant, name: String) {
     val name = name.split("<")[0]
     val doc = ArrayList<String>()
 
 
     fun build(): VMOption {
-      return VMOption(name, type = null, defaultValue = null, kind = VMOptionKind.Product, doc.joinToString(separator = " ") { it },
-                      VMOptionVariant.X)
+      return VMOption(name, type = null, defaultValue = null, kind = VMOptionKind.Product, doc.joinToString(separator = " ") { it }, variant)
     }
   }
 }

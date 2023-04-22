@@ -2,7 +2,10 @@
 package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
@@ -10,7 +13,9 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JList
+import javax.swing.ListSelectionModel
 
 object ChooserPopupUtil {
 
@@ -106,6 +111,7 @@ object ChooserPopupUtil {
             append(" ")
             append("($fullText)", SimpleTextAttributes.GRAYED_ATTRIBUTES)
           }
+          border = if (presentation.isSeparated) IdeBorderFactory.createBorder(SideBorder.BOTTOM) else null
         }
       }
     }
@@ -152,16 +158,19 @@ object ChooserPopupUtil {
     val shortText: @Nls String
     val icon: Icon?
     val fullText: @Nls String?
+    val isSeparated: Boolean
 
     class Simple(override val shortText: String,
                  override val icon: Icon? = null,
-                 override val fullText: String? = null)
+                 override val fullText: String? = null,
+                 override val isSeparated: Boolean = false)
       : PopupItemPresentation
 
     class ToString(value: Any) : PopupItemPresentation {
       override val shortText: String = value.toString()
       override val icon: Icon? = null
       override val fullText: String? = null
+      override val isSeparated: Boolean = false
     }
   }
 }

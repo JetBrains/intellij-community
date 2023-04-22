@@ -12,10 +12,10 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 
-abstract class GitLabProjectVirtualFile(sessionId: String,
+abstract class GitLabProjectVirtualFile(override val connectionId: String,
                                         val project: Project,
                                         val glProject: GitLabProjectCoordinates)
-  : ComplexPathVirtualFileWithoutContent(sessionId) {
+  : ComplexPathVirtualFileWithoutContent(connectionId), GitLabVirtualFile {
 
   override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GitLabVirtualFileSystem.getInstance()
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -71,8 +71,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public @NotNull String getText(@NotNull PsiElement match, int start, int end) {
     if (match instanceof PsiIdentifier) {
       final PsiElement parent = match.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement && !(parent instanceof PsiExpression)) {
-        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
+      if (parent instanceof PsiJavaCodeReferenceElement referenceElement && !(parent instanceof PsiExpression)) {
         final String text = referenceElement.getText();
         if (end != -1) {
           return text.substring(start, end);
@@ -940,8 +939,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
       case UIUtil.TYPE_REGEX:
         if (variableNode instanceof PsiExpressionStatement) {
           final PsiElement child = variableNode.getLastChild();
-          if (child instanceof PsiErrorElement) {
-            final PsiErrorElement errorElement = (PsiErrorElement)child;
+          if (child instanceof PsiErrorElement errorElement) {
             return JavaPsiBundle.message("expected.semicolon").equals(errorElement.getErrorDescription());
           }
         }
@@ -1016,8 +1014,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   private static boolean isApplicableMaxCount(@NotNull PsiElement variableNode) {
     final PsiElement parent = variableNode.getParent();
-    if (parent instanceof PsiLocalVariable) {
-      final PsiLocalVariable localVariable = (PsiLocalVariable)parent;
+    if (parent instanceof PsiLocalVariable localVariable) {
       if (localVariable instanceof PsiResourceVariable) return false;
       if (localVariable.getTypeElement().isInferredType()) return false;
       return true;
@@ -1028,8 +1025,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (grandParent instanceof PsiPolyadicExpression) return true;
     if (grandParent instanceof PsiExpressionStatement && isCompleteStatement((PsiExpressionStatement)grandParent)) {
       final PsiElement greatGrandParent = grandParent.getParent();
-      if (greatGrandParent instanceof PsiForStatement) {
-        final PsiForStatement forStatement = (PsiForStatement)greatGrandParent;
+      if (greatGrandParent instanceof PsiForStatement forStatement) {
         return forStatement.getInitialization() == grandParent || forStatement.getUpdate() == grandParent;
       }
       return greatGrandParent instanceof PsiCodeBlock || greatGrandParent instanceof PsiCodeFragment;
@@ -1066,10 +1062,9 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static boolean isMemberSurroundedByClass(PsiElement parent) {
-    if (!(parent instanceof PsiMember) || parent instanceof PsiTypeParameter) {
+    if (!(parent instanceof PsiMember member) || parent instanceof PsiTypeParameter) {
       return false;
     }
-    final PsiMember member = (PsiMember)parent;
     final PsiClass aClass = member.getContainingClass();
     if (aClass == null) {
       return false;

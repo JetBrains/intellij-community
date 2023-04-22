@@ -2,10 +2,7 @@
 package com.intellij.openapi.util;
 
 import org.codehaus.stax2.XMLStreamReader2;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.Namespace;
-import org.jdom.Verifier;
+import org.jdom.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -168,12 +165,16 @@ public final class SafeStAXStreamBuilder {
                                                              ? Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI())
                                                              : Namespace.NO_NAMESPACE);
     // handle attributes
-    for (int i = 0, len = reader.getAttributeCount(); i < len; i++) {
-      element.setAttribute(factory.attribute(
-        reader.getAttributeLocalName(i),
-        reader.getAttributeValue(i),
-        isNsSupported ? Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i)) : Namespace.NO_NAMESPACE
-      ));
+    int attributeCount = reader.getAttributeCount();
+    if (attributeCount != 0) {
+      AttributeList list = element.initAttributeList(attributeCount);
+      for (int i = 0; i < attributeCount; i++) {
+        list.doAdd(factory.attribute(
+          reader.getAttributeLocalName(i),
+          reader.getAttributeValue(i),
+          isNsSupported ? Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i)) : Namespace.NO_NAMESPACE
+        ));
+      }
     }
 
     if (isNsSupported) {

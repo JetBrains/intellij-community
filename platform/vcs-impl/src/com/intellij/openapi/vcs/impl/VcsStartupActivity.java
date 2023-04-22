@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.ProjectPostStartupActivity;
+import com.intellij.openapi.startup.ProjectActivity;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * Typically, should not be needed by plugins.
  *
  * @see ProjectLevelVcsManager#runAfterInitialization(Runnable)
- * @see ProjectPostStartupActivity
+ * @see ProjectActivity
  */
 public interface VcsStartupActivity {
   void runActivity(@NotNull Project project);

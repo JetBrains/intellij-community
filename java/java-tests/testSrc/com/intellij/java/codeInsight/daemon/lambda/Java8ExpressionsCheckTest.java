@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -246,8 +246,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
       PsiExpressionList argumentList = expression.getArgumentList();
       PsiExpression[] args = argumentList.getExpressions();
       for (JavaResolveResult result : candidates) {
-        if (result instanceof MethodCandidateInfo) {
-          final MethodCandidateInfo info = (MethodCandidateInfo)result;
+        if (result instanceof MethodCandidateInfo info) {
           MethodCandidateInfo.ourOverloadGuard
             .doPreventingRecursion(argumentList, false, () -> info.inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, args, true));
         }

@@ -12,7 +12,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.sun.management.OperatingSystemMXBean
 import kotlinx.coroutines.*
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
-internal class IdeHeartbeatEventReporter : ProjectPostStartupActivity {
+internal class IdeHeartbeatEventReporter : ProjectActivity {
   companion object {
     const val UI_RESPONSE_LOGGING_INTERVAL_MS = 100000
   }

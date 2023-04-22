@@ -31,6 +31,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import kotlin.math.min
 
@@ -142,6 +143,7 @@ object GrazieReplaceTypoQuickFix {
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "use getReplacementFixes(problem, underlineRanges)")
   @Suppress("UNUSED_PARAMETER", "DeprecatedCallableAddReplaceWith")
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>, file: PsiFile): List<LocalQuickFix> {

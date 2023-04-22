@@ -3,27 +3,39 @@
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.contentRange
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.*
 
-class ConvertToForEachFunctionCallIntention : SelfTargetingIntention<KtForExpression>(
-    KtForExpression::class.java,
-    KotlinBundle.lazyMessage("replace.with.a.foreach.function.call")
-) {
-    override fun isApplicableTo(element: KtForExpression, caretOffset: Int): Boolean {
-        val rParen = element.rightParenthesis ?: return false
-        if (caretOffset > rParen.endOffset) return false // available only on the loop header, not in the body
-        return element.loopRange != null && element.loopParameter != null && element.body != null
+class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableIntention<KtForExpression>(KtForExpression::class) {
+    override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.foreach.function.call")
+
+    override fun getActionName(element: KtForExpression): String = familyName
+
+    override fun isApplicableByPsi(element: KtForExpression): Boolean =
+        element.loopRange != null && element.loopParameter != null && element.body != null
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtForExpression> = applicabilityRange {
+        val rParen = it.rightParenthesis ?: return@applicabilityRange null
+        TextRange(it.startOffset, rParen.endOffset).shiftLeft(it.startOffset)
     }
 
-    override fun applyTo(element: KtForExpression, editor: Editor?) {
+    context(KtAnalysisSession)
+    override fun isApplicableByAnalyze(element: KtForExpression): Boolean =
+        element.loopRange?.getKtType()?.isIterableOrArray() == true
+
+    override fun apply(element: KtForExpression, project: Project, editor: Editor?) {
         val commentSaver = CommentSaver(element, saveLineBreaks = true)
 
         val labelName = element.getLabelName()
@@ -45,6 +57,13 @@ class ConvertToForEachFunctionCallIntention : SelfTargetingIntention<KtForExpres
         }
 
         commentSaver.restore(result)
+    }
+
+    context(KtAnalysisSession)
+    private fun KtType.isIterableOrArray(): Boolean {
+        fun KtType.fqNameMatches() = (this as? KtUsualClassType)?.classId?.asSingleFqName() in iterableOrArrayFqNames
+
+        return fqNameMatches() || getAllSuperTypes().any { it.fqNameMatches() }
     }
 
     private fun KtElement.getContinuesWithLabel(labelName: String?): List<KtContinueExpression> {
@@ -83,3 +102,16 @@ class ConvertToForEachFunctionCallIntention : SelfTargetingIntention<KtForExpres
 
     private fun KtLoopExpression.getLabelName() = (parent as? KtExpressionWithLabel)?.getLabelName()
 }
+
+private val iterableOrArrayFqNames: List<FqName> = listOf(
+    "kotlin.collections.Iterable",
+    "kotlin.Array",
+    "kotlin.DoubleArray",
+    "kotlin.FloatArray",
+    "kotlin.LongArray",
+    "kotlin.IntArray",
+    "kotlin.CharArray",
+    "kotlin.ShortArray",
+    "kotlin.ByteArray",
+    "kotlin.BooleanArray",
+).map { FqName(it) }

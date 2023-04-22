@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.ex.PlainTextFormatter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.sampullara.cli.Args;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,7 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
       StringBuilder builder = new StringBuilder();
       for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensions()) {
         final String converterFormat = converter.getFormatName();
-        if (outputFormat == converterFormat) {
+        if (outputFormat.equals(converterFormat)) {
           builder = null;
           break;
         }
@@ -130,8 +131,8 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
     // if plain formatter and output path not specified - use STDOUT
     // otherwise specified output path or a default one
     return outputPathProperty != null ? outputPathProperty
-                                      : getOutputFormatProperty() == PlainTextFormatter.NAME ? null
-                                                                                             : getDefaultOutputPath();
+                                      : Strings.areSameInstance(getOutputFormatProperty(), PlainTextFormatter.NAME) ? null
+                                                                                                                    : getDefaultOutputPath();
   }
 
   @Override

@@ -515,8 +515,16 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
         return Pair.create(previousBestPoint, previousBestPosition);
       }
 
-      if (pos == null) pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
-      Pair<Point, Short> position = chooseBestHintPosition(myEditor, pos, hint, activeLookup, preferredPosition, false);
+      Editor editor = myEditor;
+      if (pos == null) {
+        pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
+        // The position above is always in the host editor. If we are in an injected
+        // editor this position will likely be outside of our range and the hint position
+        // will be our range's end. To avoid that and compute hint position correctly,
+        // switch to the host editor.
+        editor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : editor;
+      }
+      Pair<Point, Short> position = chooseBestHintPosition(editor, pos, hint, activeLookup, preferredPosition, false);
 
       previousBestPoint = position.getFirst();
       previousBestPosition = position.getSecond();

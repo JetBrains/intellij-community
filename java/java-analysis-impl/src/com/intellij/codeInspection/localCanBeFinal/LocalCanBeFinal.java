@@ -282,10 +282,9 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
             public void visitForStatement(@NotNull PsiForStatement statement) {
               super.visitForStatement(statement);
               final PsiStatement initialization = statement.getInitialization();
-              if (!(initialization instanceof PsiDeclarationStatement)) {
+              if (!(initialization instanceof PsiDeclarationStatement declarationStatement)) {
                 return;
               }
-              final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)initialization;
               final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
               for (final PsiElement declaredElement : declaredElements) {
                 if (declaredElement instanceof PsiVariable) {
@@ -306,13 +305,11 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       }
     });
 
-    if (body.getParent() instanceof PsiParameterListOwner && REPORT_PARAMETERS) {
-      final PsiParameterListOwner methodOrLambda = (PsiParameterListOwner)body.getParent();
-      if (!(methodOrLambda instanceof SyntheticElement)) { // e.g. JspHolderMethod
-        for (PsiParameter parameter : methodOrLambda.getParameterList().getParameters()) {
-          if (parameter.getTypeElement() != null) {
-            result.add(parameter);
-          }
+    if (body.getParent() instanceof PsiParameterListOwner methodOrLambda && REPORT_PARAMETERS &&
+        !(methodOrLambda instanceof SyntheticElement)) { // e.g. JspHolderMethod
+      for (PsiParameter parameter : methodOrLambda.getParameterList().getParameters()) {
+        if (parameter.getTypeElement() != null) {
+          result.add(parameter);
         }
       }
     }
@@ -324,10 +321,9 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         continue;
       }
       final PsiElement parent = variable.getParent();
-      if (!(parent instanceof PsiDeclarationStatement)) {
+      if (!(parent instanceof PsiDeclarationStatement declarationStatement)) {
         continue;
       }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       final PsiElement[] elements = declarationStatement.getDeclaredElements();
       final PsiElement grandParent = parent.getParent();
       if (elements.length > 1 && grandParent instanceof PsiForStatement) {
@@ -370,8 +366,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     if (psiVariable instanceof PsiLocalVariable) {
       return !REPORT_VARIABLES;
     }
-    if (psiVariable instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)psiVariable;
+    if (psiVariable instanceof PsiParameter parameter) {
       final PsiElement declarationScope = parameter.getDeclarationScope();
       if (declarationScope instanceof PsiCatchSection) {
         return !REPORT_CATCH_PARAMETERS;

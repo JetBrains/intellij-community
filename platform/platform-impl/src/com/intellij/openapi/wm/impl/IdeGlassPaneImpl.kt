@@ -10,8 +10,8 @@ import com.intellij.ide.dnd.DnDAware
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Divider
@@ -27,10 +27,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.*
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.*
@@ -603,7 +600,7 @@ private class IdePaneLoadingLayer(
           return@launch
         }
 
-        val icon = withContext(RawSwingDispatcher) {
+        val icon = withContext(Dispatchers.EDT) {
           val icon: AsyncProcessIcon = object : AsyncProcessIcon.Big("Loading") {
             init {
               isOpaque = false
@@ -631,7 +628,7 @@ private class IdePaneLoadingLayer(
         }.run(totalFrames = totalFrames, cycleDuration = if (RemoteDesktopService.isRemoteSession()) 2_520 else 504)
       }
       finally {
-        withContext(RawSwingDispatcher) {
+        withContext(Dispatchers.EDT) {
           removeIcon()
           onFinish()
         }

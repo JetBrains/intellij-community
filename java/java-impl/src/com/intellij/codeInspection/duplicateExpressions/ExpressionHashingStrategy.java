@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.psi.*;
@@ -25,21 +25,17 @@ final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> 
     if (e instanceof PsiParenthesizedExpression) {
       return hashCode(((PsiParenthesizedExpression)e).getExpression());
     }
-    if (e instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unary = (PsiUnaryExpression)e;
+    if (e instanceof PsiUnaryExpression unary) {
       return hashCode(unary.getOperationTokenType(), unary.getOperand());
     }
-    if (e instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)e;
+    if (e instanceof PsiPolyadicExpression polyadic) {
       return hashCode(polyadic.getOperationTokenType(), polyadic.getOperands());
     }
-    if (e instanceof PsiConditionalExpression) {
-      PsiConditionalExpression conditional = (PsiConditionalExpression)e;
+    if (e instanceof PsiConditionalExpression conditional) {
       return hashCode(JavaTokenType.QUEST, conditional.getCondition(),
                              conditional.getThenExpression(), conditional.getElseExpression());
     }
-    if (e instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+    if (e instanceof PsiMethodCallExpression call) {
       PsiReferenceExpression ref = call.getMethodExpression();
       String name = ref.getReferenceName();
       PsiExpression qualifier = ref.getQualifierExpression();
@@ -56,12 +52,10 @@ final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> 
       PsiReferenceExpression ref = (PsiReferenceExpression)e;
       return hashCode(ref.getReferenceName(), ref.getQualifierExpression());
     }
-    if (e instanceof PsiInstanceOfExpression) {
-      PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)e;
+    if (e instanceof PsiInstanceOfExpression instanceOf) {
       return hashCode(getTypeName(instanceOf.getCheckType()), instanceOf.getOperand());
     }
-    if (e instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression access = (PsiArrayAccessExpression)e;
+    if (e instanceof PsiArrayAccessExpression access) {
       return hashCode(JavaTokenType.LBRACKET, access.getArrayExpression(), access.getIndexExpression());
     }
     if (e instanceof PsiClassObjectAccessExpression) {

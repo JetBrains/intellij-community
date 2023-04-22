@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickDoc
 
-import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.DocumentationTargetProvider
-import com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider
+import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.documentation.DocumentationTargetProvider
+import com.intellij.platform.documentation.PsiDocumentationTargetProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinLanguage

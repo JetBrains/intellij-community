@@ -71,6 +71,7 @@ import java.util.Map;
  * @author Jason Hunter
  * @author Steven Gould
  */
+@Deprecated
 public final class ProcessingInstruction extends Content {
   /**
    * JDOM2 Serialization. In this case, ProcessingInstruction is simple.

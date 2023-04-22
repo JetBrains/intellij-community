@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class MavenImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("maven.import", 9)
+    val GROUP = EventLogGroup("maven.import", 10)
 
     @JvmField
     val HAS_USER_ADDED_LIBRARY_DEP = GROUP.registerEvent("hasUserAddedLibraryDependency")
@@ -99,6 +99,19 @@ class MavenImportCollector : CounterUsagesCollector() {
 
     @JvmField
     val CONFIGURATOR_CLASS = EventFields.Class("configurator_class")
+
+    @JvmField
+    val DURATION_OF_LEGACY_BRIDGES_CREATION_MS = EventFields.Long("duration_of_bridges_creation_ms")
+
+    @JvmField
+    val DURATION_OF_LEGACY_BRIDGES_COMMIT_MS = EventFields.Long("duration_of_bridges_commit_ms")
+
+    @JvmField
+    val LEGACY_IMPORTERS_STATS = GROUP.registerVarargEvent("workspace_import.legacy_importers.stats",
+                                                           ACTIVITY_ID,
+                                                           DURATION_OF_LEGACY_BRIDGES_CREATION_MS,
+                                                           DURATION_OF_LEGACY_BRIDGES_COMMIT_MS)
+
 
     @JvmField
     val CONFIGURATOR_RUN = GROUP.registerVarargEvent("workspace_import.configurator_run",

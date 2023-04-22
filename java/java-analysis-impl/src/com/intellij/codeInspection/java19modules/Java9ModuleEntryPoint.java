@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -48,16 +48,12 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiClass) {
-      return isServiceOrExported((PsiClass)psiElement);
+    if (psiElement instanceof PsiClass psiClass) {
+      return isServiceOrExported(psiClass);
     }
-    if (psiElement instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)psiElement;
-      if (isDefaultConstructor(method) || isProviderMethod(method)) {
-        return isServiceOrExported(method.getContainingClass());
-      }
-    }
-    return false;
+    return psiElement instanceof PsiMethod method &&
+           (isDefaultConstructor(method) || isProviderMethod(method)) &&
+           isServiceOrExported(method.getContainingClass());
   }
 
   @Override
@@ -73,8 +69,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public boolean keepVisibilityLevel(boolean entryPointEnabled, @NotNull RefJavaElement refJavaElement) {
-    if (refJavaElement instanceof RefClass) {
-      RefClass refClass = (RefClass)refJavaElement;
+    if (refJavaElement instanceof RefClass refClass) {
       RefModule refModule = refClass.getModule();
       if (refModule != null) {
         RefJavaModule refJavaModule = RefJavaModule.JAVA_MODULE.get(refModule);

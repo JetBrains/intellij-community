@@ -2,9 +2,9 @@
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -48,8 +48,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     super.setUpProject()
 
     // will create .idea directory
-    // setUpProject is executed in EDT
-    runBlockingUnderModalProgress {
+    runBlockingMaybeCancellable {
       saveSettings(project)
     }
   }

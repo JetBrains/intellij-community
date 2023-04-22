@@ -18,7 +18,7 @@ import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
@@ -158,8 +158,7 @@ private fun getGroovySdkVersion(sdk: DistributionInfo?): String? {
       sdk.version.versionString
 
     is LocalDistributionInfo ->
-      GroovyConfigUtils.getInstance().getSDKVersion(sdk.path)
-        .takeIf { it != GroovyConfigUtils.UNDEFINED_VERSION }
+      GroovyConfigUtils.getInstance().getSDKVersionOrNull(sdk.path)
 
     null -> null
 

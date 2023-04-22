@@ -358,6 +358,7 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
   return indicatorRunBlockingCancellable(indicator, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Method was renamed",
   replaceWith = ReplaceWith("runBlockingCancellable(action)"),
@@ -367,6 +368,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   return runBlockingCancellable(action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Method was renamed",
   replaceWith = ReplaceWith("runBlockingCancellable(indicator, action)"),

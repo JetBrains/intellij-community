@@ -40,10 +40,10 @@ object HttpClient {
       }
   }
 
-  fun download(request: HttpUriRequest, outFile: File, retries: Long = 3): Boolean =
+  fun download(request: HttpUriRequest, outFile: File, retries: Int = 3): Boolean =
     download(request, outFile.toPath(), retries)
 
-  fun download(request: HttpUriRequest, outStream: OutputStream, retries: Long = 3): Boolean {
+  fun download(request: HttpUriRequest, outStream: OutputStream, retries: Int = 3): Boolean {
     val tempFile = File.createTempFile("downloaded_", ".txt")
 
     val result = download(request, tempFile, retries)
@@ -65,7 +65,7 @@ object HttpClient {
    * Downloading file from [url] to [outPath] with [retries].
    * @return true - if successful, false - otherwise
    */
-  fun download(request: HttpUriRequest, outPath: Path, retries: Long = 3): Boolean {
+  fun download(request: HttpUriRequest, outPath: Path, retries: Int = 3): Boolean {
     val lock = locks.getOrPut(outPath.toAbsolutePath().toString()) { Semaphore(1) }
     lock.acquire()
     var isSuccessful = false

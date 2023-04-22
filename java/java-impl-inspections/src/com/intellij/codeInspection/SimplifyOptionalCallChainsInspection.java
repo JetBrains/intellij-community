@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -137,11 +137,10 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   @Nullable
   private static PsiLambdaExpression getLambda(PsiExpression initializer) {
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(initializer);
-    if (expression instanceof PsiLambdaExpression) {
-      return (PsiLambdaExpression)expression;
+    if (expression instanceof PsiLambdaExpression lambda) {
+      return lambda;
     }
-    if (expression instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+    if (expression instanceof PsiMethodReferenceExpression methodRef) {
       PsiLambdaExpression lambda = LambdaRefactoringUtil.createLambda(methodRef, true);
       if (lambda != null) {
         LambdaUtil.specifyLambdaParameterTypes(methodRef.getFunctionalInterfaceType(), lambda);
@@ -183,8 +182,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
      */
   @Nullable
   private static PsiExpression extractConditionalDefaultValue(@NotNull PsiStatement statement, @NotNull PsiVariable optValue) {
-    if (statement instanceof PsiIfStatement) {
-      PsiIfStatement ifStatement = (PsiIfStatement)statement;
+    if (statement instanceof PsiIfStatement ifStatement) {
       PsiExpression condition = ifStatement.getCondition();
       if (condition == null) return null;
       PsiExpression thenExpr = getReturnExpression(ifStatement.getThenBranch());
@@ -192,8 +190,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       if (thenExpr == null || elseExpr == null) return null;
       return extractConditionalDefaultValue(thenExpr, elseExpr, condition, optValue);
     }
-    else if (statement instanceof PsiReturnStatement) {
-      PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
+    else if (statement instanceof PsiReturnStatement returnStatement) {
+      PsiExpression returnValue = returnStatement.getReturnValue();
       PsiConditionalExpression ternary = tryCast(PsiUtil.skipParenthesizedExprDown(returnValue), PsiConditionalExpression.class);
       if (ternary == null) return null;
       PsiExpression thenExpression = ternary.getThenExpression();

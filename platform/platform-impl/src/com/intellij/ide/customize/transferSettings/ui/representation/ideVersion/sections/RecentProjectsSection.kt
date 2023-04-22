@@ -2,9 +2,12 @@
 package com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.sections
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.SettingsPreferencesKind
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 class RecentProjectsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.RecentProjects, AllIcons.Plugins.PluginLogo) {
@@ -15,7 +18,7 @@ class RecentProjectsSection(private val ideVersion: IdeVersion) : IdeRepresentat
         panel {
           recentProjects.drop(5).forEach {
             row {
-              it.info.displayName?.let { it1 -> label(it1) }
+              it.info.displayName?.let { it1: @NlsSafe String -> label(it1) }
             }
           }
         }
@@ -28,12 +31,13 @@ class RecentProjectsSection(private val ideVersion: IdeVersion) : IdeRepresentat
     }
   }
 
-  private fun createString() = StringBuilder().run {
+  private fun createString(): @Nls String = StringBuilder().run {
     append(recentProjects.take(5).mapNotNull { it.info.displayName }.joinToString { it })
     if (recentProjects.size > 5) {
-      append(" and ${recentProjects.size-5} more")
+      append(" ")
+      append(IdeBundle.message("transfersettings.projects.and.n.more", recentProjects.size-5))
     }
-    toString()
+    toString() // NON-NLS because it's localised
   }
 
   override val name: String

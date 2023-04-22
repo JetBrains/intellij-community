@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.settings;
 
 import com.intellij.ide.JavaUiBundle;
@@ -44,9 +44,8 @@ class DependencyExclusionEditor {
         if (!(value instanceof CheckedTreeNode)) return;
 
         Object userObject = ((CheckedTreeNode)value).getUserObject();
-        if (!(userObject instanceof ArtifactDependencyNode)) return;
+        if (!(userObject instanceof ArtifactDependencyNode node)) return;
 
-        ArtifactDependencyNode node = (ArtifactDependencyNode)userObject;
         Artifact artifact = node.getArtifact();
         boolean rejected = node.isRejected();
         @NlsSafe final String groupArtifactFragment = artifact.getGroupId() + ":" + artifact.getArtifactId();

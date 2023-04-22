@@ -26,7 +26,6 @@ import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,20 +35,17 @@ import java.util.Map;
 
 import static com.intellij.util.containers.ContainerUtil.createConcurrentWeakKeySoftValueMap;
 
-public class JvmFacadeImpl implements JvmFacade {
-
+public final class JvmFacadeImpl implements JvmFacade {
   private static final Logger LOG = Logger.getInstance(JvmFacadeImpl.class);
 
   private final DumbService myDumbService;
   private final JavaPsiFacadeImpl myJavaPsiFacade;
   private final Map<GlobalSearchScope, Map<String, List<JvmClass>>> myClassCache = createConcurrentWeakKeySoftValueMap();
 
-  public JvmFacadeImpl(@NotNull Project project, MessageBus bus) {
+  public JvmFacadeImpl(@NotNull Project project) {
     myDumbService = DumbService.getInstance(project);
     myJavaPsiFacade = (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(project);
-    if (bus != null) {
-      bus.connect().subscribe(PsiModificationTracker.TOPIC, () -> myClassCache.clear());
-    }
+    project.getMessageBus().simpleConnect().subscribe(PsiModificationTracker.TOPIC, () -> myClassCache.clear());
   }
 
   @Override

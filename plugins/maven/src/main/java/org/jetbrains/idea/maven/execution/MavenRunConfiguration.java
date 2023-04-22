@@ -498,13 +498,35 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       }
     }
 
+    protected @Nullable ConsoleView createConsole(@NotNull Executor executor,
+                                                  @NotNull ProcessHandler processHandler,
+                                                  @NotNull Project project) throws ExecutionException {
+      ConsoleView console = createConsoleView(executor, processHandler, project);
+      if (console != null && getEnvironment().getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
+        return JavaRunConfigurationExtensionManager.getInstance()
+          .decorateExecutionConsole(myConfiguration,
+                                    getRunnerSettings(),
+                                    console,
+                                    executor);
+      }
+      else {
+        return console;
+      }
+    }
+
+    protected @Nullable ConsoleView createConsoleView(@NotNull Executor executor,
+                                                      @NotNull ProcessHandler processHandler,
+                                                      @NotNull Project project) throws ExecutionException {
+      return super.createConsole(executor);
+    }
+
     public ExecutionResult doDelegateBuildExecute(@NotNull Executor executor,
                                                   @NotNull ProgramRunner runner,
                                                   ExternalSystemTaskId taskId,
                                                   DefaultBuildDescriptor descriptor,
                                                   ProcessHandler processHandler,
                                                   Function<String, String> targetFileMapper) throws ExecutionException {
-      ConsoleView consoleView = createConsole(executor);
+      ConsoleView consoleView = createConsole(executor, processHandler, myConfiguration.getProject());
       BuildViewManager viewManager = getEnvironment().getProject().getService(BuildViewManager.class);
       descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
       descriptor.withExecutionEnvironment(getEnvironment());
@@ -525,8 +547,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
                                         DefaultBuildDescriptor descriptor,
                                         ProcessHandler processHandler,
                                         @NotNull Function<String, String> targetFileMapper) throws ExecutionException {
-      final BuildView buildView = createBuildView(executor, taskId, descriptor);
-
+      final BuildView buildView = createBuildView(executor, descriptor, processHandler);
 
       if (buildView == null) {
         MavenLog.LOG.warn("buildView is null for " + myConfiguration.getName());
@@ -603,9 +624,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Nullable
-    private BuildView createBuildView(@NotNull Executor executor, @NotNull ExternalSystemTaskId taskId,
-                                      @NotNull BuildDescriptor descriptor) throws ExecutionException {
-      ConsoleView console = createConsole(executor);
+    private BuildView createBuildView(@NotNull Executor executor,
+                                      @NotNull BuildDescriptor descriptor,
+                                      @NotNull ProcessHandler processHandler) throws ExecutionException {
+      ConsoleView console = createConsole(executor, processHandler, myConfiguration.getProject());
       if (console == null) {
         return null;
       }
@@ -685,14 +707,21 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
       TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
       Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
-      OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process,
-                                                                          targetedCommandLine.getCommandPresentation(remoteEnvironment),
-                                                                          targetedCommandLine.getCharset(),
-                                                                          targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+      OSProcessHandler handler = createProcessHandler(remoteEnvironment, targetedCommandLineBuilder, targetedCommandLine, process);
       ProcessTerminatedListener.attach(handler);
       JavaRunConfigurationExtensionManager.getInstance()
         .attachExtensionsToProcess(myConfiguration, handler, getRunnerSettings());
       return handler;
+    }
+
+    protected @NotNull OSProcessHandler createProcessHandler(TargetEnvironment remoteEnvironment,
+                                                             TargetedCommandLineBuilder targetedCommandLineBuilder,
+                                                             TargetedCommandLine targetedCommandLine,
+                                                             Process process) throws ExecutionException {
+      return new KillableColoredProcessHandler.Silent(process,
+                                                      targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                                      targetedCommandLine.getCharset(),
+                                                      targetedCommandLineBuilder.getFilesToDeleteOnTermination());
     }
 
     public RemoteConnectionCreator getRemoteConnectionCreator() {

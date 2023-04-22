@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -16,11 +15,7 @@ import com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -273,7 +268,7 @@ public final class JavaResolveUtil {
           if (resultClass.hasTypeParameters()) {
             PsiSubstitutor substitutor = resolveResult.getSubstitutor();
             result[i] = pattern != null && ref.getTypeParameterCount() == 0 
-                        ? PatternInference.inferPatternGenerics(resolveResult, pattern, resultClass, getContextType(pattern))
+                        ? PatternInference.inferPatternGenerics(resolveResult, pattern, resultClass, JavaPsiPatternUtil.getContextType(pattern))
                         : new CandidateInfo(resolveResult, substitutor) {
                           @NotNull
                           @Override
@@ -325,55 +320,5 @@ public final class JavaResolveUtil {
     if (directory == null) return null;
 
     return JavaDirectoryService.getInstance().getPackage(directory);
-  }
-
-  /**
-   * @param pattern deconstruction pattern to find a context type for
-   * @return a context type for the pattern; null, if cannot be determined. This method can perform 
-   * the inference for outer patterns if necessary.
-   */
-  private static @Nullable PsiType getContextType(@NotNull PsiDeconstructionPattern pattern) {
-    PsiElement parent = pattern.getParent();
-    while (parent instanceof PsiParenthesizedPattern) {
-      parent = parent.getParent();
-    }
-    if (parent instanceof PsiInstanceOfExpression) {
-      return ((PsiInstanceOfExpression)parent).getOperand().getType();
-    }
-    if (parent instanceof PsiForeachPatternStatement) {
-      PsiExpression iteratedValue = ((PsiForeachPatternStatement)parent).getIteratedValue();
-      if (iteratedValue == null) {
-        return null;
-      }
-      return JavaGenericsUtil.getCollectionItemType(iteratedValue);
-    }
-    if (parent instanceof PsiCaseLabelElementList) {
-      PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(parent.getParent(), PsiSwitchLabelStatementBase.class);
-      if (label != null) {
-        PsiSwitchBlock block = label.getEnclosingSwitchBlock();
-        if (block != null) {
-          PsiExpression expression = block.getExpression();
-          if (expression != null) {
-            return expression.getType();
-          }
-        }
-      }
-    }
-    if (parent instanceof PsiDeconstructionList) {
-      PsiDeconstructionPattern parentPattern = ObjectUtils.tryCast(parent.getParent(), PsiDeconstructionPattern.class);
-      if (parentPattern != null) {
-        int index = ArrayUtil.indexOf(((PsiDeconstructionList)parent).getDeconstructionComponents(), pattern);
-        if (index < 0) return null;
-        PsiType patternType = parentPattern.getTypeElement().getType();
-        if (!(patternType instanceof PsiClassType)) return null;
-        PsiSubstitutor parentSubstitutor = ((PsiClassType)patternType).resolveGenerics().getSubstitutor();
-        PsiClass parentRecord = PsiUtil.resolveClassInClassTypeOnly(parentPattern.getTypeElement().getType());
-        if (parentRecord == null) return null;
-        PsiRecordComponent[] components = parentRecord.getRecordComponents();
-        if (index >= components.length) return null;
-        return parentSubstitutor.substitute(components[index].getType());
-      }
-    }
-    return null;
   }
 }

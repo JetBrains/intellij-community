@@ -1,4 +1,4 @@
-// "Create field for parameter 'p1'" "true"
+// "Create field for parameter 'p1'" "true-preview"
 
 enum Test{
     A;//comment

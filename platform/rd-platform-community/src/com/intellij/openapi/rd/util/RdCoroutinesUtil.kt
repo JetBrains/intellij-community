@@ -7,6 +7,7 @@ import com.jetbrains.rd.framework.util.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.isEternal
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import java.util.concurrent.CompletableFuture
 
@@ -39,6 +40,7 @@ fun Lifetime.launchOnUiAnyModality(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(uiDispatcherAnyModality, start, action)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use launchSyncIOBackground or launchBackground")
 fun Lifetime.launchIOBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -130,6 +132,7 @@ fun CoroutineScope.launchChildOnUiAllowInlining(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(uiDispatcherWithInlining, start, action)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use launchChildSyncIOBackground or launchChildBackground or use lifetimedCoroutineScope")
 fun CoroutineScope.launchChildIOBackground(
   lifetime: Lifetime = Lifetime.Eternal,
@@ -207,6 +210,7 @@ fun <T> CoroutineScope.startChildBackgroundAsync(
   action: suspend CoroutineScope.() -> T
 ) = async(applicationThreadPool, start, action)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use startChildNonUrgentBackgroundAsync without lifetime or use lifetimedCoroutineScope", ReplaceWith("startChildNonUrgentBackgroundAsync(start, action)"))
 fun <T> CoroutineScope.startChildNonUrgentBackgroundAsync(
   lifetime: Lifetime,

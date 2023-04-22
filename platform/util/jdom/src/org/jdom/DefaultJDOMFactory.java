@@ -115,16 +115,6 @@ public class DefaultJDOMFactory implements JDOMFactory {
   }
 
   @Override
-  public final Comment comment(String text) {
-    return comment(-1, -1, text);
-  }
-
-  @Override
-  public Comment comment(final int line, final int col, final String text) {
-    return new Comment(text);
-  }
-
-  @Override
   public final DocType docType(String elementName, String publicID, String systemID) {
     return docType(-1, -1, elementName, publicID, systemID);
   }
@@ -214,18 +204,6 @@ public class DefaultJDOMFactory implements JDOMFactory {
   public Element element(final int line, final int col, final String name,
                          String prefix, String uri) {
     return new Element(name, prefix, uri);
-  }
-
-  @Override
-  public final ProcessingInstruction processingInstruction(String target,
-                                                           String data) {
-    return processingInstruction(-1, -1, target, data);
-  }
-
-  @Override
-  public ProcessingInstruction processingInstruction(final int line,
-                                                     final int col, final String target, String data) {
-    return new ProcessingInstruction(target, data);
   }
 
   @Override

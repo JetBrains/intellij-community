@@ -18,5 +18,6 @@ open class PtyProcessTtyConnector @JvmOverloads constructor(
     }
   }
 
+  @Suppress("HardCodedStringLiteral")
   override fun getName(): String = "Local"
 }

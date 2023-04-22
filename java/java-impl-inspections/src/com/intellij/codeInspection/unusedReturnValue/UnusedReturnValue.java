@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -34,9 +34,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                                            @NotNull InspectionManager manager,
                                                            @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
-    if (refEntity instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refEntity;
-
+    if (refEntity instanceof RefMethod refMethod) {
       if (VisibilityUtil.compare(refMethod.getAccessModifier(), highestModifier) < 0 ||
           refMethod.isConstructor() ||
           !refMethod.getSuperMethods().isEmpty() ||

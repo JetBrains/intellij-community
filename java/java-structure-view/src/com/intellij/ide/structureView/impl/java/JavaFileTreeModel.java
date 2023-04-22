@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewModel;
@@ -79,21 +79,16 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel impleme
   @Override
   protected boolean isSuitable(final PsiElement element) {
     if (super.isSuitable(element)) {
-      if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
+      if (element instanceof PsiMethod method) {
         PsiClass parent = method.getContainingClass();
-        return parent != null
-               && (parent.getQualifiedName() != null || parent instanceof PsiAnonymousClass);
+        return parent != null && (parent.getQualifiedName() != null || parent instanceof PsiAnonymousClass);
       }
-
-      if (element instanceof PsiField) {
-        PsiField field = (PsiField)element;
+      if (element instanceof PsiField field) {
         PsiClass parent = field.getContainingClass();
         return parent != null && parent.getQualifiedName() != null;
       }
-
-      if (element instanceof PsiClass) {
-        return ((PsiClass)element).getQualifiedName() != null;
+      if (element instanceof PsiClass aClass) {
+        return aClass.getQualifiedName() != null;
       }
 
       return element instanceof PsiLambdaExpression;

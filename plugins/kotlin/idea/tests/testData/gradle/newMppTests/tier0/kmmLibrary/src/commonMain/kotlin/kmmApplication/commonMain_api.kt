@@ -1,7 +1,7 @@
 package kmmApplication
 
-expect class <!LINE_MARKER("descr='Has actuals in [project.jvmMain, project.iosMain] module'")!>CommonMainExpect<!> {
-    fun <!LINE_MARKER("descr='Has actuals in [project.jvmMain, project.iosMain] module'")!>commonMainApi<!>()
+expect class <!LINE_MARKER("descr='Has actuals in [project.jvmMain, project.iosMain] modules'")!>CommonMainExpect<!> {
+    fun <!LINE_MARKER("descr='Has actuals in [project.jvmMain, project.iosMain] modules'")!>commonMainApi<!>()
 }
 
 fun consumeCommonMainExpect(e: CommonMainExpect?) { }

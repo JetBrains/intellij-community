@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -97,8 +97,7 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
   }
 
   private static @Nullable PsiType inferType(@NotNull PsiVariable variable) {
-    if (variable instanceof PsiParameter && variable.getParent() instanceof PsiForeachStatement) {
-      PsiForeachStatement foreach = (PsiForeachStatement)variable.getParent();
+    if (variable instanceof PsiParameter && variable.getParent() instanceof PsiForeachStatement foreach) {
       PsiExpression iteratedValue = foreach.getIteratedValue();
       return iteratedValue != null ? JavaGenericsUtil.getCollectionItemType(iteratedValue) : null;
     }

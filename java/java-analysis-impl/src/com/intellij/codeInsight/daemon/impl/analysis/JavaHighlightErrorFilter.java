@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
@@ -26,8 +26,7 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
       else {
         // reporting missing semicolons after an unclosed string literal is not useful.
         PsiElement prevLeaf = PsiTreeUtil.prevCodeLeaf(element);
-        if (prevLeaf instanceof PsiJavaToken) {
-          PsiJavaToken token = (PsiJavaToken)prevLeaf;
+        if (prevLeaf instanceof PsiJavaToken token) {
           IElementType type = token.getTokenType();
           if (type == JavaTokenType.STRING_LITERAL) {
             String text = token.getText();

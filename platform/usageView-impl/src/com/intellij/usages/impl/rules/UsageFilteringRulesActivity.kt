@@ -4,11 +4,11 @@ package com.intellij.usages.impl.rules
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.usages.rules.UsageFilteringRuleProvider
 import com.intellij.util.messages.MessageBus
 
-internal class UsageFilteringRulesActivity : ProjectPostStartupActivity {
+internal class UsageFilteringRulesActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val messageBus = project.messageBus
     messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, NotifyRulesChangedListener(messageBus))

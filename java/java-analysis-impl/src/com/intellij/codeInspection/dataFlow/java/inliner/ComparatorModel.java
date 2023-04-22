@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
@@ -122,15 +122,11 @@ abstract class ComparatorModel {
     if (expression == null || NULL_HOSTILE.matches(expression)) {
       return new NullHostile();
     }
-    if (expression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
-      if ("CASE_INSENSITIVE_ORDER".equals(ref.getReferenceName())) {
-        PsiField field = ObjectUtils.tryCast(ref.resolve(), PsiField.class);
-        if (field != null && field.getContainingClass() != null &&
-            CommonClassNames.JAVA_LANG_STRING.equals(field.getContainingClass().getQualifiedName())) {
-          return new NullHostile();
-        }
-      }
+    if (expression instanceof PsiReferenceExpression ref &&
+        "CASE_INSENSITIVE_ORDER".equals(ref.getReferenceName()) &&
+        ref.resolve() instanceof PsiField field && field.getContainingClass() != null &&
+        CommonClassNames.JAVA_LANG_STRING.equals(field.getContainingClass().getQualifiedName())) {
+      return new NullHostile();
     }
     PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
     if (call == null) return new Unknown(expression);

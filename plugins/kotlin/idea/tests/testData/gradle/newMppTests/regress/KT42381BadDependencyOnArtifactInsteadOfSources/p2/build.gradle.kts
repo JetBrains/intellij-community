@@ -2,9 +2,9 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
 }
-android {
-    compileSdkVersion({{compile_sdk_version}})
-}
+
+{{default_android_block}}
+
 kotlin {
     js() // arbitrary
     jvm()

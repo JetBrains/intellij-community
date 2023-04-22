@@ -60,7 +60,7 @@ public final class Pluralizer {
    * another word.
    */
   public static String restoreCase(String word, String result) {
-    if (word == null || result == null || word == result) return result;
+    if (word == null || result == null || Strings.areSameInstance(word, result)) return result;
     int len = Math.min(result.length(), word.length());
     if (len == 0) return result;
     char[] chars = result.toCharArray();

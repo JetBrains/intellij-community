@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.SystemDependent
 import java.io.File
 
 /**
@@ -116,11 +117,9 @@ fun ObservableProperty<String>.toUiPathProperty(): ObservableProperty<@NlsSafe S
 fun ObservableMutableProperty<String>.toUiPathProperty(): ObservableMutableProperty<@NlsSafe String> =
   transform(::getPresentablePath, ::getCanonicalPath)
 
-/**
- * Creates observable property that represents property with joined presentable path value.
- * Note: Value of source properties must be presentable.
- */
-fun ObservableProperty<@NlsSafe String>.joinPresentablePath(vararg properties: ObservableProperty<@NlsSafe String>) =
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(message = "use joinCanonicalPath instead")
+fun ObservableProperty<@SystemDependent String>.joinSystemDependentPath(vararg properties: ObservableProperty<@SystemDependent String>) =
   operation(this, *properties) { it.joinToString(File.separator) }
 
 /**
@@ -128,7 +127,7 @@ fun ObservableProperty<@NlsSafe String>.joinPresentablePath(vararg properties: O
  * Note: Value of source properties must be canonical.
  */
 fun ObservableProperty<@NlsSafe String>.joinCanonicalPath(vararg properties: ObservableProperty<@NlsSafe String>) =
-  operation(this, *properties) { it.joinToString(File.separator) }
+  operation(this, *properties) { it.joinToString("/") }
 
 /**
  * Creates mutable property string view for int property.

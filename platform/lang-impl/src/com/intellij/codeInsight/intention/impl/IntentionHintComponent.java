@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -217,26 +217,23 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @NotNull
   private static Icon getIcon(CachedIntentions cachedIntentions) {
-    if (ExperimentalUI.isNewUI()) {
-      boolean showFix = ContainerUtil.exists(cachedIntentions.getErrorFixes(),
-                                             descriptor -> IntentionManagerSettings.getInstance()
-                                               .isShowLightBulb(descriptor.getAction()));
-
-      return showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
-    }
-    else {
-      boolean showRefactoringsBulb = ContainerUtil.exists(cachedIntentions.getInspectionFixes(),
-                                                          descriptor -> IntentionActionDelegate
-                                                            .unwrap(descriptor.getAction()) instanceof BaseRefactoringIntentionAction);
-      boolean showFix = !showRefactoringsBulb && ContainerUtil.exists(cachedIntentions.getErrorFixes(),
-                                                                      descriptor -> IntentionManagerSettings.getInstance()
-                                                                        .isShowLightBulb(descriptor.getAction()));
-
-      return showRefactoringsBulb
-             ? AllIcons.Actions.RefactoringBulb
-             : showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
+    boolean showRefactoring = !ExperimentalUI.isNewUI() && ContainerUtil.exists(
+      cachedIntentions.getInspectionFixes(),
+      descriptor -> IntentionActionDelegate.unwrap(descriptor.getAction()) instanceof BaseRefactoringIntentionAction
+    );
+    if (showRefactoring) {
+      return AllIcons.Actions.RefactoringBulb;
     }
 
+    boolean showQuickFix = ContainerUtil.exists(
+      cachedIntentions.getErrorFixes(),
+      descriptor -> IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction())
+    );
+    if (showQuickFix) {
+      return AllIcons.Actions.QuickfixBulb;
+    }
+
+    return AllIcons.Actions.IntentionBulb;
   }
 
   @NotNull

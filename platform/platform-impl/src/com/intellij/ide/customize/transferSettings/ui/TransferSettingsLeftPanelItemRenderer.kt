@@ -4,6 +4,7 @@ package com.intellij.ide.customize.transferSettings.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.IconUtil
@@ -53,7 +54,7 @@ class TransferSettingsLeftPanelItemRenderer : ListCellRenderer<BaseIdeVersion> {
               foreground = fg
             }.customize(Gaps())
           }
-          item.subName?.let {
+          item.subName?.let { it: @NlsSafe String ->
             row {
               label(it).applyToComponent {
                 font = font.deriveFont(12f)

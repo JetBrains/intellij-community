@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.contracts.description.ContractProviderKey
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveMainReference
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.resolveType
@@ -504,7 +505,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             .map { v -> v.variable }
             .toSet()
         PsiTreeUtil.processElements(expr, KtSimpleNameExpression::class.java) { ref ->
-            val target = ref.mainReference.resolve()
+            val target = ref.resolveMainReference()
             if (target != null && existingVars.contains(target)) {
                 vars.addIfNotNull(KtVariableDescriptor.createFromSimpleName(factory, ref))
             }

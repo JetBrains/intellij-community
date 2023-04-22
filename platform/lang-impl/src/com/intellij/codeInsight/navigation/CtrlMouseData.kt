@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.navigation
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.psi.isNavigatableQuickDoc
 import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTarget
@@ -13,6 +12,7 @@ import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
 

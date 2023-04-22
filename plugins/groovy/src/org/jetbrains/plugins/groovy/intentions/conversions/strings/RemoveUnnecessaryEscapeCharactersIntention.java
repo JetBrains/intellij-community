@@ -68,15 +68,15 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
     final StringBuilder buffer = new StringBuilder();
     buffer.append(quote);
 
-    if (quote == "'") {
+    if (quote.equals("'")) {
       GrStringUtil.escapeAndUnescapeSymbols(value, "", "\"$", buffer);
     }
-    else if (quote == "'''") {
+    else if (quote.equals("'''")) {
       int position = buffer.length();
       GrStringUtil.escapeAndUnescapeSymbols(value, "", "\"'$n", buffer);
       GrStringUtil.fixAllTripleQuotes(buffer, position);
     }
-    else if (quote == "\"") {
+    else if (quote.equals("\"")) {
       if (literal instanceof GrString) {
         final ASTNode node = literal.getNode();
         for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -94,7 +94,7 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
         GrStringUtil.escapeAndUnescapeSymbols(value, "", "'", buffer);
       }
     }
-    else if (quote == "\"\"\"") {
+    else if (quote.equals("\"\"\"")) {
       if (literal instanceof GrString) {
         final ASTNode node = literal.getNode();
         for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {

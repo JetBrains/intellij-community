@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
@@ -53,9 +39,8 @@ public final class DfaCallArguments {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof DfaCallArguments)) return false;
-    DfaCallArguments that = (DfaCallArguments)o;
-    return myQualifier == that.myQualifier &&
+    return o instanceof DfaCallArguments that && 
+           myQualifier == that.myQualifier &&
            myMutation.equals(that.myMutation) &&
            Arrays.equals(myArguments, that.myArguments);
   }
@@ -66,7 +51,7 @@ public final class DfaCallArguments {
   }
   
   public DfaValue[] toArray() {
-    if (myArguments == null || myQualifier == null) return new DfaValue[0];
+    if (myArguments == null || myQualifier == null) return DfaValue.EMPTY_ARRAY;
     return ArrayUtil.prepend(myQualifier, myArguments);
   }
 
@@ -77,12 +62,11 @@ public final class DfaCallArguments {
       return;
     }
     if (myMutation.isPure()) {
-      if (myQualifier instanceof DfaVariableValue) {
-        DfaVariableValue qualifier = (DfaVariableValue)myQualifier;
+      if (myQualifier instanceof DfaVariableValue qualifier) {
         // We assume that even pure call may modify private fields (e.g., to cache something)
         state.flushVariables(v -> v.getQualifier() == qualifier &&
-                                  v.getPsiVariable() instanceof PsiMember &&
-                                  ((PsiMember)v.getPsiVariable()).hasModifierProperty(PsiModifier.PRIVATE));
+                                  v.getPsiVariable() instanceof PsiMember member &&
+                                  member.hasModifierProperty(PsiModifier.PRIVATE));
       }
       return;
     }
@@ -117,7 +101,11 @@ public final class DfaCallArguments {
     }
     boolean varArgCall = MethodCallUtils.isVarArgCall(call);
     PsiExpression[] args = argumentList.getExpressions();
-    PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiParameterList parameterList = method.getParameterList();
+    if (parameterList.isEmpty()) {
+      return new DfaCallArguments(qualifierValue, DfaValue.EMPTY_ARRAY, MutationSignature.fromCall(call)); 
+    }
+    PsiParameter[] parameters = parameterList.getParameters();
     DfaValue[] argValues = new DfaValue[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
       DfaValue argValue = null;

@@ -809,6 +809,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   private void createComponentBorder() {
+    if (component == null) return;
     component.setBorder(new EmptyBorder(getShadowBorderInsets()));
   }
 
@@ -838,7 +839,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   @Override
   public void revalidate() {
-    if (!isDisposed) {
+    if (!isDisposed && myTracker != null) {
       revalidate(myTracker);
     }
   }

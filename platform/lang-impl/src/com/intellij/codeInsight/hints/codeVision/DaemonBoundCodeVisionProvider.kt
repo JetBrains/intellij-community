@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
@@ -30,6 +31,7 @@ interface DaemonBoundCodeVisionProvider {
   /**
    * Computes code lens data in read action in background for a given editor.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use overload with file")
   fun computeForEditor(editor: Editor): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
@@ -47,6 +49,7 @@ interface DaemonBoundCodeVisionProvider {
    * Calls on background BEFORE editor opening
    * Returns ranges where placeholders should be when editor opens
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use getPlaceholderCollector")
   fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()
 

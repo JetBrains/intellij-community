@@ -18,6 +18,9 @@ public class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
 
   @Override
   public @NotNull MarkdownHtmlPanel createHtmlPanel(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    if (!JBCefApp.isSupported()) {
+      throw new IllegalStateException("Tried to create a JCEF panel, but JCEF is not supported in the current environment");
+    }
     return new MarkdownJCEFHtmlPanel(project, virtualFile);
   }
 

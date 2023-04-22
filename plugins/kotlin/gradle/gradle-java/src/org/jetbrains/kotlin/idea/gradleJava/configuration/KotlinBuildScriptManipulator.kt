@@ -94,27 +94,12 @@ class KotlinBuildScriptManipulator(
                 addMavenCentralIfMissing()
             }
             jvmTarget?.let {
-                val useToolchainSyntax = useJvmToolchainSyntax(gradleVersion)
-                val jvmTargetVersionNumber = getJvmTargetVersionNumber(it)
-
-                if (useToolchainSyntax && version.compare("1.7.20") >= 0) {
-                    getKotlinBlock()
-                        ?.addExpressionIfMissing("jvmToolchain($jvmTargetVersionNumber)")
-                } else if (useToolchainSyntax && version.compare("1.5.30") >= 0) {
-                    getKotlinBlock()
-                        ?.findOrCreateBlock("jvmToolchain")
-                        ?.addExpressionIfMissing("(this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of($jvmTargetVersionNumber))")
-                } else {
-                    changeKotlinTaskParameter("jvmTarget", it, forTests = false)
-                    changeKotlinTaskParameter("jvmTarget", it, forTests = true)
-                }
+                configureJvmTarget(it, version)
             }
         }
 
         return originalText != scriptFile.text
     }
-
-    private fun getJvmTargetVersionNumber(it: String) = it.removePrefix("1.")
 
     override fun changeLanguageFeatureConfiguration(
         feature: LanguageFeature,
@@ -211,6 +196,22 @@ class KotlinBuildScriptManipulator(
                         }
                     """.trimIndent()
             )
+    }
+
+    override fun configureJvmTarget(jvmTarget: String, version: IdeKotlinVersion) {
+        addJdkSpec(jvmTarget, version, gradleVersion) { useToolchain, useToolchainHelper, targetVersionNumber ->
+            when {
+                useToolchainHelper -> scriptFile.getKotlinBlock()?.addExpressionIfMissing("jvmToolchain($targetVersionNumber)")
+
+                useToolchain -> scriptFile.getKotlinBlock()?.findOrCreateBlock("jvmToolchain")
+                    ?.addExpressionIfMissing("(this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of($targetVersionNumber))")
+
+                else -> {
+                    scriptFile.changeKotlinTaskParameter("jvmTarget", jvmTarget, forTests = false)
+                    scriptFile.changeKotlinTaskParameter("jvmTarget", jvmTarget, forTests = true)
+                }
+            }
+        }
     }
 
     private fun KtBlockExpression.addNoVersionCompileStdlibIfMissing(stdlibArtifactName: String): KtCallExpression? =

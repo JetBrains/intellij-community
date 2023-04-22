@@ -32,6 +32,9 @@ try {
   }
 
   $exclusions = (Get-MpPreference).ExclusionPath
+  if (-not $exclusions) {
+    $exclusions = @()
+  }
 
   foreach ($path in $args) {
     if (-not (Test-Excluded $path $exclusions)) {

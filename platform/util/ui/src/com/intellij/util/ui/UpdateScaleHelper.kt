@@ -6,20 +6,20 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 
 @Internal
-class UpdateScaleHelper {
-  private var savedUserScale = JBUIScale.scale(1f)
+open class UpdateScaleHelper(val currentScale: (() -> Float) = { JBUIScale.scale(1f) }) {
+  private var savedScale: Float = currentScale()
 
   fun saveScaleAndRunIfChanged(runnable: Runnable): Boolean =
     saveScaleAndRunIfChanged { runnable.run() }
 
   fun saveScaleAndRunIfChanged(block: () -> Unit): Boolean {
-    if (savedUserScale == JBUIScale.scale(1f)) return false
+    if (savedScale == currentScale()) return false
 
     try {
       block()
     }
     finally {
-      savedUserScale = JBUIScale.scale(1f)
+      savedScale = currentScale()
     }
     return true
   }

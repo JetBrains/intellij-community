@@ -9,4 +9,13 @@
 annotation class MyExperimentalAPI
 
 @MyExperimentalAPI
-class Some
+class Some {
+    fun foo() {}
+}
+
+class Bar {
+    @OptIn(MyExperimentalAPI::class)
+    fun bar() {
+        Some().foo()
+    }
+}

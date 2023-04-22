@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -220,8 +220,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       }
     }
     for (RefElement refElement : myRefManager.getSortedElements()) {
-      if (refElement instanceof RefClass) {
-        RefClass refClass = (RefClass)refElement;
+      if (refElement instanceof RefClass refClass) {
         RefMethod refDefaultConstructor = refClass.getDefaultConstructor();
         if (refDefaultConstructor instanceof RefImplicitConstructor) {
           refDefaultConstructor.accept(visitor);

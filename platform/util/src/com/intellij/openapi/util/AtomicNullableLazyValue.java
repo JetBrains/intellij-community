@@ -11,6 +11,7 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
   private volatile boolean myComputed;
 
   /** @deprecated please use {@link NullableLazyValue#atomicLazyNullable} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected AtomicNullableLazyValue() { }

@@ -12,7 +12,7 @@ import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCol
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.vfs.getDocument
+import com.intellij.testFramework.utils.vfs.getDocument
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Alarm
 import org.jetbrains.concurrency.AsyncPromise

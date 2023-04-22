@@ -305,6 +305,7 @@ abstract class ScriptClassRootsUpdater(
         if (ApplicationManager.getApplication().isUnitTestMode || !isCurrentThreadEdt()) {
             applyDiffToModel(filesToAddOrUpdate, filesToRemove)
         } else {
+            if (project.isDisposed) return
             BackgroundTaskUtil.executeOnPooledThread(KotlinPluginDisposable.getInstance(project)) {
                 applyDiffToModel(filesToAddOrUpdate, filesToRemove)
             }

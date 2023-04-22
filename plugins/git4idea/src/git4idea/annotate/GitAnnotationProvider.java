@@ -245,6 +245,11 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     return parseAnnotations(revision, file, root, output);
   }
 
+  /**
+   * Read missing tooltip information without waiting for slow async {@link #loadFileHistoryInBackground}.
+   * <p>
+   * This can't fully replace slow git request, as we do not read {@link GitFileAnnotation#setRevisions(List)} from {@link VcsLogData}.
+   */
   private void loadCommitMessagesFromLog(@NotNull VirtualFile root, @NotNull GitFileAnnotation annotation) {
     VcsLogManager logManager = VcsProjectLog.getInstance(myProject).getLogManager();
     if (logManager == null) return;
@@ -267,33 +272,40 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
   private void loadFileHistoryInBackground(@NotNull GitFileAnnotation fileAnnotation) {
     List<VcsFileRevision> fileRevisions = BackgroundTaskUtil.computeInBackgroundAndTryWait(
-      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(GitDisposable.getInstance(myProject), () -> {
-        try {
-          VirtualFile file = fileAnnotation.getFile();
-          FilePath filePath = VcsUtil.getFilePath(file);
-          VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
+      () -> {
+        VirtualFile file = fileAnnotation.getFile();
+        FilePath filePath = VcsUtil.getFilePath(file);
+        VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
 
-          if (file.isInLocalFileSystem() || currentRevision == null) {
-            return loadFileHistory(filePath);
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
+        if (repository == null) return null;
+
+        return BackgroundTaskUtil.runUnderDisposeAwareIndicator(repository, () -> {
+          try {
+            if (file.isInLocalFileSystem() || currentRevision == null) {
+              return loadFileHistory(filePath);
+            }
+            else {
+              return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
+            }
           }
-          else {
-            return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
+          catch (VcsException e) {
+            LOG.warn(e);
+            return null;
           }
-        }
-        catch (VcsException e) {
-          LOG.error(e);
-          return null;
-        }
-      }),
+        });
+      },
       (revisions) -> {
         if (revisions == null) return;
+
+        GitFileAnnotation newFileAnnotation =
+          new GitFileAnnotation(fileAnnotation.getProject(),
+                                fileAnnotation.getFile(),
+                                fileAnnotation.getCurrentRevision(),
+                                fileAnnotation.getLines());
+        newFileAnnotation.setRevisions(revisions);
+
         ApplicationManager.getApplication().invokeLater(() -> {
-          GitFileAnnotation newFileAnnotation =
-            new GitFileAnnotation(fileAnnotation.getProject(),
-                                  fileAnnotation.getFile(),
-                                  fileAnnotation.getCurrentRevision(),
-                                  fileAnnotation.getLines());
-          newFileAnnotation.setRevisions(revisions);
           fileAnnotation.reload(newFileAnnotation);
         }, myProject.getDisposed());
       },

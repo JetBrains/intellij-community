@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
@@ -387,8 +387,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     }
     try {
       for (PsiElement element : myElementsToMove) {
-        if (element instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)element;
+        if (element instanceof PsiClass aClass) {
           LOG.assertTrue(aClass.isPhysical(), aClass);
           final PsiDirectory targetDirectory = destination.getTargetIfExists(element.getContainingFile());
           if (targetDirectory != null) {

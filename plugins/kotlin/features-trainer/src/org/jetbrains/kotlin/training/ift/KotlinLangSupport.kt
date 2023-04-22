@@ -8,7 +8,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
-import com.intellij.platform.PlatformProjectOpenProcessor
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
@@ -30,10 +29,6 @@ class KotlinLangSupport : JavaBasedLangSupport() {
         postInitCallback: (learnProject: Project) -> Unit
     ) {
         super.installAndOpenLearningProject(contentRoot, projectToClose) { project ->
-            // It is required to not run SetupJavaProjectFromSourcesActivity because
-            // it will overwrite our manual setup of KotlinJavaRuntime library
-            project.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, false)
-
             setupKotlin(project)
             postInitCallback(project)
         }

@@ -78,7 +78,7 @@ final class FastUtilCaseInsensitiveStringHashingStrategy implements Hash.Strateg
 
   @Override
   public boolean equals(String s1, String s2) {
-    return s1 == s2 || (s1 != null && s1.equalsIgnoreCase(s2));
+    return Strings.areSameInstance(s1, s2) || (s1 != null && s1.equalsIgnoreCase(s2));
   }
 }
 

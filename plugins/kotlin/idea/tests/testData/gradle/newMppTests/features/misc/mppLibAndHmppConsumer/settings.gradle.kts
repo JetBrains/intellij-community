@@ -9,3 +9,4 @@ pluginManagement {
 }
 
 rootProject.name = "consumer"
+include("lib")

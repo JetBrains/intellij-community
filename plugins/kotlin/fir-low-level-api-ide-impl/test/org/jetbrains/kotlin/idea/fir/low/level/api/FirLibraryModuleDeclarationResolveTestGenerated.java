@@ -28,6 +28,21 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
         runTest("testData/libraryModuleResolve/enumEntry.kt");
     }
 
+    @TestMetadata("implicitJavaTypes_listOfStrings.kt")
+    public void testImplicitJavaTypes_listOfStrings() throws Exception {
+        runTest("testData/libraryModuleResolve/implicitJavaTypes_listOfStrings.kt");
+    }
+
+    @TestMetadata("implicitJavaTypes_string.kt")
+    public void testImplicitJavaTypes_string() throws Exception {
+        runTest("testData/libraryModuleResolve/implicitJavaTypes_string.kt");
+    }
+
+    @TestMetadata("implicitJavaTypes_stringFun.kt")
+    public void testImplicitJavaTypes_stringFun() throws Exception {
+        runTest("testData/libraryModuleResolve/implicitJavaTypes_stringFun.kt");
+    }
+
     @TestMetadata("memberFunctionNoArgs.kt")
     public void testMemberFunctionNoArgs() throws Exception {
         runTest("testData/libraryModuleResolve/memberFunctionNoArgs.kt");

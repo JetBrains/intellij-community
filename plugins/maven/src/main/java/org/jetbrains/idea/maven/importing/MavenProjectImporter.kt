@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeLegacyImporter
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
@@ -94,11 +93,6 @@ interface MavenProjectImporter {
                                         importingSettings, modelsProvider, project)
       }
 
-      if (isLegacyImportToTreeStructureEnabled(project)) {
-        return MavenProjectTreeLegacyImporter(project, projectsTree, projectsToImportWithChanges,
-                                              modelsProvider, importingSettings)
-      }
-
       return MavenProjectLegacyImporter(project, projectsTree,
                                         projectsToImportWithChanges,
                                         importModuleGroupsRequired,
@@ -130,12 +124,6 @@ interface MavenProjectImporter {
       if ("false" == property) return false
       if (project == null) return false
       return MavenProjectsManager.getInstance(project).importingSettings.isWorkspaceImportEnabled
-    }
-
-    @JvmStatic
-    fun isLegacyImportToTreeStructureEnabled(project: Project?): Boolean {
-      if (isImportToWorkspaceModelEnabled(project)) return false
-      return "true" == System.getProperty("maven.import.use.tree.import")
     }
   }
 }

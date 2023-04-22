@@ -126,6 +126,7 @@ public abstract class Language extends UserDataHolderBase {
    * @deprecated do not use
    */
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void unregisterLanguage(@NotNull Language language) {
     PluginException.reportDeprecatedUsage("this method", "");

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.Nullability;
@@ -151,43 +137,41 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
 
     public static PrepopulatedCollectionModel fromList(PsiExpression listDefinition) {
       listDefinition = PsiUtil.skipParenthesizedExprDown(listDefinition);
-      if(listDefinition instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)listDefinition;
+      if(listDefinition instanceof PsiMethodCallExpression call) {
         if (ARRAYS_AS_LIST.test(call)) {
           return new PrepopulatedCollectionModel(Arrays.asList(call.getArgumentList().getExpressions()), Collections.emptyList(), "List");
         }
         return fromCollect(call, "List", COLLECTORS_TO_LIST);
       }
-      if(listDefinition instanceof PsiNewExpression) {
-        return fromNewExpression((PsiNewExpression)listDefinition, "List", JAVA_UTIL_ARRAY_LIST);
+      if(listDefinition instanceof PsiNewExpression newExpression) {
+        return fromNewExpression(newExpression, "List", JAVA_UTIL_ARRAY_LIST);
       }
-      if (listDefinition instanceof PsiReferenceExpression) {
-        return fromVariable((PsiReferenceExpression)listDefinition, "List", JAVA_UTIL_ARRAY_LIST, COLLECTION_ADD);
+      if (listDefinition instanceof PsiReferenceExpression ref) {
+        return fromVariable(ref, "List", JAVA_UTIL_ARRAY_LIST, COLLECTION_ADD);
       }
       return null;
     }
 
     public static PrepopulatedCollectionModel fromSet(PsiExpression setDefinition) {
       setDefinition = PsiUtil.skipParenthesizedExprDown(setDefinition);
-      if (setDefinition instanceof PsiMethodCallExpression) {
-        return fromCollect((PsiMethodCallExpression)setDefinition, "Set", COLLECTORS_TO_SET);
+      if (setDefinition instanceof PsiMethodCallExpression call) {
+        return fromCollect(call, "Set", COLLECTORS_TO_SET);
       }
-      if (setDefinition instanceof PsiNewExpression) {
-        return fromNewExpression((PsiNewExpression)setDefinition, "Set", JAVA_UTIL_HASH_SET);
+      if (setDefinition instanceof PsiNewExpression newExpression) {
+        return fromNewExpression(newExpression, "Set", JAVA_UTIL_HASH_SET);
       }
-      if (setDefinition instanceof PsiReferenceExpression) {
-        return fromVariable((PsiReferenceExpression)setDefinition, "Set", JAVA_UTIL_HASH_SET, COLLECTION_ADD);
+      if (setDefinition instanceof PsiReferenceExpression ref) {
+        return fromVariable(ref, "Set", JAVA_UTIL_HASH_SET, COLLECTION_ADD);
       }
       return null;
     }
 
     public static PrepopulatedCollectionModel fromMap(PsiExpression mapDefinition) {
       mapDefinition = PsiUtil.skipParenthesizedExprDown(mapDefinition);
-      if (mapDefinition instanceof PsiReferenceExpression) {
-        return fromVariable((PsiReferenceExpression)mapDefinition, "Map", JAVA_UTIL_HASH_MAP, MAP_PUT);
+      if (mapDefinition instanceof PsiReferenceExpression ref) {
+        return fromVariable(ref, "Map", JAVA_UTIL_HASH_MAP, MAP_PUT);
       }
-      if (mapDefinition instanceof PsiNewExpression) {
-        PsiNewExpression newExpression = (PsiNewExpression)mapDefinition;
+      if (mapDefinition instanceof PsiNewExpression newExpression) {
         PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
         PsiExpressionList argumentList = newExpression.getArgumentList();
         if (argumentList != null) {

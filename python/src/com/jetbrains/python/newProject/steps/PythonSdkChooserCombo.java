@@ -124,7 +124,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   /**
    * @deprecated the value of the corresponding field is not used anywhere internally
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setNewProjectPath(@Nullable String newProjectPath) {
     myNewProjectPath = newProjectPath;
   }

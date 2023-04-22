@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
@@ -37,8 +37,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                                                            @NotNull final InspectionManager manager,
                                                            @NotNull final GlobalInspectionContext globalContext,
                                                            @NotNull final ProblemDescriptionsProcessor processor) {
-    if (!(refEntity instanceof RefMethod)) return null;
-    RefMethod refMethod = (RefMethod)refEntity;
+    if (!(refEntity instanceof RefMethod refMethod)) return null;
     if (refMethod.isSyntheticJSP()) return null;
     if (refMethod.isExternalOverride()) return null;
     if (!(refMethod.isStatic() || refMethod.isConstructor()) && !refMethod.getSuperMethods().isEmpty()) return null;
@@ -100,8 +99,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     manager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
-        if (!(refEntity instanceof RefMethod)) return;
-        RefMethod refMethod = (RefMethod)refEntity;
+        if (!(refEntity instanceof RefMethod refMethod)) return;
         if (refMethod.isStatic() || refMethod.isConstructor() ||
             PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
           return;

@@ -49,6 +49,9 @@ object FilesScanExecutor {
   @JvmStatic
   fun runOnAllThreads(runnable: Runnable) {
     val progress = ProgressIndicatorProvider.getGlobalProgressIndicator()
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      checkNotNull(progress) { "progress indicator is required" }
+    }
     val results = ArrayList<Future<*>>()
     for (i in 0 until THREAD_COUNT) {
       results.add(ourExecutor.submit { ProgressManager.getInstance().runProcess(runnable, ProgressWrapper.wrap(progress)) })

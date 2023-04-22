@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -90,10 +90,9 @@ public class JavaExecutionStack extends XExecutionStack {
 
   private static CompletableFuture<Icon> calcIconAsync(ThreadReferenceProxyImpl threadProxy, boolean current) {
     ThreadReference ref = threadProxy.getThreadReference();
-    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl)) {
+    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl threadReference)) {
       return CompletableFuture.completedFuture(calcIcon(threadProxy, current));
     }
-    ThreadReferenceImpl threadReference = ((ThreadReferenceImpl)ref);
     if (current) {
       return calcThreadIconAsync(threadReference, true);
     }
@@ -394,8 +393,7 @@ public class JavaExecutionStack extends XExecutionStack {
 
   private static boolean showFrame(@NotNull XStackFrame frame) {
     if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowLibraryStackFrames() &&
-        frame instanceof JVMStackFrameInfoProvider) {
-      JVMStackFrameInfoProvider info = (JVMStackFrameInfoProvider)frame;
+        frame instanceof JVMStackFrameInfoProvider info) {
       return !info.isSynthetic() && !info.isInLibraryContent();
     }
     return true;
@@ -416,10 +414,9 @@ public class JavaExecutionStack extends XExecutionStack {
   private static @NlsContexts.ListItem CompletableFuture<String> calcRepresentationAsync(ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ThreadReference ref = thread.getThreadReference();
-    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl)) {
+    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl threadReference)) {
       return CompletableFuture.completedFuture(calcRepresentation(thread));
     }
-    ThreadReferenceImpl threadReference = ((ThreadReferenceImpl)ref);
     CompletableFuture<String> nameFuture = threadReference.nameAsync();
     CompletableFuture<String> groupNameFuture = threadReference.threadGroupAsync().thenCompose(gr -> {
       if (gr instanceof ThreadGroupReferenceImpl) {

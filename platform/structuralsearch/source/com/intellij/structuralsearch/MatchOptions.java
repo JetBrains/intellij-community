@@ -266,7 +266,7 @@ public class MatchOptions implements JDOMExternalizable {
     if (searchInjectedCode != matchOptions.searchInjectedCode) return false;
     if (!pattern.equals(matchOptions.pattern)) return false;
     if (!variableConstraints.equals(matchOptions.variableConstraints)) return false;
-    if (myUnknownFileType != matchOptions.myUnknownFileType) return false;
+    if (!Objects.equals(myUnknownFileType, matchOptions.myUnknownFileType)) return false;
     if (myFileType != matchOptions.myFileType) return false;
     if (!Objects.equals(getDialect(), matchOptions.getDialect())) return false;
     if (!Objects.equals(myPatternContextId, matchOptions.myPatternContextId)) return false;

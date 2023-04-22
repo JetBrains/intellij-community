@@ -1,148 +1,168 @@
 MODULES
-    project
-    project.consumer
-    project.consumer.androidTest
-        project.consumer.commonTest (refines, TEST)
-        project.consumer.main (friend, TEST)
-        project.consumer.commonMain (friend, TEST)
-        project.consumer.jvmAndAndroidMain (friend, TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (TEST)
-        Gradle: org.jetbrains.kotlin.mpp.tests:producer-android-debug:1.0@aar (TEST)
-    project.consumer.commonMain
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (COMPILE)
-        Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    project.consumer.commonTest
-        project.consumer.commonMain (friend, TEST)
-        project.consumer.jvmAndAndroidMain (TEST)
-        project.consumer.jvmMain (TEST)
-        project.consumer.jvmMain (RUNTIME)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (TEST)
-        Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    project.consumer.jvmAndAndroidMain
-        project.consumer.commonMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (COMPILE)
-        Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    project.consumer.jvmMain
-        project.consumer.commonMain (refines, COMPILE)
-        project.consumer.jvmAndAndroidMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (COMPILE)
-        Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    project.consumer.jvmTest
-        project.consumer.commonMain (friend, TEST)
-        project.consumer.commonTest (refines, TEST)
-        project.consumer.jvmAndAndroidMain (friend, TEST)
-        project.consumer.jvmMain (friend, TEST)
-        project.consumer.jvmMain (friend, RUNTIME)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (TEST)
-        Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    project.consumer.main
-        project.consumer.commonMain (refines, COMPILE)
-        project.consumer.jvmAndAndroidMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
-        Gradle: org.jetbrains.kotlin.mpp.tests:producer-android-debug:1.0@aar (COMPILE)
-    project.consumer.unitTest
-        project.consumer.commonTest (refines, TEST)
-        project.consumer.main (friend, TEST)
-        project.consumer.commonMain (friend, TEST)
-        project.consumer.jvmAndAndroidMain (friend, TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (TEST)
-        Gradle: org.jetbrains.kotlin.mpp.tests:producer-android-debug:1.0@aar (TEST)
-    project.producer
-    project.producer.androidTest
-        project.producer.commonTest (refines, TEST)
-        project.producer.main (friend, TEST)
-        project.producer.commonMain (friend, TEST)
-        project.producer.jvmAndAndroidMain (friend, TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    project.producer.commonMain
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    project.producer.commonTest
-        project.producer.commonMain (friend, TEST)
-        project.producer.jvmAndAndroidMain (TEST)
-        project.producer.jvmMain (TEST)
-        project.producer.jvmMain (RUNTIME)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    project.producer.jvmAndAndroidMain
-        project.producer.commonMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    project.producer.jvmMain
-        project.producer.commonMain (refines, COMPILE)
-        project.producer.jvmAndAndroidMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    project.producer.jvmTest
-        project.producer.commonMain (friend, TEST)
-        project.producer.commonTest (refines, TEST)
-        project.producer.jvmAndAndroidMain (friend, TEST)
-        project.producer.jvmMain (friend, TEST)
-        project.producer.jvmMain (friend, RUNTIME)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    project.producer.main
-        project.producer.commonMain (refines, COMPILE)
-        project.producer.jvmAndAndroidMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    project.producer.unitTest
-        project.producer.commonTest (refines, TEST)
-        project.producer.main (friend, TEST)
-        project.producer.commonMain (friend, TEST)
-        project.producer.jvmAndAndroidMain (friend, TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+project
+
+project.consumer
+
+project.consumer.androidTest
+    consumer.commonMain (friend, TEST)
+    consumer.commonTest (refines, TEST)
+    consumer.jvmAndAndroidMain (friend, TEST)
+    consumer.main (friend, TEST)
+    org.jetbrains.kotlin.mpp.tests:producer-android-debug:1.0@aar (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
+
+project.consumer.commonMain
+    org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+
+project.consumer.commonTest
+    consumer.commonMain (friend, TEST)
+    consumer.jvmAndAndroidMain (TEST)
+    consumer.jvmMain (RUNTIME)
+    consumer.jvmMain (TEST)
+    org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
+
+project.consumer.jvmAndAndroidMain
+    consumer.commonMain (refines, COMPILE)
+    org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+
+project.consumer.jvmMain
+    consumer.commonMain (refines, COMPILE)
+    consumer.jvmAndAndroidMain (refines, COMPILE)
+    org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+
+project.consumer.jvmTest
+    consumer.commonMain (friend, TEST)
+    consumer.commonTest (refines, TEST)
+    consumer.jvmAndAndroidMain (friend, TEST)
+    consumer.jvmMain (friend, RUNTIME)
+    consumer.jvmMain (friend, TEST)
+    org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
+
+project.consumer.main
+    consumer.commonMain (refines, COMPILE)
+    consumer.jvmAndAndroidMain (refines, COMPILE)
+    org.jetbrains.kotlin.mpp.tests:producer-android-debug:1.0@aar (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+
+project.consumer.unitTest
+    consumer.commonMain (friend, TEST)
+    consumer.commonTest (refines, TEST)
+    consumer.jvmAndAndroidMain (friend, TEST)
+    consumer.main (friend, TEST)
+    org.jetbrains.kotlin.mpp.tests:producer-android-debug:1.0@aar (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
+
+project.producer
+
+project.producer.androidTest
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
+    producer.commonMain (friend, TEST)
+    producer.commonTest (refines, TEST)
+    producer.jvmAndAndroidMain (friend, TEST)
+    producer.main (friend, TEST)
+
+project.producer.commonMain
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+
+project.producer.commonTest
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
+    producer.commonMain (friend, TEST)
+    producer.jvmAndAndroidMain (TEST)
+    producer.jvmMain (RUNTIME)
+    producer.jvmMain (TEST)
+
+project.producer.jvmAndAndroidMain
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+    producer.commonMain (refines, COMPILE)
+
+project.producer.jvmMain
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+    producer.commonMain (refines, COMPILE)
+    producer.jvmAndAndroidMain (refines, COMPILE)
+
+project.producer.jvmTest
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
+    producer.commonMain (friend, TEST)
+    producer.commonTest (refines, TEST)
+    producer.jvmAndAndroidMain (friend, TEST)
+    producer.jvmMain (friend, RUNTIME)
+    producer.jvmMain (friend, TEST)
+
+project.producer.main
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+    producer.commonMain (refines, COMPILE)
+    producer.jvmAndAndroidMain (refines, COMPILE)
+
+project.producer.unitTest
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
+    producer.commonMain (friend, TEST)
+    producer.commonTest (refines, TEST)
+    producer.jvmAndAndroidMain (friend, TEST)
+    producer.main (friend, TEST)
+
 
 Test configuration:
 - hiding following roots: resources, android-specific roots, generated
 - hiding following standard dependencies: sdk, self
+- dependencies order is not checked

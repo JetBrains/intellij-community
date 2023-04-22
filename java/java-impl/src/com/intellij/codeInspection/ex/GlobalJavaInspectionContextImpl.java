@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
@@ -163,8 +163,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
               return false;
             }
           }
-          else if (entry instanceof LibraryOrderEntry) {
-            LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+          else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
             Library library = libraryOrderEntry.getLibrary();
             if (library == null) {
               System.err.println(JavaBundle.message("offline.inspections.library.was.not.resolved",

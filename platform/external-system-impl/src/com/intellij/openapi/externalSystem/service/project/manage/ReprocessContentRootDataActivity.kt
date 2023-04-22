@@ -6,9 +6,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-private class ReprocessContentRootDataActivity : ProjectPostStartupActivity {
+private class ReprocessContentRootDataActivity : ProjectActivity {
 
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {

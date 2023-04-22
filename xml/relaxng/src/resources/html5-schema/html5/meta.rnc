@@ -39,7 +39,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 #			&	common.inner.metadata
 #			)
 #		)
-		
+
 ## Content Container: <body>
 
 	body.elem =
@@ -246,7 +246,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			} & v5only
 	link.inner =
 		( empty )
-		
+
 	common.elem.metadata |= link.elem
 	common.elem.phrasing |= link.elem
 	common.elem.flow |= link.elem
@@ -272,7 +272,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			}
 	style.inner =
 		( common.inner.anything )
-		
+
 	common.elem.metadata |= style.elem
 
 ## Name-Value Metadata: <meta name>
@@ -302,7 +302,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			}
 	meta.inner =
 		( empty )
-		
+
 	common.elem.metadata |= meta.name.elem
 
 ## "refresh" pragma directive: <meta http-equiv='refresh'>
@@ -322,11 +322,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 				w:string "refresh"
 			}
 		meta.http-equiv.attrs.content.refresh =
-			attribute content { 
+			attribute content {
 				common.data.refresh
 			}
 	common.elem.metadata |= meta.http-equiv.refresh.elem # not quite right per spec
-                                                       # if the definition is 
+                                                       # if the definition is
                                                        # reused in another language
 
 ## "default-style" pragma directive: <meta http-equiv='default-style'>
@@ -349,9 +349,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute content {
 				common.data.default-style
 			}
-		
+
 	common.elem.metadata |= meta.http-equiv.default-style.elem # not quite right per spec
-                                                               # if the definition is 
+                                                               # if the definition is
                                                                # reused in another language
 
 ## Content Security Policy pragma directive: <meta http-equiv='content-security-policy'>
@@ -415,7 +415,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 				| (xsd:string {
 					pattern = "[uU][tT][fF]-8"
 				} & XMLonly )
-			} 
+			}
 
 ## Inline Character Encoding Statement for HTML: <meta http-equiv='content-type'>
 

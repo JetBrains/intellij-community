@@ -306,8 +306,20 @@ internal fun KotlinULambdaExpression.getFunctionalInterfaceType(): PsiType? {
     return sourcePsi.getExpectedType()?.getFunctionalInterfaceType(this, sourcePsi, sourcePsi.typeOwnerKind)
 }
 
-internal fun resolveToPsiMethod(context: KtElement): PsiMethod? =
-    context.getResolvedCall(context.analyze())?.resultingDescriptor?.let { resolveToPsiMethod(context, it) }
+internal fun resolveToPsiMethod(ktElement: KtElement): PsiMethod? {
+    val context = ktElement.analyze()
+    if (ktElement is KtArrayAccessExpression) {
+        // Try getter first, e.g., array[...] += v, ... = array[...], or ...(..., array[...], ...)
+        context[BindingContext.INDEXED_LVALUE_GET, ktElement]?.resultingDescriptor
+            ?.let { resolveToPsiMethod(ktElement, it) }
+            ?.let { return it }
+        // Then, setter, e.g., array[...] = v
+        context[BindingContext.INDEXED_LVALUE_SET, ktElement]?.resultingDescriptor
+            ?.let { resolveToPsiMethod(ktElement, it) }
+            ?.let { return it }
+    }
+    return ktElement.getResolvedCall(context)?.resultingDescriptor?.let { resolveToPsiMethod(ktElement, it) }
+}
 
 internal fun resolveToPsiMethod(
     context: KtElement,

@@ -6,14 +6,14 @@ import org.jetbrains.kotlin.gradle.newTests.*
 object AndroidGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty {
     override val id: String = "AGP_VERSION"
 
-    enum class Values(val acronym: String, val version: String) {
-        MinSupported("MIN", "7.2"),
+    enum class Value(val acronym: String, val version: String) {
+        MinSupported("MIN", "7.2.1"),
         LatestStable("STABLE", "7.4.0"),
         Beta("BETA", "8.0.0-beta01"),
         Alpha("ALPHA", "8.1.0-alpha01")
     }
 
-    override val valuesByAcronyms: Map<String, String> = Values.values().map { it.acronym to it.version }.toMap()
+    override val valuesByAcronyms: Map<String, String> = Value.values().map { it.acronym to it.version }.toMap()
 
-    override val defaultValue: String = Values.LatestStable.version
+    override val defaultValue: String = Value.LatestStable.version
 }

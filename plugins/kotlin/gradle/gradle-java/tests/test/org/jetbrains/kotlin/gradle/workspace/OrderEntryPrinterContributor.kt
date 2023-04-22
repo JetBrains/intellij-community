@@ -18,32 +18,41 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
         val filteredEntries = orderEntries.filterNot { shouldRemoveOrderEntry(it) }
         if (filteredEntries.isEmpty()) return
 
+        val testConfig = testConfiguration.getConfiguration(OrderEntriesFilteringTestFeature)
+
         val dependsOnModules = module.implementedModules.toSet()
         val friendModules: Collection<ModuleInfo> = module.sourceModuleInfos.singleOrNull()
             ?.modulesWhoseInternalsAreVisible()
             .orEmpty()
+            .toSet()
 
         val orderEntriesRendered = buildList {
             for (entry in filteredEntries) {
-                val moduleInfo: IdeaModuleInfo? = getModuleInfo(entry)
+                val moduleInfos: Set<IdeaModuleInfo> = getModuleInfos(entry)
                 val orderEntryModule = (entry as? ModuleOrderEntry)?.module
                 add(
                     render(
                         orderEntry = entry,
                         isDependsOn = orderEntryModule in dependsOnModules,
-                        isFriend = friendModules.contains<ModuleInfo?>(moduleInfo)
+                        isFriend = friendModules.containsAll(moduleInfos)
                     )
                 )
             }
         }
 
-        val orderEntriesFoldedIfNecessary = if (testConfiguration.getConfiguration(OrderEntriesFilteringTestFeature).hideKonanDist)
+
+        val orderEntriesFoldedIfNecessary = if (testConfig.hideKonanDist)
             orderEntriesRendered
         else
             foldKonanDist(orderEntriesRendered, module)
 
+        val orderEntriesSortedIfNecessary = if (!testConfig.sortDependencies)
+            orderEntriesFoldedIfNecessary
+        else
+            orderEntriesFoldedIfNecessary.sorted()
+
         indented {
-            orderEntriesFoldedIfNecessary.forEach { println(it) }
+            orderEntriesSortedIfNecessary.forEach { println(it) }
         }
     }
 
@@ -83,40 +92,42 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
 
     private fun PrinterContext.isStdlibModule(orderEntry: OrderEntry): Boolean {
         val name = presentableNameWithoutVersion(orderEntry)
-        return name in STDLIB_MODULES || name.startsWith(NATIVE_STDLIB_PREFIX)
+        return name in STDLIB_MODULES
+                || name.startsWith(NATIVE_STDLIB_PREFIX_OLD_IMPORT)
+                || name.startsWith(NATIVE_STDLIB_KGP_BASED_IMPORT)
     }
 
     private fun PrinterContext.isKotlinTestModule(orderEntry: OrderEntry): Boolean =
         presentableNameWithoutVersion(orderEntry) in KOTLIN_TEST_MODULES
 
-    private fun PrinterContext.isKonanDistModule(orderEntry: OrderEntry): Boolean =
-        !isStdlibModule(orderEntry) && NATIVE_DISTRIBUTION_LIBRARY_PATTERN.matches(orderEntry.presentableName)
+    private fun isKonanDistModule(orderEntry: OrderEntry): Boolean {
+        val name = orderEntry.presentableName
+        // NB: we deliberately look for 'stdlib' substring instead of `!isStdlibModule(orderEntry)`
+        // to make sure that if format of stdlib-entry unexpectedly changes, we won't mismatch it
+        // with K/N Dist
+        return "stdlib" !in name && NATIVE_DISTRIBUTION_LIBRARY_PATTERN.matches(name)
+    }
 
     private fun PrinterContext.presentableNameWithoutVersion(orderEntry: OrderEntry): String =
-        orderEntry.presentableName.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}")
+        orderEntry.presentableName
+            // Be careful not to use KGP_VERSION placeholder for 3rd-party libraries (e.g. those that try to align versioning with Kotlin)
+            .let { if ("org.jetbrains.kotlin" in it || "Kotlin/Native" in it) it.replace(kotlinGradlePluginVersion.toString(), "{{KGP_VERSION}}") else it }
+            .removePrefix("${project.name}.")
+            .removePrefix("Gradle: ")
 
-    private fun PrinterContext.getModuleInfo(orderEntry: OrderEntry): IdeaModuleInfo? {
+    private fun PrinterContext.getModuleInfos(orderEntry: OrderEntry): Set<IdeaModuleInfo> {
         when (orderEntry) {
-            is ModuleOrderEntry -> return orderEntry.module?.toModuleInfo()
+            is ModuleOrderEntry -> return setOfNotNull(orderEntry.module?.toModuleInfo())
 
             is LibraryOrderEntry -> {
-                val library = orderEntry.library ?: return null
-                val libraryInfos = runReadAction { LibraryInfoCache.getInstance(project)[library] }
-
-                if (libraryInfos.size > 1)
-                    error(
-                        "Unexpectedly got several LibraryInfos for one LibraryOrderEntry\n" +
-                                "LibraryOrderEntry = ${library.presentableName}\n" +
-                                "LibraryInfos = ${libraryInfos.joinToString { it.displayedName }}"
-                    )
-
-                return libraryInfos.firstOrNull()
+                val library = orderEntry.library ?: return emptySet()
+                return runReadAction { LibraryInfoCache.getInstance(project)[library] }.toSet()
             }
 
 
-            is JdkOrderEntry -> return SdkInfo(project, orderEntry.jdk ?: return null)
+            is JdkOrderEntry -> return setOf(SdkInfo(project, orderEntry.jdk ?: return emptySet()))
 
-            else -> return null
+            else -> return emptySet()
         }
     }
 
@@ -135,26 +146,28 @@ internal class OrderEntryPrinterContributor : ModulePrinterContributor {
 
     companion object {
         private val STDLIB_MODULES = setOf(
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains:annotations:13.0",
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}}",
+            "org.jetbrains:annotations:13.0",
+            "org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}}",
         )
-        // K/N stdlib has suffix of platform, so plain contains wouldn't work
-        private val NATIVE_STDLIB_PREFIX: String = "Kotlin/Native {{KGP_VERSION}} - stdlib"
+        // Old import: Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+        // KGP based import: Kotlin/Native: stdlib (COMPILE)
+        private val NATIVE_STDLIB_PREFIX_OLD_IMPORT: String = "Kotlin/Native {{KGP_VERSION}} - stdlib"
+        private val NATIVE_STDLIB_KGP_BASED_IMPORT: String = "Kotlin/Native: stdlib"
 
         private val KOTLIN_TEST_MODULES = setOf(
-            "Gradle: org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}}",
 
-            "Gradle: org.jetbrains.kotlin:kotlin-test-js:{{KGP_VERSION}}",
+            "org.jetbrains.kotlin:kotlin-test-js:{{KGP_VERSION}}",
 
-            "Gradle: org.jetbrains.kotlin:kotlin-test:{{KGP_VERSION}}",
-            "Gradle: org.jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}}",
-            "Gradle: org.hamcrest:hamcrest-core:1.3",
-            "Gradle: junit:junit:4.13.2"
+            "jetbrains.kotlin:kotlin-test:{{KGP_VERSION}}",
+            "jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}}",
+            "hamcrest:hamcrest-core:1.3",
+            "junit:4.13.2"
         )
 
         private val NATIVE_DISTRIBUTION_LIBRARY_PATTERN = "^Kotlin/Native.*".toRegex()

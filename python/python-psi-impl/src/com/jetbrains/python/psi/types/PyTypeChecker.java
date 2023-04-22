@@ -1130,7 +1130,7 @@ public final class PyTypeChecker {
   /**
    * @deprecated use {@link PyTypeChecker#unifyReceiverWithParamSpecs(PyExpression, TypeEvalContext)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static Map<PyGenericType, PyType> unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
     return unifyReceiverWithParamSpecs(receiver, context).typeVars;

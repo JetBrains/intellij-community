@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 
 import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES;
@@ -36,7 +37,7 @@ public class PathStringDescriptor extends EnumeratorStringDescriptor {
   public boolean isEqual(String val1, String val2) {
     if (!PORTABLE_CACHES) return FileUtil.pathsEqual(val1, val2);
     // On case insensitive OS hash calculated from path converted to lower case
-    if (val1 == val2) return true;
+    if (Strings.areSameInstance(val1, val2)) return true;
     if (val1 == null || val2 == null) return false;
 
     String path1 = FileUtil.toCanonicalPath(val1);

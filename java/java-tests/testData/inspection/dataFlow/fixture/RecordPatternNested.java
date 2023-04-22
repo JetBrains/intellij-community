@@ -4,8 +4,8 @@ class Test {
       return;
     }
 
-    if (obj instanceof Bar(I2 s) bar) { //can be false?
-      System.out.println(bar);
+    if (obj instanceof Bar(I2 s)) { //can be false?
+      System.out.println(s);
     }
   }
 }

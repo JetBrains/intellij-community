@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaSmartCompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,8 +32,7 @@ public final class ClassLiteralGetter {
 
     boolean addInheritors = false;
     PsiElement position = parameters.getPosition();
-    if (classParameter instanceof PsiWildcardType) {
-      final PsiWildcardType wildcardType = (PsiWildcardType)classParameter;
+    if (classParameter instanceof PsiWildcardType wildcardType) {
       classParameter = wildcardType.isSuper() ? wildcardType.getSuperBound() : wildcardType.getExtendsBound();
       addInheritors = !wildcardType.isSuper() && classParameter instanceof PsiClassType &&
                     !(matcher.getPrefix().isEmpty() && TypeUtils.isJavaLangObject(classParameter));

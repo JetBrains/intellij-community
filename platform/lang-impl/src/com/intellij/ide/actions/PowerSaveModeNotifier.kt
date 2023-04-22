@@ -11,10 +11,10 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 
-internal class PowerSaveModeNotifier : ProjectPostStartupActivity {
+internal class PowerSaveModeNotifier : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (PowerSaveMode.isEnabled()) {
       notifyOnPowerSaveMode(project)

@@ -2,8 +2,9 @@
   "name": "Dark",
   "dark": true,
   "author": "JetBrains",
-  "editorScheme": "/themes/expUI/expUI_darkScheme.xml",
+  "editorScheme": "/themes/expUI/expUI_darkScheme_RC.xml",
   "additionalEditorSchemes": [
+    "/themes/expUI/expUI_darkScheme.xml",
     "/themes/expUI/expUI_darkSchemeNew.xml"
   ],
 
@@ -379,6 +380,7 @@
     },
     "ToolBar.verticalToolbarInsets": "7,4,7,4",
     "ToolBar.horizontalToolbarInsets": "4,7,4,7",
+    "ToolBar.separatorColor": "Grey4",
 
     "SearchField": {
       "errorForeground": "Red6",
@@ -635,7 +637,7 @@
       "PackageTagSelected.foreground": "Grey10"
     },
     "RunWidget" : {
-      "foreground": "Grey14",
+      "foreground": "Grey12",
       "disabledForeground": "#FFFFFF66",
       "background": "Blue5",
       "runningBackground": "Green5",

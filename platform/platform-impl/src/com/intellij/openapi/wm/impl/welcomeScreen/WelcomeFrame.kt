@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen
 import com.intellij.CommonBundle
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.idea.SplashManager
+import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
@@ -54,7 +54,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
   private val listenerDisposable = Disposer.newDisposable()
 
   init {
-    SplashManager.hideBeforeShow(this)
+    hideSplashBeforeShow(this)
     val rootPane = getRootPane()
     val screen = createScreen(rootPane)
     val glassPane = IdeGlassPaneImpl(rootPane)
@@ -168,7 +168,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
                     ?: throw IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point")
         val jFrame = frame as JFrame
         registerKeyboardShortcuts(jFrame.rootPane)
-        SplashManager.hideBeforeShow(jFrame)
+        hideSplashBeforeShow(jFrame)
         jFrame.isVisible = true
         IdeMenuBar.installAppMenuIfNeeded(jFrame)
         instance = frame

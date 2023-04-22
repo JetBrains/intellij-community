@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.diagnostic.LoadingState;
@@ -30,37 +30,26 @@ import static com.intellij.openapi.util.NlsActions.ActionDescription;
 import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
- * Represents an entity that has a state, a presentation and can be performed.
+ * An action has a state, a presentation and can be performed.
  * <p>
- * For an action to be useful, you need to implement {@link AnAction#actionPerformed}
- * and optionally to override {@link AnAction#update}. By overriding the
- * {@link AnAction#update} method you can dynamically change action's presentation
- * depending on the place (for more information on places see {@link com.intellij.openapi.actionSystem.ActionPlaces}.
+ * For an action to be useful, implement {@link AnAction#actionPerformed}.
  * <p>
  * The same action can have various presentations.
- *
+ * To dynamically change the action's presentation depending on the place, override {@link AnAction#update}.
+ * For more information on places, see {@link ActionPlaces}.
  * <pre>
- *  public class MyAction extends AnAction {
- *    public MyAction() {
- *      // ...
- *    }
- *
- *    public void update(AnActionEvent e) {
- *      Presentation presentation = e.getPresentation();
- *      if (e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
- *        presentation.setText("My Menu item name");
- *      } else if (e.getPlace().equals(ActionPlaces.MAIN_TOOLBAR)) {
- *        presentation.setText("My Toolbar item name");
- *      }
- *    }
- *
- *    public void actionPerformed(AnActionEvent e) { ... }
- *  }
+ * public void update(AnActionEvent e) {
+ *   if (e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
+ *     e.getPresentation().setText("My Menu item name");
+ *   } else if (e.getPlace().equals(ActionPlaces.MAIN_TOOLBAR)) {
+ *     e.getPresentation().setText("My Toolbar item name");
+ *   }
+ * }
  * </pre>
  *
  * @see AnActionEvent
  * @see Presentation
- * @see com.intellij.openapi.actionSystem.ActionPlaces
+ * @see ActionPlaces
  * @see com.intellij.openapi.project.DumbAwareAction
  */
 public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadAware {
@@ -88,46 +77,43 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Creates a new action with {@code icon} provided. Its text, description set to {@code null}.
+   * Creates a new action with the given {@code icon}, but without text or description.
    *
-   * @param icon Default icon to appear in toolbars and menus (Note some platform don't have icons in menu).
+   * @param icon the default icon to appear in toolbars and menus. Note that some platforms don't have icons in the menu.
    */
   public AnAction(@Nullable Icon icon) {
     this(Presentation.NULL_STRING, Presentation.NULL_STRING, icon);
   }
 
   /**
-   * Creates a new action with the specified text. Description and icon are
-   * set to {@code null}.
+   * Creates a new action with the given text, but without description or icon.
    *
-   * @param text Serves as a tooltip when the presentation is a button and the name of the
-   *             menu item when the presentation is a menu item (with mnemonic).
+   * @param text serves as a tooltip when the presentation is a button,
+   *             and the name of the menu item when the presentation is a menu item (with mnemonic)
    */
   public AnAction(@Nullable @ActionText String text) {
     this(text, null, null);
   }
 
   /**
-   * Creates a new action with the specified text. Description and icon are
-   * set to {@code null}.
+   * Creates a new action with the given text, but without description or icon.
+   * Use this variant if you need to localize the action text.
    *
-   * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
-   *                    menu item when the presentation is a menu item.
-   *                    <p>
-   *                    Use it if you need to localize action text.
+   * @param dynamicText serves as a tooltip when the presentation is a button,
+   *                    and the name of the menu item when the presentation is a menu item (with mnemonic)
    */
   public AnAction(@NotNull Supplier<@ActionText String> dynamicText) {
     this(dynamicText, Presentation.NULL_STRING, null);
   }
 
   /**
-   * Constructs a new action with the specified text, description and icon.
+   * Creates a new action with the given text, description and icon.
    *
-   * @param text        Serves as a tooltip when the presentation is a button and the name of the
-   *                    menu item when the presentation is a menu item (with mnemonic).
-   * @param description Describes current action, this description will appear on
-   *                    the status bar when presentation has focus
-   * @param icon        Action's icon
+   * @param dynamicText serves as a tooltip when the presentation is a button,
+   *                    and the name of the menu item when the presentation is a menu item (with mnemonic)
+   * @param description describes the current action,
+   *                    this description will appear on the status bar when the presentation has the focus
+   * @param icon        the action's icon
    */
   public AnAction(@Nullable @ActionText String text,
                   @Nullable @ActionDescription String description,
@@ -136,24 +122,26 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Constructs a new action with the specified dynamicText, dynamicDescription and icon.
+   * Creates a new action with the given text, description and icon.
+   * Use this variant if you need to localize the action text.
    *
-   * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
-   *                    menu item when the presentation is a menu item. Use it if you need to localize action text.
-   * @param icon        Action's icon
+   * @param dynamicText serves as a tooltip when the presentation is a button,
+   *                    and the name of the menu item when the presentation is a menu item (with mnemonic)
+   * @param icon        the action's icon
    */
   public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @Nullable Icon icon) {
     this(dynamicText, Presentation.NULL_STRING, icon);
   }
 
   /**
-   * Constructs a new action with the specified dynamicText, dynamicDescription and icon.
+   * Creates a new action with the given text, description and icon.
+   * Use this variant if you need to localize the action text or the description.
    *
-   * @param dynamicText        Serves as a tooltip when the presentation is a button and the name of the
-   *                           menu item when the presentation is a menu item. Use it if you need to localize action text.
-   * @param dynamicDescription Describes current action, this dynamicDescription will appear on
-   *                           the status bar when presentation has focus. Use it if you need to localize description.
-   * @param icon               Action's icon
+   * @param dynamicText        serves as a tooltip when the presentation is a button,
+   *                           and the name of the menu item when the presentation is a menu item (with mnemonic)
+   * @param dynamicDescription describes the current action,
+   *                           this description will appear on the status bar when the presentation has the focus
+   * @param icon               the action's icon
    */
   public AnAction(@NotNull Supplier<@ActionText String> dynamicText,
                   @NotNull Supplier<@ActionDescription String> dynamicDescription,
@@ -192,22 +180,17 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return myUpdateNotOverridden;
   }
 
-  /**
-   * Returns the shortcut set associated with this action.
-   *
-   * @return shortcut set associated with this action
-   */
+  /** Returns the set of shortcuts associated with this action. */
   public final @NotNull ShortcutSet getShortcutSet() {
     return myShortcutSet;
   }
 
   /**
-   * Registers a set of shortcuts that will be processed when the specified component
-   * is the ancestor of focused component. Note that the action doesn't have
-   * to be registered in action manager in order for that shortcut to work.
+   * Registers a set of shortcuts that will be processed when the specified component is the ancestor of the focused component.
+   * Note that the action doesn't have to be registered in the action manager in order for that shortcut to work.
    *
-   * @param shortcutSet the shortcuts for the action.
-   * @param component   the component for which the shortcuts will be active.
+   * @param shortcutSet the shortcuts for the action
+   * @param component   the component for which the shortcuts will be active
    */
   public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable JComponent component) {
     registerCustomShortcutSet(shortcutSet, component, null);
@@ -249,7 +232,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Copies template presentation and shortcuts set from {@code sourceAction}.
+   * Copies the template presentation and the set of shortcuts from {@code sourceAction}.
    * Consider using {@link com.intellij.openapi.actionSystem.ex.ActionUtil#copyFrom(AnAction, String)} instead.
    */
   public final void copyFrom(@NotNull AnAction sourceAction) {
@@ -274,38 +257,42 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Override with true returned if your action has to display its text along with the icon when placed in the toolbar
+   * Override with true returned if your action has to display its text along with the icon when placed in the toolbar.
    */
   public boolean displayTextInToolbar() {
     return false;
   }
 
   /**
-   * Override with true returned if your action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar
+   * Override with true returned if your action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar.
    */
   public boolean useSmallerFontForTextInToolbar() {
     return false;
   }
 
   /**
-   * Updates the presentation of the action. Default implementation does nothing.
-   * Override this method to provide the ability to dynamically change action's
-   * state and(or) presentation depending on the context (For example
-   * when your action state depends on the selection you can check for
-   * selection and change the state accordingly).<p></p>
+   * Updates the presentation of the action.
+   * The default implementation does nothing.
    * <p>
-   * This method can be called frequently, and on UI thread.
+   * Override this method to dynamically change the action's state or presentation depending on the context.
+   * For example, when your action state depends on the selection,
+   * you can check for the selection and change the state accordingly.
+   * <p>
+   * This method can be called frequently and on the UI thread.
    * This means that this method is supposed to work really fast,
-   * no real work should be done at this phase. For example, checking selection in a tree or a list,
-   * is considered valid, but working with a file system or PSI (especially resolve) is not.
+   * no real work should be done at this phase.
+   * For example, checking the selection in a tree or a list is considered valid,
+   * but working with a file system or PSI (especially resolve) is not.
    * If you cannot determine the state of the action fast enough,
-   * you should do it in the {@link #actionPerformed(AnActionEvent)} method and notify
-   * the user that action cannot be executed if it's the case.<p></p>
+   * you should do it in the {@link #actionPerformed(AnActionEvent)} method
+   * and notify the user that the action cannot be executed if it's the case.
    * <p>
-   * If the action is added to a toolbar, its "update" can be called twice a second, but only if there was
-   * any user activity or a focus transfer. If your action's availability is changed
-   * in absence of any of these events, please call {@code ActivityTracker.getInstance().inc()} to notify
-   * action subsystem to update all toolbar actions when your subsystem's determines that its actions' visibility might be affected.
+   * If the action is added to a toolbar, its {@code update} method can be called twice a second,
+   * but only if there was any user activity or a focus transfer.
+   * If your action's availability is independent from these events,
+   * call {@code ActivityTracker.getInstance().inc()}
+   * to notify the action subsystem to update all toolbar actions
+   * when your subsystem's determines that its actions' visibility might be affected.
    *
    * @see #getActionUpdateThread()
    */
@@ -350,7 +337,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   /**
    * Performs the action logic.
-   * <p/>
+   * <p>
    * It is called on the UI thread with all data in the provided {@link DataContext} instance.
    *
    * @see #beforeActionPerformedUpdate(AnActionEvent)
@@ -374,7 +361,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Sets the flag indicating whether the action has an internal or a user-customized icon.
    *
-   * @param isDefaultIconSet true if the icon is internal, false if the icon is customized by the user.
+   * @param isDefaultIconSet true if the icon is internal, false if the icon is customized by the user
    */
   public void setDefaultIcon(boolean isDefaultIconSet) {
     myIsDefaultIcon = isDefaultIconSet;
@@ -390,8 +377,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Enables automatic detection of injected fragments in editor. Values in DataContext, passed to the action, like EDITOR, PSI_FILE
-   * will refer to an injected fragment, if caret is currently positioned on it.
+   * Enables automatic detection of injected fragments in the editor.
+   * Values that are passed to the action in its DataContext, like EDITOR or PSI_FILE,
+   * will refer to an injected fragment if the caret is currently positioned on it.
    */
   public void setInjectedContext(boolean worksInInjected) {
     myWorksInInjected = worksInInjected;
@@ -479,9 +467,10 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * Returns default action text.
-   * This method must be overridden in case template presentation contains user data like Project name,
-   * Run Configuration name, etc
+   * Returns the default action text.
+   * <p>
+   * This method must be overridden if the template presentation contains user data
+   * like the name of the project, of a run configuration, etc.
    *
    * @return action presentable text without private user data
    */

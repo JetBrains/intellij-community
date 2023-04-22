@@ -176,6 +176,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
   override fun removeProject() {
     project?.let {
+      DataManager.removeDataProvider(component)
       clearListeners(it)
       remove(it)
     }

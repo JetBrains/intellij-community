@@ -71,10 +71,8 @@ import java.util.stream.Stream;
  * @author Rolf Lear
  * @see DocType
  * @see CDATA
- * @see Comment
  * @see Element
  * @see EntityRef
- * @see ProcessingInstruction
  * @see Text
  */
 final class ContentList extends AbstractList<Content> implements RandomAccess {

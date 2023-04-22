@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -82,9 +82,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
     TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
 
     PsiElement parent = identifier.getParent();
-    if (parent instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)parent;
-
+    if (parent instanceof PsiVariable variable) {
       if (variable.getInitializer() == null) {
         PsiElement child = variable.getLastChild();
         if (child instanceof PsiErrorElement && child.getPrevSibling() == identifier) return;
@@ -92,15 +90,12 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
  
       myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme));
     }
-    else if (parent instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)parent;
-
+    else if (parent instanceof PsiClass aClass) {
       if (!(parent instanceof PsiAnonymousClass) && aClass.getNameIdentifier() == identifier) {
         myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier, colorsScheme));
       }
     }
-    else if (parent instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)parent;
+    else if (parent instanceof PsiMethod method) {
       myHolder.add(HighlightNamesUtil.highlightMethodName(method, identifier, true, colorsScheme));
     }
 
@@ -157,9 +152,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
 
     PsiElement resolved = result.getElement();
 
-    if (resolved instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)resolved;
-
+    if (resolved instanceof PsiVariable variable) {
       if (!(variable instanceof PsiField)) {
         PsiElement containingClass = PsiTreeUtil.getNonStrictParentOfType(ref, PsiClass.class, PsiLambdaExpression.class);
         while ((containingClass instanceof PsiAnonymousClass || containingClass instanceof PsiLambdaExpression) &&

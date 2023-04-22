@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
@@ -233,8 +233,7 @@ public final class MutationSignature {
       }
       return fromMethod(method);
     }
-    if (call instanceof PsiNewExpression) {
-      PsiNewExpression newExpression = (PsiNewExpression)call;
+    if (call instanceof PsiNewExpression newExpression) {
       if (newExpression.isArrayCreation()) return PURE;
       if (newExpression.getArgumentList() == null || !newExpression.getArgumentList().isEmpty()) return UNKNOWN;
       PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();

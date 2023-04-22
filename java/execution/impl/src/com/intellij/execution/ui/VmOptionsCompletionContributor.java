@@ -1,17 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.vmOptions.*;
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -31,12 +37,28 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
   private static final Pattern OPTION_SEPARATOR = Pattern.compile("\\s+");
   private static final Pattern OPTION_MATCHER = Pattern.compile("^-XX:[+\\-]?(\\w+)(=.+)?$");
 
+  private static final VMOption[] STANDARD_OPTIONS = {
+    opt("ea", "enable assertions with specified granularity"),
+    opt("enableassertions", "enable assertions with specified granularity"),
+    opt("da", "disable assertions with specified granularity"),
+    opt("disableassertions", "disable assertions with specified granularity"),
+    opt("esa", "enable system assertions"),
+    opt("dsa", "disable system assertions"),
+    opt("agentpath:", "load native agent library by full pathname"),
+    opt("agentlib:", "load native agent library <libname>, e.g. -agentlib:jdwp"),
+    opt("javaagent:", "load Java programming language agent"),
+    opt("D", "set a system property in format <name>=<value>"),
+    opt("XX:", "specify non-standard JVM-specific option")
+  };
+  
+  private static VMOption opt(@NotNull String name, @NotNull String doc) {
+    return new VMOption(name, null, null, VMOptionKind.Standard, doc, VMOptionVariant.DASH);
+  }
+
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     Document document = parameters.getEditor().getDocument();
-    JavaRunConfigurationBase settings = document.getUserData(VmOptionsEditor.SETTINGS_KEY);
-    if (settings == null) return;
-    String jrePath = getJrePath(settings);
+    String jrePath = getJrePathForVmOptionsDocument(document);
     if (jrePath == null) return;
     CompletableFuture<JdkOptionsData> jdk = VMOptionsService.getInstance().getOrComputeOptionsForJdk(jrePath);
     JdkOptionsData data = ProgressIndicatorUtils.awaitWithCheckCanceled(jdk);
@@ -46,52 +68,42 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
     while (offset > 0 && Character.isAlphabetic(currentText.charAt(offset - 1))) {
       offset--;
     }
-    if (addXxCompletion(result, data, offset, currentText) || addSimpleOptions(result, data, offset, currentText)) {
+    JavaRunConfigurationBase settings = document.getUserData(VmOptionsEditor.SETTINGS_KEY);
+    if (addXxCompletion(result, data, offset, currentText) || addSimpleOptions(result, settings, data, offset, currentText)) {
       result.stopHere();
     }
   }
 
   private static boolean addSimpleOptions(@NotNull CompletionResultSet result,
+                                          @Nullable JavaRunConfigurationBase settings, 
                                           @NotNull JdkOptionsData data,
                                           int offset,
                                           @NotNull String text) {
-    if (hasOptionPrefix(text, offset, "--")) {
-      addDoubleDashOptions(result, 0);
-      return true;
+    String[] prefixes = {"--", "-", ""};
+    for (String prefix : prefixes) {
+      if (hasOptionPrefix(text, offset, prefix)) {
+        addDashOptions(result, settings, data, prefix);
+        return true;
+      }
     }
-    if (hasOptionPrefix(text, offset, "-")) {
-      addDoubleDashOptions(result, 1);
-      addSingleDashOptions(result, data, 0);
-      return true;
-    }
-    if (hasOptionPrefix(text, offset, "")) {
-      addDoubleDashOptions(result, 2);
-      addSingleDashOptions(result, data, 1);
-      return true;
-    }
-      return false;
-    }
-
-  private static void addDoubleDashOptions(@NotNull CompletionResultSet result, int prefix) {
-    String[] options = {"add-reads", "add-exports", "add-opens", "limit-modules", "patch-module"};
-    for (String option : options) {
-      option = "-".repeat(prefix) + option;
-      result.addElement(
-        TailTypeDecorator.withTail(LookupElementBuilder.create(option).withPresentableText("-".repeat(2 - prefix) + option),
-                                   TailType.SPACE));
-    }
+    return false;
   }
 
-  private static void addSingleDashOptions(@NotNull CompletionResultSet result, @NotNull JdkOptionsData data, int prefix) {
-    String[] options = {"ea", "enableassertions", "da", "disableassertions", "esa", "dsa", "agentpath:", "agentlib:",
-      "javaagent:", "XX:", "D"};
-    Stream<String> stream = Stream.concat(data.getOptions().stream()
-                                            .filter(option -> option.getVariant() == VMOptionVariant.X)
-                                            .map(option -> "X" + option.getOptionName()),
-                                          Stream.of(options));
-    stream.forEach(option -> {
-      option = "-".repeat(prefix) + option;
-      result.addElement(LookupElementBuilder.create(option).withPresentableText("-".repeat(1 - prefix) + option));
+  private static void addDashOptions(@NotNull CompletionResultSet result,
+                                     @Nullable JavaRunConfigurationBase settings,
+                                     @NotNull JdkOptionsData data, String prefix) {
+    Stream.of(
+      data.getOptions().stream().filter(option1 -> option1.getVariant() != VMOptionVariant.XX),
+      Stream.of(STANDARD_OPTIONS), 
+      settings == null ? null : settings.getKnownVMOptions().stream())
+      .flatMap(Function.identity())
+      .forEach(option -> {
+      String fullLookup = option.getVariant().prefix() + option.getOptionName();
+      if (!fullLookup.startsWith(prefix)) return;
+      String lookup = fullLookup.substring(prefix.length());
+      result.addElement(LookupElementBuilder.create(option.createPointer(), lookup + option.getVariant().suffix())
+                          .withTypeText(option.getType())
+                          .withPresentableText(fullLookup));
     });
   }
 
@@ -114,20 +126,16 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       String type = option.getType();
       LookupElementBuilder e = null;
       TailType tailType = null;
-      Icon icon = switch (option.getKind()) {
-        case Product -> AllIcons.Actions.ArrowExpand;
-        case Diagnostic -> AllIcons.General.ShowInfos;
-        case Experimental -> AllIcons.General.Warning;
-      };
+      Icon icon = option.getKind().icon();
       if ("bool".equals(type)) {
         String lookupString = (booleanStart ? "" : Boolean.parseBoolean(option.getDefaultValue()) ? "-" : "+") + option.getOptionName();
         tailType = TailType.SPACE;
-        e = LookupElementBuilder.create(lookupString);
+        e = LookupElementBuilder.create(option.createPointer(), lookupString);
       }
       else if (!booleanStart) {
         String tailText = " = " + option.getDefaultValue();
         tailType = TailType.EQUALS;
-        e = LookupElementBuilder.create(option.getOptionName()).withTailText(tailText, true);
+        e = LookupElementBuilder.create(option.createPointer(), option.getOptionName()).withTailText(tailText, true);
       }
       if (e != null) {
         LookupElement element = TailTypeDecorator.withTail(e.withTypeText(type).withIcon(icon), tailType);
@@ -138,16 +146,14 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
         elements.add(element);
       }
     }
+    result = result.withPrefixMatcher(new CamelHumpMatcher(result.getPrefixMatcher().getPrefix(), false));
     result.addAllElements(elements);
     return true;
   }
 
   private static InsertHandler<LookupElement> getInsertHandler(VMOptionKind kind) {
-    return switch (kind) {
-      case Product -> null;
-      case Diagnostic -> (context, item) -> unlock(context, "-XX:+UnlockDiagnosticVMOptions");
-      case Experimental -> (context, item) -> unlock(context, "-XX:+UnlockExperimentalVMOptions");
-    };
+    String unlockOption = kind.unlockOption();
+    return unlockOption == null ? null : (context, item) -> unlock(context, unlockOption);
   }
 
   private static void unlock(InsertionContext context, String option) {
@@ -162,23 +168,35 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
   }
 
   @Nullable
+  private static String getJrePathForVmOptionsDocument(Document document) {
+    String path = document.getUserData(EditCustomVmOptionsAction.JRE_PATH_KEY);
+    if (path != null) {
+      return path;
+    }
+    JavaRunConfigurationBase settings = document.getUserData(VmOptionsEditor.SETTINGS_KEY);
+    if (settings == null) return null;
+    return getJrePath(settings);
+  }
+
+  @Nullable
   private static String getJrePath(JavaRunConfigurationBase settings) {
     String jrePath = null;
+    Sdk sdk;
     if (settings.isAlternativeJrePathEnabled()) {
       jrePath = settings.getAlternativeJrePath();
+      sdk = jrePath == null ? null : ProjectJdkTable.getInstance().findJdk(jrePath);
     }
     else {
       Module module = settings.getConfigurationModule().getModule();
-      Sdk sdk;
       if (module != null) {
         sdk = JavaParameters.getJdkToRunModule(module, false);
       }
       else {
         sdk = PathUtilEx.getAnyJdk(settings.getProject());
       }
-      if (sdk != null) {
-        jrePath = sdk.getHomePath();
-      }
+    }
+    if (sdk != null) {
+      jrePath = sdk.getHomePath();
     }
     return jrePath;
   }

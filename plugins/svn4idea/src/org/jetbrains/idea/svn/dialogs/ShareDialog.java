@@ -139,7 +139,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     group.add(new RefreshAction(browserComponent));
     group.add(new DiscardLocationAction(browserComponent));
     group.add(new DeleteAction(browserComponent));
-    return ActionManager.getInstance().createActionPopupMenu("", group);
+    return ActionManager.getInstance().createActionPopupMenu("SvnShareDialog", group);
   }
 
   @Override

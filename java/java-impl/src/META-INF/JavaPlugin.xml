@@ -965,7 +965,6 @@
                    implementationClass="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
 
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
-    <previewHintProvider implementation="com.intellij.codeInsight.preview.JavaPreviewHintProvider"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineStaticImportHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineConstantFieldHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineLocalHandler"/>
@@ -2369,6 +2368,10 @@
                         serviceImplementation="com.intellij.ide.starters.local.generator.AssetsProcessorImpl"
                         testServiceImplementation="com.intellij.ide.starters.local.generator.TestAssetsProcessorImpl"/>
 
+    <applicationService serviceInterface="com.intellij.ide.projectWizard.NewProjectWizardFactory"
+                        serviceImplementation="com.intellij.ide.projectWizard.NewProjectWizardFactoryImpl"
+                        testServiceImplementation="com.intellij.ide.projectWizard.TestNewProjectWizardFactoryImpl"/>
+
     <newProjectWizard.language implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
     <newProjectWizard.java.buildSystem implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizard"/>
 
@@ -2392,7 +2395,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
-    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="last"/>
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="before LastResortProvider"/>
   </extensions>
 
   <actions resource-bundle="messages/JavaUiBundle">

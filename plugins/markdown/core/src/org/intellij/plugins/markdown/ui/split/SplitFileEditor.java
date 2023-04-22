@@ -370,7 +370,7 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   /**
    * @deprecated Use {@link TextEditorWithPreview.Layout}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public enum SplitEditorLayout {
     FIRST(true, false, MarkdownBundle.message("markdown.layout.editor.only")),
     SECOND(false, true, MarkdownBundle.message("markdown.layout.preview.only")),

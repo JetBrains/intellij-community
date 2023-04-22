@@ -394,9 +394,8 @@ class CompoundRendererConfigurable extends JPanel {
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
     }
-    else if (childrenRenderer instanceof ExpressionChildrenRenderer) {
+    else if (childrenRenderer instanceof ExpressionChildrenRenderer exprRenderer) {
       myRbExpressionChildrenRenderer.setSelected(true);
-      final ExpressionChildrenRenderer exprRenderer = (ExpressionChildrenRenderer)childrenRenderer;
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpression()));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpandable()));
     }
@@ -404,8 +403,7 @@ class CompoundRendererConfigurable extends JPanel {
       myRbListChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
-      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
-        EnumerationChildrenRenderer enumerationRenderer = (EnumerationChildrenRenderer)childrenRenderer;
+      if (childrenRenderer instanceof EnumerationChildrenRenderer enumerationRenderer) {
         getTableModel().init(enumerationRenderer.getChildren());
         myAppendDefaultChildren.setSelected(enumerationRenderer.isAppendDefaultChildren());
       }

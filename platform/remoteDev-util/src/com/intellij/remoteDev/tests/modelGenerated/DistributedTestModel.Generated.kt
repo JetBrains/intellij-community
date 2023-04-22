@@ -52,7 +52,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -5661622978201614177L
+        const val serializationHash = 1821782107515716912L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -165,7 +165,6 @@ class RdTestSession private constructor(
     val testClassName: String?,
     val testMethodName: String?,
     val traceCategories: List<String>,
-    val waitForProject: Boolean,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<RdTestSessionException>,
     private val _shutdown: RdSignal<Unit>,
@@ -185,14 +184,13 @@ class RdTestSession private constructor(
             val testClassName = buffer.readNullable { buffer.readString() }
             val testMethodName = buffer.readNullable { buffer.readString() }
             val traceCategories = buffer.readList { buffer.readString() }
-            val waitForProject = buffer.readBool()
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _dumpThreads = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
-            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, waitForProject, _ready, _sendException, _shutdown, _dumpThreads, _runNextAction, _makeScreenshot).withId(_id)
+            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _runNextAction, _makeScreenshot).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -201,7 +199,6 @@ class RdTestSession private constructor(
             buffer.writeNullable(value.testClassName) { buffer.writeString(it) }
             buffer.writeNullable(value.testMethodName) { buffer.writeString(it) }
             buffer.writeList(value.traceCategories) { v -> buffer.writeString(v) }
-            buffer.writeBool(value.waitForProject)
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
             RdSignal.write(ctx, buffer, value._shutdown)
@@ -244,14 +241,12 @@ class RdTestSession private constructor(
         agentId: RdAgentId,
         testClassName: String?,
         testMethodName: String?,
-        traceCategories: List<String>,
-        waitForProject: Boolean
+        traceCategories: List<String>
     ) : this(
         agentId,
         testClassName,
         testMethodName,
         traceCategories,
-        waitForProject,
         RdProperty<Boolean?>(null, __BoolNullableSerializer),
         RdSignal<RdTestSessionException>(RdTestSessionException),
         RdSignal<Unit>(FrameworkMarshallers.Void),
@@ -270,7 +265,6 @@ class RdTestSession private constructor(
             print("testClassName = "); testClassName.print(printer); println()
             print("testMethodName = "); testMethodName.print(printer); println()
             print("traceCategories = "); traceCategories.print(printer); println()
-            print("waitForProject = "); waitForProject.print(printer); println()
             print("ready = "); _ready.print(printer); println()
             print("sendException = "); _sendException.print(printer); println()
             print("shutdown = "); _shutdown.print(printer); println()
@@ -287,7 +281,6 @@ class RdTestSession private constructor(
             testClassName,
             testMethodName,
             traceCategories,
-            waitForProject,
             _ready.deepClonePolymorphic(),
             _sendException.deepClonePolymorphic(),
             _shutdown.deepClonePolymorphic(),

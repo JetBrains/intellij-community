@@ -16,6 +16,7 @@ import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -66,8 +67,11 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
             }
         }
 
-    protected open fun createDebuggerTestCompilerFacility(testFiles: TestFiles, jvmTarget: JvmTarget, useIrBackend: Boolean) =
-        DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend)
+    protected open fun createDebuggerTestCompilerFacility(
+        testFiles: TestFiles, jvmTarget: JvmTarget, useIrBackend: Boolean,
+        lambdasGenerationScheme: JvmClosureGenerationScheme,
+    ) =
+        DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend, lambdasGenerationScheme)
 
     fun doTest(testFilePath: String) {
         val wholeFile = File(testFilePath)
@@ -79,7 +83,8 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
 
         val classesDir = File(testAppDirectory, CLASSES_DIRECTORY_NAME)
         val classBuilderFactory = OriginCollectingClassBuilderFactory(ClassBuilderMode.FULL)
-        val compilerFacility = createDebuggerTestCompilerFacility(testFiles, JvmTarget.JVM_1_8, useIrBackend = true)
+        val compilerFacility = createDebuggerTestCompilerFacility(testFiles, JvmTarget.JVM_1_8, useIrBackend = true,
+                                                                  JvmClosureGenerationScheme.CLASS)
         val compilationResult = compilerFacility.compileTestSources(
             project, jvmSourcesOutputDirectory, classesDir, classBuilderFactory
         )

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -41,8 +41,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
   @Override
   public PsiElement resolve() {
     final Object value = myElement.getValue();
-    if (value instanceof String) {
-      final String name = (String)value;
+    if (value instanceof String name) {
       final String type = getMemberType(myElement);
 
       if (type != null) {
@@ -161,8 +160,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
       final String text = ", " + getMethodTypeExpressionText((ReflectiveSignature)object);
       replaceText(context, text);
     }
-    else if (object instanceof PsiField) {
-      final PsiField field = (PsiField)object;
+    else if (object instanceof PsiField field) {
       final String typeText = getTypeText(field.getType());
       final String text = ", " + typeText + ".class";
       replaceText(context, text);
@@ -172,17 +170,13 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
   static class JavaLangInvokeHandleReferenceProvider extends PsiReferenceProvider {
     @Override
     public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-      if (element instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literal = (PsiLiteralExpression)element;
-        if (literal.getValue() instanceof String) {
-          final PsiElement parent = element.getParent();
-          if (parent instanceof PsiExpressionList) {
-            final PsiExpression[] expressions = ((PsiExpressionList)parent).getExpressions();
-            final PsiExpression qualifier = expressions.length != 0 ? expressions[0] : null;
-            if (qualifier != null) {
-              return new PsiReference[]{new JavaLangInvokeHandleReference(literal, qualifier)};
-            }
-          }
+      if (element instanceof PsiLiteralExpression literal &&
+          literal.getValue() instanceof String &&
+          element.getParent() instanceof PsiExpressionList list) {
+        final PsiExpression[] expressions = list.getExpressions();
+        final PsiExpression qualifier = expressions.length != 0 ? expressions[0] : null;
+        if (qualifier != null) {
+          return new PsiReference[]{new JavaLangInvokeHandleReference(literal, qualifier)};
         }
       }
       return PsiReference.EMPTY_ARRAY;

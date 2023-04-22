@@ -120,7 +120,7 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         changed = true;
       }
       String additionalVmOptions = getString(configurationMap, "additionalVmOptions");
-      if (additionalVmOptions != null && workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS != additionalVmOptions) {
+      if (additionalVmOptions != null && !additionalVmOptions.equals(workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS)) {
         workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = additionalVmOptions;
         changed = true;
       }

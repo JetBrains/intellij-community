@@ -780,7 +780,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
-    if (path1 == path2) return true;
+    if (Strings.areSameInstance(path1, path2)) return true;
     if (path1 == null || path2 == null) return false;
 
     path1 = toCanonicalPath(path1);
@@ -792,7 +792,7 @@ public class FileUtil extends FileUtilRt {
    * optimized version of pathsEqual - it only compares pure names, without file separators
    */
   public static boolean namesEqual(@Nullable String name1, @Nullable String name2) {
-    if (name1 == name2) return true;
+    if (Strings.areSameInstance(name1, name2)) return true;
     if (name1 == null || name2 == null) return false;
     return SystemInfoRt.isFileSystemCaseSensitive ? name1.equals(name2) : name1.equalsIgnoreCase(name2);
   }

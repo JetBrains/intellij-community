@@ -13,7 +13,7 @@ public class MarkdownElementVisitor extends PsiElementVisitor {
    * @deprecated Please use {@link MarkdownLinkDestination} and
    * {@link MarkdownElementVisitor#visitLinkDestination(MarkdownLinkDestination)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void visitLinkDestination(@NotNull MarkdownLinkDestinationImpl linkDestination) {
     visitElement(linkDestination);
   }
@@ -26,7 +26,7 @@ public class MarkdownElementVisitor extends PsiElementVisitor {
   /**
    * @deprecated Please use {@link MarkdownParagraph} and {@link MarkdownElementVisitor#visitParagraph(MarkdownParagraph)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void visitParagraph(@NotNull MarkdownParagraphImpl paragraph) {
     visitElement(paragraph);
   }
@@ -56,7 +56,7 @@ public class MarkdownElementVisitor extends PsiElementVisitor {
   /**
    * @deprecated Please use {@link MarkdownCodeFence} and {@link MarkdownElementVisitor#visitCodeFence(MarkdownCodeFence)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void visitCodeFence(@NotNull MarkdownCodeFenceImpl codeFence) {
     visitElement(codeFence);
   }
@@ -64,7 +64,7 @@ public class MarkdownElementVisitor extends PsiElementVisitor {
   /**
    * @deprecated Please use {@link MarkdownHeader} and {@link MarkdownElementVisitor#visitHeader(MarkdownHeader)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void visitHeader(@NotNull MarkdownHeaderImpl header) {
     visitElement(header);
   }

@@ -62,7 +62,7 @@ data class KeyBinding(
 
 class SimpleActionDescriptor(
   val action: String,
-  @NlsContexts.Label val humanName: String,
+  @Nls val humanName: String,
   val defaultShortcut: Any // KeyboardShortcut or DummyKeyboardShortcut
 ) {
   companion object {

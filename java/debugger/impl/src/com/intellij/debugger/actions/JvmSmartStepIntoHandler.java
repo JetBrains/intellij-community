@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -45,8 +45,7 @@ public abstract class JvmSmartStepIntoHandler {
    */
   @Nullable
   protected MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
-    if (stepTarget instanceof MethodSmartStepTarget) {
-      MethodSmartStepTarget methodSmartStepTarget = (MethodSmartStepTarget)stepTarget;
+    if (stepTarget instanceof MethodSmartStepTarget methodSmartStepTarget) {
       final PsiMethod method = methodSmartStepTarget.getMethod();
       if (stepTarget.needsBreakpointRequest()) {
         return Registry.is("debugger.async.smart.step.into") && method.getContainingClass() instanceof PsiAnonymousClass
@@ -57,8 +56,7 @@ public abstract class JvmSmartStepIntoHandler {
         return new BasicStepMethodFilter(method, methodSmartStepTarget.getOrdinal(), stepTarget.getCallingExpressionLines());
       }
     }
-    if (stepTarget instanceof LambdaSmartStepTarget) {
-      LambdaSmartStepTarget lambdaTarget = (LambdaSmartStepTarget)stepTarget;
+    if (stepTarget instanceof LambdaSmartStepTarget lambdaTarget) {
       LambdaMethodFilter lambdaMethodFilter =
         new LambdaMethodFilter(lambdaTarget.getLambda(), lambdaTarget.getOrdinal(), stepTarget.getCallingExpressionLines());
 

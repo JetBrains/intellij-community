@@ -128,6 +128,10 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         private var initializerRef: ((AbstractCache<Key, Value>) -> Unit)? = initializer
         private val initializerLock = Any()
 
+        init {
+            initialize()
+        }
+
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             connection.subscribe(WorkspaceModelTopics.CHANGED, this)

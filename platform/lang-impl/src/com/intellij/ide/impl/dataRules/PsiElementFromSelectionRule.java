@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiAwareObject;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,9 +46,6 @@ public class PsiElementFromSelectionRule implements GetDataRule {
       Project project = CommonDataKeys.PROJECT.getData(dataProvider);
       element = project == null || !((VirtualFile)item).isValid() ? null :
                 PsiManager.getInstance(project).findFile((VirtualFile)item);
-    }
-    else if (item instanceof SmartPsiElementPointer<?>) {
-      element = ((SmartPsiElementPointer<?>)item).getElement();
     }
     return element != null && element.isValid() ? element : null;
   }

@@ -68,7 +68,7 @@ public final class ControlFlowUtils {
     }
     else if (statement instanceof PsiExpressionListStatement || statement instanceof PsiEmptyStatement ||
              statement instanceof PsiAssertStatement || statement instanceof PsiDeclarationStatement ||
-             statement instanceof PsiSwitchLabelStatement || statement instanceof PsiForeachStatement) {
+             statement instanceof PsiSwitchLabelStatement || statement instanceof PsiForeachStatementBase) {
       return true;
     }
     else if (statement instanceof final PsiExpressionStatement expressionStatement) {
@@ -1109,6 +1109,11 @@ public final class ControlFlowUtils {
     }
 
     @Override
+    public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
+      // don't drill down
+    }
+
+    @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       // don't drill down
     }
@@ -1151,6 +1156,11 @@ public final class ControlFlowUtils {
 
     @Override
     public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
       // don't drill down
     }
 

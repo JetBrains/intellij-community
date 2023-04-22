@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -87,8 +87,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     final Map<PsiVariable, PsiElement> localToParamRef = new HashMap<>();
     final PsiExpression[] arguments = myMethodCall.getArgumentList().getExpressions();
     for (int i = 0; i < arguments.length; i++) {
-      if (i != parameterIndex && arguments[i] instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)arguments[i];
+      if (i != parameterIndex && arguments[i] instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement element = referenceExpression.resolve();
         if (PsiUtil.isJvmLocalVariable(element)) {
           final PsiParameter param = myMethod.getParameterList().getParameters()[i];
@@ -105,8 +104,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
-        if (element instanceof PsiLocalVariable) {
-          final PsiLocalVariable localVariable = (PsiLocalVariable)element;
+        if (element instanceof PsiLocalVariable localVariable) {
           final PsiElement[] elements = DefUseUtil.getDefs(myCallingBlock, localVariable, expression);
           if (elements.length == 1) {
             PsiExpression localInitializer = null;
@@ -116,8 +114,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
             else if (elements[0] instanceof PsiAssignmentExpression) {
               localInitializer = ((PsiAssignmentExpression)elements[0]).getRExpression();
             }
-            else if (elements[0] instanceof PsiReferenceExpression) {
-              final PsiReferenceExpression refElement = (PsiReferenceExpression)elements[0];
+            else if (elements[0] instanceof PsiReferenceExpression refElement) {
               final PsiElement parent = refElement.getParent();
               if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == refElement) {
                 localInitializer = ((PsiAssignmentExpression)parent).getRExpression();
@@ -177,8 +174,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         final PsiElement resolved = referenceExpression.resolve();
-        if (resolved instanceof PsiVariable) {
-          final PsiVariable variable = (PsiVariable)resolved;
+        if (resolved instanceof PsiVariable variable) {
           final PsiElement replacement = elementsToReplace.get(variable);
           if (replacement != null) {
             replacements.put(referenceExpression, replacement);
@@ -240,8 +236,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     final Set<PsiJavaCodeReferenceElement> paramRefsToInline = new HashSet<>();
     final Map<PsiElement, PsiElement> replacements = new HashMap<>();
     for (UsageInfo usage : usages) {
-      if (usage instanceof LocalReplacementUsageInfo) {
-        final LocalReplacementUsageInfo replacementUsageInfo = (LocalReplacementUsageInfo)usage;
+      if (usage instanceof LocalReplacementUsageInfo replacementUsageInfo) {
         final PsiElement element = replacementUsageInfo.getElement();
         final PsiElement replacement = replacementUsageInfo.getReplacement();
         if (element != null && replacement != null) {
@@ -402,29 +397,25 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
-      if (reference != null) {
-        final PsiElement resolved = reference.resolve();
-        if (resolved instanceof PsiClass) {
-          final PsiClass refClass = (PsiClass)resolved;
-          final String classUnavailableMessage =
-            JavaRefactoringBundle.message("inline.parameter.depends.on.unavailable.element.inside.method",
-                                          RefactoringUIUtil.getDescription(refClass, true));
-          if (!PsiUtil.isAccessible(refClass, myMethod, null)) {
-            myConflicts.putValue(expression, classUnavailableMessage);
-          }
-          else {
-            final PsiClass methodContainingClass = myMethod.getContainingClass();
-            LOG.assertTrue(methodContainingClass != null);
-            if (!PsiTreeUtil.isAncestor(myMethod, refClass, false)) {
-              PsiElement parent = refClass;
-              while ((parent = parent.getParent()) instanceof PsiClass) {
-                if (!PsiUtil.isAccessible((PsiClass)parent, myMethod, null)) {
-                  break;
-                }
+      if (reference != null && reference.resolve() instanceof PsiClass refClass) {
+        final String classUnavailableMessage =
+          JavaRefactoringBundle.message("inline.parameter.depends.on.unavailable.element.inside.method",
+                                        RefactoringUIUtil.getDescription(refClass, true));
+        if (!PsiUtil.isAccessible(refClass, myMethod, null)) {
+          myConflicts.putValue(expression, classUnavailableMessage);
+        }
+        else {
+          final PsiClass methodContainingClass = myMethod.getContainingClass();
+          LOG.assertTrue(methodContainingClass != null);
+          if (!PsiTreeUtil.isAncestor(myMethod, refClass, false)) {
+            PsiElement parent = refClass;
+            while ((parent = parent.getParent()) instanceof PsiClass) {
+              if (!PsiUtil.isAccessible((PsiClass)parent, myMethod, null)) {
+                break;
               }
-              if (!(parent instanceof PsiFile)) {
-                myConflicts.putValue(expression, classUnavailableMessage);
-              }
+            }
+            if (!(parent instanceof PsiFile)) {
+              myConflicts.putValue(expression, classUnavailableMessage);
             }
           }
         }

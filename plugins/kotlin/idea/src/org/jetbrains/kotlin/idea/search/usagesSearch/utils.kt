@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -41,7 +42,8 @@ import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.isValidOperator
 
-@Deprecated(
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated(
     "This method is obsolete and will be removed",
     ReplaceWith(
         "resolveToDescriptorIfAny(BodyResolveMode.FULL)",

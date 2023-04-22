@@ -255,7 +255,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("|characters with markup\nand without it|",
                  unknownOffsets(extractText("a.xml", "<b><![CDATA[\n   characters with markup\n]]>and without it</b>", 22)));
 
-    assertEquals("abcd", unknownOffsets(extractText("a.xml", "<tag attr=\"abcd\"/>", 14)));
+    assertEquals("abcd efg", unknownOffsets(extractText("a.xml", "<tag attr=\"abcd efg\"/>", 14)));
     assertEquals("comment", extractText("a.xml", "<!-- comment -->", 10).toString());
 
     assertEquals("top-level text", unknownOffsets(extractText("a.html", "top-level text", 2)));

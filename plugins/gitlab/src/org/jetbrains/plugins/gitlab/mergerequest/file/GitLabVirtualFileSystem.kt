@@ -23,21 +23,28 @@ internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirt
     if (project.locationHash != path.projectHash) return null
 
     return filesCache.getOrPut(path) {
-      GitLabMergeRequestTimelineFile(path.sessionId, project, path.repository, path.mrId)
+      if(path.isDiff == true) {
+        GitLabMergeRequestDiffFile(path.sessionId, project, path.repository, path.mrId)
+      } else {
+        GitLabMergeRequestTimelineFile(path.sessionId, project, path.repository, path.mrId)
+      }
     }
   }
 
-  fun getPath(sessionId: String, project: Project, repository: GitLabProjectCoordinates, id: GitLabMergeRequestId): String =
-    getPath(FilePath(sessionId, project.locationHash, repository, GitLabMergeRequestId.Simple(id)))
+  fun getPath(sessionId: String,
+              project: Project,
+              repository: GitLabProjectCoordinates,
+              id: GitLabMergeRequestId,
+              isDiff: Boolean = false): String =
+    getPath(FilePath(sessionId, project.locationHash, repository, GitLabMergeRequestId.Simple(id), isDiff))
 
   internal data class FilePath(override val sessionId: String,
                                override val projectHash: String,
                                val repository: GitLabProjectCoordinates,
-                               val mrId: GitLabMergeRequestId.Simple) : ComplexPath
+                               val mrId: GitLabMergeRequestId.Simple,
+                               val isDiff: Boolean? = null) : ComplexPath
 
   companion object {
-    val MANAGED_FILE_CLASSES = listOf(GitLabMergeRequestTimelineFile::class.java)
-
     private const val PROTOCOL = "gitlabmr"
 
     fun getInstance() = service<VirtualFileManager>().getFileSystem(PROTOCOL) as GitLabVirtualFileSystem

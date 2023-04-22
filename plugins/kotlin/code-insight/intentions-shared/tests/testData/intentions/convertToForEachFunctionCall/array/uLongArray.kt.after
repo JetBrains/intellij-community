@@ -1,0 +1,7 @@
+// WITH_STDLIB
+@OptIn(ExperimentalUnsignedTypes::class)
+fun foo() {
+    ulongArrayOf(1u).forEach { x ->
+        println(x)
+    }
+}

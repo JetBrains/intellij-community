@@ -80,6 +80,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     if (sourceElement.isNull()) return false;
     if (isUsedTestRunners(context, PLATFORM)) return false;
     configuration.setScriptDebugEnabled(false);
+    configuration.setForceTestExecution(true);
     boolean result = doSetupConfigurationFromContext(configuration, context, sourceElement);
     restoreDefaultScriptParametersIfNeeded(configuration, context);
     return result;

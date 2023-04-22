@@ -160,8 +160,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof DebuggerSettings)) return false;
-    DebuggerSettings secondSettings = (DebuggerSettings)obj;
+    if (!(obj instanceof DebuggerSettings secondSettings)) return false;
 
     return
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,12 +141,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       qualifierExpression = ((PsiParenthesizedExpression) qualifierExpression).getExpression();
     }
 
-    if (qualifierExpression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression referenceExpression = (PsiReferenceExpression) qualifierExpression;
-
-      PsiElement resolvedElement = referenceExpression.resolve();
-
-      return resolvedElement instanceof PsiClass;
+    if (qualifierExpression instanceof PsiReferenceExpression referenceExpression) {
+      return referenceExpression.resolve() instanceof PsiClass;
     } else if (qualifierExpression != null) {
       return false;
     } else if (ref instanceof PsiMethodReferenceExpression) {
@@ -154,7 +151,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     else {
       assert PsiTreeUtil.isAncestor(targetClass, ref, true);
       PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(ref, PsiModifierListOwner.class);
-      if (owner instanceof PsiMethod && ((PsiMethod)owner).isConstructor()) {
+      if (owner instanceof PsiMethod method && method.isConstructor()) {
         //usages inside delegating constructor call
         PsiExpression run = ref;
         while (run.getParent() instanceof PsiExpression) {
@@ -239,20 +236,16 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         }
       }
     }
-    if (element instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)element;
+    if (element instanceof PsiNewExpression newExpression) {
       PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
       if (ref != null) {
         PsiElement refElement = ref.resolve();
-        if (refElement instanceof PsiClass) {
-          psiClass = (PsiClass)refElement;
-        } else {
-          final PsiElement refQualifier = ref.getQualifier();
-          if (refQualifier instanceof PsiJavaCodeReferenceElement) {
-            refElement = ((PsiJavaCodeReferenceElement)refQualifier).resolve();
-            if (refElement instanceof PsiClass) {
-              psiClass = (PsiClass)refElement;
-            }
+        if (refElement instanceof PsiClass cls) {
+          psiClass = cls;
+        } else if (ref.getQualifier() instanceof PsiJavaCodeReferenceElement refQualifier) {
+          refElement = refQualifier.resolve();
+          if (refElement instanceof PsiClass cls) {
+            psiClass = cls;
           }
         }
       }
@@ -408,7 +401,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  public static void startTemplate(@NotNull Project project, @NotNull PsiClass aClass, @NotNull Template template, @NotNull String text) {
+  public static void startTemplate(@NotNull Project project, @NotNull PsiClass aClass, @NotNull Template template, @Nls @NotNull String text) {
     aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
     template.setToReformat(true);
 

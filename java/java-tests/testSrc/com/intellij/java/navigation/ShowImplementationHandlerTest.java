@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
+/** See also {@link com.intellij.codeInsight.ShowImplementationsTest} */
 public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
 
   @Override

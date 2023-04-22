@@ -7,9 +7,9 @@ import com.intellij.openapi.editor.impl.TabCharacterPaintMode
 import com.intellij.openapi.options.advanced.AdvancedSettingBean
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-private class RegistryToAdvancedSettingsMigration : ProjectPostStartupActivity {
+private class RegistryToAdvancedSettingsMigration : ProjectActivity {
   override suspend fun execute(project: Project) {
     val propertyName = "registry.to.advanced.settings.migration.build"
     val lastMigratedVersion = PropertiesComponent.getInstance().getValue(propertyName)

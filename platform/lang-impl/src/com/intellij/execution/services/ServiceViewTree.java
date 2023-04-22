@@ -69,6 +69,7 @@ class ServiceViewTree extends Tree {
 
   private static class ServiceViewTreeCellRenderer extends ServiceViewTreeCellRendererBase {
     private ServiceViewDescriptor myDescriptor;
+    private ServiceViewItemState myItemState;
     private JComponent myComponent;
 
     @Override
@@ -81,6 +82,7 @@ class ServiceViewTree extends Tree {
                                       boolean hasFocus) {
       myDescriptor = value instanceof ServiceViewItem ? ((ServiceViewItem)value).getViewDescriptor() : null;
       myComponent = tree;
+      myItemState = new ServiceViewItemState(selected, expanded, leaf, hasFocus);
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       myDescriptor = null;
     }
@@ -92,7 +94,8 @@ class ServiceViewTree extends Tree {
       if (!(node instanceof ServiceViewItem)) return null;
 
       ServiceViewOptions viewOptions = DataManager.getInstance().getDataContext(myComponent).getData(ServiceViewActionUtils.OPTIONS_KEY);
-      return ((ServiceViewItem)node).getItemPresentation(viewOptions);
+      assert myItemState != null;
+      return ((ServiceViewItem)node).getItemPresentation(viewOptions, myItemState);
     }
 
     @Override

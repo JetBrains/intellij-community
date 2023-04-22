@@ -93,7 +93,7 @@ class MavenSyncConsole(private val myProject: Project) {
                                             System.currentTimeMillis())
       .withRestartAction(restartAction)
     descriptor.isActivateToolWindowWhenFailed = spec.isExplicitImport
-    descriptor.isActivateToolWindowWhenAdded = ExternalSystemUtil.isNewProject(myProject)
+    descriptor.isActivateToolWindowWhenAdded = false
     descriptor.isNavigateToError = if (spec.isExplicitImport) ThreeState.YES else ThreeState.UNSURE
 
     mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, SyncBundle.message("maven.sync.project.title", myProject.name)))

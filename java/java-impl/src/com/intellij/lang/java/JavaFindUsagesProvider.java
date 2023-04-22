@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.core.JavaPsiBundle;
@@ -111,8 +111,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
         return qName != null ? qName : value == null ? "" : value;
       }
     }
-    if (element instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)element;
+    if (element instanceof PsiMethod psiMethod) {
       String formatted = PsiFormatUtil.formatMethod(psiMethod,
                                                     PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                                     PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE);
@@ -123,8 +122,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
 
       return formatted;
     }
-    if (element instanceof PsiField) {
-      PsiField psiField = (PsiField)element;
+    if (element instanceof PsiField psiField) {
       String formatted = PsiFormatUtil.formatVariable(psiField, PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
       PsiClass psiClass = psiField.getContainingClass();
       if (psiClass != null) {
@@ -197,8 +195,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       if (name != null) return name;
     }
 
-    if (element instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)element;
+    if (element instanceof PsiMethod psiMethod) {
       if (useFullName) {
         int options = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
         String s = PsiFormatUtil.formatMethod((PsiMethod)element, PsiSubstitutor.EMPTY, options, PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
@@ -210,8 +207,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       }
     }
 
-    if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)((PsiParameter)element).getDeclarationScope();
+    if (element instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod method) {
       int varOptions = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME;
       int methodOptions = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
       String s = JavaBundle.message("java.terms.variable.of.method",
@@ -220,8 +216,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       return appendClassName(s, method.getContainingClass());
     }
 
-    if (element instanceof PsiField) {
-      PsiField psiField = (PsiField)element;
+    if (element instanceof PsiField psiField) {
       int options = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME;
       String s = PsiFormatUtil.formatVariable(psiField, options, PsiSubstitutor.EMPTY);
       return appendClassName(s, psiField.getContainingClass());

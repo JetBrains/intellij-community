@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +31,6 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.JavaBaseRefactoringSupportProvider;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
-import com.intellij.refactoring.introduceParameter.EnclosingMethodSelectionDialog;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.containers.ContainerUtil;
@@ -360,8 +358,7 @@ public final class CommonJavaRefactoringUtil {
       declaration = (PsiStatement) codeBlock.add(declaration);
       JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
       if (loopBodyCopy != null && !replaceBody) codeBlock.add(loopBodyCopy);
-    } else if (container instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)container;
+    } else if (container instanceof PsiLambdaExpression lambdaExpression) {
       final PsiElement invalidBody = lambdaExpression.getBody();
       if (invalidBody == null) return declaration;
 
@@ -437,14 +434,11 @@ public final class CommonJavaRefactoringUtil {
     element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
-        if (!reference.isQualified()) {
-          final PsiElement resolved = reference.resolve();
-          if (resolved instanceof PsiTypeParameter) {
-            final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
-            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false) && filter.value(typeParameter)) {
-              used.add(typeParameter);
-            }
-          }
+        if (!reference.isQualified() &&
+            reference.resolve() instanceof PsiTypeParameter typeParameter &&
+            PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false) &&
+            filter.value(typeParameter)) {
+          used.add(typeParameter);
         }
       }
 
@@ -535,8 +529,7 @@ public final class CommonJavaRefactoringUtil {
     }
 
     if (anchor == null) return null;
-    if (occurrences.length > 1 && anchor.getParent().getParent() instanceof PsiSwitchStatement) {
-      PsiSwitchStatement switchStatement = (PsiSwitchStatement)anchor.getParent().getParent();
+    if (occurrences.length > 1 && anchor.getParent().getParent() instanceof PsiSwitchStatement switchStatement) {
       if (switchStatement.getBody().equals(anchor.getParent())) {
         int startOffset = occurrences[0].getTextRange().getStartOffset();
         int endOffset = occurrences[occurrences.length - 1].getTextRange().getEndOffset();
@@ -629,11 +622,10 @@ public final class CommonJavaRefactoringUtil {
     final PsiStatement[] statements = constructorBody.getStatements();
     if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
       final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-      if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-        final PsiReferenceExpression methodExpr = methodCallExpression.getMethodExpression();
+      if (expression instanceof PsiMethodCallExpression call) {
+        final PsiReferenceExpression methodExpr = call.getMethodExpression();
         if ("this".equals(methodExpr.getReferenceName())) {
-          return (PsiMethod)methodExpr.resolve();
+          return call.resolveMethod();
         }
       }
     }
@@ -975,10 +967,9 @@ public final class CommonJavaRefactoringUtil {
     final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
     PsiElement element = resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    if (!(element instanceof PsiMethod)) {
+    if (!(element instanceof PsiMethod method)) {
       return null;
     }
-    PsiMethod method = (PsiMethod)element;
     if (!method.isVarArgs() ||
         AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
       return null;
@@ -1042,8 +1033,7 @@ public final class CommonJavaRefactoringUtil {
       }
       final Project project = callExpression.getProject();
       final JavaResolveResult resolveResult;
-      if (callExpression instanceof PsiEnumConstant) {
-        final PsiEnumConstant enumConstant = (PsiEnumConstant)callExpression;
+      if (callExpression instanceof PsiEnumConstant enumConstant) {
         final PsiClass containingClass = enumConstant.getContainingClass();
         if (containingClass == null) return false;
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -1091,16 +1081,11 @@ public final class CommonJavaRefactoringUtil {
   }
 
   public static void tryToInlineArrayCreationForVarargs(final PsiExpression expr) {
-    if (expr instanceof PsiNewExpression && ((PsiNewExpression)expr).getArrayInitializer() != null) {
-      if (expr.getParent() instanceof PsiExpressionList) {
-        final PsiExpressionList exprList = (PsiExpressionList)expr.getParent();
-        PsiElement parent = exprList.getParent();
-        if (parent instanceof PsiCall) {
-          PsiExpression[] initializers = getArrayInitializersToFlattenInVarargs((PsiCall)parent);
-          if (initializers != null && isSafeToFlattenToVarargsCall((PsiCall)parent, initializers)) {
-            inlineArrayCreationForVarargs((PsiNewExpression)expr);
-          }
-        }
+    if (expr instanceof PsiNewExpression newExpression && newExpression.getArrayInitializer() != null &&
+        expr.getParent() instanceof PsiExpressionList exprList && exprList.getParent() instanceof PsiCall parentCall) {
+      PsiExpression[] initializers = getArrayInitializersToFlattenInVarargs(parentCall);
+      if (initializers != null && isSafeToFlattenToVarargsCall(parentCall, initializers)) {
+        inlineArrayCreationForVarargs(newExpression);
       }
     }
   }
@@ -1162,22 +1147,6 @@ public final class CommonJavaRefactoringUtil {
       }
     }
     return enclosingMethods;
-  }
-
-  @Nullable
-  public static PsiMethod chooseEnclosingMethod(@NotNull PsiMethod method) {
-    final List<PsiMethod> validEnclosingMethods = getEnclosingMethods(method);
-    if (validEnclosingMethods.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      final EnclosingMethodSelectionDialog dialog = new EnclosingMethodSelectionDialog(method.getProject(), validEnclosingMethods);
-      if (!dialog.showAndGet()) {
-        return null;
-      }
-      method = dialog.getSelectedMethod();
-    }
-    else if (validEnclosingMethods.size() == 1) {
-      method = validEnclosingMethods.get(0);
-    }
-    return method;
   }
 
   private static boolean isLibraryInterfaceMethod(final PsiMethod method) {

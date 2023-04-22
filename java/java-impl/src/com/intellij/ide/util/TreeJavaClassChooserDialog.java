@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
@@ -73,9 +73,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
   @Override
   @Nullable
   protected PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
-    Object userObject = node.getUserObject();
-    if (!(userObject instanceof ClassTreeNode)) return null;
-    ClassTreeNode descriptor = (ClassTreeNode)userObject;
+    if (!(node.getUserObject() instanceof ClassTreeNode descriptor)) return null;
     return descriptor.getPsiClass();
   }
 

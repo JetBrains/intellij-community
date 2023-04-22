@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
@@ -97,8 +97,7 @@ public final class LambdaRefactoringUtil {
     final PsiSubstitutor psiSubstitutor = LambdaUtil.getSubstitutor(interfaceMethod, functionalInterfaceResolveResult);
     final MethodSignature signature = interfaceMethod.getSignature(psiSubstitutor);
     final boolean isReceiver;
-    if (resolve instanceof PsiMethod){
-      final PsiMethod method = (PsiMethod)resolve;
+    if (resolve instanceof PsiMethod method){
       isReceiver = PsiMethodReferenceUtil.isResolvedBySecondSearch(referenceExpression, signature,
                                                                    method.isVarArgs(),
                                                                    method.hasModifierProperty(PsiModifier.STATIC),
@@ -256,15 +255,11 @@ public final class LambdaRefactoringUtil {
   }
 
   private static boolean isQualifierUnnecessary(PsiElement qualifier, PsiClass containingClass) {
-    if (qualifier instanceof PsiReferenceExpression) {
-      PsiReferenceExpression reference = (PsiReferenceExpression)qualifier;
-      if (reference.resolve() instanceof PsiClass &&
-          reference.getQualifier() == null &&
-          PsiTreeUtil.isContextAncestor(containingClass, qualifier, false)) {
-        return true;
-      }
+    if (qualifier instanceof PsiReferenceExpression reference && reference.resolve() instanceof PsiClass &&
+        reference.getQualifier() == null && PsiTreeUtil.isContextAncestor(containingClass, qualifier, false)) {
+      return true;
     }
-    return qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null;
+    return qualifier instanceof PsiThisExpression thisExpression && thisExpression.getQualifier() == null;
   }
 
   private static boolean isInferredSameTypeAfterConversion(PsiLambdaExpression lambdaExpression,

@@ -2,19 +2,29 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 internal object GHPRTitleComponent {
 
@@ -28,15 +38,36 @@ internal object GHPRTitleComponent {
     return titlePane
   }
 
-  fun create(scope: CoroutineScope, reviewDetailsVM: GHPRDetailsViewModel): JComponent {
+  fun create(scope: CoroutineScope, reviewDetailsVm: GHPRDetailsViewModel): JComponent {
     val titleLabel = HtmlEditorPane().apply {
       font = JBFont.h2().asBold()
-      bindText(scope, reviewDetailsVM.titleState.map { title ->
-        createTitleText(title, reviewDetailsVM.number, reviewDetailsVM.url)
+      bindText(scope, reviewDetailsVm.titleState.map { title ->
+        createTitleText(title, reviewDetailsVm.number, reviewDetailsVm.url)
       })
     }
+    val pullRequestStateLabel = JLabel().apply {
+      font = JBFont.small()
+      foreground = UIUtil.getContextHelpForeground()
+      border = JBUI.Borders.empty(0, 4)
+      bindText(scope, combine(reviewDetailsVm.reviewMergeState, reviewDetailsVm.isDraftState) { mergeState, isDraft ->
+        GHUIUtil.getPullRequestStateText(mergeState, isDraft)
+      })
+    }.let {
+      RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
+        border = JBUI.Borders.empty()
+        background = UIUtil.getPanelBackground()
+        bindVisibility(scope, combine(reviewDetailsVm.reviewMergeState, reviewDetailsVm.isDraftState) { mergeState, isDraft ->
+          isDraft || mergeState == GHPullRequestState.CLOSED || mergeState == GHPullRequestState.MERGED
+        })
+        add(it)
+      }
+    }
 
-    return titleLabel
+    return JPanel(MigLayout(LC().emptyBorders().fillX())).apply {
+      isOpaque = false
+      add(titleLabel, CC().grow().push())
+      add(pullRequestStateLabel, CC())
+    }
   }
 
   private fun createTitleText(title: @NlsSafe String, reviewNumber: @NlsSafe String, url: String): @NlsSafe String {

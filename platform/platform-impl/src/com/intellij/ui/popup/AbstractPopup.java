@@ -1838,7 +1838,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     updateMaskAndAlpha(popupWindow);
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static Window setSize(@NotNull JComponent content, @NotNull Dimension size) {
     final Window popupWindow = getContentWindow(content);
     if (popupWindow == null) return null;

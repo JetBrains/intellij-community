@@ -500,8 +500,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx {
 
   @Nullable
   public static Range<Location> getLocalVariableBorders(@NotNull LocalVariable variable) {
-    if (!(variable instanceof LocalVariableImpl)) return null;
-    LocalVariableImpl variableImpl = (LocalVariableImpl)variable;
+    if (!(variable instanceof LocalVariableImpl variableImpl)) return null;
     return new Range<>(variableImpl.getScopeStart(), variableImpl.getScopeEnd());
   }
 }

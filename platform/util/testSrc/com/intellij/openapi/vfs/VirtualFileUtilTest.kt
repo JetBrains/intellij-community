@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.io.*
+import com.intellij.testFramework.utils.vfs.*
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.IOException
@@ -104,9 +105,9 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
         .isExistedDirectory()
 
       assertVirtualFile { writeAction { createFile("file.txt") } }
-        .isFailedWithException<IllegalStateException>("File already exists: .*")
+        .isFailedWithException<IOException>("File already exists: .*")
       assertVirtualFile { writeAction { createDirectory("directory") } }
-        .isFailedWithException<IllegalStateException>("Directory already exists: .*")
+        .isFailedWithException<IOException>("Directory already exists: .*")
 
       assertVirtualFile { writeAction { findOrCreateFile("directory") } }
         .isFailedWithException<IOException>("Expected file instead of directory: .*")
@@ -126,10 +127,10 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
       assertNioPath { getResolvedPath("file.txt") }
         .doesNotExist()
       assertNioPath { findOrCreateFile("file.txt") }
-        .assertVirtualFile { writeAction { findVirtualFile() } }
+        .assertVirtualFile { writeAction { refreshAndFindVirtualFile() } }
         .isExistedFile()
       assertNioPath { findOrCreateDirectory("directory") }
-        .assertVirtualFile { writeAction { findVirtualDirectory() } }
+        .assertVirtualFile { writeAction { refreshAndFindVirtualDirectory() } }
         .isExistedDirectory()
     }
   }
@@ -137,7 +138,7 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
   @Test
   fun `test delete`() {
     runBlocking {
-      val root = writeAction { root.getVirtualDirectory() }
+      val root = writeAction { root.refreshAndGetVirtualDirectory() }
       writeAction { root.createFile("file.txt") }
       writeAction { root.deleteRecursively("file.txt") }
       assertVirtualFile { readAction { findFile("file.txt") } }

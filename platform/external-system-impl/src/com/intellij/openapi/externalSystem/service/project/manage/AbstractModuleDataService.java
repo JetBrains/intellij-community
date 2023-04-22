@@ -471,8 +471,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
     }
 
-    noOrderAwareItems.sort(Comparator.comparing(Object::toString));
-
     for (int i = 0; i < noOrderAwareItems.size(); i++) {
       newOrder[i] = noOrderAwareItems.get(i);
     }

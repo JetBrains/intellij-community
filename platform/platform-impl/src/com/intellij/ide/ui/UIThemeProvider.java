@@ -41,6 +41,9 @@ public final class UIThemeProvider implements PluginAware {
   @RequiredElement
   public String id;
 
+  @Attribute("parentTheme")
+  public @Nullable String parentTheme;
+
   @ApiStatus.Internal
   public byte[] getThemeJson() throws IOException {
     String path = this.path;
@@ -48,7 +51,7 @@ public final class UIThemeProvider implements PluginAware {
     return ResourceUtil.getResourceAsBytes(path, pluginDescriptor.getClassLoader());
   }
 
-  public @Nullable UITheme createTheme() {
+  public @Nullable UITheme createTheme(@Nullable UITheme parentTheme) {
     try {
       ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
       byte[] stream = getThemeJson();
@@ -59,7 +62,7 @@ public final class UIThemeProvider implements PluginAware {
         ));
         return null;
       }
-      return UITheme.loadFromJson(stream, id, classLoader, Function.identity());
+      return UITheme.loadFromJson(parentTheme, stream, id, classLoader, Function.identity());
     }
     catch (Throwable e) {
       Logger.getInstance(getClass()).warn(new PluginException(

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -180,8 +180,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
         }
       }
     }
-    else if (scope instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)scope;
+    else if (scope instanceof PsiNewExpression newExpression) {
       final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
       if (anonymousClass != null) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, moving, targetClass, false)) {
@@ -197,8 +196,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
         }
       }
     }
-    else if (scope instanceof PsiJavaCodeReferenceElement) {
-      PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)scope;
+    else if (scope instanceof PsiJavaCodeReferenceElement refExpr) {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {

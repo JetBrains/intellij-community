@@ -14,6 +14,7 @@ import com.intellij.util.io.readText
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.*
+import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import java.io.File
 import java.net.URI
@@ -21,6 +22,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class NastradamusClientTest {
   init {
@@ -30,6 +32,10 @@ class NastradamusClientTest {
   @JvmField
   @Rule
   val timeoutRule = Timeout(30, TimeUnit.SECONDS)
+
+  @JvmField
+  @Rule
+  val testName: TestName = TestName()
 
   private val jacksonMapper = jacksonObjectMapper()
   private val tcMockServer = MockWebServer()
@@ -184,19 +190,48 @@ class NastradamusClientTest {
     Assert.assertEquals("Payload is in wrong format", jacksonMapper.writeValueAsString(sortEntity), request.body.readUtf8())
   }
 
-  @Test(expected = RuntimeException::class)
-  fun errorThresholdTest() {
+  @Test
+  fun successfulErrorThresholdTest() {
+    (1..3).forEach {
+      val result = withErrorThreshold<String>(
+        objName = testName.methodName,
+        errorThreshold = 1,
+        action = { it.toString() },
+        fallbackOnThresholdReached = { "fallback" }
+      )
+
+      Assert.assertEquals(it.toString(), result)
+    }
+  }
+
+  @Test
+  fun negativeErrorThresholdTest() {
+    val counter = AtomicInteger()
+
     (1..3).forEach {
       try {
-        withErrorThreshold("TestErrorThreshold", errorThreshold = 3) {
-          throw Exception("Badums")
-        }
+        withErrorThreshold<String>(
+          objName = testName.methodName,
+          errorThreshold = 3,
+          action = { throw Exception("Badums") },
+          fallbackOnThresholdReached = { "fallback" }
+        )
       }
-      catch (e: Throwable) {
+      catch (e: Exception) {
+        counter.incrementAndGet()
       }
     }
 
-    withErrorThreshold("TestErrorThreshold", errorThreshold = 3) { }
+    Assert.assertEquals("Count of failures should be 3", 3, counter.get())
+
+    val result = withErrorThreshold<String>(
+      objName = testName.methodName,
+      errorThreshold = 3,
+      action = { "action" },
+      fallbackOnThresholdReached = { "fallback" }
+    )
+
+    Assert.assertEquals("Fallback function should be executed in case of threshold limit", "fallback", result)
   }
 
   @Test

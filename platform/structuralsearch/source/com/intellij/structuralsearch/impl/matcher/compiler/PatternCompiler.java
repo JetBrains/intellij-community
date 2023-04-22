@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
@@ -218,9 +218,7 @@ public final class PatternCompiler {
     final int varCount = varEndOffsets.length;
     final String[] prefixSequence = new String[varCount];
 
-    for (int i = 0; i < varCount; i++) {
-      prefixSequence[i] = applicablePrefixes[0];
-    }
+    Arrays.fill(prefixSequence, applicablePrefixes[0]);
 
     final List<PsiElement> finalElements =
       compileByPrefixes(project, options, pattern, context, applicablePrefixes, patterns, prefixSequence, 0, checkForErrors);

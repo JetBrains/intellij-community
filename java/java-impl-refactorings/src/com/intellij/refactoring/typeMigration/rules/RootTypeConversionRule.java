@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.util.Comparing;
@@ -29,8 +29,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
     if (member != null && to instanceof PsiClassType && from instanceof PsiClassType) {
       final PsiClass targetClass = ((PsiClassType)to).resolve();
       if (targetClass != null && member.isPhysical()) {
-        if (member instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)member;
+        if (member instanceof PsiMethod method) {
           PsiMethod replacer = targetClass.findMethodBySignature(method, true);
           if (replacer == null) {
             for (PsiMethod superMethod : method.findDeepestSuperMethods()) {

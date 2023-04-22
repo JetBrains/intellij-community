@@ -613,7 +613,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   }
 
   private static boolean hasUnconditionalPatternCheck(PsiType type, PsiExpression check) {
-    final PsiPattern pattern = SwitchUtils.createPatternFromExpression(check);
+    final PsiCaseLabelElement pattern = SwitchUtils.createPatternFromExpression(check);
     if (pattern == null) return false;
     return JavaPsiPatternUtil.isUnconditionalForType(pattern, type);
   }

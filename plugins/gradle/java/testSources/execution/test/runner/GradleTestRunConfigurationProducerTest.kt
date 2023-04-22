@@ -362,6 +362,14 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   }
 
   @Test
+  fun `test configurations not from context do not force test run`() {
+    generateAndImportTemplateProject()
+    createAndAddRunConfiguration("test verify").let { configuration ->
+      TestCase.assertFalse(configuration.isForceTestExecution)
+    }
+  }
+
+  @Test
   fun `test cannot create configurationFromContext when no test sources are available`() {
     val projectData = generateAndImportTemplateProject()
 

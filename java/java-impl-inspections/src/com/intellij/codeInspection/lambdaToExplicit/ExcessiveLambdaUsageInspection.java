@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lambdaToExplicit;
 
 import com.intellij.codeInspection.*;
@@ -37,8 +37,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
         if (!(parent instanceof PsiExpressionList)) return;
         PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
         if (call == null) return;
-        if (!(lambda.getBody() instanceof PsiExpression)) return;
-        PsiExpression expr = (PsiExpression)lambda.getBody();
+        if (!(lambda.getBody() instanceof PsiExpression expr)) return;
         if (!ExpressionUtils.isSafelyRecomputableExpression(expr)) return;
         if (ContainerUtil.or(lambda.getParameterList().getParameters(),
                              param -> ExpressionUtils.isReferenceTo(expr, param))) {
@@ -134,8 +133,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
 
     @Nullable
     static Context from(@Nullable PsiElement element) {
-      if (!(element instanceof PsiLambdaExpression)) return null;
-      PsiLambdaExpression lambda = (PsiLambdaExpression)element;
+      if (!(element instanceof PsiLambdaExpression lambda)) return null;
       PsiElement body = lambda.getBody();
       if (body == null) return null;
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(lambda, PsiMethodCallExpression.class);

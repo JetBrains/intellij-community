@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.tree;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,16 +26,13 @@ import static org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.*;
 public class MavenModuleImportDependencyProvider {
   public static final int INITIAL_CAPACITY_TEST_DEPENDENCY_LIST = 4;
 
-  @NotNull private final Project project;
   @NotNull private final Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;
   @NotNull private final Set<String> dependencyTypesFromSettings;
   @NotNull private final MavenProjectsTree myProjectTree;
 
-  public MavenModuleImportDependencyProvider(@NotNull Project project,
-                                             @NotNull Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId,
+  public MavenModuleImportDependencyProvider(@NotNull Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId,
                                              @NotNull MavenImportingSettings importingSettings,
                                              @NotNull MavenProjectsTree projectTree) {
-    this.project = project;
     this.moduleImportDataByMavenId = moduleImportDataByMavenId;
     this.dependencyTypesFromSettings = importingSettings.getDependencyTypesAsSet();
     myProjectTree = projectTree;
@@ -48,7 +44,7 @@ public class MavenModuleImportDependencyProvider {
     List<MavenImportDependency<?>> mainDependencies = new ArrayList<>(mavenProject.getDependencies().size());
     List<MavenImportDependency<?>> testDependencies = new ArrayList<>(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST);
 
-    addMainDependencyToTestModule(importData, mavenProject, testDependencies);
+    addMainDependencyToTestModule(importData, testDependencies);
     boolean hasSeparateTestModule = importData.getSplittedMainAndTestModules() != null;
     for (MavenArtifact artifact : mavenProject.getDependencies()) {
       for (MavenImportDependency<?> dependency : getDependency(artifact, mavenProject)) {
@@ -64,7 +60,6 @@ public class MavenModuleImportDependencyProvider {
   }
 
   private static void addMainDependencyToTestModule(MavenProjectImportData importData,
-                                                    MavenProject mavenProject,
                                                     List<MavenImportDependency<?>> testDependencies) {
     if (importData.getSplittedMainAndTestModules() != null) {
       testDependencies.add(

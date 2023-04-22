@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.application.options.CodeStyle;
@@ -224,8 +224,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public boolean prepare(@Nullable Consumer<? super ExtractMethodProcessor> pass) throws PrepareFailedException {
     if (myElements.length == 0) return false;
     myExpression = null;
-    if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
-      final PsiExpression expression = (PsiExpression)myElements[0];
+    if (myElements.length == 1 && myElements[0] instanceof PsiExpression expression) {
       if (expression instanceof PsiAssignmentExpression && expression.getParent() instanceof PsiExpressionStatement) {
         myElements[0] = expression.getParent();
       }
@@ -506,10 +505,9 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void checkCanBeChainedConstructor() {
-    if (!(myCodeFragmentMember instanceof PsiMethod)) {
+    if (!(myCodeFragmentMember instanceof PsiMethod method)) {
       return;
     }
-    final PsiMethod method = (PsiMethod)myCodeFragmentMember;
     if (!method.isConstructor() || !PsiTypes.voidType().equals(myReturnType)) {
       return;
     }
@@ -1063,8 +1061,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       for (PsiReference reference : ReferencesSearch.search(psiParameter, new LocalSearchScope(body))){
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
-        if (parent instanceof PsiTypeCastExpression) {
-          final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+        if (parent instanceof PsiTypeCastExpression typeCastExpression) {
           final PsiTypeElement castType = typeCastExpression.getCastType();
           if (castType != null && Comparing.equal(castType.getType(), paramType)) {
             RemoveRedundantCastUtil.removeCast(typeCastExpression);
@@ -1568,8 +1565,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           reference.handleElementRename(data.name);
 
           final PsiElement element = reference.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+          if (element instanceof PsiReferenceExpression referenceExpression) {
             final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
             if (qualifierExpression instanceof PsiQualifiedExpression) {
               referenceExpression.setQualifierExpression(null);

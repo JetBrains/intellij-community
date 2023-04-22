@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -171,21 +171,18 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
     if (super.canRepresent(element)) return true;
     final PackageElement value = getValue();
     if (value == null) return true;
-    if (element instanceof PackageElement) {
-      final PackageElement packageElement = (PackageElement)element;
+    if (element instanceof PackageElement packageElement) {
       final String otherPackage = packageElement.getPackage().getQualifiedName();
       final String aPackage = value.getPackage().getQualifiedName();
       if (otherPackage.equals(aPackage)) {
         return true;
       }
     }
-    if (element instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)element;
+    if (element instanceof PsiDirectory directory) {
       return isPackageUnderDirectory(value, directory.getVirtualFile());
     }
-    if (element instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)element;
-      if (file.isDirectory()) return isPackageUnderDirectory(value, file);
+    if (element instanceof VirtualFile file) {
+      return file.isDirectory() && isPackageUnderDirectory(value, file);
     }
     return false;
   }

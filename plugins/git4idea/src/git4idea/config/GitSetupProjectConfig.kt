@@ -2,13 +2,13 @@
 package git4idea.config
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
-internal class GitSetupProjectConfig : ProjectPostStartupActivity {
+internal class GitSetupProjectConfig : ProjectActivity {
   override suspend fun execute(project: Project) {
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       setupConfigIfNeeded(project)

@@ -469,18 +469,11 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
         }
         else {
           switch (c.getCType()) {
-            case Comment:
-              printComment(out, (Comment)c);
-              break;
             case DocType:
               printDocType(out, fstack, (DocType)c);
               break;
             case Element:
               printElement(out, fstack, nstack, (Element)c);
-              break;
-            case ProcessingInstruction:
-              printProcessingInstruction(out, fstack,
-                                         (ProcessingInstruction)c);
               break;
             case Text:
               final String padding = ((Text)c).getText();

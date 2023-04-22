@@ -232,7 +232,7 @@ final class GenerateVisitorByHierarchyAction extends AnAction {
       TextRange prefixRange = ContainerUtil.getFirstItem(range);
       if (prefixRange != null) {
         String prefix = prefixRange.substring(className);
-        detectedPrefix = detectedPrefix == "" ? prefix : detectedPrefix.equals(prefix) ? detectedPrefix : null;
+        detectedPrefix = detectedPrefix.isEmpty() ? prefix : detectedPrefix.equals(prefix) ? detectedPrefix : null;
       }
       if (detectedPrefix == null) return "";
     }

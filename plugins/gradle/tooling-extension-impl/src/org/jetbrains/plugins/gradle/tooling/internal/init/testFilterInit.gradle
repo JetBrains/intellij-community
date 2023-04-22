@@ -13,7 +13,7 @@ gradle.taskGraph.whenReady { taskGraph ->
   taskGraph.allTasks.each { Task task ->
     if (task instanceof Test || (abstractTestTaskClass != null && abstractTestTaskClass.isAssignableFrom(task.class))) {
       try {
-        task.outputs.upToDateWhen { false }
+        ${FORCE_TEST_EXECUTION}
         String[] strings = ['*']
         if(ijTestIncludes.size() > 0 && ijTestIncludes != strings) {
           def filter = task.getFilter()

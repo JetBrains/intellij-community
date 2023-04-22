@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
@@ -22,11 +22,10 @@ public final class TypedSymbolNodeFilter implements NodeFilter {
     else if (element instanceof PsiMethod) {
       return true;
     }
-    else if (element instanceof PsiJavaCodeReferenceElement) {
+    else if (element instanceof PsiJavaCodeReferenceElement referenceElement) {
       if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, PsiPackageStatement.class) != null) {
         return false;
       }
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
       final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
       if (parameterList != null) {
         return true;

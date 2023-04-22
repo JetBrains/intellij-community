@@ -436,7 +436,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
         LOG.info(threadDump);
 
         if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
-          TakeScreenshotCommand.takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.before.kill"));
+          TakeScreenshotCommand.takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.on.failure"));
         }
         if (mustExitOnFailure) {
           if (MUST_EXIT_PROCESS_WITH_NON_SUCCESS_CODE_ON_IDE_ERROR) {

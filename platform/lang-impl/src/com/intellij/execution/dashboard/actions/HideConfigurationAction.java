@@ -11,9 +11,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 final class HideConfigurationAction extends DumbAwareAction {
@@ -25,8 +26,8 @@ final class HideConfigurationAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    JBIterable<RunDashboardRunConfigurationNode> nodes = RunDashboardActionUtils.getTargets(e);
-    boolean enabled = e.getProject() != null && nodes.isNotEmpty();
+    List<RunDashboardRunConfigurationNode> nodes = RunDashboardActionUtils.getTargets(e);
+    boolean enabled = e.getProject() != null && !nodes.isEmpty();
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(enabled);
     if (enabled) {
@@ -39,8 +40,8 @@ final class HideConfigurationAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
 
-    Set<RunConfiguration> configurations =
-      RunDashboardActionUtils.getTargets(e).map(node -> node.getConfigurationSettings().getConfiguration()).toSet();
+    List<RunDashboardRunConfigurationNode> nodes = RunDashboardActionUtils.getTargets(e);
+    Set<RunConfiguration> configurations = ContainerUtil.map2Set(nodes, node -> node.getConfigurationSettings().getConfiguration());
     ((RunDashboardManagerImpl)RunDashboardManager.getInstance(project)).hideConfigurations(configurations);
   }
 }

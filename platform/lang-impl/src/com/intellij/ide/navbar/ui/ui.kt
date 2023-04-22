@@ -50,7 +50,7 @@ internal fun navBarItemFont(): Font? {
   if (!ExperimentalUI.isNewUI() && UISettings.getInstance().useSmallLabelsOnTabs) {
     return RelativeFont.SMALL.derive(StartupUiUtil.getLabelFont())
   }
-  return StartupUiUtil.getLabelFont()
+  return JBUI.CurrentTheme.StatusBar.font()
 }
 
 internal fun navBarItemInsets(): Insets {

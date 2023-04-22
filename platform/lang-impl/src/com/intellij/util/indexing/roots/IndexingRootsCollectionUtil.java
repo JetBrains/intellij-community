@@ -279,7 +279,7 @@ public class IndexingRootsCollectionUtil {
         if (customData instanceof ModuleContentOrSourceRootData) {
           myContents.putValue(((ModuleContentOrSourceRootData)customData).getModule(), root);
         }
-        else if (kind == WorkspaceFileKind.CONTENT || kind == WorkspaceFileKind.TEST_CONTENT) {
+        else if (kind.isContent()) {
           myContentRoots.putValue(entity, root);
         }
         else if (kind == WorkspaceFileKind.EXTERNAL) {

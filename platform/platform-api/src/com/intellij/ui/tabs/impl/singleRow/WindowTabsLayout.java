@@ -28,7 +28,16 @@ public class WindowTabsLayout extends SingleRowLayout {
     if (tabCount > 0) {
       Rectangle bounds = getStrategy().getLayoutRect(data, data.position, length);
 
-      bounds.width = myTabs.getWidth() / tabCount;
+      int tabsWidth = myTabs.getWidth();
+      bounds.width = tabsWidth / tabCount;
+
+      if (myTabs.getIndexOf(label.getInfo()) == myTabs.getTabCount() - 1) {
+        int fullWidth = bounds.width * tabCount;
+        if (fullWidth < tabsWidth) {
+          bounds.width += tabsWidth - fullWidth;
+        }
+      }
+
       myTabs.layout(label, bounds);
       label.setAlignmentToCenter(true);
 

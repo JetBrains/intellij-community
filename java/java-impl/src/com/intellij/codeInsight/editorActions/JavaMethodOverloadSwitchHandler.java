@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -72,7 +72,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
     if (!(exprList instanceof PsiExpressionList)) return;
     PsiElement call = exprList.getParent();
-    if (!(call instanceof PsiCall)) return;
+    if (!(call instanceof PsiCall methodCall)) return;
     int lbraceOffset = exprList.getTextRange().getStartOffset();
     ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor, lbraceOffset);
     if (controller == null || !controller.isHintShown(false)) return;
@@ -119,7 +119,6 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
 
     updateParameterValues(editor, caret, targetMethod, exprList, lbraceOffset, enteredParameters, virtualComma);
 
-    PsiCall methodCall = (PsiCall)call;
     JavaMethodCallElement.setCompletionModeIfNotSet(methodCall, controller);
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());

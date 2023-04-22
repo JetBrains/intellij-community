@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -408,9 +408,8 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   }
 
   private static boolean isGetter(Object object) {
-    if (!(object instanceof PsiMethod)) return false;
+    if (!(object instanceof PsiMethod method)) return false;
 
-    PsiMethod method = (PsiMethod)object;
     if (!PropertyUtilBase.hasGetterName(method)) return false;
     if (method.hasTypeParameters()) return false;
 
@@ -421,10 +420,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (statement == null) {
       return false;
     }
-    if (!(statement.getParent() instanceof PsiCodeBlock)) {
+    if (!(statement.getParent() instanceof PsiCodeBlock codeBlock)) {
       return true;
     }
-    PsiCodeBlock codeBlock = (PsiCodeBlock)statement.getParent();
     PsiStatement[] siblings = codeBlock.getStatements();
     PsiStatement lastOne = siblings[siblings.length - 1];
     if (statement == lastOne) {

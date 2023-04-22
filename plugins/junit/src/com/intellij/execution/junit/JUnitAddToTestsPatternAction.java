@@ -39,7 +39,7 @@ public class JUnitAddToTestsPatternAction extends AbstractAddToTestsPatternActio
 
   @Override
   protected boolean isPatternBasedConfiguration(JUnitConfiguration configuration) {
-    return configuration.getPersistentData().TEST_OBJECT == JUnitConfiguration.TEST_PATTERN;
+    return JUnitConfiguration.TEST_PATTERN.equals(configuration.getPersistentData().TEST_OBJECT);
   }
 
   @Override

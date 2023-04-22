@@ -20,6 +20,6 @@ import org.jetbrains.jps.model.JpsUrlListChangeListener;
 /**
  * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.workspaceModel.storage.WorkspaceEntityStorage the workspace model}.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface JpsModuleContentRootsListener extends JpsUrlListChangeListener<JpsModule> {
 }

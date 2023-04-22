@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -36,8 +36,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
   @Override
   public CompilerRef asCompilerRef(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException {
     if (mayBeVisibleOutsideOwnerFile(element)) {
-      if (element instanceof PsiField) {
-        final PsiField field = (PsiField)element;
+      if (element instanceof PsiField field) {
         final PsiClass aClass = field.getContainingClass();
         if (aClass == null || aClass instanceof PsiAnonymousClass) return null;
         final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
@@ -47,12 +46,11 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
         final int nameId = names.tryEnumerate(name);
         return new CompilerRef.JavaCompilerFieldRef(ownerId, nameId);
       }
-      else if (element instanceof PsiMethod) {
-        final PsiClass aClass = ((PsiMethod)element).getContainingClass();
+      else if (element instanceof PsiMethod method) {
+        final PsiClass aClass = method.getContainingClass();
         if (aClass == null || aClass instanceof PsiAnonymousClass) return null;
         final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
         if (jvmOwnerName == null) return null;
-        final PsiMethod method = (PsiMethod)element;
         final String name = method.isConstructor() ? "<init>" : method.getName();
         final int parametersCount = method.getParameterList().getParametersCount();
         final int ownerId = names.tryEnumerate(jvmOwnerName);
@@ -139,10 +137,9 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
 
   @Override
   public PsiElement @NotNull [] getInstantiableConstructors(@NotNull PsiElement aClass) {
-    if (!(aClass instanceof PsiClass)) {
+    if (!(aClass instanceof PsiClass theClass)) {
       throw new IllegalArgumentException("parameter should be an instance of PsiClass: " + aClass);
     }
-    PsiClass theClass = (PsiClass)aClass;
     if (theClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return PsiElement.EMPTY_ARRAY;
     }

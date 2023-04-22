@@ -32,6 +32,9 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         }
 
         override fun setupAdvancedSettingsUI(builder: Panel) {
+            setupModuleNameUI(builder)
+            setupModuleContentRootUI(builder)
+            setupModuleFileLocationUI(builder)
         }
 
         override fun setupProject(project: Project) =

@@ -128,7 +128,7 @@ private suspend fun doInitApplication(rawArgs: List<String>,
     }
 
     withContext(Dispatchers.Default) {
-      val args = processProgramArguments(rawArgs)
+      val args = rawArgs.filterNot { CommandLineArgs.isKnownArgument(it) }
 
       val deferredStarter = runActivity("app starter creation") {
         createAppStarterAsync(args)
@@ -423,34 +423,6 @@ fun initConfigurationStore(app: ApplicationImpl) {
   app.stateStore.setPath(configPath)
   StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
-}
-
-/**
- * The method looks for `-Dkey=value` program arguments and stores some of them in system properties.
- * We should use it for a limited number of safe keys; one of them is a list of required plugins.
- */
-@Suppress("SpellCheckingInspection")
-private fun processProgramArguments(args: List<String>): List<String> {
-  if (args.isEmpty()) {
-    return emptyList()
-  }
-
-  // no need to have it as a file-level constant - processProgramArguments called at most once.
-  val safeJavaEnvParameters = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
-  val arguments = mutableListOf<String>()
-  for (arg in args) {
-    if (arg.startsWith("-D")) {
-      val keyValue = arg.substring(2).split('=')
-      if (keyValue.size == 2 && safeJavaEnvParameters.contains(keyValue[0])) {
-        System.setProperty(keyValue[0], keyValue[1])
-        continue
-      }
-    }
-    if (!CommandLineArgs.isKnownArgument(arg)) {
-      arguments.add(arg)
-    }
-  }
-  return arguments
 }
 
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {

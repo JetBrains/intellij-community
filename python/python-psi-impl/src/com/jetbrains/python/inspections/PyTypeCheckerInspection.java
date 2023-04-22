@@ -48,7 +48,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     /**
      * @deprecated do not use
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }

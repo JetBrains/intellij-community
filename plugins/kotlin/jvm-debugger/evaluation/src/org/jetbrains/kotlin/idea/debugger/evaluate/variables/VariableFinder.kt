@@ -228,8 +228,15 @@ class VariableFinder(val context: ExecutionContext) {
         }
 
         if (USE_UNSAFE_FALLBACK) {
+            val unlabeledThisKind = VariableKind.UnlabeledThis(kind.asmType)
             // Find an unlabeled this with the compatible type
-            findUnlabeledThis(VariableKind.UnlabeledThis(kind.asmType))?.let { return it }
+            findUnlabeledThis(unlabeledThisKind)?.let { return it }
+
+            // In lambdas local variable for outer this (e.g. with name "this$0") is not in visibleVariables,
+            // so try to find it in argumentVariables by type
+            frameProxy.safeArgumentValues()
+                .firstNotNullOfOrNull { findCapturedVariable(unlabeledThisKind, it) }
+                ?.let { return it }
         }
 
         return null

@@ -6,6 +6,7 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
@@ -20,7 +21,6 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
@@ -130,8 +130,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private var shouldUpdateLaF = false
 
   private val propertyGraph = PropertyGraph()
-  private val lafProperty = propertyGraph.graphProperty { lafManager.lookAndFeelReference }
-  private val syncThemeProperty = propertyGraph.graphProperty { lafManager.autodetect }
+  private val lafProperty = propertyGraph.lazyProperty { lafManager.lookAndFeelReference }
+  private val syncThemeProperty = propertyGraph.lazyProperty { lafManager.autodetect }
 
   override fun createPanel(): DialogPanel {
     lafProperty.afterChange(disposable!!) {
@@ -157,14 +157,23 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         theme.enabledIf(syncCheckBox.selected.not())
         cell(lafManager.settingsToolbar)
           .visibleIf(syncCheckBox.selected)
-      }.layout(RowLayout.INDEPENDENT)
 
-      row {
         link(message("link.get.more.themes")) {
           val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
           settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
         }
-      }
+      }.layout(RowLayout.INDEPENDENT)
+
+      row(message("combobox.ide.scale.percent")) {
+        comboBox(IdeScaleTransformer.Settings.regularScaleComboboxModel, SimpleListCellRenderer.create("") { it })
+          .bindItem( { settings.ideScale.percentStringValue }, { })
+          .onChanged {
+            IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item)?.let { scale ->
+              settings.ideScale = scale
+              settings.fireUISettingsChanged()
+            }
+          }
+      }.layout(RowLayout.INDEPENDENT).topGap(TopGap.SMALL)
 
       row {
         val fontFace = cell(FontComboBox())
@@ -417,10 +426,23 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
 
       group(message("group.presentation.mode")) {
-        row(message("presentation.mode.fon.size")) {
-          fontSizeComboBox({ settings.presentationModeFontSize },
-                           { settings.presentationModeFontSize = it },
-                           settings.presentationModeFontSize)
+        row(message("presentation.mode.ide.scale")) {
+          comboBox(IdeScaleTransformer.Settings.presentationModeScaleComboboxModel, SimpleListCellRenderer.create("") { it })
+            .bindItem( { settings.presentationModeIdeScale.percentStringValue }, { })
+            .applyToComponent {
+              isEditable = true
+            }
+            .validationOnInput(IdeScaleTransformer.Settings::validatePercentScaleInput)
+            .onChanged {
+              if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item) != null) return@onChanged
+
+              IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item)?.let { scale ->
+                settings.presentationModeIdeScale = scale
+                if (settings.presentationMode) {
+                  settings.fireUISettingsChanged()
+                }
+              }
+            }
             .shouldUpdateLaF()
         }
       }

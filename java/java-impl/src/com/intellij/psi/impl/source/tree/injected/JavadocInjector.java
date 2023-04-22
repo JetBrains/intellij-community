@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.Language;
@@ -26,9 +26,7 @@ public class JavadocInjector implements MultiHostInjector {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar,
                                    @NotNull PsiElement context) {
-    if (!(context instanceof PsiSnippetDocTagImpl)) return;
-
-    final PsiSnippetDocTagImpl snippet = (PsiSnippetDocTagImpl)context;
+    if (!(context instanceof PsiSnippetDocTagImpl snippet)) return;
 
     final Language language = getLanguage(snippet);
 

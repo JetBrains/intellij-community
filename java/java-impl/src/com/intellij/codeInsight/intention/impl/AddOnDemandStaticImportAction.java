@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -45,16 +45,15 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
   @Nullable
   public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
-    if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiJavaCodeReferenceElement)) {
+    if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiJavaCodeReferenceElement refExpr)) {
       return null;
     }
     if (PsiTreeUtil.getParentOfType(element, PsiErrorElement.class, PsiImportStatementBase.class) != null) return null;
-    PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
-    if (refExpr instanceof  PsiMethodReferenceExpression) return null;
+    if (refExpr instanceof PsiMethodReferenceExpression) return null;
     final PsiElement gParent = refExpr.getParent();
     if (gParent instanceof PsiMethodReferenceExpression) return null;
-    if (!(gParent instanceof PsiJavaCodeReferenceElement) ||
-        isParameterizedReference((PsiJavaCodeReferenceElement)gParent)) return null;
+    if (!(gParent instanceof PsiJavaCodeReferenceElement parentRef)) return null;
+    if (isParameterizedReference(parentRef)) return null;
 
     if (PsiUtilCore.getElementType(PsiTreeUtil.nextCodeLeaf(gParent)) == JavaTokenType.ARROW &&
         !(gParent.getParent() instanceof PsiCaseLabelElementList)) {
@@ -62,10 +61,9 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     }
 
     PsiElement resolved = refExpr.resolve();
-    if (!(resolved instanceof PsiClass)) {
+    if (!(resolved instanceof PsiClass psiClass)) {
       return null;
     }
-    PsiClass psiClass = (PsiClass)resolved;
     if (PsiUtil.isFromDefaultPackage(psiClass) ||
         psiClass.hasModifierProperty(PsiModifier.PRIVATE) ||
         psiClass.getQualifiedName() == null) return null;
@@ -80,7 +78,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       if (method != null && method.getContainingClass() != psiClass)  return null;
     }
     else {
-      PsiElement refNameElement = ((PsiJavaCodeReferenceElement)gParent).getReferenceNameElement();
+      PsiElement refNameElement = parentRef.getReferenceNameElement();
       if (refNameElement == null) return null;
       final PsiJavaCodeReferenceElement copy = JavaPsiFacade.getElementFactory(refNameElement.getProject())
         .createReferenceFromText(refNameElement.getText(), refExpr);
@@ -98,16 +96,13 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
           }
         }
       }
-      PsiElement resolve = ((PsiJavaCodeReferenceElement)gParent).resolve();
-      if (resolve instanceof PsiMember && !((PsiMember)resolve).hasModifierProperty(PsiModifier.STATIC)) return null;
+      if (parentRef.resolve() instanceof PsiMember member && !member.hasModifierProperty(PsiModifier.STATIC)) return null;
     }
 
-    PsiFile file = refExpr.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) return null;
-    PsiImportList importList = ((PsiJavaFile)file).getImportList();
-    if (importList == null) return null;
-
-    return psiClass;
+    if (refExpr.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getImportList() != null) {
+      return psiClass;
+    }
+    return null;
   }
 
   @Override

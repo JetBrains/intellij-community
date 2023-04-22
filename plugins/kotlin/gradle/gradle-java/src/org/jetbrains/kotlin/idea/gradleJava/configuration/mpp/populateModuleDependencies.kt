@@ -61,6 +61,13 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
         ) return@forEach
 
         /*
+         Support for non-mpp Android plugins, which are not aware of our new extension points yet
+         This is explicitly placed *after* calling into the extension points, so they can still handle the
+         request with the EP instead.
+         */
+        if (shouldDelegateToOtherPlugin(sourceSet)) return@forEach
+
+        /*
         Some dependencies are represented as IdeaKotlinProjectArtifactDependency.
         Such dependencies can be resolved to the actual source sets that built this artifact.
          */

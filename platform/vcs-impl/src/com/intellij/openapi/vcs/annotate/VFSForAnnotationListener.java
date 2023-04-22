@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Prefer using {@link AnnotationsWriteableFilesVfsListener}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class VFSForAnnotationListener implements VirtualFileListener {
   private final VirtualFile myFile;
   private final FileAnnotation myFileAnnotation;

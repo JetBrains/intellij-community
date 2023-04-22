@@ -7,13 +7,17 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
+import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
+import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 
@@ -57,21 +61,28 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
     )
 
     private fun extractData(nameExpr: KtSimpleNameExpression): Data? {
-        val parent = nameExpr.parent
-        val expression = (when (parent) {
-            is KtCallExpression -> parent.parent as? KtDotQualifiedExpression
+        val expression = when (val parent = nameExpr.parent) {
+            is KtCallExpression -> parent.getQualifiedExpressionForSelectorOrThis()
             is KtBinaryExpression -> parent
             else -> null
-        } ?: return null) as KtExpression //TODO: submit bug
+        } ?: return null
 
         val context = expression.analyze()
         val resolvedCall = expression.getResolvedCall(context) ?: return null
         if (DescriptorUtils.getFqName(resolvedCall.resultingDescriptor).toString() !in FOR_EACH_FQ_NAMES) return null
 
-        val receiver = resolvedCall.call.explicitReceiver as? ExpressionReceiver ?: return null
+        val explicitReceiver = resolvedCall.call.explicitReceiver as? ExpressionReceiver
+        val receiver = if (explicitReceiver != null) {
+            explicitReceiver.expression
+        } else {
+            val scope = expression.getResolutionScope(context) ?: return null
+            val implicitReceiverType = resolvedCall.getImplicitReceiverValue()?.type ?: return null
+            val factory = scope.getFactoryForImplicitReceiverWithSubtypeOf(implicitReceiverType) ?: return null
+            KtPsiFactory(nameExpr.project).createExpression(if (factory.isImmediate) "this" else factory.expressionText)
+        }
         val argument = resolvedCall.call.valueArguments.singleOrNull() ?: return null
         val functionLiteral = argument.getArgumentExpression() as? KtLambdaExpression ?: return null
-        return Data(expression, receiver.expression, functionLiteral, context)
+        return Data(expression, receiver, functionLiteral, context)
     }
 
     private fun generateLoop(functionLiteral: KtLambdaExpression, receiver: KtExpression, context: BindingContext): KtExpression {

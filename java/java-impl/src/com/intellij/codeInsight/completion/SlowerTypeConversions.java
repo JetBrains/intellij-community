@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -93,16 +93,15 @@ final class SlowerTypeConversions {
 
   @Nullable
   private static String getItemText(@NotNull PsiFile file, Object o) {
-    if (o instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)o;
+    if (o instanceof PsiMethod method) {
       final PsiType type = method.getReturnType();
       if (PsiTypes.voidType().equals(type) || PsiTypes.nullType().equals(type)) return null;
       if (!method.getParameterList().isEmpty()) return null;
       return method.getName() + "(" +
              getSpace(CodeStyle.getLanguageSettings(file).SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES) + ")";
     }
-    else if (o instanceof PsiVariable) {
-      return ((PsiVariable)o).getName();
+    else if (o instanceof PsiVariable variable) {
+      return variable.getName();
     }
     return null;
   }

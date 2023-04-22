@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -51,9 +51,8 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
       ProgressManager.checkCanceled();
 
       Object o = child.getValue();
-      if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
+      if (o instanceof PsiClassOwner classOwner && !(o instanceof ServerPageFile)) {
         ViewSettings settings1 = ((ProjectViewNode<?>)parent).getSettings();
-        PsiClassOwner classOwner = (PsiClassOwner)o;
         VirtualFile file = classOwner.getVirtualFile();
 
         if (!(classOwner instanceof PsiCompiledElement)) {
@@ -61,8 +60,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
           ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
           if (file != null && fileIndex.isInLibrarySource(file)) {
             PsiElement originalElement = classOwner.getOriginalElement();
-            if (originalElement instanceof PsiFile) {
-              PsiFile classFile = (PsiFile)originalElement;
+            if (originalElement instanceof PsiFile classFile) {
               VirtualFile virtualClassFile = classFile.getVirtualFile();
               if (virtualClassFile != null && fileIndex.isInLibraryClasses(virtualClassFile)
                   && !classOwner.getManager().areElementsEquivalent(classOwner, classFile)

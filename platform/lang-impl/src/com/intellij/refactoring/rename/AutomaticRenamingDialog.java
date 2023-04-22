@@ -217,7 +217,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private JPopupMenu compoundPopup() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(createRenameSelectedAction());
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("AutomaticRenamingDialog", group);
     return menu.getComponent();
   }
 

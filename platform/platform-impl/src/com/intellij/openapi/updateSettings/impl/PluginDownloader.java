@@ -175,7 +175,7 @@ public final class PluginDownloader {
    * @deprecated Please use {@link PluginDownloader#withErrorsConsumer(Consumer)} to set the errors' consumer,
    * and {@link PluginDownloader#getDescriptor()} to get the actual descriptor instance.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @RequiresBackgroundThread
   public @Nullable IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator,
                                                                               boolean showMessageOnError) throws IOException {

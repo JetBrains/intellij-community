@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
@@ -147,8 +147,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile == null) continue;
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
-        if (orderEntry instanceof LibraryOrderEntry) {
-          final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)orderEntry;
+        if (orderEntry instanceof LibraryOrderEntry libraryEntry) {
           final Library library = libraryEntry.getLibrary();
           if (library == null) continue;
           VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);

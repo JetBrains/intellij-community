@@ -4,6 +4,7 @@
 
 package org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui.editor;
 
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.Gray;
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.IParser;
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.IParser.InstantFilter;
@@ -902,20 +903,20 @@ class EditorComponent extends JTextField {
                             == KeyEvent.VK_BACK_SPACE)) {
                     if (caret > mark) {
                         caret = mark;
-                    } else if (buffer == proposal) {
+                    } else if (Strings.areSameInstance(buffer, proposal)) {
                         --caret;
                     } else if (caret == mark) {
                         caret = offset;
                     }
                 }
 
-                if ((0 == caret) && (buffer == proposal)) {
+                if ((0 == caret) && Strings.areSameInstance(buffer, proposal)) {
                     // remove all text in this case
                     match.content = CustomChoice.MATCH_ALL;
                     proposal = match.content.toString();
                 }
 
-                if (buffer != proposal) {
+                if (!Strings.areSameInstance(buffer, proposal)) {
                     super.replace(fb, 0, buffer.length(), proposal, null);
                 }
 
@@ -924,7 +925,7 @@ class EditorComponent extends JTextField {
                 moveCaretPosition(Math.min(len, caret));
                 deactivateCustomDecoration();
 
-                if (userUpdate && instantFiltering && (proposal != buffer)) {
+                if (userUpdate && instantFiltering && !Strings.areSameInstance(proposal, buffer)) {
                     match.exact = true;
                     updateFilter(proposal, match, true);
                 }

@@ -496,7 +496,7 @@ public final class RefactoringUtil {
   /**
    * @deprecated use CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static PsiCodeBlock expandExpressionLambdaToCodeBlock(@NotNull PsiLambdaExpression lambdaExpression) {
     return CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
   }

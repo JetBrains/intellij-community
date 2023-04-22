@@ -10,14 +10,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
-private class CheckProjectActivity : ProjectPostStartupActivity {
+private class CheckProjectActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment || ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

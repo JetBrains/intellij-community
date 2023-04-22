@@ -8,6 +8,7 @@ import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
@@ -35,9 +36,8 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
 
     // TODO: cache all roots? (like passing through NavBarModelBuilder.traverseToRoot)
     // TODO: hash all roots? (Set instead of Sequence)
-    val projectRootManager = ProjectRootManager.getInstance(item.data.project)
-    val projectFileIndex = projectRootManager.fileIndex
-    val defaultRoots = projectRootManager.contentRoots.asSequence()
+    val projectFileIndex = ProjectRootManager.getInstance(item.data.project).fileIndex
+    val defaultRoots = item.data.project.getBaseDirectories()
     val oldEpRoots = additionalRoots(item.data.project)
     val allRoots = (defaultRoots + oldEpRoots).filter { it.parent == null || !projectFileIndex.isInContent(it.parent) }
 

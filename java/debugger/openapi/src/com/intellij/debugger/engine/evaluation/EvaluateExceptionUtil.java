@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -74,8 +74,7 @@ public final class EvaluateExceptionUtil {
     else if (th instanceof ObjectCollectedException) {
       return JavaDebuggerBundle.message("evaluation.error.object.collected");
     }
-    else if (th instanceof InvocationException) {
-      InvocationException invocationException = (InvocationException)th;
+    else if (th instanceof InvocationException invocationException) {
       return JavaDebuggerBundle.message("evaluation.error.method.exception", invocationException.exception().referenceType().name());
     }
     else if (th instanceof EvaluateException) {

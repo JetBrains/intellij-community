@@ -32,8 +32,8 @@ kotlin {
     iosArm64Main.dependsOn(iosMain)
 
     commonMain.dependencies {
-        api("org.jetbrains.kotlinx:atomicfu:0.18.5")
-        implementation("io.ktor:ktor-client-core:2.1.3")
+        api("org.jetbrains.kotlinx:atomicfu:0.19.0")
+        implementation("io.ktor:ktor-client-core:2.2.1")
         compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     }
 

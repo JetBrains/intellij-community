@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -82,10 +82,9 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
       public void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         final URL url = e.getURL();
         final AWTEvent awtEvent = EventQueue.getCurrentEvent();
-        if (!(awtEvent instanceof MouseEvent)) {
+        if (!(awtEvent instanceof MouseEvent me)) {
           return;
         }
-        final MouseEvent me = (MouseEvent)awtEvent;
 
         if (url != null) {
           ConfigurationError error = null;

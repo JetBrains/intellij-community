@@ -1,44 +1,54 @@
 MODULES
-    my-app
-    my-app.commonMain
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
-    my-app.commonTest
-        my-app.commonMain (friend, TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
-    my-app.jsMain
-        my-app.commonMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (COMPILE)
-    my-app.jsTest
-        my-app.commonMain (friend, TEST)
-        my-app.commonTest (refines, TEST)
-        my-app.jsMain (friend, TEST)
-        my-app.jsMain (friend, RUNTIME)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (TEST)
-    my-app.jvmMain
-        my-app.commonMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    my-app.jvmTest
-        my-app.commonMain (friend, TEST)
-        my-app.commonTest (refines, TEST)
-        my-app.jvmMain (friend, TEST)
-        my-app.jvmMain (friend, RUNTIME)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    my-app.linuxX64Main
-        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
-        my-app.commonMain (refines, COMPILE)
-    my-app.linuxX64Test
-        Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
-        my-app.commonMain (friend, TEST)
-        my-app.commonTest (refines, TEST)
-        my-app.linuxX64Main (friend, TEST)
+my-app
+
+my-app.commonMain
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+
+my-app.commonTest
+    commonMain (friend, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+
+my-app.jsMain
+    commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (COMPILE)
+
+my-app.jsTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    jsMain (friend, RUNTIME)
+    jsMain (friend, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (TEST)
+
+my-app.jvmMain
+    commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains:annotations:13.0 (COMPILE)
+
+my-app.jvmTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    jvmMain (friend, RUNTIME)
+    jvmMain (friend, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains:annotations:13.0 (TEST)
+
+my-app.linuxX64Main
+    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    commonMain (refines, COMPILE)
+
+my-app.linuxX64Test
+    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    linuxX64Main (friend, TEST)
+
 
 Test configuration:
 - hiding following roots: resources, android-specific roots, generated
 - showing only following facet fields: targetPlatform
 - hiding following standard dependencies: kotlin-test, Kotlin/Native distribution, sdk, self
+- dependencies order is not checked

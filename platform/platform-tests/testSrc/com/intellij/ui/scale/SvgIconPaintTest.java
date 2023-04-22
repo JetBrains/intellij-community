@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 
 import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 import static com.intellij.ui.scale.TestScaleHelper.loadImage;
@@ -55,7 +56,7 @@ public class SvgIconPaintTest {
     return PlatformTestUtil.getPlatformTestDataPath() + "ui/abstractClass.svg";
   }
 
-  private static String getGoldImagePath() {
-    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_abstractClass@2x.png";
+  private static Path getGoldImagePath() {
+    return Path.of(PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_abstractClass@2x.png");
   }
 }

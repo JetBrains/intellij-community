@@ -7,7 +7,7 @@ import com.intellij.lang.ant.dom.AntDomIncludingDirective;
 import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.dom.TargetResolver;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -34,13 +34,10 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   public AntBuildModelImpl(final AntBuildFile buildFile) {
     myFile = buildFile;
-    final Project project = myFile.getProject();
-
-    myTargets = new PsiCachedValueImpl<>(PsiManager.getInstance(project), () -> {
+    myTargets = new PsiCachedValueImpl<>(PsiManager.getInstance(myFile.getProject()), ()-> ReadAction.compute(()-> {
       final Pair<List<AntBuildTargetBase>, Collection<Object>> result = getTargetListImpl(this);
-      final Collection<Object> deps = result.getSecond();
-      return CachedValueProvider.Result.create(result.getFirst(), ArrayUtil.toObjectArray(deps));
-    });
+      return CachedValueProvider.Result.create(result.getFirst(), ArrayUtil.toObjectArray(result.getSecond()));
+    }));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.EditorHelper;
@@ -21,8 +21,8 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveMemberViewDescriptor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -370,8 +370,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                                MoveMembersOptions options,
                                                MultiMap<PsiElement, String> conflicts) {
     for (UsageInfo usage : usages) {
-      if (!(usage instanceof MoveMembersUsageInfo)) continue;
-      final MoveMembersUsageInfo usageInfo = (MoveMembersUsageInfo)usage;
+      if (!(usage instanceof MoveMembersUsageInfo usageInfo)) continue;
       final PsiMember member = usageInfo.member;
       final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
       if (handler != null) {

@@ -18,7 +18,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.services
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
+import com.intellij.dependencytoolwindow.DependencyToolWindowOpener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -76,7 +76,7 @@ internal class DependencyNavigationService(private val project: Project) {
             .find { it.nativeModule == module }
         if (pkgsModule != null) {
             project.lifecycleScope.launch(Dispatchers.EDT) {
-                DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
+                DependencyToolWindowOpener.activateToolWindow(project, PackagesListPanelProvider) {
                     project.pkgsUiStateModifier.setTargetModules(TargetModules.from(pkgsModule))
                     project.pkgsUiStateModifier.setDependency(dependency)
                 }

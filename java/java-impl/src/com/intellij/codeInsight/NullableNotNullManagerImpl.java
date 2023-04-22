@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
@@ -289,11 +289,9 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       Jsr305Support.TYPE_QUALIFIER_NICKNAME), myProject, GlobalSearchScope.allScope(myProject));
     for (PsiAnnotation annotation : annotations) {
       PsiElement context = annotation.getContext();
-      if (context instanceof PsiModifierList && context.getContext() instanceof PsiClass) {
-        PsiClass ownerClass = (PsiClass)context.getContext();
-        if (ownerClass.isAnnotationType() && Jsr305Support.isNullabilityNickName(ownerClass)) {
-          result.add(ownerClass);
-        }
+      if (context instanceof PsiModifierList && context.getContext() instanceof PsiClass ownerClass &&
+          ownerClass.isAnnotationType() && Jsr305Support.isNullabilityNickName(ownerClass)) {
+        result.add(ownerClass);
       }
     }
     return result;

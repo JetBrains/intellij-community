@@ -497,9 +497,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         }
 
         for (LanguageVersion languageVersion : LanguageVersion.values()) {
-            if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion) &&
-                !ApplicationManager.getApplication().isInternal()
-            ) {
+            if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion)) {
                 continue;
             }
 

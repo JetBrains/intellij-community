@@ -10,7 +10,7 @@ import java.nio.ByteOrder
 class IkvIndexBuilder(private val writeSize: Boolean = true) {
   private val entries = LinkedHashSet<IkvIndexEntry>()
 
-  fun entry(key: Long, offset: Int, size: Int): IkvIndexEntry {
+  fun entry(key: Long, offset: Long, size: Int): IkvIndexEntry {
     val entry = LongKeyedEntry(longKey = key, offset = offset)
     entry.size = size
     return entry
@@ -27,17 +27,17 @@ class IkvIndexBuilder(private val writeSize: Boolean = true) {
   }
 }
 
-sealed class IkvIndexEntry(@JvmField internal val offset: Int) {
+sealed class IkvIndexEntry(@JvmField internal val offset: Long) {
   internal var size = -1
 }
 
-internal class IntKeyedEntry(@JvmField internal val intKey: Int, offset: Int) : IkvIndexEntry(offset) {
+internal class IntKeyedEntry(@JvmField internal val intKey: Int, offset: Long) : IkvIndexEntry(offset) {
   override fun equals(other: Any?) = intKey == (other as? IntKeyedEntry)?.intKey
 
   override fun hashCode() = intKey
 }
 
-internal class LongKeyedEntry(@JvmField internal val longKey: Long, offset: Int) : IkvIndexEntry(offset) {
+internal class LongKeyedEntry(@JvmField internal val longKey: Long, offset: Long) : IkvIndexEntry(offset) {
   override fun equals(other: Any?) = longKey == (other as? LongKeyedEntry)?.longKey
 
   override fun hashCode() = longKey.toInt()
@@ -55,13 +55,13 @@ private fun writeIkvIndex(entries: Collection<IkvIndexEntry>, writeSize: Boolean
       if (entries.firstOrNull() is IntKeyedEntry) {
         for (entry in entries) {
           longBuffer.put((entry as IntKeyedEntry).intKey.toLong())
-          longBuffer.put(entry.offset.toLong() shl 32 or (entry.size.toLong() and 0xffffffffL))
+          longBuffer.put(entry.offset shl 32 or (entry.size.toLong() and 0xffffffffL))
         }
       }
       else {
         for (entry in entries) {
           longBuffer.put((entry as LongKeyedEntry).longKey)
-          longBuffer.put(entry.offset.toLong() shl 32 or (entry.size.toLong() and 0xffffffffL))
+          longBuffer.put(entry.offset shl 32 or (entry.size.toLong() and 0xffffffffL))
         }
       }
       buffer.position(buffer.position() + (longBuffer.position() * Long.SIZE_BYTES))
@@ -70,7 +70,7 @@ private fun writeIkvIndex(entries: Collection<IkvIndexEntry>, writeSize: Boolean
       val intBuffer = buffer.asIntBuffer()
       for (entry in entries) {
         intBuffer.put((entry as IntKeyedEntry).intKey)
-        intBuffer.put(entry.offset)
+        intBuffer.put(Math.toIntExact(entry.offset))
       }
       buffer.position(buffer.position() + (intBuffer.position() * Int.SIZE_BYTES))
     }

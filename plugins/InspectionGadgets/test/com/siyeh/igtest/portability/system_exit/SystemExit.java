@@ -15,4 +15,8 @@ class SystemExit {
   public static void other(String[] args) {
     System.<warning descr="Call to 'System.exit()' is non-portable">exit</warning>(2);
   }
+
+  void third() {
+    Runtime.getRuntime().<warning descr="Call to 'Runtime.halt()' is non-portable">halt</warning>(1);
+  }
 }

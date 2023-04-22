@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -157,11 +157,9 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
 
   @Nullable
   public static Object getAccessibleExpressionValue(UExpression expression, Supplier<? extends PsiElement> accessPlace) {
-    if (expression instanceof UReferenceExpression) {
-      UReferenceExpression referenceExpression = (UReferenceExpression)expression;
+    if (expression instanceof UReferenceExpression referenceExpression) {
       UElement resolved = UResolvableKt.resolveToUElement(referenceExpression);
-      if (resolved instanceof UField) {
-        UField uField = (UField)resolved;
+      if (resolved instanceof UField uField) {
         PsiElement element = accessPlace.get();
         if (uField.isStatic() && uField.isFinal()) {
           if (element == null || !isAccessible(uField, element)) {

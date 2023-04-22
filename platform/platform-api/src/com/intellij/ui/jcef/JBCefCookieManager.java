@@ -105,7 +105,7 @@ public final class JBCefCookieManager {
    * @see JBCefCookieManager#getCookies(String, Boolean, Integer)
    * @deprecated use {@link #getCookies(String, Boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull List<JBCefCookie> getCookies(@NotNull String url) {
     return getCookies(url, false, null);
   }
@@ -349,7 +349,7 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #deleteCookies(String, String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean deleteCookies(@Nullable String url,
                                @Nullable String cookieName,
                                boolean doSync)

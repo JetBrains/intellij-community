@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
-import org.jetbrains.plugins.groovy.config.AbstractConfigUtils.UNDEFINED_VERSION
 import org.jetbrains.plugins.groovy.util.LibrariesUtil
 import org.jetbrains.plugins.groovy.util.LibrariesUtil.*
 import java.util.jar.Attributes
@@ -33,9 +32,7 @@ private fun fromJar(module: Module): String? {
 
 private fun getSdkVersionFromHome(module: Module): String? {
   val path = LibrariesUtil.getGroovyHomePath(module) ?: return null
-  return GroovyConfigUtils.getInstance().getSDKVersion(path).takeUnless {
-    it == UNDEFINED_VERSION
-  }
+  return GroovyConfigUtils.getInstance().getSDKVersionOrNull(path)
 }
 
 sealed class GroovyHomeKind private constructor(val jarsPath : String, val subPaths: List<String>, val pattern: Pattern) {

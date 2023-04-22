@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -182,8 +182,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
       private void handleStreamCollect(PsiMethodCallExpression methodCall) {
         PsiElement parameter = methodCall.getArgumentList().getExpressions()[0];
-        if(parameter instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
+        if(parameter instanceof PsiMethodCallExpression collectorCall) {
           ReplaceCollectorFix fix = ReplaceCollectorFix.COLLECTOR_TO_FIX_MAPPER.mapFirst(collectorCall);
           if (fix != null) {
             TextRange range = methodCall.getTextRange();
@@ -588,8 +587,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public void applyFix(@NotNull Project project, PsiElement element) {
-      if (element instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression collectCall = (PsiMethodCallExpression)element;
+      if (element instanceof PsiMethodCallExpression collectCall) {
         PsiExpression qualifierExpression = collectCall.getMethodExpression().getQualifierExpression();
         if (qualifierExpression == null) return;
         PsiExpression[] collectArgs = collectCall.getArgumentList().getExpressions();
@@ -666,21 +664,14 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public void applyFix(@NotNull Project project, PsiElement element) {
-      if (element instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression isPresentCall = (PsiMethodCallExpression)element;
-        PsiExpression isPresentQualifier = isPresentCall.getMethodExpression().getQualifierExpression();
-        if(isPresentQualifier instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression findCall = (PsiMethodCallExpression)isPresentQualifier;
-          PsiExpression findQualifier = findCall.getMethodExpression().getQualifierExpression();
-          if(findQualifier instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression filterCall = (PsiMethodCallExpression)findQualifier;
-            PsiElement replacement = element.replace(filterCall);
-            PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-            PsiElement filterName = ((PsiMethodCallExpression)replacement).getMethodExpression().getReferenceNameElement();
-            LOG.assertTrue(filterName != null);
-            filterName.replace(factory.createIdentifier(ANY_MATCH_METHOD));
-          }
-        }
+      if (element instanceof PsiMethodCallExpression isPresentCall &&
+          isPresentCall.getMethodExpression().getQualifierExpression() instanceof PsiMethodCallExpression findCall &&
+          findCall.getMethodExpression().getQualifierExpression() instanceof PsiMethodCallExpression filterCall) {
+        PsiElement replacement = element.replace(filterCall);
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        PsiElement filterName = ((PsiMethodCallExpression)replacement).getMethodExpression().getReferenceNameElement();
+        LOG.assertTrue(filterName != null);
+        filterName.replace(factory.createIdentifier(ANY_MATCH_METHOD));
       }
     }
 
@@ -805,8 +796,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public void applyFix(@NotNull Project project, PsiElement element) {
-      if(!(element instanceof PsiMethodCallExpression)) return;
-      PsiMethodCallExpression collectCall = (PsiMethodCallExpression)element;
+      if(!(element instanceof PsiMethodCallExpression collectCall)) return;
       PsiType type = collectCall.getType();
       PsiClass resolvedType = PsiUtil.resolveClassInClassTypeOnly(type);
       if(resolvedType == null || resolvedType instanceof PsiTypeParameter) return;
@@ -1015,8 +1005,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private static boolean isBoxingFunction(PsiExpression arg, PsiClass targetClass) {
       if (arg instanceof PsiMethodReferenceExpression) {
         PsiElement target = ((PsiMethodReferenceExpression)arg).resolve();
-        if (target instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)target;
+        if (target instanceof PsiMethod method) {
           // Integer::new or Integer::valueOf
           if (targetClass == method.getContainingClass() &&
               (method.isConstructor() || method.getName().equals("valueOf")) && method.getParameterList().getParametersCount() == 1) {
@@ -1024,8 +1013,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
           }
         }
       }
-      if (arg instanceof PsiLambdaExpression) {
-        PsiLambdaExpression lambda = (PsiLambdaExpression)arg;
+      if (arg instanceof PsiLambdaExpression lambda) {
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
         if (parameters.length != 1) return false;
         PsiParameter parameter = parameters[0];
@@ -1113,29 +1101,25 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Nullable
     private static PsiArrayType getArrayType(PsiMethodCallExpression call) {
       PsiType type = call.getType();
-      if (!(type instanceof PsiArrayType)) return null;
-      PsiArrayType candidate = (PsiArrayType)type;
+      if (!(type instanceof PsiArrayType candidate)) return null;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length == 0) return candidate;
       if (args.length != 1) return null;
       PsiExpression supplier = skipParenthesizedExprDown(args[0]);
-      if (supplier instanceof PsiMethodReferenceExpression) {
+      if (supplier instanceof PsiMethodReferenceExpression methodRef) {
         // like toArray(String[]::new)
-        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)supplier;
         PsiTypeElement qualifierType = methodRef.getQualifierType();
         if (methodRef.isConstructor() && qualifierType != null && candidate.isAssignableFrom(qualifierType.getType())) {
           return candidate;
         }
       }
-      else if (supplier instanceof PsiLambdaExpression) {
+      else if (supplier instanceof PsiLambdaExpression lambda) {
         // like toArray(size -> new String[size])
-        PsiLambdaExpression lambda = (PsiLambdaExpression)supplier;
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
         if (parameters.length != 1) return null;
         PsiParameter sizeParameter = parameters[0];
         PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-        if (body instanceof PsiNewExpression) {
-          PsiNewExpression newExpression = (PsiNewExpression)body;
+        if (body instanceof PsiNewExpression newExpression) {
           PsiExpression[] dimensions = newExpression.getArrayDimensions();
           PsiType newExpressionType = newExpression.getType();
           if (dimensions.length != 0 &&
@@ -1209,8 +1193,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       if (mapper instanceof PsiMethodReferenceExpression) {
         mapper = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)mapper, false, true);
       }
-      if (!(mapper instanceof PsiLambdaExpression)) return null;
-      PsiLambdaExpression lambda = (PsiLambdaExpression)mapper;
+      if (!(mapper instanceof PsiLambdaExpression lambda)) return null;
       PsiParameter indexParameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
       PsiElement body = lambda.getBody();
       if (body == null || indexParameter == null) return null;
@@ -1278,8 +1261,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       if (mapper instanceof PsiMethodReferenceExpression && container.isGetMethodReference((PsiMethodReferenceExpression)mapper)) {
         return limitedContainer;
       }
-      if (mapper instanceof PsiLambdaExpression) {
-        PsiLambdaExpression lambda = (PsiLambdaExpression)mapper;
+      if (mapper instanceof PsiLambdaExpression lambda) {
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
         if (parameters.length != 1) return null;
         PsiParameter indexParameter = parameters[0];
@@ -1396,13 +1378,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       // Boolean.TRUE::equals or x -> Boolean.TRUE.equals(x)
       arg = skipParenthesizedExprDown(arg);
       PsiReferenceExpression qualifier = null;
-      if (arg instanceof PsiMethodReferenceExpression) {
-        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)arg;
+      if (arg instanceof PsiMethodReferenceExpression methodRef) {
         if (!BOOLEAN_EQUALS.methodReferenceMatches(methodRef)) return null;
         qualifier = tryCast(methodRef.getQualifierExpression(), PsiReferenceExpression.class);
       }
-      else if (arg instanceof PsiLambdaExpression) {
-        PsiLambdaExpression lambda = (PsiLambdaExpression)arg;
+      else if (arg instanceof PsiLambdaExpression lambda) {
         PsiParameter parameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
         if (parameter == null) return null;
         PsiMethodCallExpression call = tryCast(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()), PsiMethodCallExpression.class);
@@ -1436,8 +1416,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       expression = skipParenthesizedExprDown(expression);
       if (expression == null) return null;
       if (expression instanceof PsiFunctionalExpression) return text;
-      if (expression instanceof PsiConditionalExpression) {
-        PsiConditionalExpression ternary = (PsiConditionalExpression)expression;
+      if (expression instanceof PsiConditionalExpression ternary) {
         String thenBranch = adaptToPredicate(ternary.getThenExpression());
         String elseBranch = adaptToPredicate(ternary.getElseExpression());
         if (thenBranch == null || elseBranch == null) return null;
@@ -1759,8 +1738,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
             }
           }
         }
-        if (arg instanceof PsiLambdaExpression) {
-          PsiLambdaExpression lambda = (PsiLambdaExpression)arg;
+        if (arg instanceof PsiLambdaExpression lambda) {
           PsiParameter[] parameters = lambda.getParameterList().getParameters();
           if (parameters.length != 1) return null;
           PsiParameter parameter = parameters[0];
@@ -1812,16 +1790,14 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Nullable
     private static PsiExpression extractRight(PsiMethodCallExpression allMatchCall) {
       PsiExpression arg = skipParenthesizedExprDown(allMatchCall.getArgumentList().getExpressions()[0]);
-      if (arg instanceof PsiMethodReferenceExpression) {
-        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)arg;
+      if (arg instanceof PsiMethodReferenceExpression methodRef) {
         if (COLLECTION_CONTAINS.methodReferenceMatches(methodRef) &&
             !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef) &&
             !ExpressionUtil.isEffectivelyUnqualified(methodRef)) {
           return methodRef.getQualifierExpression();
         }
       }
-      else if (arg instanceof PsiLambdaExpression) {
-        PsiLambdaExpression lambda = (PsiLambdaExpression)arg;
+      else if (arg instanceof PsiLambdaExpression lambda) {
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
         if (parameters.length == 1) {
           PsiParameter parameter = parameters[0];

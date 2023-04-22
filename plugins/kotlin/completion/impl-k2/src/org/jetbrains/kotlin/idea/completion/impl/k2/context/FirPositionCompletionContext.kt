@@ -22,10 +22,23 @@ internal class FirClassifierNamePositionContext(
     val classLikeDeclaration: KtClassLikeDeclaration,
 ) : FirRawPositionCompletionContext()
 
-internal class FirValueParameterPositionContext(
+internal sealed class FirValueParameterPositionContext : FirRawPositionCompletionContext() {
+    abstract val ktParameter: KtParameter
+}
+
+internal class FirSimpleParameterPositionContext(
     override val position: PsiElement,
-    val ktParameter: KtParameter,
-) : FirRawPositionCompletionContext()
+    override val ktParameter: KtParameter,
+) : FirValueParameterPositionContext()
+
+/**
+ * Primary constructor parameters can override properties from superclasses, so they should be analyzed with
+ * [analyzeInDependedAnalysisSession], which is why a separate position context is required.
+ */
+internal class FirPrimaryConstructorParameterPositionContext(
+    override val position: PsiElement,
+    override val ktParameter: KtParameter,
+) : FirValueParameterPositionContext()
 
 internal class FirIncorrectPositionContext(
     override val position: PsiElement
@@ -177,12 +190,19 @@ internal object FirPositionCompletionContextDetector {
             parent is KtClassLikeDeclaration && parent.nameIdentifier == position -> {
                 FirClassifierNamePositionContext(position, parent)
             }
+
             parent is KtParameter -> {
-                FirValueParameterPositionContext(position, parent)
+                if (parent.ownerFunction is KtPrimaryConstructor) {
+                    FirPrimaryConstructorParameterPositionContext(position, parent)
+                } else {
+                    FirSimpleParameterPositionContext(position, parent)
+                }
             }
+
             parent is PsiErrorElement && grandparent is KtClassBody -> {
                 FirMemberDeclarationExpectedPositionContext(position, grandparent)
             }
+
             else -> null
         }
     }
@@ -316,18 +336,26 @@ internal object FirPositionCompletionContextDetector {
             is FirPackageDirectivePositionContext,
             is FirTypeConstraintNameInWhereClausePositionContext,
             is FirIncorrectPositionContext,
-            is FirValueParameterPositionContext,
+            is FirSimpleParameterPositionContext,
             is FirClassifierNamePositionContext -> {
                 analyze(basicContext.originalKtFile, action = action)
             }
+
             is FirNameReferencePositionContext -> analyzeInDependedAnalysisSession(
                 basicContext.originalKtFile,
                 positionContext.nameExpression,
                 action = action
             )
+
             is FirMemberDeclarationExpectedPositionContext -> analyzeInDependedAnalysisSession(
                 basicContext.originalKtFile,
                 positionContext.classBody,
+                action = action
+            )
+
+            is FirPrimaryConstructorParameterPositionContext -> analyzeInDependedAnalysisSession(
+                basicContext.originalKtFile,
+                positionContext.ktParameter,
                 action = action
             )
         }

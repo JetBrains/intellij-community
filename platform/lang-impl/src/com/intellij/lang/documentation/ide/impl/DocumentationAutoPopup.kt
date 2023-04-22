@@ -6,9 +6,9 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-internal class DocumentationAutoPopup : ProjectPostStartupActivity {
+internal class DocumentationAutoPopup : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.messageBus.connect().subscribe(LookupManagerListener.TOPIC, DocumentationAutoPopupListener())
   }

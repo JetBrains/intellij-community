@@ -53,7 +53,7 @@ public class EarResource implements Serializable {
 
     EarResource resource = (EarResource)o;
     if (!file.getPath().equals(resource.file.getPath())) return false;
-    if (earDirectory != resource.earDirectory) return false;
+    if (!earDirectory.equals(resource.earDirectory)) return false;
     if (!relativePath.equals(resource.relativePath)) return false;
 
     return true;

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface PyMatchStatement extends PyStatement {
+public interface PyMatchStatement extends PyCompoundStatement {
   @Nullable PyExpression getSubject();
   @NotNull List<PyCaseClause> getCaseClauses();
 }

@@ -119,9 +119,10 @@ public class ConfigDiscovery {
   private Collection<String> discoverCollectionProperty(@NotNull ConfigKey configKey, @NotNull PsiFile file) {
     List<String> properties = new ArrayList<>();
 
+    final Project project = file.getProject();
     @Nullable VirtualFile currentFile = file.getVirtualFile();
     while (currentFile != null) {
-      final ConfigValue configValue = readProperty(configKey, file.getProject(), currentFile);
+      final ConfigValue configValue = readProperty(configKey, project, currentFile);
       if (null != configValue) {
         if (null == configValue.getValue()) {
           if (configValue.isStopBubbling()) {

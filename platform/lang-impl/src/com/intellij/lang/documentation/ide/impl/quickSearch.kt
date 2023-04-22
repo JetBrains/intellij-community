@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.ide.impl
@@ -7,14 +7,14 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
-import com.intellij.lang.documentation.impl.DocumentationRequest
-import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.documentation.impl.DocumentationRequest
+import com.intellij.platform.documentation.impl.documentationRequest
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.HintUpdateSupply

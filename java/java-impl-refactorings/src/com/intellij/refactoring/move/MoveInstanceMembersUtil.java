@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,35 +29,34 @@ public final class MoveInstanceMembersUtil {
   }
 
   private static void getThisClassesToMembers(final PsiElement scope, final Map<PsiClass, Set<PsiMember>> map, final PsiMember refMember) {
-    if (scope instanceof PsiExpression) {
-      final PsiExpression expression = (PsiExpression)scope;
-      if (!(scope instanceof PsiReferenceExpression) || !((PsiReferenceExpression)scope).isReferenceTo(refMember)) {
-        final Pair<PsiMember, PsiClass> pair = getMemberAndClassReferencedByThis(expression);
-        if (pair != null) {
-          PsiClass refClass = pair.getSecond();
-          PsiMember member = pair.getFirst();
-          if (refClass != null) {
-            boolean inherited = false;
-            PsiClass parentClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class, true);
-            while (parentClass != null && PsiTreeUtil.isAncestor(refMember, parentClass, false)) {
-              if (parentClass == refClass || parentClass.isInheritor(refClass, true)) {
-                inherited = true;
-                break;
-              }
-              parentClass = PsiTreeUtil.getParentOfType(parentClass, PsiClass.class, true);
+    if (scope instanceof PsiExpression expression &&
+        (!(scope instanceof PsiReferenceExpression) || !((PsiReferenceExpression)scope).isReferenceTo(refMember))) {
+      final Pair<PsiMember, PsiClass> pair = getMemberAndClassReferencedByThis(expression);
+      if (pair != null) {
+        PsiClass refClass = pair.getSecond();
+        PsiMember member = pair.getFirst();
+        if (refClass != null) {
+          boolean inherited = false;
+          PsiClass parentClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class, true);
+          while (parentClass != null && PsiTreeUtil.isAncestor(refMember, parentClass, false)) {
+            if (parentClass == refClass || parentClass.isInheritor(refClass, true)) {
+              inherited = true;
+              break;
             }
-            if (!inherited && !PsiTreeUtil.isAncestor(refMember, member, false)) {
-              addReferencedMember(map, refClass, member);
-            }
+            parentClass = PsiTreeUtil.getParentOfType(parentClass, PsiClass.class, true);
+          }
+          if (!inherited && !PsiTreeUtil.isAncestor(refMember, member, false)) {
+            addReferencedMember(map, refClass, member);
           }
         }
+      }
 
-        if (expression instanceof PsiThisExpression) {
-          final PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)expression).getQualifier();
-          PsiClass thisClass = thisQualifier == null ? PsiTreeUtil.getParentOfType(expression, PsiClass.class, true) : ((PsiClass)thisQualifier.resolve());
-          if (thisClass != null && !PsiTreeUtil.isAncestor( refMember,thisClass, false)) {
-            addReferencedMember(map, thisClass, null);
-          }
+      if (expression instanceof PsiThisExpression thisExpression) {
+        final PsiJavaCodeReferenceElement thisQualifier = thisExpression.getQualifier();
+        PsiClass thisClass =
+          thisQualifier == null ? PsiTreeUtil.getParentOfType(expression, PsiClass.class, true) : ((PsiClass)thisQualifier.resolve());
+        if (thisClass != null && !PsiTreeUtil.isAncestor(refMember, thisClass, false)) {
+          addReferencedMember(map, thisClass, null);
         }
       }
     }
@@ -88,8 +87,7 @@ public final class MoveInstanceMembersUtil {
           return Pair.create((PsiMember)resolved, referencedClass);
         }
       }
-    } else if (expression instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)expression;
+    } else if (expression instanceof PsiNewExpression newExpression) {
       final PsiExpression qualifier = newExpression.getQualifier();
       if (qualifier == null || qualifier instanceof PsiThisExpression) {
         PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();

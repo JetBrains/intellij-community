@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import com.intellij.openapi.util.SystemInfo
@@ -13,6 +13,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -115,6 +116,8 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
 
   @Test
   fun `extractFileToCacheLocation - executable bit`() {
+    Assume.assumeFalse(isWindows)
+
     val testArchive = createTestFile(archiveType, listOf(
       TestFile("exec", executable = true),
       TestFile("no-exec", executable = false),

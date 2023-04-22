@@ -645,7 +645,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
           frameHelper.balloonLayout?.closeAll()
           (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerEx)?.closeBalloons()
 
-          ProjectSelfieUtil.takeProjectSelfie(frameHelper.frame.rootPane, workspaceId, selfieLocation)
+          ProjectSelfieUtil.takeProjectSelfie(frameHelper.frame.rootPane, selfieLocation)
         }
         else {
           Files.deleteIfExists(selfieLocation)

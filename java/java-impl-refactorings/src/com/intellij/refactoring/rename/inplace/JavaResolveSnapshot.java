@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,13 +53,12 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
   }
 
   private static void qualify(PsiElement referent, PsiElement referee, String hidingLocalName) {
-    if (referent instanceof PsiReferenceExpression && referee instanceof PsiMember) {
-      PsiReferenceExpression ref = ((PsiReferenceExpression) referent);
-      if (!ref.isQualified() && hidingLocalName.equals(ref.getReferenceName())) {
-        final PsiElement newlyResolved = ref.resolve();
-        if (referee.getManager().areElementsEquivalent(newlyResolved, referee)) return;
-        RenameJavaMemberProcessor.qualifyMember((PsiMember)referee, referent, hidingLocalName);
-      }
+    if (referent instanceof PsiReferenceExpression ref &&
+        referee instanceof PsiMember && !ref.isQualified() &&
+        hidingLocalName.equals(ref.getReferenceName())) {
+      final PsiElement newlyResolved = ref.resolve();
+      if (referee.getManager().areElementsEquivalent(newlyResolved, referee)) return;
+      RenameJavaMemberProcessor.qualifyMember((PsiMember)referee, referent, hidingLocalName);
     }
   }
 }

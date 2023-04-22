@@ -8,10 +8,12 @@ import com.intellij.ui.SingleSelectionModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
 import javax.swing.event.DocumentEvent
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Replaced with simpler and more flexible version [com.intellij.collaboration.ui.CollaborationToolsUIUtil.attachSearch]")
 class ListWithSearchComponent<T : SearchableListItem>(
   originModel: ListModel<T>,

@@ -3,6 +3,7 @@ package com.intellij.terminal.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComponentContainer
+import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.TerminalTitle
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -38,4 +39,8 @@ interface TerminalWidget : ComponentContainer {
   fun addNotification(notificationComponent: JComponent, disposable: Disposable)
 
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
+}
+
+fun TerminalWidget.setNewParentDisposable(newParentDisposable: Disposable) {
+  Disposer.register(newParentDisposable, this)
 }

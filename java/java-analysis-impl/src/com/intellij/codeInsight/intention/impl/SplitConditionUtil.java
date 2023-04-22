@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -25,13 +25,11 @@ public final class SplitConditionUtil {
   }
 
   public static PsiPolyadicExpression findCondition(PsiElement element, boolean acceptAnd, boolean acceptOr) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return null;
     }
-    PsiJavaToken token = (PsiJavaToken)element;
-    if (!(token.getParent() instanceof PsiPolyadicExpression)) return null;
+    if (!(token.getParent() instanceof PsiPolyadicExpression expression)) return null;
 
-    PsiPolyadicExpression expression = (PsiPolyadicExpression)token.getParent();
     boolean isAndExpression = acceptAnd && expression.getOperationTokenType() == JavaTokenType.ANDAND;
     boolean isOrExpression = acceptOr && expression.getOperationTokenType() == JavaTokenType.OROR;
     if (!isAndExpression && !isOrExpression) return null;
@@ -137,8 +135,7 @@ public final class SplitConditionUtil {
         break;
       }
       else {
-        if (!(nextCondition instanceof PsiPolyadicExpression)) break;
-        PsiPolyadicExpression nextPolyadic = (PsiPolyadicExpression)nextCondition;
+        if (!(nextCondition instanceof PsiPolyadicExpression nextPolyadic)) break;
         if (!nextPolyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) break;
         PsiExpression[] nextOperands = nextPolyadic.getOperands();
         PsiExpression[] operands;

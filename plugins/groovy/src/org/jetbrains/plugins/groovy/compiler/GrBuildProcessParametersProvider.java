@@ -32,7 +32,7 @@ final class GrBuildProcessParametersProvider extends BuildProcessParametersProvi
     CompilerConfiguration config = myProject.isDefault() ? null : CompilerConfiguration.getInstance(myProject);
     if (config instanceof CompilerConfigurationImpl) {
       BackendCompiler backend = ((CompilerConfigurationImpl)config).getDefaultCompiler();
-      if (backend != null && backend.getId() == GreclipseBuilder.ID) {
+      if (backend != null && backend.getId().equals(GreclipseBuilder.ID)) {
         File file = EclipseCompilerTool.findEcjJarFile();
         if (file != null) {
           return Collections.singletonList(file.getAbsolutePath());

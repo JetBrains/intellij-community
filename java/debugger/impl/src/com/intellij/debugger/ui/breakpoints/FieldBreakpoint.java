@@ -186,8 +186,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> getFileName());
     final int locationLine = location.lineNumber();
 
-    if (event instanceof ModificationWatchpointEvent) {
-      final ModificationWatchpointEvent modificationEvent = (ModificationWatchpointEvent)event;
+    if (event instanceof ModificationWatchpointEvent modificationEvent) {
       final ObjectReference object = modificationEvent.object();
       final Field field = modificationEvent.field();
       if (object != null) {
@@ -214,8 +213,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
         locationLine
       );
     }
-    if (event instanceof AccessWatchpointEvent) {
-      AccessWatchpointEvent accessEvent = (AccessWatchpointEvent)event;
+    if (event instanceof AccessWatchpointEvent accessEvent) {
       final ObjectReference object = accessEvent.object();
       final Field field = accessEvent.field();
       if (object != null) {

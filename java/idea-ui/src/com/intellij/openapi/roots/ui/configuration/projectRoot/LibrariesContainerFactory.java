@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -90,15 +90,9 @@ public final class LibrariesContainerFactory {
 
   @NotNull
   public static LibrariesContainer createContainer(@NotNull WizardContext context, @NotNull ModulesProvider modulesProvider) {
-    final LibrariesContainer container;
-    if (modulesProvider instanceof ModulesConfigurator) {
-      ModulesConfigurator configurator = (ModulesConfigurator)modulesProvider;
-      container = createContainer(configurator.getContext());
-    }
-    else {
-      container = createContainer(context.getProject());
-    }
-    return container;
+    return modulesProvider instanceof ModulesConfigurator configurator
+           ? createContainer(configurator.getContext())
+           : createContainer(context.getProject());
   }
 
 

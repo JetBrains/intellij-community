@@ -33,6 +33,11 @@ public class JvmWithLibBasicCompletionTestGenerated extends AbstractJvmWithLibBa
         runTest("../testData/basic/withLib/NamedArgumentsKotlin.kt");
     }
 
+    @TestMetadata("OverrideJava.kt")
+    public void testOverrideJava() throws Exception {
+        runTest("../testData/basic/withLib/OverrideJava.kt");
+    }
+
     @TestMetadata("SamAdapter.kt")
     public void testSamAdapter() throws Exception {
         runTest("../testData/basic/withLib/SamAdapter.kt");

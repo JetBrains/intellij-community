@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -73,8 +73,7 @@ public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
     if (parent instanceof PsiVariable) {
       variableLocal = (PsiVariable)parent;
     }
-    else if (parent instanceof PsiNewExpression) {
-      PsiNewExpression newExpressionLocal = (PsiNewExpression)parent;
+    else if (parent instanceof PsiNewExpression newExpressionLocal) {
       final PsiElement newParent = newExpressionLocal.getParent();
       if (newParent instanceof PsiAssignmentExpression) {
         variableLocal = getFromAssignment((PsiAssignmentExpression)newParent);

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import java.awt.Dimension
+import com.jediterm.core.util.TermSize
 import java.util.concurrent.CompletableFuture
 
 interface TerminalCompletionProvider {
@@ -13,7 +13,7 @@ interface TerminalCompletionProvider {
 class NewTerminalSessionCompletionProvider(private val project: Project) : TerminalCompletionProvider {
   override fun getCompletionItems(command: String): CompletableFuture<List<String>> {
     val maxLineLength = command.split('\n').maxOf { line -> line.length }
-    val session = HeadlessTerminalSession(project, Dimension(maxLineLength + 100, 50))
+    val session = HeadlessTerminalSession(project, TermSize(maxLineLength + 100, 50))
     session.start()
     val itemsFuture = session.invokeCompletion(command)
     return itemsFuture.thenApply { items ->

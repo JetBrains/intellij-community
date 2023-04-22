@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.elements;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -220,8 +220,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         throw new RuntimeException(
           this.getClass().getName() + " - " + myStorage.getBase().getClass().getName() + " - " + myStorage.getClass().getName());
       }
-      if (packagingElementEntity instanceof CompositePackagingElementEntity) {
-        CompositePackagingElementEntity entity = (CompositePackagingElementEntity)packagingElementEntity;
+      if (packagingElementEntity instanceof CompositePackagingElementEntity entity) {
         return ContainerUtil.map(entity.getChildren().iterator(), o -> {
           PackagingElement<?> data = (PackagingElement<?>)mapping.getDataByEntity(o);
           if (data == null) {

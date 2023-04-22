@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import git4idea.remote.hosting.knownRepositories
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -35,6 +35,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.changes.GitChangeUtils
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
+import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import kotlinx.coroutines.flow.map
@@ -46,7 +47,6 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
@@ -196,7 +196,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       }.apply {
         border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }
-    val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
+    val toolbar = CodeReviewChangesTreeFactory.createTreeToolbar(actionManager, "Github.PullRequest.Changes.Toolbar", changesLoadingPanel)
     return panel.addToTop(toolbar).addToCenter(changesLoadingPanel)
   }
 
@@ -229,7 +229,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       }.apply {
         border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }
-    val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
+    val toolbar = CodeReviewChangesTreeFactory.createTreeToolbar(actionManager, "Github.PullRequest.Changes.Toolbar", changesLoadingPanel)
     val changesBrowser = BorderLayoutPanel().andTransparent()
       .addToTop(toolbar)
       .addToCenter(changesLoadingPanel)
@@ -243,7 +243,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   private fun createChangesTree(parentPanel: JPanel,
                                 model: SingleValueModel<Collection<Change>>,
                                 emptyTextText: String): JComponent {
-    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
+    val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
 
     val diffPreviewHolder = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, null, dataContext.filesManager)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -76,8 +76,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       final PsiElement psiElement = descriptor.getPsiElement();
       if (!(psiElement instanceof PsiIdentifier)) return;
       PsiModifierListOwner owner = (PsiModifierListOwner)psiElement.getParent();
-      if (owner instanceof PsiClass) {
-        PsiClass rec = (PsiClass)owner;
+      if (owner instanceof PsiClass rec) {
         if (!rec.isRecord()) return;
         String compactCtorText = "public " + rec.getName() + " {}";
         PsiMethod ctor = JavaPsiFacade.getElementFactory(project).createMethodFromText(compactCtorText, owner);

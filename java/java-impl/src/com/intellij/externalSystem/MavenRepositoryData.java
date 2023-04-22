@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -36,14 +36,7 @@ public final class MavenRepositoryData extends AbstractExternalEntityData {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof MavenRepositoryData)) return false;
-    if (!super.equals(o)) return false;
-
-    MavenRepositoryData data = (MavenRepositoryData)o;
-
-    if (!Objects.equals(name, data.name)) return false;
-    if (!Objects.equals(url, data.url)) return false;
-    return true;
+    return o instanceof MavenRepositoryData data && super.equals(o) && Objects.equals(name, data.name) && Objects.equals(url, data.url);
   }
 
   @Override

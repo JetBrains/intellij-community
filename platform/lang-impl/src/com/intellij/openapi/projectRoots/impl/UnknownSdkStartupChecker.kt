@@ -14,9 +14,9 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-private class UnknownSdkStartupChecker : ProjectPostStartupActivity {
+private class UnknownSdkStartupChecker : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       // avoid crazy background activity in tests

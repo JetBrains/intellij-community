@@ -16,7 +16,7 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.actions
 
-import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
+import com.intellij.dependencytoolwindow.DependencyToolWindowOpener
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -59,7 +59,7 @@ class AddDependencyAction : AnAction(
 
         val selectedModule = findSelectedModule(e, modules) ?: return
 
-        DependencyToolWindowFactory.activateToolWindow(project, PackagesListPanelProvider) {
+        DependencyToolWindowOpener.activateToolWindow(project, PackagesListPanelProvider) {
             project.pkgsUiStateModifier.setTargetModules(TargetModules.One(selectedModule))
         }
     }

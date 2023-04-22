@@ -128,6 +128,8 @@ private fun getBgData(project: Project, selectedItems: Lazy<List<NavBarItem>>, d
       DefaultDeleteProvider()
     }
   }
+  PlatformDataKeys.SELECTED_ITEM.name -> selectedItems.value.firstOrNull()
+  PlatformDataKeys.SELECTED_ITEMS.name -> selectedItems.value.toTypedArray()
   else -> {
     null
   }

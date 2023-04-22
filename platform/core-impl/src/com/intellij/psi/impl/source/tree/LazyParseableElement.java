@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementTypeBase;
@@ -110,6 +111,15 @@ public class LazyParseableElement extends CompositeElement {
   public int hc() {
     CharSequence text = myText();
     return text == null ? super.hc() : LeafElement.leafHC(text);
+  }
+
+  @Override
+  public boolean textContains(char c) {
+    CharSequence text = myText();
+    if (text != null) {
+      return StringUtil.indexOf(text, c) != -1;
+    }
+    return super.textContains(c);
   }
 
   @Override

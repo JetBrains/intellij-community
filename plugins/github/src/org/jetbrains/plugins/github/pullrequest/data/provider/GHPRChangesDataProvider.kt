@@ -3,14 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import git4idea.changes.GitParsedChangesBundle
 import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import java.util.concurrent.CompletableFuture
 
 interface GHPRChangesDataProvider {
 
   @RequiresEdt
-  fun loadChanges(): CompletableFuture<GHPRChangesProvider>
+  fun loadChanges(): CompletableFuture<GitParsedChangesBundle>
 
   @RequiresEdt
   fun reloadChanges()
@@ -19,7 +19,7 @@ interface GHPRChangesDataProvider {
   fun addChangesListener(disposable: Disposable, listener: () -> Unit)
 
   @RequiresEdt
-  fun loadChanges(disposable: Disposable, consumer: (CompletableFuture<GHPRChangesProvider>) -> Unit) {
+  fun loadChanges(disposable: Disposable, consumer: (CompletableFuture<GitParsedChangesBundle>) -> Unit) {
     addChangesListener(disposable) {
       consumer(loadChanges())
     }

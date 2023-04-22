@@ -30,13 +30,8 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="skiko-awt" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="skiko-awt-runtime-macos-arm64" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="skiko-awt-runtime-macos-x64" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="skiko-awt-runtime-linux-arm64" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="skiko-awt-runtime-linux-x64" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="skiko-awt-runtime-windows" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
-    <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="library" name="batik-transcoder" level="project" />
+    <orderEntry type="library" name="xml-apis-ext" level="project" />
   </component>
 </module>

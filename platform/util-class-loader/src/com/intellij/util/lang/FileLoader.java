@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
+@SuppressWarnings("BlockingMethodInNonBlockingContext")
 final class FileLoader implements Loader {
   private static final EnumSet<StandardOpenOption> READ_OPTIONS = EnumSet.of(StandardOpenOption.READ);
   private static final EnumSet<StandardOpenOption> WRITE_OPTIONS = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE);
@@ -34,7 +35,7 @@ final class FileLoader implements Loader {
   private static final AtomicLong totalReading = new AtomicLong();
 
   private static final Boolean doFsActivityLogging = false;
-  // find . -name "classpath.index" -delete
+  // `find . -name "classpath.index" -delete`
   private static final short indexFileVersion = 24;
 
   private final @NotNull Predicate<? super String> nameFilter;
@@ -107,7 +108,7 @@ final class FileLoader implements Loader {
                                                ClasspathCache.LoaderDataBuilder context,
                                                StrippedLongArrayList nameHashes) {
     // FileVisitor is not used to avoid getting file attributes for class files
-    // (.class extension is a strong indicator that it is file and not a directory)
+    // (`.class` extension is a strong indicator that it is a file and not a directory)
     Deque<Path> dirCandidates = new ArrayDeque<>();
     dirCandidates.add(startDir);
     Path dir;
@@ -157,12 +158,20 @@ final class FileLoader implements Loader {
 
   @Override
   public @Nullable Resource getResource(@NotNull String name) {
+    if (!nameFilter.test(name)) {
+      return null;
+    }
+
     Path file = path.resolve(name);
     return Files.exists(file) ? new FileResource(file) : null;
   }
 
   @Override
   public @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException {
+    if (!nameFilter.test(fileName)) {
+      return null;
+    }
+
     Path file = path.resolve(fileName);
     byte[] data;
     try {
@@ -347,11 +356,6 @@ final class FileLoader implements Loader {
   @Override
   public String toString() {
     return "FileLoader(path=" + path + ')';
-  }
-
-  @Override
-  public boolean containsName(String name) {
-    return nameFilter.test(name);
   }
 
   private static final class LoaderData implements ClasspathCache.IndexRegistrar {

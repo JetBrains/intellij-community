@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -180,8 +180,7 @@ public final class ElementToWorkOn {
       if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
         expr = ((PsiExpressionStatement)statements[0]).getExpression();
       }
-      else if (statements.length == 1 && statements[0] instanceof PsiDeclarationStatement) {
-        PsiDeclarationStatement decl = (PsiDeclarationStatement)statements[0];
+      else if (statements.length == 1 && statements[0] instanceof PsiDeclarationStatement decl) {
         PsiElement[] declaredElements = decl.getDeclaredElements();
         if (declaredElements.length == 1 && declaredElements[0] instanceof PsiLocalVariable) {
           localVar = (PsiLocalVariable)declaredElements[0];

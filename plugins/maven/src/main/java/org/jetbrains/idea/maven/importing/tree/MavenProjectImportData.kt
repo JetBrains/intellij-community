@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.tree
 
-import com.intellij.openapi.module.Module
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
@@ -13,18 +12,11 @@ open class ModuleData(val moduleName: String,
                       private val javaVersionHolder: MavenJavaVersionHolder) {
   val sourceLanguageLevel: LanguageLevel?
     get() = if (type == StandardMavenModuleType.TEST_ONLY) javaVersionHolder.testSourceLevel else javaVersionHolder.sourceLevel
-  val targetLanguageLevel: LanguageLevel?
-    get() = if (type == StandardMavenModuleType.TEST_ONLY) javaVersionHolder.testTargetLevel else javaVersionHolder.targetLevel
 
   override fun toString(): String {
     return moduleName
   }
 }
-
-class LegacyModuleData(val module: Module,
-                       type: StandardMavenModuleType,
-                       javaVersionHolder: MavenJavaVersionHolder,
-                       val isNewModule: Boolean) : ModuleData(module.name, type, javaVersionHolder)
 
 open class MavenModuleImportData(val mavenProject: MavenProject,
                                  val moduleData: ModuleData) {
@@ -48,10 +40,6 @@ open class MavenTreeModuleImportData(mavenProject: MavenProject,
                                      moduleData: ModuleData,
                                      val dependencies: List<MavenImportDependency<*>>,
                                      val changes: MavenProjectChanges) : MavenModuleImportData(mavenProject, moduleData) {
-
-  val legacyModuleData: LegacyModuleData
-    get() = moduleData as LegacyModuleData
-
 }
 
 class MavenProjectImportData(val mavenProject: MavenProject,

@@ -119,7 +119,7 @@ public abstract class WslDistributionManager implements Disposable {
   /**
    * @deprecated use {@link WslPath#isWslUncPath(String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isWslPath(@NotNull String path) {
     return WslPath.isWslUncPath(path);
   }

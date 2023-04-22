@@ -4,6 +4,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.text.Strings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
   private final Map<String, RunnerLayout> myRunnerId2Settings = new LinkedHashMap<>();
 
   public RunnerLayout getLayout(@NotNull String id) {
-    if (id == NOT_PERSISTENT_ID) return new RunnerLayout();
+    if (Strings.areSameInstance(id, NOT_PERSISTENT_ID)) return new RunnerLayout();
 
     RunnerLayout layout = myRunnerId2Settings.get(id);
     if (layout == null) {

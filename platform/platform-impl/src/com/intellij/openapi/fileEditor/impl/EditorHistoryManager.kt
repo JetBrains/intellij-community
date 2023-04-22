@@ -15,7 +15,7 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -62,7 +62,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     fun getInstance(project: Project): EditorHistoryManager = project.service()
   }
 
-  internal class EditorHistoryManagerStartUpActivity : ProjectPostStartupActivity {
+  internal class EditorHistoryManagerStartUpActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
       getInstance(project)
     }

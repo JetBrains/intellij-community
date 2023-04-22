@@ -51,6 +51,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
@@ -636,7 +637,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         boolean lastHasKids = lastHeader.mySubId != null;
         boolean newHasKids = newHeader.mySubId != null;
         if (lastHasKids != newHasKids ||
-            lastHasKids && lastHeader.myId != newHeader.myId) {
+            lastHasKids && !Strings.areSameInstance(lastHeader.myId, newHeader.myId)) {
           views.add(Separator.getInstance());
         }
       }

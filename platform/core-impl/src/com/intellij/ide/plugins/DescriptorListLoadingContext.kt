@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class DescriptorListLoadingContext constructor(
+class DescriptorListLoadingContext(
   @JvmField val disabledPlugins: Set<PluginId> = DisabledPluginsState.getDisabledIds(),
   @JvmField val expiredPlugins: Set<PluginId> = ExpiredPluginsState.expiredPluginIds,
   @ApiStatus.Experimental @JvmField val enabledOnDemandPlugins: Set<PluginId> = EnabledOnDemandPluginsState.enabledPluginIds,
@@ -108,7 +108,7 @@ class DescriptorListLoadingContext constructor(
   }
 }
 
-// doesn't make sense to intern class name since it is unique
+// doesn't make sense to intern class name since it is a unique
 // ouch, do we really cannot agree how to name implementation class attribute?
 private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
   "implementation", "implementationClass", "builderClass",

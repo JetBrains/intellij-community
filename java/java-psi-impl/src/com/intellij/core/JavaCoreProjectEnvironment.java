@@ -55,7 +55,7 @@ public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
 
     myProject.registerService(JvmPsiConversionHelper.class, new JvmPsiConversionHelperImpl());
     registerJavaPsiFacade();
-    myProject.registerService(JvmFacade.class, new JvmFacadeImpl(myProject, myMessageBus));
+    myProject.registerService(JvmFacade.class, new JvmFacadeImpl(myProject));
   }
 
   protected void registerJavaPsiFacade() {

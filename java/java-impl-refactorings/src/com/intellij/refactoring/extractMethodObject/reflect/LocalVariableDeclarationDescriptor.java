@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.psi.*;
@@ -22,11 +22,10 @@ public class LocalVariableDeclarationDescriptor implements ItemToReplaceDescript
   public static ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiDeclarationStatement declarationStatement) {
     List<AccessibleLocalVariable> variables = new ArrayList<>();
     for (PsiElement element : declarationStatement.getDeclaredElements()) {
-      if (!(element instanceof PsiLocalVariable)) {
+      if (!(element instanceof PsiLocalVariable variable)) {
         return null;
       }
 
-      PsiLocalVariable variable = (PsiLocalVariable)element;
       String name = variable.getName();
       PsiType variableType = variable.getType();
       if (!PsiReflectionAccessUtil.isAccessibleType(variableType)) {

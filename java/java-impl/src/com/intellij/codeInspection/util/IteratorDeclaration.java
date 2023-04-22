@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -54,8 +54,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     while (candidate instanceof PsiParenthesizedExpression) {
       candidate = ((PsiParenthesizedExpression)candidate).getExpression();
     }
-    if (!(candidate instanceof PsiMethodCallExpression)) return false;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)candidate;
+    if (!(candidate instanceof PsiMethodCallExpression call)) return false;
     if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression expression = call.getMethodExpression();
     return method.equals(expression.getReferenceName()) && ExpressionUtils.isReferenceTo(expression.getQualifierExpression(), myIterator);
@@ -74,8 +73,7 @@ public final class IteratorDeclaration extends IterableTraversal {
 
   @Nullable
   public static PsiLocalVariable getDeclaredVariable(PsiStatement statement) {
-    if (!(statement instanceof PsiDeclarationStatement)) return null;
-    PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
+    if (!(statement instanceof PsiDeclarationStatement declaration)) return null;
     PsiElement[] elements = declaration.getDeclaredElements();
     if (elements.length != 1) return null;
     return ObjectUtils.tryCast(elements[0], PsiLocalVariable.class);
@@ -86,8 +84,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     PsiLocalVariable variable = getDeclaredVariable(statement);
     if (variable == null) return null;
     PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
-    if (!(initializer instanceof PsiMethodCallExpression)) return null;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
+    if (!(initializer instanceof PsiMethodCallExpression call)) return null;
     if (!call.getArgumentList().isEmpty()) return null;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
     boolean listIterator = "listIterator".equals(methodExpression.getReferenceName());

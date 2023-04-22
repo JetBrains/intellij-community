@@ -1,17 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import com.jediterm.terminal.model.CharBuffer
+import com.jediterm.terminal.model.*
 import com.jediterm.terminal.model.JediTerminal.ResizeHandler
-import com.jediterm.terminal.model.StyleState
-import com.jediterm.terminal.model.TerminalSelection
-import com.jediterm.terminal.model.TerminalTextBuffer
 import java.awt.Dimension
 
 class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
@@ -98,6 +97,15 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
       }
     }
 
+  @Volatile
+  var promptText: String = ""
+    set(value) {
+      if (value != field) {
+        field = value
+        terminalListeners.forEach { it.onPromptTextChanged(value) }
+      }
+    }
+
   val historyLinesCount: Int
     get() = textBuffer.historyLinesCount
 
@@ -114,7 +122,7 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
 
   fun charAt(x: Int, y: Int): Char = textBuffer.getCharAt(x, y)
 
-  fun getLineText(line: Int): String = textBuffer.getLine(line).text
+  fun getLine(index: Int): TerminalLine = textBuffer.getLine(index)
 
   fun processHistoryAndScreenLines(scrollOrigin: Int, maxLinesToProcess: Int, consumer: StyledTextConsumer) {
     textBuffer.processHistoryAndScreenLines(scrollOrigin, maxLinesToProcess, consumer)
@@ -194,6 +202,12 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     method.invoke(textBuffer)
   }
 
+  fun clearAllExceptPrompt() {
+    textBuffer.scrollArea(1, 1 - cursorY, height)
+    textBuffer.clearHistory()
+    cursorY = 1
+  }
+
   fun lock() = textBuffer.lock()
 
   fun unlock() = textBuffer.unlock()
@@ -204,8 +218,14 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   private val terminalListeners: MutableList<TerminalListener> = mutableListOf()
   private val cursorListeners: MutableList<CursorListener> = mutableListOf()
 
-  fun addContentListener(listener: ContentListener) {
-    textBuffer.addModelListener { listener.onContentChanged() }
+  fun addContentListener(listener: ContentListener, parentDisposable: Disposable? = null) {
+    val terminalListener = TerminalModelListener { listener.onContentChanged() }
+    textBuffer.addModelListener(terminalListener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) {
+        textBuffer.removeModelListener(terminalListener)
+      }
+    }
   }
 
   fun addTerminalListener(listener: TerminalListener) {
@@ -230,6 +250,8 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     fun onAlternateBufferChanged(enabled: Boolean) {}
 
     fun onBracketedPasteModeChanged(bracketed: Boolean) {}
+
+    fun onPromptTextChanged(newText: String) {}
   }
 
   interface CursorListener {

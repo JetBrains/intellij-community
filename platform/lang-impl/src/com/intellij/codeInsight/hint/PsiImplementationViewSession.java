@@ -293,14 +293,13 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
       }
     }
 
-    //check attached sources if any
-    if (element instanceof PsiCompiledElement) {
-      element = element.getNavigationElement();
-    }
-
-    // check virtual code if any
-    if(element instanceof SyntheticElement) {
-      element = element.getNavigationElement();
+    if (element != null) {
+      //1. get element from sources if target is located in library class file
+      //2. get original element if the element is synthetic (e.g. IDEA-224198)
+      PsiElement navigationElement = element.getNavigationElement();
+      if (navigationElement != null) {
+        element = navigationElement;
+      }
     }
 
     return Pair.pair(element, ref);

@@ -46,7 +46,7 @@ interface SdkInfoCache {
 
 internal class SdkInfoCacheImpl(project: Project) :
     SdkInfoCache,
-    LockFreeFineGrainedEntityCache<ModuleInfo, SdkInfoCacheImpl.SdkDependency>(project, true),
+    LockFreeFineGrainedEntityCache<ModuleInfo, SdkInfoCacheImpl.SdkDependency>(project, doSelfInitialization = false, cleanOnLowMemory = true),
     ProjectJdkTable.Listener,
     ModuleRootListener,
     LibraryInfoListener,

@@ -60,7 +60,6 @@ import org.jdom.*;
 import org.jdom.output.support.XMLOutputProcessor;
 import org.jdom.output.support.XmlOutputProcessorImpl;
 
-import javax.xml.transform.Result;
 import java.io.*;
 import java.util.List;
 
@@ -234,18 +233,6 @@ public class XMLOutputter implements Cloneable {
   }
 
   /**
-   * Print out a <code>{@link ProcessingInstruction}</code>.
-   *
-   * @param pi  <code>ProcessingInstruction</code> to output.
-   * @param out <code>OutputStream</code> to use.
-   */
-  public void output(ProcessingInstruction pi, OutputStream out)
-    throws IOException {
-    Writer writer = makeWriter(out);
-    output(pi, writer);  // output() flushes
-  }
-
-  /**
    * Print out a <code>{@link EntityRef}</code>.
    *
    * @param entity <code>EntityRef</code> to output.
@@ -314,12 +301,6 @@ public class XMLOutputter implements Cloneable {
       if (obj instanceof Element) {
         printElement(out, doc.getRootElement(), 0,
                      createNamespaceStack());
-      }
-      else if (obj instanceof Comment) {
-        printComment(out, (Comment)obj);
-      }
-      else if (obj instanceof ProcessingInstruction) {
-        printProcessingInstruction(out, (ProcessingInstruction)obj);
       }
       else if (obj instanceof DocType) {
         printDocType(out, doc.getDocType());
@@ -451,14 +432,6 @@ public class XMLOutputter implements Cloneable {
    */
   public void output(ProcessingInstruction pi, Writer out)
     throws IOException {
-    boolean currentEscapingPolicy = currentFormat.ignoreTrAXEscapingPIs;
-
-    // Output PI verbatim, disregarding TrAX escaping PIs.
-    currentFormat.setIgnoreTrAXEscapingPIs(true);
-    printProcessingInstruction(out, pi);
-    currentFormat.setIgnoreTrAXEscapingPIs(currentEscapingPolicy);
-
-    out.flush();
   }
 
   /**
@@ -576,24 +549,6 @@ public class XMLOutputter implements Cloneable {
     return out.toString();
   }
 
-
-  /**
-   * Return a string representing a PI. Warning: a String is
-   * Unicode, which may not match the outputter's specified
-   * encoding.
-   *
-   * @param pi <code>ProcessingInstruction</code> to format.
-   */
-  public String outputString(ProcessingInstruction pi) {
-    StringWriter out = new StringWriter();
-    try {
-      output(pi, out);  // output() flushes
-    }
-    catch (IOException ignored) {
-    }
-    return out.toString();
-  }
-
   /**
    * Return a string representing an entity. Warning: a String is
    * Unicode, which may not match the outputter's specified
@@ -688,46 +643,6 @@ public class XMLOutputter implements Cloneable {
     out.write("<!--");
     out.write(comment.getText());
     out.write("-->");
-  }
-
-  /**
-   * This will handle printing of processing instructions.
-   *
-   * @param pi  <code>ProcessingInstruction</code> to write.
-   * @param out <code>Writer</code> to use.
-   */
-  private void printProcessingInstruction(Writer out, ProcessingInstruction pi
-  ) throws IOException {
-    String target = pi.getTarget();
-    boolean piProcessed = false;
-
-    if (!currentFormat.ignoreTrAXEscapingPIs) {
-      if (target.equals(Result.PI_DISABLE_OUTPUT_ESCAPING)) {
-        escapeOutput = false;
-        piProcessed = true;
-      }
-      else if (target.equals(Result.PI_ENABLE_OUTPUT_ESCAPING)) {
-        escapeOutput = true;
-        piProcessed = true;
-      }
-    }
-    if (!piProcessed) {
-      String rawData = pi.getData();
-
-      // Write <?target data?> or if no data then just <?target?>
-      if (!"".equals(rawData)) {
-        out.write("<?");
-        out.write(target);
-        out.write(" ");
-        out.write(rawData);
-        out.write("?>");
-      }
-      else {
-        out.write("<?");
-        out.write(target);
-        out.write("?>");
-      }
-    }
   }
 
   /**
@@ -947,14 +862,8 @@ public class XMLOutputter implements Cloneable {
 
       indent(out, level);
 
-      if (next instanceof Comment) {
-        printComment(out, (Comment)next);
-      }
-      else if (next instanceof Element) {
+      if (next instanceof Element) {
         printElement(out, (Element)next, level, namespaces);
-      }
-      else if (next instanceof ProcessingInstruction) {
-        printProcessingInstruction(out, (ProcessingInstruction)next);
       }
       else {
         // XXX if we get here then we have a illegal content, for

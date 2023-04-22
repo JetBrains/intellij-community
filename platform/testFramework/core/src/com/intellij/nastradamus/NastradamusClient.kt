@@ -65,22 +65,23 @@ class NastradamusClient(
       println("Requesting $uri with payload $stringJson")
     }
 
-    withErrorThreshold("NastradamusClient-sendTestRunResults") {
-      withRetry {
-        HttpClient.sendRequest(httpPost) { response ->
-          if (response.statusLine.statusCode != 200) {
-            if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
-              System.err.apply {
-                println(response)
-                println(response.entity.content.reader().readText())
-              }
+    withErrorThreshold(
+      objName = "NastradamusClient-sendTestRunResults",
+      action = {
+        withRetry {
+          HttpClient.sendRequest(httpPost) { response ->
+            if (response.statusLine.statusCode != 200) {
+              throw RuntimeException("""
+                Couldn't store test run results on Nastradamus.
+                $response
+                ${response.entity.content.reader().readText()}
+                """.trimIndent())
             }
-
-            throw RuntimeException("Couldn't store test run results on Nastradamus")
           }
         }
-      }
-    }
+      },
+      fallbackOnThresholdReached = {}
+    )
   }
 
   /**
@@ -105,32 +106,35 @@ class NastradamusClient(
       println("Requesting $uri with payload $stringJson")
     }
 
-    return withErrorThreshold("NastradamusClient-sendSortingRequest") {
-      val jsonTree = withRetry {
-        HttpClient.sendRequest(httpPost) {
-          jacksonMapper.readTree(it.entity.content)
-        }
-      }
-
-      requireNotNull(jsonTree) { "Received data from $uri must not be null" }
-
-      if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
-        println("Received data from $uri: $jsonTree")
-      }
-
-      try {
-        jsonTree.fields().asSequence()
-          .single { it.key == "sorted_tests" }.value
-          .get(currentBucketIndex.toString())
-          .map {
-            TestCaseEntity(it.findValue("name").asText())
+    return withErrorThreshold(
+      objName = "NastradamusClient-sendSortingRequest",
+      action = {
+        val jsonTree = withRetry {
+          HttpClient.sendRequest(httpPost) {
+            jacksonMapper.readTree(it.entity.content)
           }
-      }
-      catch (e: Throwable) {
-        System.err.println("Response from $uri with failure: $jsonTree")
-        throw e
-      }
-    }
+        }
+
+        requireNotNull(jsonTree) { "Received data from $uri must not be null" }
+
+        if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+          println("Received data from $uri: $jsonTree")
+        }
+
+        try {
+          jsonTree.fields().asSequence()
+            .single { it.key == "sorted_tests" }.value
+            .get(currentBucketIndex.toString())
+            .map {
+              TestCaseEntity(it.findValue("name").asText())
+            }
+        }
+        catch (e: Throwable) {
+          throw RuntimeException("Response from $uri with failure: $jsonTree", e)
+        }
+      },
+      fallbackOnThresholdReached = { throw RuntimeException("Couldn't get sorted test classes from Nastradamus") }
+    )
   }
 
   /**
@@ -187,9 +191,16 @@ class NastradamusClient(
   fun getRankedClasses(): Map<Class<*>, Int> {
     println("Getting sorted (& bucketed) test classes from Nastradamus ...")
 
+    fun fallback(): Map<Class<*>, Int> {
+      var rank = 1
+      return unsortedClasses.sortedBy { it.name }.associateWith { rank++ }
+    }
+
     return try {
-      withErrorThreshold(objName = "NastradamusClient-getRankedClasses", errorThreshold = 1) {
-        try {
+      withErrorThreshold(
+        objName = "NastradamusClient-getRankedClasses",
+        errorThreshold = 1,
+        action = {
           val changesets = getTeamCityChangesDetails()
           val cases = unsortedClasses.map { TestCaseEntity(it.name) }
           val sortedCases = sendSortingRequest(
@@ -203,28 +214,29 @@ class NastradamusClient(
           sortedClassesCachedResult = unsortedClasses.associateWith { clazz -> ranked[clazz.name] ?: Int.MAX_VALUE }
           println("Fetching sorted test classes from Nastradamus completed")
           sortedClassesCachedResult
-        }
-        catch (e: Throwable) {
-          e.printStackTrace()
-          throw e
-        }
-      }
+        },
+        fallbackOnThresholdReached = { fallback() }
+      )
     }
     catch (e: Throwable) {
       // fallback in case of any failure (just to get aggregator running)
-      System.err.println(
-        "Failure during sorting test classes via Nastradamus. Fallback to simple natural sorting. For more details take a look at failures above in the log")
-      var rank = 1
-      unsortedClasses.sortedBy { it.name }.associateWith { rank++ }
+      System.err.println("Failure during sorting test classes via Nastradamus. Fallback to simple natural sorting.")
+      sortedClassesCachedResult = fallback()
+      sortedClassesCachedResult
     }
   }
 
   fun isClassInBucket(testIdentifier: String): Boolean {
     if (!this::sortedClassesCachedResult.isInitialized) getRankedClasses()
 
-    val isMatch: Boolean = withErrorThreshold("NastradamusClient-isClassInBucket") {
-      sortedClassesCachedResult.keys.any { it.name == testIdentifier }
-    }
+    val isMatch: Boolean = withErrorThreshold(
+      objName = "NastradamusClient-isClassInBucket",
+      errorThreshold = 1,
+      action = {
+        sortedClassesCachedResult.keys.any { it.name == testIdentifier }
+      },
+      fallbackOnThresholdReached = { throw RuntimeException("Couldn't find appropriate bucket for $testIdentifier via Nastradamus") }
+    )
 
     if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
       println("Nastradamus. Class $testIdentifier matches current bucket ${TestCaseLoader.TEST_RUNNER_INDEX} - $isMatch")

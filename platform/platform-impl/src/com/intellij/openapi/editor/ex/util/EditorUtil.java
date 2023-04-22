@@ -4,8 +4,8 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -860,9 +860,9 @@ public final class EditorUtil {
    * editor.
    */
   public static Font getEditorFont() {
-    float fontSize = IdeScaleTransformer.getInstance().getCurrentEditorFontSize();
+    float fontSize = UISettingsUtils.getScaledEditorFontSize();
     if (UISettings.getInstance().getPresentationMode()) {
-      fontSize = UISettings.getInstance().getPresentationModeFontSize() - 4f;
+      fontSize -= 4f;
     }
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();

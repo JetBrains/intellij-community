@@ -888,8 +888,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
         throw evaluateException(JavaDebuggerBundle.message("evaluation.error.local.variable.missing.from.class.closure", localName));
       }
-      else if (element instanceof PsiField) {
-        final PsiField psiField = (PsiField)element;
+      else if (element instanceof PsiField psiField) {
         final PsiClass fieldClass = psiField.getContainingClass();
         if (fieldClass == null) {
           throw evaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.resolve.field.class", psiField.getName()));
@@ -930,9 +929,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         if (qualifier != null) {
           final PsiElement qualifierTarget = qualifier instanceof PsiReferenceExpression
                                              ? ((PsiReferenceExpression)qualifier).resolve() : null;
-          if (qualifierTarget instanceof PsiClass) {
+          if (qualifierTarget instanceof PsiClass psiClass) {
             // this is a call to a 'static' field
-            PsiClass psiClass = (PsiClass)qualifierTarget;
             final JVMName typeName = JVMNameUtil.getJVMQualifiedName(psiClass);
             myResult = new FieldEvaluator(new TypeEvaluator(typeName), FieldEvaluator.createClassFilter(psiClass), name);
           }
@@ -1440,8 +1438,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         String code = null;
         try {
           PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod)resolved;
+          if (resolved instanceof PsiMethod method) {
             PsiClass containingClass = method.getContainingClass();
             if (containingClass != null) {
               String find;

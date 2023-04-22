@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -31,8 +31,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
   }
 
   private static void mark(RefElement refElement) {
-    if (refElement instanceof RefClass) {
-      final RefClass refClass = (RefClass)refElement;
+    if (refElement instanceof RefClass refClass) {
       if (refClass.isEntry()) {
         ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
         return;
@@ -45,8 +44,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
-    else if (refElement instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refElement;
+    else if (refElement instanceof RefMethod refMethod) {
       RefClass aClass = refMethod.getOwnerClass();
       if (aClass != null) aClass.initializeIfNeeded();
       if (refMethod.isConstructor() || refMethod.isAbstract() || refMethod.isStatic() ||
@@ -59,8 +57,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         ((RefMethodImpl)superMethod).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
-    else if (refElement instanceof RefFieldImpl) {
-      final RefFieldImpl field = (RefFieldImpl)refElement;
+    else if (refElement instanceof RefFieldImpl field) {
       if (field.isImplicitlyWritten()) {
         field.setFlag(false, CAN_BE_FINAL_MASK);
       }
@@ -75,8 +72,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
                                boolean forWriting,
                                PsiElement referenceElement) {
     if (!forWriting) return;
-    if (!(refWhat instanceof RefField)) return;
-    final RefField refField = (RefField)refWhat;
+    if (!(refWhat instanceof RefField refField)) return;
     if (refFrom instanceof RefClass && refField.getOwnerClass() != refFrom) {
       ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
     }
@@ -193,8 +189,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         }
       }
     }
-    else if (refElement instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refElement;
+    else if (refElement instanceof RefMethod refMethod) {
       if (refMethod.isEntry()) {
         ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
       }

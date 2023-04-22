@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -95,8 +95,7 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider implemen
 
   @Override
   public String getElementUrl(final Object element) {
-     if (element instanceof PsiMethod) {
-       PsiMethod aMethod = (PsiMethod)element;
+     if (element instanceof PsiMethod aMethod) {
        if (DumbService.isDumb(aMethod.getProject())) return null;
        return PsiFormatUtil.getExternalName(aMethod);
     }
@@ -105,9 +104,8 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider implemen
 
   @Override
   public String getElementModuleName(final Object element) {
-     if (element instanceof PsiMethod) {
-      PsiMethod aMethod = (PsiMethod)element;
-      Module module = ModuleUtilCore.findModuleForPsiElement(aMethod);
+     if (element instanceof PsiMethod aMethod) {
+       Module module = ModuleUtilCore.findModuleForPsiElement(aMethod);
       return module != null ? module.getName() : null;
     }
     return null;

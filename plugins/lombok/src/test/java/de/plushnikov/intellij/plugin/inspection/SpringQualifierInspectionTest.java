@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import org.intellij.lang.annotations.Language;
 
 public class SpringQualifierInspectionTest extends LombokInspectionTest {
 
@@ -9,48 +10,62 @@ public class SpringQualifierInspectionTest extends LombokInspectionTest {
     return new SpringQualifierCopyableLombokAnnotationInspection();
   }
 
-  public void testWithConfiguration() {
+  private static final @Language("JAVA") String FILE_TEXT_WITHOUT_WARNING = """
+    import lombok.NonNull;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.beans.factory.annotation.Qualifier;
+
+    @RequiredArgsConstructor
+    public class SomeRouterService {
+
+    \t@Qualifier("someDestination1") @NonNull
+    \tprivate final SomeDestination someDestination1;
+    \t@Qualifier("someDestination2") @NonNull
+    \tprivate final SomeDestination someDestination2;
+
+    \tprivate static class SomeDestination {}
+    }""";
+  public static final @Language("JAVA") String FILE_TEXT_WITH_WARNING = """
+    import lombok.NonNull;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.beans.factory.annotation.Qualifier;
+
+    @RequiredArgsConstructor
+    public class SomeRouterService {
+
+    \t<warning descr="Lombok does not copy the annotation 'org.springframework.beans.factory.annotation.Qualifier' into the constructor">@Qualifier("someDestination1")</warning> @NonNull
+    \tprivate final SomeDestination someDestination1;
+    \t<warning descr="Lombok does not copy the annotation 'org.springframework.beans.factory.annotation.Qualifier' into the constructor">@Qualifier("someDestination2")</warning> @NonNull
+    \tprivate final SomeDestination someDestination2;
+
+    \tprivate static class SomeDestination {}
+    }""";
+
+  public void testWithConfigurationWithBlanks() {
     addQualifierClass();
     myFixture.addFileToProject("lombok.config", """
       lombok.copyableAnnotations += org.springframework.beans.factory.annotation.Qualifier
       config.stopBubbling = true
       """);
 
-    myFixture.configureByText("SomeRouterService.java", """
-      import lombok.NonNull;
-      import lombok.RequiredArgsConstructor;
-      import org.springframework.beans.factory.annotation.Qualifier;
+    myFixture.configureByText("SomeRouterService.java", FILE_TEXT_WITHOUT_WARNING);
+    myFixture.checkHighlighting();
+  }
 
-      @RequiredArgsConstructor
-      public class SomeRouterService {
+  public void testWithConfigurationWithoutBlanks() {
+    addQualifierClass();
+    myFixture.addFileToProject("lombok.config", """
+      lombok.copyableAnnotations+=org.springframework.beans.factory.annotation.Qualifier
+      config.stopBubbling=true
+      """);
 
-      \t@Qualifier("someDestination1") @NonNull
-      \tprivate final SomeDestination someDestination1;
-      \t@Qualifier("someDestination2") @NonNull
-      \tprivate final SomeDestination someDestination2;
-
-      \tprivate static class SomeDestination {}
-      }""");
+    myFixture.configureByText("SomeRouterService.java", FILE_TEXT_WITHOUT_WARNING);
     myFixture.checkHighlighting();
   }
 
   public void testWithoutConfiguration() {
     addQualifierClass();
-    myFixture.configureByText("SomeRouterService.java", """
-      import lombok.NonNull;
-      import lombok.RequiredArgsConstructor;
-      import org.springframework.beans.factory.annotation.Qualifier;
-
-      @RequiredArgsConstructor
-      public class SomeRouterService {
-
-      \t<warning descr="Lombok does not copy the annotation 'org.springframework.beans.factory.annotation.Qualifier' into the constructor">@Qualifier("someDestination1")</warning> @NonNull
-      \tprivate final SomeDestination someDestination1;
-      \t<warning descr="Lombok does not copy the annotation 'org.springframework.beans.factory.annotation.Qualifier' into the constructor">@Qualifier("someDestination2")</warning> @NonNull
-      \tprivate final SomeDestination someDestination2;
-
-      \tprivate static class SomeDestination {}
-      }""");
+    myFixture.configureByText("SomeRouterService.java", FILE_TEXT_WITH_WARNING);
     myFixture.checkHighlighting();
   }
 

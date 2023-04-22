@@ -7,7 +7,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.codeStyle.IndentHelper
 import com.intellij.psi.util.elementType
 import com.intellij.structuralsearch.StructuralReplaceHandler
@@ -17,18 +16,14 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo
-import com.intellij.util.containers.tail
 import org.jetbrains.kotlin.idea.base.util.reformatted
-import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.addTypeParameter
 import org.jetbrains.kotlin.idea.core.setDefaultValue
-import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
 import org.jetbrains.kotlin.js.translate.declaration.hasCustomSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
@@ -119,19 +114,6 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     private fun KtDotQualifiedExpression.replaceDotQualifiedExpression(
         searchTemplate: KtDotQualifiedExpression, match: KtDotQualifiedExpression, options: ReplaceOptions
     ) {
-        // fix parsing for fq selector expression replacement with shorten references
-        if (receiverExpression is KtDotQualifiedExpression && selectorExpression is KtCallExpression && options.isToShortenFQN) {
-            val file = match.containingKtFile
-            val symbols = text.split(".")
-            val psiFactory = KtPsiFactory(project)
-            receiverExpression.replace(psiFactory.createExpression(symbols.first()))
-            val importName = FqName(symbols.tail().joinToString(separator = ".") { it }.substringBefore("("))
-            file.resolveImportReference(importName).firstOrNull()?.let { importRef ->
-                ImportInsertHelper.getInstance(project).importDescriptor(file, importRef)
-            }
-            file.importList?.let { CodeStyleManager.getInstance(project).reformat(it, true) }
-
-        }
         receiverExpression.structuralReplace(searchTemplate.receiverExpression, match.receiverExpression, options)
         val selectorExpr = selectorExpression
         val searchSelectorExpr = searchTemplate.selectorExpression

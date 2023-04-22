@@ -32,8 +32,7 @@ public class BoxingEvaluator implements Evaluator {
   }
 
   public static Object box(Object value, EvaluationContextImpl context) throws EvaluateException {
-    if (value instanceof PrimitiveValue) {
-      PrimitiveValue primitiveValue = (PrimitiveValue)value;
+    if (value instanceof PrimitiveValue primitiveValue) {
       PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name());
       if (primitiveType != null) {
         return convertToWrapper(context, primitiveValue, primitiveType.getBoxedTypeName());

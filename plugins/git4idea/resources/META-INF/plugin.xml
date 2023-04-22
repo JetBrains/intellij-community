@@ -20,6 +20,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
   </dependencies>
+  <depends optional="true" config-file="git-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <actions>
     <action id="Git.Init" class="git4idea.actions.GitInit">

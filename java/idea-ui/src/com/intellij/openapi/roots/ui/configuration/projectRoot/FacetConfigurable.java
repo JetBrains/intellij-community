@@ -31,26 +31,40 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
+import java.util.Map;
 
 public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet> {
   private final Facet myFacet;
   private final ModulesConfigurator myModulesConfigurator;
   private @NlsSafe String myFacetName;
   private final FacetProjectStructureElement myProjectStructureElement;
+  private final Map<Facet, FacetConfigurable> myFacetConfigurables;
 
-  public FacetConfigurable(final Facet facet, final StructureConfigurableContext context, final Runnable updateTree) {
+  public FacetConfigurable(Map<Facet, FacetConfigurable> facetConfigurables,
+                           Facet facet,
+                           StructureConfigurableContext context,
+                           Runnable updateTree) {
     super(!facet.getType().isOnlyOneFacetAllowed() && !(facet instanceof InvalidFacet), updateTree);
     myFacet = facet;
     myModulesConfigurator = context.getModulesConfigurator();
     myFacetName = myFacet.getName();
     myProjectStructureElement = new FacetProjectStructureElement(context, facet);
+    myFacetConfigurables = facetConfigurables;
   }
 
 
   @Override
   public void setDisplayName(String name) {
-    if (!name.equals(myFacetName)) {
-      getFacetsConfigurator().getOrCreateModifiableModel(myFacet.getModule()).rename(myFacet, name);
+    var module = myFacet.getModule();
+    // facet names must be unique within the same module and facet type
+    var existingFacetNames = new HashSet<String>();
+    myFacetConfigurables.keySet().stream()
+      .filter(facet -> facet.getModule() == module && facet.getTypeId() == myFacet.getTypeId())
+      .map(facet -> myFacetConfigurables.get(facet))
+      .forEach(facetConfigurable -> existingFacetNames.add(facetConfigurable.getDisplayName()));
+    if (!existingFacetNames.contains(name)) {
+      getFacetsConfigurator().getOrCreateModifiableModel(module).rename(myFacet, name);
       myFacetName = name;
     }
   }

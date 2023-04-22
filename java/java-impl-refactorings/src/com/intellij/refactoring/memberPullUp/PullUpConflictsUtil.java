@@ -26,7 +26,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
@@ -254,8 +257,7 @@ public final class PullUpConflictsUtil {
         conflictsList.putValue(superClass, message);
       }
 
-      if (member instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)member;
+      if (member instanceof PsiMethod method) {
         final PsiModifierList modifierList = method.getModifierList();
         if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
           for (PsiClass subClass : ClassInheritorsSearch.search(superClass)) {
@@ -396,8 +398,7 @@ public final class PullUpConflictsUtil {
 
 
     private boolean existsInSuperClass(PsiElement classMember) {
-      if (!(classMember instanceof PsiMethod)) return false;
-      final PsiMethod method = ((PsiMethod)classMember);
+      if (!(classMember instanceof PsiMethod method)) return false;
       if (myInterfaceContainmentVerifier.checkedInterfacesContain(method)) return true;
       if (mySuperClass == null) return false;
       final PsiMethod methodBySignature = mySuperClass.findMethodBySignature(method, true);

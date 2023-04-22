@@ -9,7 +9,7 @@ import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.MergeRequestProducer
 import com.intellij.diff.merge.MergeResult
 import com.intellij.ide.CliResult
-import com.intellij.idea.SplashManager
+import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ApplicationStarterBase
 import com.intellij.openapi.application.EDT
@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AppIcon
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +51,7 @@ internal class MergeApplication : ApplicationStarterBase(3, 4) {
       outputFile = files[2] // base
     }
     if (outputFile == null) {
-      throw Exception(DiffBundle.message("cannot.create.file.error", ContainerUtil.getLastItem(filePaths)))
+      throw Exception(DiffBundle.message("cannot.create.file.error", filePaths.lastOrNull()))
     }
 
     val deferred = CompletableDeferred<CliResult>()
@@ -62,7 +61,7 @@ internal class MergeApplication : ApplicationStarterBase(3, 4) {
       val mode = if (project == null) WindowWrapper.Mode.MODAL else WindowWrapper.Mode.FRAME
       val dialogHints = DiffDialogHints(mode, null) { wrapper ->
         val window = wrapper.window
-        SplashManager.hideBeforeShow(window)
+        hideSplashBeforeShow(window)
         AppIcon.getInstance().requestFocus(window)
         UIUtil.runWhenWindowClosed(window) { deferred.complete(resultRef.get()) }
       }

@@ -102,18 +102,25 @@ class TeamCityClient(
     }
 
     val result =
-      withErrorThreshold("TeamCityClient-get") {
-        withRetry {
-          HttpClient.sendRequest(request = request) {
-            if (it.statusLine.statusCode != 200) {
-              System.err.println(InputStreamReader(it.entity.content).readText())
-              throw RuntimeException("TeamCity returned not successful status code ${it.statusLine.statusCode}")
-            }
+      withErrorThreshold(
+        objName = "TeamCityClient-get",
+        action = {
+          withRetry {
+            HttpClient.sendRequest(request = request) {
+              if (it.statusLine.statusCode != 200) {
+                throw RuntimeException(
+                  """
+                TeamCity returned not successful status code ${it.statusLine.statusCode}.
+                ${InputStreamReader(it.entity.content).readText()}
+                """.trimIndent())
+              }
 
-            jacksonMapper.readTree(it.entity.content)
+              jacksonMapper.readTree(it.entity.content)
+            }
           }
-        }
-      }
+        },
+        fallbackOnThresholdReached = { throw RuntimeException("Couldn't get data from TeamCity $fullUrl") }
+      )
 
     return requireNotNull(result) { "Request ${request.uri} failed" }
   }

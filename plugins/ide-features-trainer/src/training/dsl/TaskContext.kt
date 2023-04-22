@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
 import training.statistic.LearningInternalProblems
@@ -161,6 +162,7 @@ abstract class TaskContext : LearningDslBase {
     return object : HighlightingTriggerMethods() {}
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use triggerAndBorderHighlight().treeItem")
   fun triggerByFoundPathAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
                                      usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
@@ -193,6 +195,7 @@ abstract class TaskContext : LearningDslBase {
                                                         selector: ((candidates: Collection<T>) -> T?)?,
                                                         rectangle: TaskRuntimeContext.(T) -> Rectangle?) = Unit
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use triggerAndBorderHighlight().listItem")
   fun triggerByListItemAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
                                     usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,

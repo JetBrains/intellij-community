@@ -39,7 +39,7 @@ class DummyTimestampGetter(val nodesCount: Int) : TimestampGetter {
 }
 
 fun buildLayout(graphBuilder: TestGraphBuilder.() -> Unit): GraphLayoutImpl {
-  return GraphLayoutBuilder.build(graph(graphBuilder), { nodeIndex1, nodeIndex2 -> nodeIndex1 - nodeIndex2 })
+  return GraphLayoutBuilder.build(graph(graphBuilder)) { nodeIndex1, nodeIndex2 -> nodeIndex1 - nodeIndex2 }
 }
 
 fun runBek(graphBuilder: TestGraphBuilder.() -> Unit): BekBaseController.BekLinearGraph {

@@ -160,9 +160,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
         final Int2ObjectMap<List<ObjectReference>> lockedAt = new Int2ObjectOpenHashMap<>();
         if (vmProxy.canGetMonitorFrameInfo()) {
           for (Object m : threadReference.ownedMonitorsAndFrames()) {
-            if (m instanceof MonitorInfo) { // see JRE-937
-              //noinspection CastCanBeRemovedNarrowingVariableType
-              MonitorInfo info = (MonitorInfo)m;
+            if (m instanceof MonitorInfo info) { // see JRE-937
               final int stackDepth = info.stackDepth();
               List<ObjectReference> monitors;
               if ((monitors = lockedAt.get(stackDepth)) == null) {

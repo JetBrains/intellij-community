@@ -32,7 +32,7 @@ public interface ServiceViewDescriptor {
   }
 
   @NotNull
-  default ItemPresentation getCustomPresentation(@NotNull ServiceViewOptions options) {
+  default ItemPresentation getCustomPresentation(@NotNull ServiceViewOptions options, @NotNull ServiceViewItemState state) {
     return getPresentation();
   }
 

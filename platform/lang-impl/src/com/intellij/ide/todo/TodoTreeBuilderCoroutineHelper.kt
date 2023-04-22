@@ -4,6 +4,7 @@ package com.intellij.ide.todo
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,7 +35,9 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
     return scope.launch(Dispatchers.EDT) {
       treeBuilder.onUpdateStarted()
       constrainedReadAction(*constraints) {
-        treeBuilder.collectFiles()
+        blockingContextToIndicator {
+          treeBuilder.collectFiles()
+        }
       }
       treeBuilder.onUpdateFinished()
     }.asCompletableFuture()

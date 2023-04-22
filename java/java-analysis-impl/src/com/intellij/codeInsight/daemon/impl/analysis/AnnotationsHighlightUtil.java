@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -157,11 +157,10 @@ public final class AnnotationsHighlightUtil {
       return info;
     }
 
-    if (value instanceof PsiArrayInitializerMemberValue) {
+    if (value instanceof PsiArrayInitializerMemberValue arrayValue) {
       if (expectedType instanceof PsiArrayType) return null;
       String description = JavaErrorBundle.message("annotation.illegal.array.initializer", JavaHighlightUtil.formatType(expectedType));
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description);
-      PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)value;
       PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
       if (initializers.length == 0) {
         PsiType arrayType = PsiTypesUtil.createArrayType(expectedType, 1);
@@ -185,8 +184,7 @@ public final class AnnotationsHighlightUtil {
       return info;
     }
 
-    if (value instanceof PsiExpression) {
-      PsiExpression expr = (PsiExpression)value;
+    if (value instanceof PsiExpression expr) {
       PsiType type = expr.getType();
 
       PsiClass psiClass = PsiUtil.resolveClassInType(type);
@@ -226,9 +224,7 @@ public final class AnnotationsHighlightUtil {
     PsiJavaCodeReferenceElement element = annotationToCheck.getNameReferenceElement();
     if (element == null) return null;
     PsiElement resolved = element.resolve();
-    if (!(resolved instanceof PsiClass)) return null;
-
-    PsiClass annotationType = (PsiClass)resolved;
+    if (!(resolved instanceof PsiClass annotationType)) return null;
 
     PsiClass contained = contained(annotationType);
     String containedElementFQN = contained == null ? null : contained.getQualifiedName();
@@ -435,8 +431,7 @@ public final class AnnotationsHighlightUtil {
         PsiElement nextElement = owner instanceof PsiTypeElement
             ? (PsiTypeElement)owner
             : PsiTreeUtil.skipSiblingsForward((PsiModifierList)owner, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
-        if (nextElement instanceof PsiTypeElement) {
-          PsiTypeElement typeElement = (PsiTypeElement)nextElement;
+        if (nextElement instanceof PsiTypeElement typeElement) {
           PsiType type = typeElement.getType();
           //see JLS 9.7.4 Where Annotations May Appear
           if (PsiTypes.voidType().equals(type)) {
@@ -803,12 +798,11 @@ public final class AnnotationsHighlightUtil {
     PsiElement owner = parameter.getParent().getParent();
     if (owner == null) return null;
 
-    if (!(owner instanceof PsiMethod)) {
+    if (!(owner instanceof PsiMethod method)) {
       String text = JavaErrorBundle.message("receiver.wrong.context");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text);
     }
 
-    PsiMethod method = (PsiMethod)owner;
     if (isStatic(method) || method.isConstructor() && isStatic(method.getContainingClass())) {
       String text = JavaErrorBundle.message("receiver.static.context");
       HighlightInfo.Builder info =
@@ -840,9 +834,8 @@ public final class AnnotationsHighlightUtil {
 
   static HighlightInfo.Builder checkReceiverType(@NotNull PsiReceiverParameter parameter) {
     PsiElement owner = parameter.getParent().getParent();
-    if (!(owner instanceof PsiMethod)) return null;
+    if (!(owner instanceof PsiMethod method)) return null;
 
-    PsiMethod method = (PsiMethod)owner;
     PsiClass enclosingClass = method.getContainingClass();
     boolean isConstructor = method.isConstructor();
     if (isConstructor && enclosingClass != null) {

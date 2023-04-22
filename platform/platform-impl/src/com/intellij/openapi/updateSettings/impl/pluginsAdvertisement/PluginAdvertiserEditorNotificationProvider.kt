@@ -134,10 +134,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
           return null
         }
       }
-      else if (jbProduced.isNotEmpty()) {
-        createInstallActionLabel(jbProduced)
-      }
-      else if (suggestedIdes.isNotEmpty()) {
+      else if (suggestedIdes.isNotEmpty() && jbProduced.isEmpty()) {
         if (suggestedIdes.size > 1) {
           val parentPanel = label.parent
           parentPanel.remove(label)
@@ -171,8 +168,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
         }
         return panel    // Don't show the "Ignore extension" label
       }
-      else if (thirdParty.isNotEmpty()) {
-        createInstallActionLabel(thirdParty)
+      else if (thirdParty.isNotEmpty() || jbProduced.isNotEmpty()) {
+        createInstallActionLabel(jbProduced + thirdParty)
       }
       else {
         return null

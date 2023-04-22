@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -192,11 +192,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
         if (qualifierExpression != null && !myClass.isEquivalentTo(PsiUtil.resolveClassInType(qualifierExpression.getType()))) return;
         final PsiElement resolved = methodExpression.resolve();
-        if (resolved instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)resolved;
-          if ("getClass".equals(method.getName()) && method.getParameterList().isEmpty()) {
-            result.putValue(methodExpression, JavaRefactoringBundle.message("inline.to.anonymous.no.get.class.calls"));
-          }
+        if (resolved instanceof PsiMethod method && "getClass".equals(method.getName()) && method.getParameterList().isEmpty()) {
+          result.putValue(methodExpression, JavaRefactoringBundle.message("inline.to.anonymous.no.get.class.calls"));
         }
       }
     });
@@ -217,8 +214,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       else if (element != null && element.getParent() instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression) element.getParent());
       }
-      else if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiReferenceList) {
-        PsiReferenceList refList = (PsiReferenceList) element.getParent();
+      else if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiReferenceList refList) {
         PsiClass parentClass = tryCast(refList.getParent(), PsiClass.class);
         if (parentClass != null && refList == parentClass.getPermitsList()) {
           SealedUtils.removeFromPermitsList(parentClass, myClass);

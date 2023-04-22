@@ -69,7 +69,7 @@ internal object KotlinBytecodeDecompiler {
         val configuration = CompilerConfiguration().apply {
             languageVersionSettings = file.languageVersionSettings
         }
-        val generationState = KotlinBytecodeToolWindow.compileSingleFile(file, configuration) ?: return emptyMap()
+        val generationState = KotlinBytecodeToolWindow.compileSingleFile(file, configuration)?.first ?: return emptyMap()
 
         val bytecodeMap = hashMapOf<File, () -> ByteArray>()
         generationState.factory.asList().filter { FileUtilRt.extensionEquals(it.relativePath, "class") }.forEach {

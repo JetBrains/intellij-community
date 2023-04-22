@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
@@ -183,7 +184,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       else {
         UISettings uiSettings = UISettings.getInstance();
         if (uiSettings.getPresentationMode()) {
-          editor.setFontSize(uiSettings.getPresentationModeFontSize());
+          editor.setFontSize(UISettingsUtils.getPresentationModeFontSize());
         }
       }
 

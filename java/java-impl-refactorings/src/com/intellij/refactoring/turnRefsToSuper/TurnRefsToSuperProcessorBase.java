@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.internal.diGraph.analyzer.GlobalAnalyzer;
@@ -94,8 +94,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       }
 
       for (UsageInfo usage : myVariablesUsages) {
-        if (usage instanceof MoveRenameUsageInfo) {
-          final MoveRenameUsageInfo renameUsageInfo = ((MoveRenameUsageInfo)usage);
+        if (usage instanceof MoveRenameUsageInfo renameUsageInfo) {
           final String newName = variableRenames.get(renameUsageInfo.getUpToDateReferencedElement());
           final PsiReference reference = renameUsageInfo.getReference();
           if (reference != null) {
@@ -235,7 +234,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     }
 
     PsiElement parent = ref.getParent();
-    if (parent instanceof PsiTypeElement) {
+    if (parent instanceof PsiTypeElement typeElement) {
       PsiElement pparent = parent.getParent();
       while (pparent instanceof PsiTypeElement) {
         addLink(pparent, parent);
@@ -243,7 +242,6 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         parent = pparent;
         pparent = parent.getParent();
       }
-      final PsiTypeElement typeElement = (PsiTypeElement)parent;
 
       addLink(typeElement, ref);
       addLink(ref, typeElement);
@@ -258,11 +256,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         addLink(pparent, typeElement);
         addLink(typeElement, pparent);
       }
-      else if (pparent instanceof PsiReferenceParameterList) {
-        final PsiReferenceParameterList refParameterList = ((PsiReferenceParameterList)pparent);
+      else if (pparent instanceof PsiReferenceParameterList refParameterList) {
         final PsiElement ppparent = pparent.getParent();
-        if (ppparent instanceof PsiJavaCodeReferenceElement) {
-          final PsiJavaCodeReferenceElement classReference = (PsiJavaCodeReferenceElement)ppparent;
+        if (ppparent instanceof PsiJavaCodeReferenceElement classReference) {
           if (classReference.getParent() instanceof PsiReferenceList) {
             final PsiReferenceList referenceList = ((PsiReferenceList)ppparent.getParent());
             final PsiClass parentClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
@@ -300,8 +296,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         markNode(ref); //???
       }
     }
-    else if (parent instanceof PsiNewExpression) {
-      PsiNewExpression newExpression = (PsiNewExpression)parent;
+    else if (parent instanceof PsiNewExpression newExpression) {
       if (newExpression.getType() instanceof PsiArrayType) {
         addLink(newExpression, ref);
         addLink(ref, newExpression);
@@ -328,8 +323,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
   private void linkTypeParameterInstantiations (PsiTypeParameter typeParameter, final PsiTypeElement instantiation, final PsiClass inheritingClass) {
     final PsiTypeParameterListOwner owner = typeParameter.getOwner();
-    if (owner instanceof PsiClass) {
-      final PsiClass ownerClass = ((PsiClass)owner);
+    if (owner instanceof PsiClass ownerClass) {
       final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(ownerClass, inheritingClass, PsiSubstitutor.EMPTY);
       if (substitutor == null) return;
       ownerClass.accept(new JavaRecursiveElementVisitor() {
@@ -347,10 +341,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
                 addLink(method.getReturnTypeElement(), instantiation);
               }
             }
-          } else if (pparent instanceof PsiParameter) {
-            final PsiParameter parameter = (PsiParameter)pparent;
-            if (parameter.getDeclarationScope() instanceof PsiMethod) {
-              PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+          } else if (pparent instanceof PsiParameter parameter) {
+            if (parameter.getDeclarationScope() instanceof PsiMethod method) {
               final int index = ((PsiParameterList)parameter.getParent()).getParameterIndex(parameter);
               final MethodSignature signature = method.getSignature(substitutor);
               if (PsiUtil.isAccessible(method, inheritingClass, null)) {
@@ -391,16 +383,13 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     tmp = newExpression.getParent();
     if (!(tmp instanceof PsiExpressionList)) return;
     tmp = tmp.getParent();
-    if (!(tmp instanceof PsiMethodCallExpression)) return;
-    PsiMethodCallExpression methodCall = (PsiMethodCallExpression)tmp;
+    if (!(tmp instanceof PsiMethodCallExpression methodCall)) return;
     tmp = tmp.getParent();
-    if (!(tmp instanceof PsiTypeCastExpression)) return;
-    PsiTypeCastExpression typeCast = (PsiTypeCastExpression)tmp;
+    if (!(tmp instanceof PsiTypeCastExpression typeCast)) return;
 
     PsiReferenceExpression methodRef = methodCall.getMethodExpression();
     tmp = methodRef.resolve();
-    if (!(tmp instanceof PsiMethod)) return;
-    PsiMethod method = (PsiMethod)tmp;
+    if (!(tmp instanceof PsiMethod method)) return;
     @NonNls final String name = method.getName();
     if (!name.equals("toArray")) return;
 
@@ -435,8 +424,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         final PsiExpression iteratedValue = ((PsiForeachStatement)declScope).getIteratedValue();
         addLink(type, iteratedValue);
       }
-      else if (declScope instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)declScope;
+      else if (declScope instanceof PsiMethod method) {
         final int index = method.getParameterList().getParameterIndex((PsiParameter)variable);
 
         {
@@ -574,16 +562,14 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     PsiExpression expr;
     while ((expr = myExpressionsQueue.pollFirst()) != null) {
       PsiElement parent = expr.getParent();
-      if (parent instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression assignment) {
         if (assignment.getRExpression() != null) {
           addLink(assignment.getLExpression(), assignment.getRExpression());
         }
         addLink(assignment, assignment.getLExpression());
         addLink(assignment.getLExpression(), assignment);
       }
-      else if (parent instanceof PsiArrayAccessExpression) {
-        PsiArrayAccessExpression arrayAccess = (PsiArrayAccessExpression)parent;
+      else if (parent instanceof PsiArrayAccessExpression arrayAccess) {
         if (expr.equals(arrayAccess.getArrayExpression())) {
           addLink(arrayAccess, expr);
           addLink(expr, arrayAccess);
@@ -593,8 +579,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         addLink(parent, expr);
         addLink(expr, parent);
       }
-      else if (parent instanceof PsiArrayInitializerExpression) {
-        PsiArrayInitializerExpression arrayInitializerExpr = (PsiArrayInitializerExpression)parent;
+      else if (parent instanceof PsiArrayInitializerExpression arrayInitializerExpr) {
         PsiExpression[] initializers = arrayInitializerExpr.getInitializers();
         for (PsiExpression initializer : initializers) {
           addLink(arrayInitializerExpr, initializer);
@@ -617,13 +602,10 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     for (final PsiElement element : myElementToNode.keySet()) {
       if (element instanceof PsiExpression) {
         final PsiElement parent = element.getParent();
-        if (parent instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression refExpr = (PsiReferenceExpression)parent;
-          if (element.equals(refExpr.getQualifierExpression())) {
-            final PsiElement refElement = refExpr.resolve();
-            if (refElement != null && !isInSuper(refElement)) {
-              markNode(element);
-            }
+        if (parent instanceof PsiReferenceExpression refExpr && element.equals(refExpr.getQualifierExpression())) {
+          final PsiElement refElement = refExpr.resolve();
+          if (refElement != null && !isInSuper(refElement)) {
+            markNode(element);
           }
         }
       }

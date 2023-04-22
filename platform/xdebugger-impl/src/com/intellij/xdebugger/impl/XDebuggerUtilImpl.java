@@ -466,7 +466,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
    * @deprecated use {@link XDebugProcess#getEvaluator()}
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static XDebuggerEvaluator getEvaluator(final XSuspendContext suspendContext) {
     XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
     if (executionStack != null) {

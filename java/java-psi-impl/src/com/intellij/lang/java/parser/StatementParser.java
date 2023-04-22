@@ -13,7 +13,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -531,7 +531,8 @@ public class StatementParser {
    * @return marker and whether it contains expression inside
    */
   @NotNull
-  Pair<PsiBuilder.@Nullable Marker, Boolean> parseCaseLabel(PsiBuilder builder) {
+  @ApiStatus.Internal
+  public Pair<PsiBuilder.@Nullable Marker, Boolean> parseCaseLabel(PsiBuilder builder) {
     if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
       PsiBuilder.Marker defaultElement = builder.mark();
       builder.advanceLexer();
@@ -545,7 +546,7 @@ public class StatementParser {
       }
       builder.remapCurrentToken(JavaTokenType.WHEN_KEYWORD);
       builder.advanceLexer();
-      PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parse(builder, ExpressionParser.FORBID_LAMBDA_MASK);
+      PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder);
       if (guardingExpression == null) {
         error(builder, JavaPsiBundle.message("expected.expression"));
       }
@@ -553,7 +554,7 @@ public class StatementParser {
       done(patternGuard, JavaElementType.PATTERN_GUARD);
       return Pair.create(patternGuard, false);
     }
-    return Pair.create(myParser.getExpressionParser().parseAssignment(builder, BitUtil.set(0, ExpressionParser.FORBID_LAMBDA_MASK, true)), true);
+    return Pair.create(myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder), true);
   }
 
   private PsiBuilder.Marker parseSwitchLabelStatement(PsiBuilder builder) {

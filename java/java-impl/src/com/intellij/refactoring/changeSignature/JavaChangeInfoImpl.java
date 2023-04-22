@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
@@ -464,9 +464,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof JavaChangeInfoImpl)) return false;
-
-    JavaChangeInfoImpl that = (JavaChangeInfoImpl)o;
+    if (!(o instanceof JavaChangeInfoImpl that)) return false;
 
     if (arrayToVarargs != that.arrayToVarargs) return false;
     if (isExceptionSetChanged != that.isExceptionSetChanged) return false;

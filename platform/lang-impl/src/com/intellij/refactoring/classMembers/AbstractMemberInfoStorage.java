@@ -17,21 +17,23 @@
 package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Dennis.Ushakov
  */
 public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends PsiElement, M extends MemberInfoBase<T>> {
-  protected final HashMap<C, LinkedHashSet<C>> myClassToSubclassesMap = new HashMap<>();
-  private final HashMap<C, Set<C>> myTargetClassToExtendingMap = new HashMap<>();
-  private final HashMap<C, List<M>> myClassToMemberInfoMap = new HashMap<>();
+  protected final Map<C, Set<C>> myClassToSubclassesMap = new ConcurrentHashMap<>();
+  private final Map<C, Set<C>> myTargetClassToExtendingMap = new ConcurrentHashMap<>();
+  private final Map<C, List<M>> myClassToMemberInfoMap = new ConcurrentHashMap<>();
   protected final C myClass;
   protected final MemberInfoBase.Filter<T> myFilter;
-  private final HashMap<C, List<M>> myTargetClassToIntermediateMemberInfosMap = new HashMap<>();
-  private final HashMap<C, LinkedHashSet<M>> myTargetClassToMemberInfosListMap = new HashMap<>();
-  private final HashMap<C, HashSet<M>> myTargetClassToDuplicatedMemberInfosMap = new HashMap<>();
+  private final Map<C, List<M>> myTargetClassToIntermediateMemberInfosMap = new ConcurrentHashMap<>();
+  private final Map<C, LinkedHashSet<M>> myTargetClassToMemberInfosListMap = new ConcurrentHashMap<>();
+  private final Map<C, Set<M>> myTargetClassToDuplicatedMemberInfosMap = new ConcurrentHashMap<>();
 
   public AbstractMemberInfoStorage(C aClass, MemberInfoBase.Filter<T> memberInfoFilter) {
     myClass = aClass;
@@ -108,16 +110,16 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
     return result;
   }
 
-  protected LinkedHashSet<C> getSubclasses(C aClass) {
-    return myClassToSubclassesMap.computeIfAbsent(aClass, k -> new LinkedHashSet<>());
+  protected Set<C> getSubclasses(C aClass) {
+    return myClassToSubclassesMap.computeIfAbsent(aClass, k -> Collections.synchronizedSet(new LinkedHashSet<>()));
   }
 
   public Set<M> getDuplicatedMemberInfos(C baseClass) {
     return myTargetClassToDuplicatedMemberInfosMap.computeIfAbsent(baseClass, k -> buildDuplicatedMemberInfos(baseClass));
   }
 
-  private HashSet<M> buildDuplicatedMemberInfos(C baseClass) {
-    HashSet<M> result = new HashSet<>();
+  private Set<M> buildDuplicatedMemberInfos(C baseClass) {
+    Set<M> result = ContainerUtil.newConcurrentSet();
     List<M> memberInfos = getIntermediateMemberInfosList(baseClass);
 
     for (int i = 0; i < memberInfos.size(); i++) {

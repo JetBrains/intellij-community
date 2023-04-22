@@ -12,7 +12,6 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import it.unimi.dsi.fastutil.objects.Object2FloatMap;
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
-import org.jdom.Comment;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -219,10 +218,6 @@ public class BeanBinding extends NotNullDeserializeBinding {
     LinkedHashMap<NestedBinding, List<Element>> data = null;
     nextNode:
     for (Content content : element.getContent()) {
-      if (content instanceof Comment) {
-        continue;
-      }
-
       for (NestedBinding binding : bindings) {
         if (content instanceof org.jdom.Text) {
           if (binding instanceof TextBinding) {

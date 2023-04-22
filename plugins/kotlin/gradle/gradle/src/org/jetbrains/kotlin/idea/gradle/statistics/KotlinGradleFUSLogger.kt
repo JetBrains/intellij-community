@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.gradle.statistics
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.delay
 import org.jetbrains.kotlin.statistics.BuildSessionLogger
 import org.jetbrains.kotlin.statistics.BuildSessionLogger.Companion.STATISTICS_FOLDER_NAME
@@ -16,7 +16,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.minutes
 
-class KotlinGradleFUSLogger : ProjectPostStartupActivity {
+class KotlinGradleFUSLogger : ProjectActivity {
     override suspend fun execute(project: Project) {
         while (true) {
             delay(EXECUTION_DELAY_MIN.minutes)

@@ -229,22 +229,6 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myColoredText.clear();
   }
 
-  /**
-   * Converts plain text to colored text with regular attributes if necessary.
-   * <p>
-   *   This function should be called if {@link #setPresentableText(String)} was called first,
-   *   and then it is necessary to append some colored text to it. It resets the presentable (plain)
-   *   text to {@code null} and appends it to the colored text with {@link SimpleTextAttributes#REGULAR_ATTRIBUTES}.
-   * </p>
-   */
-  public void ensureColoredTextIsUsed() {
-    if (myPresentableText == null) {
-      return;
-    }
-    addText(myPresentableText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    myPresentableText = null;
-  }
-
   public void clear() {
     myBackground = null;
     myIcon = null;

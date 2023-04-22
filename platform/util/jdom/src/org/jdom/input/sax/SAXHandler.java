@@ -466,24 +466,6 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
   @Override
   public void processingInstruction(final String target, final String data)
     throws SAXException {
-
-    if (suppress) {
-      return;
-    }
-
-    flushCharacters();
-
-    final ProcessingInstruction pi = (currentLocator == null) ? factory
-      .processingInstruction(target, data) : factory
-                                       .processingInstruction(currentLocator.getLineNumber(),
-                                                              currentLocator.getColumnNumber(), target, data);
-
-    if (atRoot) {
-      factory.addContent(currentDocument, pi);
-    }
-    else {
-      factory.addContent(getCurrentElement(), pi);
-    }
   }
 
   /**
@@ -983,30 +965,6 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
   @Override
   public void comment(final char[] ch, final int start, final int length)
     throws SAXException {
-
-    if (suppress) {
-      return;
-    }
-
-    flushCharacters();
-
-    final String commentText = new String(ch, start, length);
-    if (inDTD && inInternalSubset && (!expand)) {
-      internalSubset.append("  <!--").append(commentText).append("-->\n");
-      return;
-    }
-    if ((!inDTD) && (!commentText.isEmpty())) {
-      final Comment comment = currentLocator == null ? factory
-        .comment(commentText) : factory.comment(
-        currentLocator.getLineNumber(),
-        currentLocator.getColumnNumber(), commentText);
-      if (atRoot) {
-        factory.addContent(currentDocument, comment);
-      }
-      else {
-        factory.addContent(getCurrentElement(), comment);
-      }
-    }
   }
 
   /**

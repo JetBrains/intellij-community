@@ -41,9 +41,13 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable { testFixture.tearDown() },
+      ThrowableRunnable { ApplicationManager.getApplication().invokeAndWait { testFixture.tearDown() } },
       ThrowableRunnable { super.tearDown() }
     ).run()
+  }
+
+  override fun runInDispatchThread(): Boolean {
+    return false
   }
 
   fun `test remote resolve project info`() {

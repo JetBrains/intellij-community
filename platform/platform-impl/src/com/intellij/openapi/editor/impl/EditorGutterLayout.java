@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -191,7 +192,7 @@ public class EditorGutterLayout {
 
   protected int getAreaWidth(String ID) {
     for (GutterArea area : getLayout()) {
-      if (area.id == ID) {
+      if (Strings.areSameInstance(area.id, ID)) {
         return area.width();
       }
     }
@@ -200,7 +201,7 @@ public class EditorGutterLayout {
   private int getOffset(String ID) {
     int offset = 0;
     for (GutterArea area : getLayout()) {
-      if (area.id == ID) return offset;
+      if (Strings.areSameInstance(area.id, ID)) return offset;
       offset += area.width();
     }
     return -1;

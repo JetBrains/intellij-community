@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.progress.ProgressIndicator
@@ -11,11 +12,12 @@ import com.intellij.util.application
 open class TransferSettingsPerformImportTask(project: Project,
                                              private val performer: ImportPerformer,
                                              private var settings: Settings,
-                                             private val shouldInstallPlugins: Boolean) : Task.Backgroundable(project, "Importing settings",
+                                             private val shouldInstallPlugins: Boolean) : Task.Backgroundable(project,
+                                                                                                              IdeBundle.message("transfersettings.task.progress.title.importing.settings"),
                                                                                                               false) {
   override fun run(indicator: ProgressIndicator) {
     indicator.isIndeterminate = true
-    indicator.text2 = "Starting up..."
+    indicator.text2 = IdeBundle.message("transfersettings.task.progress.details.starting.up")
     val requiredPlugins = performer.collectAllRequiredPlugins(settings)
     indicator.isIndeterminate = false
     indicator.fraction = 0.0
@@ -28,9 +30,9 @@ open class TransferSettingsPerformImportTask(project: Project,
 
     performer.perform(project, settings, indicator)
     indicator.isIndeterminate = true
-    indicator.text2 = "Finishing up..."
+    indicator.text2 = IdeBundle.message("transfersettings.task.progress.details.finishing.up")
     application.invokeAndWait({ performer.performEdt(project, settings) }, indicator.modalityState)
 
-    indicator.text2 = "Complete"
+    indicator.text2 = IdeBundle.message("transfersettings.task.progress.details.complete")
   }
 }

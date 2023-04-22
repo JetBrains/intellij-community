@@ -15,13 +15,12 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner
 import org.jetbrains.plugins.terminal.TerminalProcessOptions
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import java.awt.Dimension
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 
 private var sessionIndex = 1
 
-class HeadlessTerminalSession(private val project: Project, size: Dimension): Disposable {
+class HeadlessTerminalSession(project: Project, termSize: TermSize): Disposable {
   private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("FakeTerminal-${sessionIndex++}")
   private val textBuffer: TerminalTextBuffer
   private val terminalStarter: TerminalStarter
@@ -29,12 +28,12 @@ class HeadlessTerminalSession(private val project: Project, size: Dimension): Di
 
   init {
     val terminalRunner = TerminalToolWindowManager.getInstance(project).terminalRunner as AbstractTerminalRunner<Process>
-    val process = terminalRunner.createProcess(TerminalProcessOptions(null, size.width, size.height))
+    val process = terminalRunner.createProcess(TerminalProcessOptions(null, termSize))
     val ttyConnector = terminalRunner.createTtyConnector(process)
 
     val styleState = StyleState()
-    textBuffer = TerminalTextBuffer(size.width, size.height, styleState)
-    val terminal = JediTerminal(FakeTerminalDisplay(size), textBuffer, styleState)
+    textBuffer = TerminalTextBuffer(termSize.columns, termSize.rows, styleState)
+    val terminal = JediTerminal(FakeTerminalDisplay(termSize), textBuffer, styleState)
     terminalStarter = TerminalStarter(terminal, ttyConnector, TtyBasedArrayDataStream(ttyConnector), null)
   }
 
@@ -85,10 +84,10 @@ class HeadlessTerminalSession(private val project: Project, size: Dimension): Di
   val TerminalTextBuffer.text : String
     get() = screenLines.dropLastWhile { it == ' ' || it == '\n' }
 
-  private class FakeTerminalDisplay(private val size: Dimension) : TerminalDisplay {
-    override fun getRowCount(): Int = size.height
+  private class FakeTerminalDisplay(private val termSize: TermSize) : TerminalDisplay {
+    override fun getRowCount(): Int = termSize.rows
 
-    override fun getColumnCount(): Int = size.width
+    override fun getColumnCount(): Int = termSize.columns
 
     override fun setCursor(x: Int, y: Int) {
     }

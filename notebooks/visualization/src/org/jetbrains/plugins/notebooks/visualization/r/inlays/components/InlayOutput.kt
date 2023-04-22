@@ -120,7 +120,7 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   }
 
   private fun createToolbar(): JComponent {
-    return ToolbarUtil.createEllipsisToolbar(actions + createClearAction()).apply {
+    return ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions + createClearAction()).apply {
       isOpaque = true
       background = UiCustomizer.instance.getTextOutputBackground(editor)
     }

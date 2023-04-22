@@ -20,6 +20,8 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentHolder
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -136,7 +138,7 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
 
   private fun createAndAddPRContent(id: GHPRIdentifier): Content {
     val contentDisposable = Disposer.newDisposable()
-    val title = GithubBundle.message("pull.request.num", id.number)
+    val title = "#${id.number}"
     val component = GHPRViewComponentFactory(ActionManager.getInstance(), project, dataContext, id, contentDisposable).create()
     val content = contentManager.factory.createContent(component, title, false).apply {
       setDisposer(contentDisposable)

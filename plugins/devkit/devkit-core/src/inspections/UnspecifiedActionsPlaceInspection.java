@@ -10,7 +10,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.util.UastExpressionUtils;
+import org.jetbrains.uast.UIdentifier;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.Objects;
@@ -34,21 +34,19 @@ public class UnspecifiedActionsPlaceInspection extends DevKitUastInspectionBase 
 
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression node) {
-        if (UastExpressionUtils.isMethodCall(node)) {
-          PsiMethod method = node.resolve();
-          if (method != null) {
-            String methodName = node.getMethodName();
-            if (methodName != null && requiresSpecifiedActionPlace(method, methodName) && node.getValueArgumentCount() > 0) {
-              UExpression parameter = node.getArgumentForParameter(0);
-              if (parameter != null && actionPlaceIsUnspecified(parameter)) {
-                PsiElement reportedElement = parameter.getSourcePsi();
-                if (reportedElement == null) return SKIP_CHILDREN;
-                String messageKey = CREATE_ACTION_TOOLBAR_METHOD_NAME.equals(methodName)
-                                    ? "inspections.unspecified.actions.place.toolbar"
-                                    : "inspections.unspecified.actions.place.popup.menu";
-                holder.registerProblem(reportedElement, DevKitBundle.message(messageKey));
-              }
-            }
+        UIdentifier identifier = node.getMethodIdentifier();
+        String methodName = identifier != null ? identifier.getName() : null;
+        PsiMethod method = CREATE_ACTION_TOOLBAR_METHOD_NAME.equals(methodName) ||
+                           CREATE_ACTION_POPUP_MENU_METHOD_NAME.equals(methodName) ? node.resolve() : null;
+        if (method != null && requiresSpecifiedActionPlace(method, methodName) && node.getValueArgumentCount() > 0) {
+          UExpression parameter = node.getArgumentForParameter(0);
+          if (parameter != null && actionPlaceIsUnspecified(parameter)) {
+            PsiElement reportedElement = parameter.getSourcePsi();
+            if (reportedElement == null) return SKIP_CHILDREN;
+            String messageKey = CREATE_ACTION_TOOLBAR_METHOD_NAME.equals(methodName)
+                                ? "inspections.unspecified.actions.place.toolbar"
+                                : "inspections.unspecified.actions.place.popup.menu";
+            holder.registerProblem(reportedElement, DevKitBundle.message(messageKey));
           }
         }
         return SKIP_CHILDREN;

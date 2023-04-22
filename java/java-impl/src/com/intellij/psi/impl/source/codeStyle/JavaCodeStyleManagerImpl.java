@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.LiteralNameSuggester;
 import com.intellij.openapi.util.text.PastParticiple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -24,6 +25,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -574,7 +576,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @NotNull
   private NamesByExprInfo suggestVariableNameByExpression(@NotNull PsiExpression expr, @Nullable VariableKind variableKind) {
-    final LinkedHashSet<String> names = new LinkedHashSet<>();
+    List<String> fromLiteral = ExpressionUtils.nonStructuralChildren(expr)
+      .map(e -> e instanceof PsiLiteralExpression literal && literal.getValue() instanceof String str ? str : null)
+      .filter(Objects::nonNull)
+      .flatMap(literal -> LiteralNameSuggester.literalNames(literal).stream())
+      .distinct()
+      .toList();
+    final LinkedHashSet<String> names = new LinkedHashSet<>(fromLiteral);
     ContainerUtil.addIfNotNull(names, suggestVariableNameFromConstant(expr, variableKind));
     ContainerUtil.addIfNotNull(names, suggestVariableNameFromLiterals(expr));
 

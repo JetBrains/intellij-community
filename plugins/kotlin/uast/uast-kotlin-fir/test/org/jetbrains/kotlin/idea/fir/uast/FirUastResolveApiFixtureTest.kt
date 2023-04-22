@@ -168,8 +168,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("OperatorOverloads", ::checkOperatorOverloads)
     }
 
-    fun testResolveStaticImportFromObject() {
-        doCheck("ResolveStaticImportFromObject", ::checkResolveStaticImportFromObject)
+    fun testOperatorMultiResolvable() {
+        doCheck("OperatorMultiResolvable", ::checkOperatorMultiResolvable)
     }
 
     fun testResolveSyntheticJavaPropertyAccessor() {
@@ -178,6 +178,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveKotlinPropertyAccessor() {
         doCheck("ResolveKotlinPropertyAccessor", ::checkResolveKotlinPropertyAccessor)
+    }
+
+    fun testResolveStaticImportFromObject() {
+        doCheck("ResolveStaticImportFromObject", ::checkResolveStaticImportFromObject)
     }
 
     fun testResolveToSubstituteOverride() {

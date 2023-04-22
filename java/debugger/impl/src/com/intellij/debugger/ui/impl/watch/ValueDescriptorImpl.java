@@ -276,9 +276,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         Value trace = invokeExceptionGetStackTrace(exceptionObj, evaluationContext);
 
         // print to console as well
-        if (printToConsole && trace instanceof ArrayReference) {
+        if (printToConsole && trace instanceof ArrayReference traceArray) {
           DebugProcessImpl process = evaluationContext.getDebugProcess();
-          ArrayReference traceArray = (ArrayReference)trace;
           process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
           for (Value stackElement : traceArray.getValues()) {
             process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
@@ -493,8 +492,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
-    if (descriptor instanceof ValueDescriptorImpl) {
-      ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
+    if (descriptor instanceof ValueDescriptorImpl valueDescriptor) {
       myRenderer = valueDescriptor.myRenderer;
     }
     super.displayAs(descriptor);
@@ -582,8 +580,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
     catch (Exception wrapper) {
       if (!(wrapper.getCause() instanceof EvaluateException)) throw wrapper;
-      if (!(wrapper.getCause() instanceof NeedMarkException)) throw (EvaluateException)wrapper.getCause();
-      NeedMarkException e = (NeedMarkException)wrapper.getCause();
+      if (!(wrapper.getCause() instanceof NeedMarkException e)) throw (EvaluateException)wrapper.getCause();
 
       XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(context.getDebugProcess());
       if (markers != null) {

@@ -1,4 +1,4 @@
-// "Create field for parameter 'test'" "true"
+// "Create field for parameter 'test'" "true-preview"
 
 package codeInsight.createFieldFromParameterAction.test1;
 

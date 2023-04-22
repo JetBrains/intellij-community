@@ -53,9 +53,15 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
         val resolutionFacade = ktExpression.getResolutionFacade()
         val bindingContext = ktExpression.safeAnalyzeNonSourceRootCode(resolutionFacade)
-        val call = ktExpression.getCall(bindingContext) ?: return emptySequence()
-        return call.resolveCandidates(bindingContext, resolutionFacade)
-            .mapNotNull { resolveToDeclarationImpl(ktExpression, it.candidateDescriptor) }
-            .asSequence()
+        return sequence {
+            // Use logic (shared with CLI) about handling compound assignments
+            yieldAll(super.getReferenceVariants(ktExpression, nameHint))
+            // Then, look for other candidates with a name hint
+            val call = ktExpression.getCall(bindingContext) ?: return@sequence
+            call.resolveCandidates(bindingContext, resolutionFacade)
+                .forEach {resolvedCall ->
+                    resolveToDeclarationImpl(ktExpression, resolvedCall.candidateDescriptor)?.let { yield(it) }
+                }
+        }
     }
 }

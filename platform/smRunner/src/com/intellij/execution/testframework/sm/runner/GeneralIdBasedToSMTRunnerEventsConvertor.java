@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent.NodePropertyKey.PRESENTABLE_NAME;
+
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class);
@@ -376,6 +378,24 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     fireOnTestsCountInSuite(count);
   }
 
+  @Override
+  public void onSetNodeProperty(final @NotNull TestSetNodePropertyEvent event) {
+    LOG.debug("onSetNodeProperty", " ", event);
+    final Node node = findNode(event);
+    if (node == null) {
+      logProblem("Node not found: " + event);
+      return;
+    }
+    final SMTestProxy nodeProxy = node.getProxy();
+    if (event.getPropertyKey() == PRESENTABLE_NAME) {
+      nodeProxy.setPresentableName(event.getPropertyValue());
+    }
+    else {
+      logProblem("Unhandled event: " + event);
+    }
+    myEventPublisher.onSetNodeProperty(nodeProxy, event);
+  }
+
   private @Nullable String validateAndGetNodeId(@NotNull TreeNodeEvent treeNodeEvent) {
     String nodeId = treeNodeEvent.getId();
     if (nodeId == null || nodeId.equals(TreeNodeEvent.ROOT_NODE_ID)) {
@@ -507,7 +527,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
       Node node = (Node)o;
 
-      return myId == node.myId;
+      return myId.equals(node.myId);
     }
 
     @Override

@@ -63,15 +63,12 @@ package org.jdom.input;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.*;
-import org.w3c.dom.Comment;
-import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
 import org.w3c.dom.*;
 
 import java.util.HashMap;
 
 import static org.jdom.JDOMConstants.*;
-
 
 /**
  * Builds a JDOM Document from a pre-existing DOM {@link org.w3c.dom.Document
@@ -180,28 +177,6 @@ public final class DOMBuilder {
   }
 
   /**
-   * This will build a JDOM Comment from an existing DOM Comment
-   *
-   * @param comment <code> org.w3c.dom.Comment</code> object
-   * @return <code>Comment</code> - JDOM Comment object
-   * @since JDOM2
-   */
-  public org.jdom.Comment build(Comment comment) {
-    return factory.comment(comment.getNodeValue());
-  }
-
-  /**
-   * This will build a JDOM ProcessingInstruction from an existing DOM ProcessingInstruction
-   *
-   * @param pi <code> org.w3c.dom.ProcessingInstruction</code> object
-   * @return <code>ProcessingInstruction</code> - JDOM ProcessingInstruction object
-   * @since JDOM2
-   */
-  public org.jdom.ProcessingInstruction build(ProcessingInstruction pi) {
-    return factory.processingInstruction(pi.getTarget(), pi.getData());
-  }
-
-  /**
    * This will build a JDOM EntityRef from an existing DOM EntityReference
    *
    * @param er <code> org.w3c.dom.EntityReference</code> object
@@ -283,7 +258,7 @@ public final class DOMBuilder {
           factory.setRoot(doc, element);
         }
         else {
-          // else add to parent element
+          // else add to a parent element
           factory.addContent(current, element);
         }
 
@@ -316,7 +291,7 @@ public final class DOMBuilder {
               // RL: note, it should also be true that uri.equals(attvalue)
               // if not, then the parser is boken.
               // further, declaredNS should be exactly the same as ns
-              // so the following should in fact do nothing.
+              // so the following should, in fact do nothing.
               element.setNamespace(declaredNS);
             }
             else {
@@ -355,7 +330,7 @@ public final class DOMBuilder {
               // The alternative to that is in some conditions,
               // the parser could have a 'default' or 'fixed'
               // attribute that comes from an XSD used for
-              // validation. In that case there may not be a prefix
+              // validation. In that case, there may not be a prefix
               // There's also the possibility the DOM contains
               // garbage.
               if (attPrefix.length() > 0) {
@@ -444,21 +419,8 @@ public final class DOMBuilder {
 
 
       case Node.PROCESSING_INSTRUCTION_NODE:
-        if (atRoot) {
-          factory.addContent(doc, build((ProcessingInstruction)node));
-        }
-        else {
-          factory.addContent(current, build((ProcessingInstruction)node));
-        }
-        break;
 
       case Node.COMMENT_NODE:
-        if (atRoot) {
-          factory.addContent(doc, build((Comment)node));
-        }
-        else {
-          factory.addContent(current, build((Comment)node));
-        }
         break;
 
       case Node.ENTITY_REFERENCE_NODE:

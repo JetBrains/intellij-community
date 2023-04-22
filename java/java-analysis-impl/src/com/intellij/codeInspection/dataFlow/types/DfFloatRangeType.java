@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -58,8 +58,7 @@ class DfFloatRangeType implements DfFloatType {
       int to = Float.compare(val, myTo);
       return (from <= 0 && to <= 0) != myInvert;
     }
-    if (other instanceof DfFloatRangeType) {
-      DfFloatRangeType range = (DfFloatRangeType)other;
+    if (other instanceof DfFloatRangeType range) {
       if (range.myNaN && !myNaN) return false;
       if (!myInvert && myFrom == Float.NEGATIVE_INFINITY && myTo == Float.POSITIVE_INFINITY) return true;
       int from = Float.compare(myFrom, range.myFrom);
@@ -97,10 +96,9 @@ class DfFloatRangeType implements DfFloatType {
       }
       return joinRange(value, value, exact);
     }
-    if (!(other instanceof DfFloatRangeType)) {
+    if (!(other instanceof DfFloatRangeType range)) {
       return exact ? null : TOP;
     }
-    DfFloatRangeType range = (DfFloatRangeType)other;
     DfFloatRangeType res = range.myNaN && !myNaN ? new DfFloatRangeType(myFrom, myTo, myInvert, true) : this;
     if (range.myInvert) {
       if (range.myFrom > Float.NEGATIVE_INFINITY) {
@@ -145,8 +143,7 @@ class DfFloatRangeType implements DfFloatType {
   public @NotNull DfType meet(@NotNull DfType other) {
     if (other.isSuperType(this)) return this;
     if (this.isSuperType(other)) return other;
-    if (!(other instanceof DfFloatRangeType)) return DfType.BOTTOM;
-    DfFloatRangeType range = (DfFloatRangeType)other;
+    if (!(other instanceof DfFloatRangeType range)) return DfType.BOTTOM;
     boolean nan = range.myNaN && myNaN;
     if (!myInvert) {
       if (!range.myInvert) {

@@ -30,7 +30,7 @@ public class GrTraitMethod extends LightMethod implements PsiMirrorElement {
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return name != PsiModifier.ABSTRACT && super.hasModifierProperty(name);
+    return !name.equals(PsiModifier.ABSTRACT) && super.hasModifierProperty(name);
   }
 
   @NotNull

@@ -136,6 +136,10 @@ public interface ApplicationEx extends Application {
 
   void assertIsDispatchThread(@Nullable JComponent component);
 
+  /**
+   * Use {@link #assertIsNonDispatchThread()}
+   */
+  @Deprecated
   void assertTimeConsuming();
 
   /**

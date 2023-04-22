@@ -63,7 +63,7 @@ public final class BootstrapClassLoaderUtil {
 
     if (AppMode.isDevServer()) {
       List<Path> paths = loadClassPathFromDevBuild(distDir);
-      pathClassLoader.getClassPath().appendFiles(paths);
+      pathClassLoader.getClassPath().addFiles(paths);
       return;
     }
 
@@ -125,7 +125,7 @@ public final class BootstrapClassLoaderUtil {
     }
 
     if (!classpath.isEmpty()) {
-      pathClassLoader.getClassPath().appendFiles(List.copyOf(classpath));
+      pathClassLoader.getClassPath().addFiles(List.copyOf(classpath));
     }
 
     if (installMarketplace) {

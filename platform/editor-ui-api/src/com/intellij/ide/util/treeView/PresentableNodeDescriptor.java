@@ -52,7 +52,12 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   protected final boolean apply(@NotNull PresentationData presentation, @Nullable PresentationData before) {
     setIcon(presentation.getIcon(false));
+    // If the node has both plain and colored text, the plain one takes priority for myName because it's also supposed to be plain,
+    // and it can be used, e.g. for sorting, while the colored version may contain information not needed for sorting such as inplace comments.
     myName = presentation.getPresentableText();
+    if (myName == null) {
+      myName = getColoredTextAsPlainText(presentation);
+    }
     myColor = presentation.getForcedTextForeground();
     boolean updated = !presentation.equals(before);
 

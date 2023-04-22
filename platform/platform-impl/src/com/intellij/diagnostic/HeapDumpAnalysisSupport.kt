@@ -13,7 +13,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import java.awt.Component
 import java.io.File
 import java.io.FileOutputStream
@@ -69,7 +69,7 @@ open class HeapDumpAnalysisSupport {
   }
 }
 
-internal class AnalyzePendingSnapshotActivity: ProjectPostStartupActivity {
+internal class AnalyzePendingSnapshotActivity: ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

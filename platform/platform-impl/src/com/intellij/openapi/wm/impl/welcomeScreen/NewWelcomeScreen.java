@@ -120,7 +120,7 @@ public final class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   public static boolean isNewWelcomeScreen(@NotNull AnActionEvent e) {
-    return e.getPlace() == ActionPlaces.WELCOME_SCREEN;
+    return ActionPlaces.WELCOME_SCREEN.equals(e.getPlace());
   }
 
   public static void updateNewProjectIconIfWelcomeScreen(@NotNull AnActionEvent e) {

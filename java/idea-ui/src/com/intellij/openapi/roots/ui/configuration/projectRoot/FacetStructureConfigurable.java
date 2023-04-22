@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -272,8 +272,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     FacetType selectedFacetType = null;
     List<FacetEditor> facetEditors = new ArrayList<>();
     for (NamedConfigurable selectedConfigurable : selectedConfigurables) {
-      if (selectedConfigurable instanceof FacetConfigurable) {
-        FacetConfigurable facetConfigurable = (FacetConfigurable)selectedConfigurable;
+      if (selectedConfigurable instanceof FacetConfigurable facetConfigurable) {
         FacetType facetType = facetConfigurable.getEditableObject().getType();
         if (selectedFacetType != null && selectedFacetType != facetType) {
           return false;

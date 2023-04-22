@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.inlineSuperClass;
 
@@ -98,7 +98,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     else {
       ReferencesSearch.search(mySuperClass).forEach(reference -> {
         final PsiElement element = reference.getElement();
-        if (element instanceof PsiJavaCodeReferenceElement) {
+        if (element instanceof PsiJavaCodeReferenceElement classRef) {
           final PsiImportStaticStatement staticImportStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
           if (staticImportStatement != null) {
             usages.add(new ReplaceStaticImportUsageInfo(staticImportStatement, myTargetClasses));
@@ -111,9 +111,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
               final PsiElement parent = element.getParent();
               if (parent instanceof PsiReferenceList) {
                 final PsiElement pparent = parent.getParent();
-                if (pparent instanceof PsiClass) {
-                  final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)element;
-                  final PsiClass inheritor = (PsiClass)pparent;
+                if (pparent instanceof PsiClass inheritor) {
                   if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
                     usages.add(new ReplaceExtendsListUsageInfo(classRef, mySuperClass, inheritor));
                   }
@@ -126,20 +124,18 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
                 final PsiClassType targetClassType = elementFactory
                   .createType(targetClass, TypeConversionUtil.getSuperClassSubstitutor(mySuperClass, targetClass, PsiSubstitutor.EMPTY));
 
-                if (parent instanceof PsiTypeElement) {
-                  final PsiType superClassType = ((PsiTypeElement)parent).getType();
+                if (parent instanceof PsiTypeElement typeElement) {
+                  final PsiType superClassType = typeElement.getType();
                   PsiSubstitutor subst = getSuperClassSubstitutor(superClassType, targetClassType, resolveHelper, targetClass);
-                  usages.add(new ReplaceWithSubtypeUsageInfo(((PsiTypeElement)parent), elementFactory.createType(targetClass, subst), myTargetClasses));
+                  usages.add(new ReplaceWithSubtypeUsageInfo(typeElement, elementFactory.createType(targetClass, subst), myTargetClasses));
                 }
-                else if (parent instanceof PsiNewExpression) {
-                  final PsiClassType newType = elementFactory.createType(targetClass,
-                                                                         getSuperClassSubstitutor(((PsiNewExpression)parent).getType(),
-                                                                                                  targetClassType, resolveHelper,
-                                                                                                  targetClass));
-                  usages.add(new ReplaceConstructorUsageInfo(((PsiNewExpression)parent), newType, myTargetClasses));
+                else if (parent instanceof PsiNewExpression newExpression) {
+                  final PsiClassType newType = elementFactory.createType(
+                    targetClass, getSuperClassSubstitutor(newExpression.getType(), targetClassType, resolveHelper, targetClass));
+                  usages.add(new ReplaceConstructorUsageInfo(newExpression, newType, myTargetClasses));
                 }
-                else if (parent instanceof PsiJavaCodeReferenceElement) {
-                  usages.add(new ReplaceReferenceUsageInfo(((PsiJavaCodeReferenceElement)parent).getQualifier(), myTargetClasses));
+                else if (parent instanceof PsiJavaCodeReferenceElement ref) {
+                  usages.add(new ReplaceReferenceUsageInfo(ref.getQualifier(), myTargetClasses));
                 }
               }
             }

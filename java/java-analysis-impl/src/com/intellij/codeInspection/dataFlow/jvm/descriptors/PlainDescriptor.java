@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -210,8 +210,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
       if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
       PsiExpression initializer = field.getInitializer();
       Predicate<PsiExpression> callToMethod = (PsiExpression e) -> {
-        if (!(e instanceof PsiMethodCallExpression)) return false;
-        PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+        if (!(e instanceof PsiMethodCallExpression call)) return false;
         return call.getMethodExpression().isReferenceTo(referrer) &&
                (isStatic || ExpressionUtil.isEffectivelyUnqualified(call.getMethodExpression()));
       };

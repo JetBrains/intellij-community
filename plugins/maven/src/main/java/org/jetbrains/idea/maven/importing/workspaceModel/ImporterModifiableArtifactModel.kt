@@ -14,7 +14,7 @@ import com.intellij.packaging.impl.elements.ArchivePackagingElement
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity

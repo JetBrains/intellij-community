@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -150,14 +150,11 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   private static void setSelectedTemplate(@NotNull Step step, @NotNull String group, @Nullable String name) {
-    if (step instanceof ProjectTypeStep) {
-      ProjectTypeStep projectTypeStep = (ProjectTypeStep)step;
-      if (!projectTypeStep.setSelectedTemplate(group, name)) {
-        throw new IllegalArgumentException(
-          group + '/' + name + " template not found. " +
-          "Available groups: " + projectTypeStep.availableTemplateGroupsToString()
-        );
-      }
+    if (step instanceof ProjectTypeStep projectTypeStep && !projectTypeStep.setSelectedTemplate(group, name)) {
+      throw new IllegalArgumentException(
+        group + '/' + name + " template not found. " +
+        "Available groups: " + projectTypeStep.availableTemplateGroupsToString()
+      );
     }
     if (step instanceof ChooseTemplateStep) {
       if (name != null) {

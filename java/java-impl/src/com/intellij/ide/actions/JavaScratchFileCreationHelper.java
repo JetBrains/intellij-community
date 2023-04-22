@@ -18,7 +18,7 @@ public class JavaScratchFileCreationHelper extends ScratchFileCreationHelper {
   @Override
   public boolean prepareText(@NotNull Project project, @NotNull Context context, @NotNull DataContext dataContext) {
     String caretMarker = "CARET_MARKER";
-    if (context.text == "") {
+    if (context.text.isEmpty()) {
       String templateText = "class Scratch { public static void main (String[] args) {\n" + caretMarker + "\n} }";
       String text = reformat(project, context.language, templateText);
       context.caretOffset = text.indexOf(caretMarker);

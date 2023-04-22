@@ -99,7 +99,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link AnnotationHolder#newAnnotation} instead
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Annotation(int startOffset,
                     int endOffset,
                     @NotNull HighlightSeverity severity,

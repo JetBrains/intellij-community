@@ -58,6 +58,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun addPluginRepository(repository: RepositoryDescription)
 
     fun addResolutionStrategy(pluginId: String)
+
+    fun configureJvmTarget(jvmTarget: String, version: IdeKotlinVersion)
 }
 
 fun GradleBuildScriptManipulator<*>.usesNewMultiplatform(): Boolean {
@@ -89,5 +91,22 @@ fun LanguageFeature.State.assertApplicableInMultiplatform() {
 val MIN_GRADLE_VERSION_FOR_JVM_TOOLCHAIN_SYNTAX: GradleVersion = GradleVersion.version("6.7")
     @ApiStatus.Internal get
 
-fun useJvmToolchainSyntax(gradleVersion: GradleVersionInfo): Boolean =
-    gradleVersion >= GradleVersionProvider.getVersion(MIN_GRADLE_VERSION_FOR_JVM_TOOLCHAIN_SYNTAX.version)
+fun addJdkSpec(
+    jvmTarget: String,
+    version: IdeKotlinVersion,
+    gradleVersion: GradleVersionInfo,
+    applySpec: (
+        useToolchain: Boolean,
+        useToolchainHelper: Boolean,
+        targetVersionNumber: String
+    ) -> Unit
+) {
+    val targetVersionNumber = jvmTarget.removePrefix("1.")
+    val useToolchain =
+        gradleVersion >= GradleVersionProvider.getVersion(MIN_GRADLE_VERSION_FOR_JVM_TOOLCHAIN_SYNTAX.version) && version.compare("1.5.30") >= 0
+    val useToolchainHelper = useToolchain && version.compare("1.7.20") >= 0
+
+    applySpec(
+        useToolchain, useToolchainHelper, targetVersionNumber
+    )
+}

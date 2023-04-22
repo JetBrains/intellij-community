@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -394,8 +394,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
           return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTable.ModifiableModel.class},
                                         new LibraryTableModelInvocationHandler((LibraryTable.ModifiableModel)result));
         }
-        if (result instanceof Library[]) {
-          Library[] libraries = (Library[])result;
+        if (result instanceof Library[] libraries) {
           for (int idx = 0; idx < libraries.length; idx++) {
             Library library = libraries[idx];
             libraries[idx] =
@@ -490,8 +489,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       final boolean needUpdate = METHOD_COMMIT.equals(method.getName());
       try {
         Object result = method.invoke(myDelegateModel, unwrapParams(params));
-        if (result instanceof Library[]) {
-          Library[] libraries = (Library[])result;
+        if (result instanceof Library[] libraries) {
           for (int idx = 0; idx < libraries.length; idx++) {
             Library library = libraries[idx];
             libraries[idx] =

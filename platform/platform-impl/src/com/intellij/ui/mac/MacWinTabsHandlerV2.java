@@ -181,7 +181,7 @@ public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
 
     JPanel parentComponent = getTabsContainer(frame);
     parentComponent.add(tabs);
-    tabs.createTabsForFrame(frame, tabFrames);
+    tabs.createTabsForFrame(tabFrames);
 
     boolean oldVisible = parentComponent.isVisible();
     parentComponent.setVisible(true);

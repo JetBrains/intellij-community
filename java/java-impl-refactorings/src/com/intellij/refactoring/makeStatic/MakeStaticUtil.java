@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.makeStatic;
 
@@ -28,25 +28,19 @@ public final class MakeStaticUtil {
 
   private static void addClassRefs(PsiTypeParameterListOwner originalMember, ArrayList<? super InternalUsageInfo> classRefs,
                                    PsiClass containingClass, PsiElement element, boolean includeSelf) {
-    if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)element;
-
-      if (!ref.isQualified()) { // resolving only "naked" fields and methods
-        PsiElement resolved = ref.resolve();
-
-        if (resolved instanceof PsiMember && !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-          PsiMember member = (PsiMember)resolved;
-          if (originalMember.getManager().areElementsEquivalent(member, originalMember)) {
-            if (includeSelf) {
-              classRefs.add(new SelfUsageInfo(element, originalMember));
-            }
+    if (element instanceof PsiReferenceExpression ref) {
+      // resolving only "naked" fields and methods
+      if (!ref.isQualified() && ref.resolve() instanceof PsiMember member && !member.hasModifierProperty(PsiModifier.STATIC)) {
+        if (originalMember.getManager().areElementsEquivalent(member, originalMember)) {
+          if (includeSelf) {
+            classRefs.add(new SelfUsageInfo(element, originalMember));
           }
-          else {
-            final PsiClass memberContainingClass = member.getContainingClass();
-            if (!(originalMember instanceof PsiClass) || !isPartOf(memberContainingClass, (PsiClass)originalMember)) {
-              if (isPartOf(memberContainingClass, containingClass)) {
-                classRefs.add(new InternalUsageInfo(element, member));
-              }
+        }
+        else {
+          final PsiClass memberContainingClass = member.getContainingClass();
+          if (!(originalMember instanceof PsiClass) || !isPartOf(memberContainingClass, (PsiClass)originalMember)) {
+            if (isPartOf(memberContainingClass, containingClass)) {
+              classRefs.add(new InternalUsageInfo(element, member));
             }
           }
         }
@@ -125,8 +119,7 @@ public final class MakeStaticUtil {
         accessedForWriting.add((PsiField)referencedElement);
         needClassParameter = true;
       }
-      else if (referencedElement instanceof PsiField) {
-        PsiField field = (PsiField)referencedElement;
+      else if (referencedElement instanceof PsiField field) {
         reported.add(field);
       }
       else {

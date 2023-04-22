@@ -39,6 +39,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   /**
    * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet()} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @ApiStatus.Internal
   public CompactVirtualFileSet() {

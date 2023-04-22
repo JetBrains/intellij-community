@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlDomReader")
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.util.xml.dom
 
 import com.fasterxml.aalto.WFCException
 import com.fasterxml.aalto.impl.ErrorConsts
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -155,12 +156,11 @@ private fun readAttributes(reader: XMLStreamReader2, interner: XmlInterner): Map
     }
     else -> {
       // Map.of cannot be used here - in core-impl only Java 8 is allowed
-      @Suppress("SSBasedInspection")
-      val result = Object2ObjectOpenHashMap<String, String>(attributeCount)
+      val result = HashMap<String, String>(attributeCount)
       var i = 0
       while (i < attributeCount) {
         val name = interner.name(reader.getAttributeLocalName(i))
-        result[name] = interner.value(name, reader.getAttributeValue(i))
+        result.put(name, interner.value(name, reader.getAttributeValue(i)))
         i++
       }
       result

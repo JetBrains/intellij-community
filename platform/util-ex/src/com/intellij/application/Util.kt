@@ -3,13 +3,15 @@ package com.intellij.application
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Execute coroutine on pooled thread. Uncaught error will be logged.
  *
  * @see com.intellij.openapi.application.Application.executeOnPooledThread
  */
-@Deprecated(message = "Use Dispatchers.IO", replaceWith = ReplaceWith("Dispatchers.IO"))
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated(message = "Use Dispatchers.IO", replaceWith = ReplaceWith("Dispatchers.IO"))
 @Suppress("unused") // unused receiver
 val Dispatchers.ApplicationThreadPool: CoroutineDispatcher
   get() = IO

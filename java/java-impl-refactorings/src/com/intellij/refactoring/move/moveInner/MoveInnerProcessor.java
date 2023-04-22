@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -99,8 +99,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
 
     final String newQName;
-    if (myTargetContainer instanceof PsiDirectory) {
-      final PsiDirectory targetDirectory = (PsiDirectory)myTargetContainer;
+    if (myTargetContainer instanceof PsiDirectory targetDirectory) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
       LOG.assertTrue(aPackage != null);
       newQName = aPackage.getQualifiedName() + "." + myNewClassName;
@@ -196,8 +195,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       // replace references in a new class to old inner class with references to itself
       for (PsiReference ref : ReferencesSearch.search(myInnerClass, new LocalSearchScope(newClass.getContainingFile()), true)) {
         PsiElement element = ref.getElement();
-        if (element.getParent() instanceof PsiJavaCodeReferenceElement) {
-          PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)element.getParent();
+        if (element.getParent() instanceof PsiJavaCodeReferenceElement parentRef) {
           PsiElement parentRefElement = parentRef.resolve();
           if (parentRefElement instanceof PsiClass) { // reference to inner class inside our inner
             PsiImportStatementBase insertedImport = PsiTreeUtil.getParentOfType(parentRef, PsiImportStatementBase.class);

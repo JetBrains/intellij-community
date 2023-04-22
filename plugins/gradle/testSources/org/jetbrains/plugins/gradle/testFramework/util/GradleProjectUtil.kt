@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.withProjectAsync
@@ -22,7 +22,7 @@ internal fun <T> Result<T>.onFailureCatching(action: (Throwable) -> Unit): Resul
   return Result.failure(compound)
 }
 
-suspend fun openProjectAsyncAndWait(virtualFile: VirtualFile, vararg activities: ProjectPostStartupActivity): Project {
+suspend fun openProjectAsyncAndWait(virtualFile: VirtualFile, vararg activities: ProjectActivity): Project {
   val deferred = getProjectDataLoadPromise()
   return openProjectAsync(virtualFile, *activities)
     .withProjectAsync {

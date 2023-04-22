@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -22,7 +22,7 @@ import java.util.*
 
 private const val IGNORE_LANGUAGE_DETECTOR_PROPERTY_NAME = "LANGUAGE_DETECTOR_ASKED_BEFORE"
 
-private class LanguagePluginDetectionStartupActivity : ProjectPostStartupActivity {
+private class LanguagePluginDetectionStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val application = ApplicationManagerEx.getApplicationEx()
     if (application == null

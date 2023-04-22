@@ -24,6 +24,7 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
   private val comparator: Comparator<ConstrainedPresentation<*, Constraint>> = compareBy { it.priority }
 ) : PresentationContainerRenderer<Constraint> {
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use constructor with [Comparator] parameter")
   constructor(
     constrainedPresentations: Collection<ConstrainedPresentation<*, Constraint>>,

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
@@ -60,8 +60,7 @@ class LibraryTreeStructure extends AbstractTreeStructure {
       return elements.toArray();
     }
 
-    if (element instanceof OrderRootTypeElement) {
-      OrderRootTypeElement rootTypeElement = (OrderRootTypeElement)element;
+    if (element instanceof OrderRootTypeElement rootTypeElement) {
       OrderRootType orderRootType = rootTypeElement.getOrderRootType();
       final String[] urls = libraryEditor.getUrls(orderRootType).clone();
       Arrays.sort(urls, LibraryRootsComponent.ourUrlComparator);
@@ -72,8 +71,7 @@ class LibraryTreeStructure extends AbstractTreeStructure {
       return items.toArray();
     }
 
-    if (element instanceof ItemElement) {
-      ItemElement itemElement = (ItemElement)element;
+    if (element instanceof ItemElement itemElement) {
       List<String> excludedUrls = new ArrayList<>();
       for (String excludedUrl : libraryEditor.getExcludedRootUrls()) {
         if (VfsUtilCore.isEqualOrAncestor(itemElement.getUrl(), excludedUrl)) {

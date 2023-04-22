@@ -80,8 +80,7 @@ public class CallTracer implements OverheadProducer {
 
   private void accept(Event event) {
     OverheadTimings.add(myDebugProcess, this, 1, null);
-    if (event instanceof MethodEntryEvent) {
-      MethodEntryEvent methodEntryEvent = (MethodEntryEvent)event;
+    if (event instanceof MethodEntryEvent methodEntryEvent) {
       try {
         ThreadReference thread = methodEntryEvent.thread();
         ThreadRequest request = myThreadRequests.get(thread);
@@ -108,11 +107,10 @@ public class CallTracer implements OverheadProducer {
                 if (value == null) {
                   res.append("null");
                 }
-                else if (value instanceof StringReference) {
-                  res.append(((StringReference)value).value());
+                else if (value instanceof StringReference stringReference) {
+                  res.append(stringReference.value());
                 }
-                else if (value instanceof ObjectReference) {
-                  ObjectReference objectReference = (ObjectReference)value;
+                else if (value instanceof ObjectReference objectReference) {
                   res.append(StringUtil.getShortName(objectReference.referenceType().name())).append("@")
                     .append(objectReference.uniqueID());
                 }

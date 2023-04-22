@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -238,8 +238,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         }
         newMember = (PsiMember)targetClass.add(member);
       }
-      else if (member instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)member;
+      else if (member instanceof PsiMethod method) {
         PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
         boolean pushMethodToClass = methodBySignature == null;
         if (pushMethodToClass) {
@@ -352,13 +351,10 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         ReferencesSearch.search(superMethod, new LocalSearchScope(containingClass)).findAll();
       for (PsiReference reference : superReferences) {
         PsiElement element = reference.getElement();
-        if (element instanceof PsiReferenceExpression) {
-          PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-          if (superMethod.getBody() != null) {
-            // No super method body: either native method or compilation error
-            new InlineMethodProcessor(element.getProject(), superMethod, referenceExpression, null, true)
-              .inlineMethodCall(referenceExpression);
-          }
+        if (element instanceof PsiReferenceExpression referenceExpression && superMethod.getBody() != null) {
+          // No super method body: either native method or compilation error
+          new InlineMethodProcessor(element.getProject(), superMethod, referenceExpression, null, true)
+            .inlineMethodCall(referenceExpression);
         }
       }
     }

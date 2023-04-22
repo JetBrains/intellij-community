@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.analysis.AnalysisScope;
@@ -100,8 +100,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
 
   @Override
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager, @NotNull final GlobalInspectionContext globalContext) {
-    if (refEntity instanceof RefModule){
-      final RefModule refModule = (RefModule)refEntity;
+    if (refEntity instanceof RefModule refModule){
       final Module module = refModule.getModule();
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       boolean onlyGeneratedSources = true;

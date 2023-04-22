@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
@@ -315,12 +315,19 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     String fg = toHtmlColor(NamedColorUtil.getInactiveTextColor());
     String number = count <= 0 ? "" : String.valueOf(count);
     @Language("HTML")
-    String labelWithCounter = "<html><body>" +
-                              "<table cellpadding='0' cellspacing='0'><tr>" +
-                                "<td><nobr>%s</nobr></td>" +
-                                "<td width='%s'></td>" +
-                                "<td><font color='%s'>%s</font></td>" +
-                              "</tr></table></body></html>";
+    @NonNls String labelWithCounter = """
+      <html>
+        <body>
+          <table cellpadding='0' cellspacing='0'>
+            <tr>
+              <td><nobr>%s</nobr></td>
+              <td width='%s'></td>
+              <td><font color='%s'>%s</font></td>
+            </tr>
+          </table>
+        </body>
+      </html>
+      """;
     return String.format(labelWithCounter, name, padding, fg, number);
   }
 

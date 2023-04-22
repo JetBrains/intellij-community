@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -175,11 +175,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       private void excludeFieldCandidate(PsiReference ref) {
         if (ref == null) return;
         final PsiElement resolved = ref.resolve();
-        if (resolved instanceof PsiField) {
-          final PsiField field = (PsiField)resolved;
-          if (aClass.equals(field.getContainingClass())) {
-            candidates.remove(field);
-          }
+        if (resolved instanceof PsiField field && aClass.equals(field.getContainingClass())) {
+          candidates.remove(field);
         }
       }
     });
@@ -250,18 +247,16 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       final List<PsiReferenceExpression> readBeforeWrites = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       for (final PsiReferenceExpression readBeforeWrite : readBeforeWrites) {
         final PsiElement resolved = readBeforeWrite.resolve();
-        if (resolved instanceof PsiField) {
-          final PsiField field = (PsiField)resolved;
-          if (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) || writtenVariables.contains(field)) {
-            PsiElement parent = body.getParent();
-            if (!(parent instanceof PsiMethod) ||
-                !((PsiMethod)parent).isConstructor() ||
-                field.getInitializer() == null ||
-                field.hasModifierProperty(PsiModifier.STATIC) ||
-                !PsiTreeUtil.isAncestor(((PsiMethod)parent).getContainingClass(), field, true)) {
-              candidates.remove(field);
-            }
+        if (resolved instanceof PsiField field &&
+            (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) ||
+             writtenVariables.contains(field))) {
+          PsiElement parent = body.getParent();
+          if (parent instanceof PsiMethod method && method.isConstructor() &&
+              field.getInitializer() != null && !field.hasModifierProperty(PsiModifier.STATIC) &&
+              PsiTreeUtil.isAncestor(method.getContainingClass(), field, true)) {
+            continue;
           }
+          candidates.remove(field);
         }
       }
     }

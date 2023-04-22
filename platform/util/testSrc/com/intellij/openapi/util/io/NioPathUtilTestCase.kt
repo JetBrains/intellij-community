@@ -4,6 +4,7 @@ package com.intellij.openapi.util.io
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.utils.io.children
 import com.intellij.util.io.isFile
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
@@ -93,7 +94,6 @@ abstract class NioPathUtilTestCase {
 
     inline fun <reified Ex : Exception> isFailedWithException(pattern: String = ".*") =
       isFailedWithException(Ex::class.java, Regex(pattern))
-
 
     fun doesNotExist() = withFile { path ->
       Assertions.assertTrue(path == null || !exists(path)) {

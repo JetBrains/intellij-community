@@ -22,11 +22,7 @@ public final class FieldData extends DescriptorData<FieldDescriptorImpl> {
   }
 
   public boolean equals(Object object) {
-    if (!(object instanceof FieldData)) {
-      return false;
-    }
-    final FieldData fieldData = (FieldData)object;
-    return fieldData.myField == myField && fieldData.myObjRef.equals(myObjRef);
+    return object instanceof FieldData fieldData && fieldData.myField == myField && fieldData.myObjRef.equals(myObjRef);
   }
 
   public int hashCode() {

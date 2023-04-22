@@ -657,11 +657,10 @@ public final class ExpectedTypesProvider {
     @NotNull
     private static TailType getAssignmentRValueTailType(@NotNull PsiAssignmentExpression assignment) {
       if (assignment.getParent() instanceof PsiExpressionStatement) {
-        if (!(assignment.getParent().getParent() instanceof PsiForStatement)) {
+        if (!(assignment.getParent().getParent() instanceof PsiForStatement forStatement)) {
           return TailType.SEMICOLON;
         }
 
-        PsiForStatement forStatement = (PsiForStatement)assignment.getParent().getParent();
         if (!assignment.getParent().equals(forStatement.getUpdate())) {
           return TailType.SEMICOLON;
         }
@@ -673,22 +672,21 @@ public final class ExpectedTypesProvider {
     public void visitExpressionList(@NotNull PsiExpressionList list) {
       PsiResolveHelper helper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
       PsiElement parent = list.getParent();
-      if (parent instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
+      if (parent instanceof PsiMethodCallExpression methodCall) {
         CandidateInfo[] candidates = helper.getReferencedMethodCandidates(methodCall, false, true);
         Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(candidates, list, myExpr, myForCompletion));
       }
-      else if (parent instanceof PsiEnumConstant) {
-        getExpectedArgumentsTypesForEnumConstant((PsiEnumConstant)parent, list);
+      else if (parent instanceof PsiEnumConstant enumConstant) {
+        getExpectedArgumentsTypesForEnumConstant(enumConstant, list);
       }
-      else if (parent instanceof PsiNewExpression) {
-        getExpectedArgumentsTypesForNewExpression((PsiNewExpression)parent, list);
+      else if (parent instanceof PsiNewExpression newExpression) {
+        getExpectedArgumentsTypesForNewExpression(newExpression, list);
       }
       else if (parent instanceof PsiAnonymousClass) {
         getExpectedArgumentsTypesForNewExpression((PsiNewExpression)parent.getParent(), list);
       }
-      else if (parent instanceof PsiSwitchLabelStatementBase) {
-        PsiSwitchBlock switchBlock = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchBlock();
+      else if (parent instanceof PsiSwitchLabelStatementBase switchLabel) {
+        PsiSwitchBlock switchBlock = switchLabel.getEnclosingSwitchBlock();
         handleCaseElementList(switchBlock);
       }
     }
@@ -738,8 +736,7 @@ public final class ExpectedTypesProvider {
         JavaResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(newType);
         PsiClass newClass = (PsiClass)resolveResult.getElement();
         final PsiSubstitutor substitutor;
-        if (newClass instanceof PsiAnonymousClass) {
-          final PsiAnonymousClass anonymous = (PsiAnonymousClass)newClass;
+        if (newClass instanceof PsiAnonymousClass anonymous) {
           newClass = anonymous.getBaseClassType().resolve();
           if (newClass == null) return;
 
@@ -1114,8 +1111,7 @@ public final class ExpectedTypesProvider {
         PsiMethod method = (PsiMethod)candidateInfo.getElement();
         PsiTypeParameter returnTypeParameter = getReturnTypeParameterNotMentionedPreviously(index, method);
         PsiSubstitutor substitutor;
-        if (candidateInfo instanceof MethodCandidateInfo) {
-          MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
+        if (candidateInfo instanceof MethodCandidateInfo info) {
           substitutor = info.inferSubstitutorFromArgs(policy, args);
           if (!info.isStaticsScopeCorrect() && !method.hasModifierProperty(PsiModifier.STATIC) || info.getInferenceErrorMessage() != null) continue;
           if (forCompletion && returnTypeParameter != null) {

@@ -207,7 +207,7 @@ common.attrs.other =
 	&	common.attrs.inert?
 	)
 
-	common.attrs.autofocus = 
+	common.attrs.autofocus =
 		attribute autofocus {
 			w:string "autofocus" | w:string ""
 		}
@@ -227,7 +227,7 @@ common.attrs.other =
 			string
 		}
 
-	common.attrs.inert = 
+	common.attrs.inert =
 		attribute inert {
 			w:string "inert" | w:string ""
 		}
@@ -261,7 +261,7 @@ common.attrs.other =
 
 	common.data.idref =
 		w:IDREF
-		
+
 	common.data.idrefs =
 		w:IDREFS
 
@@ -269,7 +269,7 @@ common.attrs.other =
 		w:ID #FIXME
 
 	common.data.hash-name =
-		w:hash-name	
+		w:hash-name
 #		xsd:string {
 #			pattern = "#.+"
 #		}
@@ -293,12 +293,12 @@ common.attrs.other =
 #		xsd:string {
 #			pattern = "[0-9]+"
 #		}
-		
+
 #	common.data.percent =
 #		xsd:string {
 #			pattern = "(100)|([1-9]?[0-9](\.[0-9]+)?)%"
 #		}
-		
+
 	common.data.float =
 		w:float
 #		xsd:string {
@@ -310,13 +310,13 @@ common.attrs.other =
 #		xsd:string {
 #			pattern = "(0*[1-9][0-9]*(\.[0-9]+)?)|([0-9]+(\.0*[1-9][0-9]*)?)([eE]-?[0-9]+)?"
 #		}
-		
+
 	common.data.float.non-negative =
 		w:float-non-negative
 #		xsd:string {
 #			pattern = "[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?"
 #		}
-		
+
 ## Temporal
 
 	common.data.datetime =
@@ -464,7 +464,7 @@ common.attrs.other =
 # #####################################################################
 ##  WF2 Module Hook                                                   #
 # #####################################################################
-		
+
 common-form.attrs.form = ( notAllowed )
 
 # #####################################################################

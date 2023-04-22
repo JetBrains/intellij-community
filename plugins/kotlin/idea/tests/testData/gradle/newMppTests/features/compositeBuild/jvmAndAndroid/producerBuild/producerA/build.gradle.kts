@@ -9,6 +9,8 @@ plugins {
 group = "org.jetbrains.sample"
 version = "1.0.0-SNAPSHOT"
 
+{{default_android_block}}
+
 kotlin {
     jvm()
     android()

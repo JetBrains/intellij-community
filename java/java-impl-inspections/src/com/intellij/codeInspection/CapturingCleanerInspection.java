@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -73,10 +73,9 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
 
 
       @Nullable
-      private PsiElement getElementCapturingThis(@NotNull PsiExpression runnableExpr,
-                                                 @NotNull PsiClass trackedClass) {
-        if (runnableExpr instanceof PsiMethodReferenceExpression) {
-          PsiMethodReferenceExpression methodReference = (PsiMethodReferenceExpression)runnableExpr;
+      private static PsiElement getElementCapturingThis(@NotNull PsiExpression runnableExpr,
+                                                        @NotNull PsiClass trackedClass) {
+        if (runnableExpr instanceof PsiMethodReferenceExpression methodReference) {
           if (PsiMethodReferenceUtil.isStaticallyReferenced(methodReference)) return null;
 
           PsiElement qualifier = methodReference.getQualifier();
@@ -87,15 +86,13 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           }
           return null;
         }
-        if (runnableExpr instanceof PsiLambdaExpression) {
-          PsiLambdaExpression lambda = (PsiLambdaExpression)runnableExpr;
+        if (runnableExpr instanceof PsiLambdaExpression lambda) {
           if (!lambda.getParameterList().isEmpty()) return null;
           PsiElement lambdaBody = lambda.getBody();
           if (lambdaBody == null) return null;
           return getLambdaOrInnerClassElementCapturingThis(lambdaBody, trackedClass);
         }
-        if (runnableExpr instanceof PsiNewExpression) {
-          PsiNewExpression newExpression = (PsiNewExpression)runnableExpr;
+        if (runnableExpr instanceof PsiNewExpression newExpression) {
           if (newExpression.getAnonymousClass() != null) {
             if (PsiUtil.isLanguageLevel18OrHigher(trackedClass)) {
               PsiElement elementCapturingThis = getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass);

@@ -10,7 +10,6 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -41,8 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.debugger.actions.PopFrameAction.ACTION_NAME;
 
 public class JvmDropFrameActionHandler implements XDropFrameHandler {
 
@@ -62,15 +58,14 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
 
   @Override
   public void drop(@NotNull XStackFrame frame) {
-    if (frame instanceof JavaStackFrame) {
-      var stackFrame = (JavaStackFrame)frame;
+    if (frame instanceof JavaStackFrame stackFrame) {
       var project = myDebugSession.getProject();
       var debugProcess = myDebugSession.getProcess();
       var debuggerContext = myDebugSession.getContextManager().getContext();
       try {
         myDebugSession.setSteppingThrough(stackFrame.getStackFrameProxy().threadProxy());
         if (evaluateFinallyBlocks(project,
-                                  UIUtil.removeMnemonic(ActionsBundle.actionText(ACTION_NAME)),
+                                  XDebuggerBundle.message("xdebugger.reset.frame.title"),
                                   stackFrame,
                                   new XDebuggerEvaluator.XEvaluationCallback() {
                                     @Override
@@ -81,7 +76,7 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
                                     @Override
                                     public void errorOccurred(@NotNull final String errorMessage) {
                                       showError(project, JavaDebuggerBundle.message("error.executing.finally", errorMessage),
-                                                UIUtil.removeMnemonic(ActionsBundle.actionText(ACTION_NAME)));
+                                                XDebuggerBundle.message("xdebugger.reset.frame.title"));
                                     }
                                   })) {
           return;
@@ -90,7 +85,7 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
       }
       catch (NativeMethodException e2) {
         Messages.showMessageDialog(project, JavaDebuggerBundle.message("error.native.method.exception"),
-                                   UIUtil.removeMnemonic(ActionsBundle.actionText(ACTION_NAME)), Messages.getErrorIcon());
+                                   XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon());
       }
       catch (InvalidStackFrameException | VMDisconnectedException ignored) {
       }
@@ -188,7 +183,7 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
     }
     else {
       Messages.showMessageDialog(project, XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"),
-                                 UIUtil.removeMnemonic(ActionsBundle.actionText(ACTION_NAME)),
+                                 XDebuggerBundle.message("xdebugger.reset.frame.title"),
                                  Messages.getErrorIcon());
     }
   }

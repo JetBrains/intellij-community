@@ -98,7 +98,14 @@ internal object Completions {
             is FirIncorrectPositionContext -> {
                 // do nothing, completion is not supposed to be called here
             }
-            is FirValueParameterPositionContext -> {
+
+            is FirSimpleParameterPositionContext -> {
+                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext) // for parameter declaration
+                complete(factory.keywordContributor(0), positionContext)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext)
+            }
+
+            is FirPrimaryConstructorParameterPositionContext -> {
                 complete(factory.declarationFromUnresolvedNameContributor(0), positionContext) // for parameter declaration
                 complete(factory.declarationFromOverridableMembersContributor(0), positionContext)
                 complete(factory.keywordContributor(0), positionContext)

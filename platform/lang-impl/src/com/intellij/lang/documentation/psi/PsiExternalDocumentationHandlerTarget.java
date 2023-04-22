@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.psi;
 
 import com.intellij.codeInsight.navigation.UtilKt;
-import com.intellij.lang.documentation.DocumentationResult;
-import com.intellij.lang.documentation.DocumentationTarget;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.model.Pointer;
 import com.intellij.navigation.TargetPresentation;
+import com.intellij.platform.documentation.DocumentationResult;
+import com.intellij.platform.documentation.DocumentationTarget;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -50,7 +50,7 @@ final class PsiExternalDocumentationHandlerTarget implements DocumentationTarget
 
   @NotNull
   @Override
-  public TargetPresentation presentation() {
+  public TargetPresentation computePresentation() {
     return UtilKt.targetPresentation(myTargetElement);
   }
 
@@ -66,7 +66,7 @@ final class PsiExternalDocumentationHandlerTarget implements DocumentationTarget
   }
 
   // static method ensures that this is not captured
-  private static @NotNull Supplier<DocumentationResult.@Nullable Data> fetchComputable(
+  private static @NotNull Supplier<DocumentationResult.@Nullable Documentation> fetchComputable(
     @NotNull ExternalDocumentationHandler handler,
     @NotNull String url,
     @NotNull PsiElement context

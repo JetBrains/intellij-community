@@ -262,7 +262,7 @@ public final class VcsUtil {
    * in this case name of files for "before" and "after" revisions must not coincide.
    * @deprecated See {@link Change#getType()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isRenameChange(Change change) {
     boolean isRenamed = false;
     ContentRevision before = change.getBeforeRevision();
@@ -280,7 +280,7 @@ public final class VcsUtil {
    * "before" revision is NULL, while "after" revision is NOT NULL.
    * @deprecated See {@link Change#getType()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isChangeForNew(Change change) {
     return change.getBeforeRevision() == null && change.getAfterRevision() != null;
   }
@@ -290,7 +290,7 @@ public final class VcsUtil {
    * "before" revision is NOT NULL, while "after" revision is NULL.
    * @deprecated See {@link Change#getType()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isChangeForDeleted(Change change) {
     return change.getBeforeRevision() != null && change.getAfterRevision() == null;
   }

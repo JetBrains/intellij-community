@@ -3,58 +3,54 @@
 package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.kotlin.asJava.elements.*
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.junit.Assume
-import java.io.File
 import kotlin.test.assertNotNull
 
-abstract class AbstractIdeLightClassesByFqNameTest : KotlinLightCodeInsightFixtureTestCase() {
-    fun doTest(@Suppress("UNUSED_PARAMETER") unused: String) {
-        val fileName = fileName()
-        val fileExtension = fileName.substringAfterLast('.')
-        val extraFilePath = when {
-            fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, "extra.$fileExtension")
-            else -> error("Invalid test data extension")
+abstract class AbstractIdeLightClassesByFqNameTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
+
+    override fun setUp() {
+        super.setUp()
+        module.setupKotlinFacet {
+            // LanguageVersionSettingsProvider#computeProjectLanguageVersionSettings uses
+            // kotlin-dist-for-ide/kotlinc-dist-for-ide-from-sources/build.txt
+            // as languageVersion that could point to jpsPluginVersion from model.properties
+            // and could be slightly behind latest supported analysis version
+            settings.languageLevel = LanguageVersion.LATEST_STABLE
         }
-
-        val fileText = File(testDataDirectory, fileName).readText()
-        Assume.assumeFalse(
-            "The test is not supported",
-            InTextDirectivesUtils.isDirectiveDefined(fileText, LightClassTestCommon.SKIP_IDE_TEST_DIRECTIVE),
-        )
-
-        withCustomCompilerOptions(fileText, project, module) {
-            val testFiles = if (File(testDataDirectory, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
-            myFixture.configureByFiles(*testFiles.toTypedArray())
-            if ((myFixture.file as? KtFile)?.isScript() == true) {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
+    }
+    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
+        withCustomCompilerOptions(dataFile().readText(), project, module) {
+            val ktFiles = files.filterIsInstance<KtFile>()
+            val firstFile = ktFiles.first()
+            if (firstFile.isScript()) {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(firstFile)
             }
 
-            val ktFile = myFixture.file as KtFile
             val testData = dataFile()
             testLightClass(
-                KotlinTestUtils.replaceExtension(testData, "java"),
-                testData,
-                { LightClassTestCommon.removeEmptyDefaultImpls(it) },
-                { fqName ->
-                    findLightClass(fqName, ktFile, project)?.apply {
-                        checkConsistency(this as KtLightClass)
-                        PsiElementChecker.checkPsiElementStructure(this)
+                testData = testData,
+                normalize = { LightClassTestCommon.removeEmptyDefaultImpls(it) },
+                findLightClass = { fqName ->
+                    ktFiles.firstNotNullOfOrNull { ktFile ->
+                        findLightClass(fqName, ktFile, project)?.apply {
+                            checkConsistency(this as KtLightClass)
+                            PsiElementChecker.checkPsiElementStructure(this)
+                        }
                     }
                 },
             )
 
-            UltraLightChecker.checkClassEquivalence(ktFile)
+            for (file in ktFiles) {
+                UltraLightChecker.checkClassEquivalence(file)
+            }
         }
     }
 

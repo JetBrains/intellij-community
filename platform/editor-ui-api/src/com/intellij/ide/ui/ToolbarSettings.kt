@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,7 +21,7 @@ interface ToolbarSettings : PersistentStateComponent<ExperimentalToolbarSettings
     const val ROLLBACK_ACTION_ID = "RunToolbarRollbackToPrevious"
 
     @JvmStatic
-    fun getInstance(): ToolbarSettings = ApplicationManager.getApplication().getService(ToolbarSettings::class.java)
+    fun getInstance(): ToolbarSettings = ApplicationManager.getApplication().service<ToolbarSettings>()
   }
 
   val isAvailable: Boolean

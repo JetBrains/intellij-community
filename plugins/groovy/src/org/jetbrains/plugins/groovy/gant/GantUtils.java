@@ -59,11 +59,6 @@ public final class GantUtils {
     return AbstractConfigUtils.getSDKJarVersion(path + "/lib", "gant-\\d.*\\.jar", AbstractConfigUtils.MANIFEST_PATH);
   }
 
-  public static String getGantVersion(String path) {
-    String jarVersion = getGantVersionOrNull(path);
-    return jarVersion != null ? jarVersion : AbstractConfigUtils.UNDEFINED_VERSION;
-  }
-
   public static boolean isGantSdkHome(VirtualFile file) {
     if (file != null && file.isDirectory()) {
       final String path = file.getPath();

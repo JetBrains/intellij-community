@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -33,8 +34,12 @@ internal abstract class KtModuleByModuleInfoBase(
     open val directRegularDependencies: List<KtModule>
         get() = ideaModuleInfo.dependenciesWithoutSelf().map(provider::getKtModuleByModuleInfo).toList()
 
-    open val directRefinementDependencies: List<KtModule>
+    open val directDependsOnDependencies: List<KtModule>
         get() = ideaModuleInfo.expectedBy.map(provider::getKtModuleByModuleInfo)
+
+    // TODO: Implement some form of caching. Also see `ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo`.
+    val transitiveDependsOnDependencies: List<KtModule>
+        get() = computeTransitiveDependsOnDependencies(directDependsOnDependencies)
 
     open val directFriendDependencies: List<KtModule>
         get() = ideaModuleInfo.modulesWhoseInternalsAreVisible().map(provider::getKtModuleByModuleInfo)
@@ -69,7 +74,12 @@ internal class KtSourceModuleByModuleInfo(
     override val directRegularDependencies: List<KtModule>
         get() = moduleInfo.dependencies(provider)
 
-    override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
+    override val contentScope: GlobalSearchScope
+        get() = if (moduleInfo is ModuleTestSourceInfo) {
+            val testOnlyScope = GlobalSearchScopes.projectTestScope(project).intersectWith(ideaModule.moduleTestSourceScope)
+            KotlinResolveScopeEnlarger.enlargeScope(testOnlyScope, ideaModule, isTestScope = true)
+        } else
+            moduleInfo.contentScope
 
     override val languageVersionSettings: LanguageVersionSettings get() = moduleInfo.module.languageVersionSettings
 
@@ -164,8 +174,8 @@ internal class KtLibrarySourceModuleByModuleInfo(
     override val directFriendDependencies: List<KtModule>
         get() = binaryLibrary.directFriendDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
 
-    override val directRefinementDependencies: List<KtModule>
-        get() = binaryLibrary.directRefinementDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+    override val directDependsOnDependencies: List<KtModule>
+        get() = binaryLibrary.directDependsOnDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
 
     override val contentScope: GlobalSearchScope
         get() = LibrarySourcesScope(moduleInfo.project, moduleInfo.library)

@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
@@ -27,6 +28,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Cursor
 import java.awt.event.MouseEvent
@@ -55,6 +57,16 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     object : ClickListener() {
       override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+        if (UIUtil.isCloseClick(event, MouseEvent.MOUSE_RELEASED)) {
+          val project = ProjectUtil.getProjectForComponent(this@apply)
+          if (project != null) {
+            val files = FileEditorManager.getInstance(project).selectedFiles
+            if (files.isNotEmpty()) {
+              FileEditorManager.getInstance(project).closeFile(files[0])
+              return true
+            }
+          }
+        }
         if (clickCount == 1) {
           showRecentFilesPopup(this@apply)
           return true
@@ -136,7 +148,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
           val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
           component.isOpaque = false
           component.foreground = fg
-          component.text = filename
+          component.text = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
         }
       }
     }

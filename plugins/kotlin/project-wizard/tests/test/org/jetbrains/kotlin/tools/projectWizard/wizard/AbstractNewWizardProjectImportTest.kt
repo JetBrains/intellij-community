@@ -51,9 +51,12 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
 
     override fun setUp() {
         super.setUp()
+        setRegistryPropertyForTest("use.jdk.vendor.in.suggested.jdk.name", "false")
         runWriteAction {
-            PluginTestCaseBase.addJdk(testRootDisposable) {
-                JavaSdk.getInstance().createJdk(SDK_NAME, IdeaTestUtil.requireRealJdkHome(), false)
+            listOf(SDK_NAME, "1.8", "11").forEach { name ->
+                PluginTestCaseBase.addJdk(testRootDisposable) {
+                    JavaSdk.getInstance().createJdk(name, IdeaTestUtil.requireRealJdkHome(), false)
+                }
             }
         }
         sdkCreationChecker = KotlinSdkCreationChecker()

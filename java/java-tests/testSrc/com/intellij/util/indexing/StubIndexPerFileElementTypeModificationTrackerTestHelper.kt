@@ -16,6 +16,9 @@ class StubIndexPerFileElementTypeModificationTrackerTestHelper() {
     lastSeenModCounts.clear()
   }
 
+  /**
+   * call to propagate information about file element types into indexes
+   */
   fun ensureStubIndexUpToDate(project: Project) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project))
   }

@@ -3,11 +3,7 @@ plugins {
     kotlin("multiplatform")
 }
 
-android {
-    compileSdkVersion({{compile_sdk_version}})
-    buildToolsVersion("{{build_tools_version}}")
-    namespace = "org.jetbrains.kotlin.mpp.tests"
-}
+{{default_android_block}}
 
 kotlin {
     android()

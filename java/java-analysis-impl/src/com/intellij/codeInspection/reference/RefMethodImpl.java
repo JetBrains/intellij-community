@@ -6,6 +6,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Predicates;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -95,10 +96,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       setAbstract(javaPsi.hasModifierProperty(PsiModifier.ABSTRACT));
 
       setLibraryOverride(javaPsi.hasModifierProperty(PsiModifier.NATIVE));
-      if (PsiModifier.PUBLIC == getAccessModifier()) {
+      if (PsiModifier.PUBLIC.equals(getAccessModifier())) {
         setAppMain(isAppMain(javaPsi, this));
       }
-      if (PsiModifier.PRIVATE != getAccessModifier() && !isStatic()) {
+      if (!PsiModifier.PRIVATE.equals(getAccessModifier()) && !isStatic()) {
         initializeSuperMethods(javaPsi);
       }
     }
@@ -513,8 +514,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       String newTemplate = createReturnValueTemplate(expression, this);
 
       synchronized (this) {
-        //noinspection StringEquality
-        if (myReturnValueTemplate == RETURN_VALUE_UNDEFINED) {
+        if (Strings.areSameInstance(myReturnValueTemplate, RETURN_VALUE_UNDEFINED)) {
           myReturnValueTemplate = newTemplate;
         }
         else if (!Objects.equals(myReturnValueTemplate, newTemplate)) {
@@ -548,8 +548,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public synchronized String getReturnValueIfSame() {
-    //noinspection StringEquality
-    if (myReturnValueTemplate == RETURN_VALUE_UNDEFINED) return null;
+    if (Strings.areSameInstance(myReturnValueTemplate, RETURN_VALUE_UNDEFINED)) return null;
     return myReturnValueTemplate;
   }
 

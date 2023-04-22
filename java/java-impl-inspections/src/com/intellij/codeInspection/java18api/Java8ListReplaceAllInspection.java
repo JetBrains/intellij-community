@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -118,8 +118,7 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement parent = descriptor.getStartElement().getParent();
-      if (!(parent instanceof PsiForStatement)) return;
-      PsiForStatement statement = (PsiForStatement)parent;
+      if (!(parent instanceof PsiForStatement statement)) return;
       PsiStatement body = statement.getBody();
       if (body == null) return;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);

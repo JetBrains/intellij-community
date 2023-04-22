@@ -34,6 +34,12 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
   private static final Object lock = new Object();
 
+  @ApiStatus.Experimental
+  public static boolean isTrackable(@NotNull VirtualFile file) {
+    return !(file.getFileSystem() instanceof NonPhysicalFileSystem) ||
+           Boolean.TRUE.equals(file.getUserData(TRACK_NON_PHYSICAL));
+  }
+
   @Override
   public @Nullable Document getDocument(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -55,7 +61,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
         FileType fileType = file.getFileType();
         document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
 
-        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem) || Boolean.TRUE.equals(TRACK_NON_PHYSICAL.get(file))) {
+        if (isTrackable(file)) {
           document.addDocumentListener(getDocumentListener());
         }
 

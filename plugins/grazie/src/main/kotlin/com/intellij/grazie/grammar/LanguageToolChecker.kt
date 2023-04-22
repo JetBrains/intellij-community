@@ -7,8 +7,11 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.*
+import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Predicates
@@ -18,6 +21,8 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.html.*
 import org.languagetool.JLanguageTool
 import org.languagetool.Languages
@@ -42,41 +47,58 @@ open class LanguageToolChecker : TextChecker() {
   }
 
   private fun doCheck(extracted: TextContent): List<Problem> {
-    val str = extracted.toString()
-    if (str.isBlank()) return emptyList()
+    val text = extracted.toString()
+    if (text.isBlank()) return emptyList()
 
-    val lang = LangDetector.getLang(str) ?: return emptyList()
+    val language = LangDetector.getLang(text) ?: return emptyList()
 
-    return try {
-      ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
-        val tool = LangTool.getTool(lang)
-        val sentences = tool.sentenceTokenize(str)
-        if (sentences.any { it.length > 1000 }) emptyList()
-        else {
-          val matches = runLT(tool, str)
-          val disappearsAfterAddingQuotes by lazy { checkQuotedText(extracted, tool) }
-
-          matches.asSequence()
-            .filterNot { possiblyMarkupDependent(it) && disappearsAfterAddingQuotes.test(it) }
-            .map { Problem(it, lang, extracted, this is TestChecker) }
-            .filterNot { isGitCherryPickedFrom(it.match, extracted) }
-            .filterNot { isKnownLTBug(it.match, extracted) }
-            .filterNot {
-              val range = if (it.fitsGroup(RuleGroup.CASING)) includeSentenceBounds(extracted, it.patternRange) else it.patternRange
-              extracted.hasUnknownFragmentsIn(range)
+    try {
+      return ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
+        runBlockingCancellable {
+          withContext(Dispatchers.IO) {
+            // LT will use indicator for cancelled checks
+            coroutineToIndicator {
+              val indicator = ProgressManager.getGlobalProgressIndicator()
+              checkNotNull(indicator) { "Indicator was not set for current job" }
+              return@coroutineToIndicator ApplicationUtil.runWithCheckCanceled(
+                { collectLanguageToolProblems(extracted, text, language) },
+                indicator
+              )
             }
-            .toList()
+          }
         }
       }
     }
-    catch (e: Throwable) {
-      if (ExceptionUtil.causedBy(e, ProcessCanceledException::class.java)) {
+    catch (exception: Throwable) {
+      if (ExceptionUtil.causedBy(exception, ProcessCanceledException::class.java)) {
         throw ProcessCanceledException()
       }
-
-      logger.warn("Got exception from LanguageTool", e)
-      emptyList()
+      logger.warn("Got exception from LanguageTool", exception)
     }
+    return emptyList()
+  }
+
+  private fun collectLanguageToolProblems(extracted: TextContent, text: String, lang: Lang): List<Problem> {
+    val tool = LangTool.getTool(lang)
+    val sentences = tool.sentenceTokenize(text)
+    if (sentences.any { it.length > 1000 }) {
+      return emptyList()
+    }
+    val matches = runLT(tool, text)
+    val disappearsAfterAddingQuotes by lazy { checkQuotedText(extracted, tool) }
+    return matches.asSequence()
+      .filterNot { possiblyMarkupDependent(it) && disappearsAfterAddingQuotes.test(it) }
+      .map { Problem(it, lang, extracted, this is TestChecker) }
+      .filterNot { isGitCherryPickedFrom(it.match, extracted) }
+      .filterNot { isKnownLTBug(it.match, extracted) }
+      .filterNot {
+        val range = when {
+          it.fitsGroup(RuleGroup.CASING) -> includeSentenceBounds(extracted, it.patternRange)
+          else -> it.patternRange
+        }
+        extracted.hasUnknownFragmentsIn(range)
+      }
+      .toList()
   }
 
   private fun checkQuotedText(extracted: TextContent, tool: JLanguageTool): Predicate<RuleMatch> = when {

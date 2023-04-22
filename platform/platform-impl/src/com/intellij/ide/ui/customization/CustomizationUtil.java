@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -80,13 +80,13 @@ public final class CustomizationUtil {
 
     ActionGroup correctedGroup = new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
     String groupId = ActionManager.getInstance().getId(group);
-    schema.getActions().stream()
-      .map(actionUrl -> actionUrl.getComponent() instanceof Group g ? g : null)
-      .filter(g -> g != null && Objects.equals(g.getId(), groupId))
-      .findFirst()
-      .ifPresent(g -> {
-        if (g.isForceShowAsPopup()) correctedGroup.setPopup(true);
-      });
+    for (ActionUrl actionUrl : schema.getActions()) {
+      Group g1 = actionUrl.getComponent() instanceof Group g ? g : null;
+      if (g1 != null && Objects.equals(g1.getId(), groupId)) {
+        if (g1.isForceShowAsPopup()) correctedGroup.setPopup(true);
+        break;
+      }
+    }
     return correctedGroup;
   }
 
@@ -553,7 +553,7 @@ public final class CustomizationUtil {
     return ActionManager.getInstance().getId(actionForId);
   }
 
-  @Nullable
+  @Nls @Nullable
   private static String getGroupName(AnAction action, String groupID) {
     String templateText = action.getTemplateText();
     return Strings.isEmpty(templateText) ? CustomActionsSchema.getInstance().getDisplayName(groupID) : templateText;
@@ -561,9 +561,9 @@ public final class CustomizationUtil {
 
   private static class ToolbarCustomizableActionsPanel extends CustomizableActionsPanel {
     @NotNull private final String myGroupID;
-    @NotNull private final String myGroupName;
+    @Nls @NotNull private final String myGroupName;
 
-    private ToolbarCustomizableActionsPanel(@NotNull String groupID, @NotNull String groupName) {
+    private ToolbarCustomizableActionsPanel(@NotNull String groupID, @Nls @NotNull String groupName) {
       myGroupID = groupID;
       myGroupName = groupName;
     }

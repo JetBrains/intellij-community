@@ -50,7 +50,7 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
                       UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS) ?: RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
   }
 
-  override fun getFont(): Font = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBFont.label()
+  override fun getFont(): Font = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBUI.CurrentTheme.StatusBar.font()
 
   fun recomputeSize() {
     val label = JLabel("XXX") //NON-NLS

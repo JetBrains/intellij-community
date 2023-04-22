@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.CommonBundle;
@@ -209,8 +209,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       return new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
-          if (value instanceof OverheadProducer) {
-            OverheadProducer overheadProducer = (OverheadProducer)value;
+          if (value instanceof OverheadProducer overheadProducer) {
             if (overheadProducer.isObsolete()) {
               overrideAttributes(overheadProducer, STRIKEOUT_ATTRIBUTES);
             }
@@ -264,8 +263,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
                                              boolean hasFocus,
                                              int row,
                                              int column) {
-          if (value instanceof OverheadProducer) {
-            OverheadProducer overheadProducer = (OverheadProducer)value;
+          if (value instanceof OverheadProducer overheadProducer) {
             Long val = myGetter.apply(overheadProducer);
             append(val != null ? String.valueOf((long)val) : "",
                    overheadProducer.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);

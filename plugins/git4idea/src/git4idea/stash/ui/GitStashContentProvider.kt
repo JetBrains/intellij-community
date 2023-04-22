@@ -8,7 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -112,7 +112,7 @@ internal class GitStashDisplayNameSupplier : Supplier<String> {
   }
 }
 
-internal class GitStashStartupActivity : ProjectPostStartupActivity {
+internal class GitStashStartupActivity : ProjectActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {

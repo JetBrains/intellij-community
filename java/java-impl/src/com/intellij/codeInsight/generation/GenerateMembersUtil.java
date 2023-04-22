@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -108,8 +108,7 @@ public final class GenerateMembersUtil {
       if (element instanceof PsiField || element instanceof PsiMethod || element instanceof PsiClassInitializer) break;
       element = element.getNextSibling();
     }
-    if (element instanceof PsiField) {
-      PsiField field = (PsiField)element;
+    if (element instanceof PsiField field) {
       PsiTypeElement typeElement = field.getTypeElement();
       if (typeElement != null && !field.equals(typeElement.getParent())) {
         field.normalizeDeclaration();
@@ -230,8 +229,7 @@ public final class GenerateMembersUtil {
   private static PsiClass findClassAtOffset(@NotNull PsiFile file, PsiElement leaf) {
     PsiElement element = leaf;
     while (element != null && !(element instanceof PsiFile)) {
-      if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
-        final PsiClass psiClass = (PsiClass)element;
+      if (element instanceof PsiClass psiClass && !(element instanceof PsiTypeParameter)) {
         if (psiClass.isEnum()) {
           PsiElement lastChild = null;
           for (PsiElement child = psiClass.getFirstChild(); child != null; child = child.getNextSibling()) {

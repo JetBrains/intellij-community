@@ -173,27 +173,6 @@ public interface JDOMFactory {
    */
   Text text(String str);
 
-  // **** constructing Comment ****
-
-  /**
-   * This creates the comment with the supplied text.
-   *
-   * @param text <code>String</code> content of comment.
-   * @return the created Comment instance
-   */
-  Comment comment(String text);
-
-  /**
-   * This creates the comment with the supplied text.
-   *
-   * @param line The line on which this content begins.
-   * @param col  The column on the line at which this content begins.
-   * @param text <code>String</code> content of comment.
-   * @return the created Comment instance
-   * @since JDOM2
-   */
-  Comment comment(int line, int col, String text);
-
   // **** constructing DocType
 
   /**
@@ -432,31 +411,6 @@ public interface JDOMFactory {
   Element element(int line, int col, String name, String prefix, String uri);
 
   // **** constructing ProcessingInstruction ****
-
-  /**
-   * This will create a new <code>ProcessingInstruction</code>
-   * with the specified target and data.
-   *
-   * @param target <code>String</code> target of PI.
-   * @param data   <code>String</code> data for PI.
-   * @return the created ProcessingInstruction instance
-   */
-  ProcessingInstruction processingInstruction(String target,
-                                              String data);
-
-  /**
-   * This will create a new <code>ProcessingInstruction</code>
-   * with the specified target and data.
-   *
-   * @param line   The line on which this content begins.
-   * @param col    The column on the line at which this content begins.
-   * @param target <code>String</code> target of PI.
-   * @param data   <code>String</code> data for PI.
-   * @return the created ProcessingInstruction instance
-   * @since JDOM2
-   */
-  ProcessingInstruction processingInstruction(int line, int col, String target,
-                                              String data);
 
   /**
    * This will create a new <code>EntityRef</code>

@@ -71,7 +71,10 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
                                         packageDetails.info.summary,
                                         packageDetails.info.description,
                                         packageDetails.info.descriptionContentType,
-                                        packageDetails.info.projectUrls["Documentation"])
+                                        packageDetails.info.projectUrls["Documentation"],
+                                        packageDetails.info.author,
+                                        packageDetails.info.authorEmail,
+                                        packageDetails.info.homePage)
 
     }
     catch (ex: Exception) {

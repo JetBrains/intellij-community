@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -359,8 +359,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       final Object o = getSelectedObject();
-      if (o instanceof LibraryEx) {
-        final LibraryEx selected = (LibraryEx)o;
+      if (o instanceof LibraryEx selected) {
         final String newName = Messages.showInputDialog(JavaUiBundle.message("label.enter.library.name"), JavaUiBundle.message(
           "dialog.title.copy.library"), null, selected.getName() + "2", new NonEmptyInputValidator());
         if (newName == null) return;

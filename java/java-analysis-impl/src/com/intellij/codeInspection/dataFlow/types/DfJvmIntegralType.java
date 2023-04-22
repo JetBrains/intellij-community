@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
@@ -53,8 +53,7 @@ public interface DfJvmIntegralType extends DfIntegralType, DfPrimitiveType {
   @Override
   default boolean isSuperType(@NotNull DfType other) {
     if (other == DfType.BOTTOM) return true;
-    if (!(other instanceof DfIntegralType)) return false;
-    DfIntegralType integralType = (DfIntegralType)other;
+    if (!(other instanceof DfIntegralType integralType)) return false;
     if (integralType.getLongRangeType() != getLongRangeType()) return false;
     return getRange().contains(integralType.getRange()) &&
            getWideRange().contains(integralType.getWideRange());

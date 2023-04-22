@@ -2293,7 +2293,7 @@ public class UsageViewImpl implements UsageViewEx {
    *
    * @deprecated store origin usage elsewhere
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setOriginUsage(@NotNull Usage usage) {
     myOriginUsage = usage;
   }
@@ -2303,7 +2303,7 @@ public class UsageViewImpl implements UsageViewEx {
    *
    * @deprecated store origin usage elsewhere
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isOriginUsage(@NotNull Usage usage) {
     return
       myOriginUsage instanceof UsageInfo2UsageAdapter &&

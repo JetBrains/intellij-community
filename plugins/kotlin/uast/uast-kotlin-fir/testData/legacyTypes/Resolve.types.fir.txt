@@ -63,7 +63,7 @@ UFile (package = ) [public final class ResolveKt {...]
                                 UIdentifier (Identifier (Date)) [UIdentifier (Identifier (Date))]
                                 USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Date) [<init>] : PsiType:Date
                 UBinaryExpression (operator = =) [date.time = 1000] : PsiType:Unit
-                    UQualifiedReferenceExpression [date.time] : PsiType:Unit
+                    UQualifiedReferenceExpression [date.time] : PsiType:long
                         USimpleNameReferenceExpression (identifier = date) [date] : PsiType:Date
                         USimpleNameReferenceExpression (identifier = time) [time] : PsiType:long
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [setTime(1000)]

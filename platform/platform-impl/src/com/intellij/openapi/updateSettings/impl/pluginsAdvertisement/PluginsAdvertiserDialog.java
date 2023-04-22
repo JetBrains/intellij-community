@@ -42,17 +42,17 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     mySelectAllSuggestions = selectAllSuggestions;
     setTitle(IdeBundle.message("dialog.title.choose.plugins.to.install.or.enable"));
     init();
+
+    JRootPane rootPane = getPeer().getRootPane();
+    if (rootPane != null) {
+      rootPane.setPreferredSize(new JBDimension(800, 600));
+    }
   }
 
   public PluginsAdvertiserDialog(@Nullable Project project,
                                  @NotNull Collection<PluginDownloader> pluginsToInstall,
                                  @NotNull List<PluginNode> customPlugins) {
     this(project, pluginsToInstall, customPlugins, false, null);
-
-    JRootPane rootPane = getPeer().getRootPane();
-    if (rootPane != null) {
-      rootPane.setPreferredSize(new JBDimension(800, 600));
-    }
   }
 
   @Override

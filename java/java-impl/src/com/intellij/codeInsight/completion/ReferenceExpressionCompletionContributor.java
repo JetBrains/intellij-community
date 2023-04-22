@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -100,8 +100,7 @@ public final class ReferenceExpressionCompletionContributor {
       JavaSmartCompletionContributor.completeReference(element, reference, new AndFilter(filter, new ElementFilter() {
         @Override
         public boolean isAcceptable(Object o, PsiElement context) {
-          if (o instanceof CandidateInfo) {
-            final CandidateInfo info = (CandidateInfo)o;
+          if (o instanceof CandidateInfo info) {
             final PsiElement member = info.getElement();
 
             if (expectedType.equals(PsiTypes.voidType())) {

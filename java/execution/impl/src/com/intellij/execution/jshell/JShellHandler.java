@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
 import com.intellij.execution.ExecutionBundle;
@@ -206,7 +206,7 @@ public final class JShellHandler {
     final Sdk sdk = alternateSdk != null? alternateSdk :
                     module != null? ModuleRootManager.getInstance(module).getSdk() :
                     ProjectRootManager.getInstance(project).getProjectSdk();
-    if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
+    if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType javaSdkType)) {
       throw new ExecException(
         (sdk != null ? "Expected Java SDK" : " SDK is not configured") +
         (module != null? " for module " + module.getName() : " for project " + project.getName())
@@ -219,7 +219,6 @@ public final class JShellHandler {
     if (!sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_9)) {
       throw new ExecException("JDK version is " + sdkVersion.getDescription() + ". JDK 9 or higher is needed to run JShell.");
     }
-    final JavaSdkType javaSdkType = (JavaSdkType)sdk.getSdkType();
     final String vmExePath = javaSdkType.getVMExecutablePath(sdk);
     if (vmExePath == null) {
       throw new ExecException("Cannot determine path to VM executable for JDK " + sdk.getName() + ". Please re-configure the JDK.");

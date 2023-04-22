@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -119,8 +119,7 @@ public final class JavaDfaValueFactory {
 
   private static DfaValue createReferenceValue(DfaValueFactory factory, @NotNull PsiReferenceExpression refExpr) {
     PsiElement target = refExpr.resolve();
-    if (target instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)target;
+    if (target instanceof PsiVariable variable) {
       if (!PsiUtil.isAccessedForWriting(refExpr)) {
         DfaValue constValue = getConstantFromVariable(factory, variable);
         if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, variable)) return constValue;
@@ -201,8 +200,7 @@ public final class JavaDfaValueFactory {
     if (target instanceof PsiVariable) {
       return new PlainDescriptor((PsiVariable)target);
     }
-    if (target instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)target;
+    if (target instanceof PsiMethod method) {
       // Assume that methods returning stream always return a new one
       if (InheritanceUtil.isInheritor(method.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) return null;
       if (method.getParameterList().isEmpty() &&

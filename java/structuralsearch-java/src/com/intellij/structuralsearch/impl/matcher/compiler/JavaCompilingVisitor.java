@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -93,15 +93,9 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
 
     private static boolean isClassFromJavaLangPackage(PsiElement target) {
-      if (!(target instanceof PsiClass)) {
-        return false;
-      }
-      final PsiFile file = target.getContainingFile();
-      if (!(file instanceof PsiJavaFile)) {
-        return false;
-      }
-      final PsiJavaFile javaFile = (PsiJavaFile)file;
-      return "java.lang".equals(javaFile.getPackageName());
+      return target instanceof PsiClass &&
+             target.getContainingFile() instanceof PsiJavaFile javaFile &&
+             "java.lang".equals(javaFile.getPackageName());
     }
 
     @Override
@@ -402,8 +396,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     final MatchingHandler handler = pattern.getHandlerSimple(parameter);
     @NonNls final String name = "__catch_" + parent.getTextOffset();
     final SubstitutionHandler substitutionHandler;
-    if (handler instanceof SubstitutionHandler) {
-      final SubstitutionHandler parameterHandler = (SubstitutionHandler)handler;
+    if (handler instanceof SubstitutionHandler parameterHandler) {
       substitutionHandler =
         new SubstitutionHandler(name, false, parameterHandler.getMinOccurs(),
                                 parameterHandler.isTarget() ? Integer.MAX_VALUE : parameterHandler.getMaxOccurs(), true);
@@ -445,8 +438,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         }
       }
     }
-    else if (firstChild instanceof PsiModifierList) {
-      final PsiModifierList modifierList = (PsiModifierList)firstChild;
+    else if (firstChild instanceof PsiModifierList modifierList) {
       final PsiAnnotation[] annotations = modifierList.getAnnotations();
       if (annotations.length != 1) {
         throw new MalformedPatternException();
@@ -489,8 +481,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     if (parent != null && parent.getParent() instanceof PsiClass) {
       GlobalCompilingVisitor.setFilter(handler, TypeFilter.getInstance());
     }
-    else if (parent instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)parent;
+    else if (parent instanceof PsiNewExpression newExpression) {
       if (newExpression.isArrayCreation()) {
         GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiJavaCodeReferenceElement || e instanceof PsiKeyword);
       }
@@ -570,11 +561,10 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       if (expressionStatement.getExpression() instanceof PsiReferenceExpression && pattern.isRealTypedVar(expressionStatement)) {
         // search for statement
         final MatchingHandler handler = pattern.getHandler(expressionStatement);
-        if (handler instanceof SubstitutionHandler) {
-          final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
-          if (parent instanceof PsiForStatement &&
-              (((PsiForStatement)parent).getInitialization() == expressionStatement ||
-               ((PsiForStatement)parent).getUpdate() == expressionStatement)) {
+        if (handler instanceof SubstitutionHandler substitutionHandler) {
+          if (parent instanceof PsiForStatement forStatement &&
+              (forStatement.getInitialization() == expressionStatement ||
+               forStatement.getUpdate() == expressionStatement)) {
             substitutionHandler.setFilter(e -> e instanceof PsiExpression || e instanceof PsiExpressionListStatement ||
                                                e instanceof PsiDeclarationStatement || e instanceof PsiEmptyStatement);
           }
@@ -608,9 +598,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private static boolean needsSupers(final PsiElement element, final MatchingHandler handler) {
-    if (element.getParent() instanceof PsiClass && handler instanceof SubstitutionHandler) {
-      final SubstitutionHandler handler2 = (SubstitutionHandler)handler;
-
+    if (element.getParent() instanceof PsiClass && handler instanceof SubstitutionHandler handler2) {
       return handler2.isStrictSubtype() || handler2.isSubtype();
     }
     return false;

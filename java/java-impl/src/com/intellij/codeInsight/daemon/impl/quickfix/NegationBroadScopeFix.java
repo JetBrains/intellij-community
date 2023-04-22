@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -68,9 +68,9 @@ public class NegationBroadScopeFix implements IntentionAction {
     if (parent instanceof PsiInstanceOfExpression && ((PsiInstanceOfExpression)parent).getOperand() == myPrefixExpression) {
       return true;
     }
-    if (!(parent instanceof PsiBinaryExpression)) return false;
-    PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
-    return binaryExpression.getLOperand() == myPrefixExpression && TypeConversionUtil.isBooleanType(binaryExpression.getType());
+    return parent instanceof PsiBinaryExpression binaryExpression &&
+           binaryExpression.getLOperand() == myPrefixExpression &&
+           TypeConversionUtil.isBooleanType(binaryExpression.getType());
   }
 
   @NotNull

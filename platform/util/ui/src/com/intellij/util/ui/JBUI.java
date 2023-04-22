@@ -685,6 +685,18 @@ public final class JBUI {
         return Widget.HOVER_BACKGROUND;
       }
 
+      public static @NotNull Font font() {
+        return ObjectUtils.coalesce(getFont(fontKey()), defaultFont());
+      }
+
+      public static @NotNull String fontKey() {
+        return "StatusBar.font";
+      }
+
+      public static @NotNull JBFont defaultFont() {
+        return JBFont.label();
+      }
+
       public interface Widget {
         Color FOREGROUND = JBColor.namedColor("StatusBar.Widget.foreground", UIUtil.getLabelForeground());
         Color HOVER_FOREGROUND = JBColor.namedColor("StatusBar.Widget.hoverForeground", UIUtil.getLabelForeground());
@@ -941,6 +953,18 @@ public final class JBUI {
 
       public static int defaultExperimentalToolbarButtonIconSize() {
         return 20;
+      }
+
+      public static Font experimentalToolbarFont() {
+        return ObjectUtils.coalesce(getFont(experimentalToolbarFontKey()), defaultExperimentalToolbarFont());
+      }
+
+      public @NotNull static String experimentalToolbarFontKey() {
+        return "MainToolbar.Button.font";
+      }
+
+      public static Font defaultExperimentalToolbarFont() {
+        return JBFont.label();
       }
 
       public static int burgerMenuButtonIconSize() {
@@ -1484,6 +1508,25 @@ public final class JBUI {
                        : UIUtil.getPanelBackground();
       }
     }
+    
+    public static final class NavBar {
+
+      @NotNull
+      public static Insets itemInsets() {
+        return insets(itemInsetsKey(), defaultItemInsets());
+      }
+
+      @NotNull
+      public static JBInsets defaultItemInsets() {
+        return insets(4, 2);
+      }
+
+      @NotNull
+      public static String itemInsetsKey() {
+        return "NavBar.Breadcrumbs.itemInsets";
+      }
+      
+    }
 
     public static final class NewClassDialog {
       public static @NotNull Color searchFieldBackground() {
@@ -1795,6 +1838,19 @@ public final class JBUI {
 
       public static int defaultConfigurationSelectorWidth() {
         return 90;
+      }
+
+      public static Font configurationSelectorFont() {
+        return ObjectUtils.coalesce(getFont(configurationSelectorFontKey()), defaultConfigurationSelectorFont());
+      }
+
+      @NotNull
+      public static String configurationSelectorFontKey() {
+        return "RunWidget.configurationSelectorFont";
+      }
+
+      public static Font defaultConfigurationSelectorFont() {
+        return JBFont.label();
       }
     }
 

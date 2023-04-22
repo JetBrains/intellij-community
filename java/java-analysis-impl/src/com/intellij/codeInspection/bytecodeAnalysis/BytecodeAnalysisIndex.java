@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -157,13 +157,11 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
       for (DirectionResultPair pair : eqs.results) {
         DataInputOutputUtil.writeINT(out, pair.directionKey);
         Result rhs = pair.result;
-        if (rhs instanceof Value) {
-          Value finalResult = (Value)rhs;
+        if (rhs instanceof Value finalResult) {
           out.writeBoolean(true); // final flag
           DataInputOutputUtil.writeINT(out, finalResult.ordinal());
         }
-        else if (rhs instanceof Pending) {
-          Pending pendResult = (Pending)rhs;
+        else if (rhs instanceof Pending pendResult) {
           out.writeBoolean(false); // pending flag
           DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
@@ -176,8 +174,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
             }
           }
         }
-        else if (rhs instanceof Effects) {
-          Effects effects = (Effects)rhs;
+        else if (rhs instanceof Effects effects) {
           DataInputOutputUtil.writeINT(out, effects.effects.size());
           for (EffectQuantum effect : effects.effects) {
             writeEffect(out, effect);
@@ -253,9 +250,8 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
       else if (effect == EffectQuantum.ThisChangeQuantum) {
         DataInputOutputUtil.writeINT(out, -2);
       }
-      else if (effect instanceof EffectQuantum.CallQuantum) {
+      else if (effect instanceof EffectQuantum.CallQuantum callQuantum) {
         DataInputOutputUtil.writeINT(out, -3);
-        EffectQuantum.CallQuantum callQuantum = (EffectQuantum.CallQuantum)effect;
         writeKey(out, callQuantum.key);
         out.writeBoolean(callQuantum.isStatic);
         DataInputOutputUtil.writeINT(out, callQuantum.data.length);
@@ -263,16 +259,16 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           writeDataValue(out, dataValue);
         }
       }
-      else if (effect instanceof EffectQuantum.ReturnChangeQuantum) {
+      else if (effect instanceof EffectQuantum.ReturnChangeQuantum returnChangeQuantum) {
         DataInputOutputUtil.writeINT(out, -4);
-        writeKey(out, ((EffectQuantum.ReturnChangeQuantum)effect).key);
+        writeKey(out, returnChangeQuantum.key);
       }
-      else if (effect instanceof EffectQuantum.FieldReadQuantum) {
+      else if (effect instanceof EffectQuantum.FieldReadQuantum fieldReadQuantum) {
         DataInputOutputUtil.writeINT(out, -5);
-        writeKey(out, ((EffectQuantum.FieldReadQuantum)effect).key);
+        writeKey(out, fieldReadQuantum.key);
       }
-      else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
-        DataInputOutputUtil.writeINT(out, ((EffectQuantum.ParamChangeQuantum)effect).n);
+      else if (effect instanceof EffectQuantum.ParamChangeQuantum paramChangeQuantum) {
+        DataInputOutputUtil.writeINT(out, paramChangeQuantum.n);
       }
     }
 

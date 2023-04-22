@@ -86,7 +86,7 @@ public abstract class TextExtractor {
    * @deprecated use {@link #findTextsAt}
    * @return the first of {@link #findTextsAt} or null if it's empty
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static TextContent findTextAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     return ContainerUtil.getFirstItem(findTextsAt(psi, allowedDomains));
@@ -213,7 +213,7 @@ public abstract class TextExtractor {
    * @deprecated use {@link #findUniqueTextsAt}
    * @return the first of {@link #findUniqueTextsAt} or null if it's empty
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable TextContent findUniqueTextAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     return ContainerUtil.getFirstItem(findUniqueTextsAt(psi, allowedDomains));
   }

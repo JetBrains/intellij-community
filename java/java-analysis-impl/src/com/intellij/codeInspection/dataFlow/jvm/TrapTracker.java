@@ -32,7 +32,7 @@ public class TrapTracker {
   /**
    * @deprecated use {@link #TrapTracker(DfaValueFactory, TypeConstraints.TypeConstraintFactory)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TrapTracker(@NotNull DfaValueFactory factory, @NotNull PsiElement context) {
     this(factory, JavaClassDef.typeConstraintFactory(context));
   }

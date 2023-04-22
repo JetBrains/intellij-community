@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -21,11 +20,9 @@ import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher MAP_GET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "get").parameterTypes(
@@ -139,8 +136,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
           if (!BoolUtils.isNegation(nextExpression)) return false;
           nextExpression = BoolUtils.getNegated(nextExpression);
         }
-        if (!(nextExpression instanceof PsiMethodCallExpression)) return false;
-        PsiMethodCallExpression call = (PsiMethodCallExpression)nextExpression;
+        if (!(nextExpression instanceof PsiMethodCallExpression call)) return false;
         if (!"isPresent".equals(call.getMethodExpression().getReferenceName()) || !call.getArgumentList().isEmpty()) return false;
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
         return qualifier != null && PsiEquivalenceUtil.areElementsEquivalent(qualifier, optionalExpression);

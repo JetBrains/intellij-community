@@ -2,7 +2,6 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.VMOptions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.EDT
@@ -23,6 +22,8 @@ import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import kotlin.io.path.div
 import kotlin.io.path.exists
+
+const val PER_PROJECT_INSTANCE_TEST_SCRIPT = "test_script.txt"
 
 internal suspend fun checkChildProcess(projectStoreBaseDir: Path, activity: Activity): Boolean {
   if (shouldOpenInChildProcess(projectStoreBaseDir)) {
@@ -113,7 +114,7 @@ private fun openProjectInstanceArgs(projectStoreBaseDir: Path): List<String> {
     }.toTypedArray())
 
     if (ApplicationManagerEx.isInIntegrationTest()) {
-      val customTestScriptPath = PerProjectInstancePaths(projectStoreBaseDir).getSystemDir().resolve(VMOptions.TEST_SCRIPT_FILE_NAME)
+      val customTestScriptPath = PerProjectInstancePaths(projectStoreBaseDir).getSystemDir().resolve(PER_PROJECT_INSTANCE_TEST_SCRIPT)
       @Suppress("SpellCheckingInspection")
       add("-Dtestscript.filename=${customTestScriptPath}")
 

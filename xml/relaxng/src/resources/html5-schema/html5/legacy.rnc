@@ -1512,3 +1512,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	button.reset.attrs &= legacy.attrs.datasrc?
 	button.button.attrs &= legacy.attrs.datasrc?
 	table.attrs &= legacy.attrs.datasrc?
+
+## manifest attribute
+
+	html.attrs.manifest =
+		attribute manifest {
+			string
+		}
+
+	html.attrs &= html.attrs.manifest?

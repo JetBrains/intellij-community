@@ -140,7 +140,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setDividerWidth(ExperimentalUI.isNewUI() ? 1 : 2);
     mySplitter.getDivider().setBackground(JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.PREVIEW_BORDER_COLOR)));
 
-    myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
+    myToolbarWrapper = createSplitEditorToolbar(mySplitter);
 
     if (myLayout == null) {
       String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
@@ -199,7 +199,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setOrientation(verticalSplit);
   }
 
-  private @NotNull SplitEditorToolbar createMarkdownToolbarWrapper(@NotNull JComponent targetComponentForActions) {
+  private @NotNull SplitEditorToolbar createSplitEditorToolbar(@NotNull JComponent targetComponentForActions) {
     final ActionToolbar leftToolbar = createToolbar();
     if (leftToolbar != null) {
       leftToolbar.setTargetComponent(targetComponentForActions);
@@ -447,9 +447,13 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   protected AnAction @NotNull [] createTabActions() {
     return new AnAction[]{
-      getSingleChangeViewModeAction(),
+      //getSingleChangeViewModeAction(),
+      Separator.create(), //todo[konstantin.hudyakov] this separator will be hidden since toolbars can start with separator, but we need it according to mockups
+      getShowEditorAction(),
+      getShowEditorAndPreviewAction(),
+      getShowPreviewAction(),
       Separator.create(),
-      createTabViewModesPopupActionGroup()
+      //createTabViewModesPopupActionGroup()
     };
   }
 

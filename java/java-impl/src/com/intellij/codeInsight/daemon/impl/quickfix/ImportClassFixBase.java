@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -261,8 +261,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   private static void filterAlreadyImportedButUnresolved(@NotNull Collection<PsiClass> list, @NotNull PsiFile containingFile) {
-    if (!(containingFile instanceof PsiJavaFile)) return;
-    PsiJavaFile javaFile = (PsiJavaFile)containingFile;
+    if (!(containingFile instanceof PsiJavaFile javaFile)) return;
     PsiImportList importList = javaFile.getImportList();
     PsiImportStatementBase[] importStatements = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
     Set<String> unresolvedImports = new HashSet<>(importStatements.length);
@@ -305,23 +304,20 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     PsiElement parent = parameter.getParent();
     if (parent instanceof PsiParameterList) {
       PsiElement granny = parent.getParent();
-      if (granny instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)granny;
-        if (method.getModifierList().hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)) {
-          PsiClass aClass = method.getContainingClass();
-          Set<PsiClass> probableTypes = new HashSet<>();
-          InheritanceUtil.processSupers(aClass, false, psiClass -> {
-            for (PsiMethod psiMethod : psiClass.findMethodsByName(method.getName(), false)) {
-              for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
-                ContainerUtil.addIfNotNull(probableTypes, PsiUtil.resolveClassInClassTypeOnly(psiParameter.getType()));
-              }
+      if (granny instanceof PsiMethod method && method.getModifierList().hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)) {
+        PsiClass aClass = method.getContainingClass();
+        Set<PsiClass> probableTypes = new HashSet<>();
+        InheritanceUtil.processSupers(aClass, false, psiClass -> {
+          for (PsiMethod psiMethod : psiClass.findMethodsByName(method.getName(), false)) {
+            for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
+              ContainerUtil.addIfNotNull(probableTypes, PsiUtil.resolveClassInClassTypeOnly(psiParameter.getType()));
             }
-            return true;
-          });
-          List<PsiClass> filtered = ContainerUtil.filter(candidates, psiClass -> probableTypes.contains(psiClass));
-          if (!filtered.isEmpty()) {
-            return filtered;
           }
+          return true;
+        });
+        List<PsiClass> filtered = ContainerUtil.filter(candidates, psiClass -> probableTypes.contains(psiClass));
+        if (!filtered.isEmpty()) {
+          return filtered;
         }
       }
     }

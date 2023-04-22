@@ -1,3 +1,0 @@
-[withInvokeExtension.0.kt] Companion object 8 operator fun Foos.Companion.invoke() {}
-[withInvokeExtension.1.kt] Companion object 4 Foos.Companion.invoke()
-[withInvokeExtension.1.kt] Function call 3 Foos()

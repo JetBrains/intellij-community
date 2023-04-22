@@ -251,7 +251,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
         AbstractExternalDependency dependency;
         ModuleVersionIdentifier moduleVersionIdentifier = artifact.getModuleVersion().getId();
         if (artifact.getId().getComponentIdentifier() instanceof ProjectComponentIdentifier) {
-          if (scope == RUNTIME_SCOPE) {
+          if (RUNTIME_SCOPE.equals(scope)) {
             SourceSet sourceSet = mySourceSetFinder.findByArtifact(artifactFile.getPath());
             if (sourceSet != null) {
               FileCollectionDependency outputDirsRuntimeFileDependency =
@@ -485,7 +485,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
     fileCollectionDependency.setScope(scope);
     result.add(fileCollectionDependency);
 
-    if (scope == RUNTIME_SCOPE) {
+    if (RUNTIME_SCOPE.equals(scope)) {
       ExternalDependency outputDirsRuntimeFileDependency = resolveSourceSetOutputDirsRuntimeFileDependency(sourceSetOutput);
       if (outputDirsRuntimeFileDependency != null) {
         result.add(outputDirsRuntimeFileDependency);

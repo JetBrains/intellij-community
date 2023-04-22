@@ -109,7 +109,7 @@ public final class JdkEx {
   private static MethodInvocator mySetTabbingMode;
 
   private static @Nullable MethodInvocator getTabbingModeInvocator() {
-    if ((ExperimentalUI.isNewUI() && !Registry.is("ide.mac.os.wintabs.version2", false)) ||
+    if ((ExperimentalUI.isNewUI() && !Registry.is("ide.mac.os.wintabs.version2", true)) ||
         !SystemInfo.isJetBrainsJvm ||
         !SystemInfo.isMacOSBigSur ||
         !Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true)) {

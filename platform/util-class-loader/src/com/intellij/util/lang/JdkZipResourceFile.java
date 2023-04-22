@@ -29,6 +29,7 @@ final class JdkZipResourceFile implements ResourceFile {
 
   private static final Object lock = new Object();
 
+  // lockJars - true implies that the .jar file will not be modified in the lifetime of the JarLoader
   JdkZipResourceFile(@NotNull Path path, boolean lockJars) {
     this.lockJars = lockJars;
     this.file = path.toFile();

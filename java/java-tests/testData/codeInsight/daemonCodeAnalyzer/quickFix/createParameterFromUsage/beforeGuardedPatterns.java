@@ -1,4 +1,4 @@
-// "Create parameter 'flag'" "true"
+// "Create parameter 'flag'" "true-preview"
 class Foo {
     void test(Object obj) {
         switch (obj) {

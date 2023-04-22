@@ -127,8 +127,7 @@ public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiEl
       List<PsiElement> toDelete = new ArrayList<>();
       List<PsiDeclarationStatement> declarations = new ArrayList<>();
       for (PsiElement e = label.getNextSibling(); e != stopAt; e = e.getNextSibling()) {
-        if (e instanceof PsiDeclarationStatement && nextLabel != null) {
-          PsiDeclarationStatement declaration = (PsiDeclarationStatement)e;
+        if (e instanceof PsiDeclarationStatement declaration && nextLabel != null) {
           PsiElement[] elements = declaration.getDeclaredElements();
           boolean declarationIsReused = ContainerUtil.or(elements, element ->
             ReferencesSearch.search(element, new LocalSearchScope(scope)).anyMatch(ref -> ref.getElement().getTextOffset() > end));

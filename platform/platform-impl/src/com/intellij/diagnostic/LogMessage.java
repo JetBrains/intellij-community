@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ public class LogMessage extends AbstractMessage {
     String str = message;
     if (str != null && throwable.getMessage() != null) {
       str = StringUtil.trimStart(str, throwable.getMessage());
-      if (str != message) {
+      if (!Strings.areSameInstance(str, message)) {
         str = StringUtil.trimStart(str, ": ");
       }
     }

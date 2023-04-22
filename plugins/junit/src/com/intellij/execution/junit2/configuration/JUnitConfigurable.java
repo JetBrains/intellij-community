@@ -407,7 +407,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     if (forkMethod == null) {
       forkMethod = JUnitConfiguration.FORK_NONE;
     }
-    else if (selectedType == JUnitConfigurationModel.CLASS && forkMethod == JUnitConfiguration.FORK_KLASS &&
+    else if (selectedType == JUnitConfigurationModel.CLASS && JUnitConfiguration.FORK_KLASS.equals(forkMethod) &&
              RepeatCount.ONCE.equals(repeat)) {
       forkMethod = JUnitConfiguration.FORK_METHOD;
     }

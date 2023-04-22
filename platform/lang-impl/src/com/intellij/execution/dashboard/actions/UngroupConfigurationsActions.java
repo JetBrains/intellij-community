@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,10 +30,10 @@ final class UngroupConfigurationsActions extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    JBIterable<GroupingNode> targets = getTargets(e, GroupingNode.class);
+    List<GroupingNode> targets = getTargets(e, GroupingNode.class);
     boolean enabled = e.getProject() != null &&
-                      targets.isNotEmpty() &&
-                      targets.filter(node -> !(node.getGroup() instanceof FolderDashboardGroupingRule.FolderDashboardGroup)).isEmpty();
+                      !targets.isEmpty() &&
+                      ContainerUtil.all(targets, node -> node.getGroup() instanceof FolderDashboardGroupingRule.FolderDashboardGroup);
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 

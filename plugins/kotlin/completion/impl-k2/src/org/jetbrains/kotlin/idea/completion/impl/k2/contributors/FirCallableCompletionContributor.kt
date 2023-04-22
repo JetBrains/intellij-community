@@ -10,7 +10,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.checkers.ExtensionApplicabilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -25,7 +27,6 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.utils.addIfNotNull
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -102,7 +103,16 @@ internal open class FirCallableCompletionContributor(
         val implicitReceivers = implicitScopesContext.implicitReceivers
         val implicitReceiversTypes = implicitReceivers.map { it.type }
 
-        val availableNonExtensions = collectNonExtensions(implicitScopes, visibilityChecker, scopeNameFilter) { filter(it) }
+        val syntheticJavaPropertiesScopes = implicitReceiversTypes.mapNotNull { type ->
+            type.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
+        }.asCompositeScope()
+
+        val availableNonExtensions = collectNonExtensions(
+            implicitScopes,
+            syntheticJavaPropertiesScopes,
+            visibilityChecker,
+            scopeNameFilter
+        ) { filter(it) }
         val extensionsWhichCanBeCalled = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
         // TODO: consider relying on tower resolver when populating callable entries. For example
@@ -173,7 +183,13 @@ internal open class FirCallableCompletionContributor(
                 if (symbol.classKind == KtClassKind.ENUM_CLASS) {
                     collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
                 }
-                collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker, scopeNameFilter).forEach { memberSymbol ->
+                val nonExtensions = collectNonExtensions(
+                    symbol.getStaticMemberScope(),
+                    syntheticJavaPropertiesScope = null,
+                    visibilityChecker,
+                    scopeNameFilter
+                )
+                nonExtensions.forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
                         context,
                         memberSymbol,
@@ -220,6 +236,7 @@ internal open class FirCallableCompletionContributor(
         context: WeighingContext,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
+        allowSyntheticJavaProperties: Boolean = true,
     ) {
         val smartCastInfo = explicitReceiver.getSmartCastInfo()
         if (smartCastInfo?.isStable == false) {
@@ -230,13 +247,21 @@ internal open class FirCallableCompletionContributor(
                 implicitScopes,
                 extensionChecker,
                 context,
+                allowSyntheticJavaProperties,
                 // Only offer the hint if the type is denotable.
                 smartCastInfo.smartCastType.takeIf { it.approximateToSuperPublicDenotable(true) == null }
             )
         }
 
         val receiverType = explicitReceiver.getKtType() ?: return
-        collectDotCompletionForCallableReceiver(receiverType, visibilityChecker, implicitScopes, extensionChecker, context)
+        collectDotCompletionForCallableReceiver(
+            receiverType,
+            visibilityChecker,
+            implicitScopes,
+            extensionChecker,
+            context,
+            allowSyntheticJavaProperties
+        )
     }
 
     private fun KtAnalysisSession.collectDotCompletionForCallableReceiver(
@@ -245,22 +270,24 @@ internal open class FirCallableCompletionContributor(
         implicitScopes: KtScope,
         extensionChecker: ExtensionApplicabilityChecker,
         context: WeighingContext,
+        allowSyntheticJavaProperties: Boolean = true,
         explicitReceiverTypeHint: KtType? = null
     ) {
         val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope()?.getDeclarationScope() ?: return
+        val syntheticJavaPropertiesScope = if (allowSyntheticJavaProperties) {
+            typeOfPossibleReceiver.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
+        } else null
 
-        val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter) { filter(it) }.toList()
+        val nonExtensionMembers = collectNonExtensions(
+            possibleReceiverScope,
+            syntheticJavaPropertiesScope,
+            visibilityChecker,
+            scopeNameFilter
+        ) { filter(it) }
         val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
-        val realJavaGettersAndSetters = nonExtensionMembers.asSequence().filterIsInstance<KtSyntheticJavaPropertySymbol>()
-            .flatMap { listOfNotNull(it.javaGetterSymbol, it.javaSetterSymbol) }
-            .toSet()
-        for (nonExtensionMember in nonExtensionMembers) {
-            // Skip Java getters/setters that are mapped to Kotlin's synthetic properties, because we show the properties in the completion
-            // (K1 has the same behavior)
-            if (nonExtensionMember !in realJavaGettersAndSetters) {
-                addCallableSymbolToCompletion(context, nonExtensionMember, getOptions(nonExtensionMember), explicitReceiverTypeHint = explicitReceiverTypeHint)
-            }
+        nonExtensionMembers.forEach {
+            addCallableSymbolToCompletion(context, it, getOptions(it), explicitReceiverTypeHint = explicitReceiverTypeHint)
         }
 
         // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
@@ -347,22 +374,41 @@ internal class FirCallableReferenceCompletionContributor(
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker
     ) {
+        val allowSyntheticJavaProperties =
+            explicitReceiver.languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
+
         when (val resolved = explicitReceiver.reference()?.resolveToSymbol()) {
             is KtPackageSymbol -> return
             is KtNamedClassOrObjectSymbol -> {
-                fun process(callable: KtCallableSymbol) {
-                    if (visibilityChecker.isVisible(callable)) {
-                        addCallableSymbolToCompletion(context.withoutExpectedType(), callable, getOptions(callable))
-                    }
-                }
+                val memberScope = listOfNotNull(
+                    resolved.getMemberScope(),
+                    resolved.companionObject?.getMemberScope(),
+                    resolved.getStaticMemberScope()
+                ).asCompositeScope()
 
-                resolved.getMemberScope().getCallableSymbols(scopeNameFilter).forEach(::process)
-                resolved.companionObject?.getMemberScope()?.getCallableSymbols(scopeNameFilter)?.forEach(::process)
-                resolved.getStaticMemberScope().getCallableSymbols(scopeNameFilter).forEach(::process)
+                val syntheticJavaPropertiesScope = if (allowSyntheticJavaProperties) {
+                    resolved.buildSelfClassType().getSyntheticJavaPropertiesScope()?.getDeclarationScope()
+                } else null
+
+                val nonExtensionMembers = collectNonExtensions(
+                    memberScope,
+                    syntheticJavaPropertiesScope,
+                    visibilityChecker,
+                    scopeNameFilter
+                ) { filter(it) }
+
+                nonExtensionMembers.forEach { addCallableSymbolToCompletion(context.withoutExpectedType(), it, getOptions(it)) }
             }
 
             else -> {
-                collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
+                collectDotCompletionForCallableReceiver(
+                    implicitScopes,
+                    explicitReceiver,
+                    context,
+                    extensionChecker,
+                    visibilityChecker,
+                    allowSyntheticJavaProperties
+                )
             }
         }
     }

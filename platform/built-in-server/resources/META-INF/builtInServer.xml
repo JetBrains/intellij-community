@@ -48,6 +48,7 @@
     <webServerPathHandler implementation="org.jetbrains.builtInWebServer.DefaultWebServerPathHandler" order="last"/>
     <webServerFileHandler implementation="org.jetbrains.builtInWebServer.StaticFileHandler" order="last"/>
     <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.DefaultWebServerRootsProvider"/>
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.LastResortWebServerRootsProvider" id="LastResortProvider" order="last"/>
 
     <binaryRequestHandler implementation="org.jetbrains.io.jsonRpc.socket.RpcBinaryRequestHandler"/>
   </extensions>

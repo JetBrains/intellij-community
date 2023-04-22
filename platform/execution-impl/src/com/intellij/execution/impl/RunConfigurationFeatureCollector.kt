@@ -5,11 +5,11 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.minutes
 
-private class RunConfigurationFeatureCollector : ProjectPostStartupActivity {
+private class RunConfigurationFeatureCollector : ProjectActivity {
   override suspend fun execute(project: Project) {
     // no hurry to update current feature mapping of all run configurations types
     delay(10.minutes)

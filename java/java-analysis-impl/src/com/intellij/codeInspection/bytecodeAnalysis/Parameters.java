@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
@@ -198,16 +198,14 @@ class NonNullInAnalysis extends Analysis<PResult> {
       steps ++;
       TooComplexException.check(method, steps);
       PendingAction action = pendingActions.get(--pendingTop);
-      if (action instanceof MakeResult) {
-        MakeResult makeResult = (MakeResult) action;
+      if (action instanceof MakeResult makeResult) {
         PResult result = combineResults(makeResult.subResult, makeResult.indices);
         State state = makeResult.state;
         int insnIndex = state.conf.insnIndex;
         results.set(state.index, result);
         addComputed(insnIndex, state);
       }
-      else if (action instanceof ProceedState) {
-        ProceedState proceedState = (ProceedState) action;
+      else if (action instanceof ProceedState proceedState) {
         State state = proceedState.state;
         int insnIndex = state.conf.insnIndex;
         Conf conf = state.conf;

@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public class EditorFontCacheImpl extends EditorFontCache {
       assert font != null : "Font " + fontType + " not found.";
       UISettings uiSettings = UISettings.getInstance();
       if (uiSettings.getPresentationMode()) {
-        return font.deriveFont((float)uiSettings.getPresentationModeFontSize());
+        return font.deriveFont(UISettingsUtils.getPresentationModeFontSize());
       }
       return font;
     }

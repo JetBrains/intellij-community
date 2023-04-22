@@ -15,10 +15,10 @@ class RunScratchFromHereAction : ScratchAction(
     override fun actionPerformed(e: AnActionEvent) {
         val scratchFile = e.currentScratchFile ?: return
 
-        doAction(scratchFile)
+        Handler.doAction(scratchFile)
     }
 
-    companion object {
+    object Handler {
         fun doAction(scratchFile: ScratchFile) {
             val executor = scratchFile.replScratchExecutor ?: return
 

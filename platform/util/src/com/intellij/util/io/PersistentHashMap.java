@@ -172,6 +172,7 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
   /**
    * @deprecated use {@link PersistentHashMap#processKeysWithExistingMapping(Processor)} instead.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @NotNull
   public Collection<Key> getAllKeysWithExistingMapping() throws IOException {

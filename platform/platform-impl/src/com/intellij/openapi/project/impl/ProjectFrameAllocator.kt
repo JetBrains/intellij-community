@@ -11,7 +11,8 @@ import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.RunOnceUtil
-import com.intellij.idea.SplashManager
+import com.intellij.idea.getAndUnsetSplashProjectFrame
+import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -222,7 +223,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
       return
     }
 
-    val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
+    val preAllocated = getAndUnsetSplashProjectFrame() as IdeFrameImpl?
     if (preAllocated != null) {
       val frameHelper = withContext(Dispatchers.EDT) {
         val loadingState = MutableLoadingState(selfie = null)
@@ -421,7 +422,7 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
 
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
-        SplashManager.hideBeforeShow(frame)
+        hideSplashBeforeShow(frame)
         setDefaultSize(frame)
         frame.setLocationRelativeTo(null)
         return frame
@@ -438,7 +439,7 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
 
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
-        SplashManager.hideBeforeShow(frame)
+        hideSplashBeforeShow(frame)
         if (isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null) {
           frame.normalBounds = boundsAndDevice.first
         }

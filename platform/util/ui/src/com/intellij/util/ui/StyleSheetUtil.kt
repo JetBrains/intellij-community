@@ -59,6 +59,7 @@ object StyleSheetUtil {
     return result
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use loadStyleSheet(InputStream)")
   fun loadStyleSheet(url: URL): StyleSheet? {
     try {

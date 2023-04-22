@@ -17,7 +17,10 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -51,8 +54,10 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -552,21 +557,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return buttonWithText;
     }
 
-    ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
-      @Override
-      protected DataContext getDataContext() {
-        return getToolbarDataContext();
-      }
-
-      @Override
-      protected @NotNull Icon getFallbackIcon(boolean enabled) {
-        Presentation p = getAction().getTemplatePresentation();
-        Icon icon = Objects.requireNonNullElse(p.getIcon(), AllIcons.Toolbar.Unknown);
-        if (enabled) return icon;
-        if (p.getDisabledIcon() != null) return p.getDisabledIcon();
-        return IconLoader.getDisabledIcon(icon);
-      }
-    };
+    ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize);
 
     applyToolbarLook(look, presentation, actionButton);
     return actionButton;

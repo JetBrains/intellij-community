@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -92,8 +92,7 @@ public class JavaIntroduceParameterObjectDelegate
                                                             IntroduceParameterObjectClassDescriptor descriptor,
                                                             List<? extends ParameterInfo> oldMethodParameters,
                                                             Object substitutor) {
-    if (callExpression instanceof PsiCallExpression) {
-      final PsiCallExpression expr = (PsiCallExpression)callExpression;
+    if (callExpression instanceof PsiCallExpression expr) {
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(expr.getProject());
       final String qualifiedName = StringUtil.getQualifiedName(descriptor.getPackageName(), descriptor.getClassName());
       final PsiClass existingClass = facade.findClass(qualifiedName, expr.getResolveScope());
@@ -191,13 +190,13 @@ public class JavaIntroduceParameterObjectDelegate
     
     ReferencesSearch.search(parameter, localSearchScope).forEach(reference -> {
          final PsiElement refElement = reference.getElement();
-         if (refElement instanceof PsiReferenceExpression) {
-           final PsiReferenceExpression paramUsage = (PsiReferenceExpression)refElement;
-           switch (detector.getExpressionAccess(refElement)) {
-             case Read -> readUsages.add(paramUsage);
-             case ReadWrite -> readWriteUsages.add(paramUsage);
-             case Write -> writeUsages.add(paramUsage);
-           }
+         if (refElement instanceof PsiReferenceExpression paramUsage) {
+           List<PsiReferenceExpression> list = switch (detector.getExpressionAccess(refElement)) {
+             case Read -> readUsages;
+             case ReadWrite -> readWriteUsages;
+             case Write -> writeUsages;
+           };
+           list.add(paramUsage);
          }
          return true;
        }

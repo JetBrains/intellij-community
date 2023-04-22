@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -140,7 +140,7 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
 
   public static void register(@NotNull HighlightInfo.Builder highlightInfo, PsiExpression expression, PsiType lType) {
     expression = PsiUtil.deparenthesizeExpression(expression);
-    if (!(expression instanceof PsiNewExpression)) return;
+    if (!(expression instanceof PsiNewExpression newExpression)) return;
     final PsiType rType = expression.getType();
     PsiType newType = lType;
     if (rType instanceof PsiClassType && newType instanceof PsiClassType) {
@@ -163,7 +163,6 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
     if (rType == null || newType.getCanonicalText().equals(rType.getCanonicalText())) return;
     final PsiClass aClass = PsiTypesUtil.getPsiClass(newType);
     if (aClass != null && (aClass.isEnum() || aClass.isAnnotationType())) return;
-    PsiNewExpression newExpression = (PsiNewExpression)expression;
     highlightInfo.registerFix(new ChangeNewOperatorTypeFix(newType, newExpression), null, null, null, null);
   }
 

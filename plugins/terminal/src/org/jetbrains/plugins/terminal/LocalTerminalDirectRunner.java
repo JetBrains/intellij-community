@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -43,7 +42,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -291,11 +289,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
 
       @Override
-      public void resize(@NotNull Dimension termWinSize) {
+      public void resize(@NotNull TermSize termSize) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("resize to " + termWinSize);
+          LOG.debug("resize to " + termSize);
         }
-        super.resize(termWinSize);
+        super.resize(termSize);
       }
     };
   }

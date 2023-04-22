@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkListener;
 import java.util.Collection;
 
 public abstract class WritingAccessProvider {
@@ -35,6 +36,11 @@ public abstract class WritingAccessProvider {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getReadOnlyMessage() {
     return CoreBundle.message("editing.read.only.file.hint");
+  }
+
+  @Nullable
+  public HyperlinkListener getHyperlinkListener() {
+    return null;
   }
 
   /**

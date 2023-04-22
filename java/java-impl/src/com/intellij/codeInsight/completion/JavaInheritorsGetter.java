@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -20,7 +20,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,11 +94,8 @@ public class JavaInheritorsGetter {
   private static List<PsiClassType> extractClassTypes(ExpectedTypeInfo[] infos) {
     final List<PsiClassType> expectedClassTypes = new SmartList<>();
     for (PsiType type : ExpectedTypesGetter.extractTypes(infos, true)) {
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
-        if (classType.resolve() != null) {
-          expectedClassTypes.add(classType);
-        }
+      if (type instanceof PsiClassType classType && classType.resolve() != null) {
+        expectedClassTypes.add(classType);
       }
     }
     return expectedClassTypes;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -95,14 +95,10 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof JavaPsiClassReferenceElement)) return false;
-
-    final JavaPsiClassReferenceElement that = (JavaPsiClassReferenceElement)o;
-
+    if (!(o instanceof JavaPsiClassReferenceElement that)) return false;
     if (myQualifiedName != null) {
       return myQualifiedName.equals(that.myQualifiedName);
     }
-
     return Comparing.equal(myClass, that.myClass);
   }
 

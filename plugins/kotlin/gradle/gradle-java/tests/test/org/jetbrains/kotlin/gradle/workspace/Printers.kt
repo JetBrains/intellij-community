@@ -16,7 +16,12 @@ import java.io.File
 class WorkspaceModelPrinter(
     private val moduleContributors: List<ModulePrinterContributor>
 ) {
-    fun print(project: Project, projectRoot: File, testConfiguration: TestConfiguration, kotlinGradlePluginVersion: KotlinToolingVersion): String {
+    fun print(
+        project: Project,
+        projectRoot: File,
+        testConfiguration: TestConfiguration,
+        kotlinGradlePluginVersion: KotlinToolingVersion
+    ): String {
         val printer = Printer(StringBuilder())
         val context = PrinterContext(printer, project, projectRoot, testConfiguration, kotlinGradlePluginVersion)
         context.processModules()
@@ -44,11 +49,10 @@ class WorkspaceModelPrinter(
         val modules = runReadAction { ModuleManager.getInstance(project).modules }.toList()
         val modulesFiltered = filterModules(modules)
 
-        printer.indented {
-            for (module in modulesFiltered.sortedBy { it.name }) {
-                printer.println(module.name)
-                moduleContributors.forEach { with(it) { process(module) } }
-            }
+        for (module in modulesFiltered.sortedBy { it.name }) {
+            printer.println(module.name)
+            moduleContributors.forEach { with(it) { process(module) } }
+            printer.println()
         }
     }
 

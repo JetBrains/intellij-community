@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
+import com.intellij.reference.SoftReference
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
@@ -19,11 +20,11 @@ class MarkdownParserManager: Disposable {
     val bufferHash: Int = buffer.hashCode()
   )
 
-  private val lastParsingResult = AtomicReference<ParsingResult?>()
+  private val lastParsingResult = AtomicReference<SoftReference<ParsingResult>>()
 
   @JvmOverloads
   fun parse(buffer: CharSequence, flavour: MarkdownFlavourDescriptor = FLAVOUR): ASTNode {
-    val info = lastParsingResult.get()
+    val info = lastParsingResult.get()?.get()
     if (info != null && info.bufferHash == buffer.hashCode() && info.buffer == buffer) {
       return info.tree
     }
@@ -32,7 +33,7 @@ class MarkdownParserManager: Disposable {
       buffer.toString(),
       parseInlines = false
     )
-    lastParsingResult.set(ParsingResult(buffer, parseResult))
+    lastParsingResult.set(SoftReference(ParsingResult(buffer, parseResult)))
     return parseResult
   }
 

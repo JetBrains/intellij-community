@@ -745,8 +745,23 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (HeavyProcessLatch.INSTANCE.isRunning()) {
       return;
     }
+    if (modCount != myLocalModCount.get()) {
+      //RC: Basically, we're trying to flush 'if idle': i.e. we don't want to
+      //    issue a flush if somebody actively writes to indexes because flush
+      //    will slow them down, if not stall them -- and (regular) flush is
+      //    less important than e.g. a current UI task. So we issue a flush only
+      //    if there _were no updates_ in indexes since the last invocation of
+      //    this method:
+      return;
+    }
+
     IndexingStamp.flushCaches();
+
+    final int maxAttemptsPerIndex = 2;
+    final int maxSleepPerAttemptMs = 16;
+
     IndexConfiguration state = getState();
+    int interferencesWithOtherThreads = 0;
     for (ID<?, ?> indexId : state.getIndexIDs()) {
       if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount.get()) {
         return; // do not interfere with 'main' jobs
@@ -754,7 +769,41 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         final UpdatableIndex<?, ?, FileContent, ?> index = state.getIndex(indexId);
         if (index != null) {
-          index.flush();
+          //RC: regular flush should not interfere with other, (likely) more response-time-critical
+          //    jobs. We can't guarantee the total absence of interference, though -- instead we're
+          //    trying to be just 'nice to others' here.
+          //    I.e. do .yield() after each flush, so somebody who waits for index access -- has its
+          //    chance. We also use .tryLock() as a way to feel interference (readLock.tryLock fails
+          //    -> somebody else acquired write lock), and back off a bit, giving 'other job' a chance
+          //    to finish.
+          //    (See e.g. IDEA-244174 for what could go wrong otherwise)
+
+          for (int attempt = 0; attempt < maxAttemptsPerIndex; attempt++) {
+            final Lock indexReadLock = index.getLock().readLock();
+            final boolean lockSucceeded = indexReadLock.tryLock();
+            if (lockSucceeded) {
+              try {
+                index.flush();
+              }
+              finally {
+                indexReadLock.unlock();
+              }
+              interferencesWithOtherThreads--;
+              break;
+            }
+            else {
+              interferencesWithOtherThreads++;
+            }
+
+            // linear backoff based on how many times we contended with others:
+            final int toWaitMs = MathUtil.clamp(interferencesWithOtherThreads, 0, maxSleepPerAttemptMs);
+            if (toWaitMs == 0) {
+              Thread.yield();
+            }
+            else {
+              Thread.sleep(toWaitMs);
+            }
+          }
         }
       }
       catch (Throwable e) {
@@ -1590,10 +1639,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   @Nullable("null in case index update is not necessary or the update has failed")
   <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(@NotNull ID<?, ?> indexId,
-                                                                                                       @NotNull VirtualFile file,
-                                                                                                       int inputId,
-                                                                                                       @NotNull FileContent currentFC,
-                                                                                                       boolean writeValuesSeparately) {
+    @NotNull VirtualFile file,
+    int inputId,
+    @NotNull FileContent currentFC,
+    boolean writeValuesSeparately) {
     if (doTraceStubUpdates(indexId)) {
       LOG.info("index " + indexId + " update requested for " + getFileInfoLogString(inputId, file, currentFC));
     }
@@ -2043,11 +2092,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       @Override
       public void run() {
-        int currentModCount = myLocalModCount.get();
-        if (lastModCount == currentModCount) {
+        final int currentModCount = myLocalModCount.get();
+        try {
           flushAllIndices(lastModCount);
         }
-        lastModCount = currentModCount;
+        finally {
+          lastModCount = currentModCount;
+        }
       }
     });
   }

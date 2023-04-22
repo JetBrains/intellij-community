@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -119,14 +119,14 @@ public class ClassTypeArgumentMigrationProcessor {
    * signature should be changed for methods with type parameters
    */
   private void prepareMethodsChangeSignature(final PsiClass currentClass, final PsiElement memberToChangeSignature, final PsiType memberType) {
-    if (memberToChangeSignature instanceof PsiMethod) {
-      final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(currentClass, (PsiMethod)memberToChangeSignature, true);
+    if (memberToChangeSignature instanceof PsiMethod superMethod) {
+      final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(currentClass, superMethod, true);
       if (method != null && method.getContainingClass() == currentClass) {
         myLabeler.addRoot(new TypeMigrationUsageInfo(method), memberType, method, false);
       }
-    } else if (memberToChangeSignature instanceof PsiParameter && ((PsiParameter)memberToChangeSignature).getDeclarationScope() instanceof PsiMethod) {
-      final PsiMethod superMethod = (PsiMethod)((PsiParameter)memberToChangeSignature).getDeclarationScope();
-      final int parameterIndex = superMethod.getParameterList().getParameterIndex((PsiParameter)memberToChangeSignature);
+    } else if (memberToChangeSignature instanceof PsiParameter superParameter &&
+               superParameter.getDeclarationScope() instanceof PsiMethod superMethod) {
+      final int parameterIndex = superMethod.getParameterList().getParameterIndex(superParameter);
       final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(currentClass, superMethod, true);
       if (method != null && method.getContainingClass() == currentClass) {
         final PsiParameter parameter = Objects.requireNonNull(method.getParameterList().getParameter(parameterIndex));

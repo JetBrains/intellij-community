@@ -106,7 +106,6 @@ public abstract class XPath implements Serializable {
    *                the XPath expression.
    * @return the list of selected items, which may be of types: {@link Element},
    * {@link Attribute}, {@link Text}, {@link CDATA},
-   * {@link Comment}, {@link ProcessingInstruction}, Boolean,
    * Double, or String.
    * @throws JDOMException if the evaluation of the XPath
    *                       expression on the specified context
@@ -122,7 +121,6 @@ public abstract class XPath implements Serializable {
    *                the XPath expression.
    * @return the first selected item, which may be of types: {@link Element},
    * {@link Attribute}, {@link Text}, {@link CDATA},
-   * {@link Comment}, {@link ProcessingInstruction}, Boolean,
    * Double, String, or <code>null</code> if no item was selected.
    * @throws JDOMException if the evaluation of the XPath
    *                       expression on the specified context
@@ -200,7 +198,6 @@ public abstract class XPath implements Serializable {
    * @param path    the XPath expression to evaluate.
    * @return the list of selected items, which may be of types: {@link Element},
    * {@link Attribute}, {@link Text}, {@link CDATA},
-   * {@link Comment}, {@link ProcessingInstruction}, Boolean,
    * Double, or String.
    * @throws JDOMException if the XPath expression is invalid or
    *                       its evaluation on the specified context
@@ -229,7 +226,6 @@ public abstract class XPath implements Serializable {
    * @param path    the XPath expression to evaluate.
    * @return the first selected item, which may be of types: {@link Element},
    * {@link Attribute}, {@link Text}, {@link CDATA},
-   * {@link Comment}, {@link ProcessingInstruction}, Boolean,
    * Double, String, or <code>null</code> if no item was selected.
    * @throws JDOMException if the XPath expression is invalid or
    *                       its evaluation on the specified context

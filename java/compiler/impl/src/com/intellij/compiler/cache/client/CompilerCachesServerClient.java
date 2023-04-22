@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -15,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
@@ -44,9 +44,7 @@ public final class CompilerCachesServerClient {
       return HttpRequests.request(serverUrl + "/commit_history.json")
         .tuner(tuner -> headers.forEach((k, v) -> tuner.addRequestProperty(k, v)))
         .connect(it -> {
-          URLConnection connection = it.getConnection();
-          if (connection instanceof HttpURLConnection) {
-            HttpURLConnection httpConnection = (HttpURLConnection)connection;
+          if (it.getConnection() instanceof HttpURLConnection httpConnection) {
             if (httpConnection.getResponseCode() == 200) {
               return OBJECT_MAPPER.readValue(getInputStream(httpConnection), new TypeReference<>() {
               });

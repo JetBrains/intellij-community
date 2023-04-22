@@ -1523,7 +1523,7 @@ public class ExpressionGenerator extends Generator {
     LOG.assertTrue(type instanceof GrRangeType);
     final PsiClass resolved = ((GrRangeType)type).resolve();
     builder.append("new ");
-    if (resolved == null || resolved.getQualifiedName() == GroovyCommonClassNames.GROOVY_LANG_RANGE) {
+    if (resolved == null || GroovyCommonClassNames.GROOVY_LANG_RANGE.equals(resolved.getQualifiedName())) {
       builder.append(GroovyCommonClassNames.GROOVY_LANG_OBJECT_RANGE);
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,9 +32,8 @@ public final class ViewsGeneralSettings implements PersistentStateComponent<View
   }
 
   public boolean equals(Object object) {
-    if (!(object instanceof ViewsGeneralSettings)) return false;
-    ViewsGeneralSettings generalSettings = ((ViewsGeneralSettings)object);
-    return HIDE_NULL_ARRAY_ELEMENTS == generalSettings.HIDE_NULL_ARRAY_ELEMENTS &&
+    return object instanceof ViewsGeneralSettings generalSettings && 
+           HIDE_NULL_ARRAY_ELEMENTS == generalSettings.HIDE_NULL_ARRAY_ELEMENTS &&
            AUTOSCROLL_TO_NEW_LOCALS == generalSettings.AUTOSCROLL_TO_NEW_LOCALS &&
            POPULATE_THROWABLE_STACKTRACE == generalSettings.POPULATE_THROWABLE_STACKTRACE &&
            USE_DFA_ASSIST == generalSettings.USE_DFA_ASSIST &&

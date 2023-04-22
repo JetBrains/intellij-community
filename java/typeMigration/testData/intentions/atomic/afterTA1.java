@@ -1,4 +1,4 @@
-// "Convert to atomic" "true"
+// "Convert to atomic" "true-preview"
 import java.lang.annotation.*;
 import java.util.concurrent.atomic.AtomicReference;
 

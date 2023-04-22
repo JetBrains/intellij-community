@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases
 
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.debugger.test.AbstractIrKotlinSteppingTest
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
@@ -14,9 +15,10 @@ abstract class AbstractK2IrKotlinSteppingTest : AbstractIrKotlinSteppingTest() {
     override fun createDebuggerTestCompilerFacility(
         testFiles: TestFiles,
         jvmTarget: JvmTarget,
-        useIrBackend: Boolean
+        useIrBackend: Boolean,
+        lambdasGenerationScheme: JvmClosureGenerationScheme,
     ): DebuggerTestCompilerFacility {
-        return K2DebuggerTestCompilerFacility(project, testFiles, jvmTarget, useIrBackend)
+        return K2DebuggerTestCompilerFacility(project, testFiles, jvmTarget, useIrBackend, lambdasGenerationScheme)
     }
 
 }

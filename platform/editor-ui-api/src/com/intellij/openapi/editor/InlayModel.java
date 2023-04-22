@@ -12,8 +12,10 @@ import java.util.EventListener;
 import java.util.List;
 
 /**
- * Allows adding custom visual elements to the editor's representation.
- * Such elements are not reflected in document contents.
+ * Keeps track of all inlays of a single editor.
+ * <p>
+ * Inlays are visual additions to the editor that are not reflected in the editor's document,
+ * such as parameter hints or author attributions.
  * <p>
  * There are two kinds of inlays:
  * <ul>

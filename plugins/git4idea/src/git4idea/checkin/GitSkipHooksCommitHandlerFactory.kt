@@ -21,7 +21,8 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 
 private val IS_SKIP_HOOKS_KEY = Key.create<Boolean>("Git.Commit.IsSkipHooks")
-internal var CommitContext.isSkipHooks: Boolean by commitProperty(IS_SKIP_HOOKS_KEY)
+var CommitContext.isSkipHooks: Boolean by commitProperty(IS_SKIP_HOOKS_KEY)
+  internal set
 
 class GitSkipHooksCommitHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {

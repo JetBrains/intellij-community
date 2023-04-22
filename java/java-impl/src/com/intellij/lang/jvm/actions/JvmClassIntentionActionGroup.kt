@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
@@ -30,15 +30,15 @@ open class JvmClassIntentionActionGroup(
     }
 
     actions.find { it.target.sourceElement?.language == callSiteLanguage }?.let {
-      // There is an action with same target language as call site language
+      // There is an action with the same target language as the call site language
       // => its group text is in our language terms
       // => use its group text.
       return it.groupDisplayText
     }
 
-    // At this point all actions came from foreign languages and all have different group text.
+    // At this point, all actions came from foreign languages, and they have different group texts.
     // We don't know how to name them, so we fall back to default text.
-    // We pass some data, so the group can, for example, make use of element name.
+    // We pass some data, so the group can, for example, make use of the element name.
     val renderData = actions.asSequence().mapNotNull { it.renderData }.firstOrNull()
     return actionGroup.getDisplayText(renderData)
   }

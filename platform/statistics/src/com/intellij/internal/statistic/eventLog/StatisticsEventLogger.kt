@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
 interface StatisticsEventLogger {
@@ -32,6 +33,7 @@ interface StatisticsEventLogger {
 
   fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void>
   fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void>
+  fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit)
   fun getActiveLogFile(): EventLogFile?
   fun getLogFilesProvider(): EventLogFilesProvider
   fun cleanup()
@@ -158,6 +160,7 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
     CompletableFuture.completedFuture(null)
   override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> =
     CompletableFuture.completedFuture(null)
+  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {}
 }
 
 object EmptyEventLogFilesProvider: EventLogFilesProvider {

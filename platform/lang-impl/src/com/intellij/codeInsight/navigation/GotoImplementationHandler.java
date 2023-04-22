@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.NavigateAction;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.model.Pointer;
 import com.intellij.model.psi.impl.UtilKt;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
@@ -73,8 +74,9 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       @Override
       public void onSuccess() {
         super.onSuccess();
-        @Nullable Object oneElement = getTheOnlyOneElement();
-        if (oneElement instanceof SmartPsiElementPointer<?> && navigateToElement(((SmartPsiElementPointer<?>)oneElement).getElement())) {
+        @Nullable ItemWithPresentation oneElement = getTheOnlyOneElement();
+        if (oneElement != null && oneElement.item instanceof SmartPsiElementPointer<?> &&
+            navigateToElement(((SmartPsiElementPointer<?>)oneElement.item).getElement())) {
           myPopup.cancel();
         }
       }
@@ -191,7 +193,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return createDataForSource(editor, element.getTextOffset(), element);
   }
 
-  private class ImplementationsUpdaterTask extends BackgroundUpdaterTaskBase<Object> {
+  private class ImplementationsUpdaterTask extends BackgroundUpdaterTaskBase<ItemWithPresentation> {
     private final Editor myEditor;
     private final int myOffset;
     private final GotoData myGotoData;
@@ -212,8 +214,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
-      for (SmartPsiElementPointer<?> pointer : myGotoData.getPointers()) {
-        if (!updateComponent(pointer)) {
+      for (ItemWithPresentation item : myGotoData.getItems()) {
+        if (!updateComponent(item)) {
           return;
         }
       }
@@ -222,9 +224,9 @@ public class GotoImplementationHandler extends GotoTargetHandler {
         protected void processElement(PsiElement element) {
           indicator.checkCanceled();
           if (!TargetElementUtil.getInstance().acceptImplementationForReference(myReference, element)) return;
-          SmartPsiElementPointer<PsiElement> pointer = myGotoData.addTarget(element);
-          if (pointer != null) {
-            if (!updateComponent(pointer)) {
+          ItemWithPresentation item = myGotoData.addTarget(element);
+          if (item != null) {
+            if (!updateComponent(item)) {
               indicator.cancel();
             }
           }
@@ -239,27 +241,31 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     }
 
     @Override
-    protected @Nullable Usage createUsage(@NotNull Object element) {
-      if (element instanceof SmartPsiElementPointer<?>) {
-        PsiElement psiElement = ((SmartPsiElementPointer<?>)element).getElement();
+    protected @Nullable Usage createUsage(@NotNull ItemWithPresentation element) {
+      if (element.item instanceof Pointer<?>) {
+        PsiElement psiElement = (PsiElement)((Pointer<?>)element.item).dereference();
         return psiElement == null ? null : new UsageInfo2UsageAdapter(new UsageInfo(psiElement));
       }
       return null;
     }
   }
 
-  private static @Nullable Comparator<? super Object> createImplementationComparator(@NotNull GotoData gotoData) {
-    Comparator<PsiElement> projectContentComparator = projectElementsFirst(gotoData.source.getProject());
-    Comparator<PsiElement> presentationComparator = Comparator.comparing(element -> gotoData.getComparingObject(element));
-    Comparator<PsiElement> positionComparator = PsiUtilCore::compareElementsByPosition;
-    Comparator<PsiElement> result = projectContentComparator.thenComparing(presentationComparator).thenComparing(positionComparator);
-    Comparator<PsiElement> psiElementComparator = wrapIntoReadAction(result);
-    return (o1, o2) -> {
-      if (o1 instanceof SmartPsiElementPointer<?> && o2 instanceof SmartPsiElementPointer<?>) {
-        return ReadAction.compute(() -> psiElementComparator.compare(((SmartPsiElementPointer<?>)o1).getElement(), ((SmartPsiElementPointer<?>)o2).getElement()));
+  private static @Nullable Comparator<ItemWithPresentation> createImplementationComparator(@NotNull GotoData gotoData) {
+    Comparator<ItemWithPresentation> projectContentComparator = wrapPsiComparator(projectElementsFirst(gotoData.source.getProject()));
+    Comparator<ItemWithPresentation> presentationComparator = Comparator.comparing(element -> gotoData.getComparingObject(element));
+    Comparator<ItemWithPresentation> positionComparator = wrapPsiComparator(PsiUtilCore::compareElementsByPosition);
+    return projectContentComparator.thenComparing(presentationComparator).thenComparing(positionComparator);
+  }
+
+  @NotNull
+  private static Comparator<ItemWithPresentation> wrapPsiComparator(Comparator<PsiElement> result) {
+    Comparator<ItemWithPresentation> comparator = (o1, o2) -> {
+      if (o1.item instanceof SmartPsiElementPointer<?> && o2.item instanceof SmartPsiElementPointer<?>) {
+        return ReadAction.compute(() -> result.compare(((SmartPsiElementPointer<?>)o1.item).getElement(), ((SmartPsiElementPointer<?>)o2.item).getElement()));
       }
       return 0;
     };
+    return comparator;
   }
 
   public static @NotNull Comparator<PsiElement> projectElementsFirst(@NotNull Project project) {

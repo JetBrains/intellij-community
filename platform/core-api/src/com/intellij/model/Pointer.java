@@ -2,6 +2,7 @@
 package com.intellij.model;
 
 import com.intellij.openapi.application.Application;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -107,6 +108,7 @@ public interface Pointer<T> {
    * @deprecated use {@link #hardPointer(Object)}.
    * See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(value = "_ -> new", pure = true)
   static <T> @NotNull Pointer<T> hardPointerWithEquality(@NotNull T value) {
@@ -139,6 +141,7 @@ public interface Pointer<T> {
    * @deprecated use {@link #uroborosPointer(Pointer, BiFunction)}.
    * See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(value = "_, _, _ -> new", pure = true)
   static <T, U> @NotNull Pointer<T> uroborosPointer(@NotNull Pointer<? extends U> underlyingPointer,

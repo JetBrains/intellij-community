@@ -10,7 +10,7 @@
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
     <action id="ChangesView.ToggleCommitUi" class="com.intellij.openapi.vcs.actions.commit.ToggleChangesViewCommitUiAction"
-            use-shortcut-of="CheckinProject">
+            use-shortcut-of="CheckinProject" icon="AllIcons.Actions.Commit">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
     <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.commit.CommonCheckinFilesAction"/>

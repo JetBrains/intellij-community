@@ -68,8 +68,7 @@ public class FieldEvaluator implements Evaluator {
 
   @Nullable
   private Field findField(@Nullable Type t) {
-    if (t instanceof ClassType) {
-      ClassType cls = (ClassType)t;
+    if (t instanceof ClassType cls) {
       if (myTargetClassFilter.acceptClass(cls)) {
         return cls.fieldByName(myFieldName);
       }
@@ -81,8 +80,7 @@ public class FieldEvaluator implements Evaluator {
       }
       return findField(cls.superclass());
     }
-    else if (t instanceof InterfaceType) {
-      InterfaceType iface = (InterfaceType)t;
+    else if (t instanceof InterfaceType iface) {
       if (myTargetClassFilter.acceptClass(iface)) {
         return iface.fieldByName(myFieldName);
       }
@@ -120,8 +118,7 @@ public class FieldEvaluator implements Evaluator {
       return refType.getValue(field);
     }
 
-    if (object instanceof ObjectReference) {
-      ObjectReference objRef = (ObjectReference)object;
+    if (object instanceof ObjectReference objRef) {
       ReferenceType refType = objRef.referenceType();
       if (!(refType instanceof ClassType || refType instanceof ArrayType)) {
         throw EvaluateExceptionUtil.createEvaluateException(

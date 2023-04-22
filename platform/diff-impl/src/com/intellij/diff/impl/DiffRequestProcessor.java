@@ -779,8 +779,8 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
     @NotNull
     @Override
-    public List<FrameDiffTool> getTools() {
-      return getAvailableFittedTools();
+    public List<DiffTool> getTools() {
+      return new ArrayList<>(getAvailableFittedTools());
     }
 
     @NotNull

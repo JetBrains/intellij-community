@@ -6,8 +6,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_POPUP
 import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_TOOLBAR
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
@@ -67,16 +65,14 @@ class CommonCheckinProjectAction : DumbAwareAction() {
 }
 
 class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
-  init {
-    ActionUtil.copyFrom(this, IdeActions.ACTION_CHECKIN_PROJECT)
-  }
-
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
 
   override fun update(e: AnActionEvent) {
     super.update(e)
+
+    e.presentation.text = ActionsBundle.message("action.CheckinProject.text")
 
     if (!(e.isToggleCommitEnabled() && e.isFromLocalChanges())) {
       e.presentation.isEnabledAndVisible = false

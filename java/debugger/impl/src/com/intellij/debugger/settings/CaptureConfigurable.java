@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.CommonBundle;
@@ -362,8 +362,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           if (e instanceof PsiMethod) {
             addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
           }
-          else if (e instanceof PsiParameter) {
-            PsiParameter psiParameter = (PsiParameter)e;
+          else if (e instanceof PsiParameter psiParameter) {
             PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
             addCapturePointIfNeeded(psiParameter, psiMethod,
                                     DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),

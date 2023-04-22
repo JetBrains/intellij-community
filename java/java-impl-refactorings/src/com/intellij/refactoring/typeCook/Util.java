@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook;
 
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
@@ -136,8 +136,7 @@ public final class Util {
         if (actualType == null /*|| actualType instanceof PsiWildcardType*/) {
           subst = subst.put(theParm, Bottom.BOTTOM);
         }
-        else if (actualType instanceof PsiWildcardType) {
-          final PsiWildcardType wctype = (PsiWildcardType)actualType;
+        else if (actualType instanceof PsiWildcardType wctype) {
           final PsiType bound = wctype.getBound();
 
           if (bound == null) {
@@ -188,8 +187,7 @@ public final class Util {
   }
 
   public static boolean bindsTypeParameters(PsiType t, Set<? extends PsiTypeParameter> params) {
-    if (t instanceof PsiWildcardType) {
-      final PsiWildcardType wct = ((PsiWildcardType)t);
+    if (t instanceof PsiWildcardType wct) {
       final PsiType bound = wct.getBound();
 
       return bound != null && wct.isExtends() && bindsTypeParameters(bound, params);
@@ -323,24 +321,17 @@ public final class Util {
 
   public static void changeType(final PsiElement element, final PsiType type) {
     try {
-      if (element instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression cast = ((PsiTypeCastExpression)element);
-
+      if (element instanceof PsiTypeCastExpression cast) {
         cast.getCastType().replace(JavaPsiFacade.getElementFactory(cast.getProject()).createTypeElement(type));
       }
-      else if (element instanceof PsiVariable) {
-        final PsiVariable field = ((PsiVariable)element);
-
+      else if (element instanceof PsiVariable field) {
         field.normalizeDeclaration();
         field.getTypeElement().replace(JavaPsiFacade.getElementFactory(field.getProject()).createTypeElement(type));
       }
-      else if (element instanceof PsiMethod) {
-        final PsiMethod method = ((PsiMethod)element);
-
+      else if (element instanceof PsiMethod method) {
         method.getReturnTypeElement().replace(JavaPsiFacade.getElementFactory(method.getProject()).createTypeElement(type));
       }
-      else if (element instanceof PsiNewExpression) {
-        final PsiNewExpression newx = (PsiNewExpression)element;
+      else if (element instanceof PsiNewExpression newx) {
         final PsiClassType.ClassResolveResult result = resolveType(type);
 
         final PsiSubstitutor subst = result.getSubstitutor();

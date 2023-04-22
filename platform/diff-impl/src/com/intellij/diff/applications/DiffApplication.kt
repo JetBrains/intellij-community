@@ -15,7 +15,7 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.ide.CliResult
-import com.intellij.idea.SplashManager
+import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ApplicationStarterBase
 import com.intellij.openapi.application.EDT
@@ -24,11 +24,9 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.WindowWrapper
-import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AppIcon
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,7 +62,7 @@ internal class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsC
       val task = CompletableDeferred<Unit>()
       val dialogHints = DiffDialogHints(mode, null) { wrapper ->
         val window = wrapper.window
-        SplashManager.hideBeforeShow(window)
+        hideSplashBeforeShow(window)
         AppIcon.getInstance().requestFocus(window)
         window.addWindowListener(object : WindowAdapter() {
           override fun windowClosed(e: WindowEvent) {
@@ -99,8 +97,7 @@ private class MyDiffRequestProducer(private val project: Project?, private val f
   }
 
   override fun getContentType(): FileType? {
-    val file = ContainerUtil.find(files, Conditions.notNull())
-    return file?.fileType
+    return files.firstOrNull { it != null }?.fileType
   }
 
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {

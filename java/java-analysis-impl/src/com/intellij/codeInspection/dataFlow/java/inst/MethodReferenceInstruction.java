@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInsight.Nullability;
@@ -103,7 +103,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     PsiParameter[] samParameters = sam.getParameterList().getParameters();
     boolean firstParameterIsQualifier = isQualifierDereferenced(methodRef);
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    DfaValue[] arguments = new DfaValue[parameters.length];
+    DfaValue[] arguments = parameters.length == 0 ? DfaValue.EMPTY_ARRAY : new DfaValue[parameters.length];
     Arrays.fill(arguments, interpreter.getFactory().getUnknown());
     for (int i = 0; i < samParameters.length; i++) {
       DfaValue value = interpreter.getFactory().fromDfType(

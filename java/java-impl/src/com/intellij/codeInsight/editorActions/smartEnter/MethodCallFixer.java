@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -85,11 +85,8 @@ public class MethodCallFixer implements Fixer {
   private static int getMissingParenthesisOffset(PsiExpressionList argList) {
     PsiElement child = argList.getFirstChild();
     while (child != null) {
-      if (child instanceof PsiErrorElement) {
-        final PsiErrorElement errorElement = (PsiErrorElement)child;
-        if (errorElement.getErrorDescription().contains("')'")) {
-          return errorElement.getTextRange().getStartOffset();
-        }
+      if (child instanceof PsiErrorElement errorElement && errorElement.getErrorDescription().contains("')'")) {
+        return errorElement.getTextRange().getStartOffset();
       }
       child = child.getNextSibling();
     }

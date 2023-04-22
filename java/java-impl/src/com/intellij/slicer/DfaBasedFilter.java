@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
@@ -56,8 +56,7 @@ final class DfaBasedFilter {
   }
 
   private boolean allowed(@NotNull PsiElement element, boolean assertionsDisabled) {
-    if (myDfType instanceof DfConstantType && element instanceof PsiLiteralValue) {
-      DfConstantType<?> dfConstantType = (DfConstantType<?>)myDfType;
+    if (myDfType instanceof DfConstantType<?> dfConstantType && element instanceof PsiLiteralValue) {
       Object constValue = dfConstantType.getValue();
       if (!(constValue instanceof PsiElement)) {
         PsiPrimitiveType targetType = dfConstantType instanceof DfPrimitiveType ? ((DfPrimitiveType)dfConstantType).getPsiType() : null;
@@ -82,8 +81,7 @@ final class DfaBasedFilter {
   }
 
   private @NotNull DfType getElementDfType(@NotNull PsiElement element, boolean assertionsDisabled) {
-    if (!(element instanceof PsiExpression)) return DfType.TOP;
-    PsiExpression expression = (PsiExpression)element;
+    if (!(element instanceof PsiExpression expression)) return DfType.TOP;
     PsiType expressionType = expression.getType();
     if (TypeConversionUtil.isPrimitiveAndNotNull(expressionType) && myDfType instanceof DfReferenceType) {
       return DfTypes.typedObject(((PsiPrimitiveType)expressionType).getBoxedType(expression), Nullability.NOT_NULL);

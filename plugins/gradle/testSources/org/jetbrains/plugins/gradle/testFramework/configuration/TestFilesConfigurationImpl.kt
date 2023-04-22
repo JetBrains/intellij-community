@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.testFramework.configuration
 
 import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.vfs.*
+import com.intellij.testFramework.utils.vfs.createDirectory
+import com.intellij.testFramework.utils.vfs.createFile
 import java.util.ArrayList
 import java.util.HashMap
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
@@ -199,9 +199,8 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
     }
 
     private boolean isTargetClass(PsiElement maybeClass) {
-      if (!(maybeClass instanceof PsiClass)) return false;
+      if (!(maybeClass instanceof PsiClass declaredClass)) return false;
       if (myClassName.startsWith("com.sun.proxy.$Proxy")) return true;
-      PsiClass declaredClass = (PsiClass)maybeClass;
       String declaredName = declaredClass.getQualifiedName();
       if (myClassName.equals(declaredName)) return true;
       PsiClass calledClass = ClassUtil.findPsiClass(maybeClass.getManager(), myClassName, declaredClass, true);

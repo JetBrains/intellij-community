@@ -15,17 +15,14 @@ public final class TerminalUtils {
   }
 
   public static boolean hasSelectionInTerminal(@Nullable Component component) {
-    if (!(component instanceof TerminalPanel)) return false;
-    return ((TerminalPanel)component).getSelection() != null;
+    return component instanceof TerminalPanel terminalPanel && terminalPanel.getSelection() != null;
   }
 
   public static @Nullable String getSelectedTextInTerminal(@Nullable Component component) {
-    if (!(component instanceof TerminalPanel)) return null;
-    return JBTerminalWidget.getSelectedText((TerminalPanel)component);
+    return component instanceof TerminalPanel panel ? JBTerminalWidget.getSelectedText(panel) : null;
   }
 
   public static @Nullable String getTextInTerminal(@Nullable Component component) {
-    if (!(component instanceof TerminalPanel)) return null;
-    return JBTerminalWidget.getText((TerminalPanel)component);
+    return component instanceof TerminalPanel panel ? JBTerminalWidget.getText(panel) : null;
   }
 }

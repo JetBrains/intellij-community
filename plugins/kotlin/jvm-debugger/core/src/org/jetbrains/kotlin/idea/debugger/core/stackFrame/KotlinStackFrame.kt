@@ -225,6 +225,10 @@ open class KotlinStackFrame(
                 val label = name.drop(AsmUtil.LABELED_THIS_PARAMETER.length)
                 clone(customName ?: getThisName(label), label)
             }
+            name.startsWith(AsmUtil.CAPTURED_LABELED_THIS_FIELD) -> {
+                val label = name.drop(AsmUtil.CAPTURED_LABELED_THIS_FIELD.length)
+                clone(customName ?: getThisName(label), label)
+            }
             name == AsmUtil.THIS_IN_DEFAULT_IMPLS -> clone(customName ?: ("$THIS (outer)"), null)
             name == AsmUtil.RECEIVER_PARAMETER_NAME -> clone(customName ?: ("$THIS (receiver)"), null)
             name == AsmUtil.INLINE_DECLARATION_SITE_THIS -> {

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.collections
 
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.builtins.getFunctionalClassKind
+import org.jetbrains.kotlin.builtins.getFunctionTypeKind
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-fun KotlinType.isFunctionOfAnyKind() = constructor.declarationDescriptor?.getFunctionalClassKind() != null
+fun KotlinType.isFunctionOfAnyKind() = constructor.declarationDescriptor?.getFunctionTypeKind() != null
 
 fun KotlinType?.isMap(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
     val classDescriptor = this?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false

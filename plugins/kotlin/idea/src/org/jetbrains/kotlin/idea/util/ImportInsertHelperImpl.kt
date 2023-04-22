@@ -501,7 +501,12 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
                     (importList.addAfter(newDirective, insertAfter) as KtImportDirective).also { insertedDirective ->
                         if (isInjectedScript) {
-                            importList.addBefore(psiFactory.createNewLine(1), insertedDirective)
+                            if (insertAfter != null) {
+                                importList.addBefore(psiFactory.createNewLine(1), insertedDirective)
+                            }
+                            if (insertAfter == null) {
+                                importList.addAfter(psiFactory.createNewLine(1), insertedDirective)
+                            }
                         }
                     }
                 }

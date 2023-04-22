@@ -22,7 +22,6 @@
     <refactoring.extractIncludeHandler language="XHTML"
                                        implementationClass="com.intellij.htmltools.refactoring.lang.html.ExtractIncludeFromHTMLHandler"/>
 
-    <previewHintProvider implementation="com.intellij.htmltools.codeInsight.preview.HtmlPreviewHintProvider"/>
     <highlightErrorFilter implementation="com.intellij.htmltools.xml.util.XHtmlErrorFilter"/>
 
     <externalAnnotator language="HTML"

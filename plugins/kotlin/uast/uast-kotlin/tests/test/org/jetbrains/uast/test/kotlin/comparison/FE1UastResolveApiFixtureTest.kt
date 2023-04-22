@@ -123,6 +123,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkOperatorOverloads(myFixture)
     }
 
+    fun testOperatorMultiResolvable() {
+        checkOperatorMultiResolvable(myFixture)
+    }
+
     fun testResolveSyntheticJavaPropertyAccessor() {
         checkResolveSyntheticJavaPropertyAccessor(myFixture)
     }

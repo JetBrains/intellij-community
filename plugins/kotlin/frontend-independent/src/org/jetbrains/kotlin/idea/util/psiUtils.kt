@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.psi.*
@@ -31,8 +32,11 @@ fun KtExpression.resultingWhens(): List<KtWhenExpression> = when (this) {
     else -> listOf()
 }
 
-
-
+@Deprecated("Use org.jetbrains.kotlin.idea.base.util.reformatted() instead.")
+fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement {
+    CodeStyleManager.getInstance(project).reformat(this, canChangeWhiteSpacesOnly)
+    return this
+}
 
 fun PsiClass.isSyntheticKotlinClass(): Boolean {
     if ('$' !in name!!) return false // optimization to not analyze annotations of all classes

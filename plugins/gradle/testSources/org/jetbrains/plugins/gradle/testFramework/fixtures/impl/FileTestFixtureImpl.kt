@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.utils.editor.reloadFromDisk
+import com.intellij.testFramework.utils.vfs.*
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
@@ -58,7 +60,7 @@ internal class FileTestFixtureImpl(
     val configuration = createFixtureConfiguration()
 
     excludedFiles = configuration.excludedFiles
-      .map { root.path.getResolvedNioPath(it) }
+      .map { root.toNioPath().getResolvedPath(it) }
       .toSet()
 
     withSuppressedErrors {
@@ -84,7 +86,7 @@ internal class FileTestFixtureImpl(
 
   private fun createFixtureRoot(relativePath: String): VirtualFile {
     val systemPath = Path.of(PathManager.getSystemPath())
-    val systemDirectory = systemPath.findOrCreateDirectory().getVirtualDirectory()
+    val systemDirectory = systemPath.findOrCreateDirectory().refreshAndGetVirtualDirectory()
     val fixtureRoot = "FileTestFixture/$relativePath"
     VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
     return runWriteActionAndGet {
@@ -171,7 +173,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun snapshot(relativePath: String) {
-    snapshot(root.path.getResolvedNioPath(relativePath))
+    snapshot(root.toNioPath().getResolvedPath(relativePath))
   }
 
   private fun snapshot(path: Path) {
@@ -188,7 +190,7 @@ internal class FileTestFixtureImpl(
   }
 
   override fun rollback(relativePath: String) {
-    rollback(root.path.getResolvedNioPath(relativePath))
+    rollback(root.toNioPath().getResolvedPath(relativePath))
   }
 
   private fun rollback(path: Path) {
@@ -202,19 +204,19 @@ internal class FileTestFixtureImpl(
     runWriteActionAndWait {
       if (text != null) {
         path.findOrCreateFile()
-        val file = path.getVirtualFile()
-        file.reloadDocument()
+        val file = path.refreshAndGetVirtualFile()
+        file.findDocument()?.reloadFromDisk()
         file.writeText(text)
       }
       else {
-        val file = path.findVirtualFile()
+        val file = path.refreshAndFindVirtualFile()
         file?.deleteRecursively()
       }
     }
   }
 
   private fun getTextContent(path: Path): String? {
-    val file = path.findVirtualFile() ?: return null
+    val file = path.refreshAndFindVirtualFile() ?: return null
     return file.readText()
   }
 

@@ -43,6 +43,7 @@ public final class GradleConstants {
   public static final String TESTS_ARG_NAME = "--tests";
 
   public static final Key<Boolean> RUN_TASK_AS_TEST = Key.create("plugins.gradle.enable.test.reporting");
+  public static final Key<Boolean> FORCE_TEST_EXECUTION = Key.create("plugins.gradle.force.test.execution");
 
   private GradleConstants() {
   }

@@ -182,12 +182,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return false;
   }
 
-  @NotNull
-  public String getSDKLibVersion(Library library) {
-    return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
-  }
-
   public Collection<String> getSDKVersions(Library[] libraries) {
-    return ContainerUtil.map2List(libraries, library -> getSDKLibVersion(library));
+    return ContainerUtil.map2List(libraries, library -> getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library)));
   }
 }

@@ -474,7 +474,7 @@ public class ClassesProcessor implements CodeConstants {
 
       anonymousClassType = new VarType(lambda_class_name, true);
 
-      boolean is_method_reference = (content_class_name != classStruct.qualifiedName);
+      boolean is_method_reference = !Objects.equals(content_class_name, classStruct.qualifiedName);
       if (!is_method_reference) { // content method in the same class, check synthetic flag
         StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
         is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference

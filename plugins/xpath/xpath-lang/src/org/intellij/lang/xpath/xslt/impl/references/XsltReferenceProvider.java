@@ -115,8 +115,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       } else if (XsltSupport.isIncludeOrImportHref(attribute)) {
         final String href = attribute.getValue();
         final String resourceLocation = ExternalResourceManager.getInstance().getResourceLocation(href, attribute.getProject());
-        //noinspection StringEquality
-        if (href == resourceLocation) {
+        if (href.equals(resourceLocation)) {
           // not a configured external resource
           if (!URLUtil.containsScheme(href)) {
             // a local file reference

@@ -33,7 +33,7 @@ internal object ProjectSelfieUtil {
     return appSystemDir.resolve("project-selfies-v2").resolve("$projectWorkspaceId.ij")
   }
 
-  fun readImage(file: Path, scaleContextProvider: () -> ScaleContext): Image? {
+  fun readImage(file: Path, scaleContextProvider: () -> ScaleContext): BufferedImage? {
     val buffer = try {
       FileChannel.open(file).use { channel ->
         channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size()).order(ByteOrder.LITTLE_ENDIAN)
@@ -65,7 +65,7 @@ internal object ProjectSelfieUtil {
 
       @Suppress("UndesirableClassUsage")
       val rawImage = BufferedImage(colorModel, raster, false, null)
-      return ImageUtil.ensureHiDPI(rawImage, scaleContext)
+      return ImageUtil.ensureHiDPI(rawImage, scaleContext) as BufferedImage
     }
     finally {
       ByteBufferCleaner.unmapBuffer(buffer)
@@ -78,7 +78,7 @@ internal object ProjectSelfieUtil {
     })
   }
 
-  fun takeProjectSelfie(component: Component, workspaceId: String, selfieLocation: Path) {
+  fun takeProjectSelfie(component: Component, selfieLocation: Path) {
     //val start = System.currentTimeMillis()
     val graphicsConfiguration = component.graphicsConfiguration
     val image = ImageUtil.createImage(graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_ARGB)

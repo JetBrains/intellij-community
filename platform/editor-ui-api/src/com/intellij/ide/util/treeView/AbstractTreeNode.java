@@ -339,7 +339,11 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
     @Override
     public void append(@NotNull @NlsSafe String text, @NotNull SimpleTextAttributes attributes) {
-      myPresentation.ensureColoredTextIsUsed();
+      if (myPresentation.getColoredText().isEmpty() && myPresentation.getPresentableText() != null) {
+        // Convert plain text into colored text before appending comments.
+        // Keep the plain text (it's used for sorting nodes, for example).
+        myPresentation.addText(myPresentation.getPresentableText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
       myPresentation.addText(text, attributes);
     }
 

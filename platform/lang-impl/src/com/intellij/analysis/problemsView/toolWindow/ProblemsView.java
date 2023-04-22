@@ -75,10 +75,9 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static void createContent(@NotNull ContentManager manager, @NotNull ProblemsViewTab panel) {
-    if (!(panel instanceof JComponent))
+    if (!(panel instanceof JComponent component))
       throw new IllegalArgumentException("panel is not JComponent");
 
-    var component = (JComponent)panel;
     Content content = manager.getFactory().createContent(component, panel.getName(0), false);
     content.setCloseable(false);
     manager.addContent(content);
@@ -106,6 +105,24 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     HighlightingErrorsProviderBase.getInstance(project);
   }
 
+  public static void addPanel(@NotNull Project project, @NotNull ProblemsViewPanelProvider provider) {
+    var window = getToolWindow(project);
+    assert window != null;
+    var manager = window.getContentManager();
+    var panel = provider.create();
+    if (panel == null) return;
+    createContent(manager, panel);
+  }
+
+  public static void removePanel(Project project, String id) {
+    var content = ProblemsViewToolWindowUtils.INSTANCE.getContentById(project, id);
+    var toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
+    if (content == null || toolWindow == null)
+      return;
+    
+    toolWindow.getContentManager().removeContent(content, true);
+  }
+
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow window) {
     ProblemsViewState state = ProblemsViewState.getInstance(project);
@@ -129,8 +146,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
       public void selectionChanged(@NotNull ContentManagerEvent event) {
         boolean selected = ContentManagerEvent.ContentOperation.add == event.getOperation();
         var component = event.getContent().getComponent();
-        if (component instanceof ProblemsViewTab) {
-          var problemsView = (ProblemsViewTab)component;
+        if (component instanceof ProblemsViewTab problemsView) {
           ProblemsView.selectionChanged(selected, event.getContent());
           if (selected)
             state.setSelectedTabId(problemsView.getTabId());

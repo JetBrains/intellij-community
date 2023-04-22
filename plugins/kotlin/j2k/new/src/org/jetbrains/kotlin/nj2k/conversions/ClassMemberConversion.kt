@@ -28,6 +28,8 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveApplicab
     }
 
     private fun JKMethodImpl.convert() {
+        removeStaticModifierFromAnonymousClassMember()
+
         if (throwsList.isNotEmpty()) {
             annotationList.annotations +=
                 throwsAnnotation(throwsList.map { it.type.updateNullabilityRecursively(NotNull) }, symbolProvider)
@@ -53,6 +55,15 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveApplicab
         }
     }
 
+    private fun JKDeclaration.removeStaticModifierFromAnonymousClassMember() {
+        (this as? JKOtherModifiersOwner)?.elementByModifier(STATIC)?.let { static ->
+            val grandParent = parent?.parent
+            if (grandParent is JKNewExpression && grandParent.isAnonymousClass) {
+                otherModifierElements -= static
+            }
+        }
+    }
+
     private fun JKMethodImpl.isMainFunctionDeclaration(): Boolean {
         if (name.value != "main") return false
         if (!hasOtherModifier(STATIC)) return false
@@ -65,6 +76,7 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveApplicab
     }
 
     private fun JKField.convert() {
+        removeStaticModifierFromAnonymousClassMember()
         mutability = if (modality == FINAL) IMMUTABLE else MUTABLE
         modality = FINAL
         psi<PsiField>()?.let { psiField ->

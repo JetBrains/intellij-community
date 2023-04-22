@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -37,8 +37,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
                                                             @NotNull Set<PsiMember> membersToMove,
                                                             @NotNull PsiClass targetClass) {
     PsiElement ref = psiReference.getElement();
-    if (ref instanceof PsiJavaCodeReferenceElement) {
-      PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)ref;
+    if (ref instanceof PsiJavaCodeReferenceElement refExpr) {
       @Nullable PsiElement qualifier = refExpr.getQualifier();
       if (RefactoringHierarchyUtil.willBeInTargetClass(refExpr, membersToMove, targetClass, true)) {
         // both member and the reference to it will be in target class
@@ -174,8 +173,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     final PsiElement element = usage.getElement();
     if (element == null || !element.isValid()) return true;
 
-    if (usage.reference instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression)usage.reference;
+    if (usage.reference instanceof PsiReferenceExpression refExpr) {
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
         if (usage.qualifierClass != null && PsiTreeUtil.getParentOfType(refExpr, PsiSwitchLabelStatement.class) == null) {
@@ -275,11 +273,10 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement psiElement = expression.resolve();
-            if (psiElement instanceof PsiField) {
-              final PsiField psiField = (PsiField)psiElement;
-              if ((psiField.getContainingClass() == targetClass || membersToMove.contains(psiField))&& !afterFields.contains(psiField)) {
-                afterFields.add(psiField);
-              }
+            if (psiElement instanceof PsiField psiField &&
+                (psiField.getContainingClass() == targetClass || membersToMove.contains(psiField)) &&
+                !afterFields.contains(psiField)) {
+              afterFields.add(psiField);
             }
           }
         });

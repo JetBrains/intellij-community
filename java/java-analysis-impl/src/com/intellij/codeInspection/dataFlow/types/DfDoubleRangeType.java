@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -58,8 +58,7 @@ class DfDoubleRangeType implements DfDoubleType {
       int to = Double.compare(val, myTo);
       return (from <= 0 && to <= 0) != myInvert;
     }
-    if (other instanceof DfDoubleRangeType) {
-      DfDoubleRangeType range = (DfDoubleRangeType)other;
+    if (other instanceof DfDoubleRangeType range) {
       if (range.myNaN && !myNaN) return false;
       if (!myInvert && myFrom == Double.NEGATIVE_INFINITY && myTo == Double.POSITIVE_INFINITY) return true;
       int from = Double.compare(myFrom, range.myFrom);
@@ -97,10 +96,9 @@ class DfDoubleRangeType implements DfDoubleType {
       }
       return joinRange(value, value, exact);
     }
-    if (!(other instanceof DfDoubleRangeType)) {
+    if (!(other instanceof DfDoubleRangeType range)) {
       return exact ? null : TOP;
     }
-    DfDoubleRangeType range = (DfDoubleRangeType)other;
     DfDoubleRangeType res = range.myNaN && !myNaN ? new DfDoubleRangeType(myFrom, myTo, myInvert, true) : this;
     if (range.myInvert) {
       if (range.myFrom > Double.NEGATIVE_INFINITY) {
@@ -145,8 +143,7 @@ class DfDoubleRangeType implements DfDoubleType {
   public @NotNull DfType meet(@NotNull DfType other) {
     if (other.isSuperType(this)) return this;
     if (this.isSuperType(other)) return other;
-    if (!(other instanceof DfDoubleRangeType)) return DfType.BOTTOM;
-    DfDoubleRangeType range = (DfDoubleRangeType)other;
+    if (!(other instanceof DfDoubleRangeType range)) return DfType.BOTTOM;
     boolean nan = range.myNaN && myNaN;
     if (!myInvert) {
       if (!range.myInvert) {

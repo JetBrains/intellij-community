@@ -42,7 +42,7 @@ public final class JdkUtil {
   /**
    * @deprecated Please use ExecutionUtil.PROPERTY_DYNAMIC_CLASSPATH
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final String PROPERTY_DYNAMIC_CLASSPATH = ExecutionUtil.PROPERTY_DYNAMIC_CLASSPATH;
 
   private JdkUtil() { }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -117,9 +117,7 @@ class JavaChangeSignatureUsageSearcher {
   }
 
   private void findUsagesInCallers(final ArrayList<? super UsageInfo> usages) {
-    if (myChangeInfo instanceof JavaChangeInfoImpl) {
-      JavaChangeInfoImpl changeInfo = (JavaChangeInfoImpl)myChangeInfo;
-
+    if (myChangeInfo instanceof JavaChangeInfoImpl changeInfo) {
       for (PsiMethod caller : changeInfo.propagateParametersMethods) {
         usages.add(new CallerUsageInfo(caller, true, changeInfo.propagateExceptionsMethods.contains(caller)));
       }
@@ -312,9 +310,8 @@ class JavaChangeSignatureUsageSearcher {
             result.add(implicitUsageInfo);
           }
         }
-        else if (element instanceof PsiClass) {
+        else if (element instanceof PsiClass psiClass) {
           LOG.assertTrue(method.isConstructor());
-          final PsiClass psiClass = (PsiClass)element;
           if (JavaLanguage.INSTANCE.equals(psiClass.getLanguage())) {
             if (myChangeInfo instanceof JavaChangeInfoImpl) {
               if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,

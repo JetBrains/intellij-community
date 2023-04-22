@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.*;
+import com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -142,7 +143,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
                                              Document doc) {
     boolean autoWrapInProgress = DataManager.getInstance().loadFromDataContext(dataContext,
                                                                                AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY) != null;
-    if (PyWhiteSpaceUtil.needInsertBackslash(file, offset, autoWrapInProgress)) {
+    if (PyWhiteSpaceFormattingStrategy.needInsertBackslash(file, offset, autoWrapInProgress)) {
       doc.insertString(offset, "\\");
       caretOffset.set(caretOffset.get() + 1);
     }

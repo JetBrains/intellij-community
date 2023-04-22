@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -69,35 +69,30 @@ public class MarkerType {
 
   public static final MarkerType OVERRIDING_METHOD = new MarkerType("OVERRIDING_METHOD", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = getParentMethod(element);
-    if (!(parent instanceof PsiMethod)) return null;
-    PsiMethod method = (PsiMethod)parent;
+    if (!(parent instanceof PsiMethod method)) return null;
 
     return calculateOverridingMethodTooltip(method, method != element.getParent());
   }, new LineMarkerNavigator() {
     @Override
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = getParentMethod(element);
-      if (!(parent instanceof PsiMethod)) return;
-      PsiMethod method = (PsiMethod)parent;
+      if (!(parent instanceof PsiMethod method)) return;
       navigateToOverridingMethod(e, method, method != element.getParent());
     }
   });
-  public static final MarkerType SIBLING_OVERRIDING_METHOD = new MarkerType("SIBLING_OVERRIDING_METHOD",
-                                                                            (NullableFunction<PsiElement, String>)element -> {
-                                                                       PsiElement parent = getParentMethod(element);
-                                                                       if (!(parent instanceof PsiMethod)) return null;
-                                                                       PsiMethod method = (PsiMethod)parent;
-
-                                                                       return calculateOverridingSiblingMethodTooltip(method);
-                                                                     }, new LineMarkerNavigator() {
-    @Override
-    public void browse(MouseEvent e, PsiElement element) {
+  public static final MarkerType SIBLING_OVERRIDING_METHOD =
+    new MarkerType("SIBLING_OVERRIDING_METHOD", (NullableFunction<PsiElement, String>)element -> {
       PsiElement parent = getParentMethod(element);
-      if (!(parent instanceof PsiMethod)) return;
-      PsiMethod method = (PsiMethod)parent;
-      navigateToSiblingOverridingMethod(e, method);
-    }
-  });
+      if (!(parent instanceof PsiMethod method)) return null;
+      return calculateOverridingSiblingMethodTooltip(method);
+    }, new LineMarkerNavigator() {
+      @Override
+      public void browse(MouseEvent e, PsiElement element) {
+        PsiElement parent = getParentMethod(element);
+        if (!(parent instanceof PsiMethod method)) return;
+        navigateToSiblingOverridingMethod(e, method);
+      }
+    });
 
   @Nullable
   private static String calculateOverridingMethodTooltip(@NotNull PsiMethod method, boolean acceptSelf) {
@@ -201,9 +196,7 @@ public class MarkerType {
 
   public static final MarkerType OVERRIDDEN_METHOD = new MarkerType("OVERRIDDEN_METHOD", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiMethod)) return null;
-    PsiMethod method = (PsiMethod)parent;
-
+    if (!(parent instanceof PsiMethod method)) return null;
     return getOverriddenMethodTooltip(method);
   }, new InheritorsLineMarkerNavigator() {
     @Override
@@ -241,8 +234,7 @@ public class MarkerType {
 
   public static final MarkerType SUBCLASSED_CLASS = new MarkerType("SUBCLASSED_CLASS", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiClass)) return null;
-    PsiClass aClass = (PsiClass)parent;
+    if (!(parent instanceof PsiClass aClass)) return null;
     return getSubclassedClassTooltip(aClass);
   }, new InheritorsLineMarkerNavigator() {
     @Override

@@ -72,37 +72,42 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
                                      base: String?,
                                      relativePath: String): Boolean {
     val path = toLoadPath(relativePath, base)
-    dataLoader.load(path)?.let {
-      readModuleDescriptor(input = it,
-                           readContext = readContext,
-                           pathResolver = this,
-                           dataLoader = dataLoader,
-                           includeBase = getChildBase(base = base, relativePath = relativePath),
-                           readInto = readInto,
-                           locationSource = null)
-      return true
-    }
-
-    if (findInJarFiles(readInto = readInto,
-                       dataLoader = dataLoader,
-                       readContext = readContext,
-                       relativePath = path,
-                       includeBase = getChildBase(base = base, relativePath = relativePath))) {
-      return true
-    }
-
-    // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
-    if (path.startsWith("META-INF/")) {
-      PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
+    try {
+      dataLoader.load(path)?.let {
         readModuleDescriptor(input = it,
                              readContext = readContext,
                              pathResolver = this,
                              dataLoader = dataLoader,
-                             includeBase = null,
+                             includeBase = getChildBase(base = base, relativePath = relativePath),
                              readInto = readInto,
                              locationSource = null)
         return true
       }
+
+      if (findInJarFiles(readInto = readInto,
+                         dataLoader = dataLoader,
+                         readContext = readContext,
+                         relativePath = path,
+                         includeBase = getChildBase(base = base, relativePath = relativePath))) {
+        return true
+      }
+
+      // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
+      if (path.startsWith("META-INF/")) {
+        PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
+          readModuleDescriptor(input = it,
+                               readContext = readContext,
+                               pathResolver = this,
+                               dataLoader = dataLoader,
+                               includeBase = null,
+                               readInto = readInto,
+                               locationSource = null)
+          return true
+        }
+      }
+    }
+    catch (e: Throwable) {
+      throw IOException("Exception ${e.message} while loading $path", e)
     }
     return false
   }

@@ -26,8 +26,8 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.*;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
+import com.intellij.workspaceModel.ide.VirtualFileUrls;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.impl.UtilsKt;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
@@ -399,7 +399,7 @@ class RootIndex {
     for (CustomEntityProjectModelInfoProvider.@NotNull ExcludeStrategy<T> excludeStrategy :
       SequencesKt.asIterable(provider.getExcludeSdkRootStrategies(entities, snapshot))) {
       T entity = excludeStrategy.generativeEntity;
-      List<VirtualFile> files = ContainerUtil.mapNotNull(excludeStrategy.excludeUrls, UtilsKt::getVirtualFile);
+      List<VirtualFile> files = ContainerUtil.mapNotNull(excludeStrategy.excludeUrls, VirtualFileUrls::getVirtualFile);
       info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileSupplier.ensureValid(file, entity, provider)));
 
       java.util.function.@Nullable Function<Sdk, List<VirtualFile>> fun = excludeStrategy.excludeSdkRootsStrategy;
@@ -1186,9 +1186,8 @@ class RootIndex {
   }
 
   @NotNull
-  List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
-    if (!(info instanceof DirectoryInfoImpl)) return Collections.emptyList();
-    return getOrderEntryGraph().getOrderEntries(((DirectoryInfoImpl)info).getRoot());
+  List<OrderEntry> getOrderEntries(@NotNull VirtualFile root) {
+    return getOrderEntryGraph().getOrderEntries(root);
   }
 
   @NotNull

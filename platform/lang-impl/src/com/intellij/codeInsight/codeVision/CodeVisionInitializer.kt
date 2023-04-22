@@ -4,7 +4,7 @@ package com.intellij.codeInsight.codeVision
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -17,7 +17,7 @@ open class CodeVisionInitializer(project: Project) {
 
   open fun getCodeVisionHost(): CodeVisionHost = host
 
-  internal class CodeVisionInitializerStartupActivity : ProjectPostStartupActivity {
+  internal class CodeVisionInitializerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
       withContext(Dispatchers.EDT) {
         getInstance(project).host.initialize()

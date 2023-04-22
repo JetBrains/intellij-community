@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
+import com.intellij.openapi.util.registry.Registry
 import icons.KotlinBaseResourcesIcons
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -32,6 +33,8 @@ abstract class ProjectTemplate : DisplayableSettingItem {
     abstract val id: String
     open val icon: Icon? = null
 
+    open fun isVisible() = true
+
     private val setsDefaultValues: List<SettingWithValue<*, *>>
         get() = listOf(KotlinPlugin.projectKind.reference withValue projectKind)
 
@@ -61,7 +64,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         }
     }
 
-    protected inline fun <reified C: ModuleConfigurator> Module.withConfiguratorSettings(
+    protected inline fun <reified C : ModuleConfigurator> Module.withConfiguratorSettings(
         createSettings: ConfiguratorSettingsBuilder<C>.() -> Unit = {}
     ) = apply {
         check(configurator is C)
@@ -243,6 +246,10 @@ object WasmApplicationProjectTemplate : ProjectTemplate() {
     override val id = "simpleWasmApplication"
     override val icon: Icon
         get() = KotlinIcons.Wizard.WEB
+
+    override fun isVisible(): Boolean {
+        return Registry.`is`("kotlin.wasm.wizard")
+    }
 
     @NonNls
     override val suggestedProjectName: String = "myWasmApplication"

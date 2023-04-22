@@ -10,14 +10,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.ensureActive
 import kotlin.coroutines.coroutineContext
 
 /**
  * @see IsUpToDateCheckConsumer
  */
-internal class IsUpToDateCheckStartupActivity : ProjectPostStartupActivity {
+internal class IsUpToDateCheckStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -57,8 +57,7 @@ public abstract class JavaSourceRootDetector extends ProjectStructureDetector {
 
     List<DetectedProjectRoot> lastItems = result.subList(result.size() - THRESHOLD, result.size());
     for (DetectedProjectRoot item : lastItems) {
-      if (!(item instanceof JavaModuleSourceRoot)) return false;
-      JavaModuleSourceRoot oldRoot = (JavaModuleSourceRoot)item;
+      if (!(item instanceof JavaModuleSourceRoot oldRoot)) return false;
       if (!FileUtil.filesEqual(oldRoot.getDirectory(), root.getDirectory()) || !oldRoot.getPackagePrefix().equals(root.getPackagePrefix())
           || !oldRoot.getRootTypeName().equals(root.getRootTypeName())) {
         return false;

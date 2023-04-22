@@ -31,6 +31,12 @@ data class UnattendedHostStatus(
   val backendUnresponsive: Boolean,
   val modalDialogIsOpened: Boolean,
   val idePath: String,
+
+  // join links at app level are available since 2023.1
+  val joinLink: String?,
+  val httpLink: String?,
+  val gatewayLink: String?,
+
   val projects: List<UnattendedHostPerProjectStatus>? = null
 ) {
 

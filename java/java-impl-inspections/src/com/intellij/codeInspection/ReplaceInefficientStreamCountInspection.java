@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -131,8 +131,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
 
   static boolean doesFlatMapCallCollectionStream(PsiMethodCallExpression flatMapCall) {
     PsiElement function = flatMapCall.getArgumentList().getExpressions()[0];
-    if (function instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)function;
+    if (function instanceof PsiMethodReferenceExpression methodRef) {
       if (!STREAM_METHOD.equals(methodRef.getReferenceName())) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
       if (method != null && STREAM_METHOD.equals(method.getName()) && method.getParameterList().isEmpty()) {
@@ -223,8 +222,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if (!(element instanceof PsiMethodCallExpression)) return;
-      PsiMethodCallExpression countCall = (PsiMethodCallExpression)element;
+      if (!(element instanceof PsiMethodCallExpression countCall)) return;
       PsiElement countName = countCall.getMethodExpression().getReferenceNameElement();
       if (countName == null) return;
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
@@ -287,15 +285,12 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       if (flatMapName == null) return;
       PsiElement parameter = qualifierCall.getArgumentList().getExpressions()[0];
       PsiElement streamCallName = null;
-      if (parameter instanceof PsiMethodReferenceExpression) {
-        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)parameter;
+      if (parameter instanceof PsiMethodReferenceExpression methodRef) {
         streamCallName = methodRef.getReferenceNameElement();
       }
-      else if (parameter instanceof PsiLambdaExpression) {
-        PsiExpression expression = extractLambdaReturnExpression((PsiLambdaExpression)parameter);
-        if (expression instanceof PsiMethodCallExpression) {
-          streamCallName = ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement();
-        }
+      else if (parameter instanceof PsiLambdaExpression lambda &&
+               extractLambdaReturnExpression(lambda) instanceof PsiMethodCallExpression call) {
+        streamCallName = call.getMethodExpression().getReferenceNameElement();
       }
       if (streamCallName == null || !streamCallName.getText().equals("stream")) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(qualifierCall.getProject());

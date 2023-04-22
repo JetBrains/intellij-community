@@ -14,7 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
@@ -65,7 +65,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
   }
 }
 
-private class ReaderModeEditorSettingsListener : ProjectPostStartupActivity {
+private class ReaderModeEditorSettingsListener : ProjectActivity {
   override suspend fun execute(project: Project) {
     val propertyChangeListener = PropertyChangeListener { event ->
       when (event.propertyName) {

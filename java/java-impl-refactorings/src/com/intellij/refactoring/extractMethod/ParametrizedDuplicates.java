@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -483,9 +483,8 @@ public final class ParametrizedDuplicates {
   @Nullable
   private static PsiExpression wrapExpressionWithCodeBlock(PsiElement @NotNull [] copy,
                                                            @NotNull ExtractMethodProcessor originalProcessor) {
-    if (copy.length != 1 || !(copy[0] instanceof PsiExpression)) return null;
+    if (copy.length != 1 || !(copy[0] instanceof PsiExpression expression)) return null;
 
-    PsiExpression expression = (PsiExpression)copy[0];
     PsiType type = expression.getType();
     if (type == null || PsiTypes.nullType().equals(type)) return null;
 

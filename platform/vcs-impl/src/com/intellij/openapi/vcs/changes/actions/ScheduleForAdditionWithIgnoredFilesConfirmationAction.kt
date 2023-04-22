@@ -64,7 +64,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
       }
       else null
 
-    performUnversionedFilesAddition(project, unversionedFiles, browser, addToVcsTask)
+    Manager.performUnversionedFilesAddition(project, unversionedFiles, browser, addToVcsTask)
   }
 
   private fun dialogMessage(path: FilePath): @NlsContexts.DialogMessage String {

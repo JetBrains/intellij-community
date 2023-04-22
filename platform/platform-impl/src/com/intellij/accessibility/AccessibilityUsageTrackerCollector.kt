@@ -5,13 +5,13 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import java.util.concurrent.ConcurrentLinkedQueue
 
 internal class AccessibilityUsageTrackerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  class CollectStatisticsTask : ProjectPostStartupActivity {
+  class CollectStatisticsTask : ProjectActivity {
     override suspend fun execute(project: Project) {
       raisedEvents.forEach(EventId::log)
     }

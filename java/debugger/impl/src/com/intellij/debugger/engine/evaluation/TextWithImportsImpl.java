@@ -81,11 +81,7 @@ public final class TextWithImportsImpl implements TextWithImports {
   }
 
   public boolean equals(Object object) {
-    if (!(object instanceof TextWithImportsImpl)) {
-      return false;
-    }
-    TextWithImportsImpl item = ((TextWithImportsImpl)object);
-    return Objects.equals(item.myText, myText) && Objects.equals(item.myImports, myImports);
+    return object instanceof TextWithImportsImpl item && Objects.equals(item.myText, myText) && Objects.equals(item.myImports, myImports);
   }
 
   public String toString() {

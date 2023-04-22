@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -290,9 +290,8 @@ public final class DfaUtil {
       }
     }
     if (type instanceof DfPrimitiveType) {
-      if (value.getDfType() instanceof DfPrimitiveType) {
+      if (value.getDfType() instanceof DfPrimitiveType valueType) {
         PsiPrimitiveType psiType = ((DfPrimitiveType)type).getPsiType();
-        DfPrimitiveType valueType = (DfPrimitiveType)value.getDfType();
         if (!valueType.getPsiType().equals(psiType)) {
           return value.getFactory().fromDfType(valueType.castTo(psiType));
         }
@@ -334,8 +333,7 @@ public final class DfaUtil {
   }
 
   public static boolean isEmptyCollectionConstantField(@Nullable PsiVariable var) {
-    if (!(var instanceof PsiField)) return false;
-    PsiField field = (PsiField)var;
+    if (!(var instanceof PsiField field)) return false;
     return field.getName().startsWith("EMPTY_") && field.getContainingClass() != null &&
            JAVA_UTIL_COLLECTIONS.equals(field.getContainingClass().getQualifiedName());
   }

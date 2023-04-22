@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
+import com.intellij.util.containers.TreeNodeProcessingResult
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
@@ -98,14 +99,13 @@ object IndexableFilesIterationMethods {
           }
           val accepted = fileFilter.accept(file) &&
                          shouldIndexFileIndependentlyFromProjectFileIndex(file, rootsSet, null)
-          val status = if (accepted) contentIteratorEx.processFileEx(file) else ContentIteratorEx.Status.CONTINUE
-          if (status == ContentIteratorEx.Status.CONTINUE) {
-            return CONTINUE
+          val status = if (accepted) contentIteratorEx.processFileEx(file) else TreeNodeProcessingResult.CONTINUE
+          return when (status) {
+            TreeNodeProcessingResult.CONTINUE -> CONTINUE
+            TreeNodeProcessingResult.SKIP_CHILDREN -> SKIP_CHILDREN
+            TreeNodeProcessingResult.SKIP_TO_PARENT -> skipTo(file.parent)
+            TreeNodeProcessingResult.STOP -> skipTo(root)
           }
-          return if (status == ContentIteratorEx.Status.SKIP_CHILDREN) {
-            SKIP_CHILDREN
-          }
-          else skipTo(root)
         }
       })
       return@all !Comparing.equal<VirtualFile>(result.skipToParent, root)
@@ -117,7 +117,7 @@ object IndexableFilesIterationMethods {
       processor
     }
     else ContentIteratorEx { fileOrDir: VirtualFile? ->
-      if (processor.processFile(fileOrDir!!)) ContentIteratorEx.Status.CONTINUE else ContentIteratorEx.Status.STOP
+      if (processor.processFile(fileOrDir!!)) TreeNodeProcessingResult.CONTINUE else TreeNodeProcessingResult.STOP
     }
   }
 

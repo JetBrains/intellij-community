@@ -1,10 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io
 
+import com.intellij.testFramework.utils.io.createDirectory
+import com.intellij.testFramework.utils.io.createFile
+import com.intellij.testFramework.utils.io.deleteChildrenRecursively
+import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.IOException
-import java.nio.file.FileSystemException
 import kotlin.io.path.extension
 
 
@@ -104,19 +107,19 @@ class NioPathUtilTest : NioPathUtilTestCase() {
         .isExistedDirectory()
 
       assertNioPath { createFile("file.txt") }
-        .isFailedWithException<IllegalStateException>("File already exists: .*")
+        .isFailedWithException<IOException>("File already exists: .*")
       assertNioPath { createDirectory("directory") }
-        .isFailedWithException<IllegalStateException>("Directory already exists: .*")
+        .isFailedWithException<IOException>("Directory already exists: .*")
 
       assertNioPath { findOrCreateFile("directory") }
         .isFailedWithException<IOException>("Expected file instead of directory: .*")
       assertNioPath { findOrCreateDirectory("file.txt") }
-        .isFailedWithException<FileSystemException>()
+        .isFailedWithException<IOException>()
 
       assertNioPath { createFile("file.txt/file.txt") }
-        .isFailedWithException<FileSystemException>()
+        .isFailedWithException<IOException>()
       assertNioPath { createDirectory("file.txt/directory") }
-        .isFailedWithException<FileSystemException>()
+        .isFailedWithException<IOException>()
     }
   }
 

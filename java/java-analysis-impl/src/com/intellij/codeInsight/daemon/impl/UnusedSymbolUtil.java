@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -261,8 +261,7 @@ public final class UnusedSymbolUtil {
       options = new JavaClassFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = true;
     }
-    else if (member instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)member;
+    else if (member instanceof PsiMethod method) {
       options = new JavaMethodFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = method.isConstructor();
       toSearch.addAll(DeepestSuperMethodsSearch.search(method).findAll());

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.psi.*;
@@ -289,8 +289,7 @@ abstract class Operation {
       PsiExpression body = PsiUtil.skipParenthesizedExprDown(fn.getExpression());
       PsiExpression condition = null;
       boolean inverted = false;
-      if(body instanceof PsiConditionalExpression) {
-        PsiConditionalExpression ternary = (PsiConditionalExpression)body;
+      if(body instanceof PsiConditionalExpression ternary) {
         condition = ternary.getCondition();
         PsiExpression thenExpression = PsiUtil.skipParenthesizedExprDown(ternary.getThenExpression());
         PsiExpression elseExpression = PsiUtil.skipParenthesizedExprDown(ternary.getElseExpression());
@@ -303,8 +302,7 @@ abstract class Operation {
         }
         else return null;
       }
-      if(!(body instanceof PsiMethodCallExpression)) return null;
-      PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)body;
+      if(!(body instanceof PsiMethodCallExpression terminalCall)) return null;
       List<StreamToLoopInspection.OperationRecord> records =
         StreamToLoopInspection.extractOperations(outVar, terminalCall, supportUnknownSources);
       if(records == null || StreamToLoopInspection.getTerminal(records) != null) return null;

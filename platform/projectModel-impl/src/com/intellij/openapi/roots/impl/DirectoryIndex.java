@@ -51,7 +51,7 @@ public abstract class DirectoryIndex {
   public abstract String getPackageName(@NotNull VirtualFile dir);
 
   @NotNull
-  public abstract List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info);
+  public abstract List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir);
 
   /**
    * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module

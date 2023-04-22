@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.CommonBundle;
@@ -183,8 +183,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     if (element instanceof LibraryDescriptor) {
       return PlatformIcons.LIBRARY_ICON;
     }
-    if (element instanceof File) {
-      final File file = (File)element;
+    if (element instanceof File file) {
       return file.isDirectory()? PlatformIcons.FOLDER_ICON : PlatformIcons.JAR_ICON;
     }
     return null;
@@ -212,8 +211,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       return getElementTextFromFile((File)element);
     }
 
-    if (element instanceof ModuleDescriptor) {
-      final ModuleDescriptor moduleDescriptor = (ModuleDescriptor)element;
+    if (element instanceof ModuleDescriptor moduleDescriptor) {
       final StringBuilder builder = new StringBuilder(moduleDescriptor.getName());
 
       final Set<File> contents = moduleDescriptor.getContentRoots();

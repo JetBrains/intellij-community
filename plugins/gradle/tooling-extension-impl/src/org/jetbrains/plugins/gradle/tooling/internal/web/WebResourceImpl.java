@@ -62,7 +62,7 @@ public class WebResourceImpl implements WebConfiguration.WebResource {
 
     WebResourceImpl resource = (WebResourceImpl)o;
     if (!file.getPath().equals(resource.file.getPath())) return false;
-    if (myWarDirectory != resource.myWarDirectory) return false;
+    if (!myWarDirectory.equals(resource.myWarDirectory)) return false;
     if (!myRelativePath.equals(resource.myRelativePath)) return false;
 
     return true;

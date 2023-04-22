@@ -153,10 +153,10 @@ public class JCefImageViewerUI extends JPanel implements DataProvider, Disposabl
       ZoomOptions zoomOptions = editorOptions.getZoomOptions();
       if (zoomOptions.isWheelZooming() && e.isControlDown()) {
         int rotation = e.getWheelRotation();
-        if (rotation > 0) {
+        if (rotation < 0) {
           myViewer.setZoom(myViewer.getZoom() * 1.2, new Point(e.getX(), e.getY()));
         }
-        else if (rotation < 0) {
+        else if (rotation > 0) {
           myViewer.setZoom(myViewer.getZoom() / 1.2, new Point(e.getX(), e.getY()));
         }
 

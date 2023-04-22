@@ -64,8 +64,10 @@ public interface ActionToolbar {
   }
 
   /** This is the default minimum size of the toolbar button. */
+  @NotNull
   Dimension DEFAULT_MINIMUM_BUTTON_SIZE = JBUI.size(22, 22);
 
+  @NotNull
   Dimension NAVBAR_MINIMUM_BUTTON_SIZE = JBUI.size(20, 20);
 
   static Dimension experimentalToolbarMinimumButtonSize() {

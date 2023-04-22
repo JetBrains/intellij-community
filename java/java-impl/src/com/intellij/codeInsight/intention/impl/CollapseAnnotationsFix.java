@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
@@ -40,8 +40,7 @@ public final class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActio
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (!(startElement instanceof PsiAnnotation)) return;
-    PsiAnnotation annotation = (PsiAnnotation)startElement;
+    if (!(startElement instanceof PsiAnnotation annotation)) return;
     PsiNameValuePair attribute = ArrayUtil.getFirstElement(annotation.getParameterList().getAttributes());
     if (attribute == null) return;
     PsiAnnotationMemberValue origValue = attribute.getValue();

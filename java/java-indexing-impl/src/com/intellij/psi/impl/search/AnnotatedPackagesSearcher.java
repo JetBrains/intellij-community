@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
@@ -41,18 +41,15 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
       boolean accepted = ReadAction.compute(() -> {
         PsiModifierList modList = (PsiModifierList)annotation.getParent();
         final PsiElement owner = modList.getParent();
-        if (owner instanceof PsiClass) {
-          PsiClass candidate = (PsiClass)owner;
-          if ("package-info".equals(candidate.getName())) {
-            LOG.assertTrue(candidate.isValid());
-            final PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-            if (ref != null && psiManager.areElementsEquivalent(ref.resolve(), annClass) &&
-                useScope.contains(candidate.getContainingFile().getVirtualFile())) {
-              final String qname = candidate.getQualifiedName();
-              if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
-                qname.substring(0, qname.lastIndexOf('.'))))) {
-                return false;
-              }
+        if (owner instanceof PsiClass candidate && "package-info".equals(candidate.getName())) {
+          LOG.assertTrue(candidate.isValid());
+          final PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+          if (ref != null && psiManager.areElementsEquivalent(ref.resolve(), annClass) &&
+              useScope.contains(candidate.getContainingFile().getVirtualFile())) {
+            final String qname = candidate.getQualifiedName();
+            if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
+              qname.substring(0, qname.lastIndexOf('.'))))) {
+              return false;
             }
           }
         }

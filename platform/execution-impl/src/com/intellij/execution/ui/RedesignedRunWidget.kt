@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -314,11 +313,7 @@ private abstract class TogglePopupAction : ToggleAction {
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
-private class InactiveStopActionPlaceholder : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    error("The placeholder should not be invoked")
-  }
-
+private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -419,14 +414,26 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
         JBUI.size(JBUI.CurrentTheme.RunWidget.configurationSelectorWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
       else JBUI.size(16, JBUI.CurrentTheme.RunWidget.toolbarHeight())
     }) {
+
       override fun getMargins(): Insets = JBInsets.create(0, 8)
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
       override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
       override fun getDownArrowIcon(): Icon = PreparedIcon(super.getDownArrowIcon())
+
+      override fun updateUI() {
+        super.updateUI()
+        updateFont()
+      }
+
+      fun updateFont() {
+        font = JBUI.CurrentTheme.RunWidget.configurationSelectorFont()
+      }
+
     }.also {
       it.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
       it.setHorizontalTextAlignment(SwingConstants.LEFT)
+      it.updateFont()
     }
   }
 }

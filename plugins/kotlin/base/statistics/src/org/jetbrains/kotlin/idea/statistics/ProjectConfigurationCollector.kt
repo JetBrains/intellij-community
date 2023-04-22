@@ -39,7 +39,8 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
                         systemField.with(buildSystem),
                         platformField.with(platform),
                         isMPPBuild.with(it.isMultiPlatformModule || it.isNewMultiPlatformModule),
-                        pluginInfoField.with(KotlinIdePlugin.getPluginInfo())
+                        pluginInfoField.with(KotlinIdePlugin.getPluginInfo()),
+                        eventFlags.with(KotlinASStatisticsEventFlags.calculateAndPackEventsFlagsToLong(it))
                     )
                 )
             }
@@ -79,6 +80,8 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
         private val isMPPBuild = EventFields.Boolean("isMPP")
         private val pluginInfoField = EventFields.PluginInfo
 
+        private val eventFlags = EventFields.Long("eventFlags")
+
         private fun composePlatformFields(): List<String> {
             return listOf(
                 listOf("jvm", "jvm.android", "js", "common", "native.unknown", "unknown"),
@@ -91,7 +94,8 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
             systemField,
             platformField,
             isMPPBuild,
-            pluginInfoField
+            pluginInfoField,
+            eventFlags
         )
 
     }

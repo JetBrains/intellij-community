@@ -23,6 +23,10 @@ object OrderEntriesFilteringTestFeature : TestFeature<OrderEntriesFilteringConfi
             if (configuration.excludeDependencies != null) {
                 add("hiding dependencies matching ${configuration.excludeDependencies.toString()}")
             }
+
+            if (configuration.sortDependencies) {
+                add("dependencies order is not checked")
+            }
         }
     }
 
@@ -36,6 +40,17 @@ class OrderEntriesFilteringConfiguration {
     var hideStdlib: Boolean = false
     var hideKotlinTest: Boolean = false
     var hideKonanDist: Boolean = false
+
+    /**
+     * Enables or disabled sorting of dependencies (based on the lexicographical order of their
+     * string representation)
+     *
+     * This is technically incorrect, because dependencies order matters in general case. However,
+     * the majority of test cases don't actually have such a configuration where any possible reordering
+     * can cause issues and, actually, change said order quite frequently, leading to a lot of noisy
+     * changes in testdata. Therefore, sorting is enabled by default
+     */
+    var sortDependencies: Boolean = true
 
     // Always hidden for now
     val hideSelfDependency: Boolean = true
@@ -67,4 +82,9 @@ interface OrderEntriesFilteringSupport {
         require(config.excludeDependencies == null) { "onlyDependencies can not be used together with excludeDependencies" }
         config.onlyDependencies = regex.toRegex()
     }
+
+    var TestConfigurationDslScope.sortDependencies
+        get() = config.sortDependencies
+        set(value) { config.sortDependencies = value }
+
 }

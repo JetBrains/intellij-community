@@ -176,8 +176,8 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl("Default", inspectionToolsSupplier,
                                                                         inspectionProfileManager, baseProfile, null)
       .also { profile ->
-        profile.initInspectionTools()
         profile.copyFrom(baseProfile)
+        profile.initInspectionTools()
         profile.name = profileName ?: "Default"
       }
     configurations.forEach { configuration ->

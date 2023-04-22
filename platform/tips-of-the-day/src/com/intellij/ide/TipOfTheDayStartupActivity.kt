@@ -5,12 +5,12 @@ import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PlatformUtils
 
-private class TipOfTheDayStartupActivity : ProjectPostStartupActivity {
+private class TipOfTheDayStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment || PlatformUtils.isRider() || !GeneralSettings.getInstance().isShowTipsOnStartup) {
       throw ExtensionNotApplicableException.create()

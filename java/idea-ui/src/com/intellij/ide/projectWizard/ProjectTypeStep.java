@@ -590,7 +590,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @Nullable
   private ProjectTemplate getSelectedTemplate() {
-    return myCurrentCard == TEMPLATES_CARD ? myTemplatesList.getSelectedTemplate() : null;
+    return TEMPLATES_CARD.equals(myCurrentCard) ? myTemplatesList.getSelectedTemplate() : null;
   }
 
   @Nullable
@@ -606,7 +606,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   }
 
   public Collection<ProjectTemplate> getAvailableTemplates() {
-    if (myCurrentCard != FRAMEWORKS_CARD) {
+    if (!FRAMEWORKS_CARD.equals(myCurrentCard)) {
       return Collections.emptyList();
     }
     else {

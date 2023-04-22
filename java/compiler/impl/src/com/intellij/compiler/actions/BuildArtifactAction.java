@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.actions;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -103,8 +103,7 @@ public final class BuildArtifactAction extends DumbAwareAction {
 
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     KeyStroke editKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getEditSource());
-    if (popup instanceof ListPopupImpl && settingsService != null && editKeyStroke != null) {
-      ListPopupImpl popupImpl = (ListPopupImpl)popup;
+    if (popup instanceof ListPopupImpl popupImpl && settingsService != null && editKeyStroke != null) {
       popupImpl.registerAction("editArtifact", editKeyStroke, new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {

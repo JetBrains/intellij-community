@@ -1,6 +1,7 @@
 package com.intellij.ide.customize.transferSettings.providers.vswin
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
@@ -21,19 +22,16 @@ import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSP
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import javax.swing.*
 
 private val logger = logger<VSWinTransferSettingsProvider>()
 class VSWinTransferSettingsProvider : TransferSettingsProvider {
   override val name = "Visual Studio"
 
-  private val defaultAdviceBase = "uit Visual Studio and any programs that use Visual Studio tooling. Wait about 30 seconds after that."
-  private val defaultAdvice = "Q$defaultAdviceBase"
-  val failureReason = "This happens if Visual Studio is open or its files are accessed by another program. $defaultAdvice"
-  private val noSettings = "This happens if Visual Studio was not properly uninstalled, if its settings are corrupt, or if it has never been launched."
-  // file is not accessible
-  val fnaReason = "Required configuration file is missing."
-
+  private val defaultAdvice: @Nls String = IdeBundle.message("transfersettings.vs.quit.advise")
+  val failureReason: @Nls String = IdeBundle.message("transfersettings.vs.failureReason", defaultAdvice)
+  private val noSettings: @Nls String = IdeBundle.message("transfersettings.vs.noSettings")
 
   override fun getIdeVersions(skipIds: List<String>): List<BaseIdeVersion> {
     var speedResult = ""
@@ -56,7 +54,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
         return@mapNotNull null
       }
 
-      speedResult += "START $instanceIdForIdeVersion ---------------------------\n"
+      speedResult += "START $instanceIdForIdeVersion ---------------------------\n" // NON-NLS
 
       val name = if (System.getProperty("trl.transfer.debug")?.toBoolean() == true) {
         "${hive.presentationString.replace("Visual Studio", "VS")} ${hive.hiveString}"
@@ -87,7 +85,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       }
 
       val res2 = convertTimeFn(timeFn() - registryTime)
-      speedResult += "registryTime $res2\n"
+      speedResult += "registryTime $res2\n" // NON-NLS
 
       if (registry == null) {
         logger.warn("Critical. Failed to init registry")
@@ -116,7 +114,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       }.let { if (it.isEmpty()) null else it.toString().trimStart() }
 
       val res1 = convertTimeFn(timeFn() - subNameTime)
-      speedResult += "subname $res1\n"
+      speedResult += "subname $res1\n" // NON-NLS
 
       val readSettingsTime = timeFn()
       try {
@@ -133,7 +131,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       }
 
       val res3 = convertTimeFn(timeFn() - readSettingsTime)
-      speedResult += "readSettingsFile $res3\n"
+      speedResult += "readSettingsFile $res3\n" // NON-NLS
 
       val settings by lazy { VSParser(hive).settings }
 
@@ -157,7 +155,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
     if (System.getProperty("trl.transfer.ReSharperGranular").toBoolean()) {
       SwingUtilities.invokeLater {
-        Messages.showInfoMessage(speedResult, "Speedrun")
+        Messages.showInfoMessage(speedResult, "Speedrun") // NON-NLS
       }
     }
 

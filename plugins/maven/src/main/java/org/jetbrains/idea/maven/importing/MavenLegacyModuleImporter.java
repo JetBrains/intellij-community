@@ -33,11 +33,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class MavenLegacyModuleImporter {
@@ -91,26 +87,6 @@ public final class MavenLegacyModuleImporter {
     myRootModelAdapter = mavenRootModelAdapter;
 
     configFolders();
-    configDependencies(importData.getDependencies());
-    LanguageLevel level = MavenImportUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
-    configLanguageLevel(level);
-  }
-
-  public void configMainAndTestAggregator(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
-    assert importData.getModuleData().getType() == StandardMavenModuleType.COMPOUND_MODULE;
-    myRootModelAdapter = mavenRootModelAdapter;
-
-    new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTestAggregator();
-    configDependencies(importData.getDependencies());
-    LanguageLevel level = MavenImportUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
-    configLanguageLevel(level);
-  }
-
-  public void configMainAndTest(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
-    StandardMavenModuleType type = importData.getModuleData().getType();
-    assert type == StandardMavenModuleType.MAIN_ONLY || type == StandardMavenModuleType.TEST_ONLY;
-    myRootModelAdapter = mavenRootModelAdapter;
-    new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTest(type);
     configDependencies(importData.getDependencies());
     LanguageLevel level = MavenImportUtil.getLanguageLevel(myMavenProject, () -> importData.getModuleData().getSourceLanguageLevel());
     configLanguageLevel(level);

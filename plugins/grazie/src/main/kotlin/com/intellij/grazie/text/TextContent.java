@@ -222,7 +222,7 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
    * @deprecated use {@link #joinWithWhitespace(char, List)}
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   static TextContent joinWithWhitespace(List<? extends @NotNull TextContent> components) {
     return joinWithWhitespace(' ', components);
   }

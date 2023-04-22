@@ -30,6 +30,9 @@ class TerminalPromptPanel(private val project: Project,
   private val editor: EditorImpl
   private val completionProvider: TerminalCompletionProvider = NewTerminalSessionCompletionProvider(project)
 
+  val charSize: Dimension
+    get() = Dimension(editor.charHeight, editor.lineHeight)
+
   init {
     document = DocumentImpl("", true)
     editor = TerminalUiUtils.createEditor(document, project, settings)

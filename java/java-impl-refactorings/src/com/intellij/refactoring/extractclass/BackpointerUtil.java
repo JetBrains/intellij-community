@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractclass;
 
@@ -15,15 +15,13 @@ public final class BackpointerUtil {
       final PsiExpression contents = ((PsiParenthesizedExpression)expression).getExpression();
       return isBackpointerReference(contents, value);
     }
-    if (!(expression instanceof PsiReferenceExpression)) {
+    if (!(expression instanceof PsiReferenceExpression reference)) {
       return false;
     }
-    final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
     final PsiElement qualifier = reference.getQualifier();
     if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
       return false;
     }
-    final PsiElement referent = reference.resolve();
-    return referent instanceof PsiField && value.test((PsiField)referent);
+    return reference.resolve() instanceof PsiField field && value.test(field);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -494,8 +494,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         }
       }
 
-      if (def instanceof PsiReferenceExpression && def.getParent() instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)def.getParent();
+      if (def instanceof PsiReferenceExpression && def.getParent() instanceof PsiAssignmentExpression assignmentExpression) {
         if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) return null;
         final PsiExpression rExpr = assignmentExpression.getRExpression();
         if (rExpr != null) return rExpr;

@@ -15,14 +15,13 @@ import javax.swing.JComponent
 internal object GitLabMergeRequestDetailsDescriptionComponentFactory {
   fun create(
     scope: CoroutineScope,
-    detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel,
-    openTimeLineAction: (GitLabMergeRequestId, Boolean) -> Unit
+    detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel
   ): JComponent {
     val descriptionPanel = SimpleHtmlPane().apply {
       bindText(scope, detailsInfoVm.description)
     }
     val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
-      openTimeLineAction(GitLabMergeRequestId.Simple(detailsInfoVm.number), true)
+      detailsInfoVm.showTimeline()
     }.apply {
       border = JBUI.Borders.emptyTop(4)
     }

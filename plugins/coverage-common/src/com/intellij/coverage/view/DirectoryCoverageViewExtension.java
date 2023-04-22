@@ -104,6 +104,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
           }
         }
         final CoverageListNode e = new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean, false);
+        e.setParent(node);
         if (!e.getChildren().isEmpty()) {
           children.add(e);
         }
@@ -116,11 +117,9 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
             continue;
           }
         }
-        children.add(new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean, true));
-      }
-
-      for (AbstractTreeNode childNode : children) {
-        childNode.setParent(node);
+        final CoverageListNode e = new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean, true);
+        e.setParent(node);
+        children.add(e);
       }
     }
     return children;

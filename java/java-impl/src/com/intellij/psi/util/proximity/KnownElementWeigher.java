@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -43,11 +43,10 @@ public class KnownElementWeigher extends ProximityWeigher {
       return 0;
     }
 
-    if (element instanceof PsiClass) {
-      return getJdkClassProximity((PsiClass)element);
+    if (element instanceof PsiClass aClass) {
+      return getJdkClassProximity(aClass);
     }
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
         String methodName = method.getName();

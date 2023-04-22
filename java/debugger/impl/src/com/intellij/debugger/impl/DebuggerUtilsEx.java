@@ -140,8 +140,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return checkedType;
     }
 
-    if (checkedType instanceof ClassType) {
-      ClassType classType = (ClassType)checkedType;
+    if (checkedType instanceof ClassType classType) {
       ClassType superClassType = classType.superclass();
       if (superClassType != null) {
         ReferenceType superClass = getSuperClass(baseQualifiedName, superClassType);

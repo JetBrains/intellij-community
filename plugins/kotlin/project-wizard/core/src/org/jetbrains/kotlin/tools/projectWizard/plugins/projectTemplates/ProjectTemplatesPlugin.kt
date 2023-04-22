@@ -26,6 +26,7 @@ class ProjectTemplatesPlugin(context: Context) : Plugin(context) {
             },
         ) {
             values = ProjectTemplate.ALL
+                .filter { it.isVisible() }
             isRequired = false
             tooltipText = KotlinNewProjectWizardBundle.message("plugin.templates.setting.template.tooltip")
         }

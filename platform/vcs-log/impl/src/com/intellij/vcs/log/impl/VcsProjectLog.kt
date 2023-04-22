@@ -16,7 +16,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Ref
@@ -228,7 +228,7 @@ class VcsProjectLog(private val project: Project) : Disposable {
     }
   }
 
-  internal class InitLogStartupActivity : ProjectPostStartupActivity {
+  internal class InitLogStartupActivity : ProjectActivity {
     init {
       val app = ApplicationManager.getApplication()
       if (app.isUnitTestMode || app.isHeadlessEnvironment) {

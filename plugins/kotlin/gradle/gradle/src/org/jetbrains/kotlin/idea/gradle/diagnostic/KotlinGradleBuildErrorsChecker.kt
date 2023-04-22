@@ -5,7 +5,7 @@ import com.intellij.diagnostic.KotlinCompilerCrash
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileReader
@@ -15,7 +15,7 @@ import kotlin.time.Duration.Companion.minutes
  * This class schedules checks of Kotlin Compiler crashes which took place outside IDE, e.g. when compilation
  * was executed from Gradle.
  */
-class KotlinGradleBuildErrorsChecker : ProjectPostStartupActivity {
+class KotlinGradleBuildErrorsChecker : ProjectActivity {
     companion object {
         const val EXECUTION_DELAY_MIN = 2L
         const val BUILD_ERROR_REPORTS_FOLDER = ".gradle/kotlin/errors"

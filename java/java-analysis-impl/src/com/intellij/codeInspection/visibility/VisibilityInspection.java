@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.analysis.AnalysisScope;
@@ -99,10 +99,9 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
                                                            @NotNull final InspectionManager manager,
                                                            @NotNull final GlobalInspectionContext globalContext,
                                                            @NotNull final ProblemDescriptionsProcessor processor) {
-    if (!(refEntity instanceof RefJavaElement)) {
+    if (!(refEntity instanceof RefJavaElement refElement)) {
       return null;
     }
-    final RefJavaElement refElement = (RefJavaElement)refEntity;
 
     if (refElement instanceof RefParameter) return null;
     if (refElement.isSyntheticJSP()) return null;
@@ -135,8 +134,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (refElement instanceof RefImplicitConstructor) return null;
 
     //ignore library override methods.
-    if (refElement instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod) refElement;
+    if (refElement instanceof RefMethod refMethod) {
       if (refMethod.isExternalOverride() || refMethod.isRecordAccessor()) return null;
     }
 
@@ -248,13 +246,10 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (isAbstractMethod(refElement)) {
       weakestAccess = PsiModifier.PROTECTED;
     }
-    if (refElement instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refElement;
-      if (refMethod.isConstructor()) {
-        final RefClass ownerClass = refMethod.getOwnerClass();
-        if (ownerClass != null && ownerClass.isRecord()) {
-          weakestAccess = ownerClass.getAccessModifier();
-        }
+    if (refElement instanceof RefMethod refMethod && refMethod.isConstructor()) {
+      final RefClass ownerClass = refMethod.getOwnerClass();
+      if (ownerClass != null && ownerClass.isRecord()) {
+        weakestAccess = ownerClass.getAccessModifier();
       }
     }
 
@@ -307,9 +302,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (!isAccessibleFrom(refElement, to, accessModifier)) return false;
     }
 
-    if (to instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod) to;
-
+    if (to instanceof RefMethod refMethod) {
       if (refMethod.isAbstract() && (refMethod.getDerivedMethods().isEmpty() || PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()))) return false;
 
       for (RefMethod refOverride : refMethod.getDerivedMethods()) {
@@ -322,8 +315,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
     }
 
-    if (to instanceof RefClass) {
-      RefClass refClass = (RefClass) to;
+    if (to instanceof RefClass refClass) {
       for (RefClass subClass : refClass.getSubClasses()) {
         if (!isAccessibleFrom(subClass, to, accessModifier)) return false;
       }
@@ -503,8 +495,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static void ignoreElement(@NotNull ProblemDescriptionsProcessor processor, @NotNull RefEntity refElement){
     processor.ignoreElement(refElement);
 
-    if (refElement instanceof RefClass) {
-      RefClass refClass = (RefClass) refElement;
+    if (refElement instanceof RefClass refClass) {
       RefMethod defaultConstructor = refClass.getDefaultConstructor();
       if (defaultConstructor != null) {
         processor.ignoreElement(defaultConstructor);
@@ -608,8 +599,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
         LOG.assertTrue(list != null);
 
-        if (element instanceof PsiMethod) {
-          PsiMethod psiMethod = (PsiMethod)element;
+        if (element instanceof PsiMethod psiMethod) {
           PsiClass containingClass = psiMethod.getContainingClass();
           if (containingClass != null && containingClass.getParent() instanceof PsiFile &&
               PsiModifier.PRIVATE.equals(myHint) &&

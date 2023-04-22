@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -242,8 +242,7 @@ public final class SuspiciousMethodCallUtil {
 
     final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
     PsiElement element = resolveResult.getElement();
-    if (!(element instanceof PsiMethod)) return null;
-    PsiMethod calleeMethod = (PsiMethod)element;
+    if (!(element instanceof PsiMethod calleeMethod)) return null;
     NullableLazyValue<PsiMethod> lazyContextMethod = lazyNullable(() -> PsiTreeUtil.getParentOfType(methodExpression, PsiMethod.class));
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter

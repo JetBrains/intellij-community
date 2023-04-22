@@ -1,51 +1,63 @@
 MODULES
-    my-app
-    my-app.commonMain
-        Gradle: unresolved:unresolved:1.0 (COMPILE)
-    my-app.commonTest
-        my-app.commonMain (friend, TEST)
-        Gradle: unresolved:unresolved:1.0 (TEST)
-    my-app.iosArm64Main
-        my-app.commonMain (refines, COMPILE)
-        my-app.iosMain (refines, COMPILE)
-        Gradle: unresolved:unresolved:1.0 (COMPILE)
-    my-app.iosArm64Test
-        my-app.commonMain (friend, TEST)
-        my-app.commonTest (refines, TEST)
-        my-app.iosArm64Main (friend, TEST)
-        my-app.iosMain (friend, TEST)
-        my-app.iosTest (refines, TEST)
-        Gradle: unresolved:unresolved:1.0 (TEST)
-    my-app.iosMain
-        my-app.commonMain (refines, COMPILE)
-        Gradle: unresolved:unresolved:1.0 (COMPILE)
-    my-app.iosTest
-        my-app.commonMain (friend, TEST)
-        my-app.commonTest (refines, TEST)
-        my-app.iosMain (friend, TEST)
-        Gradle: unresolved:unresolved:1.0 (TEST)
-    my-app.iosX64Main
-        my-app.commonMain (refines, COMPILE)
-        my-app.iosMain (refines, COMPILE)
-        Gradle: unresolved:unresolved:1.0 (COMPILE)
-    my-app.iosX64Test
-        my-app.commonMain (friend, TEST)
-        my-app.commonTest (refines, TEST)
-        my-app.iosMain (friend, TEST)
-        my-app.iosTest (refines, TEST)
-        my-app.iosX64Main (friend, TEST)
-        Gradle: unresolved:unresolved:1.0 (TEST)
-    my-app.jvmMain
-        my-app.commonMain (refines, COMPILE)
-        Gradle: unresolved:unresolved:1.0 (COMPILE)
-    my-app.jvmTest
-        my-app.commonMain (friend, TEST)
-        my-app.commonTest (refines, TEST)
-        my-app.jvmMain (friend, TEST)
-        my-app.jvmMain (friend, RUNTIME)
-        Gradle: unresolved:unresolved:1.0 (TEST)
+my-app
+
+my-app.commonMain
+    unresolved:unresolved:1.0 (COMPILE)
+
+my-app.commonTest
+    commonMain (friend, TEST)
+    unresolved:unresolved:1.0 (TEST)
+
+my-app.iosArm64Main
+    commonMain (refines, COMPILE)
+    iosMain (refines, COMPILE)
+    unresolved:unresolved:1.0 (COMPILE)
+
+my-app.iosArm64Test
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    iosArm64Main (friend, TEST)
+    iosMain (friend, TEST)
+    iosTest (refines, TEST)
+    unresolved:unresolved:1.0 (TEST)
+
+my-app.iosMain
+    commonMain (refines, COMPILE)
+    unresolved:unresolved:1.0 (COMPILE)
+
+my-app.iosTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    iosMain (friend, TEST)
+    unresolved:unresolved:1.0 (TEST)
+
+my-app.iosX64Main
+    commonMain (refines, COMPILE)
+    iosMain (refines, COMPILE)
+    unresolved:unresolved:1.0 (COMPILE)
+
+my-app.iosX64Test
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    iosMain (friend, TEST)
+    iosTest (refines, TEST)
+    iosX64Main (friend, TEST)
+    unresolved:unresolved:1.0 (TEST)
+
+my-app.jvmMain
+    commonMain (refines, COMPILE)
+    unresolved:unresolved:1.0 (COMPILE)
+
+my-app.jvmTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    jvmMain (friend, RUNTIME)
+    jvmMain (friend, TEST)
+    unresolved:unresolved:1.0 (TEST)
+
 
 Test configuration:
 - hiding following roots: resources, android-specific roots, generated
 - showing only following facet fields: targetPlatform
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- dependencies order is not checked

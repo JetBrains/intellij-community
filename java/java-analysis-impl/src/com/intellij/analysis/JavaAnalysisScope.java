@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.analysis;
 
@@ -40,8 +40,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   public AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     if (myType == FILE) {
-      if (myElement instanceof PsiJavaFile && !FileTypeUtils.isInServerPageFile(myElement)) {
-        PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
+      if (myElement instanceof PsiJavaFile psiJavaFile && !FileTypeUtils.isInServerPageFile(myElement)) {
         final PsiClass[] classes = psiJavaFile.getClasses();
         boolean onlyPackLocalClasses = true;
         for (final PsiClass aClass : classes) {
@@ -102,8 +101,7 @@ public class JavaAnalysisScope extends AnalysisScope {
 
   @Override
   public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
-    if (myElement instanceof PsiPackage) {
-      final PsiPackage pack = (PsiPackage)myElement;
+    if (myElement instanceof PsiPackage pack) {
       final Set<PsiDirectory> dirs = new HashSet<>();
       ApplicationManager.getApplication().runReadAction(() -> {
         ContainerUtil.addAll(dirs, pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject())));

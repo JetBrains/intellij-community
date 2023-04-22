@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.*;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -1261,10 +1263,8 @@ public final class TypeConversionUtil {
    *   }
    * </pre>
    */
+  @ApiStatus.Experimental
   public static boolean existSuperPathWithoutRepetitiveArguments(PsiClass psiClass, PsiClass superClass) {
-    if (!psiClass.hasTypeParameters() || !superClass.hasTypeParameters()) {
-      return false;
-    }
     final Map<PsiClass, Object> map = CachedValuesManager.getCachedValue(psiClass, () -> {
       HashingStrategy<PsiClass> strategy = new HashingStrategy<PsiClass>() {
         @Override
@@ -1280,11 +1280,6 @@ public final class TypeConversionUtil {
           if (o1 == null || o2 == null) {
             return false;
           }
-
-          String qname1 = o1.getQualifiedName();
-          if (qname1 != null) {
-            return qname1.equals(o2.getQualifiedName());
-          }
           return o1.getManager().areElementsEquivalent(o1, o2);
         }
       };
@@ -1292,29 +1287,22 @@ public final class TypeConversionUtil {
       final Object dummyValue = new Object();
       ArrayDeque<PsiClassType> queue = new ArrayDeque<>();
       Function<PsiClass, Set<PsiTypeParameter>> collectPsiTypeParameters = aClass -> {
-        PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
-        return Arrays.stream(typeParameters)
+        return StreamSupport.stream(PsiUtil.typeParametersIterable(aClass).spliterator(), false)
           .filter(t -> t.getBounds().length == 0)
           .collect(Collectors.toSet());
       };
       BiPredicate<Set<PsiTypeParameter>, PsiClassType> isPossibleWay = (sourceTypeParameters, superType) -> {
-        Map<PsiTypeParameter, Integer> count = new HashMap<>();
-        PsiType[] superTypeParameters = superType.getParameters();
-        if (superTypeParameters.length == 0) {
+        Map<PsiType, Integer> count = new HashMap<>();
+        PsiClass resolved = superType.resolve();
+        if (resolved == null) {
           return false;
         }
-        for (PsiType type : superTypeParameters) {
-          if (!(type instanceof PsiClassType)) {
-            continue;
-          }
-          PsiClassType currentClassType = (PsiClassType)type;
-          JvmTypeResolveResult resolvedType = currentClassType.resolveType();
-          if (resolvedType == null) {
-            continue;
-          }
-          JvmTypeDeclaration declaration = resolvedType.getDeclaration();
-          if (declaration instanceof PsiTypeParameter && sourceTypeParameters.contains(declaration)) {
-            count.merge((PsiTypeParameter)declaration, 1, (oldValue, newValue) -> oldValue + newValue);
+        Set<PsiType> sourceTypes = sourceTypeParameters.stream().map(t -> PsiSubstitutor.EMPTY.substitute(t))
+          .collect(Collectors.toSet());
+        Map<PsiTypeParameter, PsiType> substitutionMap = superType.resolveGenerics().getSubstitutor().getSubstitutionMap();
+        for (PsiType type : substitutionMap.values()) {
+          if (sourceTypes.contains(type)) {
+            count.merge(type, 1, (oldValue, newValue) -> oldValue + newValue);
           }
         }
         return ContainerUtil.and(count.values(), t -> t <= 1);

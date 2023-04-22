@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -44,8 +44,7 @@ public class BoxPrimitiveInTernaryFix implements LocalQuickFix {
 
   private static PsiConditionalExpression getParentConditional(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (!(parent instanceof PsiConditionalExpression)) return null;
-    PsiConditionalExpression conditional = (PsiConditionalExpression)parent;
+    if (!(parent instanceof PsiConditionalExpression conditional)) return null;
     PsiType type = conditional.getType();
     if (type == null) return null;
     PsiExpression thenExpression = conditional.getThenExpression();

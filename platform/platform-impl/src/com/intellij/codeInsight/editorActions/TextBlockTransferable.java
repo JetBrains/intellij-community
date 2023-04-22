@@ -53,7 +53,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   @Override
   public int getSize() {
     int size = myText.length();
-    if (myRawText != null && myRawText.rawText != myText) {
+    if (myRawText != null && !Strings.areSameInstance(myRawText.rawText, myText)) {
       size += StringUtil.length(myRawText.rawText);
     }
     return size;

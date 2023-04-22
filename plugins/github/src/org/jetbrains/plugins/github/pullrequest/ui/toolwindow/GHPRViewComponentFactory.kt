@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.collaboration.async.DisposingScope
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -24,6 +25,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.changes.GitParsedChangesBundle
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.github.api.data.GHCommit
@@ -32,13 +34,15 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewed
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.changes.*
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRDiffRequestChainProducer
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupport
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupportImpl
+import org.jetbrains.plugins.github.pullrequest.ui.changes.showPullRequestProgress
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.*
@@ -57,7 +61,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private val detailsLoadingModel = GHCompletableFutureLoadingModel<GHPullRequest>(disposable)
   private val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(disposable)
-  private val changesLoadingModel = GHCompletableFutureLoadingModel<GHPRChangesProvider>(disposable)
+  private val changesLoadingModel = GHCompletableFutureLoadingModel<GitParsedChangesBundle>(disposable)
   private val viewedStateLoadingModel = GHCompletableFutureLoadingModel<Map<String, GHPullRequestFileViewedState>>(disposable)
 
   init {
@@ -135,7 +139,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private class Controller(
     private val tree: ChangesTree,
-    private val changesProviderModel: SingleValueModel<GHPRChangesProvider>,
+    private val changesProviderModel: SingleValueModel<GitParsedChangesBundle>,
     private val commitsVm: GHPRCommitsViewModel,
     private val diffBridge: GHPRDiffController
   ) : GHPRCommitBrowserComponentController {
@@ -241,10 +245,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private fun createCommitChangesModel(
     scope: CoroutineScope,
-    changesProviderModel: SingleValueModel<GHPRChangesProvider>,
+    changesProviderModel: SingleValueModel<GitParsedChangesBundle>,
     commitsAndFilesVm: GHPRCommitsViewModel
-  ): SingleValueModel<List<Change>> {
-    val commitChangesModel: SingleValueModel<List<Change>> = SingleValueModel(emptyList())
+  ): SingleValueModel<Collection<Change>> {
+    val commitChangesModel: SingleValueModel<Collection<Change>> = SingleValueModel(emptyList())
     scope.launch(start = CoroutineStart.UNDISPATCHED) {
       commitsAndFilesVm.selectedCommit.collect { selectedCommit ->
         commitChangesModel.value = if (selectedCommit == null) {
@@ -261,11 +265,11 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private fun createChangesTree(
     parentPanel: JPanel,
-    model: SingleValueModel<List<Change>>,
+    model: SingleValueModel<Collection<Change>>,
     emptyTextText: String,
     getCustomData: ChangesTree.(String) -> Any? = { null }
   ): ChangesTree {
-    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
+    val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
 
     val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider,
                                                           dataContext.filesManager)

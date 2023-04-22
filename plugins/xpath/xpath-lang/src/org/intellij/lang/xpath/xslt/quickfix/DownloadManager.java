@@ -54,7 +54,7 @@ public abstract class DownloadManager {
   }
 
   public void fetch(@NotNull final String location) throws DownloadException {
-    if (resourceManager.getResourceLocation(location, myProject) != location) {
+    if (!location.equals(resourceManager.getResourceLocation(location, myProject))) {
       return;
     }
 
@@ -119,7 +119,7 @@ public abstract class DownloadManager {
       throw new DownloadException(location, e);
     }
     finally {
-      if (file != null && resourceManager.getResourceLocation(location, myProject) == location) {
+      if (file != null && location.equals(resourceManager.getResourceLocation(location, myProject))) {
         // something went wrong. get rid of the file
         FileUtil.delete(file);
       }

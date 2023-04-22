@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -292,8 +293,10 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         if (!(psiFile instanceof XmlFile)) continue;
 
-        PsiElement psiElement = psiFile.findElementAt(entry.getOffset());
-        XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
+        XmlTag xmlTag = AstLoadingFilter.forceAllowTreeLoading(psiFile, () -> {
+          PsiElement psiElement = psiFile.findElementAt(entry.getOffset());
+          return PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
+        });
         tags.add(xmlTag);
       }
       return true;

@@ -22,6 +22,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testCond1() { doParserTest("cond ?"); }
   public void testCond2() { doParserTest("cond ? true"); }
   public void testCond3() { doParserTest("cond ? true :"); }
+  public void testCond4() { doParserTest("cond ? true : false ? true : false"); }
 
   public void testCondOr0() { doParserTest("a || b || c"); }
   public void testCondOr1() { doParserTest("a ||"); }

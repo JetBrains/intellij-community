@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.codeInsight.Nullability;
@@ -86,10 +86,9 @@ public class NullityInferrer {
         continue;
       }
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiAssignmentExpression)) {
+      if (!(parent instanceof PsiAssignmentExpression assignment)) {
         continue;
       }
-      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
       if (assignment.getLExpression().equals(element) &&
           !expressionIsNeverNull(assignment.getRExpression())) {
         return false;
@@ -110,10 +109,9 @@ public class NullityInferrer {
         continue;
       }
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiAssignmentExpression)) {
+      if (!(parent instanceof PsiAssignmentExpression assignment)) {
         continue;
       }
-      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
       if (assignment.getLExpression().equals(element) && expressionIsSometimesNull(assignment.getRExpression())) {
         return true;
       }
@@ -337,8 +335,7 @@ public class NullityInferrer {
         return;
       }
       final PsiElement grandParent = parameter.getDeclarationScope();
-      if (grandParent instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)grandParent;
+      if (grandParent instanceof PsiMethod method) {
         if (method.getBody() != null) {
           if (JavaSourceInference.inferNullability(parameter) == Nullability.NOT_NULL) {
             registerNotNullAnnotation(parameter);
@@ -364,8 +361,7 @@ public class NullityInferrer {
       else if (grandParent instanceof PsiForeachStatement) {
         for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(grandParent))) {
           final PsiElement place = reference.getElement();
-          if (place instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression expr = (PsiReferenceExpression)place;
+          if (place instanceof PsiReferenceExpression expr) {
             final PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
             if (processParameter(parameter, expr, parent)) return;
           }
@@ -405,8 +401,8 @@ public class NullityInferrer {
       else if (parent instanceof PsiInstanceOfExpression) {
         return true;
       }
-      else if (parent instanceof PsiReferenceExpression) {
-        final PsiExpression qualifierExpression = ((PsiReferenceExpression)parent).getQualifierExpression();
+      else if (parent instanceof PsiReferenceExpression ref) {
+        final PsiExpression qualifierExpression = ref.getQualifierExpression();
         if (qualifierExpression == expr) {
           registerNotNullAnnotation(parameter);
           return true;
@@ -422,27 +418,20 @@ public class NullityInferrer {
           }
         }
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        if (((PsiAssignmentExpression)parent).getRExpression() == expr) {
-          final PsiExpression expression = ((PsiAssignmentExpression)parent).getLExpression();
-          if (expression instanceof PsiReferenceExpression) {
-            final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
-            if (resolve instanceof PsiVariable) {
-              final PsiVariable localVar = (PsiVariable)resolve;
-              if (isNotNull(localVar)) {
-                registerNotNullAnnotation(parameter);
-                return true;
-              }
-            }
-          }
+      else if (parent instanceof PsiAssignmentExpression assignment) {
+        if (assignment.getRExpression() == expr &&
+            assignment.getLExpression() instanceof PsiReferenceExpression ref &&
+            ref.resolve() instanceof PsiVariable localVar && isNotNull(localVar)) {
+          registerNotNullAnnotation(parameter);
+          return true;
         }
-      } else if (parent instanceof PsiForeachStatement) {
-        if (((PsiForeachStatement)parent).getIteratedValue() == expr) {
+      } else if (parent instanceof PsiForeachStatement forEach) {
+        if (forEach.getIteratedValue() == expr) {
           registerNotNullAnnotation(parameter);
           return true;
         }
       }
-      else if (parent instanceof PsiSwitchStatement && ((PsiSwitchStatement)parent).getExpression() == expr) {
+      else if (parent instanceof PsiSwitchStatement switchStatement && switchStatement.getExpression() == expr) {
         registerNotNullAnnotation(parameter);
         return true;
       }

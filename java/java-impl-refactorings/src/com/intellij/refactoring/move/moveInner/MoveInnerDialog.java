@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -184,8 +184,7 @@ public class MoveInnerDialog extends MoveDialogBase {
 
   @Nullable
   private PsiElement getTargetContainer() {
-    if (myTargetContainer instanceof PsiDirectory) {
-      final PsiDirectory psiDirectory = (PsiDirectory)myTargetContainer;
+    if (myTargetContainer instanceof PsiDirectory psiDirectory) {
       PsiPackage oldPackage = getTargetPackage();
       String name = oldPackage == null ? "" : oldPackage.getQualifiedName();
       final String targetName = getPackageName();
@@ -255,18 +254,14 @@ public class MoveInnerDialog extends MoveDialogBase {
             }
           }
         }
-        if (message == null) {
-          if (myTargetContainer instanceof PsiClass) {
-            PsiClass targetClass = (PsiClass)myTargetContainer;
-            PsiClass[] classes = targetClass.getInnerClasses();
-            for (PsiClass aClass : classes) {
-              if (className.equals(aClass.getName())) {
-                message = JavaRefactoringBundle.message("inner.class.exists", className, targetClass.getName());
-                break;
-              }
+        if (message == null && myTargetContainer instanceof PsiClass targetClass) {
+          PsiClass[] classes = targetClass.getInnerClasses();
+          for (PsiClass aClass : classes) {
+            if (className.equals(aClass.getName())) {
+              message = JavaRefactoringBundle.message("inner.class.exists", className, targetClass.getName());
+              break;
             }
           }
-
         }
       }
     }
@@ -340,8 +335,7 @@ public class MoveInnerDialog extends MoveDialogBase {
 
   @Nullable
   private PsiPackage getTargetPackage() {
-    if (myTargetContainer instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)myTargetContainer;
+    if (myTargetContainer instanceof PsiDirectory directory) {
       return JavaDirectoryService.getInstance().getPackage(directory);
     }
     return null;

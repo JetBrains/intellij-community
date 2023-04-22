@@ -14,10 +14,14 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.ColorIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.CollaborationToolsIcons
 import org.jetbrains.plugins.github.GithubIcons
@@ -85,7 +89,7 @@ object GHUIUtil {
     return datePrefix + prettyDate
   }
 
-  fun <T> showChooserPopup(@NlsContexts.PopupTitle popupTitle: String, parentComponent: JComponent,
+  fun <T> showChooserPopup(parentComponent: JComponent,
                            cellRenderer: SelectionListCellRenderer<T>,
                            currentList: List<T>,
                            availableListFuture: CompletableFuture<List<T>>)
@@ -113,7 +117,7 @@ object GHUIUtil {
       cellRenderer.getText(it.value)
     }
 
-    val panel = JBUI.Panels.simplePanel(scrollPane).addToTop(searchField.textEditor)
+    val panel = JBUI.Panels.simplePanel(scrollPane).addToTop(searchField)
     ListUtil.installAutoSelectOnMouseMove(list)
 
     fun toggleSelection() {
@@ -136,7 +140,6 @@ object GHUIUtil {
     JBPopupFactory.getInstance().createComponentPopupBuilder(panel, searchField)
       .setRequestFocus(true)
       .setCancelOnClickOutside(true)
-      .setTitle(popupTitle)
       .setResizable(true)
       .setMovable(true)
       .setKeyboardActions(listOf(Pair.create(ActionListener { toggleSelection() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))))
@@ -176,19 +179,15 @@ object GHUIUtil {
 
   data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
 
-  sealed class SelectionListCellRenderer<T> : ListCellRenderer<SelectableWrapper<T>>, BorderLayoutPanel() {
-
-    private val mainLabel = JLabel()
-    private val checkIconLabel = JLabel()
-
-    init {
-      checkIconLabel.iconTextGap = JBUI.scale(UIUtil.DEFAULT_VGAP)
-      checkIconLabel.border = JBUI.Borders.empty(0, 4)
-
-      addToLeft(checkIconLabel)
-      addToCenter(mainLabel)
-
-      border = JBUI.Borders.empty(4, 0)
+  sealed class SelectionListCellRenderer<T> : ListCellRenderer<SelectableWrapper<T>> {
+    private val checkBox: JBCheckBox = JBCheckBox().apply {
+      isOpaque = false
+    }
+    private val label: SimpleColoredComponent = SimpleColoredComponent()
+    private val panel = BorderLayoutPanel(10, 5).apply {
+      addToLeft(checkBox)
+      addToCenter(label)
+      border = JBUI.Borders.empty(5)
     }
 
     override fun getListCellRendererComponent(list: JList<out SelectableWrapper<T>>,
@@ -196,23 +195,26 @@ object GHUIUtil {
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      foreground = UIUtil.getListForeground(isSelected, true)
-      background = UIUtil.getListBackground(isSelected, true)
+      checkBox.apply {
+        this.isSelected = value.selected
+        this.isFocusPainted = cellHasFocus
+        this.isFocusable = cellHasFocus
+      }
 
-      mainLabel.foreground = foreground
-      mainLabel.font = font
+      label.apply {
+        clear()
+        append(getText(value.value))
+        icon = getIcon(value.value)
+        foreground = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
+      }
 
-      mainLabel.text = getText(value.value)
-      mainLabel.icon = getIcon(value.value)
+      UIUtil.setBackgroundRecursively(panel, ListUiUtil.WithTallRow.background(list, isSelected, true))
 
-      val icon = LafIconLookup.getIcon("checkmark", isSelected, false)
-      checkIconLabel.icon = if (value.selected) icon else EmptyIcon.create(icon)
-
-      return this
+      return panel
     }
 
-    @NlsContexts.Label
-    abstract fun getText(value: T): String
+    abstract fun getText(value: T): @NlsContexts.Label String
+
     abstract fun getIcon(value: T): Icon
 
     class PRReviewers(private val iconsProvider: GHAvatarIconsProvider)

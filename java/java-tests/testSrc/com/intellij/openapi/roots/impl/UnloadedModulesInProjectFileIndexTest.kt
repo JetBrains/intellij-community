@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
@@ -29,9 +30,6 @@ class UnloadedModulesInProjectFileIndexTest {
   private val fileIndex
     get() = ProjectFileIndex.getInstance(projectModel.project)
 
-  private val directoryIndex
-    get() = DirectoryIndex.getInstance(projectModel.project)
-  
   @Test
   fun `unload module`() {
     val unloadedModule = projectModel.createModule("unloaded")
@@ -42,7 +40,7 @@ class UnloadedModulesInProjectFileIndexTest {
     assertNull(fileIndex.getUnloadedModuleNameForFile(file))
 
     projectModel.setUnloadedModules("unloaded")
-    
+
     fileIndex.assertInUnloadedModule(file, "unloaded", contentRoot)
     fileIndex.assertInUnloadedModule(contentRoot, "unloaded", contentRoot)
 
@@ -59,16 +57,20 @@ class UnloadedModulesInProjectFileIndexTest {
     ModuleRootModificationUtil.addDependency(unloadedModule, main)
     ModuleRootModificationUtil.addDependency(main, util)
     ModuleRootModificationUtil.addDependency(main, common, DependencyScope.COMPILE, true)
-    
+
     projectModel.setUnloadedModules("unloaded")
-    
-    assertSameElements(directoryIndex.getDependentUnloadedModules(main), "unloaded")
-    assertEmpty(directoryIndex.getDependentUnloadedModules(util))
-    assertSameElements(directoryIndex.getDependentUnloadedModules(common), "unloaded")
+
+    assertSameElements(getDependentUnloadedModules(main), "unloaded")
+    assertEmpty(getDependentUnloadedModules(util))
+    assertSameElements(getDependentUnloadedModules(common), "unloaded")
 
     projectModel.setUnloadedModules()
-    assertEmpty(directoryIndex.getDependentUnloadedModules(main))
-    assertEmpty(directoryIndex.getDependentUnloadedModules(common))
+    assertEmpty(getDependentUnloadedModules(main))
+    assertEmpty(getDependentUnloadedModules(common))
+  }
+
+  private fun getDependentUnloadedModules(main: Module): MutableSet<String> {
+    return DirectoryIndex.getInstance(projectModel.project).getDependentUnloadedModules(main)
   }
 
   @Test
@@ -82,11 +84,11 @@ class UnloadedModulesInProjectFileIndexTest {
 
     projectModel.setUnloadedModules("unloaded")
     fileIndex.assertScope(libraryRoot, NOT_IN_PROJECT)
-    
+
     projectModel.setUnloadedModules()
     fileIndex.assertScope(libraryRoot, IN_LIBRARY)
   }
-  
+
   @Test
   fun `project-level library in unloaded module`() {
     val unloaded = projectModel.createModule("unloaded")
@@ -99,7 +101,7 @@ class UnloadedModulesInProjectFileIndexTest {
 
     projectModel.setUnloadedModules("unloaded")
     fileIndex.assertScope(libraryRoot, NOT_IN_PROJECT)
-    
+
     projectModel.setUnloadedModules()
     fileIndex.assertScope(libraryRoot, IN_LIBRARY)
   }

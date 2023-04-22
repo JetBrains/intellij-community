@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -80,8 +80,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
     }
 
     CombinedCollector tryUnwrap() {
-      if (myDownstream instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)myDownstream;
+      if (myDownstream instanceof PsiMethodCallExpression call) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         if (myFinisher == null && isCollectorMethod(call, "collectingAndThen")) {
           return new CombinedCollector(args[0], args[1], myMapper);

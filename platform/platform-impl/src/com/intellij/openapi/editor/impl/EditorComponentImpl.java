@@ -8,6 +8,7 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
@@ -47,7 +48,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.Grayer;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -128,8 +128,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != uiSettings.getPresentationModeFontSize()) {
-      myEditor.setFontSize(uiSettings.getPresentationModeFontSize());
+    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != UISettingsUtils.getPresentationModeFontSize()) {
+      myEditor.setFontSize(UISettingsUtils.getPresentationModeFontSize());
     }
   }
 

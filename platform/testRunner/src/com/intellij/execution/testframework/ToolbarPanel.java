@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.runners.PreferredPlace;
+import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
@@ -103,13 +103,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     final AnAction[] importActions = properties.createImportActions();
     if (importActions != null) {
-      for (AnAction importAction : importActions) {
-        if (importAction.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.TOOLBAR) {
-          actionGroup.add(importAction);
-        } else {
-          moreGroup.add(importAction);
-        }
-      }
+      RunContentBuilder.addActionsWithConstraints(importActions, Constraints.LAST, actionGroup, moreGroup);
     }
 
     final RunProfile configuration = properties.getConfiguration();

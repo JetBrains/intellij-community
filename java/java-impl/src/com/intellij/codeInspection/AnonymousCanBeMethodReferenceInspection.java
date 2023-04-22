@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection.MethodReferenceCandidate;
@@ -69,14 +69,13 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
             LambdaCanBeMethodReferenceInspection
               .canBeMethodReferenceProblem(method.getParameterList().getParameters(), aClass.getBaseClassType(), aClass.getParent(),
                                            methodReferenceCandidate.myExpression);
-          if (candidate instanceof PsiCallExpression) {
-            final PsiCallExpression callExpression = (PsiCallExpression)candidate;
+          if (candidate instanceof PsiCallExpression callExpression) {
             final PsiMethod resolveMethod = callExpression.resolveMethod();
             if (resolveMethod != method &&
                 !AnonymousCanBeLambdaInspection.functionalInterfaceMethodReferenced(resolveMethod, aClass, callExpression)) {
               final PsiElement parent = aClass.getParent();
-              if (parent instanceof PsiNewExpression) {
-                final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
+              if (parent instanceof PsiNewExpression newExpression) {
+                final PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
                 if (classReference != null) {
                   final PsiElement lBrace = aClass.getLBrace();
                   LOG.assertTrue(lBrace != null);

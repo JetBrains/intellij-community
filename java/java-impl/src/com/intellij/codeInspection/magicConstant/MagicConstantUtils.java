@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -120,7 +120,7 @@ public final class MagicConstantUtils {
   /**
    * @deprecated used {@link #getAllowedValues(PsiModifierListOwner, PsiType, PsiElement)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type) {
     return getAllowedValues(element, type, null);
@@ -196,8 +196,7 @@ public final class MagicConstantUtils {
       }
     }
     PsiMethod method = null;
-    if (owner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)owner;
+    if (owner instanceof PsiParameter parameter) {
       PsiElement scope = parameter.getDeclarationScope();
       if (!(scope instanceof PsiMethod)) return null;
       PsiElement nav = scope.getNavigationElement();
@@ -259,8 +258,7 @@ public final class MagicConstantUtils {
       if (words.size() != 2) continue;
       String ref = words.get(1);
       PsiExpression constRef = JavaPsiFacade.getElementFactory(manager.getProject()).createExpressionFromText(ref, aClass);
-      if (!(constRef instanceof PsiReferenceExpression)) continue;
-      PsiReferenceExpression expr = (PsiReferenceExpression)constRef;
+      if (!(constRef instanceof PsiReferenceExpression expr)) continue;
       values.add(expr);
     }
     if (values.isEmpty()) return null;

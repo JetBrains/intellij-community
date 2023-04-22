@@ -19,6 +19,7 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +79,7 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
     PermanentLinearGraphImpl newLinearGraph = PermanentLinearGraphBuilder.newInstance(graphCommits).build();
 
     int[] layoutIndexes = new int[end - start];
-    List<Integer> headNodeIndexes = new ArrayList<>();
+    it.unimi.dsi.fastutil.ints.IntList headNodeIndexes = new IntArrayList();
 
     Object2IntMap<CommitId> commitIdToInteger = reverseCommitIdMap(permanentCommitsInfo, permanentGraphSize);
     for (int row = start; row < end; row++) {
@@ -93,7 +94,7 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
     ContainerUtil.sort(headNodeIndexes, Comparator.comparingInt(o -> layoutIndexes[o]));
     int[] starts = new int[headNodeIndexes.size()];
     for (int i = 0; i < starts.length; i++) {
-      starts[i] = layoutIndexes[headNodeIndexes.get(i)];
+      starts[i] = layoutIndexes[headNodeIndexes.getInt(i)];
     }
 
     GraphLayoutImpl newLayout = new GraphLayoutImpl(layoutIndexes, headNodeIndexes, starts);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -112,8 +112,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
   @Override
   public void setTemplate(@Nullable PostfixTemplate template) {
     super.setTemplate(template);
-    if (template instanceof JavaEditablePostfixTemplate) {
-      JavaEditablePostfixTemplate javaTemplate = (JavaEditablePostfixTemplate)template;
+    if (template instanceof JavaEditablePostfixTemplate javaTemplate) {
       myLanguageLevelCombo.setSelectedItem(javaTemplate.getMinimumLanguageLevel());
       myStaticImportCheckBox.setSelected(javaTemplate.getLiveTemplate().getValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE));
     }

@@ -10,10 +10,13 @@ import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
-import com.intellij.ide.*
+import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runBlockingUnderModalProgress
+import com.intellij.ide.joinBlocking
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
@@ -482,7 +485,7 @@ object DynamicPlugins {
           }
           // https://youtrack.jetbrains.com/issue/IDEA-245031
           // mark plugin classloaders as being unloaded to ensure that new extension instances will be not created during unload
-          setClassLoaderState(pluginDescriptor, PluginClassLoader.UNLOAD_IN_PROGRESS)
+          setClassLoaderState(pluginDescriptor, PluginAwareClassLoader.UNLOAD_IN_PROGRESS)
 
           unloadLoadedOptionalDependenciesOnPlugin(pluginDescriptor, pluginSet = pluginSet, classLoaders = classLoaders)
 
@@ -642,7 +645,7 @@ object DynamicPlugins {
         LOG.info("Detach classloader $dependencyClassloader from $classLoader")
         if (mainDescriptor !== subDescriptor && classLoader.pluginDescriptor === subDescriptor) {
           classLoaders.add(classLoader)
-          classLoader.state = PluginClassLoader.UNLOAD_IN_PROGRESS
+          classLoader.state = PluginAwareClassLoader.UNLOAD_IN_PROGRESS
         }
       }
       true

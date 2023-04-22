@@ -140,6 +140,7 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
         if (sourceElement.isNull) return false
 
         configuration.isScriptDebugEnabled = false
+        configuration.isForceTestExecution = true
         return doSetupConfigurationFromContext(configuration, context, sourceElement)
     }
 

@@ -1,16 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.ui.svg.SvgTranscoder
-import com.intellij.ui.svg.createSvgDocument
-import com.intellij.util.io.DigestUtil
 import java.awt.Dimension
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
-import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.imageio.ImageIO
@@ -94,7 +91,7 @@ private fun loadImage(file: Path, failOnMalformedImage: Boolean): BufferedImage?
     // don't mask any exception for svg file
     Files.newInputStream(file).use {
       try {
-        return SvgTranscoder.createImage(1f, createSvgDocument(null, it), null)
+        return SvgTranscoder.createImage(scale = 1f, input = it)
       }
       catch (e: Exception) {
         throw IOException("Cannot decode $file", e)
@@ -111,11 +108,6 @@ private fun loadImage(file: Path, failOnMalformedImage: Boolean): BufferedImage?
     }
     return null
   }
-}
-
-internal fun md5(file: Path): String {
-  val hash = DigestUtil.md5().digest(Files.readAllBytes(file))
-  return BigInteger(hash).abs().toString(16)
 }
 
 internal enum class ImageType(private val suffix: String) {

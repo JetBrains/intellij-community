@@ -116,6 +116,8 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     repaint();
   }
 
+  /** @deprecated Use other regular ways to add data providers */
+  @Deprecated(forRemoval = true)
   public void addDataProvider(@NotNull DataProvider provider) {
     myDataProviders.add(provider);
   }

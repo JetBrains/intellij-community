@@ -276,7 +276,7 @@ fun HorizontalListPanel(gap: Int = 0): JPanel =
  */
 @Suppress("FunctionName")
 fun LoadingLabel(): JLabel = JLabel(CollaborationToolsUIUtil.animatedLoadingIcon).apply {
-  name = "Animated loading panel"
+  name = "Animated loading label"
 }
 
 /**
@@ -284,7 +284,7 @@ fun LoadingLabel(): JLabel = JLabel(CollaborationToolsUIUtil.animatedLoadingIcon
  */
 @Suppress("FunctionName")
 fun TransparentScrollPane(content: JComponent): JScrollPane =
-  ScrollPaneFactory.createScrollPane(content, false).apply {
+  ScrollPaneFactory.createScrollPane(content, true).apply {
     isOpaque = false
     viewport.isOpaque = false
   }

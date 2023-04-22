@@ -4,6 +4,7 @@ package com.intellij.terminal;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.CursorShape;
 import com.jediterm.terminal.TerminalColor;
@@ -24,20 +24,22 @@ import com.jediterm.terminal.emulator.ColorPalette;
 import com.jediterm.terminal.ui.AwtTransformers;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
-import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
+import com.jediterm.terminal.ui.settings.DefaultSettingsProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static com.jediterm.terminal.ui.AwtTransformers.fromAwtToTerminalColor;
 
-public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsProvider {
+public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvider {
 
   public static final TextAttributesKey COMMAND_TO_RUN_USING_IDE_KEY =
     TextAttributesKey.createTextAttributesKey("TERMINAL_COMMAND_TO_RUN_USING_IDE");
@@ -54,13 +56,6 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @NotNull EditorColorsScheme getColorsScheme() {
     return myUiSettingsManager.getEditorColorsScheme();
-  }
-
-  @Override
-  public @NotNull TerminalActionPresentation getNewSessionActionPresentation() {
-    TerminalActionPresentation presentation = super.getNewSessionActionPresentation();
-    return new TerminalActionPresentation(IdeBundle.message("terminal.action.NewSession.text"),
-                                          presentation.getKeyStrokes());
   }
 
   @Override
@@ -127,16 +122,9 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   @Override
-  public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
-    List<KeyStroke> keyStrokes = ContainerUtil.concat(super.getCloseSessionActionPresentation().getKeyStrokes(),
-                                                      getKeyStrokesByActionId("CloseActiveTab"));
-    return new TerminalActionPresentation(IdeBundle.message("terminal.action.CloseSession.text"), keyStrokes);
-  }
-
-  @Override
   public @NotNull TerminalActionPresentation getFindActionPresentation() {
     return new TerminalActionPresentation(IdeBundle.message("terminal.action.Find.text"),
-                                          getKeyStrokesByActionId(IdeActions.ACTION_FIND));
+                                          getKeyStrokesByActionId("Terminal.Find", IdeActions.ACTION_FIND));
   }
 
   @NotNull
@@ -161,6 +149,14 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     });
   }
 
+  public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId, @NotNull String failoverActionId) {
+    List<KeyStroke> strokes = getKeyStrokesByActionId(actionId);
+    if (strokes.isEmpty() && ActionManager.getInstance().getAction(actionId) == null) {
+      strokes = getKeyStrokesByActionId(failoverActionId);
+    }
+    return strokes;
+  }
+
   public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
     List<KeyStroke> keyStrokes = new ArrayList<>();
     Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
@@ -173,12 +169,10 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     return keyStrokes;
   }
 
-  @Override
   public @NotNull TerminalActionPresentation getNextTabActionPresentation() {
     return new TerminalActionPresentation(IdeBundle.message("terminal.action.SelectNextTab.text"), getKeyStrokesByActionId("NextTab"));
   }
 
-  @Override
   public @NotNull TerminalActionPresentation getPreviousTabActionPresentation() {
     return new TerminalActionPresentation(IdeBundle.message("terminal.action.SelectPreviousTab.text"),
                                           getKeyStrokesByActionId("PreviousTab"));
@@ -291,5 +285,25 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       return editorSettings.isBlinkCaret() ? CursorShape.BLINK_UNDERLINE : CursorShape.STEADY_UNDERLINE;
     }
     return editorSettings.isBlinkCaret() ? CursorShape.BLINK_VERTICAL_BAR : CursorShape.STEADY_VERTICAL_BAR;
+  }
+
+  /**
+   * @deprecated use {@link org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider#getNewTabActionPresentation()} instead
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull TerminalActionPresentation getNewSessionActionPresentation() {
+    return new TerminalActionPresentation("New Session", com.jediterm.terminal.ui.UIUtil.isMac
+                                                         ? KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.META_DOWN_MASK)
+                                                         : KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+  }
+
+  /**
+   * @deprecated use {@link org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider#getCloseTabActionPresentation()} instead
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
+    return new TerminalActionPresentation("Close Session", com.jediterm.terminal.ui.UIUtil.isMac
+                                                           ? KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.META_DOWN_MASK)
+                                                           : KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
   }
 }

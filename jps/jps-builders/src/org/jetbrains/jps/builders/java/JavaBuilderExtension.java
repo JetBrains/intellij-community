@@ -52,7 +52,7 @@ public abstract class JavaBuilderExtension {
    * Results from ConstantAffectionResolver extensions will be combined with the results found by the java ConstantAffectionResolver.
    * The implementation should expect asynchronous execution.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public Callbacks.ConstantAffectionResolver getConstantSearch(CompileContext context) {
     return null;

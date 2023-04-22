@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -72,15 +72,11 @@ public class ExprTypePredicate extends MatchPredicate {
   }
 
   protected PsiType evalType(@NotNull PsiExpression match, @NotNull MatchContext context) {
-    if (match instanceof PsiFunctionalExpression) {
-      final PsiFunctionalExpression functionalExpression = (PsiFunctionalExpression)match;
+    if (match instanceof PsiFunctionalExpression functionalExpression) {
       return functionalExpression.getFunctionalInterfaceType();
     }
-    else if (match instanceof PsiReferenceExpression) {
-      final PsiElement parent = match.getParent();
-      if (parent instanceof PsiMethodCallExpression) {
-        return ((PsiMethodCallExpression)parent).getType();
-      }
+    else if (match instanceof PsiReferenceExpression && match.getParent() instanceof PsiMethodCallExpression call) {
+      return call.getType();
     }
     return match.getType();
   }
@@ -122,8 +118,7 @@ public class ExprTypePredicate extends MatchPredicate {
       dimensions = "";
     }
     final List<String> result = new SmartList<>();
-    if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)type;
+    if (type instanceof PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       final StringBuilder typeText = new StringBuilder();
@@ -228,8 +223,7 @@ public class ExprTypePredicate extends MatchPredicate {
             return;
           }
           if (i > 0) text.append(',');
-          if (parameterType instanceof PsiClassType) {
-            final PsiClassType classType = (PsiClassType)parameterType;
+          if (parameterType instanceof PsiClassType classType) {
             final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
             final PsiClass aClass1 = result.getElement();
             if (aClass1 != null) {

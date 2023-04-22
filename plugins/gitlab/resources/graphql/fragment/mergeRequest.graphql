@@ -8,6 +8,12 @@ fragment mergeRequest on MergeRequest {
   targetBranch
   sourceBranch
 
+  diffRefs {
+    baseSha
+    startSha
+    headSha
+  }
+
   conflicts
   state
 

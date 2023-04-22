@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -16,13 +16,11 @@ class PreviewTreeRenderer extends ColoredTreeCellRenderer {
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value,
                                     boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    if (value instanceof MethodNode) {
-      MethodNode methodNode = (MethodNode)value;
+    if (value instanceof MethodNode methodNode) {
       setIcon(methodNode.getIcon());
       appendText(methodNode);
     }
-    else if (value instanceof FragmentNode) {
-      FragmentNode node = (FragmentNode)value;
+    else if (value instanceof FragmentNode node) {
       appendText(node);
     }
     if (value instanceof DefaultMutableTreeNode) {

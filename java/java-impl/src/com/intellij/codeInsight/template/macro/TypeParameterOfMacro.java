@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
@@ -45,8 +45,7 @@ public class TypeParameterOfMacro extends Macro {
       }
       type = expression.getType();
     }
-    if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)type;
+    if (type instanceof PsiClassType classType) {
       final PsiType[] parameters = classType.getParameters();
       if (params.length > 1) {
         final Result result1 = params[1].calculateResult(context);

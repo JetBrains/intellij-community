@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.module.Module;
@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -131,8 +132,10 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
     PsiFile psiFile = psiManager.findFile(file);
     if (!(psiFile instanceof XmlFile)) return null;
 
-    PsiElement psiElement = psiFile.findElementAt(offset);
-    XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
+    XmlTag xmlTag = AstLoadingFilter.forceAllowTreeLoading(psiFile, () -> {
+      PsiElement psiElement = psiFile.findElementAt(offset);
+      return PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
+    });
     final DomElement domElement = domManager.getDomElement(xmlTag);
     return ObjectUtils.tryCast(domElement, ExtensionPoint.class);
   }

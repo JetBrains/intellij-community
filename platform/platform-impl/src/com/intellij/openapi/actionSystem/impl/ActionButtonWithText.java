@@ -81,7 +81,7 @@ public class ActionButtonWithText extends ActionButton {
   @Override
   public void updateUI() {
     super.updateUI();
-    if (myPlace == ActionPlaces.EDITOR_TOOLBAR) {
+    if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
       // tweak font & color for editor toolbar to match editor tabs style
       setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       setForeground(ColorUtil.dimmer(JBColor.BLACK));

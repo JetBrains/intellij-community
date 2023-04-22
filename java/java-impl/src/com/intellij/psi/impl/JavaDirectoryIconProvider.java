@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.icons.AllIcons;
@@ -28,11 +28,10 @@ import javax.swing.*;
 final class JavaDirectoryIconProvider extends IconProvider implements DumbAware {
   @Override
   public @Nullable Icon getIcon(@NotNull PsiElement element, int flags) {
-    if (!(element instanceof PsiDirectory)) {
+    if (!(element instanceof PsiDirectory psiDirectory)) {
       return null;
     }
 
-    final PsiDirectory psiDirectory = (PsiDirectory)element;
     final VirtualFile vFile = psiDirectory.getVirtualFile();
     final Project project = psiDirectory.getProject();
 

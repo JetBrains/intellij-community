@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -127,8 +127,7 @@ public enum HighlightingFeature {
     PsiAnnotation annotation = getAnnotation(owner);
     if (annotation != null) return annotation;
 
-    if (owner instanceof PsiMember && !owner.hasModifier(JvmModifier.STATIC)) {
-      PsiMember member = (PsiMember)owner;
+    if (owner instanceof PsiMember member && !owner.hasModifier(JvmModifier.STATIC)) {
       PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
       if (result != null) return result;
     }

@@ -67,7 +67,7 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
         if ("WITH_STDLIB" in globalDirectives) {
             runWriteAction {
                 val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("kotlin-stdlib")
-                with (library.modifiableModel) {
+                with(library.modifiableModel) {
                     addRoot(TestKotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
                     addRoot(TestKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
 
@@ -94,6 +94,8 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
         assertNotEmpty(libraryFiles)
 
         val directives = libraryFiles.first().directives
+        val compilerArguments = directives["COMPILER_ARGUMENTS"].orEmpty()
+
         val sourcesPath = targetPath.resolve("sources")
         for (testFile in libraryFiles) {
             val path = sourcesPath.resolve(testFile.name)
@@ -111,6 +113,7 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
             attachSources = "WITH_SOURCES" in directives,
             libraryName = libraryName,
             target = jarFile,
+            options = compilerArguments.split(' ').map(String::trim).filter(String::isNotBlank),
         )
 
         mockLibraryFacility?.setUp(module)

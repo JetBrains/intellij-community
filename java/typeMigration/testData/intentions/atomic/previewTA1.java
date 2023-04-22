@@ -1,0 +1,1 @@
+AtomicReference v = new AtomicReference(...)

@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.impl.FloatingDecorator
 import com.intellij.openapi.wm.impl.InternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
@@ -465,7 +466,7 @@ class InternalDecoratorImpl internal constructor(
       val windowInfo = window.windowInfo
       if (toolWindowManager.project.isDisposed ||
           !toolWindowManager.isToolWindowRegistered(window.id) ||
-          window.isDisposed || windowInfo.type == ToolWindowType.FLOATING || windowInfo.type == ToolWindowType.WINDOWED) {
+          window.isDisposed || !windowInfo.type.isInternal) {
         return JBInsets.emptyInsets()
       }
       val anchor = windowInfo.anchor

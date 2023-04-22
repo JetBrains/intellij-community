@@ -19,7 +19,6 @@ import java.io.IOException
 import java.io.StringWriter
 import java.io.Writer
 import java.util.*
-import javax.xml.transform.Result
 
 private val DEFAULT_FORMAT = JDOMUtil.createFormat("\n")
 
@@ -70,8 +69,6 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     for (obj in content) {
       when (obj) {
         is Element -> printElement(out, doc.rootElement, 0)
-        is Comment -> printComment(out, obj)
-        is ProcessingInstruction -> printProcessingInstruction(out, obj)
         is DocType -> {
           printDocType(out, doc.docType)
           // Always print line separator after declaration, helps the
@@ -130,35 +127,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
         out.write(" encoding=\"$encoding\"")
       }
       out.write("?>")
-
-      // Print new line after decl always, even if no other new lines
-      // Helps the output look better and is semantically
-      // inconsequential
       writeLineSeparator(out)
-    }
-  }
-
-  /**
-   * This will handle printing of processing instructions.
-   *
-   * @param pi  `ProcessingInstruction` to write.
-   * @param out `Writer` to use.
-   */
-  @Throws(IOException::class)
-  private fun printProcessingInstruction(out: Writer, pi: ProcessingInstruction) {
-    val target = pi.target
-    var piProcessed = false
-
-    if (!format.ignoreTrAXEscapingPIs) {
-      if (target == Result.PI_DISABLE_OUTPUT_ESCAPING) {
-        piProcessed = true
-      }
-      else if (target == Result.PI_ENABLE_OUTPUT_ESCAPING) {
-        piProcessed = true
-      }
-    }
-    if (!piProcessed) {
-      writeProcessingInstruction(out, pi, target)
     }
   }
 
@@ -320,13 +289,8 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
 
       indent(out, level)
 
-      when (next) {
-        is Comment -> printComment(out, next)
-        is Element -> printElement(out, next, level)
-        is ProcessingInstruction -> printProcessingInstruction(out, next)
-        else -> {
-          // XXX if we get here then we have an illegal content, for now we'll just ignore it (probably should throw an exception)
-        }
+      if (next is Element) {
+        printElement(out, next, level)
       }
 
       index++
@@ -512,10 +476,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
 
   private fun shouldCheckElement(element: Element): Boolean {
     //any user-provided name-value
-    if ("property" == element.name && element.parentElement?.name.let { it == "driver-properties" || it == "driver"}) {
-      return false
-    }
-    return true
+    return !("property" == element.name && element.parentElement?.name.let { it == "driver-properties" || it == "driver"})
   }
 
   private fun logSensitiveInformationError(name: String, elementKind: String, parentElement: Element?) {
@@ -582,12 +543,6 @@ private fun printEntityRef(out: Writer, entity: EntityRef) {
   out.write("&")
   out.write(entity.name)
   out.write(";")
-}
-
-private fun printComment(out: Writer, comment: Comment) {
-  out.write("<!--")
-  out.write(comment.text)
-  out.write("-->")
 }
 
 private fun isAllWhitespace(obj: Content): Boolean {

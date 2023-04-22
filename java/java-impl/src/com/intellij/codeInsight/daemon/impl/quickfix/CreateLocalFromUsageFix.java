@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -97,13 +97,11 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       anchor = getAnchor(expressions);
       if (anchor == null) return;
     }
-    if (anchor instanceof PsiExpressionStatement &&
-        ((PsiExpressionStatement)anchor).getExpression() instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)((PsiExpressionStatement)anchor).getExpression();
-      if (assignment.getLExpression().textMatches(myReferenceExpression)) {
-        initializer = assignment.getRExpression();
-        isInline = true;
-      }
+    if (anchor instanceof PsiExpressionStatement expressionStatement &&
+        expressionStatement.getExpression() instanceof PsiAssignmentExpression assignment &&
+        assignment.getLExpression().textMatches(myReferenceExpression)) {
+      initializer = assignment.getRExpression();
+      isInline = true;
     }
 
     PsiDeclarationStatement decl = factory.createVariableDeclarationStatement(varName, type, initializer);

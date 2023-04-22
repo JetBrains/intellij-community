@@ -6,14 +6,15 @@ import com.intellij.navigation.TargetPresentationBuilder;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.list.TargetPopup;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * @deprecated Please use {@link TargetPopup#createTargetPresentationRenderer}
+ * Please use {@link TargetPopup#createTargetPresentationRenderer}
  */
-@Deprecated
+@ApiStatus.Obsolete
 public class FileListRenderer implements ListCellRenderer<VirtualFile> {
   private final ListCellRenderer<VirtualFile> myPresentationRenderer;
 

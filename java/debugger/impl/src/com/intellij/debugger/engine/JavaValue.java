@@ -723,11 +723,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       try {
-        if (type instanceof ArrayType) {
-          type = ((ArrayType)type).componentType();
+        if (type instanceof ArrayType arrayType) {
+          type = arrayType.componentType();
         }
-        if (type instanceof ClassType) {
-          ClassType clsType = (ClassType)type;
+        if (type instanceof ClassType clsType) {
 
           Method lambdaMethod =
             MethodBytecodeUtil.getLambdaMethod(clsType, debugProcess.getVirtualMachineProxy().getClassesByNameProvider());

@@ -462,8 +462,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     @Nullable
     private static @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
       final PsiElement element = resolveResult.getElement();
-      if (!(element instanceof PsiMethod)) return null;
-      final PsiMethod method = (PsiMethod)element;
+      if (!(element instanceof PsiMethod method)) return null;
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       if (!PsiUtil.isRawSubstitutor(method, substitutor)) {
         if (JavaVersionService.getInstance().isAtLeast(place, JavaSdkVersion.JDK_1_8)) {

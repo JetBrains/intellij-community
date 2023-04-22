@@ -6,11 +6,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel
+import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -23,6 +25,8 @@ import java.util.UUID
 @Service(Service.Level.PROJECT)
 class PackageManagerHolder : Disposable {
   private val cache = mutableMapOf<UUID, PythonPackageManager>()
+
+  private val bridgeCache = mutableMapOf<UUID, PythonPackageManagementServiceBridge>()
 
   /**
    * Requires Sdk to be Python Sdk and have PythonSdkAdditionalData.
@@ -39,6 +43,18 @@ class PackageManagerHolder : Disposable {
 
     cache[cacheKey] = manager
     return manager
+  }
+
+  fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
+    val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
+    if (cacheKey in bridgeCache) {
+      val bridge = bridgeCache[cacheKey]
+      if (bridge?.project == project) return bridge
+    }
+    val bridge = PythonPackageManagementServiceBridge(project, sdk)
+    Disposer.register(this, bridge)
+    bridgeCache[cacheKey] = bridge
+    return bridge
   }
 
   override fun dispose() {
@@ -75,9 +91,12 @@ suspend fun <T> runPackagingOperationOrShowErrorDialog(sdk: Sdk,
   }
   catch (ex: PyExecutionException) {
     val description = PyPackageManagementService.toErrorDescription(listOf(ex), sdk, packageName)
-    withContext(Dispatchers.Main) {
-      if (packageName != null) PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
-      else PackagesNotificationPanel.showError(title, description!!)
+    if (!PythonPackageManagementServiceBridge.runningUnderOldUI) {
+      // todo[akniazev] this check is used for legacy package management only, remove when it's not needed anymore
+      withContext(Dispatchers.Main) {
+        if (packageName != null) PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
+        else PackagesNotificationPanel.showError(title, description!!)
+      }
     }
     return Result.failure(ex)
   }

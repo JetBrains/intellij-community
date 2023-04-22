@@ -553,6 +553,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/frame/inlineFunThisKotlinVariables.kt");
             }
 
+            @TestMetadata("inlinedLambdaInsideSam.kt")
+            public void testInlinedLambdaInsideSam() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/inlinedLambdaInsideSam.kt");
+            }
+
             @TestMetadata("lambdaAsValueArgument.kt")
             public void testLambdaAsValueArgument() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/lambdaAsValueArgument.kt");

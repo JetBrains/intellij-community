@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -63,34 +63,30 @@ final class SideEffectCalculator {
   }
 
   boolean calculateSideEffect(@Nullable PsiExpression e) {
-    if (e instanceof PsiParenthesizedExpression) {
-      return mayHaveSideEffect(((PsiParenthesizedExpression)e).getExpression());
+    if (e instanceof PsiParenthesizedExpression paren) {
+      return mayHaveSideEffect(paren.getExpression());
     }
     if (e instanceof PsiUnaryExpression) {
       return PsiUtil.isIncrementDecrementOperation(e) || mayHaveSideEffect(((PsiUnaryExpression)e).getOperand());
     }
-    if (e instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)e;
+    if (e instanceof PsiPolyadicExpression polyadic) {
       return ContainerUtil.exists(polyadic.getOperands(), this::mayHaveSideEffect);
     }
-    if (e instanceof PsiConditionalExpression) {
-      PsiConditionalExpression conditional = (PsiConditionalExpression)e;
+    if (e instanceof PsiConditionalExpression conditional) {
       return mayHaveSideEffect(conditional.getCondition()) ||
              mayHaveSideEffect(conditional.getThenExpression()) ||
              mayHaveSideEffect(conditional.getElseExpression());
     }
-    if (e instanceof PsiMethodCallExpression) {
-      return calculateCallSideEffect((PsiMethodCallExpression)e);
+    if (e instanceof PsiMethodCallExpression call) {
+      return calculateCallSideEffect(call);
     }
-    if (e instanceof PsiReferenceExpression) {
-      return calculateReferenceSideEffect((PsiReferenceExpression)e);
+    if (e instanceof PsiReferenceExpression ref) {
+      return calculateReferenceSideEffect(ref);
     }
-    if (e instanceof PsiInstanceOfExpression) {
-      PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)e;
+    if (e instanceof PsiInstanceOfExpression instanceOf) {
       return mayHaveSideEffect(instanceOf.getOperand());
     }
-    if (e instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression access = (PsiArrayAccessExpression)e;
+    if (e instanceof PsiArrayAccessExpression access) {
       PsiExpression array = access.getArrayExpression();
       return mayHaveSideEffect(array) ||
              mayHaveSideEffect(access.getIndexExpression()) ||
@@ -99,8 +95,8 @@ final class SideEffectCalculator {
     if (e instanceof PsiLambdaExpression) {
       return false; // lambda itself (unless called) has no side effect
     }
-    if (e instanceof PsiNewExpression) {
-      return calculateNewSideEffect((PsiNewExpression)e);
+    if (e instanceof PsiNewExpression newExpression) {
+      return calculateNewSideEffect(newExpression);
     }
     return true;
   }
@@ -114,12 +110,10 @@ final class SideEffectCalculator {
         resolved instanceof PsiClass || resolved instanceof PsiPackage) {
       return false;
     }
-    if (resolved instanceof PsiField) {
-      PsiField field = (PsiField)resolved;
+    if (resolved instanceof PsiField field) {
       return !field.hasModifierProperty(PsiModifier.FINAL);
     }
-    if (resolved instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)resolved;
+    if (resolved instanceof PsiMethod method) {
       return methodMayHaveSideEffect(method);
     }
     return true;
@@ -137,15 +131,8 @@ final class SideEffectCalculator {
       return true;
     }
     PsiJavaCodeReferenceElement ref = newExpr.getClassReference();
-    if (ref != null) {
-      PsiElement resolved = ref.resolve();
-      if (resolved instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass)resolved;
-        return !ClassUtils.isImmutableClass(psiClass) ||
-               calculateSideEffect(newExpr, newExpr.getQualifier());
-      }
-    }
-    return true;
+    return ref == null || !(ref.resolve() instanceof PsiClass psiClass) || 
+           !ClassUtils.isImmutableClass(psiClass) || calculateSideEffect(newExpr, newExpr.getQualifier());
   }
 
   private boolean calculateSideEffect(@NotNull PsiCallExpression call, @Nullable PsiExpression qualifier) {
