@@ -21,10 +21,14 @@ const val TEST_INIT_SCRIPT_NAME = "ijTestInit"
 
 fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): File {
   val jarPaths = GradleExecutionHelper.getToolingExtensionsJarPaths(toolingExtensionClasses)
-  val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle", mapOf(
-    "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" },
-    "IS_BUILD_SCR_PROJECT" to isBuildSrcProject.toString()
-  ))
+  val initScript = joinInitScripts(
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/RegistryProcessor.gradle"),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JetGradlePlugin.gradle"),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle", mapOf(
+      "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" },
+      "IS_BUILD_SCR_PROJECT" to isBuildSrcProject.toString()
+    ))
+  )
   return createInitScript(MAIN_INIT_SCRIPT_NAME, initScript)
 }
 
