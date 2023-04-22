@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.Sdk
@@ -103,6 +104,8 @@ fun Project.containsNonScriptKotlinFile(): Boolean = !FileTypeIndex.processFiles
     { it.toPsiFile(this)?.safeAs<KtFile>()?.isScript() != false },
     projectScope(),
 )
+
+fun VirtualFile.getModule(project: Project) = ModuleUtilCore.findModuleForFile(this, project)
 
 val Module.sdk: Sdk?
     get() = ModuleRootManager.getInstance(this).sdk

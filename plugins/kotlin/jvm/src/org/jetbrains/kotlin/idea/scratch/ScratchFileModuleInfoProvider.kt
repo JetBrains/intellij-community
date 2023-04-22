@@ -5,12 +5,12 @@ package org.jetbrains.kotlin.idea.scratch
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
+import org.jetbrains.kotlin.idea.base.util.getModule
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
-import org.jetbrains.kotlin.idea.util.projectStructure.getModule
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 
-class ScratchFileModuleInfoProvider() : ScratchFileListener {
+class ScratchFileModuleInfoProvider : ScratchFileListener {
     companion object {
         private val LOG = logger<ScratchFileModuleInfoProvider>()
     }
