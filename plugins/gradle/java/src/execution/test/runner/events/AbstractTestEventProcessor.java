@@ -12,9 +12,6 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsolePropertie
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
 /**
  * @author Vladislav.Soroka
  */
@@ -64,10 +61,6 @@ public abstract class AbstractTestEventProcessor implements TestEventProcessor {
 
   protected void registerTestProxy(final String proxyId, SMTestProxy testProxy) {
     getExecutionConsole().getTestsMap().put(proxyId, testProxy);
-  }
-
-  protected String decode(String s) {
-    return new String(Base64.getDecoder().decode(s), StandardCharsets.UTF_8);
   }
 
   protected boolean showInternalTestNodes() {

@@ -15,7 +15,8 @@ public class TestAssertionFailure extends TestFailure {
   private final @Nullable String actualFile;
 
   public TestAssertionFailure(
-    @NotNull @Nls String message,
+    @Nullable String exceptionName,
+    @Nullable @Nls String message,
     @Nullable @Nls String stackTrace,
     @Nullable @Nls String description,
     @NotNull List<Failure> causes,
@@ -24,11 +25,23 @@ public class TestAssertionFailure extends TestFailure {
     @Nullable String expectedFile,
     @Nullable String actualFile
   ) {
-    super(message, stackTrace, description, causes, false);
+    super(exceptionName, message, stackTrace, description, causes, false);
     this.expectedText = expectedText;
     this.actualText = actualText;
     this.expectedFile = expectedFile;
     this.actualFile = actualFile;
+  }
+
+  public TestAssertionFailure(
+    @Nullable String exceptionName,
+    @Nullable @Nls String message,
+    @Nullable @Nls String stackTrace,
+    @Nullable @Nls String description,
+    @NotNull List<Failure> causes,
+    @NotNull String expectedText,
+    @NotNull String actualText
+  ) {
+    this(exceptionName, message, stackTrace, description, causes, expectedText, actualText, null, null);
   }
 
   public @NotNull String getExpectedText() {

@@ -9,10 +9,12 @@ import java.util.List;
 
 public class TestFailure extends FailureImpl {
 
+  private final @Nullable String exceptionName;
   private final @Nullable String stackTrace;
   private final boolean isTestError;
 
   public TestFailure(
+    @Nullable String exceptionName,
     @Nullable @Nls String message,
     @Nullable @Nls String stackTrace,
     @Nullable @Nls String description,
@@ -20,8 +22,13 @@ public class TestFailure extends FailureImpl {
     boolean isTestError
   ) {
     super(message, description, causes);
+    this.exceptionName = exceptionName;
     this.stackTrace = stackTrace;
     this.isTestError = isTestError;
+  }
+
+  public @Nullable String getExceptionName() {
+    return exceptionName;
   }
 
   public @Nullable String getStackTrace() {

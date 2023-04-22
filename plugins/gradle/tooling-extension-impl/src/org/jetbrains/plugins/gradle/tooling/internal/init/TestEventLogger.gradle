@@ -96,9 +96,11 @@ class TestEventLogger {
 
   private static def logFailureDescriptor(MarkupBuilder xml, Throwable exception) {
     def errorMsg = escapeCdata(exception.message)
+    def exceptionName = escapeCdata(exception.class.name)
     def stackTrace = escapeCdata(getStackTrace(exception))
 
     xml.mkp.yieldUnescaped("<errorMsg>$errorMsg</errorMsg>")
+    xml.mkp.yieldUnescaped("<exceptionName>$exceptionName</exceptionName>")
     xml.mkp.yieldUnescaped("<stackTrace>$stackTrace</stackTrace>")
   }
 

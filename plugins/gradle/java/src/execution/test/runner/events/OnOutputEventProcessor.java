@@ -23,7 +23,7 @@ public class OnOutputEventProcessor extends AbstractTestEventProcessor {
   @Override
   public void process(@NotNull TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     var testId = eventXml.getTestId();
-    var output = decode(eventXml.getTestEventTest());
+    var output = GradleXmlTestEventConverter.decode(eventXml.getTestEventTest());
     var isStdOut = "StdOut".equals(eventXml.getTestEventTestDescription());
 
     doProcess(testId, output, isStdOut);

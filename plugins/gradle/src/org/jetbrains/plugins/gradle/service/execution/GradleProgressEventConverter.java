@@ -159,16 +159,18 @@ public final class GradleProgressEventConverter {
     var description = failure.getDescription();
     var causes = ContainerUtil.map(failure.getCauses(), it -> convertTestFailure(it));
     if (failure instanceof org.gradle.tooling.TestAssertionFailure assertionFailure) {
+      var exceptionName = assertionFailure.getClassName();
       var stackTrace = assertionFailure.getStacktrace();
       var expectedText = assertionFailure.getExpected();
       var actualText = assertionFailure.getActual();
-      if (message != null && expectedText != null && actualText != null) {
-        return new TestAssertionFailure(message, stackTrace, description, causes, expectedText, actualText, null, null);
+      if (expectedText != null && actualText != null) {
+        return new TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText);
       }
     }
     if (failure instanceof org.gradle.tooling.TestFailure testFailure) {
+      var exceptionName = testFailure.getClassName();
       var stackTrace = testFailure.getStacktrace();
-      return new TestFailure(message, stackTrace, description, causes, false);
+      return new TestFailure(exceptionName, message, stackTrace, description, causes, false);
     }
     LOG.warn("Undefined test failure type " + failure.getClass().getName());
     return new FailureImpl(message, description, Collections.emptyList());

@@ -95,19 +95,19 @@ fun loadJvmDebugInitScript(
 
 fun loadIjTestLoggerInitScript(): String {
   return joinInitScripts(
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/EnhanceGradleDaemonClassLoaderInit.gradle"),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestEventLogger.gradle"),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/IjTestEventLogger.gradle"),
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/IjTestEventLoggerInit.gradle")
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/IjTestEventLoggerInit.gradle"),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/FileComparisonForGradleDaemonInit.gradle")
   )
 }
 
 fun loadFileComparisonTestLoggerInitScript(): String {
   return joinInitScripts(
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/EnhanceGradleDaemonClassLoaderInit.gradle"),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestEventLogger.gradle"),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/FileComparisonTestEventLogger.gradle"),
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/FileComparisonTestEventLoggerInit.gradle")
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/FileComparisonTestEventLoggerInit.gradle"),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/FileComparisonForGradleDaemonInit.gradle")
   )
 }
 

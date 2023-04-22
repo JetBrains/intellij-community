@@ -20,12 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-
-import java.util.Collections;
-import java.util.List;
 
 public class AfterTestEventProcessor extends AbstractTestEventProcessor {
 
@@ -37,64 +33,34 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
 
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
-    var finishEvent = (ExternalSystemFinishEvent<? extends TestOperationDescriptor>)testEvent;
-    var testId = finishEvent.getEventId();
-    var testResult = finishEvent.getOperationResult();
-    process(testId, testResult);
+    var event = (ExternalSystemFinishEvent<? extends TestOperationDescriptor>)testEvent;
+    process(event, false);
   }
 
   @Override
   public void process(@NotNull TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException, NumberFormatException {
     var testId = eventXml.getTestId();
-    var testResult = convertTestResult(eventXml);
-    process(testId, testResult);
+    var testParentId = eventXml.getTestParentId();
+    var eventTime = Long.parseLong(eventXml.getEventTestResultEndTime());
+    var testDescriptor = GradleXmlTestEventConverter.convertTestDescriptor(eventTime, eventXml);
+    var testResult = GradleXmlTestEventConverter.convertOperationResult(eventXml);
+    var event = new ExternalSystemFinishEventImpl<>(testId, testParentId, testDescriptor, testResult);
+    process(event, true);
   }
 
-  private @NotNull OperationResult convertTestResult(
-    @NotNull TestEventXmlView eventXml
-  ) throws TestEventXmlView.XmlParserException, NumberFormatException {
-    var startTime = Long.parseLong(eventXml.getEventTestResultStartTime());
-    var endTime = Long.parseLong(eventXml.getEventTestResultEndTime());
-    var resultType = TestEventResult.fromValue(eventXml.getTestEventResultType());
-
-    if (resultType == TestEventResult.SUCCESS) {
-      return new SuccessResultImpl(startTime, endTime, false);
+  private void process(@NotNull ExternalSystemFinishEvent<? extends TestOperationDescriptor> event, boolean isXml) {
+    var patcher = getExecutionConsole().getFileComparisonEventPatcher();
+    var patchedEvent = patcher.patchTestFinishEvent(event, isXml);
+    if (patchedEvent == null) {
+      LOG.info("Skipped event because it is incomplete: " + event);
+      return;
     }
-    if (resultType == TestEventResult.SKIPPED) {
-      return new SkippedResultImpl(startTime, endTime);
-    }
-    if (resultType == TestEventResult.FAILURE) {
-      var failureType = eventXml.getEventTestResultFailureType();
-      var message = decode(eventXml.getEventTestResultErrorMsg()); //NON-NLS
-      var stackTrace = decode(eventXml.getEventTestResultStackTrace()); //NON-NLS
-      var description = decode(eventXml.getTestEventTestDescription()); //NON-NLS
-      if ("comparison".equals(failureType)) {
-        var actualText = decode(eventXml.getEventTestResultActual());
-        var expectedText = decode(eventXml.getEventTestResultExpected());
-        var expectedFilePath = StringUtil.nullize(decode(eventXml.getEventTestResultFilePath()));
-        var actualFilePath = StringUtil.nullize(decode(eventXml.getEventTestResultActualFilePath()));
-        var assertionFailure = new TestAssertionFailure(
-          message, stackTrace, description, ContainerUtil.emptyList(), expectedText, actualText, expectedFilePath, actualFilePath
-        );
-        return new FailureResultImpl(startTime, endTime, List.of(assertionFailure));
-      }
-      if ("assertionFailed".equals(failureType)) {
-        var failure = new TestFailure(message, stackTrace, description, Collections.emptyList(), false);
-        return new FailureResultImpl(startTime, endTime, List.of(failure));
-      }
-      if ("error".equals(failureType)) {
-        var failure = new TestFailure(message, stackTrace, description, Collections.emptyList(), true);
-        return new FailureResultImpl(startTime, endTime, List.of(failure));
-      }
-      LOG.error("Undefined test failure type: " + failureType);
-      var failure = new FailureImpl(message, stackTrace, Collections.emptyList());
-      return new FailureResultImpl(startTime, endTime, List.of(failure));
-    }
-    LOG.error("Undefined test result type: " + resultType);
-    return new DefaultOperationResult(startTime, endTime);
+    process(patchedEvent);
   }
 
-  private void process(@NotNull String testId, @NotNull OperationResult testResult) {
+  private void process(@NotNull ExternalSystemFinishEvent<? extends TestOperationDescriptor> event) {
+    var testId = event.getEventId();
+    var testResult = event.getOperationResult();
     var startTime = testResult.getStartTime();
     var endTime = testResult.getEndTime();
 
