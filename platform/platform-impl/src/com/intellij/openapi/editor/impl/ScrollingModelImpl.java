@@ -397,18 +397,18 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   private static @NotNull VisualPosition getLogicalLineEnd(@NotNull Editor editor, @NotNull Point point) {
     LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
+    int lineCount = editor.getDocument().getLineCount();
     if (logicalPosition.line < 0) {
       return new VisualPosition(0, 0);
     }
 
-    if (logicalPosition.line < editor.getDocument().getLineCount()) {
+    if (logicalPosition.line < lineCount) {
       int endOffset = editor.getDocument().getLineEndOffset(logicalPosition.line);
       return editor.offsetToVisualPosition(endOffset);
     }
 
-    VisualPosition textEndPosition = editor.logicalToVisualPosition(new LogicalPosition(editor.getDocument().getLineCount() - 1, 0));
-    int additionalLines = logicalPosition.line + 1 - editor.getDocument().getLineCount();
-    return new VisualPosition(textEndPosition.line + additionalLines, 0);
+    // the point is outside the text, so there is no need to take care of soft wraps
+    return editor.xyToVisualPosition(point);
   }
 
   private static @NotNull VisualPosition getLogicalLineStart(@NotNull Editor editor, @NotNull Point point) {
