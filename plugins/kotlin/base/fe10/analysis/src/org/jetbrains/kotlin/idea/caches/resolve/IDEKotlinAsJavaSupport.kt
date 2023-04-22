@@ -167,6 +167,10 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, searchScope].platformSourcesFirst()
     }
 
+    override fun findFilesForScript(scriptFqName: FqName, searchScope: GlobalSearchScope): Collection<KtScript> = runReadAction {
+        KotlinScriptFqnIndex[scriptFqName.asString(), project, searchScope]
+    }
+
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = KtDescriptorBasedFakeLightClass(classOrObject)
     override val IdeaModuleInfo.contentSearchScope: GlobalSearchScope get() = this.contentScope
 
