@@ -71,7 +71,6 @@ object JpsProjectUtils {
       // they're ok with missing output directory and a known case
       val m = allOutputDirectories[root]
       if (m != null) {
-        println("Found module: ${m.name}")
         val moduleWithEmptySources = m.sourceRoots.isEmpty() ||
           m.sourceRoots.all { !it.path.exists() || it.path.listDirectoryEntries().isEmpty() }
         if (moduleWithEmptySources) {
