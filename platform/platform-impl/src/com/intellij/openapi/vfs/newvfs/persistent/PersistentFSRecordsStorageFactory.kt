@@ -104,6 +104,12 @@ object PersistentFSRecordsStorageFactory {
       pageSize,
       IOUtil.useNativeByteOrderForByteBuffers()
     )
-    return PersistentFSRecordsOverLockFreePagedStorage(storage)
+    try {
+      return PersistentFSRecordsOverLockFreePagedStorage(storage)
+    }
+    catch (t: Throwable) {
+      storage.close()
+      throw t
+    }
   }
 }
