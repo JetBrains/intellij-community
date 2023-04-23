@@ -32,7 +32,7 @@ object GitLabNoteComponentFactory {
              cs: CoroutineScope,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
              vm: GitLabNoteViewModel): JComponent {
-    val textPanel = createTextPanel(cs, vm.htmlBody)
+    val textPanel = createTextPanel(cs, vm.bodyHtml)
 
     val actionsVm = vm.actionsVm
     val contentPanel = if (actionsVm != null) {
