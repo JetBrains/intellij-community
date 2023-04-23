@@ -7,6 +7,9 @@ import com.intellij.lang.jvm.util.JvmInheritanceUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.psi.PsiClass
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
@@ -19,7 +22,7 @@ internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBas
     if (LightServiceMigrationUtil.isVersion193OrHigher(element) ||
         ApplicationManager.getApplication().isUnitTestMode) {
       val (aClass, level) = LightServiceMigrationUtil.getServiceImplementation(element) ?: return
-      if (!aClass.isWritable || !aClass.hasModifier(JvmModifier.FINAL)) return
+      if (!aClass.hasModifier(JvmModifier.FINAL) || isLibraryClass(aClass)) return
       if (level == Service.Level.APP &&
           JvmInheritanceUtil.isInheritor(aClass, PersistentStateComponent::class.java.canonicalName)) {
         return
@@ -33,5 +36,10 @@ internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBas
         holder.createProblem(element, message)
       }
     }
+  }
+
+  private fun isLibraryClass(aClass: PsiClass): Boolean {
+    val containingVirtualFile = PsiUtilCore.getVirtualFile(aClass)
+    return containingVirtualFile != null && ProjectFileIndex.getInstance(aClass.project).isInLibraryClasses(containingVirtualFile)
   }
 }

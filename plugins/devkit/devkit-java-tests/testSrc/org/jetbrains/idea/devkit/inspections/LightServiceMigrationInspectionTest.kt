@@ -40,4 +40,8 @@ internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspec
   fun testLightService() {
     doTest(getCodeFilePath(), getXmlFilePath())
   }
+
+  fun testLibraryClass() {
+    myFixture.testHighlighting(getTestName(true) + ".xml")
+  }
 }
