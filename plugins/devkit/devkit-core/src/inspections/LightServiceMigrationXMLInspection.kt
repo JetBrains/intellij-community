@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.util.JvmInheritanceUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -24,7 +25,8 @@ internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBas
         return
       }
       if (aClass.hasAnnotation(Service::class.java.canonicalName)) {
-        holder.createProblem(element, DevKitBundle.message("inspection.light.service.migration.already.annotated.message"))
+        val message = DevKitBundle.message("inspection.light.service.migration.already.annotated.message")
+        holder.createProblem(element, ProblemHighlightType.ERROR, message, null)
       }
       else {
         val message = LightServiceMigrationUtil.getMessage(level)
