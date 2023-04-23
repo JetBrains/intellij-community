@@ -33,8 +33,8 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * JPS data structures allowing incremental compilation for [CompilationOutput]
    */
   private class JpsCaches(private val context: CompilationContext) {
-    val skipDownload = bool(SKIP_DOWNLOAD_PROPERTY)
-    val skipUpload = bool(SKIP_UPLOAD_PROPERTY)
+    val downloadCompilationOutputsOnly = bool(DOWNLOAD_COMPILATION_ONLY_PROPERTY)
+    val uploadCompilationOutputsOnly = bool(UPLOAD_COMPILATION_ONLY_PROPERTY)
     val dir: Path get() = context.compilationData.dataStorageRoot
 
     val isIncrementalCompilationDataAvailable: Boolean by lazy {
@@ -60,6 +60,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
     val isStale: Boolean get() = !downloader.availableForHeadCommit
     val shouldBeDownloaded: Boolean get() = !forceRebuild && !isLocalCacheUsed()
+    val shouldBeUploaded by lazy { bool(UPLOAD_PROPERTY) }
   }
 
   private var forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
@@ -74,13 +75,13 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
   private val downloader by lazy {
     val availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY)
-    PortableCompilationCacheDownloader(context, git, remoteCache, remoteGitUrl, availableForHeadCommit, jpsCaches.skipDownload)
+    PortableCompilationCacheDownloader(context, git, remoteCache, remoteGitUrl, availableForHeadCommit, jpsCaches.downloadCompilationOutputsOnly)
   }
 
   private val uploader by lazy {
     val s3Folder = require(AWS_SYNC_FOLDER_PROPERTY, "AWS S3 sync folder", context)
     val commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit", context)
-    PortableCompilationCacheUploader(context, remoteCache, remoteGitUrl, commitHash, s3Folder, jpsCaches.skipUpload, forceRebuild)
+    PortableCompilationCacheUploader(context, remoteCache, remoteGitUrl, commitHash, s3Folder, jpsCaches.uploadCompilationOutputsOnly, forceRebuild)
   }
 
   /**
@@ -125,6 +126,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * Upload local [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]
    */
   fun upload() {
+    if (!remoteCache.shouldBeUploaded) return
     if (!forceRebuild && downloader.availableForHeadCommit) {
       context.messages.info("Nothing new to upload")
     }
@@ -235,16 +237,21 @@ class PortableCompilationCache(private val context: CompilationContext) {
 }
 
 /**
+ * If false then nothing will be uploaded
+ */
+private const val UPLOAD_PROPERTY = "intellij.jps.remote.cache.upload"
+
+/**
  * [PortableCompilationCache.JpsCaches] archive upload may be skipped if only [CompilationOutput]s are required
  * without any incremental compilation (for tests execution as an example)
  */
-private const val SKIP_UPLOAD_PROPERTY = "intellij.jps.remote.cache.uploadCompilationOutputsOnly"
+private const val UPLOAD_COMPILATION_ONLY_PROPERTY = "intellij.jps.remote.cache.uploadCompilationOutputsOnly"
 
 /**
  * [PortableCompilationCache.JpsCaches] archive download may be skipped if only [CompilationOutput]s are required
  * without any incremental compilation (for tests execution as an example)
  */
-private const val SKIP_DOWNLOAD_PROPERTY = "intellij.jps.remote.cache.downloadCompilationOutputsOnly"
+private const val DOWNLOAD_COMPILATION_ONLY_PROPERTY = "intellij.jps.remote.cache.downloadCompilationOutputsOnly"
 
 /**
  * URL for read/write operations

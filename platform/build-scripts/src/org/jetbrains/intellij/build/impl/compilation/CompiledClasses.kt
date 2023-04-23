@@ -82,7 +82,9 @@ internal object CompiledClasses {
       }
       PortableCompilationCache.IS_ENABLED -> {
         span.addEvent("JPS remote cache will be used for compilation")
-        PortableCompilationCache(context).downloadCacheAndCompileProject()
+        val jpsCache = PortableCompilationCache(context)
+        jpsCache.downloadCacheAndCompileProject()
+        jpsCache.upload()
       }
       context.options.pathToCompiledClassesArchive != null -> {
         span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"),
