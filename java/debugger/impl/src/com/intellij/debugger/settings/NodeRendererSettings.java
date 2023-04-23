@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -243,7 +244,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     });
 
     if (Registry.is("debugger.renderers.annotations")) {
-      ReadAction.run(() -> addAnnotationRenderers(allRenderers, project));
+      addAnnotationRenderers(allRenderers, project);
     }
 
     // plugins registered renderers come after that
@@ -591,15 +592,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   static void visitAnnotatedElements(String annotationFqn,
                                      Project project,
                                      BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer) {
-    JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(annotationFqn), project, GlobalSearchScope.allScope(project))
-      .forEach(annotation -> {
-        PsiElement parent = annotation.getContext();
-        if (annotationFqn.equals(annotation.getQualifiedName()) && parent instanceof PsiModifierList) {
-          PsiElement owner = parent.getParent();
-          if (owner instanceof PsiModifierListOwner) {
-            consumer.accept((PsiModifierListOwner)owner, annotation);
-          }
+    Collection<PsiAnnotation> annotations =
+      ReadAction.compute(
+        () -> JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(annotationFqn), project, GlobalSearchScope.allScope(project)));
+    annotations.forEach(annotation -> ReadAction.run(() -> {
+      if (!annotation.isValid()) return;
+      PsiElement parent = annotation.getContext();
+      if (parent instanceof PsiModifierList) {
+        PsiElement owner = parent.getParent();
+        if (owner instanceof PsiModifierListOwner && annotationFqn.equals(annotation.getQualifiedName())) {
+          consumer.accept((PsiModifierListOwner)owner, annotation);
         }
-      });
+      }
+    }));
   }
 }
