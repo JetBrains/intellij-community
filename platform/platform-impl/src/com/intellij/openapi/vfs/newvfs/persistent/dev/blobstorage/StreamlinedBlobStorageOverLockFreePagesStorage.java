@@ -7,6 +7,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.pagecache.Page;
+import com.intellij.util.io.pagecache.PageUnsafe;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
@@ -288,7 +289,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
     int currentRecordId = recordId;
     for (int i = 0; i < MAX_REDIRECTS; i++) {
       final long recordOffset = idToOffset(currentRecordId);
-      try (final Page page = pagedStorage.pageByOffset(recordOffset, /*forWrite: */ false)) {
+      try (final PageUnsafe page = (PageUnsafe)pagedStorage.pageByOffset(recordOffset, /*forWrite: */ false)) {
         final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
         page.lockPageForRead();
         try {
@@ -346,7 +347,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
     int currentRecordId = recordId;
     for (int i = 0; i < MAX_REDIRECTS; i++) {
       final long recordOffset = idToOffset(currentRecordId);
-      try (final Page page = pagedStorage.pageByOffset(recordOffset, /*forWrite: */ false)) {
+      try (final PageUnsafe page = (PageUnsafe)pagedStorage.pageByOffset(recordOffset, /*forWrite: */ false)) {
         final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
         page.lockPageForRead();
         try {
@@ -464,7 +465,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
     for (int i = 0; i < MAX_REDIRECTS; i++) {
       final long recordOffset = idToOffset(currentRecordId);
       final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
-      try (final Page page = pagedStorage.pageByOffset(recordOffset, /*forWrite: */ true)) {
+      try (final PageUnsafe page = (PageUnsafe)pagedStorage.pageByOffset(recordOffset, /*forWrite: */ true)) {
         page.lockPageForWrite();
         try {
           final ByteBuffer buffer = page.rawPageBuffer();
@@ -577,7 +578,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
     checkRecordIdExists(recordId);
 
     final long recordOffset = idToOffset(recordId);
-    try (final Page page = pagedStorage.pageByOffset(recordOffset, /*forWrite: */ true)) {
+    try (final PageUnsafe page = (PageUnsafe)pagedStorage.pageByOffset(recordOffset, /*forWrite: */ true)) {
       final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
       page.lockPageForWrite();
       try {
@@ -636,7 +637,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
     int currentId = offsetToId(recordsStartOffset());
     for (int recordNo = 0; ; recordNo++) {
       final long recordOffset = idToOffset(currentId);
-      try (final Page page = pagedStorage.pageByOffset(recordOffset, /*forWrite: */ false)) {
+      try (final PageUnsafe page = (PageUnsafe)pagedStorage.pageByOffset(recordOffset, /*forWrite: */ false)) {
         final int offsetOnPage = pagedStorage.toOffsetInPage(recordOffset);
         page.lockPageForRead();
         try {

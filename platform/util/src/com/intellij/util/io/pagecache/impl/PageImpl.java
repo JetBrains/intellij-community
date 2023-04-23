@@ -6,6 +6,7 @@ import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.pagecache.Page;
+import com.intellij.util.io.pagecache.PageUnsafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,7 +79,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  * @see PagedFileStorageWithRWLockedPageContent
  */
 @ApiStatus.Internal
-public abstract class PageImpl implements Page {
+public abstract class PageImpl implements Page, PageUnsafe {
 
   /**
    * Initial state page is created with. Page buffer is not yet allocated, page data is not yet
@@ -372,6 +373,20 @@ public abstract class PageImpl implements Page {
         return true;
       }
     }
+  }
+
+  @Override
+  public boolean tryAcquire(final Object acquirer) {
+    try {
+      if (tryAcquireForUse(acquirer)) {
+        return true;
+      }//else: not ready yet
+    }
+    catch (IOException ignored) {
+      //already on reclamation path
+    }
+
+    return false;
   }
 
   @Override
@@ -725,6 +740,7 @@ public abstract class PageImpl implements Page {
   //         resize -- on split, or regular insert. Better to have dedicated Page.copyRangeTo(Page) method
   //         for that, since now one need to acquire page locks, and they must be acquired in
   //         stable order to avoid deadlocks
+  @Override
   @ApiStatus.Obsolete
   public ByteBuffer duplicate() {
     checkPageIsValidForAccess();

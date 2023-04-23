@@ -4,6 +4,9 @@ package com.intellij.util.io;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.pagecache.Page;
+import com.intellij.util.io.pagecache.PageUnsafe;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy.SharedLockLockingStrategy;
 import com.intellij.util.io.stats.BTreeStatistics;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -16,19 +19,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-public final class IntToIntBtree extends AbstractIntToIntBtree {
+/**
+ * Implementation is not lock-free, it just uses {@link FilePageCacheLockFree} for page management.
+ * Actually, the implementation expects to be guarded by a single lock
+ */
+public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
   private static final boolean CACHE_ROOT_NODE_BUFFER = SystemProperties.getBooleanProperty("idea.btree.cache.root.node.buffer", true);
 
-
   private static final int HAS_ZERO_KEY_MASK = 0xFF000000;
-  static final boolean doSanityCheck = false;
-  static final boolean doDump = false;
 
-  final int pageSize;
+  private static final int UNDEFINED_ADDRESS = -1;
+  private static final int DEFAULT_PAGE_SIZE = 1024 * 1024;
+
+  private static final boolean DO_SANITY_CHECK = false;
+  private static final boolean DO_DUMP = false;
+
+  private final int pageSize;
   private final short maxInteriorNodes;
   private final short maxLeafNodes;
   private final short maxLeafNodesInHash;
-  final BtreeRootNode root;
+
+  private final BtreeRootNode root;
   private int height;
   private int maxStepsSearchedInHash;
   private int totalHashStepsSearched;
@@ -40,14 +51,15 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
   private boolean hasZeroKey;
   private int zeroKeyValue;
 
-  private final ResizeableMappedFile storage;
+  private final PagedFileStorageWithRWLockedPageContent storage;
   private final int metaDataLeafPageLength;
   private final int hashPageCapacity;
 
-  private static final int UNDEFINED_ADDRESS = -1;
-  private static final int DEFAULT_PAGE_SIZE = 1024 * 1024;
 
-  public IntToIntBtree(int pageSize, @NotNull Path file, @NotNull StorageLockContext storageLockContext, boolean initial)
+  public IntToIntBtreeLockFree(int pageSize,
+                               @NotNull Path file,
+                               @NotNull StorageLockContext storageLockContext,
+                               boolean initial, SharedLockLockingStrategy lockingStrategy)
     throws IOException {
     this.pageSize = pageSize;
 
@@ -55,10 +67,14 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
       Files.deleteIfExists(file);
     }
 
-    storage = new ResizeableMappedFile(file, pageSize, storageLockContext,
-                                       SystemProperties.getIntProperty("idea.IntToIntBtree.page.size", DEFAULT_PAGE_SIZE), true,
-                                       IOUtil.useNativeByteOrderForByteBuffers());
-    storage.setRoundFactor(pageSize);
+    storage = new PagedFileStorageWithRWLockedPageContent(
+      file,
+      storageLockContext,
+      SystemProperties.getIntProperty("idea.IntToIntBtree.page.size", DEFAULT_PAGE_SIZE),
+      IOUtil.useNativeByteOrderForByteBuffers(),
+      lockingStrategy
+    );
+    //storage.setRoundFactor(pageSize);
     root = new BtreeRootNode();
 
     if (initial) {
@@ -94,9 +110,9 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     root.getNodeView().setIndexLeaf(true);
   }
 
-  // return total number of bytes needed for storing information
   @Override
-  public void persistVars(@NotNull BtreeDataStorage storage, boolean toDisk) throws IOException {
+  public void persistVars(@NotNull BtreeDataStorage storage,
+                          boolean toDisk) throws IOException {
     int i = storage.persistInt(0, height | (hasZeroKey ? HAS_ZERO_KEY_MASK : 0), toDisk);
     hasZeroKey = (i & HAS_ZERO_KEY_MASK) != 0;
     height = i & ~HAS_ZERO_KEY_MASK;
@@ -172,9 +188,10 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     }
 
     if (root.address == UNDEFINED_ADDRESS) return false;
-    DirectBufferWrapper root = initAccessNodeView();
+
+    Page root = initAccessNodeView();
     try {
-      int index = myAccessNodeView.locate(key, false);
+      int index = myAccessNodeView.locate(key, /*split: */ false);
 
       if (index < 0) {
         myCanUseLastKey = true;
@@ -187,35 +204,38 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
       result[0] = myAccessNodeView.addressAt(index);
     }
     finally {
-      myAccessNodeView.disposeBuffer();
+      myAccessNodeView.disposePage();
       if (root != null) {
-        root.unlock();
+        root.release();
       }
     }
+
     return true;
   }
 
-  private DirectBufferWrapper initAccessNodeView() throws IOException {
+  private Page initAccessNodeView() throws IOException {
     int rootAddress = root.address;
 
-    DirectBufferWrapper wrapper;
+    PageUnsafe page;
     if (CACHE_ROOT_NODE_BUFFER) {
       BtreeIndexNodeView node = root.getNodeView();
-      node.lockBuffer();
-      wrapper = node.bufferWrapper;
+      node.acquirePage();
+      page = node.page;
     }
     else {
-      wrapper = null;
+      page = null;
     }
 
+
+    //sharedBuffer only here:
     if (myAccessNodeView == null) {
-      myAccessNodeView = new BtreeIndexNodeView(rootAddress, true, wrapper);
+      myAccessNodeView = new BtreeIndexNodeView(rootAddress, /*cache: */true, page);
     }
     else {
-      myAccessNodeView.initTraversal(rootAddress, wrapper);
+      myAccessNodeView.initTraversal(rootAddress, page);
     }
 
-    return wrapper;
+    return page;
   }
 
   @Override
@@ -236,7 +256,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
           myAccessNodeView.insert(key, value);
         }
         finally {
-          myAccessNodeView.disposeBuffer();
+          myAccessNodeView.disposePage();
         }
         return;
       }
@@ -246,7 +266,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
 
   private void doPut(int key, int value) throws IOException {
     if (root.address == UNDEFINED_ADDRESS) doAllocateRoot();
-    DirectBufferWrapper root = initAccessNodeView();
+    Page root = initAccessNodeView();
     try {
       int index = myAccessNodeView.locate(key, true);
 
@@ -259,9 +279,9 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
       }
     }
     finally {
-      myAccessNodeView.disposeBuffer();
+      myAccessNodeView.disposePage();
       if (root != null) {
-        root.unlock();
+        root.release();
       }
     }
   }
@@ -283,7 +303,9 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
   }
 
   @Override
-  public void doClose() throws IOException {
+  public void doClose() throws IOException, InterruptedException {
+    final BtreeIndexNodeView rootNode = root.nodeView;
+    rootNode.disposePage();
     storage.close();
   }
 
@@ -291,12 +313,6 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
   public void doFlush() throws IOException {
     storage.force();
   }
-
-  @FunctionalInterface
-  private interface NodeOp<T> {
-    T operate(@NotNull DirectBufferWrapper buffer) throws IOException;
-  }
-
 
   // Leaf index node
   // (value_address {<0 if address in duplicates segment}, hash key) {getChildrenCount()}
@@ -316,25 +332,39 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     static final int LENGTH_SHIFT = 8;
     static final int LENGTH_MASK = 0xFFFF;
 
+    /** address of a node in a file (i.e. absolute) */
     private int address = -1;
+    /** address of a node in a page (i.e. relative to file page) */
     private int addressInBuffer;
 
     private short myChildrenCount = -1;
-    private DirectBufferWrapper bufferWrapper;
-    private boolean isSharedBuffer;
-    private boolean myHasFullPagesAlongPath;
 
     /**
-     * Do not unlock buffer in {@link #unlockBuffer()}: keep it locked after first {@link #lockBuffer()} call
-     * and until {@link #disposeBuffer()}
+     * page lifecycle:
+     * (regular): page acquired in .acquirePage(), released in .releasePage(), re-acquired in .acquirePage(), null-ed in .disposePage()
+     * (cached):  page acquired once in .acquirePage(), released (and null-ed) only in .disposePage() -- .releasePage() does nothing,
+     * (shared):  somebody else controls page lifecycle, so .(acquire|release|dispose)Page() all do nothing
+     * <p>
+     * Shared pages used by root (only?).
+     * !cached (i.e. regular) pages are used by rootNode only.
+     * All other pages are 'cached'.
      */
-    private final boolean cacheBuffer;
+    private PageUnsafe page;
+    /** Somebody else is responsible for page lifecycle (acquire/release), this node shouldn't do anything about it */
+    private boolean isSharedPage;
+
+    /** Do not call page.release() on unlockPage(), but keep page in-use until .disposePage() */
+    private final boolean keepPageAcquiredUntilDispose;
+
+
+    private boolean myHasFullPagesAlongPath;
+
 
     private void setFlag(int mask, boolean flag) throws IOException {
       mask <<= FLAGS_SHIFT;
-      lockBuffer();
+      acquirePage();
       try {
-        int anInt = bufferWrapper.getInt(addressInBuffer);
+        int anInt = page.getInt(addressInBuffer);
 
         if (flag) {
           anInt |= mask;
@@ -342,19 +372,19 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
         else {
           anInt &= ~mask;
         }
-        bufferWrapper.putInt(addressInBuffer, anInt);
+        page.putInt(addressInBuffer, anInt);
       }
       finally {
-        unlockBuffer();
+        releasePage();
       }
     }
 
-    BtreeIndexNodeView(boolean cacheBuffer) {
-      this.cacheBuffer = cacheBuffer;
+    BtreeIndexNodeView(boolean keepPageAcquiredUntilDispose) {
+      this.keepPageAcquiredUntilDispose = keepPageAcquiredUntilDispose;
     }
 
-    BtreeIndexNodeView(int address, boolean cacheBuffer, DirectBufferWrapper sharedBuffer) throws IOException {
-      this.cacheBuffer = cacheBuffer;
+    BtreeIndexNodeView(int address, boolean keepPageAcquiredUntilDispose, PageUnsafe sharedBuffer) throws IOException {
+      this.keepPageAcquiredUntilDispose = keepPageAcquiredUntilDispose;
       initTraversal(address, sharedBuffer);
     }
 
@@ -364,15 +394,16 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
 
     private void setChildrenCount(short value) throws IOException {
       myChildrenCount = value;
-      lockBuffer();
+      acquirePage();
       try {
-        int myValue = bufferWrapper.getInt(addressInBuffer);
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        int myValue = pageBuffer.getInt(addressInBuffer);
         myValue &= ~LENGTH_MASK << LENGTH_SHIFT;
         myValue |= value << LENGTH_SHIFT;
-        bufferWrapper.putInt(addressInBuffer, myValue);
+        page.putInt(addressInBuffer, myValue);
       }
       finally {
-        unlockBuffer();
+        releasePage();
       }
     }
 
@@ -381,58 +412,57 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     }
 
     private int getNextPage() throws IOException {
-      lockBuffer();
+      acquirePage();
       try {
         return getInt(4);
       }
       finally {
-        unlockBuffer();
+        releasePage();
       }
     }
 
     private int getInt(int address) throws IOException {
-      lockBuffer();
+      acquirePage();
       try {
-        return bufferWrapper.getInt(addressInBuffer + address);
+        return page.getInt(addressInBuffer + address);
       }
       finally {
-        unlockBuffer();
+        releasePage();
       }
     }
 
     private void putInt(int offset, int value) throws IOException {
-      lockBuffer();
+      acquirePage();
       try {
-        bufferWrapper.putInt(addressInBuffer + offset, value);
+        page.putInt(addressInBuffer + offset, value);
       }
       finally {
-        unlockBuffer();
+        releasePage();
       }
     }
 
     private ByteBuffer getBytes(int address, int length) throws IOException {
-      lockBuffer();
+      acquirePage();
       try {
-        ByteBuffer duplicate = bufferWrapper.copy();
+        final ByteBuffer duplicate = page.duplicate();
 
-        int newPosition = address + addressInBuffer;
+        final int newPosition = address + addressInBuffer;
         duplicate.position(newPosition);
         duplicate.limit(newPosition + length);
         return duplicate;
       }
       finally {
-        unlockBuffer();
+        releasePage();
       }
     }
 
     private void putBytes(int address, ByteBuffer buffer) throws IOException {
-      lockBuffer();
+      acquirePage();
       try {
-        bufferWrapper.position(address + addressInBuffer);
-        bufferWrapper.put(buffer);
+        page.putFromBuffer(buffer, address + addressInBuffer);
       }
       finally {
-        unlockBuffer();
+        releasePage();
       }
     }
 
@@ -442,82 +472,95 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
       setAddress(_address, null);
     }
 
-    void setAddress(int _address, DirectBufferWrapper sharedBuffer) throws IOException {
-      if (doSanityCheck) assert _address % pageSize == 0;
+    void setAddress(int _address, PageUnsafe sharedBuffer) throws IOException {
+      if (DO_SANITY_CHECK) assert _address % pageSize == 0;
 
       address = _address;
-      addressInBuffer = getStorage().getOffsetInPage(address);
-      disposeBuffer();
+      addressInBuffer = storage.toOffsetInPage(address);
+
+      disposePage();
+
       if (sharedBuffer != null) {
-        bufferWrapper = sharedBuffer;
-        isSharedBuffer = true;
+        page = sharedBuffer;
+        isSharedPage = true;
       }
       syncWithStore();
     }
 
     private void syncWithStore() throws IOException {
-      lockBuffer();
+      acquirePage();
       try {
-        doInitFlags(bufferWrapper.getInt(addressInBuffer));
+        doInitFlags(page.getInt(addressInBuffer));
       }
       finally {
-        unlockBuffer();
+        releasePage();
       }
     }
 
-    private void lockBuffer() throws IOException {
-      if (isSharedBuffer) {
+    private void acquirePage() throws IOException {
+      if (isSharedPage) {
         return;
       }
-      if (bufferWrapper == null) {
-        bufferWrapper = getStorage().getByteBuffer(address, false);
+      if (page == null) {
+        page = (PageUnsafe)storage.pageByOffset(address, /*forWrite: */ false);
       }
-      else {
-        if (!cacheBuffer) {
-          if (!bufferWrapper.tryLock()) {
-            bufferWrapper = getStorage().getByteBuffer(address, false);
-          }
+      else if (!keepPageAcquiredUntilDispose) {
+        boolean acquiredSuccessfully = page.tryAcquire(this);
+        if (!acquiredSuccessfully) {
+          page = (PageUnsafe)storage.pageByOffset(address, /*forWrite: */ false);
         }
-      }
+      }//else: if(keepPageAcquiredUntilDispose) -> page must be already acquired, if !null
     }
 
-    private void unlockBuffer() {
-      if (isSharedBuffer) {
+    private void releasePage() {
+      if (isSharedPage) {
         return;
       }
-      if (!cacheBuffer) {
-        bufferWrapper.unlock();
+      if (!keepPageAcquiredUntilDispose) {
+        page.release();
       }
     }
 
-    private void disposeBuffer() {
-      if (bufferWrapper != null && cacheBuffer) {
-        if (isSharedBuffer) {
-          isSharedBuffer = false;
+    private void disposePage() {
+      try {
+        if (isSharedPage) {
+          isSharedPage = false;
+          return;
         }
-        else {
-          bufferWrapper.unlock();
+
+        //RC: in theory, we should dispose only cached pages, because !cached are already release()-ed
+        // in .releasePage(). But there are .disposePage() calls without previous releasePage(): i.e.
+        // in .setAddress() -- hence we always release page if it is !null -- i.e. if there is page to
+        // release:
+        if (page != null && keepPageAcquiredUntilDispose) {
+          page.release();
         }
       }
-      bufferWrapper = null;
+      finally {
+        page = null;
+      }
     }
 
-    private @NotNull PagedFileStorage getStorage() {
-      return storage.getPagedFileStorage();
-    }
 
-
-    private int search(final int value) throws IOException {
+    private int search(int value) throws IOException {
       if (isIndexLeaf() && isHashedLeaf()) {
         return hashIndex(value);
       }
-      return ObjectUtils.binarySearch(0, getChildrenCount(), mid -> {
-        return Integer.compare(keyAt(mid), value);
-      });
+      acquirePage();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
+        return ObjectUtils.binarySearch(0, getChildrenCount(), mid -> {
+          int key = keyAtGivenLocksAndBufferAcquired(pageBuffer, mid);
+          return Integer.compare(key, value);
+        });
+      }
+      finally {
+        releasePage();
+      }
     }
 
     int addressAt(int i) throws IOException {
-      if (doSanityCheck) {
+      if (DO_SANITY_CHECK) {
         short childrenCount = getChildrenCount();
         if (isHashedLeaf()) {
           assert i < hashPageCapacity;
@@ -532,7 +575,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
 
     private void setAddressAt(int i, int value) throws IOException {
       int offset = indexToOffset(i);
-      if (doSanityCheck) {
+      if (DO_SANITY_CHECK) {
         short childrenCount = getChildrenCount();
         final int metaPageLen;
 
@@ -555,9 +598,10 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
       return i * INTERIOR_SIZE + (isHashedLeaf() ? metaDataLeafPageLength : RESERVED_META_PAGE_LEN);
     }
 
+
     private int keyAt(int i) {
       try {
-        if (doSanityCheck) {
+        if (DO_SANITY_CHECK) {
           if (isHashedLeaf()) {
             assert i < hashPageCapacity;
           }
@@ -572,9 +616,27 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
       }
     }
 
+    private int keyAtGivenLocksAndBufferAcquired(ByteBuffer pageBuffer,
+                                                 int slotIndex) {
+      final int keyOffsetInNode = indexToOffset(slotIndex) + KEY_OFFSET;
+      return getIntGivenLocksAndBufferAcquired(pageBuffer, keyOffsetInNode);
+    }
+
+    private int addressAtGivenLocksAndBufferAcquired(ByteBuffer pageBuffer,
+                                                     int slotIndex) {
+      final int offsetInNode = indexToOffset(slotIndex);
+      return getIntGivenLocksAndBufferAcquired(pageBuffer, offsetInNode);
+    }
+
+    private int getIntGivenLocksAndBufferAcquired(ByteBuffer pageBuffer,
+                                                  int offsetInNode) {
+      return pageBuffer.getInt(addressInBuffer + offsetInNode);
+    }
+
+
     private void setKeyAt(int i, int value) throws IOException {
       final int offset = indexToOffset(i) + KEY_OFFSET;
-      if (doSanityCheck) {
+      if (DO_SANITY_CHECK) {
         final int metaPageLen;
         if (isHashedLeaf()) {
           assert i < hashPageCapacity;
@@ -632,50 +694,48 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
 
     boolean processMappings(KeyValueProcessor processor) throws IOException {
       assert isIndexLeaf();
+      acquirePage();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
 
-      if (isHashedLeaf()) {
-        int offset = addressInBuffer + indexToOffset(0);
-
-        for (int i = 0; i < hashPageCapacity; ++i) {
-          int finalOffset = offset;
-          Boolean result;
-          lockBuffer();
-          try {
-            result = ((NodeOp<Boolean>)b -> {
-              int key = b.getInt(finalOffset + KEY_OFFSET);
-              if (key != HASH_FREE) {
-                if (!processor.process(key, b.getInt(finalOffset))) return false;
+        if (isHashedLeaf()) {
+          int offset = addressInBuffer + indexToOffset(0);
+          for (int slotNo = 0; slotNo < hashPageCapacity; slotNo++) {
+            int key = pageBuffer.getInt(offset + KEY_OFFSET);
+            if (key != HASH_FREE) {
+              int value = pageBuffer.getInt(offset);
+              if (!processor.process(key, value)) {
+                return false;
               }
-              return true;
-            }).operate(bufferWrapper);
+            }
+            offset += INTERIOR_SIZE;
           }
-          finally {
-            unlockBuffer();
-          }
-          if (!result) {
-            return false;
-          }
-
-          offset += INTERIOR_SIZE;
         }
-      }
-      else {
-        final int childrenCount = getChildrenCount();
-        for (int i = 0; i < childrenCount; ++i) {
-          if (!processor.process(keyAt(i), addressAt(i))) return false;
+        else {
+          final int childrenCount = getChildrenCount();
+          for (int childNo = 0; childNo < childrenCount; ++childNo) {
+            final int key = keyAtGivenLocksAndBufferAcquired(pageBuffer, childNo);
+            final int value = addressAtGivenLocksAndBufferAcquired(pageBuffer, childNo);
+            if (!processor.process(key, value)) {
+              return false;
+            }
+          }
         }
+        return true;
       }
-      return true;
+      finally {
+        releasePage();
+      }
     }
 
-    public void initTraversal(int address, DirectBufferWrapper sharedBuffer) throws IOException {
+    public void initTraversal(int address, PageUnsafe sharedBuffer) throws IOException {
       myHasFullPagesAlongPath = false;
       setAddress(address, sharedBuffer);
     }
 
     @Override
     public void close() {
-      disposeBuffer();
+      disposePage();
     }
 
     private final class HashLeafData {
@@ -694,19 +754,19 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
 
         for (int i = 0; i < hashPageCapacity; ++i) {
 
-          nodeView.lockBuffer();
+          nodeView.acquirePage();
           try {
-            int key = nodeView.bufferWrapper.getInt(offset + KEY_OFFSET);
+            int key = nodeView.page.getInt(offset + KEY_OFFSET);
             if (key != HASH_FREE) {
-              int value = nodeView.bufferWrapper.getInt(offset);
+              int value = nodeView.page.getInt(offset);
 
-              if (keyNumber[0] == keys.length) throw new CorruptedException(storage.getPagedFileStorage().getFile());
+              if (keyNumber[0] == keys.length) throw new CorruptedException(storage.getFile());
               keys[keyNumber[0]++] = key;
               values.put(key, value);
             }
           }
           finally {
-            nodeView.unlockBuffer();
+            nodeView.releasePage();
           }
 
           offset += INTERIOR_SIZE;
@@ -725,7 +785,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     private int splitNode(int parentAddress) throws IOException {
       final boolean indexLeaf = isIndexLeaf();
 
-      if (doSanityCheck) {
+      if (DO_SANITY_CHECK) {
         assert isFull();
         dump("before split:" + indexLeaf);
       }
@@ -794,7 +854,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
           }
 
           if (parent != null) {
-            if (doSanityCheck) {
+            if (DO_SANITY_CHECK) {
               int medianKeyInParent = parent.search(medianKey);
               int ourKey = keyAt(0);
               int ourKeyInParent = parent.search(ourKey);
@@ -816,7 +876,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
 
             parent.insert(medianKey, -newIndexNode.address);
 
-            if (doSanityCheck) {
+            if (DO_SANITY_CHECK) {
               parent.dump("After modifying parent");
               int search = parent.search(medianKey);
               assert search >= 0;
@@ -828,7 +888,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
             }
           }
           else {
-            if (doSanityCheck) {
+            if (DO_SANITY_CHECK) {
               root.getNodeView().dump("Splitting root:" + medianKey);
             }
 
@@ -836,7 +896,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
             newIndexNode.syncWithStore();
             syncWithStore();
 
-            if (doSanityCheck) {
+            if (DO_SANITY_CHECK) {
               System.out.println("Pages:" + pagesCount + ", elements:" + count + ", average:" + (height + 1));
             }
             root.setAddress(newRootAddress);
@@ -848,7 +908,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
             rootNodeView.setAddressAt(0, -address);
             rootNodeView.setAddressAt(1, -newIndexNode.address);
 
-            if (doSanityCheck) {
+            if (DO_SANITY_CHECK) {
               rootNodeView.dump("New root");
               dump("First child");
               newIndexNode.dump("Second child");
@@ -866,7 +926,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     }
 
     void dump(String s) throws IOException {
-      if (doDump) {
+      if (DO_DUMP) {
         immediateDump(s);
       }
     }
@@ -906,7 +966,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
         int i = search(valueHC);
 
         ++searched;
-        if (searched > maxHeight) throw new CorruptedException(storage.getPagedFileStorage().getFile());
+        if (searched > maxHeight) throw new CorruptedException(storage.getFile());
 
         if (isIndexLeaf()) {
           height = Math.max(height, searched);
@@ -920,12 +980,12 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     }
 
     private void insert(int valueHC, int newValueId) throws IOException {
-      if (doSanityCheck) {
+      if (DO_SANITY_CHECK) {
         boolean b = !isFull();
         assert b;
       }
       short recordCount = getChildrenCount();
-      if (doSanityCheck) assert recordCount < getMaxChildrenCount();
+      if (DO_SANITY_CHECK) assert recordCount < getMaxChildrenCount();
 
       final boolean indexLeaf = isIndexLeaf();
 
@@ -950,7 +1010,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
       }
 
       int medianKeyInParent = search(valueHC);
-      if (doSanityCheck) assert medianKeyInParent < 0;
+      if (DO_SANITY_CHECK) assert medianKeyInParent < 0;
       int index = -medianKeyInParent - 1;
       setChildrenCount((short)(recordCount + 1)); // "this" node becomes dirty
 
@@ -995,7 +1055,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
         setAddressAt(index + 1, newValueId);
       }
 
-      if (doSanityCheck) {
+      if (DO_SANITY_CHECK) {
         if (index > 0) assert keyAt(index - 1) < keyAt(index);
         if (index < recordCount) assert keyAt(index) < keyAt(index + 1);
       }
@@ -1004,47 +1064,55 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     private static final boolean useDoubleHash = true;
 
     private int hashIndex(int value) throws IOException {
-      final int length = hashPageCapacity;
-      int hash = value & 0x7fffffff;
-      int index = hash % length;
-      int keyAtIndex = keyAt(index);
+      acquirePage();
+      try {
+        final ByteBuffer pageBuffer = page.rawPageBuffer();
 
-      hashSearchRequests++;
+        final int length = hashPageCapacity;
+        int hash = value & 0x7fffffff;
+        int index = hash % length;
+        int keyAtIndex = keyAtGivenLocksAndBufferAcquired(pageBuffer, index);
 
-      int total = 0;
-      if (useDoubleHash) {
-        if (keyAtIndex != value && keyAtIndex != HASH_FREE) {
-          // see Knuth, p. 529
-          final int probe = 1 + (hash % (length - 2));
+        hashSearchRequests++;
 
-          do {
-            index -= probe;
-            if (index < 0) index += length;
+        int total = 0;
+        if (useDoubleHash) {
+          if (keyAtIndex != value && keyAtIndex != HASH_FREE) {
+            // see Knuth, p. 529
+            final int probe = 1 + (hash % (length - 2));
 
-            keyAtIndex = keyAt(index);
-            ++total;
-            if (total > length) {
-              throw new CorruptedException(storage.getPagedFileStorage().getFile()); // violation of Euler's theorem
+            do {
+              index -= probe;
+              if (index < 0) index += length;
+
+              keyAtIndex = keyAtGivenLocksAndBufferAcquired(pageBuffer, index);
+              ++total;
+              if (total > length) {
+                throw new CorruptedException(storage.getFile()); // violation of Euler's theorem
+              }
             }
+            while (keyAtIndex != value && keyAtIndex != HASH_FREE);
           }
-          while (keyAtIndex != value && keyAtIndex != HASH_FREE);
         }
-      }
-      else {
-        while (keyAtIndex != value && keyAtIndex != HASH_FREE) {
-          if (index == 0) index = length;
-          --index;
-          keyAtIndex = keyAt(index);
-          ++total;
+        else {
+          while (keyAtIndex != value && keyAtIndex != HASH_FREE) {
+            if (index == 0) index = length;
+            --index;
+            keyAtIndex = keyAtGivenLocksAndBufferAcquired(pageBuffer, index);
+            ++total;
 
-          if (total > length) throw new CorruptedException(storage.getPagedFileStorage().getFile()); // violation of Euler's theorem
+            if (total > length) throw new CorruptedException(storage.getFile()); // violation of Euler's theorem
+          }
         }
+
+        maxStepsSearchedInHash = Math.max(maxStepsSearchedInHash, total);
+        totalHashStepsSearched += total;
+
+        return keyAtIndex == HASH_FREE ? -index - 1 : index;
       }
-
-      maxStepsSearchedInHash = Math.max(maxStepsSearchedInHash, total);
-      totalHashStepsSearched += total;
-
-      return keyAtIndex == HASH_FREE ? -index - 1 : index;
+      finally {
+        releasePage();
+      }
     }
   }
 
@@ -1062,7 +1130,8 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
     return processLeafPages(root.getNodeView(), processor);
   }
 
-  private boolean processLeafPages(@NotNull BtreeIndexNodeView node, @NotNull KeyValueProcessor processor) throws IOException {
+  private boolean processLeafPages(@NotNull BtreeIndexNodeView node,
+                                   @NotNull KeyValueProcessor processor) throws IOException {
     if (node.isIndexLeaf()) {
       return node.processMappings(processor);
     }

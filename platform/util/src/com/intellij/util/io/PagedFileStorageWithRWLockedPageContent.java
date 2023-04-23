@@ -440,7 +440,9 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
 
   private int toPageIndex(final long offsetInFile) {
     final int pageIndex = (int)(offsetInFile / pageSize);
-    assert pageIndex >= 0 : "pageIndex(offset: " + offsetInFile + ") = " + pageIndex + ", but must be >=0";
+    if (pageIndex < 0) {
+      throw new AssertionError("pageIndex(offset: " + offsetInFile + ") = " + pageIndex + ", but must be >=0");
+    }
     return pageIndex;
   }
 

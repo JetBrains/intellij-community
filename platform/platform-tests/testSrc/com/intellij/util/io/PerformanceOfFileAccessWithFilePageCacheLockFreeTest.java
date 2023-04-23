@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.io.pagecache.Page;
+import com.intellij.util.io.pagecache.PageUnsafe;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.NotNull;
@@ -242,7 +243,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
         final int requestNo = rnd.nextInt(offsetsToRequest.length);
         final long blockOffset = offsetsToRequest[requestNo] % FILE_SIZE;
-        try (final Page page = pagedStorage.pageByOffset(blockOffset, /*forWrite: */ false)) {
+        try (final PageUnsafe page = (PageUnsafe)pagedStorage.pageByOffset(blockOffset, /*forWrite: */ false)) {
           buffer.clear();
          
           //emulate 'read':
@@ -311,7 +312,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
         final ThreadLocalRandom rnd = ThreadLocalRandom.current();
         final int requestNo = rnd.nextInt(offsetsToRequest.length);
         final long blockOffset = offsetsToRequest[requestNo] % FILE_SIZE;
-        try (final Page page = pagedStorage.pageByOffset(blockOffset, /*forWrite: */ true)) {
+        try (final PageUnsafe page = (PageUnsafe)pagedStorage.pageByOffset(blockOffset, /*forWrite: */ true)) {
           //emulate 'write':
           buffer.clear();
           //page.write(0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT,
