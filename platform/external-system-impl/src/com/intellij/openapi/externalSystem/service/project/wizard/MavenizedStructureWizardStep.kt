@@ -74,6 +74,8 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
   }
 
   private val contentPanel by lazy {
+    // IDEA-309673 Remove or cleanup old Gradle startup controls
+    // IDEA-309676 Remove or cleanup old Maven startup controls
     panel {
       if (!context.isCreatingNewProject) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.parent.label")) {
