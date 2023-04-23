@@ -2,11 +2,10 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.lang.jvm.DefaultJvmElementVisitor
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmClassKind
-import com.intellij.lang.jvm.JvmElementVisitor
+import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.util.JvmInheritanceUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -29,10 +28,14 @@ internal class LightServiceMigrationCodeInspection : DevKitJvmInspection() {
         if (LightServiceMigrationUtil.isVersion193OrHigher(clazz) ||
             ApplicationManager.getApplication().isUnitTestMode) {
           if (clazz.hasAnnotation(Service::class.java.canonicalName)) return true
-          if (!LightServiceMigrationUtil.canBeLightService(clazz)) return true
+          if (!clazz.hasModifier(JvmModifier.FINAL)) return true
           for (candidate in locateExtensionsByPsiClass(clazz)) {
             val extension = DomUtil.findDomElement(candidate.pointer.element, Extension::class.java, false) ?: continue
             val (serviceImplementation, level) = LightServiceMigrationUtil.getServiceImplementation(extension) ?: continue
+            if (level == Service.Level.APP &&
+                JvmInheritanceUtil.isInheritor(clazz, PersistentStateComponent::class.java.canonicalName)) {
+              continue
+            }
             if (serviceImplementation == clazz) {
               val message = LightServiceMigrationUtil.getMessage(level)
               sink.highlight(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)

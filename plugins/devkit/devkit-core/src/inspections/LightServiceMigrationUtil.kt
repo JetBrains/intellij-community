@@ -1,10 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.util.JvmInheritanceUtil
-import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
@@ -21,11 +17,6 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 internal object LightServiceMigrationUtil {
 
   data class ServiceInfo(val aClass: PsiClass, val level: Service.Level)
-
-  fun canBeLightService(jvmClass: JvmClass): Boolean {
-    return jvmClass.hasModifier(JvmModifier.FINAL) &&
-           !JvmInheritanceUtil.isInheritor(jvmClass, PersistentStateComponent::class.java.canonicalName)
-  }
 
   fun getServiceImplementation(extension: Extension): ServiceInfo? {
     val level = when (extension.extensionPoint?.effectiveQualifiedName) {
