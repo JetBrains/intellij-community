@@ -205,7 +205,6 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
 
     int editorWidth = viewRect.width;
-    if (editorWidth == 0) return horizontalOffset;
 
     JScrollPane scrollPane = mySupplier.getScrollPane();
     int scrollWidth = scrollPane.getHorizontalScrollBar().getMaximum() - getExtent(scrollPane.getHorizontalScrollBar());
