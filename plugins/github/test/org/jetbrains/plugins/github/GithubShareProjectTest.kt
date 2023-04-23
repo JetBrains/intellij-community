@@ -22,7 +22,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
 
     GHShareProjectUtil.shareProjectOnGithub(myProject, projectRoot)
 
-    checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
+    checkNotification(NotificationType.INFORMATION, "Successfully created empty repository on GitHub", null)
     findGitRepo()
     checkGitExists()
     checkRepoExists(mainAccount, GHRepositoryPath(mainAccount.username, projectName))
