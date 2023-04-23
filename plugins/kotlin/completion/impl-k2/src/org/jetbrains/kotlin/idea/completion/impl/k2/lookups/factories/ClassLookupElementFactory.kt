@@ -20,8 +20,9 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.renderer.render
 
 internal class ClassLookupElementFactory {
@@ -59,24 +60,37 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
 
             val token = context.file.findElementAt(context.startOffset)
 
-            // add temporary suffix for type in the receiver type position, in order for it to be resolved and shortened correctly
-            val temporarySuffix = if (token?.isDeclarationIdentifier() == true) ".f" else ""
+            val (temporaryPrefix, temporarySuffix) = when {
+                // add temporary suffix for type in the receiver type position, in order for it to be resolved and shortened correctly
+                token?.isCallableDeclarationIdentifier() == true -> "" to ".f"
 
-            context.document.replaceString(context.startOffset, context.tailOffset, fqNameRendered + temporarySuffix)
+                // if there is no reference in the current context and the position is not receiver type position,
+                // add temporary prefix and suffix
+                token?.parent !is KtNameReferenceExpression -> "$;val v:" to "$"
+
+                else -> "" to ""
+            }
+
+            context.document.replaceString(context.startOffset, context.tailOffset, temporaryPrefix + fqNameRendered + temporarySuffix)
             context.commitDocument()
 
-            val fqNameEndOffset = context.startOffset + fqNameRendered.length
-            val rangeMarker = context.document.createRangeMarker(fqNameEndOffset, fqNameEndOffset + temporarySuffix.length)
+            val fqNameStartOffset = context.startOffset + temporaryPrefix.length
+            val fqNameEndOffset = fqNameStartOffset + fqNameRendered.length
 
-            shortenReferencesInRange(targetFile, TextRange(context.startOffset, fqNameEndOffset))
+            val rangeMarker = context.document.createRangeMarker(context.startOffset, fqNameEndOffset + temporarySuffix.length)
+            val fqNameRangeMarker = context.document.createRangeMarker(fqNameStartOffset, fqNameEndOffset)
+
+            shortenReferencesInRange(targetFile, TextRange(fqNameStartOffset, fqNameEndOffset))
             context.commitDocument()
             psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
 
-            if (rangeMarker.isValid()) {
-                context.document.deleteString(rangeMarker.startOffset, rangeMarker.endOffset)
+            if (rangeMarker.isValid && fqNameRangeMarker.isValid) {
+                context.document.deleteString(rangeMarker.startOffset, fqNameRangeMarker.startOffset)
+                context.document.deleteString(fqNameRangeMarker.endOffset, rangeMarker.endOffset)
             }
         }
     }
 
-    private fun PsiElement.isDeclarationIdentifier(): Boolean = elementType == KtTokens.IDENTIFIER && parent is KtDeclaration
+    private fun PsiElement.isCallableDeclarationIdentifier(): Boolean =
+        elementType == KtTokens.IDENTIFIER && parent is KtCallableDeclaration
 }

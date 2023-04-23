@@ -1367,6 +1367,16 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/SecondTypeArg.kt");
         }
 
+        @TestMetadata("SecondTypeArg2.kt")
+        public void testSecondTypeArg2() throws Exception {
+            runTest("../completion/testData/handlers/basic/SecondTypeArg2.kt");
+        }
+
+        @TestMetadata("SecondTypeArg3.kt")
+        public void testSecondTypeArg3() throws Exception {
+            runTest("../completion/testData/handlers/basic/SecondTypeArg3.kt");
+        }
+
         @TestMetadata("SpaceAfterParenthesisBug.kt")
         public void testSpaceAfterParenthesisBug() throws Exception {
             runTest("../completion/testData/handlers/basic/SpaceAfterParenthesisBug.kt");
