@@ -42,6 +42,7 @@ public class SurroundAutoCloseableActionTest extends LightJavaCodeInsightFixture
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = true;
     doTest();
   }
+  public void testImplicitlyTypedDeclaration() { doTest(); }
 
   private void doTest() {
     String name = getTestName(false);
