@@ -53,8 +53,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_VIRTUAL_SPACE = false;
     public int VERTICAL_SCROLL_OFFSET = 1;
     public int VERTICAL_SCROLL_JUMP = 0;
-    public int HORIZONTAL_SCROLL_OFFSET = 0;
-    public int HORIZONTAL_SCROLL_JUMP = 3;
+    public int HORIZONTAL_SCROLL_OFFSET = 3;
+    public int HORIZONTAL_SCROLL_JUMP = 0;
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
