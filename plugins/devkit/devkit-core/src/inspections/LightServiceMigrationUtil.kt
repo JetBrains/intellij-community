@@ -5,6 +5,7 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.util.JvmInheritanceUtil
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiClass
@@ -19,11 +20,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal object LightServiceMigrationUtil {
 
-  enum class Level {
-    PROJECT, APPLICATION
-  }
-
-  data class ServiceInfo(val aClass: PsiClass, val level: Level)
+  data class ServiceInfo(val aClass: PsiClass, val level: Service.Level)
 
   fun canBeLightService(jvmClass: JvmClass): Boolean {
     return jvmClass.hasModifier(JvmModifier.FINAL) &&
@@ -32,8 +29,8 @@ internal object LightServiceMigrationUtil {
 
   fun getServiceImplementation(extension: Extension): ServiceInfo? {
     val level = when (extension.extensionPoint?.effectiveQualifiedName) {
-      "com.intellij.projectService" -> Level.PROJECT
-      "com.intellij.applicationService" -> Level.APPLICATION
+      "com.intellij.projectService" -> Service.Level.PROJECT
+      "com.intellij.applicationService" -> Service.Level.APP
       else -> return null
     }
     val extensionPoint = extension.extensionPoint
@@ -55,10 +52,10 @@ internal object LightServiceMigrationUtil {
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  fun getMessage(level: Level): String {
+  fun getMessage(level: Service.Level): String {
     return when (level) {
-      Level.APPLICATION -> DevKitBundle.message("inspection.light.service.migration.app.level.message")
-      Level.PROJECT -> DevKitBundle.message("inspection.light.service.migration.project.level.message")
+      Service.Level.APP -> DevKitBundle.message("inspection.light.service.migration.app.level.message")
+      Service.Level.PROJECT -> DevKitBundle.message("inspection.light.service.migration.project.level.message")
     }
   }
 
