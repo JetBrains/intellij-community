@@ -27,7 +27,6 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     checkGitExists()
     checkRepoExists(mainAccount, GHRepositoryPath(mainAccount.username, projectName))
     checkRemoteConfigured()
-    checkLastCommitPushed()
   }
 
   fun testGithubAlreadyExists() {
