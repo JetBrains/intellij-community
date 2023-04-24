@@ -34,8 +34,8 @@ object IndexDiagnosticDumperUtils {
     Paths.get(logPath).resolve("indexing-diagnostic")
   }
 
-  val alternativeIndexingDiagnosticDir: Path by lazy {
+  val oldVersionIndexingDiagnosticDir: Path by lazy {
     val logPath = PathManager.getLogPath()
-    Paths.get(logPath).resolve("alternative-indexing-diagnostic")
+    Paths.get(logPath).resolve("old-version-indexing-diagnostic")
   }
 }

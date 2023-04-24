@@ -16,9 +16,9 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.alternativeIndexingDiagnosticDir
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.indexingDiagnosticDir
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.jacksonMapper
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.oldVersionIndexingDiagnosticDir
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateActivityHtml
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateHtml
@@ -127,9 +127,8 @@ class IndexDiagnosticDumper : Disposable {
     val shouldPrintScanningRefreshedFilesInformationDuringIndexingActionInAggregateHtml = false
 
     @JvmStatic
-    private val shouldDumpAlternativeDiagnostics: Boolean
-      get() =
-        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.alternative.diagnostics", false)
+    private val shouldDumpOldDiagnostics: Boolean
+      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.old.version.of.diagnostics", false)
 
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
@@ -157,8 +156,8 @@ class IndexDiagnosticDumper : Disposable {
           dirStream.forEach { FileUtil.deleteWithRenaming(it) }
         }
       }
-      if (alternativeIndexingDiagnosticDir.exists()) {
-        alternativeIndexingDiagnosticDir.directoryStreamIfExists { dirStream ->
+      if (oldVersionIndexingDiagnosticDir.exists()) {
+        oldVersionIndexingDiagnosticDir.directoryStreamIfExists { dirStream ->
           dirStream.forEach { FileUtil.deleteWithRenaming(it) }
         }
       }
@@ -170,8 +169,8 @@ class IndexDiagnosticDumper : Disposable {
       return directory
     }
 
-    fun getAlternativeProjectDiagnosticDirectory(project: Project): Path {
-      val directory = project.getProjectCachePath(alternativeIndexingDiagnosticDir)
+    fun getOldVersionProjectDiagnosticDirectory(project: Project): Path {
+      val directory = project.getProjectCachePath(oldVersionIndexingDiagnosticDir)
       directory.createDirectories()
       return directory
     }
@@ -241,7 +240,7 @@ class IndexDiagnosticDumper : Disposable {
 
   private var isDisposed = false
 
-  private val unsavedIndexingHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingHistoryImpl>()
+  private val unsavedOldIndexingHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingHistoryImpl>()
   private val unsavedIndexingActivityHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingActivityHistory>()
 
   fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistoryImpl) {
@@ -250,6 +249,9 @@ class IndexDiagnosticDumper : Disposable {
 
   fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     try {
+      if (!shouldDumpOldDiagnostics) {
+        return
+      }
       if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
         return
       }
@@ -257,7 +259,7 @@ class IndexDiagnosticDumper : Disposable {
         return
       }
       projectIndexingHistory.indexingFinished()
-      unsavedIndexingHistories.add(projectIndexingHistory)
+      unsavedOldIndexingHistories.add(projectIndexingHistory)
       NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
     }
     finally {
@@ -267,9 +269,6 @@ class IndexDiagnosticDumper : Disposable {
 
   fun onScanningFinished(projectScanningHistory: ProjectScanningHistoryImpl) {
     // try {
-    if (!shouldDumpAlternativeDiagnostics) {
-      return
-    }
     if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
       return
     }
@@ -287,9 +286,6 @@ class IndexDiagnosticDumper : Disposable {
 
   fun onDumbIndexingFinished(projectDumbIndexingHistory: ProjectDumbIndexingHistoryImpl) {
     try {
-      if (!shouldDumpAlternativeDiagnostics) {
-        return
-      }
       if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
         return
       }
@@ -327,13 +323,13 @@ class IndexDiagnosticDumper : Disposable {
 
   @Synchronized
   private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistoryImpl) {
-    if (!unsavedIndexingHistories.remove(projectIndexingHistory)) {
+    if (!unsavedOldIndexingHistories.remove(projectIndexingHistory)) {
       return
     }
     try {
       check(!isDisposed)
 
-      val indexDiagnosticDirectory = getProjectDiagnosticDirectory(projectIndexingHistory.project)
+      val indexDiagnosticDirectory = getOldVersionProjectDiagnosticDirectory(projectIndexingHistory.project)
 
       val (diagnosticJson: Path, diagnosticHtml: Path) = getFilesForNewJsonAndHtmlDiagnostics(indexDiagnosticDirectory)
 
@@ -358,9 +354,6 @@ class IndexDiagnosticDumper : Disposable {
 
   @Synchronized
   private fun dumpProjectIndexingActivityHistoryToLogSubdirectory(projectIndexingActivityHistory: ProjectIndexingActivityHistory) {
-    if (!shouldDumpAlternativeDiagnostics) {
-      return
-    }
     if (!unsavedIndexingActivityHistories.remove(projectIndexingActivityHistory)) {
       return
     }
@@ -368,7 +361,7 @@ class IndexDiagnosticDumper : Disposable {
       check(!isDisposed)
 
       val project = projectIndexingActivityHistory.project
-      val indexDiagnosticDirectory = getAlternativeProjectDiagnosticDirectory(project)
+      val indexDiagnosticDirectory = getProjectDiagnosticDirectory(project)
 
       val (diagnosticJson: Path, diagnosticHtml: Path) = getFilesForNewJsonAndHtmlDiagnostics(indexDiagnosticDirectory)
 
@@ -550,7 +543,7 @@ class IndexDiagnosticDumper : Disposable {
   @Synchronized
   override fun dispose() {
     // it's important to save diagnostic, no matter how
-    for (unsavedIndexingHistory in unsavedIndexingHistories) {
+    for (unsavedIndexingHistory in unsavedOldIndexingHistories) {
       dumpProjectIndexingHistoryToLogSubdirectory(unsavedIndexingHistory)
     }
     for (unsavedIndexingActivityHistory in unsavedIndexingActivityHistories) {
