@@ -40,21 +40,40 @@ impl<'a> TestEnvironment<'a> {
 
     pub fn create_temp_dir(&self, relative_path: &str) -> PathBuf {
         let temp_dir = self.test_root_dir.path().join(relative_path);
-        fs::create_dir_all(&temp_dir).expect(format!("Failed to create temp. dir: {:?}", temp_dir).as_str());
+        fs::create_dir_all(&temp_dir).expect(&format!("Cannot create: {:?}", temp_dir));
         temp_dir
     }
 
-    pub fn create_user_config_file(&mut self, name: &str, content: &str) {
-        let custom_config_dir = get_custom_config_dir();
-        fs::create_dir_all(&custom_config_dir)
-            .expect(&format!("cannot create {:?}", &custom_config_dir));
-        self.to_delete.push(custom_config_dir.clone());
+    pub fn create_temp_file(&self, relative_path: &str, content: &str) -> PathBuf {
+        let temp_file = self.test_root_dir.path().join(relative_path);
+        Self::create_file(&temp_file, content);
+        temp_file
+    }
 
+    pub fn create_user_config_file(&mut self, name: &str, content: &str) -> PathBuf {
+        let custom_config_dir = get_custom_config_dir();
+        self.to_delete.push(custom_config_dir.clone());
         let config_file = custom_config_dir.join(name);
-        OpenOptions::new().write(true).create_new(true).open(&config_file)
-            .expect(&format!("cannot create {:?}", &config_file))
+        Self::create_file(&config_file, content);
+        config_file
+    }
+
+    pub fn create_toolbox_vm_options(&mut self, content: &str) -> PathBuf {
+        let dist_root = if cfg!(target_os = "macos") { self.dist_root.parent().unwrap() } else { &self.dist_root };
+        let vm_options_name = dist_root.file_name().unwrap().to_str().unwrap().to_string() + ".vmoptions";
+        let vm_options_file = dist_root.parent().unwrap().join(vm_options_name);
+        self.to_delete.push(vm_options_file.clone());
+        Self::create_file(&vm_options_file, content);
+        vm_options_file
+    }
+
+    fn create_file(file: &Path, content: &str) {
+        fs::create_dir_all(file.parent().unwrap())
+            .expect(&format!("Cannot create: {:?}", file));
+        OpenOptions::new().write(true).create_new(true).open(&file)
+            .expect(&format!("Cannot create {:?}", &file))
             .write_all(content.as_bytes())
-            .expect(&format!("cannot write {:?}", &config_file));
+            .expect(&format!("Cannot write {:?}", &file));
     }
 }
 
@@ -62,8 +81,9 @@ impl<'a> Drop for TestEnvironment<'a> {
     fn drop(&mut self) {
         for path in &self.to_delete {
             debug!("Deleting {:?}", path);
-            if let Err(e) = fs::remove_dir_all(&path) {
-                eprintln!("{:?}", e);
+            if let Ok(metadata) = path.symlink_metadata() {
+                let result = if metadata.is_dir() { fs::remove_dir_all(&path) } else { fs::remove_file(path) };
+                result.expect(&format!("cannot delete: {:?}", path))
             }
         }
     }
@@ -87,7 +107,8 @@ struct TestEnvironmentShared {
     launcher_path: PathBuf,
     jbr_root: PathBuf,
     app_jar_path: PathBuf,
-    product_info_path: PathBuf
+    product_info_path: PathBuf,
+    vm_options_path: PathBuf
 }
 
 fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool) -> Result<TestEnvironment<'a>> {
@@ -132,8 +153,9 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let app_jar_path = Path::new("./resources/TestProject/build/libs/app.jar").canonicalize()?;
 
     let product_info_path = project_root.join(format!("resources/product_info_{}.json", env::consts::OS));
+    let vm_options_path = project_root.join("resources/xplat.vmoptions");
 
-    Ok(TestEnvironmentShared { launcher_path, jbr_root, app_jar_path, product_info_path })
+    Ok(TestEnvironmentShared { launcher_path, jbr_root, app_jar_path, product_info_path, vm_options_path })
 }
 
 fn get_jbr_sdk_from_project_root(project_root: &Path) -> Result<PathBuf> {
@@ -232,11 +254,11 @@ fn layout_launcher(
         target_dir,
         vec![
             "bin/idea.properties",
-            "bin/xplat64.vmoptions",
             "lib/boot-linux.jar"
         ],
         vec![
             (&shared_env.launcher_path, launcher_rel_path),
+            (&shared_env.vm_options_path, "bin/xplat64.vmoptions"),
             (&shared_env.app_jar_path, "lib/app.jar"),
             (&shared_env.product_info_path, "product-info.json")
         ],
@@ -277,11 +299,11 @@ fn layout_launcher(
         &dist_root,
         vec![
             "bin/idea.properties",
-            "bin/xplat.vmoptions",
             "lib/boot-macos.jar"
         ],
         vec![
             (&shared_env.launcher_path, launcher_rel_path),
+            (&shared_env.vm_options_path, "bin/xplat.vmoptions"),
             (&shared_env.app_jar_path, "lib/app.jar"),
             (&shared_env.product_info_path, "Resources/product-info.json")
         ],
@@ -320,11 +342,11 @@ fn layout_launcher(
         target_dir,
         vec![
             "bin\\idea.properties",
-            "bin\\xplat64.exe.vmoptions",
             "lib\\boot-windows.jar"
         ],
         vec![
             (&shared_env.launcher_path, launcher_rel_path),
+            (&shared_env.vm_options_path, "bin\\xplat64.exe.vmoptions"),
             (&shared_env.app_jar_path, "lib\\app.jar"),
             (&shared_env.product_info_path, "product-info.json")
         ],
@@ -590,4 +612,14 @@ pub fn test_runtime_selection(result: LauncherRunResult, expected_rt: PathBuf) {
     let adjusted_rt = if cfg!(target_os = "macos") { expected_rt.join("Contents/Home") } else { expected_rt };
 
     assert_eq!(adjusted_rt.to_str().unwrap(), actual_rt, "Wrong runtime; run result: {:?}", result);
+}
+
+pub fn assert_vm_option_presence(dump: &IntellijMainDumpedLaunchParameters, vm_option: &str) {
+    assert!(dump.vmOptions.contains(&vm_option.to_string()),
+            "{:?} is not in {:?}", vm_option, dump.vmOptions);
+}
+
+pub fn assert_vm_option_absence(dump: &IntellijMainDumpedLaunchParameters, vm_option: &str) {
+    assert!(!dump.vmOptions.contains(&vm_option.to_string()),
+            "{:?} should not be in {:?}", vm_option, dump.vmOptions);
 }

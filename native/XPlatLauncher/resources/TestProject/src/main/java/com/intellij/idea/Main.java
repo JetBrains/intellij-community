@@ -9,10 +9,7 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public class Main {
@@ -38,6 +35,7 @@ public class Main {
             "usage: " + Main.class.getName() + " [command [options ...]]\n" +
             "commands:\n" +
             "  dump-launch-parameters [test-args ...] --output /path/to/output/file\n" +
+            "  vm-options-overloading <property>\n" +
             "  async-profiler\n" +
             "  exit-code <number>\n" +
             "  sigsegv");
@@ -63,7 +61,12 @@ public class Main {
     ) { }
 
     var vmOptions = ManagementFactory.getRuntimeMXBean().getInputArguments();
-    var dump = new DumpedLaunchParameters(List.of(args), vmOptions, System.getenv(), System.getProperties());
+    var properties = new HashMap<>(System.getProperties());
+    properties.put("__MAX_HEAP", String.valueOf(Runtime.getRuntime().maxMemory() >> 20));
+    properties.put("__GC", ManagementFactory.getGarbageCollectorMXBeans().stream()
+      .map(bean -> bean.getName().split(" ", 2)[0])
+      .findFirst().orElse("-"));
+    var dump = new DumpedLaunchParameters(List.of(args), vmOptions, System.getenv(), properties);
 
     var gson = new GsonBuilder().setPrettyPrinting().create();
     var jsonText = gson.toJson(dump);
