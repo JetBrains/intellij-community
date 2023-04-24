@@ -715,9 +715,6 @@ final class FSRecordsImpl {
       checkNotDisposed();
       return connection.getNames().enumerate(name);
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
     catch (Throwable e) {
       throw handleError(e);
     }

@@ -267,9 +267,11 @@ final class PersistentFSConnector {
     final int commonVersion = commonVersionIfExists(recordsStorage, attributesStorage, contentsStorage);
 
     if (commonVersion != currentImplVersion) {
-      //MAYBE RC: better check !empty not only recordsStorage, but attributesStorage & contentsStorage as well
-      final boolean storageIsEmpty = (recordsStorage.recordsCount() == 0);
-      if (commonVersion == 0 && storageIsEmpty) {
+      //If storages are just created -> commonVersion=0, and storages are empty.
+      // => we should stamp them with current implVersion and go ahead.
+      //Otherwise it is version mismatch and we should rebuild VFS storages from 0.
+      final boolean storagesAreEmpty = (recordsStorage.recordsCount() == 0);
+      if (commonVersion == 0 && storagesAreEmpty) {//MAYBE RC: better check also attributes/contentsStorage.isEmpty()?
         //all storages are fresh new => assign their versions to the current one:
         setCurrentVersion(recordsStorage, attributesStorage, contentsStorage, currentImplVersion);
         return;
