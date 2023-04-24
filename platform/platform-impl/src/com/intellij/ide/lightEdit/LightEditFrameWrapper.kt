@@ -189,7 +189,7 @@ internal class LightEditFrameWrapper(
       get() = LightEditMainMenuHelper.getMainMenuActionGroup()
 
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false) {
+      return object : IdeStatusBarImpl(disposable = frameHelper, frameHelper = frameHelper, addToolWindowWidget = false) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }

@@ -476,7 +476,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         if (mainStatusBar != null) {
           val frame = getFrame()
           if (frame is IdeFrame) {
-            statusBar = mainStatusBar.createChild(frame) {
+            statusBar = mainStatusBar.createChild(this@DockWindow, frame) {
               (container as? DockableEditorTabbedContainer)?.splitters?.currentWindow?.selectedComposite?.selectedWithProvider?.fileEditor
             }
           }
