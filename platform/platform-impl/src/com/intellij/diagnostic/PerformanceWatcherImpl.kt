@@ -3,7 +3,6 @@ package com.intellij.diagnostic
 
 import com.intellij.execution.process.OSProcessUtil
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
@@ -14,10 +13,10 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -26,13 +25,13 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
-import com.intellij.util.containers.ContainerUtil
-import one.util.streamex.StreamEx
+import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
@@ -41,8 +40,11 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.BiConsumer
+import java.util.function.ObjIntConsumer
 import javax.swing.SwingUtilities
+import kotlin.io.path.name
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 private val LOG = logger<PerformanceWatcherImpl>()
 private const val TOLERABLE_LATENCY = 100
@@ -52,7 +54,7 @@ private const val PID_FILE_NAME = ".pid"
 private val ourIdeStart = System.currentTimeMillis()
 
 internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher() {
-  private val logDir = File(PathManager.getLogPath())
+  private val logDir = PathManager.getLogDir()
 
   @Volatile
   private var swingApdex = ApdexData.EMPTY
@@ -95,13 +97,13 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
       if (ApplicationInfoImpl.getShadowInstance().isEAP) {
         val ourReasonableThreadPoolSize = registryManager["reasonable.application.thread.pool.size"]
         val service = AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService
-        val AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors()
+        val allAvailableProcessors = Runtime.getRuntime().availableProcessors()
         service.setNewThreadListener { _, _ ->
           val executorSize = service.backendPoolExecutorSize
-          if (executorSize > ourReasonableThreadPoolSize.asInteger() + AVAILABLE_PROCESSORS) {
-            val message = "Too many threads: $executorSize created in the global Application pool. ($ourReasonableThreadPoolSize, available processors: $AVAILABLE_PROCESSORS)"
+          if (executorSize > ourReasonableThreadPoolSize.asInteger() + allAvailableProcessors) {
+            val message = "Too many threads: $executorSize created in the global Application pool. ($ourReasonableThreadPoolSize, available processors: $allAvailableProcessors)"
             val file = doDumpThreads("newPooledThread/", true, message, true)
-            LOG.info(message + if (file == null) "" else "; thread dump is saved to '" + file.path + "'")
+            LOG.info(message + if (file == null) "" else "; thread dump is saved to '$file'")
           }
         }
       }
@@ -111,19 +113,23 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
     }
   }
 
-  override fun processUnfinishedFreeze(consumer: BiConsumer<in File, in Int?>) {
-    val files = logDir.listFiles() ?: return
+  override fun processUnfinishedFreeze(consumer: ObjIntConsumer<Path>) {
+    val files = try {
+      Files.newDirectoryStream(logDir) { it.fileName.toString().startsWith(THREAD_DUMPS_PREFIX) }.use { it.sorted() }
+    }
+    catch (ignore: NoSuchFileException) {
+      return
+    }
+
     for (file in files) {
-      if (file.name.startsWith(THREAD_DUMPS_PREFIX)) {
-        val marker = file.toPath().resolve(DURATION_FILE_NAME)
-        if (Files.exists(marker)) {
-          try {
-            val s = Files.readString(marker)
-            Files.deleteIfExists(marker)
-            consumer.accept(file, s.toInt())
-          }
-          catch (ignored: Exception) {
-          }
+      val marker = file.resolve(DURATION_FILE_NAME)
+      if (Files.exists(marker)) {
+        try {
+          val s = Files.readString(marker)
+          Files.deleteIfExists(marker)
+          consumer.accept(file, s.toInt())
+        }
+        catch (ignored: Exception) {
         }
       }
     }
@@ -191,14 +197,14 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
     }
   }
 
-  override fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, stripDump: Boolean): File? {
+  override fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, stripDump: Boolean): Path? {
     return doDumpThreads(pathPrefix = pathPrefix,
                          appendMillisecondsToFileName = appendMillisecondsToFileName,
                          contentsPrefix = "",
                          stripDump = stripDump)
   }
 
-  private fun doDumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, contentsPrefix: String, stripDump: Boolean): File? {
+  private fun doDumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, contentsPrefix: String, stripDump: Boolean): Path? {
     if (thread == null) {
       return null
     }
@@ -207,31 +213,30 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
                        rawDump = contentsPrefix + ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), stripDump).rawDump)
   }
 
-  private fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, rawDump: String): File? {
-    var pathPrefix = pathPrefix
-    if (!pathPrefix.contains('/')) {
-      pathPrefix = "$THREAD_DUMPS_PREFIX$pathPrefix-${formatTime(ourIdeStart)}-${buildName()}/"
+  private fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, rawDump: String): Path? {
+    var effectivePathPrefix = pathPrefix
+    if (!effectivePathPrefix.contains('/')) {
+      effectivePathPrefix = "$THREAD_DUMPS_PREFIX$effectivePathPrefix-${formatTime(ourIdeStart)}-${buildName()}/"
     }
-    else if (!pathPrefix.startsWith(THREAD_DUMPS_PREFIX)) {
-      pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix
+    else if (!effectivePathPrefix.startsWith(THREAD_DUMPS_PREFIX)) {
+      effectivePathPrefix = THREAD_DUMPS_PREFIX + effectivePathPrefix
     }
     val now = System.currentTimeMillis()
     val suffix = if (appendMillisecondsToFileName) "-$now" else ""
-    val file = File(logDir, "$pathPrefix$DUMP_PREFIX${formatTime(now)}$suffix.txt")
-    val dir = file.parentFile
-    if (!(dir.isDirectory || dir.mkdirs())) {
-      return null
-    }
+    val file = logDir.resolve("$effectivePathPrefix$DUMP_PREFIX${formatTime(now)}$suffix.txt")
+    val dir = file.parent
 
     val memoryUsage = getMemoryUsage()
     if (!memoryUsage.isEmpty()) {
       LOG.info("$memoryUsage while dumping threads to $file")
     }
+
     try {
-      FileUtil.writeToFile(file, rawDump)
+      Files.createDirectories(dir)
+      Files.writeString(file, rawDump)
     }
     catch (e: IOException) {
-      LOG.info("Failed to write the thread dump file: ${e.message}")
+      LOG.info("Failed to write the thread dump file", e)
     }
     return file
   }
@@ -290,7 +295,7 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
             stopDumping()
             val durationMs = getDuration(taskStop, TimeUnit.MILLISECONDS)
             val publisher = publisher
-            publisher?.uiFreezeFinished(durationMs, File(logDir, freezeFolder))
+            publisher?.uiFreezeFinished(durationMs, logDir.resolve(freezeFolder!!))
             val reportDir = postProcessReportFolder(durationMs)
             publisher?.uiFreezeRecorded(durationMs, reportDir)
           }.get()
@@ -309,8 +314,8 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
 
       //TODO always true for some reason
       //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
-      val reportDir = File(logDir, freezeFolder)
-      reportDir.mkdirs()
+      val reportDir = logDir.resolve(freezeFolder!!)
+      Files.createDirectories(reportDir)
       val publisher = publisher ?: return
       publisher.uiFreezeStarted(reportDir)
       dumpTask = object : SamplingTask(dumpInterval, maxDumpDuration) {
@@ -323,34 +328,39 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
                        ?: return
             try {
               val duration = getDuration(System.nanoTime(), TimeUnit.SECONDS)
-              FileUtil.writeToFile(File(file.parentFile, DURATION_FILE_NAME), java.lang.Long.toString(duration))
+              Files.createDirectories(file.parent)
+              Files.writeString(file.parent.resolve(DURATION_FILE_NAME), duration.toString())
               publisher.dumpedThreads(file, threadDump)
             }
             catch (e: IOException) {
-              LOG.info("Failed to write the duration file: " + e.message)
+              LOG.info("Failed to write the duration file", e)
             }
           }
         }
       }
     }
 
-    private fun postProcessReportFolder(durationMs: Long): File? {
-      val dir = File(logDir, freezeFolder)
-      var reportDir: File? = null
-      if (dir.exists()) {
-        cleanup(dir)
-        reportDir = File(logDir, dir.name + getFreezePlaceSuffix() + "-" + TimeUnit.MILLISECONDS.toSeconds(durationMs) + "sec")
-        if (!dir.renameTo(reportDir)) {
-          LOG.warn("Unable to create freeze folder $reportDir")
-          reportDir = dir
-        }
-        val message = "UI was frozen for " + durationMs + "ms, details saved to " + reportDir
-        if (PluginManagerCore.isRunningFromSources()) {
-          LOG.info(message)
-        }
-        else {
-          LOG.warn(message)
-        }
+    private fun postProcessReportFolder(durationMs: Long): Path? {
+      val dir = logDir.resolve(freezeFolder!!)
+      if (!Files.exists(dir)) {
+        return null
+      }
+
+      cleanup(dir)
+      var reportDir = logDir.resolve("${dir.name}${getFreezePlaceSuffix()}-${TimeUnit.MILLISECONDS.toSeconds(durationMs)}sec")
+      try {
+        Files.move(dir, reportDir)
+      }
+      catch (e: IOException) {
+        LOG.warn("Unable to create freeze folder $reportDir", e)
+        reportDir = dir
+      }
+      val message = "UI was frozen for ${durationMs}ms, details saved to $reportDir"
+      if (PluginManagerCore.isRunningFromSources()) {
+        LOG.info(message)
+      }
+      else {
+        LOG.warn(message)
       }
       return reportDir
     }
@@ -362,8 +372,8 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
     }
 
     private fun getFreezePlaceSuffix(): String {
-      var stacktraceCommonPart: List<StackTraceElement>? = null
       val task = dumpTask ?: return ""
+      var stacktraceCommonPart: List<StackTraceElement>? = null
       for (info in task.threadInfos) {
         val edt = info.firstOrNull(ThreadDumper::isEDT) ?: continue
         val edtStack = edt.stackTrace ?: continue
@@ -375,12 +385,9 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
         }
       }
 
-      if (!ContainerUtil.isEmpty(stacktraceCommonPart)) {
-        val element = stacktraceCommonPart!![0]
-        return "-" +
-               FileUtil.sanitizeFileName(StringUtil.getShortName(element.className)) +
-               "." +
-               FileUtil.sanitizeFileName(element.methodName)
+      if (!stacktraceCommonPart.isNullOrEmpty()) {
+        val element = stacktraceCommonPart[0]
+        return "-${sanitizeFileName(StringUtil.getShortName(element.className))}.${sanitizeFileName(element.methodName)}"
       }
       return ""
     }
@@ -434,15 +441,16 @@ private fun reportCrashesIfAny() {
           attachment.isIncluded = true
 
           // include plugins list
-          val plugins = StreamEx.of(PluginManagerCore.getLoadedPlugins())
-            .filter { d: IdeaPluginDescriptor? -> d!!.isEnabled && !d.isBundled }
-            .map<PluginInfo> { plugin: PluginDescriptor -> getPluginInfoByDescriptor(plugin) }
-            .filter { obj: PluginInfo -> obj.isSafeToReport() }
-            .map<String> { (_, id, version): PluginInfo -> "$id ($version)" }
-            .joining("\n", "Extra plugins:\n", "")
-          val pluginsAttachment = Attachment("plugins.txt", plugins)
+          val plugins = PluginManagerCore.getLoadedPlugins()
+            .asSequence()
+            .filter { it.isEnabled && !it.isBundled }
+            .map(::getPluginInfoByDescriptor)
+            .filter(PluginInfo::isSafeToReport)
+            .map { (_, id, version): PluginInfo -> "$id ($version)" }
+            .joinToString(separator = "\n", "Extra plugins:\n")
+          val pluginAttachment = Attachment("plugins.txt", plugins)
           attachment.isIncluded = true
-          var attachments = arrayOf(attachment, pluginsAttachment)
+          var attachments = arrayOf(attachment, pluginAttachment)
 
           // look for extended crash logs
           val extraLog = findExtraLogFile(pid, appInfoFileLastModified)
@@ -489,23 +497,26 @@ private val publisher: IdePerformanceListener?
     return if (app != null && !app.isDisposed) app.messageBus.syncPublisher(IdePerformanceListener.TOPIC) else null
   }
 
-private fun cleanOldFiles(dir: File, level: Int) {
-  val children = dir.listFiles { dir1: File?, name: String -> level > 0 || name.startsWith(THREAD_DUMPS_PREFIX) }
-                 ?: return
-  Arrays.sort(children)
-  for (i in children.indices) {
-    val child = children[i]
-    if (i < children.size - 100 || ageInDays(child) > 10) {
-      FileUtil.delete(child)
+private fun cleanOldFiles(dir: Path, level: Int) {
+  val children = try {
+    Files.newDirectoryStream(dir) { level > 0 || it.fileName.toString().startsWith(THREAD_DUMPS_PREFIX) }.use { it.sorted() }
+  }
+  catch (ignore: NoSuchFileException) {
+    return
+  }
+
+  for ((i, child) in children.withIndex()) {
+    if (i < (children.size - 100) || ageInDays(child) > 10) {
+      NioFiles.deleteRecursively(child)
     }
-    else if (level < 3) {
-      cleanOldFiles(child, level + 1)
+    else if (level < 3 && Files.isDirectory(child)) {
+      cleanOldFiles(dir = child, level = level + 1)
     }
   }
 }
 
-private fun ageInDays(file: File): Long {
-  return TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - file.lastModified())
+private fun ageInDays(file: Path): Long {
+  return (System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis()).toDuration(DurationUnit.MILLISECONDS).inWholeDays
 }
 
 /** for [IdePerformanceListener.uiResponded] events (ms)  */
@@ -520,8 +531,8 @@ private fun formatTime(timeMs: Long): String {
   return SimpleDateFormat("yyyyMMdd-HHmmss").format(Date(timeMs))
 }
 
-private fun cleanup(dir: File) {
-  FileUtil.delete(File(dir, DURATION_FILE_NAME))
+private fun cleanup(dir: Path) {
+  Files.deleteIfExists(dir.resolve(DURATION_FILE_NAME))
 }
 
 internal fun getStacktraceCommonPart(commonPart: List<StackTraceElement>,

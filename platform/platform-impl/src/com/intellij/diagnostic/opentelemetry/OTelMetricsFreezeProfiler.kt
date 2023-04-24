@@ -5,9 +5,7 @@ import com.intellij.diagnostic.FreezeProfiler
 import com.intellij.diagnostic.telemetry.MetricsExporterUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.SystemProperties
-import java.io.File
+import com.intellij.openapi.diagnostic.logger
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -21,57 +19,55 @@ import java.nio.file.Path
  * Profiler limits attachment size to MAX_METRICS_LINES_TO_ATTACH.
  */
 class OTelMetricsFreezeProfiler : FreezeProfiler {
+  override fun start(reportDir: Path) {
+  }
 
+  override fun stop() {
+  }
 
-  override fun start(reportDir: File) = Unit
+  override fun getAttachments(reportDir: Path): List<Attachment> = collectOpenTelemetryReports()
+}
 
-  override fun stop() = Unit
+/**
+ * The whole metrics file could be quite large, so limit attachment to <=5000 lines
+ * (which is ~500Kb, ~1.5h min of recording):
+ */
+private val MAX_METRICS_LINES_TO_ATTACH = System.getProperty("idea.freeze.otel.max-metrics-lines-to-attach", "").toIntOrNull() ?: 5000
 
-  override fun getAttachments(reportDir: File): List<Attachment> = collectOpenTelemetryReports()
+/**
+ * @return OTel metrics reports (.csv) as an [Attachment].
+ * Currently, returns only a single, the most recent report, or an empty list of no recent reports could be found,
+ * or an error happens during the report content loading.
+ */
+private fun collectOpenTelemetryReports(): List<Attachment> {
+  val logDir = Path.of(PathManager.getLogPath())
+  if (Files.isDirectory(logDir)) {
+    try {
+      val mostRecentFile = listMetricsFiles().maxByOrNull { it.fileName }
+      mostRecentFile ?: return emptyList()
 
-  companion object {
-    /**
-     * The whole metrics file could be quite large, so limit attachment to <=5000 lines
-     * (which is ~500Kb, ~1.5h min of recording):
-     */
-    private val MAX_METRICS_LINES_TO_ATTACH = SystemProperties.getIntProperty("idea.freeze.otel.max-metrics-lines-to-attach", 5000)
-
-    /**
-     * @return OTel metrics reports (.csv) as an [Attachment].
-     * Currently, returns only a single, the most recent report, or an empty list of no recent reports could be found,
-     * or an error happens during the report content loading.
-     */
-    private fun collectOpenTelemetryReports(): List<Attachment> {
-      val logDir = Path.of(PathManager.getLogPath())
-      if (Files.isDirectory(logDir)) {
-        try {
-          val mostRecentFile = listMetricsFiles().maxByOrNull { it.fileName }
-          mostRecentFile ?: return emptyList()
-
-          val lines = Files.readAllLines(mostRecentFile)
-          //The whole metrics file could be quite large, so limit attachment size:
-          val tailLines = lines.takeLast(MAX_METRICS_LINES_TO_ATTACH)
-            .joinToString("\n")
-          return listOf(
-            Attachment(
-              mostRecentFile.fileName.toString(),
-              tailLines
-            )
-          )
-        }
-        catch (ex: IOException) {
-          thisLogger().info("Error reading most recent open-telemetry-metrics.csv file", ex)
-        }
-      }
-      return emptyList()
+      val lines = Files.readAllLines(mostRecentFile)
+      //The whole metrics file could be quite large, so limit attachment size:
+      val tailLines = lines.takeLast(MAX_METRICS_LINES_TO_ATTACH)
+        .joinToString("\n")
+      return listOf(
+        Attachment(
+          mostRecentFile.fileName.toString(),
+          tailLines
+        )
+      )
     }
-
-    fun listMetricsFiles(): List<Path> {
-      val metricsReportingPath = MetricsExporterUtils.metricsReportingPath()
-      metricsReportingPath ?: return emptyList()
-
-      val fileLimiterForMetrics = MetricsExporterUtils.setupFileLimiterForMetrics(metricsReportingPath)
-      return fileLimiterForMetrics.listExistentFiles()
+    catch (ex: IOException) {
+      logger<OTelMetricsFreezeProfiler>().info("Error reading most recent open-telemetry-metrics.csv file", ex)
     }
   }
+  return emptyList()
+}
+
+private fun listMetricsFiles(): List<Path> {
+  val metricsReportingPath = MetricsExporterUtils.metricsReportingPath()
+  metricsReportingPath ?: return emptyList()
+
+  val fileLimiterForMetrics = MetricsExporterUtils.setupFileLimiterForMetrics(metricsReportingPath)
+  return fileLimiterForMetrics.listExistentFiles()
 }

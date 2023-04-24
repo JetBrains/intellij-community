@@ -5,7 +5,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.internal.DebugAttachDetector;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 final class FusFreezeReporter implements IdePerformanceListener {
@@ -14,7 +14,7 @@ final class FusFreezeReporter implements IdePerformanceListener {
   private static final int TOLERABLE_UI_LATENCY = 100;
 
   @Override
-  public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
+  public void uiFreezeFinished(long durationMs, @Nullable Path reportDir) {
     if (!isDebugEnabled) {
       LifecycleUsageTriggerCollector.onFreeze(durationMs);
     }

@@ -6,15 +6,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 @ApiStatus.Internal
 public interface FreezeProfiler {
   /** @param reportDir directory to collect some intermediate profiling info */
-  void start(@NotNull File reportDir);
+  void start(@NotNull Path reportDir);
 
   void stop();
 
   /** @param reportDir directory for intermediate results -- same as passed in {@link #start(File)} before */
-  @NotNull List<Attachment> getAttachments(@NotNull File reportDir);
+  @NotNull List<Attachment> getAttachments(@NotNull Path reportDir);
 }
