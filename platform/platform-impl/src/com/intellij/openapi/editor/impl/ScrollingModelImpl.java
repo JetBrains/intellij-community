@@ -226,13 +226,9 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
     if (rightBound - leftBound > editorWidth) { // if editor width is not enough to satisfy offsets from both sides, we center target location
       horizontalOffset = targetLocation.x - editorWidth / 2;
-    } else if (scrollType == ScrollType.RELATIVE && leftBound < viewRect.x) {
-      int leftmostPossibleLocation = getLeftmostLocation(targetLocation, editorWidth, scrollOffset, spaceWidth);
-      int leftAfterScrollJump = Math.max(leftmostPossibleLocation, viewRect.x - scrollJump * spaceWidth);
-      horizontalOffset = Math.min(leftBound, leftAfterScrollJump);
-    } else if (scrollType == ScrollType.MAKE_VISIBLE && leftBound < viewRect.x) {
-      // we try to scroll to 0, if it is possible (rightBound allows us)
-      if (rightBound < editorWidth) {
+    } else if (leftBound < viewRect.x) {
+      if (scrollType == ScrollType.MAKE_VISIBLE && rightBound < editorWidth) {
+        // here we try to scroll to 0, if it is possible (that's the point of MAKE_VISIBLE)
         horizontalOffset = 0;
       } else {
         int leftmostPossibleLocation = getLeftmostLocation(targetLocation, editorWidth, scrollOffset, spaceWidth);
