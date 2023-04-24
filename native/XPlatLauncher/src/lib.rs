@@ -113,19 +113,19 @@ fn main_impl(remote_dev: bool, verbose: bool) -> Result<()> {
         std::process::exit(1);
     }));
 
-    debug!("** Preparing configuration");
-    let configuration = &get_configuration(remote_dev)?;
+    debug!("** Preparing launch configuration");
+    let configuration = get_configuration(remote_dev)?;
 
     debug!("** Locating runtime");
-    let java_home = &configuration.prepare_for_launch()?;
+    let java_home = configuration.prepare_for_launch()?;
     debug!("Resolved runtime: {java_home:?}");
 
     debug!("** Resolving VM options");
-    let vm_options = get_full_vm_options(configuration)?;
+    let vm_options = get_full_vm_options(&configuration)?;
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-    let result = java::run_jvm_and_event_loop(java_home, vm_options, args.to_vec());
+    let result = java::run_jvm_and_event_loop(&java_home, vm_options, args.to_vec());
 
     log::logger().flush();
 
@@ -150,7 +150,7 @@ pub struct ProductInfoLaunchField {
     pub additionalJvmArguments: Vec<String>
 }
 
-trait LaunchConfiguration {
+pub trait LaunchConfiguration {
     fn get_args(&self) -> &[String];
 
     fn get_intellij_vm_options(&self) -> Result<Vec<String>>;
@@ -162,30 +162,13 @@ trait LaunchConfiguration {
 
 fn get_configuration(is_remote_dev: bool) -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
-    debug!("args={:?}", &cmd_args[1..]);
-
-    let (remote_dev_project_path, jvm_args) = match is_remote_dev {
-        true => {
-            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args)?;
-            (remote_dev_args.project_path, remote_dev_args.ij_args)
-        },
-        false => (None, cmd_args[1..].to_vec())
-    };
+    debug!("args={:?}", &cmd_args);
 
     if is_remote_dev {
-        // required for the most basic launch (e.g. showing help)
-        // as there may be nothing on user system and we'll crash
-        RemoteDevLaunchConfiguration::setup_font_config()?;
-    }
-
-    let default = DefaultLaunchConfiguration::new(jvm_args)?;
-
-    match remote_dev_project_path {
-        None => Ok(Box::new(default)),
-        Some(x) => {
-            let config = RemoteDevLaunchConfiguration::new(&x, default)?;
-            Ok(Box::new(config))
-        }
+        RemoteDevLaunchConfiguration::new(cmd_args)
+    } else {
+        let configuration = DefaultLaunchConfiguration::new(cmd_args[1..].to_vec())?;
+        Ok(Box::new(configuration))
     }
 }
 

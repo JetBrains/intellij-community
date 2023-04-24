@@ -142,8 +142,26 @@ impl DefaultLaunchConfiguration {
 }
 
 impl RemoteDevLaunchConfiguration {
+    pub fn new(args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
+        let (project_path, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
+
+        // required for the most basic launch (e.g. showing help)
+        // as there may be nothing on user system and we'll crash
+        Self::setup_font_config()?;
+
+        let default_cfg = DefaultLaunchConfiguration::new(default_cfg_args)?;
+
+        match project_path {
+            Some(path) => {
+                let configuration = Self::create(&path, default_cfg)?;
+                Ok(Box::new(configuration))
+            },
+            None => Ok(Box::new(default_cfg))
+        }
+    }
+
     // remote-dev-server.exe ij_command_name /path/to/project args
-    pub fn parse_remote_dev_args(args: &[String]) -> Result<RemoteDevArgs> {
+    fn parse_remote_dev_args(args: &[String]) -> Result<(Option<PathBuf>, Vec<String>)> {
         debug!("Parsing remote dev command-line arguments");
 
         if args.len() < 2 {
@@ -173,16 +191,12 @@ impl RemoteDevLaunchConfiguration {
         let project_path = if args.len() > 2 {
             let arg = args[2].as_str();
             if arg == "-h" || arg == "--help" {
-                return Ok(
-                    RemoteDevArgs {
-                        project_path: None,
-                        ij_args: vec![
-                            args[0].to_string(),
-                            "remoteDevShowHelp".to_string(),
-                            ij_starter_command.ij_command
-                        ]
-                    }
-                );
+                let args = vec![
+                    args[0].to_string(),
+                    "remoteDevShowHelp".to_string(),
+                    ij_starter_command.ij_command
+                ];
+                return Ok((None, args));
             }
 
             Some(Self::get_project_path(arg)?)
@@ -213,7 +227,7 @@ impl RemoteDevLaunchConfiguration {
             }
         }.concat();
 
-        Ok(RemoteDevArgs { project_path, ij_args })
+        Ok((project_path, ij_args))
     }
 
     fn get_project_path(argument: &str) -> Result<PathBuf> {
@@ -229,7 +243,7 @@ impl RemoteDevLaunchConfiguration {
         return Ok(project_path);
     }
 
-    pub fn new(project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
+    fn create(project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
         // prevent opening of 2 backends for the same directory via symlinks
         let canonical_project_path = canonical_non_unc(project_path)?;
 
@@ -434,13 +448,13 @@ impl RemoteDevLaunchConfiguration {
         Ok(trust_file_path)
     }
 
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
-    pub fn setup_font_config() -> Result<()> {
+    #[cfg(not(target_os = "linux"))]
+    fn setup_font_config() -> Result<()> {
         Ok(())
     }
 
-    #[cfg(any(target_os = "linux"))]
-    pub fn setup_font_config() -> Result<()> {
+    #[cfg(target_os = "linux")]
+    fn setup_font_config() -> Result<()> {
         // TODO: implement
         Ok(())
     }
@@ -520,11 +534,6 @@ fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
 struct IdeProperty {
     key: String,
     value: String
-}
-
-pub struct RemoteDevArgs {
-    pub project_path: Option<PathBuf>,
-    pub ij_args: Vec<String>
 }
 
 fn print_help() {
