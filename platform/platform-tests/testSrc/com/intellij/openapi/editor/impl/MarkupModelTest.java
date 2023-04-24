@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -8,17 +11,49 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MarkupModelTest extends AbstractEditorTest {
   public void testMarkupModelListenersDoWork() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     initText(" ".repeat(100));
-    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
+    Document document = getDocument(getFile());
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     List<String> events = new ArrayList<>();
+    addMarkupListener(markupModel, events);
+    checkEventsFiredSynchronously(markupModel, events);
+  }
+
+  private void checkEventsFiredSynchronously(MarkupModelEx markupModel, List<String> events) {
+    RangeHighlighter highlighter = markupModel.addRangeHighlighter(1, 2, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    List<String> expected = new ArrayList<>();
+    assertEventsFired(expected, events, "(1,2): AA");
+    highlighter.setCustomRenderer((editor, highlighter1, g) -> {}); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setEditorFilter(__ -> true); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setErrorStripeMarkColor(new Color(1)); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setErrorStripeTooltip(this); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setGutterIconRenderer(MarkupModelStressTest.DUMMY_GUTTER_ICON_RENDERER); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setLineMarkerRenderer((editor, g, r) -> {}); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setLineSeparatorColor(new Color(1)); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setLineSeparatorRenderer((g, x1, x2, y) -> {}); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setTextAttributesKey(CodeInsightColors.LINE_NONE_COVERAGE); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.setThinErrorStripeMark(true); assertEventsFired(expected, events, "(1,2): AC");
+    highlighter.dispose();
+    assertEventsFired(expected, events,"(1,2): BR", "(1,2): AR");
+  }
+
+  private void addMarkupListener(@NotNull MarkupModelEx markupModel, @NotNull List<? super String> events) {
     markupModel.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
@@ -40,21 +75,72 @@ public class MarkupModelTest extends AbstractEditorTest {
         events.add(highlighter.getTextRange() + ": AC");
       }
     });
-    RangeHighlighter highlighter = markupModel.addRangeHighlighter(1, 2, 0, null, HighlighterTargetArea.EXACT_RANGE);
+  }
+
+  public void _testMarkupModelListenersMustWorkInBGT() throws ExecutionException, InterruptedException {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    initText(" ".repeat(100));
+    Document document = getDocument(getFile());
+    List<String> events = ContainerUtil.createLockFreeCopyOnWriteList();
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    addMarkupListener(markupModel, events);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+      checkEventsFiredSynchronously(markupModel, events);
+    });
+    while (!future.isDone()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    future.get();
+  }
+
+  private void assertEventsFired(List<String> expected, List<String> actualEvents, String... events) {
+    expected.addAll(List.of(events));
+    assertEquals(expected, actualEvents);
+  }
+
+  public void testMarkupModelListenersFireAfterDocumentChangeLedToRangeHighlighterRemoval() {
+    initText(" ".repeat(100));
+    Document document = getDocument(getFile());
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    List<String> events = new ArrayList<>();
+    addMarkupListener(markupModel, events);
+    RangeHighlighter highlighter = markupModel.addRangeHighlighter(10, 11, 1, null, HighlighterTargetArea.EXACT_RANGE);
     List<String> expected = new ArrayList<>();
-    expected.add("(1,2): AA"); assertEquals(expected, events);
-    highlighter.setCustomRenderer((editor, highlighter1, g) -> {}); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setEditorFilter(__ -> true); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setErrorStripeMarkColor(new Color(1)); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setErrorStripeTooltip(this); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setGutterIconRenderer(MarkupModelStressTest.DUMMY_GUTTER_ICON_RENDERER); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setLineMarkerRenderer((editor, g, r) -> {}); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setLineSeparatorColor(new Color(1)); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setLineSeparatorRenderer((g, x1, x2, y) -> {}); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setTextAttributesKey(CodeInsightColors.LINE_NONE_COVERAGE); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.setThinErrorStripeMark(true); expected.add("(1,2): AC"); assertEquals(expected, events);
-    highlighter.dispose();  expected.add("(1,2): BR");  expected.add("(1,2): AR"); assertEquals(expected, events);
-    assertEquals(expected, events);
+    assertEventsFired(expected, events, "(10,11): AA");
+    WriteAction.run(() -> document.deleteString(5, 20));
+    assertFalse(highlighter.isValid());
+    assertEventsFired(expected, events, "(10,11): BR", "(10,11): AR");
+  }
+
+  public void testMustNotAllowCrazyStuffFromInsideMarkupModelListenerDuringHighlighterRemove() {
+    initText(" ".repeat(100));
+    Document document = getDocument(getFile());
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter highlighter = markupModel.addRangeHighlighter(10, 11, 1, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter2 = markupModel.addRangeHighlighter(10, 11, 1, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter3 = markupModel.addRangeHighlighter(11, 11, 1, null, HighlighterTargetArea.EXACT_RANGE);
+    AtomicInteger fired = new AtomicInteger();
+    markupModel.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
+      @Override
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter1) {
+        fired.incrementAndGet();
+        assertSame(highlighter, highlighter1);
+        assertTrue(highlighter2.isValid());
+        assertThrows(IncorrectOperationException.class, ()->markupModel.addRangeHighlighter(1, 3, 1, null, HighlighterTargetArea.EXACT_RANGE));
+        assertThrows(IncorrectOperationException.class, ()->markupModel.removeHighlighter(highlighter2));
+      }
+
+      @Override
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter1) {
+        fired.incrementAndGet();
+        assertSame(highlighter, highlighter1);
+        assertTrue(highlighter3.isValid());
+        assertThrows(IncorrectOperationException.class, ()->markupModel.addRangeHighlighter(1, 3, 1, null, HighlighterTargetArea.EXACT_RANGE));
+        assertThrows(IncorrectOperationException.class, ()->markupModel.removeHighlighter(highlighter3));
+      }
+    });
+    highlighter.dispose();
+    assertEquals(2, fired.get());
   }
 }

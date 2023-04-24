@@ -219,7 +219,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     boolean removed = treeFor(segmentHighlighter).removeInterval((RangeHighlighterEx)segmentHighlighter);
     LOG.assertTrue(removed);
-    fireAfterRemoved((RangeHighlighterEx)segmentHighlighter);
   }
 
   @Override

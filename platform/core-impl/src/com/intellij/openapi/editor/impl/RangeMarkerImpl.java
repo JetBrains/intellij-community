@@ -232,7 +232,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       invalidate();
     }
     else {
-      setRange(newRange);
+      node.setRange(newRange);
     }
   }
 

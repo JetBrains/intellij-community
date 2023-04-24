@@ -124,7 +124,12 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   }
 
   @Override
-  void fireBeforeRemoved(@NotNull RangeHighlighterEx markerEx) {
-    myMarkupModel.fireBeforeRemoved(markerEx);
+  void fireBeforeRemoved(@NotNull RangeHighlighterEx marker) {
+    myMarkupModel.fireBeforeRemoved(marker);
+  }
+
+  @Override
+  void fireAfterRemoved(@NotNull RangeHighlighterEx marker) {
+    myMarkupModel.fireAfterRemoved(marker);
   }
 }

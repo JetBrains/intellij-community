@@ -166,21 +166,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
 
     // Some old tree was saved in the virtual file. Have to transfer markers from there.
-    List<RangeMarkerEx> oldMarkers = new ArrayList<>(oldTree.size());
-    oldTree.processAll(r -> oldMarkers.add(r));
-    for (RangeMarkerEx r : oldMarkers) {
-      TextRange newRange = ((RangeMarkerImpl)r).reCalcTextRangeAfterReload(this, tabSize);
-      RangeMarkerTree.RMNode<RangeMarkerEx> node = ((RangeMarkerImpl)r).myNode;
-      if (node == null) continue;
-      int startOffset = newRange.getStartOffset();
-      int endOffset = newRange.getEndOffset();
-      if (r.isValid() && TextRange.isProperRange(startOffset, endOffset) && endOffset <= getTextLength()) {
-        registerRangeMarker(r, startOffset, endOffset, r.isGreedyToLeft(), r.isGreedyToRight(), 0);
-      }
-      else {
-        node.invalidateUnderLock();
-      }
-    }
+    oldTree.copyRangeMarkersTo(this, tabSize);
   }
 
   // track GC of RangeMarkerTree: means no-one is interested in range markers for this file anymore

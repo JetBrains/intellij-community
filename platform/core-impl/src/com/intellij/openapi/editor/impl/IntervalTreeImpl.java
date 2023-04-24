@@ -20,10 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Comparator;
-import java.util.ConcurrentModificationException;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.Lock;
@@ -779,7 +776,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
                                                       boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     l.writeLock().lock();
     try {
-      if (firingBeforeRemove) {
+      if (firingRemove) {
         throw new IncorrectOperationException("Must not add range marker from within beforeRemoved listener");
       }
       checkMax(true);
@@ -972,6 +969,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     finally {
       setNode(interval, null);
       l.writeLock().unlock();
+      afterRemove(interval);
     }
   }
 
@@ -1277,8 +1275,10 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
 
   @Override
   public void clear() {
+    List<T> toRemove = new ArrayList<>();
     l.writeLock().lock();
     processAll(t -> {
+      toRemove.add(t);
       beforeRemove(t);
       return true;
     });
@@ -1288,6 +1288,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
     finally {
       l.writeLock().unlock();
+      afterRemove(toRemove);
     }
   }
 
@@ -1300,24 +1301,44 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     collectGced(root.getRight(), gced);
   }
 
-  void fireBeforeRemoved(@NotNull T markerEx) {
-  }
+  private boolean firingRemove; // accessed under l.writeLock() only
 
-  private boolean firingBeforeRemove; // accessed under l.writeLock() only
+  void fireBeforeRemoved(@NotNull T marker) {
+  }
+  void fireAfterRemoved(@NotNull T marker) {
+  }
+  void afterRemove(@NotNull List<? extends T> markers) {
+    for (T marker : markers) {
+      afterRemove(marker);
+    }
+  }
 
   // must be called under l.writeLock()
-  void beforeRemove(@NotNull T markerEx) {
-    if (firingBeforeRemove) {
+  void beforeRemove(@NotNull T marker) {
+    if (firingRemove) {
       throw new IllegalStateException("must not remove range markers from within beforeRemove() listener");
     }
-    firingBeforeRemove = true;
+    firingRemove = true;
     try {
-      fireBeforeRemoved(markerEx);
+      fireBeforeRemoved(marker);
     }
     finally {
-      firingBeforeRemove = false;
+      firingRemove = false;
     }
   }
+  private void afterRemove(@NotNull T marker) {
+    if (firingRemove) {
+      throw new IncorrectOperationException("must not remove range markers from within beforeRemove() listener");
+    }
+    firingRemove = true;
+    try {
+      fireAfterRemoved(marker);
+    }
+    finally {
+      firingRemove = false;
+    }
+  }
+
 
   private static class IntervalTreeGuide<T extends MutableInterval> implements WalkingState.TreeGuide<IntervalNode<T>> {
     @Override
