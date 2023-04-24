@@ -241,14 +241,10 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
       PsiElement anchor = result.getAnchor();
       statement = ObjectUtils.tryCast(statements[statements.length - 1], PsiReturnStatement.class);
       PsiElement gParent = anchor.getParent();
-      if (hasNameConflict(statements, anchor, element)) {
-        gParent.addBefore(JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(ct.text(body), anchor), anchor);
-      }
-      else {
-        for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
-          if (child != statement && !(child instanceof PsiJavaToken)) {
-            gParent.addBefore(ct.markUnchanged(child), anchor);
-          }
+      solveNameConflicts(statements, anchor, element);
+      for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child != statement && !(child instanceof PsiJavaToken)) {
+          gParent.addBefore(ct.markUnchanged(child), anchor);
         }
       }
     }
@@ -266,15 +262,24 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     }
   }
   
-  private static boolean hasNameConflict(PsiStatement[] statements, PsiElement anchor, PsiLambdaExpression lambda) {
+  private static void solveNameConflicts(PsiStatement[] statements, @NotNull PsiElement anchor, @NotNull PsiLambdaExpression lambda) {
     Predicate<PsiVariable> allowedVar = variable -> PsiTreeUtil.isAncestor(lambda, variable, true);
-    JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(anchor.getProject());
-    return StreamEx.of(statements).select(PsiDeclarationStatement.class)
+    Project project = anchor.getProject();
+    JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
+    StreamEx.of(statements).select(PsiDeclarationStatement.class)
       .flatArray(PsiDeclarationStatement::getDeclaredElements)
-      .select(PsiNamedElement.class)
-      .map(PsiNamedElement::getName)
-      .nonNull()
-      .anyMatch(name -> !name.equals(manager.suggestUniqueVariableName(name, anchor, allowedVar)));
+      .select(PsiVariable.class)
+      .forEach(e -> {
+        PsiIdentifier identifier = e.getNameIdentifier();
+        if (identifier == null) return;
+        String name = identifier.getText();
+        String newName = manager.suggestUniqueVariableName(name, anchor, allowedVar);
+        if (!name.equals(newName)) {
+          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(e, anchor);
+          refs.forEach(ref -> ref.handleElementRename(newName));
+          identifier.replace(JavaPsiFacade.getElementFactory(project).createIdentifier(newName));
+        }
+      });
   }
 
   private static void inlineCallArguments(PsiMethodCallExpression callExpression,

@@ -37,4 +37,16 @@ class X {
       })
       .collect(Collectors.toList());
   }
+
+  private static List<String> getStrings(List<String> test) {
+    return test.stream()
+      .collect(()->{
+        ArrayList<String> objects = new ArrayList<>();
+        objects.add("1");
+        return objects;
+      }, (strings, string) -> {
+        System.out.println("1");
+        strings.add(string);
+      }, (strings, strings2) -> strings.addAll(strings2));
+  }
 }

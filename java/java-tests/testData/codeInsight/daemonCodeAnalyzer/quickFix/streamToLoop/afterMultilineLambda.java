@@ -38,4 +38,15 @@ class X {
           }
       }
   }
+
+  private static List<String> getStrings(List<String> test) {
+      ArrayList<String> objects1 = new ArrayList<>();
+      objects1.add("1");
+      ArrayList<String> strings = objects1;
+      for (String string : test) {
+          System.out.println("1");
+          strings.add(string);
+      }
+      return strings;
+  }
 }
