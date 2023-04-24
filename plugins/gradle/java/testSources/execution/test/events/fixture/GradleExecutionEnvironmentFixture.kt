@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.SimpleOperationLeakTracker
+import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.testFramework.util.getExecutionOperation
 import org.junit.jupiter.api.Assertions
 
@@ -20,7 +20,7 @@ class GradleExecutionEnvironmentFixture(
 
   private lateinit var testDisposable: Disposable
 
-  private lateinit var executionLeakTracker: SimpleOperationLeakTracker
+  private lateinit var executionLeakTracker: OperationLeakTracker
 
   private var executionEnvironment: ExecutionEnvironment? = null
 
@@ -29,7 +29,7 @@ class GradleExecutionEnvironmentFixture(
 
     testDisposable = Disposer.newDisposable()
 
-    executionLeakTracker = SimpleOperationLeakTracker { getExecutionOperation(project, it) }
+    executionLeakTracker = OperationLeakTracker { getExecutionOperation(project, it) }
     executionLeakTracker.setUp()
 
     installExecutionListener()
@@ -63,7 +63,7 @@ class GradleExecutionEnvironmentFixture(
     executionEnvironment = null
     val result = executionLeakTracker.withAllowedOperation(1, action)
     Assertions.assertNotNull(executionEnvironment) {
-      "Gradle execution isn't finished.\n"
+      "Gradle execution isn't finished."
     }
     return result
   }

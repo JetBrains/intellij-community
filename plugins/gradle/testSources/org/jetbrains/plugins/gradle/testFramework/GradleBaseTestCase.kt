@@ -15,7 +15,7 @@ import com.intellij.testFramework.utils.vfs.createDirectory
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESListenerLeakTracker
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.SimpleOperationLeakTracker
+import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.TestInfo
 abstract class GradleBaseTestCase {
 
   private lateinit var listenerLeakTracker: ESListenerLeakTracker
-  private lateinit var reloadLeakTracker: SimpleOperationLeakTracker
+  private lateinit var reloadLeakTracker: OperationLeakTracker
 
   lateinit var testDisposable: Disposable
 
@@ -45,7 +45,7 @@ abstract class GradleBaseTestCase {
     listenerLeakTracker = ESListenerLeakTracker()
     listenerLeakTracker.setUp()
 
-    reloadLeakTracker = SimpleOperationLeakTracker { getGradleProjectReloadOperation(it) }
+    reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
     reloadLeakTracker.setUp()
 
     testDisposable = Disposer.newDisposable()

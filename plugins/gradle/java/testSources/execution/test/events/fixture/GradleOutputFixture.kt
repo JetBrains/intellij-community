@@ -17,7 +17,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.util.containers.addIfNotNull
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.ListAssert
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.SimpleOperationLeakTracker
+import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
 import java.util.function.Function
 
@@ -27,14 +27,14 @@ class GradleOutputFixture(
 
   private lateinit var fixtureDisposable: Disposable
 
-  private lateinit var taskExecutionLeakTracker: SimpleOperationLeakTracker
+  private lateinit var taskExecutionLeakTracker: OperationLeakTracker
 
   private lateinit var output: Output
 
   override fun setUp() {
     fixtureDisposable = Disposer.newDisposable()
 
-    taskExecutionLeakTracker = SimpleOperationLeakTracker { getGradleTaskExecutionOperation(project, it) }
+    taskExecutionLeakTracker = OperationLeakTracker { getGradleTaskExecutionOperation(project, it) }
     taskExecutionLeakTracker.setUp()
 
     installGradleEventsListener()
