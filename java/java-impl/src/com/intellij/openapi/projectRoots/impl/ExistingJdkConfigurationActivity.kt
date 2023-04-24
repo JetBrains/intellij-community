@@ -1,25 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PreloadingActivity
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JdkFinder
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import java.util.function.Consumer
 
 /**
- * This [PreloadingActivity] makes it possible to index an installed JDK without any
+ * This [ProjectActivity] makes it possible to index an installed JDK without any
  * configuration.
  * The registry key `jdk.configure.existing` must be enabled.
  *
@@ -53,7 +46,6 @@ class ExistingJdkConfigurationActivity : ProjectActivity {
 
       // Set project SDK
       if (rootManager.projectSdk == null) {
-        JavaHomeFinderMac.JAVA_HOME_FIND_UTIL
         addedJdks
           .filterNotNull()
           .maxByOrNull { JavaSdk.getInstance().getVersion(it)?.ordinal ?: 0 }
