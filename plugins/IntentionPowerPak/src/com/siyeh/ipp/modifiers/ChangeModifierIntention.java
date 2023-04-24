@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,6 +64,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
@@ -232,10 +234,10 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     private final boolean myExtendLeft, myExtendRight;
     private final String myOriginalText;
     private final RangeMarker myMarker;
-    private final @NlsContexts.Command String myActionName;
+    private final @Command String myActionName;
     private final PsiFile myFile;
 
-    ModifierUpdater(@NotNull PsiFile file, @NotNull Document document, @NotNull TextRange range, @NotNull @NlsContexts.Command String actionName) {
+    ModifierUpdater(@NotNull PsiFile file, @NotNull Document document, @NotNull TextRange range, @NotNull @Command String actionName) {
       myDocument = document;
       myFile = file;
       myActionName = actionName;
@@ -326,7 +328,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
   private static void processWithConflicts(@NotNull PsiModifierList modifierList,
                                            @NotNull AccessModifier modifier,
-                                           @NotNull MultiMap<PsiElement, String> conflicts) {
+                                           @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     boolean shouldProcess;
     if (conflicts.isEmpty()) {
       shouldProcess = true;
@@ -382,7 +384,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @Nullable
-  private static MultiMap<PsiElement, String> checkForConflicts(@NotNull PsiMember member, AccessModifier modifier) {
+  private static MultiMap<PsiElement, @DialogMessage String> checkForConflicts(@NotNull PsiMember member, AccessModifier modifier) {
     if (member instanceof PsiClass aClass && modifier == AccessModifier.PUBLIC) {
       final PsiElement parent = aClass.getParent();
       if (!(parent instanceof PsiJavaFile javaFile)) {

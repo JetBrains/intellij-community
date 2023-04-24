@@ -4,7 +4,6 @@ package com.intellij.refactoring.memberPushDown;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -25,6 +24,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
                                Member extends PsiElement,
@@ -93,7 +95,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
 
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     myDelegate.checkSourceClassConflicts(myPushDownData, conflicts);
     final UsageInfo[] usagesIn = refUsages.get();
     if (usagesIn.length == 0) {
@@ -174,7 +176,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
 
   @NotNull
   @Override
-  protected @NlsContexts.DialogTitle String getCommandName() {
+  protected @DialogTitle String getCommandName() {
     return RefactoringBundle.message("push.members.down.title");
   }
 

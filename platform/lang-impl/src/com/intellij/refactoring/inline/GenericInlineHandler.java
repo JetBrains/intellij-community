@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class GenericInlineHandler {
   private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);
@@ -141,7 +143,7 @@ public final class GenericInlineHandler {
   public static Map<Language, InlineHandler.Inliner> initInliners(PsiElement elementToInline,
                                                                   UsageInfo[] usagesIn,
                                                                   InlineHandler.Settings settings,
-                                                                  MultiMap<PsiElement, String> conflicts,
+                                                                  MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                                   Language... emptyInliners) {
     ArrayList<PsiReference> refs = new ArrayList<>();
     for (UsageInfo info : usagesIn) {
@@ -176,10 +178,10 @@ public final class GenericInlineHandler {
     return inliners;
   }
 
-  public static void collectConflicts(final PsiReference reference,
-                                      final PsiElement element,
-                                      final Map<Language, InlineHandler.Inliner> inliners,
-                                      final MultiMap<PsiElement, String> conflicts) {
+  public static void collectConflicts(PsiReference reference,
+                                      PsiElement element,
+                                      Map<Language, InlineHandler.Inliner> inliners,
+                                      MultiMap<PsiElement, @DialogMessage String> conflicts) {
     final PsiElement referenceElement = reference.getElement();
     final Language language = referenceElement.getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
