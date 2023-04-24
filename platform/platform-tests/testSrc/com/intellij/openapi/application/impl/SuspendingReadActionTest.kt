@@ -2,7 +2,6 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
@@ -76,29 +75,9 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
 
   @RepeatedTest(REPETITIONS)
   fun rethrow(): Unit = timeoutRunBlocking {
-    testRethrow(object : Throwable() {})
-    testRethrow(CancellationException())
-    testRethrow(ProcessCanceledException())
-    testRethrow(CannotReadException())
-  }
-
-  private suspend inline fun <reified T : Throwable> testRethrow(t: T) {
-    lateinit var readJob: Job
-    val thrown = assertThrows<T> {
-      cra {
-        readJob = requireNotNull(Cancellation.currentJob())
-        throw t
-      }
+    testRwRethrow {
+      cra(action = it)
     }
-    val cause = thrown.cause
-    if (cause != null) {
-      assertSame(t, cause) // kotlin trace recovery via [cause]
-    }
-    else {
-      assertSame(t, thrown)
-    }
-    assertTrue(readJob.isCompleted)
-    assertTrue(readJob.isCancelled)
   }
 
   /**

@@ -2,7 +2,6 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.*
 import com.intellij.testFramework.junit5.TestApplication
@@ -78,29 +77,9 @@ class SuspendingWriteActionTest {
 
   @RepeatedTest(repetitions)
   fun rethrow(): Unit = timeoutRunBlocking {
-    testRethrow(object : Throwable() {})
-    testRethrow(CancellationException())
-    testRethrow(ProcessCanceledException())
-    testRethrow(ReadAction.CannotReadException())
-  }
-
-  private suspend inline fun <reified T : Throwable> testRethrow(t: T) {
-    lateinit var writeJob: Job
-    val thrown = assertThrows<T> {
-      writeAction {
-        writeJob = requireNotNull(Cancellation.currentJob())
-        throw t
-      }
+    testRwRethrow {
+      writeAction(it)
     }
-    val cause = thrown.cause
-    if (cause != null) {
-      Assertions.assertSame(t, cause) // kotlin trace recovery via 'cause'
-    }
-    else {
-      Assertions.assertSame(t, thrown)
-    }
-    Assertions.assertTrue(writeJob.isCompleted)
-    Assertions.assertTrue(writeJob.isCancelled)
   }
 
   @Test
