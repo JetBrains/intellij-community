@@ -26,7 +26,9 @@ private class ProjectRunConfigurationInitializer : ProjectServiceContainerInitia
       runActivity("RunManager initialization") {
         // we must not fire beginUpdate here, because message bus will fire queued parent message bus messages (and, so, SOE may occur because all other projectOpened will be processed before us)
         // simply, you should not listen changes until project opened
-        project.getService(RunManager::class.java)
+        readActionBlocking {
+          project.getService(RunManager::class.java)
+        }
         IS_RUN_MANAGER_INITIALIZED.set(project, true)
       }
     }
