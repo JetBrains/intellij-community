@@ -18,10 +18,7 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -203,7 +200,7 @@ open class DebuggerTestCompilerFacility(
         return options
     }
 
-    open fun analyzeSources(ktFiles: List<KtFile>): Pair<ResolutionFacade, AnalysisResult> {
+    open fun analyzeSources(ktFiles: List<KtFile>): Pair<LanguageVersionSettings, AnalysisResult> {
         return runReadAction {
             val resolutionFacade = KotlinCacheService.getInstance(project)
                 .getResolutionFacadeWithForcedPlatform(ktFiles, JvmPlatforms.unspecifiedJvmPlatform)
@@ -214,15 +211,15 @@ open class DebuggerTestCompilerFacility(
                 resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
             }
             analysisResult.throwIfError()
-            resolutionFacade to analysisResult
+            resolutionFacade.languageVersionSettings to analysisResult
         }
     }
 
     // Returns the qualified name of the main test class.
     fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String {
         return runReadAction {
-            val (resolutionFacade, analysisResult) = analyzeSources(jvmKtFiles)
-            findMainClass(analysisResult.bindingContext, resolutionFacade.languageVersionSettings, jvmKtFiles)?.asString()
+            val (languageVersionSettings, analysisResult) = analyzeSources(jvmKtFiles)
+            findMainClass(analysisResult.bindingContext, languageVersionSettings, jvmKtFiles)?.asString()
                 ?: error("Cannot find main class name")
         }
     }

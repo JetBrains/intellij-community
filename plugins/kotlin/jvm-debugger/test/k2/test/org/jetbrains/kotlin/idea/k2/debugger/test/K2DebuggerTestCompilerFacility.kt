@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.debugger.test
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
 import org.jetbrains.kotlin.idea.debugger.test.TestFileWithModule
@@ -17,7 +18,7 @@ internal class K2DebuggerTestCompilerFacility(
     compileConfig: TestCompileConfiguration,
 ) : DebuggerTestCompilerFacility(project, files, jvmTarget, compileConfig) {
 
-    override fun analyzeSources(ktFiles: List<KtFile>): Pair<ResolutionFacade, AnalysisResult> {
+    override fun analyzeSources(ktFiles: List<KtFile>): Pair<LanguageVersionSettings, AnalysisResult> {
         return withTestServicesNeededForCodeCompilation(project) {
             super.analyzeSources(ktFiles)
         }
