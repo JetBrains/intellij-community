@@ -23,18 +23,18 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.jar.Attributes;
 
+import static com.intellij.openapi.util.text.StringUtil.isDecimalDigit;
 import static com.intellij.psi.search.GlobalSearchScope.allScope;
 import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
 import static java.util.Collections.emptyMap;
@@ -207,7 +207,7 @@ public final class JavaLibraryUtil {
 
   private static @NotNull Libraries fillLibraries(OrderEnumerator orderEnumerator, boolean collectFiles) {
     Set<String> allMavenCoords = new HashSet<>();
-    Set<String> allJarLibraries = new HashSet<>();
+    Map<String, String> jarLibrariesIndex = new HashMap<>();
 
     orderEnumerator.recursively()
       .forEachLibrary(library -> {
@@ -224,26 +224,41 @@ public final class JavaLibraryUtil {
           allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
         }
         else {
-          for (VirtualFile libraryFile : libraryFiles) {
-            if (libraryFile.getFileSystem() != JarFileSystem.getInstance()) continue;
+          JarFileSystem jarFileSystem = JarFileSystem.getInstance();
 
-            allJarLibraries.add(libraryFile.getNameWithoutExtension());
+          for (VirtualFile libraryFile : libraryFiles) {
+            if (libraryFile.getFileSystem() != jarFileSystem) continue;
+
+            String nameWithoutExtension = libraryFile.getNameWithoutExtension();
+
+            jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
+
+            String indexNamePart = StringUtil.substringBeforeLast(nameWithoutExtension, "-");
+            if (!indexNamePart.equals(nameWithoutExtension)) {
+              jarLibrariesIndex.put(indexNamePart, nameWithoutExtension);
+            }
           }
         }
 
         return true;
       });
-    return new Libraries(copyOf(allMavenCoords), copyOf(allJarLibraries));
+
+    return new Libraries(Set.copyOf(allMavenCoords), Map.copyOf(jarLibrariesIndex));
   }
 
-  private record Libraries(Set<String> mavenLibraries, Set<String> jpsLibraries) {
+  private record Libraries(Set<String> mavenLibraries,
+                           Map<String, String> jpsNameIndex) {
     boolean contains(@NotNull String mavenCoords) {
       if (mavenLibraries.contains(mavenCoords)) return true;
+      if (jpsNameIndex.isEmpty()) return false;
 
       String libraryName = getLibraryName(mavenCoords);
       if (libraryName == null) return false;
 
-      return ContainerUtil.exists(jpsLibraries, jpsLibrary -> matchLibraryName(jpsLibrary, libraryName));
+      String existingJpsLibraryName = jpsNameIndex.get(libraryName);
+      if (existingJpsLibraryName == null) return false;
+
+      return matchLibraryName(existingJpsLibraryName, libraryName);
     }
 
     private static @Nullable String getLibraryName(@NotNull String mavenCoords) {
@@ -260,10 +275,6 @@ public final class JavaLibraryUtil {
     if (fileName.length() == prefix.length()) return false;
 
     char versionStart = fileName.charAt(prefix.length());
-    return StringUtil.isDecimalDigit(versionStart);
-  }
-
-  private static <T> Set<T> copyOf(Set<T> set) {
-    return set.isEmpty() ? Collections.emptySet() : Set.copyOf(set);
+    return isDecimalDigit(versionStart);
   }
 }
