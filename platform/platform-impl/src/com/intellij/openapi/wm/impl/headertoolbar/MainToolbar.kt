@@ -35,6 +35,8 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
+
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
   private val disposable = Disposer.newDisposable()
@@ -64,7 +66,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
         GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.RIGHT)
       )
         .mapNotNull { info ->
-          (customActionSchema.getCorrectedAction(info.id, info.name) as ActionGroup?)?.let {
+          customActionSchema.getCorrectedAction(info.id, info.name)?.let {
             it to info.align
           }
         }
@@ -84,8 +86,10 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       addWidget(it.button, HorizontalLayout.LEFT)
     }
 
+    val customizationGroup = CustomActionsSchema.getInstance().getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
+
     for ((actionGroup, position) in actionGroups) {
-      addWidget(widget = createActionBar(actionGroup), position = position)
+      addWidget(widget = createActionBar(actionGroup, customizationGroup), position = position)
     }
   }
 
@@ -104,8 +108,8 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     (widget as? Disposable)?.let { Disposer.register(disposable, it) }
   }
 
-  private fun createActionBar(group: ActionGroup): JComponent {
-    val toolbar = MyActionToolbarImpl(group, layoutCallBack)
+  private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): JComponent {
+    val toolbar = MyActionToolbarImpl(group, layoutCallBack, customizationGroup, MAIN_TOOLBAR_ID)
     toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
     toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
@@ -121,7 +125,8 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
 typealias LayoutCallBack = () -> Unit
 
-private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: LayoutCallBack?) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: LayoutCallBack?, customizationGroup: ActionGroup?, customizationGroupID: String)
+  : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, customizationGroup, customizationGroupID) {
 
   private val iconUpdater = HeaderIconUpdater()
 
