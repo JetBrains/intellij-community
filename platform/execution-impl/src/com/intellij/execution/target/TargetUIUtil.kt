@@ -48,14 +48,15 @@ fun com.intellij.ui.dsl.builder.Row.textFieldWithBrowseTargetButton(targetType: 
                                                                     targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
                                                                     project: Project,
                                                                     @NlsContexts.DialogTitle title: String,
-                                                                    property: MutableProperty<String>): Cell<TextFieldWithBrowseButton> {
+                                                                    property: MutableProperty<String>,
+                                                                    targetBrowserHints: TargetBrowserHints = TargetBrowserHints(true)): Cell<TextFieldWithBrowseButton> {
   val textFieldWithBrowseButton = TextFieldWithBrowseButton()
   val browser = targetType.createBrowser(project,
                                          title,
                                          TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
                                          textFieldWithBrowseButton.textField,
                                          targetSupplier,
-                                         TargetBrowserHints(true))
+                                         targetBrowserHints)
   textFieldWithBrowseButton.addActionListener(browser)
   return cell(textFieldWithBrowseButton)
     .bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, property)
