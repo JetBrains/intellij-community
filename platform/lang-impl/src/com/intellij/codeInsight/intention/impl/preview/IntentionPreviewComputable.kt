@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
 import com.intellij.util.LocalTimeCounter
 import java.io.IOException
 import java.lang.ref.Reference
@@ -178,17 +177,18 @@ internal class IntentionPreviewComputable(private val project: Project,
     val selection: TextRange
     val caretOffset: Int
     if (origFile != originalFile) { // injection
+      val manager = InjectedLanguageManager.getInstance(project)
       val selectionModel = origEditor.selectionModel
-      val start = mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionStart)
+      val start = manager.mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionStart)
       val end = if (selectionModel.selectionEnd == selectionModel.selectionStart) start
       else
-        mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionEnd)
+        manager.mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionEnd)
       selection = TextRange(start, end)
       val caretModel = origEditor.caretModel
       caretOffset = when (caretModel.offset) {
         selectionModel.selectionStart -> start
         selectionModel.selectionEnd -> end
-        else -> mapInjectedOffsetToUnescaped(origFile, caretModel.offset)
+        else -> manager.mapInjectedOffsetToUnescaped(origFile, caretModel.offset)
       }
     }
     else {
@@ -197,26 +197,6 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
     editorCopy.caretModel.moveToOffset(caretOffset)
     editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
-  }
-
-  private fun mapInjectedOffsetToUnescaped(injectedFile: PsiFile, injectedOffset: Int): Int {
-    var unescapedOffset = 0
-    var escapedOffset = 0
-    injectedFile.accept(object : PsiRecursiveElementWalkingVisitor() {
-      override fun visitElement(element: PsiElement) {
-        val leafText = InjectedLanguageUtilBase.getUnescapedLeafText(element, false)
-        if (leafText != null) {
-          unescapedOffset += leafText.length
-          escapedOffset += element.textLength
-          if (escapedOffset >= injectedOffset) {
-            unescapedOffset -= escapedOffset - injectedOffset
-            stopWalking()
-          }
-        }
-        super.visitElement(element)
-      }
-    })
-    return unescapedOffset
   }
 }
 
