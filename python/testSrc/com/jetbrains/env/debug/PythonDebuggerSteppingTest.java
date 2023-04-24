@@ -1057,7 +1057,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         eval("result").hasValue("3");
         stepOver();
         waitForPause();
-        eval("z").hasValue("42");  // check that we haven't got into the `asyncio` machinery
+        eval("z").hasValue("42");  // Check that we haven't fallen into the `asyncio` machinery.
         resume();
         waitForTerminate();
       }
