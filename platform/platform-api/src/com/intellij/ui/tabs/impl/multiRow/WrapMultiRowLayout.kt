@@ -20,8 +20,10 @@ class WrapMultiRowLayout(tabs: JBTabsImpl, showPinnedTabsSeparately: Boolean) : 
     val rows = mutableListOf<TabsRow>()
     if (showPinnedTabsSeparately) {
       val (pinned, unpinned) = splitToPinnedUnpinned(infos)
-      rows.add(CompressibleTabsRow(pinned, withTitle = tabs.titleWrapper.preferredSize.width > 0,
-                                   withEntryPointToolbar = tabs.entryPointPreferredSize.width > 0))
+      if (pinned.isNotEmpty()) {
+        rows.add(CompressibleTabsRow(pinned, withTitle = tabs.titleWrapper.preferredSize.width > 0,
+                                     withEntryPointToolbar = tabs.entryPointPreferredSize.width > 0))
+      }
       doSplitToRows(data, rows, unpinned, getRowMaxLen)
     }
     else {
