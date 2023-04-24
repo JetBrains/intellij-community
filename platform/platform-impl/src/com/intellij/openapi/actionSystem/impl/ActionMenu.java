@@ -104,7 +104,10 @@ public final class ActionMenu extends JBMenu {
 
     if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       myScreenMenuPeer = new Menu(myPresentation.getText(enableMnemonics));
-      myScreenMenuPeer.setOnOpen(() -> fillMenu(), this);
+      myScreenMenuPeer.setOnOpen(() -> {
+        setSelected(true);
+        fillMenu();
+      }, this);
       myScreenMenuPeer.setOnClose(() -> setSelected(false), this);
       myScreenMenuPeer.listenPresentationChanges(myPresentation);
     }
