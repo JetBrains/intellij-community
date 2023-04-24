@@ -6,9 +6,8 @@ import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
 import com.siyeh.ig.callMatcher.CallMatcher
@@ -90,16 +89,30 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
         ASSERTJ_EXTRACTING_REF_MATCHER.uCallMatches(elem) -> return // not supported
         ASSERTJ_EXTRACTING_FUN_MATCHER.uCallMatches(elem) -> {
           val arg = elem.valueArguments.firstOrNull() ?: return
-          when (arg) {
-            is ULambdaExpression -> arg.body.getExpressionType() ?: return
-            is UCallableReferenceExpression -> arg.qualifierExpression?.getExpressionType() ?: return
-            else -> return
-          }
+          valueArgumentType(arg) ?: return
+        }
+        ASSERTJ_EXTRACTING_ITER_FUN_MATCHER.uCallMatches(elem) -> {
+          val sourceElem = elem.sourcePsi ?: return
+          val project = sourceElem.project
+          val iterable = JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", sourceElem.resolveScope) ?: return
+          if (!InheritanceUtil.isInheritor(sourceType, "java.lang.Iterable")) return
+          val arg = elem.valueArguments.firstOrNull() ?: return
+          PsiElementFactory.getInstance(sourceElem.project).createType(iterable, valueArgumentType(arg))
+        }
+        ASSERTJ_SINGLE_ELEMENT_MATCHER.uCallMatches(elem) -> {
+          if (!InheritanceUtil.isInheritor(sourceType, "java.lang.Iterable")) return
+          sourceType.asSafely<PsiClassType>()?.parameters?.firstOrNull() ?: return
         }
         else -> sourceType
       }
     }
     checkMismatch(checkCall, sourceType, checkType)
+  }
+
+  private fun valueArgumentType(arg: UExpression): PsiType? = when (arg) {
+    is ULambdaExpression -> arg.body.getExpressionType()
+    is UCallableReferenceExpression -> arg.resolveToUElement()?.asSafely<UMethod>()?.returnType
+    else -> null
   }
 
   fun buildErrorString(methodName: String, left: PsiType, right: PsiType): @Nls String {
@@ -132,6 +145,14 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
 
     private val ASSERTJ_EXTRACTING_FUN_MATCHER: CallMatcher = CallMatcher.instanceCall(
       "org.assertj.core.api.AbstractObjectAssert", "extracting"
+    )
+
+    private val ASSERTJ_SINGLE_ELEMENT_MATCHER: CallMatcher = CallMatcher.instanceCall(
+      "org.assertj.core.api.AbstractIterableAssert", "singleElement"
+    )
+
+    private val ASSERTJ_EXTRACTING_ITER_FUN_MATCHER: CallMatcher = CallMatcher.instanceCall(
+      "org.assertj.core.api.AbstractIterableAssert", "extracting"
     )
 
     private val ASSERTJ_ASSERT_THAT_MATCHER: CallMatcher = CallMatcher.staticCall(
