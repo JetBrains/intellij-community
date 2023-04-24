@@ -4,10 +4,7 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.progress.CurrentJobCancellationException
-import com.intellij.openapi.progress.JobCanceledException
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.prepareThreadContext
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -21,6 +18,12 @@ internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContex
   }
   catch (readCe: ReadCancellationException) {
     throw CannotReadException(readCe)
+  }
+  catch (currentJobCe: CurrentJobCancellationException) {
+    throw currentJobCe.cause
+  }
+  catch (pceCe: PceCancellationException) {
+    throw pceCe.cause
   }
 }
 

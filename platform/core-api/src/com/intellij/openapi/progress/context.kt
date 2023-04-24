@@ -109,14 +109,6 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
       }
     }
   }
-  catch (ce: IndicatorCancellationException) {
-    currentJob.cancel(ce)
-    throw ProcessCanceledException(ce)
-  }
-  catch (ce: CurrentJobCancellationException) {
-    currentJob.cancel(ce)
-    throw ProcessCanceledException(ce)
-  }
   catch (t: Throwable) {
     currentJob.completeExceptionally(t)
     throw t

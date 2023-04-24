@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.PceCancellationException
 import com.intellij.openapi.progress.ProcessCanceledException
 import kotlinx.coroutines.Job
 import org.junit.jupiter.api.Assertions.assertSame
@@ -32,6 +33,19 @@ private suspend inline fun <reified T : Throwable> testRwRethrow(t: T, noinline 
   else {
     assertSame(t, thrown)
   }
+  assertTrue(readJob.isCompleted)
+  assertTrue(readJob.isCancelled)
+}
+
+private suspend inline fun <reified T : ProcessCanceledException> testRwRethrow(pce: T, noinline rw: suspend (() -> Nothing) -> Nothing) {
+  lateinit var readJob: Job
+  val thrown = assertThrows<PceCancellationException> {
+    rw {
+      readJob = requireNotNull(Cancellation.currentJob())
+      throw pce
+    }
+  }
+  assertSame(pce, thrown.cause)
   assertTrue(readJob.isCompleted)
   assertTrue(readJob.isCancelled)
 }

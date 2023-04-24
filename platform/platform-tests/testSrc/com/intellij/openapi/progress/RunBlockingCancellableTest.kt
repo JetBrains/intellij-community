@@ -101,6 +101,15 @@ class RunBlockingCancellableTest : CancellationTest() {
     assertSame(t, thrown)
   }
 
+  private fun testRunBlockingCancellableRethrow(t: CancellationException) {
+    val thrown = assertThrows<CeProcessCanceledException> {
+      runBlockingCancellable {
+        throw t
+      }
+    }
+    assertSame(t, thrown.cause)
+  }
+
   @Test
   fun `with current job child failure`() {
     currentJobTest {

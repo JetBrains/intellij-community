@@ -17,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
@@ -104,7 +105,7 @@ suspend fun checkCancelled() {
  * ```
  *
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
- * @throws CancellationException if [current job][Cancellation.currentJob] is cancelled
+ * or [current job][Cancellation.currentJob] is cancelled
  * @see coroutineToIndicator
  * @see blockingContext
  * @see blockingContextToIndicator
@@ -122,8 +123,13 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
     if (!allowOrphan && ctx[Job] == null) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking(ctx, action)
+    try {
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking(ctx, action)
+    }
+    catch (ce: CancellationException) {
+      throw CeProcessCanceledException(ce)
+    }
   }
 }
 
@@ -155,8 +161,13 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
   return prepareIndicatorThreadContext(indicator) { ctx ->
     val context = ctx +
                   CoroutineName("indicator run blocking")
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking(context, action)
+    try {
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking(context, action)
+    }
+    catch (ce: CancellationException) {
+      throw CeProcessCanceledException(ce)
+    }
   }
 }
 
@@ -199,6 +210,9 @@ fun <T> blockingContext(currentContext: CoroutineContext, action: () -> T): T {
         throw IllegalStateException("JobCanceledException must be thrown by ProgressManager.checkCanceled()", e)
       }
       throw CurrentJobCancellationException(e)
+    }
+    catch (pce: ProcessCanceledException) {
+      throw PceCancellationException(pce)
     }
   }
 }

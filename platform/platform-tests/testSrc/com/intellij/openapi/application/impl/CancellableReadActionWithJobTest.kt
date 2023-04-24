@@ -4,7 +4,6 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.*
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -39,7 +38,7 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
   fun cancellation() {
     val job = Job()
     blockingContext(job) {
-      assertThrows<CancellationException> {
+      assertThrows<ProcessCanceledException> {
         computeCancellable {
           testNoExceptions()
           job.cancel()
