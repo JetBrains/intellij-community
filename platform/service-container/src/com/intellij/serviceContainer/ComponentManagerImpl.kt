@@ -683,7 +683,7 @@ abstract class ComponentManagerImpl(
   }
 
   final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): Deferred<T> {
-    return getServiceAsyncIfDefined(keyClass) ?: throw RuntimeException("service is not defined for key ${keyClass.name}")
+    return getServiceAsyncIfDefined(keyClass) ?: throw RuntimeException("service is not defined for $keyClass")
   }
 
   suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): Deferred<T>? {
