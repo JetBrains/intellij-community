@@ -41,7 +41,6 @@ import java.util.function.Function;
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private static final Logger LOG = Logger.getInstance(XDebuggerExpressionComboBox.class);
 
-  private final JComponent myComponent;
   private final ComboBox<XExpression> myComboBox;
   private final CollectionComboBoxModel<XExpression> myModel = new CollectionComboBoxModel<>();
   private XDebuggerComboBoxEditor myEditor;
@@ -59,7 +58,6 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.setMinimumSize(minimumSize);
     initEditor(showEditor, languageInside);
     fillComboBox();
-    myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
     setExpression(myExpression);
   }
 
@@ -73,7 +71,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   @Override
   public JComponent getComponent() {
-    return myComponent;
+    return myComboBox;
   }
 
   @Override
@@ -91,7 +89,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public void setEnabled(boolean enable) {
     if (enable == myComboBox.isEnabled()) return;
 
-    UIUtil.setEnabled(myComponent, enable, true);
+    UIUtil.setEnabled(myComboBox, enable, true);
     //myComboBox.setEditable(enable);
 
     if (enable) {
