@@ -873,6 +873,16 @@
         <constraint name="Expression" nameOfExprType="java\.util\.stream\.Stream" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
         <constraint name="params" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Call to 'equals()' on KtType" description="Calling `equals` on two types only checks whether the structure of the types is equal, not whether the types are actually equal." suppressId="EqualsOnKtType" text="$lType$ == $rType$" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$lType$.isEqualTo($rType$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="lType" nameOfExprType="org\.jetbrains\.kotlin\.analysis\.api\.types\.KtType" within="" contains="" />
+        <constraint name="rType" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Call to 'equals()' on KtType" text="$lType$ != $rType$" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$lType$.isEqualTo($rType$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="lType" nameOfExprType="org\.jetbrains\.kotlin\.analysis\.api\.types\.KtType" within="" contains="" />
+        <constraint name="rType" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="can be simplified to ReadAction.compute()" uuid="44cf5267-e665-3ff5-9d2f-0de5c6983156" text="$application$.runReadAction(new $Computable$() {&#10;  public $SearchScope$ compute() {&#10;    return $e$;&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
         <constraint name="SearchScope" within="" contains="" />
         <constraint name="e" within="" contains="" />

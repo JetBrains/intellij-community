@@ -11,10 +11,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) = callExpressionVisitor(
@@ -24,11 +24,12 @@ internal class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinI
             if (identifier != OperatorNameConventions.EQUALS) return
             val receiver = call.getQualifiedExpressionForSelector()?.receiverExpression ?: return
             val argument = call.valueArguments.singleOrNull()?.getArgumentExpression() ?: return
-
-            val receiverType = analyze(receiver) { receiver.getTypeIfComparable() } ?: return
-            val argumentType = analyze(argument) { argument.getTypeIfComparable() } ?: return
-            if (receiverType != argumentType) {
-                holder.registerProblem(callee, KotlinBundle.message("equals.between.objects.of.inconvertible.types"))
+            analyze(call) {
+                val receiverType = receiver.getTypeIfComparable() ?: return
+                val argumentType = argument.getTypeIfComparable() ?: return
+                if (!receiverType.isEqualTo(argumentType)) {
+                    holder.registerProblem(callee, KotlinBundle.message("equals.between.objects.of.inconvertible.types"))
+                }
             }
         }
     )

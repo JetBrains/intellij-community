@@ -19,7 +19,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.DeletePsiElementsFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
+import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateFunctionFix
 import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
@@ -276,7 +278,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 val isNullable = type.isMarkedNullable
 
                 var text = when {
-                    type == builtinTypes.BYTE || type == builtinTypes.SHORT || type == builtinTypes.INT -> ref
+                    type isEqualTo builtinTypes.BYTE || type isEqualTo builtinTypes.SHORT || type isEqualTo builtinTypes.INT -> ref
 
                     type.isArrayOrPrimitiveArray() -> {
                         val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()

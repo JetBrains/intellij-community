@@ -75,7 +75,7 @@ object SpecifySuperTypeFixFactory {
         //  the candidate would not contain those being removed here.
         candidates.removeAll { superType ->
             candidates.any { otherSuperType ->
-                superType != otherSuperType && otherSuperType isSubTypeOf superType
+                !superType.isEqualTo(otherSuperType) && otherSuperType isSubTypeOf superType
             }
         }
         if (candidates.isEmpty()) return@diagnosticFixFactory listOf()
