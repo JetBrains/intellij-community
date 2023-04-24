@@ -91,6 +91,17 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   }
 
   private static ResourceRoot createResourceRoot(Path baseDir, String relativePath) {
+    Path root = convertToAbsolute(baseDir, relativePath);
+    if (Files.isRegularFile(root)) {
+      return new JarResourceRoot(root);
+    }
+    return new DirectoryResourceRoot(root);
+  }
+
+  private static Path convertToAbsolute(Path baseDir, String relativePath) {
+    if (relativePath.startsWith("$")) {
+      return ResourcePathMacros.resolve(relativePath);
+    }
     Path root = baseDir;
     while (relativePath.startsWith("../")) {
       relativePath = relativePath.substring(3);
@@ -99,9 +110,6 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     if (!relativePath.isEmpty()) {
       root = root.resolve(relativePath);
     }
-    if (Files.isRegularFile(root)) {
-      return new JarResourceRoot(root);
-    }
-    return new DirectoryResourceRoot(root);
+    return root;
   }
 }
