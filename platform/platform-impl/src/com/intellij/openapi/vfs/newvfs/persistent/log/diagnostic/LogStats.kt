@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.sqrt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
@@ -95,23 +96,39 @@ private fun calcStats(log: VfsLog): Stats {
 private fun Double.format(fmt: String) = String.format(fmt, this)
 
 
-private fun benchmark(log: VfsLog, runs: Int = 25) {
+private fun benchmark(log: VfsLog, runs: Int = 30, heatRuns: Int = 20) {
   val statsArr = mutableListOf<Stats>()
 
-  repeat(runs) {
-    statsArr += calcStats(log)
+  repeat(heatRuns + runs) {
+    val stat = calcStats(log)
+    if (it >= heatRuns) {
+      statsArr += stat
+    }
   }
 
   val stats = statsArr[0]
 
   fun List<Double>.avg() = sum() / size
+  fun List<Double>.std(): Double {
+    val avg = avg()
+    return sqrt(sumOf { (it - avg) * (it - avg) } / size)
+  }
   fun <T> List<T>.avgOf(body: (T) -> Double) = map(body).avg()
+  fun <T> List<T>.deviationOf(body: (T) -> Double) = map(body).std()
+  data class MeanDev(val mean: Double, val dev: Double) {
+    fun represent(doubleFormat: String = "%.2f") = "${mean.format(doubleFormat)}±${dev.format(doubleFormat)}"
+    override fun toString(): String {
+      return represent()
+    }
+  }
+  fun <T> List<T>.meanDev(body: (T) -> Double) = MeanDev(avgOf(body), deviationOf(body))
 
   println(stats)
-  println("Benchmark, avg among $runs runs")
-  println("calc stats time: ${statsArr.avgOf { it.elapsedTime.toDouble(DurationUnit.SECONDS) }.format("%.1f")} seconds")
-  println("avg read speed: ${statsArr.avgOf { it.avgReadSpeedBPS / 1024.0 / 1024.0 }.format("%.1f")} MiB/s")
-  println("avg descriptor read speed: ${statsArr.avgOf { it.avgDescPS / 1000.0 }.format("%.1f")} KDesc/s")
+  println()
+  println("Benchmark, $runs runs, $heatRuns preheat runs")
+  println("calc stats time: ${statsArr.meanDev { it.elapsedTime.toDouble(DurationUnit.SECONDS) }} seconds")
+  println("read speed: ${statsArr.meanDev { it.avgReadSpeedBPS / 1024.0 / 1024.0 }} MiB/s")
+  println("descriptor read speed: ${statsArr.meanDev { it.avgDescPS / 1000.0 }} KDesc/s")
 }
 
 private fun single(log: VfsLog) {
@@ -128,5 +145,5 @@ fun main(args: Array<String>) {
 
   val log = VfsLog(Path.of(args[0]), true)
   //single(log)
-  benchmark(log, 25)
+  benchmark(log, 100)
 }
