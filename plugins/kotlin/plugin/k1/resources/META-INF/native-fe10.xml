@@ -1,5 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <extensions defaultExtensionNs="com.intellij">
-    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.ide.konan.decompiler.KotlinNativeMetadataDecompiler"/>
-  </extensions>
-</idea-plugin>
