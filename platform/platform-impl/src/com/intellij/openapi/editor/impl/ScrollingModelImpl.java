@@ -240,12 +240,16 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
         // here we try to scroll to 0, if it is possible (that's the point of MAKE_VISIBLE)
         horizontalOffset = 0;
       } else {
+        // this is done to ensure safety in cases where scrolling excessively may obscure the target location
+        // (due to a large scroll jump or a narrow editor width).
         int leftmostPossibleLocation = getLeftmostLocation(targetLocation, editorWidth, scrollOffset, spaceWidth);
         int leftAfterScrollJump = Math.max(leftmostPossibleLocation, viewRect.x - scrollJump * spaceWidth);
         horizontalOffset = Math.min(leftBound, leftAfterScrollJump);
       }
     } else if (rightBound > viewRect.x + editorWidth) {
       int rightmostPossibleLocation = getRightmostLocation(targetLocation, textWidth, editorWidth, scrollOffset, spaceWidth);
+      // this is done to ensure safety in cases where scrolling excessively may obscure the target location
+      // (due to a large scroll jump or a narrow editor width).
       int rightAfterScrollJump = Math.min(rightmostPossibleLocation, viewRect.x + editorWidth + scrollJump * spaceWidth);
       horizontalOffset = Math.max(rightBound, rightAfterScrollJump) - editorWidth;
     }
@@ -347,12 +351,16 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       if (offsetBottomBound - offsetTopBound > editorHeight) {
         verticalOffset = centerPosition;
       } else if (viewRect.y + viewRect.height < offsetBottomBound) {
+        // this is done to ensure safety in cases where scrolling excessively may obscure the target location
+        // (due to a large scroll jump or a small editor height).
         int bottomAfterScrollJump = Math.min(
           getBottommostLocation(targetLocation, textHeight, editorHeight, offsetTopBound),
           addVerticalOffsetToPosition(editor, scrollJump, new Point(viewRect.x, viewRect.y + viewRect.height))
         );
         verticalOffset = Math.max(offsetBottomBound - viewRect.height, bottomAfterScrollJump - viewRect.height);
       } else if (viewRect.y > offsetTopBound) {
+        // this is done to ensure safety in cases where scrolling excessively may obscure the target location
+        // (due to a large scroll jump or a small editor height).
         int topAfterScrollJump = Math.max(
           getTopmostLocation(targetLocation, editorHeight, offsetBottomBound),
           addVerticalOffsetToPosition(editor, -scrollJump, new Point(viewRect.x, viewRect.y))
@@ -383,42 +391,40 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     if (scrollOffset > 0) {
       // if we are calculating the bottom scroll bound, add scroll offset to the end of logical line containing the given point,
       // because we want to see some following lines and not just wrapped visual lines of the same logical line
-      VisualPosition pointLogicalLineEnd = isUseSoftWraps ? getLogicalLineEnd(editor, point) : editor.xyToVisualPosition(point);
+      VisualPosition pointLogicalLineEnd = getLogicalLineEnd(editor, point, isUseSoftWraps);
       VisualPosition bottomLine = new VisualPosition(pointLogicalLineEnd.line + scrollOffset, 0);
       return editor.visualPositionToXY(bottomLine).y;
     }
     else if (scrollOffset < 0) {
       // we count offset from logical line start to see previous lines (not the same line content if soft wrap is enabled)
-      VisualPosition pointLineStart = getLogicalLineStart(editor, point);
+      VisualPosition pointLineStart = getLogicalLineStart(editor, point, isUseSoftWraps);
       VisualPosition topLine = new VisualPosition(Math.max(0, pointLineStart.line + scrollOffset), 0);
       // If soft wraps are enabled, last visual lines of one logical line may be not so helpful. That's why we scroll to logical line start
-      if (editor.getSettings().isUseSoftWraps()) {
-        topLine = getLogicalLineStart(editor, topLine);
-      }
+      topLine = getLogicalLineStart(editor, topLine, isUseSoftWraps);
       return editor.visualPositionToXY(topLine).y;
     } else {
       return point.y;
     }
   }
 
-  private static @NotNull VisualPosition getLogicalLineEnd(@NotNull Editor editor, @NotNull Point point) {
-    LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
-    int lineCount = editor.getDocument().getLineCount();
-    if (logicalPosition.line < 0) {
-      return new VisualPosition(0, 0);
-    }
+  private static @NotNull VisualPosition getLogicalLineEnd(@NotNull Editor editor, @NotNull Point point, boolean isUseSoftWraps) {
+    if (isUseSoftWraps) {
+      LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
+      if (logicalPosition.line < 0) {
+        return new VisualPosition(0, 0);
+      }
 
-    if (logicalPosition.line < lineCount) {
-      int endOffset = editor.getDocument().getLineEndOffset(logicalPosition.line);
-      return editor.offsetToVisualPosition(endOffset);
+      int lineCount = editor.getDocument().getLineCount();
+      if (logicalPosition.line < lineCount) {
+        int endOffset = editor.getDocument().getLineEndOffset(logicalPosition.line);
+        return editor.offsetToVisualPosition(endOffset);
+      }
     }
-
-    // the point is outside the text, so there is no need to take care of soft wraps
     return editor.xyToVisualPosition(point);
   }
 
-  private static @NotNull VisualPosition getLogicalLineStart(@NotNull Editor editor, @NotNull Point point) {
-    if (editor.getSettings().isUseSoftWraps()) {
+  private static @NotNull VisualPosition getLogicalLineStart(@NotNull Editor editor, @NotNull Point point, boolean isUseSoftWraps) {
+    if (isUseSoftWraps) {
       LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
       return editor.logicalToVisualPosition(new LogicalPosition(logicalPosition.line, 0));
     } else {
@@ -427,9 +433,13 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     }
   }
 
-  private static @NotNull VisualPosition getLogicalLineStart(@NotNull Editor editor, @NotNull VisualPosition visualPosition) {
-    LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
-    return editor.logicalToVisualPosition(new LogicalPosition(logicalPosition.line, 0));
+  private static @NotNull VisualPosition getLogicalLineStart(@NotNull Editor editor, @NotNull VisualPosition visualPosition, boolean isUseSoftWraps) {
+    if (isUseSoftWraps) {
+      LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
+      return editor.logicalToVisualPosition(new LogicalPosition(logicalPosition.line, 0));
+    } else {
+      return visualPosition;
+    }
   }
 
   @Nullable
