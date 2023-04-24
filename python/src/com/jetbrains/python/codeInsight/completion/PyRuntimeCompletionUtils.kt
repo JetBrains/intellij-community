@@ -206,11 +206,16 @@ private fun collectParentOfLambdaExpression(element: PyExpression, callInnerRefe
 fun proceedPyValueChildrenNames(childrenNodes: Set<String>, ignoreML: Boolean = false): List<LookupElement> {
   return childrenNodes.map {
     val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("runtime.completion.type.text"))
-    when (ignoreML) {
-      true -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY).asMLIgnorable()
-      false -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
-    }
+    createPrioritizedLookupElement(lookupElement, ignoreML)
   }
+}
+
+internal fun createPrioritizedLookupElement(lookupElement: LookupElement, ignoreML: Boolean): LookupElement {
+  val prioritizedElement = PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
+  if (ignoreML) {
+    return prioritizedElement.asMLIgnorable()
+  }
+  return prioritizedElement
 }
 
 fun processDataFrameColumns(dfName: String,
@@ -230,10 +235,7 @@ fun processDataFrameColumns(dfName: String,
       else -> null
     }?.let {
       val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("pandas.completion.type.text", dfName))
-      when (ignoreML) {
-        true -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY).asMLIgnorable()
-        false -> PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
-      }
+      createPrioritizedLookupElement(lookupElement, ignoreML)
     }
   }
 }

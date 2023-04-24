@@ -1,10 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.completion
 
+import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.patterns.PlatformPatterns
+import com.intellij.util.ProcessingContext
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.state.PyRuntime
@@ -59,9 +66,64 @@ interface PyRuntimeCompletionRetrievalService {
   }
 }
 
-fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalService,
-                              runtimeService: PyRuntime,
-                              parameters: CompletionParameters): List<LookupElement> {
+abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), DumbAware {
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    val project = parameters.editor.project ?: return
+    if (parameters.completionType != CompletionType.BASIC) return
+
+    val context = ProcessingContext()
+    if (!PlatformPatterns.psiElement().accepts(parameters.position, context)) return
+
+    ProgressManager.checkCanceled()
+
+    val service: PyRuntimeCompletionRetrievalService = getCompletionRetrievalService(project)
+    if (!service.canComplete(parameters)) return
+
+    fillCompletionVariantsFromRuntime(project, service, parameters, createCustomMatcher(parameters, result))
+  }
+
+  private fun fillCompletionVariantsFromRuntime(
+    project: Project,
+    service: PyRuntimeCompletionRetrievalService,
+    parameters: CompletionParameters,
+    result: CompletionResultSet,
+  ) {
+    val runtimeResults: MutableMap<String, LookupElement> =
+      createCompletionResultSet(service, getRuntimeEnvService(project), parameters)
+        .associateByTo(hashMapOf()) { lookupElement -> lookupElement.lookupString }
+
+    // In general, [createCompletionResultSet] returns an empty list in two cases:
+    // * If there is no runtime. In that case, it's better to return early to not waste CPU on runRemainingContributors and
+    //   hash table access, even though these operations are fast.
+    // * If there is nothing found. In that case, it's better to return early again, because there is nothing to add to the result.
+    // * Other very improbable cases like absence of the project assigned to the editor, which are handled in a defensive manner.
+    if (runtimeResults.isNotEmpty()) {
+      if (!result.isStopped) {
+        result.runRemainingContributors(parameters) { item ->
+          if (runtimeResults.remove(item.lookupElement.lookupString) != null) {
+            val prioritizedCompletionResult = item.withLookupElement(createPrioritizedLookupElement(item.lookupElement, true))
+            result.passResult(prioritizedCompletionResult)
+          }
+          else {
+            result.passResult(item)
+          }
+        }
+      }
+
+      result.addAllElements(runtimeResults.values)
+    }
+  }
+
+  abstract fun getRuntimeEnvService(project: Project): PyRuntime
+
+  abstract fun getCompletionRetrievalService(project: Project): PyRuntimeCompletionRetrievalService
+}
+
+private fun createCompletionResultSet(
+  retrievalService: PyRuntimeCompletionRetrievalService,
+  runtimeService: PyRuntime,
+  parameters: CompletionParameters,
+): List<LookupElement> {
   if (!retrievalService.canComplete(parameters)) return emptyList()
   val project = parameters.editor.project ?: return emptyList()
   val treeNodeList = runtimeService.getGlobalPythonVariables(parameters.originalFile.virtualFile, project, parameters.editor)
@@ -72,6 +134,11 @@ fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalServ
     return@Callable pyObjectCandidates.flatMap { candidate ->
       val parentNode = getParentNodeByName(treeNodeList, candidate.psiName)
       val valueContainer = parentNode?.valueContainer
+      /**
+       * Don't need to send requests to jupyter server about Python's module,
+       * because LegacyCompletionContributor provide completion items for Python's modules
+       * @see com.intellij.codeInsight.completion.LegacyCompletionContributor
+       */
       if (valueContainer is PyDebugValue && valueContainer.type == "module") return@flatMap emptyList()
 
       getSetOfChildrenByListOfCall(parentNode, candidate.pyQualifiedExpressionList)
