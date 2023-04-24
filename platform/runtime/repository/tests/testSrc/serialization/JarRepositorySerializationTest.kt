@@ -19,9 +19,9 @@ class JarRepositorySerializationTest {
 
   @Test
   fun `empty module`() {
-    check(listOf(RawRuntimeModuleDescriptor("intellij.platform.util", emptyList(), emptyList()))) { 
-      xml("intellij.platform.util.xml", """
-        <module name="intellij.platform.util">
+    check(listOf(RawRuntimeModuleDescriptor("ij.platform.util", emptyList(), emptyList()))) { 
+      xml("ij.platform.util.xml", """
+        <module name="ij.platform.util">
         </module>
       """.trimIndent())
     }
@@ -29,11 +29,11 @@ class JarRepositorySerializationTest {
   
   @Test
   fun `single module`() {
-    check(listOf(RawRuntimeModuleDescriptor("intellij.platform.util", listOf("../util.jar"), emptyList()))) {
-      xml("intellij.platform.util.xml", """
-          <module name="intellij.platform.util">
+    check(listOf(RawRuntimeModuleDescriptor("ij.platform.util", listOf("../ij-util.jar"), emptyList()))) {
+      xml("ij.platform.util.xml", """
+          <module name="ij.platform.util">
             <resources>
-              <resource-root path="../util.jar"/>
+              <resource-root path="../ij-util.jar"/>
             </resources>
           </module>
         """.trimIndent())
@@ -43,20 +43,20 @@ class JarRepositorySerializationTest {
   @Test
   fun `two modules`() {
     check(listOf(
-      RawRuntimeModuleDescriptor("intellij.platform.util.rt", listOf("../util-rt.jar"), emptyList()),
-      RawRuntimeModuleDescriptor("intellij.platform.util", emptyList(), listOf("intellij.platform.util.rt")),
+      RawRuntimeModuleDescriptor("ij.platform.util.rt", listOf("../ij-util-rt.jar"), emptyList()),
+      RawRuntimeModuleDescriptor("ij.platform.util", emptyList(), listOf("ij.platform.util.rt")),
     )) {
-      xml("intellij.platform.util.xml", """
-          <module name="intellij.platform.util">
+      xml("ij.platform.util.xml", """
+          <module name="ij.platform.util">
             <dependencies>
-              <module name="intellij.platform.util.rt"/>
+              <module name="ij.platform.util.rt"/>
             </dependencies>
           </module>
         """.trimIndent())
-      xml("intellij.platform.util.rt.xml", """
-          <module name="intellij.platform.util.rt">
+      xml("ij.platform.util.rt.xml", """
+          <module name="ij.platform.util.rt">
             <resources>
-              <resource-root path="../util-rt.jar"/>
+              <resource-root path="../ij-util-rt.jar"/>
             </resources>
           </module>
         """.trimIndent())

@@ -19,11 +19,11 @@ class RepositoryTest {
   fun dependencies() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor("intellij.platform.util.rt", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("intellij.platform.util", emptyList(), listOf("intellij.platform.util.rt")),
+      RawRuntimeModuleDescriptor("ij.platform.util.rt", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor("ij.platform.util", emptyList(), listOf("ij.platform.util.rt")),
     )
-    val util = repository.getModule(RuntimeModuleId.module("intellij.platform.util"))
-    val utilRt = repository.getModule(RuntimeModuleId.module("intellij.platform.util.rt"))
+    val util = repository.getModule(RuntimeModuleId.module("ij.platform.util"))
+    val utilRt = repository.getModule(RuntimeModuleId.module("ij.platform.util.rt"))
     assertEquals(listOf(utilRt), util.dependencies)
   }
 
