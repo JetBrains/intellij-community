@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -17,20 +18,23 @@ internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContex
   try {
     cancellableReadActionInternal(ctx, action)
   }
+  catch (readCe: ReadCancellationException) {
+    throw CannotReadException(readCe)
+  }
   catch (ce: CancellationException) {
     // One of two variants is thrown:
     // 1.
     // CannotReadException(
     //   CurrentJobCancellationException(JobCanceledException(
-    //     CancellationException(original CannotReadException)
+    //     ReadCancellationException()
     //   ))
     // )
     // 2.
     // CannotReadException(
-    //   CancellationException(original CannotReadException)
+    //   ReadCancellationException()
     // )
-    val cause = Cancellation.getCause(ce)
-    if (cause is CannotReadException) {
+    val original = Cancellation.unwrap(ce)
+    if (original is ReadCancellationException) {
       // cancelled normally by a write action
       throw CannotReadException(ce)
     }
@@ -84,7 +88,16 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
 }
 
 private fun Job.cancelReadJob() {
-  cancel(cause = CancellationException(CannotReadException()))
+  cancel(cause = ReadCancellationException(cause = null))
 }
 
 private class Value<T>(val value: T)
+
+@Internal
+internal class ReadCancellationException(cause: Throwable?) : CancellationException() {
+  init {
+    if (cause != null) {
+      initCause(cause)
+    }
+  }
+}

@@ -35,12 +35,12 @@ public final class Cancellation {
     }
   }
 
-  public static @Nullable Throwable getCause(@NotNull CancellationException ce) {
+  public static @NotNull Throwable unwrap(@NotNull CancellationException ce) {
     if (ce instanceof CurrentJobCancellationException) {
-      return ((CurrentJobCancellationException)ce).getOriginalCancellationException().getCause();
+      return ((CurrentJobCancellationException)ce).getOriginalCancellationException();
     }
     else {
-      return ce.getCause();
+      return ce;
     }
   }
 

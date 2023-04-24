@@ -3,7 +3,6 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.progress.Cancellation
@@ -96,9 +95,12 @@ internal class InternalReadAction<T>(
       insideReadAction(loopJob)
     }
   }
+  catch (readCe: ReadCancellationException) {
+    ReadResult.WritePending
+  }
   catch (e: CancellationException) {
-    val cause = Cancellation.getCause(e)
-    if (cause is CannotReadException) {
+    val original = Cancellation.unwrap(e)
+    if (original is ReadCancellationException) {
       ReadResult.WritePending
     }
     else {
