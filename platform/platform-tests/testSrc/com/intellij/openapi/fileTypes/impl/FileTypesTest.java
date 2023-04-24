@@ -89,7 +89,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     // we test against myFileTypeManager instance only, standard FileTypeManager.getInstance() must not be changed in any way
-    myFileTypeManager = new FileTypeManagerImpl();
+    //noinspection deprecation
+    myFileTypeManager = new FileTypeManagerImpl(myProject.getCoroutineScope());
     myFileTypeManager.listenAsyncVfsEvents();
     myFileTypeManager.initializeComponent();
     myFileTypeManager.getRegisteredFileTypes();

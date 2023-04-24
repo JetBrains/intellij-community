@@ -41,6 +41,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
@@ -127,7 +128,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<String, StandardFileType> myStandardFileTypes = new LinkedHashMap<>();
   private final SchemeManager<FileTypeWithDescriptor> mySchemeManager;
 
-  protected FileTypeManagerImpl() {
+  protected FileTypeManagerImpl(@NotNull CoroutineScope coroutineScope) {
     NonLazySchemeProcessor<FileTypeWithDescriptor, FileTypeWithDescriptor> abstractTypesProcessor = new NonLazySchemeProcessor<>() {
       @Override
       public @NotNull FileTypeWithDescriptor readScheme(@NotNull Element element, boolean duringLoad) {
@@ -187,7 +188,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     };
     mySchemeManager = SchemeManagerFactory.getInstance().create(FILE_SPEC, abstractTypesProcessor, null, null, SettingsCategory.CODE);
 
-    myDetectionService = new FileTypeDetectionService(this);
+    myDetectionService = new FileTypeDetectionService(this, coroutineScope);
     Disposer.register(this, myDetectionService);
 
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
