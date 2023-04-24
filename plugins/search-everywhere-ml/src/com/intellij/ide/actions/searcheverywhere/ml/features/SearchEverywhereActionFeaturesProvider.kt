@@ -99,9 +99,9 @@ internal class SearchEverywhereActionFeaturesProvider :
         data.add(GROUP_LENGTH_KEY.with(withUpperBound(it.length)))
       }
     }
-    addIfTrue(data, IS_EDITOR_ACTION, action is EditorAction)
-    addIfTrue(data, IS_SEARCH_ACTION, action is SearchEverywhereBaseAction)
-    addIfTrue(data, IS_TOGGLE_ACTION_DATA_KEY, action is ToggleAction)
+    data.addIfTrue(IS_EDITOR_ACTION, action is EditorAction)
+    data.addIfTrue(IS_SEARCH_ACTION, action is SearchEverywhereBaseAction)
+    data.addIfTrue(IS_TOGGLE_ACTION_DATA_KEY, action is ToggleAction)
 
     val presentation = if (value is ActionWrapper && value.hasPresentation()) value.presentation else action.templatePresentation
     data.add(HAS_ICON_KEY.with(presentation.icon != null))
@@ -183,10 +183,10 @@ internal class SearchEverywhereActionFeaturesProvider :
       val timeSinceLastUsageEvent = if (isSe) TIME_SINCE_LAST_USAGE_SE else TIME_SINCE_LAST_USAGE
       data.add(timeSinceLastUsageEvent.with(timeSinceLastUsage))
 
-      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_MINUTE_SE else WAS_USED_IN_LAST_MINUTE, timeSinceLastUsage <= Time.MINUTE)
-      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_HOUR_SE else WAS_USED_IN_LAST_HOUR, timeSinceLastUsage <= Time.HOUR)
-      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_DAY_SE else WAS_USED_IN_LAST_DAY, timeSinceLastUsage <= Time.DAY)
-      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_MONTH_SE else WAS_USED_IN_LAST_MONTH, timeSinceLastUsage <= (4 * Time.WEEK.toLong()))
+      data.addIfTrue(if (isSe) WAS_USED_IN_LAST_MINUTE_SE else WAS_USED_IN_LAST_MINUTE, timeSinceLastUsage <= Time.MINUTE)
+      data.addIfTrue(if (isSe) WAS_USED_IN_LAST_HOUR_SE else WAS_USED_IN_LAST_HOUR, timeSinceLastUsage <= Time.HOUR)
+      data.addIfTrue(if (isSe) WAS_USED_IN_LAST_DAY_SE else WAS_USED_IN_LAST_DAY, timeSinceLastUsage <= Time.DAY)
+      data.addIfTrue(if (isSe) WAS_USED_IN_LAST_MONTH_SE else WAS_USED_IN_LAST_MONTH, timeSinceLastUsage <= (4 * Time.WEEK.toLong()))
     }
   }
 
