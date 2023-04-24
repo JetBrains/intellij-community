@@ -8,6 +8,7 @@ import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProviderEx;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyStructuralType;
@@ -21,6 +22,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
   private static final UsageType UNTYPED = new UsageType(PyPsiBundle.messagePointer("python.find.usages.untyped.probable.usage"));
   private static final UsageType USAGE_IN_ISINSTANCE = new UsageType(PyPsiBundle.messagePointer("python.find.usages.usage.in.isinstance"));
   private static final UsageType USAGE_IN_SUPERCLASS = new UsageType(PyPsiBundle.messagePointer("python.find.usages.usage.in.superclass.list"));
+  private static final UsageType USAGE_IN_TYPE_HINT = new UsageType(PyPsiBundle.messagePointer("python.find.usages.usage.in.type.hint"));
 
   @Override
   public UsageType getUsageType(@NotNull PsiElement element) {
@@ -29,6 +31,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
 
   @Override
   public UsageType getUsageType(PsiElement element, UsageTarget @NotNull [] targets) {
+    final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
     if (element instanceof PyElement) {
       if (PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) != null) {
         return IN_IMPORT;
@@ -36,7 +39,6 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
       if (element instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
         if (qualifier != null) {
-          final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
           final PyType type = context.getType(qualifier);
           if (type == null || type instanceof PyStructuralType) {
             return UNTYPED;
@@ -57,6 +59,9 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
               return USAGE_IN_ISINSTANCE;
             }
           }
+        }
+        if (PyTypingTypeProvider.isInsideTypeHint(element, context)) {
+          return USAGE_IN_TYPE_HINT;
         }
         final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
         if (pyClass != null && PsiTreeUtil.isAncestor(pyClass.getSuperClassExpressionList(), element, true)) {
