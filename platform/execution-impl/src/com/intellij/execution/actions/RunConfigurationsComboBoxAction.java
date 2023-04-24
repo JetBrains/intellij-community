@@ -43,6 +43,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
@@ -252,15 +253,17 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     addRunConfigurations(allActionsGroup, project,
                          settings -> createFinalAction(settings, project),
-                         folderName -> DefaultActionGroup.createPopupGroup(() -> folderName));
+                         folderName -> DefaultActionGroup.createPopupGroup(() -> folderName),
+                         null);
     return allActionsGroup;
   }
 
   @ApiStatus.Internal
-  public static int addRunConfigurations(DefaultActionGroup allActionsGroup,
-                                         Project project,
-                                         Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
-                                         Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder) {
+  public static int addRunConfigurations(@NotNull DefaultActionGroup allActionsGroup,
+                                         @NotNull Project project,
+                                         @NotNull Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
+                                         @NotNull Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder,
+                                         @Nullable BiFunction<? super RunnerAndConfigurationSettings, String, ? extends AnAction> createSubAction) {
     int allConfigurationsNumber = 0;
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -271,6 +274,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         List<RunnerAndConfigurationSettings> configurationsList = entry.getValue();
         for (RunnerAndConfigurationSettings settings : configurationsList) {
           group.add(createAction.apply(settings));
+          if (createSubAction != null && group != actionGroup) {
+            // Inline run configuration from folder to the top level popup. It may be hidden by default but shown on search.
+            actionGroup.add(createSubAction.apply(settings, folderName));
+          }
         }
         if (group != actionGroup) {
           actionGroup.add(group);

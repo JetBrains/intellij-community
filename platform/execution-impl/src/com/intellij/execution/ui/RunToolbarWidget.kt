@@ -101,8 +101,15 @@ internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEve
   val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
     HideableDefaultActionGroup(folderName) { shouldBeShown(null, it) }
   }
+  val filteringSubActions: (RunnerAndConfigurationSettings, String) -> AnAction = { configuration, folderName ->
+    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e) { holdingFilter ->
+      holdingFilter && !recents.contains(configuration)
+    }.also {
+      it.templatePresentation.putClientProperty(Presentation.PROP_VALUE, folderName)
+    }
+  }
   val allConfigurations = DefaultActionGroup()
-  val allConfigurationsNumber = RunConfigurationsComboBoxAction.addRunConfigurations(allConfigurations, project, createActionFn, createFolderFn)
+  val allConfigurationsNumber = RunConfigurationsComboBoxAction.addRunConfigurations(allConfigurations, project, createActionFn, createFolderFn, filteringSubActions)
 
   if (shouldShowRecent && allConfigurationsNumber < recentLimit) {
     shouldShowRecent = false
