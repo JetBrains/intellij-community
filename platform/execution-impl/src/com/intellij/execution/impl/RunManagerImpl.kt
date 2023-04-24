@@ -168,6 +168,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   private var selectedRCSetupScheduled: Boolean = false
 
   private val iconAndInvalidCache = RunConfigurationIconAndInvalidCache()
+
+  // used by Rider
+  @Suppress("unused")
   val iconCache: RunConfigurationIconCache
     get() = iconAndInvalidCache
 
@@ -333,15 +336,15 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   fun getConfigurationsGroupedByTypeAndFolder(isIncludeUnknown: Boolean): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
     val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
-    // use allSettings to return sorted result
+    // use allSettings to return a sorted result
     for (setting in allSettings) {
       val type = setting.type
       if (!isIncludeUnknown && type === UnknownConfigurationType.getInstance()) {
         continue
       }
 
-      val folderToConfigurations = result.getOrPut(type) { LinkedHashMap() }
-      folderToConfigurations.getOrPut(setting.folderName) { SmartList() }.add(setting)
+      val folderToConfigurations = result.computeIfAbsent(type) { LinkedHashMap() }
+      folderToConfigurations.computeIfAbsent(setting.folderName) { SmartList() }.add(setting)
     }
     return result
   }
@@ -767,6 +770,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   @VisibleForTesting
   protected open fun onFirstLoadingFinished() {
+    @Suppress("TestOnlyProblems")
     if (ProjectManagerImpl.isLight(project)) {
       return
     }
@@ -842,7 +846,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           schemeKey += ", type: ${it}"
         }
       }
-      else if (schemeKey != null) {
+      else {
         val typeId = element.getAttributeValue("type")
         if (typeId == null) {
           LOG.warn("typeId is null for '${schemeKey}'")
@@ -1256,11 +1260,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     eventPublisher.runConfigurationChanged(settings, null)
   }
 
-  @Suppress("OverridingDeprecatedMember")
-  override fun addRunManagerListener(listener: RunManagerListener) {
-    project.messageBus.connect().subscribe(RunManagerListener.TOPIC, listener)
-  }
-
   fun fireBeforeRunTasksUpdated() {
     eventPublisher.beforeRunTasksChanged()
   }
@@ -1271,8 +1270,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
   }
 
-  fun removeConfigurations(toRemove: Collection<RunnerAndConfigurationSettings>) = removeConfigurations(toRemove,
-                                                                                                        deleteFileIfStoredInArbitraryFile = true)
+  fun removeConfigurations(toRemove: Collection<RunnerAndConfigurationSettings>) {
+    removeConfigurations(_toRemove = toRemove, deleteFileIfStoredInArbitraryFile = true)
+  }
 
   internal fun removeConfigurations(_toRemove: Collection<RunnerAndConfigurationSettings>,
                                     deleteFileIfStoredInArbitraryFile: Boolean = true,

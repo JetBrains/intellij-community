@@ -263,13 +263,12 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final List<ChooseRunConfigurationPopup.ItemWrapper<?>> wrappers = new ArrayList<>();
     wrappers.add(createNewWrapper(button));
-    final List<ChooseRunConfigurationPopup.ItemWrapper> allSettings =
-      ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
-        @Override
-        public Executor getExecutor() {
-          return executor;
-        }
-      }, false);
+    var allSettings = ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
+      @Override
+      public Executor getExecutor() {
+        return executor;
+      }
+    }, false);
     final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper<?> setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings settings) {
@@ -297,9 +296,8 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     showPopup(button, popup);
   }
 
-  private void showPopup(AnActionButton button, JBPopup popup) {
-    final RelativePoint point = button.getPreferredPopupPoint();
-    popup.show(point);
+  private static void showPopup(AnActionButton button, JBPopup popup) {
+    popup.show(button.getPreferredPopupPoint());
   }
 
   @Override
