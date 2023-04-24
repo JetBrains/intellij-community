@@ -16,7 +16,6 @@ class IdeaCommunityBuildTest {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     val productProperties = IdeaCommunityProperties(communityHomePath.communityRoot)
-    productProperties.supportModularLoading = true
     runTestBuild(
       homePath = homePath,
       communityHomePath = communityHomePath,

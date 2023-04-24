@@ -361,6 +361,13 @@ class BuildOptions(
    */
   @ApiStatus.Experimental
   var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", false)
+  
+  /**
+   * If `true`, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] will be generated in the distribution.
+   * This option doesn't make sense if [useModularLoader] is set to `true`, in this case the generation is enabled automatically. 
+   */
+  @ApiStatus.Experimental
+  var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false)
 
   /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
