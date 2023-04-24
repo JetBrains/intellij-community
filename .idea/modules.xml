@@ -887,6 +887,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/reproducible-builds/intellij.platform.reproducibleBuilds.diffTool.iml" filepath="$PROJECT_DIR$/platform/reproducible-builds/intellij.platform.reproducibleBuilds.diffTool.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources/intellij.platform.resources.iml" filepath="$PROJECT_DIR$/platform/platform-resources/intellij.platform.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources-en/intellij.platform.resources.en.iml" filepath="$PROJECT_DIR$/platform/platform-resources-en/intellij.platform.resources.en.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/runtime/loader/intellij.platform.runtime.loader.iml" filepath="$PROJECT_DIR$/platform/runtime/loader/intellij.platform.runtime.loader.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/runtime/repository/intellij.platform.runtime.repository.iml" filepath="$PROJECT_DIR$/platform/runtime/repository/intellij.platform.runtime.repository.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/runtime/repository/tests/intellij.platform.runtime.repository.tests.iml" filepath="$PROJECT_DIR$/platform/runtime/repository/tests/intellij.platform.runtime.repository.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/backend/intellij.platform.scriptDebugger.backend.iml" filepath="$PROJECT_DIR$/platform/script-debugger/backend/intellij.platform.scriptDebugger.backend.iml" />

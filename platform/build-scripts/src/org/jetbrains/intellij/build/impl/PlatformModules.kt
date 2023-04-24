@@ -202,6 +202,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     "intellij.platform.util.classLoader",
     "intellij.platform.util.zip",
     "intellij.platform.boot",
+    "intellij.platform.runtime.loader",
   ), productLayout = productLayout, layout = layout)
   addModule(UTIL_JAR, listOf(
     // Scala uses GeneralCommandLine in JPS plugin

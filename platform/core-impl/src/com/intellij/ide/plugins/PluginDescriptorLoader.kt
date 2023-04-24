@@ -83,7 +83,7 @@ internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescr
   }
 }
 
-private fun loadDescriptorFromDir(file: Path,
+fun loadDescriptorFromDir(file: Path,
                                   descriptorRelativePath: String,
                                   pluginPath: Path?,
                                   context: DescriptorListLoadingContext,
@@ -119,7 +119,7 @@ private fun loadDescriptorFromDir(file: Path,
   }
 }
 
-private fun loadDescriptorFromJar(file: Path,
+fun loadDescriptorFromJar(file: Path,
                                   fileName: String,
                                   pathResolver: PathResolver,
                                   parentContext: DescriptorListLoadingContext,
@@ -578,19 +578,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
 
   val custom = loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool)
 
-  val effectiveBundledPluginDir = bundledPluginDir ?: if (isUnitTestMode) {
-    null
-  }
-  else {
-    Paths.get(PathManager.getPreInstalledPluginsPath())
-  }
-
-  val bundled = if (effectiveBundledPluginDir == null) {
-    emptyList()
-  }
-  else {
-    loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
-  }
+  val bundled = PluginDescriptorLoadingStrategy.strategy.loadBundledPluginDescriptors(this, bundledPluginDir, isUnitTestMode, context, zipFilePool)
 
   return (root + custom + bundled)
 }
@@ -820,7 +808,7 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
   }
 }
 
-private fun CoroutineScope.loadDescriptorsFromDir(dir: Path,
+internal fun CoroutineScope.loadDescriptorsFromDir(dir: Path,
                                                   context: DescriptorListLoadingContext,
                                                   isBundled: Boolean,
                                                   pool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
