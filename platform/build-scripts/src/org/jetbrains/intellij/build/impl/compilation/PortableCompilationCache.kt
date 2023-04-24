@@ -127,18 +127,14 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * Upload local [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]
    */
   fun upload() {
-    if (!remoteCache.shouldBeUploaded) return
-    if (!forceRebuild && downloader.availableForHeadCommit) {
-      context.messages.info("Nothing new to upload")
-    }
-    else {
+    if (remoteCache.shouldBeUploaded) {
       uploader.upload(context.messages)
+      val metadataFile = context.paths.artifactDir.resolve(COMPILATION_CACHE_METADATA_JSON)
+      Files.createDirectories(metadataFile.parent)
+      Files.writeString(metadataFile, "This is stub file required only for TeamCity artifact dependency. " +
+                                      "Compiled classes will be resolved via ${remoteCache.url}")
+      context.messages.artifactBuilt("$metadataFile")
     }
-    val metadataFile = context.paths.artifactDir.resolve(COMPILATION_CACHE_METADATA_JSON)
-    Files.createDirectories(metadataFile.parent)
-    Files.writeString(metadataFile, "This is stub file required only for TeamCity artifact dependency. " +
-                                    "Compiled classes will be resolved via ${remoteCache.url}")
-    context.messages.artifactBuilt("$metadataFile")
   }
 
   /**
