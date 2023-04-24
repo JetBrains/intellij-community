@@ -3,16 +3,10 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
+    use std::env;
     use std::collections::HashMap;
-    use std::{env, fs};
-    use std::fs::File;
-    use std::io::Write;
-    use std::path::PathBuf;
-    use std::sync::Mutex;
-    use crate::utils::*;
 
-    /// Because of the shared config directory, runtime selection tests cannot run concurrently.
-    static RT_LOCK: Mutex<usize> = Mutex::new(0);
+    use crate::utils::*;
 
     #[test]
     fn correct_launcher_startup_test() {
@@ -58,29 +52,8 @@ mod tests {
         let expected_rt = test.create_jbr_link("_prod_jdk_jbr");
         let env = HashMap::from([("XPLAT_JDK", expected_rt.to_str().unwrap())]);
 
-        let _lock = RT_LOCK.lock().expect("Failed to acquire the runtime lock");
         let result = run_launcher_ext(&test, LauncherRunSpec::standard().assert_status().with_env(&env));
-        do_test_runtime_selection(result, expected_rt);
-    }
-
-    #[test]
-    fn selecting_user_config_runtime_test() {
-        let mut test = prepare_test_env(LauncherLocation::Standard);
-        let expected_rt = test.create_jbr_link("_user_jbr");
-
-        let _lock = RT_LOCK.lock().expect("Failed to acquire the runtime lock");
-
-        let custom_config_dir = get_custom_config_dir();
-        test.delete_later(&custom_config_dir);
-
-        let jdk_config_name = if cfg!(target_os = "windows") { "xplat64.exe.jdk" } else { "xplat.jdk" };
-        let jdk_config_file = custom_config_dir.join(jdk_config_name);
-        fs::create_dir_all(custom_config_dir).unwrap();
-        File::create(jdk_config_file).unwrap()
-            .write_all(expected_rt.to_str().unwrap().as_bytes()).unwrap();
-
-        let result = run_launcher_ext(&test, LauncherRunSpec::standard().assert_status());
-        do_test_runtime_selection(result, expected_rt);
+        test_runtime_selection(result, expected_rt);
     }
 
     #[test]
@@ -88,9 +61,8 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::Standard);
         let expected_rt = test.dist_root.join("jbr");
 
-        let _lock = RT_LOCK.lock().expect("Failed to acquire the runtime lock");
         let result = run_launcher_ext(&test, LauncherRunSpec::standard().assert_status());
-        do_test_runtime_selection(result, expected_rt);
+        test_runtime_selection(result, expected_rt);
     }
 
     #[test]
@@ -99,9 +71,8 @@ mod tests {
         let expected_rt = test.create_jbr_link("_jdk_home_jbr");
         let env = HashMap::from([("JDK_HOME", expected_rt.to_str().unwrap())]);
 
-        let _lock = RT_LOCK.lock().expect("Failed to acquire the runtime lock");
         let result = run_launcher_ext(&test, LauncherRunSpec::standard().assert_status().with_env(&env));
-        do_test_runtime_selection(result, expected_rt);
+        test_runtime_selection(result, expected_rt);
     }
 
     #[test]
@@ -110,21 +81,8 @@ mod tests {
         let expected_rt = test.create_jbr_link("_java_home_jbr");
         let env = HashMap::from([("JAVA_HOME", expected_rt.to_str().unwrap())]);
 
-        let _lock = RT_LOCK.lock().expect("Failed to acquire the runtime lock");
         let result = run_launcher_ext(&test, LauncherRunSpec::standard().assert_status().with_env(&env));
-        do_test_runtime_selection(result, expected_rt);
-    }
-
-    fn do_test_runtime_selection(result: LauncherRunResult, expected_rt: PathBuf) {
-        let rt_line = result.stdout.lines().into_iter()
-            .find(|line| line.contains("Resolved runtime: "))
-            .expect(format!("The 'resolved runtime' line is not in the output: {}", result.stdout).as_str());
-        let resolved_rt = rt_line.split_once("Resolved runtime: ").unwrap().1;
-        let actual_rt = &resolved_rt[1..resolved_rt.len() - 1].replace("\\\\", "\\");
-
-        let adjusted_rt = if cfg!(target_os = "macos") { expected_rt.join("Contents/Home") } else { expected_rt };
-
-        assert_eq!(adjusted_rt.to_str().unwrap(), actual_rt, "Wrong runtime; run result: {:?}", result);
+        test_runtime_selection(result, expected_rt);
     }
 
     #[test]

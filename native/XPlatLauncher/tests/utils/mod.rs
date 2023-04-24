@@ -3,8 +3,8 @@
 use std::{env, fs, thread, time};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
-use std::fs::File;
-use std::io::{BufReader, Read};
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output, Stdio};
 use std::sync::Once;
@@ -12,6 +12,7 @@ use std::sync::Once;
 use anyhow::{bail, Context, Result};
 use log::debug;
 use serde::{Deserialize, Serialize};
+use tempfile::{Builder, TempDir};
 use utils::PathExt;
 use xplat_launcher::get_config_home;
 
@@ -26,7 +27,7 @@ pub struct TestEnvironment<'a> {
     pub project_dir: PathBuf,
     launcher_path: PathBuf,
     shared_env: &'a TestEnvironmentShared,
-    test_root_dir: tempfile::TempDir,
+    test_root_dir: TempDir,
     to_delete: Vec<PathBuf>
 }
 
@@ -43,8 +44,17 @@ impl<'a> TestEnvironment<'a> {
         temp_dir
     }
 
-    pub fn delete_later(&mut self, path: &Path) {
-        self.to_delete.push(path.to_path_buf());
+    pub fn create_user_config_file(&mut self, name: &str, content: &str) {
+        let custom_config_dir = get_custom_config_dir();
+        fs::create_dir_all(&custom_config_dir)
+            .expect(&format!("cannot create {:?}", &custom_config_dir));
+        self.to_delete.push(custom_config_dir.clone());
+
+        let config_file = custom_config_dir.join(name);
+        OpenOptions::new().write(true).create_new(true).open(&config_file)
+            .expect(&format!("cannot create {:?}", &config_file))
+            .write_all(content.as_bytes())
+            .expect(&format!("cannot write {:?}", &config_file));
     }
 }
 
@@ -90,7 +100,7 @@ fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool
 
     let shared_env = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
 
-    let temp_dir = tempfile::Builder::new().prefix("xplat_launcher_test_").tempdir().context(format!("Failed to create temp directory"))?;
+    let temp_dir = Builder::new().prefix("xplat_launcher_test_").tempdir().context("Failed to create temp directory")?;
 
     let (dist_root, launcher_path) = layout_launcher(launcher_location, with_jbr, temp_dir.path(), shared_env)?;
 
@@ -382,7 +392,7 @@ pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
     java_home.join("Contents/Home/bin/java")
 }
 
-pub fn get_custom_config_dir() -> PathBuf {
+fn get_custom_config_dir() -> PathBuf {
     get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTest")
 }
 
@@ -568,4 +578,16 @@ fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParam
     reader.read_to_string(&mut text)?;
     let dump: IntellijMainDumpedLaunchParameters = serde_json::from_str(text.as_str())?;
     Ok(dump)
+}
+
+pub fn test_runtime_selection(result: LauncherRunResult, expected_rt: PathBuf) {
+    let rt_line = result.stdout.lines().into_iter()
+        .find(|line| line.contains("Resolved runtime: "))
+        .expect(format!("The 'Resolved runtime:' line is not in the output: {}", result.stdout).as_str());
+    let resolved_rt = rt_line.split_once("Resolved runtime: ").unwrap().1;
+    let actual_rt = &resolved_rt[1..resolved_rt.len() - 1].replace("\\\\", "\\");
+
+    let adjusted_rt = if cfg!(target_os = "macos") { expected_rt.join("Contents/Home") } else { expected_rt };
+
+    assert_eq!(adjusted_rt.to_str().unwrap(), actual_rt, "Wrong runtime; run result: {:?}", result);
 }
