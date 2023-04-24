@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo(iterable: Iterable<String>) {
     iterable.singl<caret>
 }
