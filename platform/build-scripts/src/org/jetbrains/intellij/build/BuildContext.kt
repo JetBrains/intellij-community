@@ -64,6 +64,17 @@ interface BuildContext : CompilationContext {
   var bootClassPathJarNames: PersistentList<String>
 
   /**
+   * Specifies name of Java class which should be used to start the IDE.
+   */
+  val ideMainClassName: String
+
+  /**
+   * Specifies whether the new modular loader should be used in the IDE distributions, see [ProductProperties.supportModularLoading] and
+   * [BuildOptions.useModularLoader].
+   */
+  val useModularLoader: Boolean
+  
+  /**
    * see BuildTasksImpl.buildProvidedModuleList
    */
   var builtinModule: BuiltinModulesFileData?

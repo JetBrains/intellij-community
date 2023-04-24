@@ -2,12 +2,11 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.util.SystemProperties
+import com.intellij.platform.buildScripts.testFramework.createBuildOptionsForTest
+import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.BuildContextImpl
-import com.intellij.platform.buildScripts.testFramework.createBuildOptionsForTest
-import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 
@@ -17,7 +16,7 @@ class IdeaCommunityBuildTest {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     val productProperties = IdeaCommunityProperties(communityHomePath.communityRoot)
-    productProperties.generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.test.generate.runtime.repository", false)
+    productProperties.supportModularLoading = true
     runTestBuild(
       homePath = homePath,
       communityHomePath = communityHomePath,

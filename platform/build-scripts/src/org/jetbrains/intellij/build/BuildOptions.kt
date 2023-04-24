@@ -356,6 +356,13 @@ class BuildOptions(
   val nonBundledPluginDirectoriesToInclude: Set<String> = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
+   * If this option and [ProductProperties.supportModularLoading] are set to `true`, a file containing module descriptors will be added to 
+   * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128). 
+   */
+  @ApiStatus.Experimental
+  var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", false)
+
+  /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
    * If `null`, `"jbr_jcef-"` will be used.
    */

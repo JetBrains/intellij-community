@@ -21,12 +21,12 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
@@ -108,7 +108,9 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
         if (!context.isStepSkipped(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
           reorderJar("lib/app.jar", appFile)
         }
-        context.bootClassPathJarNames = generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
+        context.bootClassPathJarNames =
+          if (context.useModularLoader) persistentListOf("boot.jar", "platform-runtime-repository.jar")
+          else generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
         result
       }
     }
@@ -164,7 +166,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
       }
     }
     createBuildThirdPartyLibraryListJob(entries, context)
-    if (context.productProperties.generateRuntimeModuleRepository) {
+    if (context.useModularLoader) {
       launch(Dispatchers.IO) {
         spanBuilder("generate runtime module repository").useWithScope2 { 
           generateRuntimeModuleRepository(entries, context)

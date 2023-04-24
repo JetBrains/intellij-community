@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
@@ -49,6 +50,12 @@ class BuildContextImpl(
     get() = productProperties.xBootClassPathJarNames
 
   override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
+  
+  override val ideMainClassName: String
+    get() = if (useModularLoader) "com.intellij.platform.runtime.loader.Loader" else productProperties.mainClassName
+  
+  override val useModularLoader: Boolean
+    get() = productProperties.supportModularLoading && options.useModularLoader
 
   override val applicationInfo = ApplicationInfoPropertiesImpl(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
@@ -246,6 +253,11 @@ class BuildContextImpl(
     // require bundled JNA dispatcher lib
     jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.noclasspath=true")
+
+    if (useModularLoader) {
+      jvmArgs.add("-Dintellij.platform.runtime.repository.path=$macroName/${RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME}")
+      jvmArgs.add("-Dintellij.platform.root.module=${productProperties.applicationInfoModule}")
+    }
 
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")

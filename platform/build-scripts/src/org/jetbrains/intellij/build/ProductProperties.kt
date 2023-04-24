@@ -61,7 +61,8 @@ abstract class ProductProperties {
   var fastInstanceActivation: Boolean = true
 
   /**
-   * An entry point into application's Java code, usually [com.intellij.idea.Main].
+   * An entry point into application's Java code, usually [com.intellij.idea.Main]. 
+   * Use [BuildContext.ideMainClassName] if you need to access this value in the build scripts.
    */
   var mainClassName: String = "com.intellij.idea.Main"
 
@@ -157,11 +158,11 @@ abstract class ProductProperties {
   var buildCrossPlatformDistribution: Boolean = false
 
   /**
-   * Determines whether descriptors for [com.intellij.platform.runtime.repository.RuntimeModuleRepository] should be included into the 
-   * distributions.
+   * Set to `true` if the product can be started using [com.intellij.platform.runtime.loader.Loader]. 
+   * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
    */
   @ApiStatus.Experimental
-  var generateRuntimeModuleRepository: Boolean = false
+  var supportModularLoading: Boolean = false
 
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.

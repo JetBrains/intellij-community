@@ -209,7 +209,7 @@ internal class WindowsDistributionBuilder(
         Pair("ide_jvm_args", additionalJvmArguments.joinToString(separator = " ")),
         Pair("class_path", classPath),
         Pair("base_name", baseName),
-        Pair("main_class_name", context.productProperties.mainClassName),
+        Pair("main_class_name", context.ideMainClassName),
       )
     )
 
@@ -280,7 +280,7 @@ internal class WindowsDistributionBuilder(
         IDS_CLASSPATH_LIBS=${classPath}
         IDS_BOOTCLASSPATH_LIBS=${bootClassPath}
         IDS_INSTANCE_ACTIVATION=${context.productProperties.fastInstanceActivation}
-        IDS_MAIN_CLASS=${context.productProperties.mainClassName.replace('.', '/')}
+        IDS_MAIN_CLASS=${context.ideMainClassName.replace('.', '/')}
         """.trimIndent().trim())
 
       val communityHome = context.paths.communityHome
