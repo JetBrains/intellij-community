@@ -188,7 +188,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   private @NotNull Point calcOffsetsToScroll(@NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
     Editor editor = mySupplier.getEditor();
-    List<ScrollPositionCalculator> calculators = ScrollPositionCalculator.EXTENSION_POINT_NAME.getExtensionList();
+    List<ScrollPositionCalculator> calculators = ScrollPositionCalculator.EXTENSION_POINT_NAME.getExtensionsIfPointIsRegistered();
     if (calculators.isEmpty()) {
       if (editor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
         if (scrollType == ScrollType.CENTER ||
