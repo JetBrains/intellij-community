@@ -27,11 +27,9 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +41,6 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -83,7 +80,6 @@ public final class ListPluginComponent extends JPanel {
   private JLabel myDownloads;
   private JLabel myVersion;
   private JLabel myVendor;
-  private JLabel myFeatures;
   private LicensePanel myLicensePanel;
   private LicensePanel myUpdateLicensePanel;
   private JPanel myErrorPanel;
@@ -124,7 +120,6 @@ public final class ListPluginComponent extends JPanel {
     if (myIsAvailable) {
       createButtons();
       createMetricsPanel();
-      createFeaturesPanel();
       createLicensePanel();
     }
     else {
@@ -409,19 +404,6 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  private void createFeaturesPanel() {
-    if (myMarketplace) {
-      Collection<String> features = ((PluginNode)myPlugin).getSuggestedFeatures();
-      if (!ContainerUtil.isEmpty(features)) {
-        myFeatures = new JBLabel();
-        myFeatures.setText("<html><body><b>" + StringUtil.join(features, "</b> <b>") + "</b></body></html>"); //NON-NLS
-        PluginManagerConfigurable.setTinyFont(myFeatures);
-        myFeatures.setBorder(JBUI.Borders.emptyTop(5));
-        myLayout.addLineComponent(myFeatures);
-      }
-    }
-  }
-
   private void createTag() {
     List<String> tags = PluginManagerConfigurable.getTags(myPlugin);
     if (!tags.isEmpty()) {
@@ -634,9 +616,6 @@ public final class ListPluginComponent extends JPanel {
     }
     if (myVendor != null) {
       myVendor.setForeground(otherForeground);
-    }
-    if (myFeatures != null) {
-      myFeatures.setForeground(myInstalledDescriptorForMarketplace == null || isEnabledState() ? null : DisabledColor);
     }
   }
 

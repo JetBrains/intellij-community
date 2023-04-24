@@ -31,6 +31,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -104,6 +105,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private LinkPanel myBugtrackerUrl;
   private LinkPanel myDocumentationUrl;
   private LinkPanel mySourceCodeUrl;
+  private JEditorPane mySuggestedFeatures;
   private JBScrollPane myBottomScrollPane;
   private final List<JBScrollPane> myScrollPanes = new ArrayList<>();
   private JEditorPane myDescriptionComponent;
@@ -240,6 +242,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     topPanel.add(myNameAndButtons);
     topPanel.add(mySuggestedIdeBanner, VerticalLayout.FILL_HORIZONTAL);
+
+    mySuggestedFeatures = new JEditorPane();
+    UIUtil.convertToLabel(mySuggestedFeatures);
+    PluginManagerConfigurable.setTinyFont(mySuggestedFeatures);
+    mySuggestedFeatures.setCaret(EmptyCaret.INSTANCE);
+
+    topPanel.add(mySuggestedFeatures, VerticalLayout.FILL_HORIZONTAL);
 
     myNameAndButtons.add(myVersion1 = new JBLabel().setCopyable(true));
 
@@ -1019,6 +1028,18 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       String date = pluginNode instanceof PluginNode ? ((PluginNode)pluginNode).getPresentableDate() : null;
       myDate.setText(myMultiTabs ? IdeBundle.message("plugins.configurable.release.date.0", date) : date);
       myDate.setVisible(date != null);
+    }
+
+    if (mySuggestedFeatures != null) {
+      mySuggestedFeatures.setVisible(false);
+      if (myMarketplace && myPlugin instanceof PluginNode node) {
+        String feature = ContainerUtil.getFirstItem(node.getSuggestedFeatures());
+        if (feature != null) {
+          mySuggestedFeatures.setText(
+            "dependency".equals(feature) ? IdeBundle.message("plugins.configurable.suggested.features.dependency") : feature); //NON-NLS
+          mySuggestedFeatures.setVisible(true);
+        }
+      }
     }
 
     for (JBScrollPane scrollPane : myScrollPanes) {
