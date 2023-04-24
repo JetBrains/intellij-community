@@ -109,6 +109,12 @@ interface WebSymbolDocumentation {
            additionalSections: Map<@Nls String, @Nls String> = emptyMap(),
            footnote: @Nls String? = this.footnote): WebSymbolDocumentation
 
+  fun appendFootnote(footnote: @Nls String?): WebSymbolDocumentation =
+    if (footnote != null)
+      withFootnote((this.footnote ?: "") + footnote)
+    else
+      this
+
   companion object {
 
     fun create(symbol: WebSymbol, location: PsiElement?): WebSymbolDocumentation =
