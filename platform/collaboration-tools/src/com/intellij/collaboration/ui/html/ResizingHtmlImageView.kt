@@ -149,7 +149,7 @@ class ResizingHtmlImageView(element: Element) : View(element) {
       cachedContainer?.repaint(100)
     }
     else {
-      cachedContainer?.repaint(100, rect.x, rect.y, rect.width, rect.height)
+      cachedContainer?.repaint(rect.x, rect.y, rect.width, rect.height)
     }
   }
 
@@ -285,7 +285,7 @@ private class ImageLoader(
       val dim = Dimension(img.getWidth(null), img.getHeight(null))
       state = State.Loaded(img, dim)
     }
-    else {
+    else if (state !is State.Loaded) {
       state = State.Loading(dimension.takeIf { width >= 0 && height >= 0 })
     }
 
