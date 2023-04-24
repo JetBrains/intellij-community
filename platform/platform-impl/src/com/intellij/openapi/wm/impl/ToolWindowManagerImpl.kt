@@ -750,6 +750,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       .filter { it.isAvailable }
   }
 
+  override fun isStripeButtonShow(toolWindow: ToolWindow): Boolean = idToEntry.get(toolWindow.id)?.stripeButton != null
+
   /**
    * @return windowed decorator for the tool window with specified `ID`.
    */
