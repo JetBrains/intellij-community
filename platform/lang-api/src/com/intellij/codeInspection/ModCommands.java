@@ -53,7 +53,7 @@ public final class ModCommands {
    *                PSI write operations in background to modify this copy
    * @return a command that will perform the corresponding update to the original element
    */
-  public static @NotNull ModCommand psiUpdate(@NotNull PsiElement orig, @NotNull Consumer<@NotNull PsiElement> updater) {
+  public static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig, @NotNull Consumer<@NotNull E> updater) {
     return psiUpdate(orig, (e, ctx) -> updater.accept(e));
   }
 
@@ -64,8 +64,8 @@ public final class ModCommands {
    *                to modify this copy
    * @return a command that will perform the corresponding update to the original element
    */
-  public static @NotNull ModCommand psiUpdate(@NotNull PsiElement orig,
-                                              @NotNull BiConsumer<@NotNull PsiElement, @NotNull PsiUpdateContext> updater) {
+  public static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig,
+                                                                     @NotNull BiConsumer<@NotNull E, @NotNull PsiUpdateContext> updater) {
     PsiFile origFile = orig.getContainingFile();
     VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
     Project project = origFile.getProject();
@@ -75,7 +75,7 @@ public final class ModCommands {
       textEditor.getEditor()
       : null;
     PsiFile copyFile = (PsiFile)origFile.copy();
-    PsiElement copy = PsiTreeUtil.findSameElementInCopy(orig, copyFile);
+    E copy = PsiTreeUtil.findSameElementInCopy(orig, copyFile);
     PostprocessReformattingAspect aspect = PostprocessReformattingAspect.getInstance(project);
     PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     Document document = copyFile.getViewProvider().getDocument();

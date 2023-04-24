@@ -2,39 +2,34 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplaceWithQualifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class ReplaceWithQualifierFix extends PsiBasedModCommandAction<PsiMethodCallExpression> {
   private final String myRole;
 
-  public ReplaceWithQualifierFix(@Nullable PsiMethodCallExpression call, @Nullable String role) {
+  public ReplaceWithQualifierFix(@NotNull PsiMethodCallExpression call, @Nullable String role) {
     super(call);
     myRole = role;
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiMethodCallExpression call = (PsiMethodCallExpression)startElement;
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call) {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-    if (qualifier == null) return;
-    new CommentTracker().replace(call, qualifier);
+    if (qualifier == null) return ModCommands.nop();
+    return ModCommands.psiUpdate(call, c -> {
+      new CommentTracker().replace(c, qualifier);
+    });
   }
 
   @Override
-  public @NotNull String getText() {
+  public @NotNull String getName() {
     return myRole == null ? QuickFixBundle.message("replace.with.qualifier.text") :
            QuickFixBundle.message("replace.with.qualifier.text.role", myRole);
   }

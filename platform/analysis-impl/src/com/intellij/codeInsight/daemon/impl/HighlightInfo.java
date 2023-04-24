@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -15,6 +15,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -572,6 +573,15 @@ public class HighlightInfo implements Segment {
                         @Nullable @Nls String displayName,
                         @Nullable TextRange fixRange,
                         @Nullable HighlightDisplayKey key);
+
+    @NotNull
+    default Builder registerFix(@NotNull ModCommandAction action,
+                        @Nullable List<? extends IntentionAction> options,
+                        @Nullable @Nls String displayName,
+                        @Nullable TextRange fixRange,
+                        @Nullable HighlightDisplayKey key) {
+      return registerFix(action.asIntention(), options, displayName, fixRange, key);
+    }
 
     @Nullable("null means filtered out")
     HighlightInfo create();
