@@ -1886,7 +1886,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ExtractMethodRecommender"
                      key="inspection.extract.method.inspection.name" bundle="messages.JavaAnalysisBundle"
                      groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WARNING" isInternal="true"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.refactoring.extractMethod.ExtractMethodRecommenderInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantLabeledSwitchRuleCodeBlock"
                      key="inspection.labeled.switch.rule.redundant.code.block.display.name" bundle="messages.JavaBundle"
