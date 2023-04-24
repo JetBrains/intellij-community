@@ -1105,6 +1105,65 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
     }
 
+    fun checkResolveSyntheticJavaPropertyCompoundAccess(myFixture: JavaCodeInsightTestFixture, isK2 : Boolean = true) {
+        myFixture.addClass(
+            """public class X {
+        |int getFoo() { return 42; }
+        |void setFoo(int s) {}
+        |}""".trimMargin()
+        )
+
+        myFixture.configureByText(
+            "main.kt", """
+                fun box(x : X) {
+                  x.foo += 42
+                  x.foo++
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val plusEq = uFile.findElementByTextFromPsi<UBinaryExpression>("x.foo +=", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val wholePlusEq = plusEq.resolveOperator()
+        TestCase.assertNull(wholePlusEq)
+        // `x.foo` from `x.foo += 42`
+        val left = (plusEq.leftOperand as? UResolvable)?.resolve() as? PsiMethod
+        if (isK2) {
+            TestCase.assertEquals("getFoo", left?.name)
+        } else {
+            TestCase.assertEquals("setFoo", left?.name)
+        }
+
+        val plusEqMulti = (plusEq as UMultiResolvable).multiResolve()
+        val plusEqMultiStrings = plusEqMulti.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            plusEqMultiStrings,
+            "int getFoo() { return 42; }",
+            "void setFoo(int s) {}",
+        )
+
+        val plusPlus = uFile.findElementByTextFromPsi<UUnaryExpression>("x.foo++", strict = false)
+            .orFail("cant convert to UUnaryExpression")
+        val wholePlusPlus = plusPlus.resolveOperator()
+        TestCase.assertNull(wholePlusPlus)
+        // `x.foo` from `x.foo++`
+        val operand = (plusPlus.operand as? UResolvable)?.resolve() as? PsiMethod
+        if (isK2) {
+            TestCase.assertEquals("getFoo", operand?.name)
+        } else {
+            TestCase.assertEquals("setFoo", operand?.name)
+        }
+
+        val plusPlusMulti = (plusPlus as UMultiResolvable).multiResolve()
+        val plusPlusMultiStrings = plusPlusMulti.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            plusPlusMultiStrings,
+            "int getFoo() { return 42; }",
+            "void setFoo(int s) {}",
+        )
+    }
+
     fun checkResolveSyntheticJavaPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """public class X {

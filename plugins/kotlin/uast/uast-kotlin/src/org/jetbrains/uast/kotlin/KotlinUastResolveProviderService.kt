@@ -183,7 +183,16 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                         unwrappedPsi.operationToken == KtTokens.EXCLEXCL
                     ) {
                         // E.g., `i++` -> access to `i`
-                        unwrappedPsi.baseExpression?.let { resolveToDeclaration(it) }?.let { yield(it) }
+                        unwrappedPsi.baseExpression?.let { operand ->
+                            when (val descriptor = operand.getResolvedCall(operand.analyze())?.resultingDescriptor) {
+                                is SyntheticJavaPropertyDescriptor -> {
+                                    resolveToPsiMethod(operand, descriptor.getMethod)?.let { yield(it) }
+                                    descriptor.setMethod?.let { resolveToPsiMethod(operand, it) }?.let { yield(it) }
+                                }
+                                else ->
+                                    resolveToDeclaration(operand)?.let { yield(it) }
+                            }
+                        }
                     }
                     // Look for regular function call, e.g., inc() in `i++`
                     resolveToDeclaration(ktExpression)?.let { yield(it) }
