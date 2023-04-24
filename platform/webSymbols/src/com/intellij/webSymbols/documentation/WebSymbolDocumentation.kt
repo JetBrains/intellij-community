@@ -117,17 +117,25 @@ interface WebSymbolDocumentation {
 
   companion object {
 
-    fun create(symbol: WebSymbol, location: PsiElement?): WebSymbolDocumentation =
-      WebSymbolDocumentationImpl(symbol.name, Strings.escapeXmlEntities(symbol.name), symbol.description, symbol.docUrl,
-                                 symbol.apiStatus,
-                                 symbol.required ?: false,
-                                 symbol.defaultValue ?: symbol.attributeValue?.default,
-                                 symbol.origin.takeIf { it.library != null }
-                                   ?.let { context ->
-                                     context.library +
-                                     if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
-                                   },
-                                 symbol.icon, symbol.descriptionSections, null)
+    fun create(symbol: WebSymbol,
+               location: PsiElement?,
+               name: String = symbol.name,
+               definition: String = Strings.escapeXmlEntities(symbol.name),
+               description: @Nls String? = symbol.description,
+               docUrl: String? = symbol.docUrl,
+               apiStatus: WebSymbol.ApiStatus? = symbol.apiStatus,
+               required: Boolean = symbol.required ?: false,
+               defaultValue: String? = symbol.defaultValue ?: symbol.attributeValue?.default,
+               library: String? = symbol.origin.takeIf { it.library != null }
+                 ?.let { context ->
+                   context.library +
+                   if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
+                 },
+               icon: Icon? = symbol.icon,
+               descriptionSections: Map<@Nls String, @Nls String> = symbol.descriptionSections,
+               footnote: @Nls String? = null): WebSymbolDocumentation =
+      WebSymbolDocumentationImpl(name, definition, description, docUrl, apiStatus, required, defaultValue, library, icon,
+                                 descriptionSections, footnote)
         .let { doc: WebSymbolDocumentation ->
           WebSymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->
             customizer.customize(symbol, location, documentation)
