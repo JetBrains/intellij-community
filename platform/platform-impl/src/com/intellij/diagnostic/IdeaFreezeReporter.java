@@ -57,7 +57,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   private SamplingTask myDumpTask;
   private final List<ThreadDump> myCurrentDumps = new ArrayList<>();
-  private List<? extends StackTraceElement> myStacktraceCommonPart;
+  private List<StackTraceElement> myStacktraceCommonPart;
   private volatile boolean myAppClosing;
 
   IdeaFreezeReporter() {
@@ -206,7 +206,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           myStacktraceCommonPart = List.of(edtStack);
         }
         else {
-          myStacktraceCommonPart = PerformanceWatcherImpl.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
+          myStacktraceCommonPart = PerformanceWatcherImplKt.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
         }
       }
       File dir = toFile.getParentFile();
@@ -337,7 +337,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   }
 
   private @Nullable IdeaLoggingEvent createEvent(long duration,
-                                                 @NotNull List<? extends Attachment> attachments,
+                                                 @NotNull List<Attachment> attachments,
                                                  @Nullable File reportDir,
                                                  @NotNull PerformanceWatcher performanceWatcher,
                                                  boolean finished) {
@@ -363,7 +363,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                                                  long dumpInterval,
                                                  int sampledCount,
                                                  @NotNull List<? extends ThreadInfo> causeThreads,
-                                                 @NotNull List<? extends Attachment> attachments,
+                                                 @NotNull List<Attachment> attachments,
                                                  @Nullable File reportDir,
                                                  @Nullable String jitProblem,
                                                  boolean finished) {
@@ -471,7 +471,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
     @NotNull CallTreeNode addCallee(StackTraceElement e, long time, ThreadInfo threadInfo) {
       for (CallTreeNode child : myChildren) {
-        if (PerformanceWatcherImpl.compareStackTraceElements(child.myStackTraceElement, e)) {
+        if (PerformanceWatcherImplKt.compareStackTraceElements(child.myStackTraceElement, e)) {
           child.myTime += time;
           return child;
         }
