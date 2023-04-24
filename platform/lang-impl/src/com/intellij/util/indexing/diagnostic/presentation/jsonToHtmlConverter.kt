@@ -1090,7 +1090,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
                 td(times.collectingIndexableFilesTime.presentableDuration())
               }
               tr {
-                td("Time of running $INDEX_INFRA_EXTENSIONS (without loading content)"); td(times.indexExtensionsTime.presentableDuration())
+                td("Time of running $INDEX_INFRA_EXTENSIONS (without loading content; sum of durations on many threads)"); td(times.indexExtensionsTime.presentableDuration())
               }
 
               tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
