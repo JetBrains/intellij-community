@@ -186,19 +186,28 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     myAnimationDisabled = false;
   }
 
-  private Point calcOffsetsToScroll(Point targetLocation, ScrollType scrollType, Rectangle viewRect) {
+  private @NotNull Point calcOffsetsToScroll(@NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
     Editor editor = mySupplier.getEditor();
-    if (editor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
-      if (scrollType == ScrollType.CENTER ||
-          scrollType == ScrollType.CENTER_DOWN ||
-          scrollType == ScrollType.CENTER_UP) {
-        scrollType = ScrollType.RELATIVE;
+    List<ScrollPositionCalculator> calculators = ScrollPositionCalculator.EXTENSION_POINT_NAME.getExtensionList();
+    if (calculators.isEmpty()) {
+      if (editor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
+        if (scrollType == ScrollType.CENTER ||
+            scrollType == ScrollType.CENTER_DOWN ||
+            scrollType == ScrollType.CENTER_UP) {
+          scrollType = ScrollType.RELATIVE;
+        }
       }
-    }
 
-    int hOffset = getHorizontalOffset(editor, targetLocation, scrollType, viewRect);
-    int vOffset = getVerticalOffset(editor, targetLocation, scrollType, viewRect);
-    return new Point(hOffset, vOffset);
+      int hOffset = getHorizontalOffset(editor, targetLocation, scrollType, viewRect);
+      int vOffset = getVerticalOffset(editor, targetLocation, scrollType, viewRect);
+      return new Point(hOffset, vOffset);
+    } else {
+      // ScrollPositionCalculator was added for IdeaVim plugin
+      if (calculators.size() > 1) {
+        LOG.warn("Multiple instances of ScrollPositionCalculator have been found.");
+      }
+      return calculators.get(0).calcOffsetsToScroll(editor, targetLocation, scrollType, viewRect);
+    }
   }
 
   private int getHorizontalOffset(@NotNull Editor editor, @NotNull Point targetLocation, @NotNull ScrollType scrollType, @NotNull Rectangle viewRect) {
