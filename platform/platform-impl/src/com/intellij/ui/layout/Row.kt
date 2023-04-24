@@ -169,10 +169,6 @@ abstract class Row : Cell(), RowBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract var subRowIndent: Int
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
-  @get:ApiStatus.ScheduledForRemoval
-  protected abstract val builder: LayoutBuilderImpl
-
   /**
    * Specifies the right alignment for the component if the cell is larger than the component plus its gaps.
    */
