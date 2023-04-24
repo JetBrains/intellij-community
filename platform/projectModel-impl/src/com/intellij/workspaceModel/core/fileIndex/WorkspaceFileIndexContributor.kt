@@ -176,6 +176,17 @@ interface WorkspaceFileSetRegistrar {
   fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity)
 
   /**
+   * Includes [file] to the workspace. Note, that unlike the default [registerFileSet], files under [file] won't be included. 
+   * @param kind specify kind which will be assigned to the files
+   * @param entity first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
+   * @param customData optional custom data which will be associated with the root and can be accessed via [WorkspaceFileSetWithCustomData].
+   */
+  fun registerNonRecursiveFileSet(file: VirtualFileUrl,
+                                  kind: WorkspaceFileKind,
+                                  entity: WorkspaceEntity,
+                                  customData: WorkspaceFileSetData?)
+
+  /**
    * A variant of [registerExclusionCondition] function which takes [VirtualFile] instead of [VirtualFileUrl].
    * This function is considered as a temporary solution until all contributors to [WorkspaceFileIndex] are migrated to Workspace Model.
    */

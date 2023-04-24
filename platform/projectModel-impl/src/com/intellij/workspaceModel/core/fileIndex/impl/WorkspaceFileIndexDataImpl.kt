@@ -327,24 +327,40 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                                  kind: WorkspaceFileKind,
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
+      registerFileSet(root, kind, entity, customData, recursive = true)
+    }
+
+    private fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?,
+                                recursive: Boolean) {
       val rootFile = rootFileSupplier.findFile(root)
       if (rootFile != null) {
-        registerFileSet(rootFile, kind, entity, customData)
+        registerFileSet(rootFile, kind, entity, customData, recursive)
       }
       else {
-        nonExistingFilesRegistry.registerUrl(root, entity, storageKind, if (kind.isContent) NonExistingFileSetKind.INCLUDED_CONTENT else NonExistingFileSetKind.INCLUDED_OTHER)
+        nonExistingFilesRegistry.registerUrl(root, entity, storageKind,
+                                             if (kind.isContent) NonExistingFileSetKind.INCLUDED_CONTENT else NonExistingFileSetKind.INCLUDED_OTHER)
       }
     }
 
-    override fun registerFileSet(root: VirtualFile,
-                                 kind: WorkspaceFileKind,
-                                 entity: WorkspaceEntity,
-                                 customData: WorkspaceFileSetData?) {
-      val fileSet = WorkspaceFileSetImpl(root, kind, entity.createReference(), storageKind, customData ?: DummyWorkspaceFileSetData)
+    override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
+      registerFileSet(root, kind, entity, customData, recursive = true)
+    }
+
+    private fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?,
+                                recursive: Boolean) {
+      val fileSet = WorkspaceFileSetImpl(root, kind, entity.createReference(), storageKind, customData ?: DummyWorkspaceFileSetData,
+                                         recursive)
       fileSets.putValue(root, fileSet)
       if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
       }
+    }
+
+    override fun registerNonRecursiveFileSet(file: VirtualFileUrl,
+                                             kind: WorkspaceFileKind,
+                                             entity: WorkspaceEntity,
+                                             customData: WorkspaceFileSetData?) {
+      registerFileSet(file, kind, entity, customData, recursive = false)
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
@@ -428,6 +444,13 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
       if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.removeByPrefixAndReference(customData.packagePrefix, entity.createReference())
       }
+    }
+
+    override fun registerNonRecursiveFileSet(file: VirtualFileUrl,
+                                             kind: WorkspaceFileKind,
+                                             entity: WorkspaceEntity,
+                                             customData: WorkspaceFileSetData?) {
+      registerFileSet(file, kind, entity, customData)
     }
 
     private fun isOriginatedFrom(fileSet: StoredFileSet, entity: WorkspaceEntity): Boolean {

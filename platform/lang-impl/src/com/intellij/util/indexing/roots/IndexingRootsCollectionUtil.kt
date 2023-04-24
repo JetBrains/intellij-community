@@ -488,6 +488,13 @@ private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: Work
   override fun registerExclusionCondition(root: VirtualFile, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
     rootData.registerExcludedRoot(root)
   }
+
+  override fun registerNonRecursiveFileSet(file: VirtualFileUrl,
+                                           kind: WorkspaceFileKind,
+                                           entity: WorkspaceEntity,
+                                           customData: WorkspaceFileSetData?) {
+    rootData.registerFileSet(file, kind, entity, customData)
+  }
 }
 
 
