@@ -240,7 +240,7 @@ private inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
 }
 
 private fun publishTraceFile() {
-  val trace = TraceManager.finish() ?: return
+  val trace = TraceManager.finish()?.takeIf { it.exists() } ?: return
   try {
     println("Performance report is written to $trace")
     println("##teamcity[publishArtifacts '$trace']")
