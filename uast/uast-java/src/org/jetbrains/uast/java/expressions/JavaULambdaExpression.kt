@@ -77,6 +77,10 @@ private class JavaImplicitUReturnExpression(givenParent: UElement?) : JavaAbstra
   override lateinit var returnExpression: UExpression
     internal set
 
+  override fun getExpressionType(): PsiType? {
+    return returnExpression.getExpressionType()
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -96,6 +100,10 @@ private class JavaImplicitUBlockExpression(givenParent: UElement?) : JavaAbstrac
     get() = null
   override lateinit var expressions: List<UExpression>
     internal set
+
+  override fun getExpressionType(): PsiType? {
+    return expressions.singleOrNull()?.getExpressionType()
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
