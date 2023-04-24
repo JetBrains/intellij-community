@@ -4,6 +4,7 @@ package com.intellij.diagnostic.telemetry.helpers;
 import com.intellij.diagnostic.telemetry.IJTracer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.diagnostic.telemetry.TracerLevel;
+import com.intellij.openapi.diagnostic.Logger;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
@@ -24,6 +25,7 @@ public abstract class SharedMetrics {
   }
 
   private final ConcurrentHashMap<String, Span> spans = new ConcurrentHashMap<>();
+  private static final Logger LOG = Logger.getInstance(SharedMetrics.class);
 
   public Context getSpanContext(String spanName) {
     return Context.current().with(getOrStartSpan(spanName));
@@ -66,12 +68,17 @@ public abstract class SharedMetrics {
 
   public void endSpan(@NotNull String spanName, Function<Span, Span> action) {
     if (!spans.containsKey(spanName)) {
-      throw new RuntimeException(String.format("Span with name %s isn't started yet, but called to stop", spanName));
+      LOG.error(String.format("Span with name %s isn't started yet, but was called to stop", spanName));
     }
 
     var span = spans.get(spanName);
     if (span != null) {
-      action.apply(span).end();
+      try {
+        action.apply(span).end();
+      }
+      catch (Exception e) {
+        LOG.error(String.format("Error while stopping span %s ", spanName), e);
+      }
     }
   }
 
