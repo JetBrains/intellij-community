@@ -43,11 +43,11 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
     ): TaskResult<Unit> =
         GradlePlugin.gradleProperties
             .addValues(
-                "kotlin.js.compiler" to irOrLegacyCompiler(module).lowercase()
+                "kotlin.js.compiler" to "ir"
             )
 
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
-        super.getConfiguratorSettings() + kind + useJsLegacyCompiler
+        super.getConfiguratorSettings() + kind
 
     companion object : ModuleConfiguratorSettings() {
         val kind by enumSetting<JsTargetKind>(
@@ -67,38 +67,6 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
                     else -> true
                 }
             }
-        }
-
-        val compiler by enumSetting<JsCompiler>(
-            KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler"),
-            GenerationPhase.PROJECT_GENERATION
-        ) {
-            defaultValue = value(JsCompiler.BOTH)
-            tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.tooltip")
-            filter = { reference, compilerCandidate ->
-                when {
-                    reference !is ModuleConfiguratorSettingReference<*, *> -> false
-                    reference.module?.let { settingValue(it, kind) } == JsTargetKind.LIBRARY -> true
-                    reference.module?.let { settingValue(it, kind) } == JsTargetKind.APPLICATION
-                            && compilerCandidate == JsCompiler.BOTH -> false
-                    else -> true
-                }
-            }
-        }
-
-        internal fun Reader.jsCompilerParam(module: Module): String? = settingValue(module, compiler)?.scriptValue
-
-        val useJsLegacyCompiler by booleanSetting(
-            KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.use.js.legacy.title"),
-            GenerationPhase.PROJECT_GENERATION
-        ) {
-            defaultValue = value(false)
-            description = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.use.js.ir.description")
-        }
-
-        internal fun Reader.irOrLegacyCompiler(module: Module): String {
-            fun Reader.useJsLegacyCompiler(module: Module): Boolean = settingValue(module, useJsLegacyCompiler) ?: false
-            return if (!useJsLegacyCompiler(module)) JsCompiler.IR.scriptValue else JsCompiler.LEGACY.scriptValue
         }
 
         fun Reader.isApplication(module: Module): Boolean =

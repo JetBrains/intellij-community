@@ -13,9 +13,6 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.JvmToolchainConfi
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetAccessIR
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.compiler
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.jsCompilerParam
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.irOrLegacyCompiler
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.kind
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.browserSubTarget
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedConfigurator.Companion.nodejsSubTarget
@@ -81,12 +78,6 @@ enum class JsTargetKind(override val text: String) : DisplayableSettingItem {
     APPLICATION(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.kind.application"))
 }
 
-enum class JsCompiler(override val text: String, val scriptValue: String) : DisplayableSettingItem {
-    IR(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.ir"), "IR"),
-    LEGACY(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.legacy"), "LEGACY"),
-    BOTH(KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.compiler.both"), "BOTH")
-}
-
 abstract class AbstractBrowserTargetConfigurator: JsTargetConfigurator, ModuleConfiguratorWithTests {
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
          super<JsTargetConfigurator>.getConfiguratorSettings()
@@ -100,22 +91,17 @@ abstract class AbstractBrowserTargetConfigurator: JsTargetConfigurator, ModuleCo
     ): List<BuildSystemIR> = irsList {
         +DefaultTargetConfigurationIR(
             module.createTargetAccessIr(
-                ModuleSubType.js,
-                createAdditionalParams(module)
+                ModuleSubType.js
             )
         ) {
             browserSubTarget(module, this@createTargetIrs, cssSupportNeeded = true)
         }
     }
-
-    abstract fun Reader.createAdditionalParams(module: Module): List<String>
 }
 
 object JsBrowserTargetConfigurator : AbstractBrowserTargetConfigurator() {
     @NonNls
     override val id = "jsBrowser"
-
-    override fun Reader.createAdditionalParams(module: Module): List<String> = listOf(irOrLegacyCompiler(module))
 }
 
 object MppLibJsBrowserTargetConfigurator : AbstractBrowserTargetConfigurator() {
@@ -123,10 +109,8 @@ object MppLibJsBrowserTargetConfigurator : AbstractBrowserTargetConfigurator() {
     override val id = "mppLibJsBrowser"
 
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> {
-        return listOf(testFramework, kind, compiler)
+        return listOf(testFramework, kind)
     }
-
-    override fun Reader.createAdditionalParams(module: Module): List<String> = jsCompilerParam(module)?.let { listOf(it) } ?: emptyList()
 }
 
 object JsNodeTargetConfigurator : JsTargetConfigurator {
@@ -138,8 +122,7 @@ object JsNodeTargetConfigurator : JsTargetConfigurator {
     override fun Reader.createTargetIrs(module: Module): List<BuildSystemIR> = irsList {
         +DefaultTargetConfigurationIR(
             module.createTargetAccessIr(
-                ModuleSubType.js,
-                listOf(irOrLegacyCompiler(module))
+                ModuleSubType.js
             )
         ) {
             nodejsSubTarget(module, this@createTargetIrs)
