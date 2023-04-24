@@ -7,6 +7,10 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.gradle.GradleKotlinNewProjectWizard"/>
+    <registryKey key="kotlin.js.wizard"
+                 description="Deprecated Kotlin/JS templates are enabled"
+                 defaultValue="false"
+                 restartRequired="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">

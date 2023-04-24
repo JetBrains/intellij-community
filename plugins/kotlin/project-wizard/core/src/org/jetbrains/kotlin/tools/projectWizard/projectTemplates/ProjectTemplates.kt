@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.registry.Registry
 import icons.KotlinBaseResourcesIcons
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -253,7 +254,7 @@ object FrontendApplicationProjectTemplate : ProjectTemplate() {
         get() = KotlinIcons.Wizard.JS
 
     override fun isVisible(): Boolean =
-        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
+        Registry.`is`("kotlin.js.wizard", false)
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -284,7 +285,7 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
         get() = KotlinIcons.Wizard.REACT_JS
 
     override fun isVisible(): Boolean =
-        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
+        Registry.`is`("kotlin.js.wizard", false)
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -381,7 +382,7 @@ object NodeJsApplicationProjectTemplate : ProjectTemplate() {
         get() = KotlinIcons.Wizard.NODE_JS
 
     override fun isVisible(): Boolean =
-        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
+        Registry.`is`("kotlin.js.wizard", false)
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
