@@ -40,14 +40,14 @@ import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PathUtilRt
-import com.intellij.util.SingleAlarm
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -64,14 +64,17 @@ import javax.swing.JFrame
 import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<RecentProjectsManager>()
 
 /**
  * Used directly by IntelliJ IDEA.
  */
+@OptIn(FlowPreview::class)
 @State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
-open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
+open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
+  RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
     const val MAX_PROJECTS_IN_MAIN_MENU: Int = 6
 
@@ -95,19 +98,27 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   private val disableUpdatingRecentInfo = AtomicBoolean()
 
-  private val nameResolver = SingleAlarm.pooledThreadSingleAlarm(50, ApplicationManager.getApplication()) {
-    var paths: Set<String>
-    synchronized(namesToResolve) {
-      paths = HashSet(namesToResolve)
-      namesToResolve.clear()
-    }
-    for (p in paths) {
-      nameCache.put(p, readProjectName(p))
-    }
-  }
+  private val nameResolveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
+
+  init {
+    coroutineScope.launch {
+      nameResolveRequests
+        .debounce(50.milliseconds)
+        .collectLatest {
+          val paths = synchronized(namesToResolve) {
+            val paths = namesToResolve.toList()
+            namesToResolve.clear()
+            paths
+          }
+          for (p in paths) {
+            nameCache.put(p, readProjectName(p))
+          }
+        }
+    }
+  }
 
   final override fun getState() = state
 
@@ -412,11 +423,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       return it
     }
 
-    nameResolver.cancel()
     synchronized(namesToResolve) {
       namesToResolve.add(path)
     }
-    nameResolver.request()
+    check(nameResolveRequests.tryEmit(Unit))
+
     val name = PathUtilRt.getFileName(path)
     return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
   }
