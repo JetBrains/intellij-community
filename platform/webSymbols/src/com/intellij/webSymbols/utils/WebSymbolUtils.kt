@@ -173,6 +173,46 @@ val WebSymbol.nameSegments: List<WebSymbolNameSegment>
           ?: pattern?.let { listOf(WebSymbolNameSegment(0, 0, this)) }
           ?: listOf(WebSymbolNameSegment(this))
 
+val WebSymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment> get() =
+  Sequence {
+    object : Iterator<WebSymbolNameSegment> {
+      private var next: WebSymbolNameSegment? = null
+      val fifo = LinkedList<WebSymbolNameSegment>()
+      val visitedSymbols = mutableSetOf<WebSymbol>()
+
+      init {
+        addNameSegmentsToQueue(this@nameSegmentsWithProblems)
+        advance()
+      }
+
+      private fun addNameSegmentsToQueue(symbol: WebSymbol) {
+        if (symbol is CompositeWebSymbol && visitedSymbols.add(symbol)) {
+          fifo.addAll(symbol.nameSegments)
+        }
+      }
+
+      private fun advance() {
+        while (fifo.isNotEmpty()) {
+          val segment = fifo.removeFirst()
+          segment.symbols.forEach {
+            addNameSegmentsToQueue(it)
+          }
+          if (segment.problem != null) {
+            next = segment
+            return
+          }
+        }
+        next = null
+      }
+
+      override fun hasNext(): Boolean =
+        next != null
+
+      override fun next(): WebSymbolNameSegment =
+        next!!.also { advance() }
+    }
+  }
+
 internal val WebSymbol.matchedNameOrName: String
   get() = (this as? WebSymbolMatch)?.matchedName ?: name
 

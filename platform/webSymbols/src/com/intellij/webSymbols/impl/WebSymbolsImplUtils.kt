@@ -9,15 +9,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.Interner
-import com.intellij.util.containers.Stack
 import com.intellij.util.ui.JBUI
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsScope
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.patterns.impl.applyIcons
-import com.intellij.webSymbols.query.WebSymbolNamesProvider
-import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryParams
 import com.intellij.webSymbols.webTypes.json.WebTypes

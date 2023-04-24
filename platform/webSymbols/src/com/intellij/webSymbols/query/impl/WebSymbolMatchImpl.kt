@@ -159,7 +159,7 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
                origin: WebSymbolOrigin,
                explicitPriority: Priority?,
                explicitProximity: Int?): WebSymbolMatch =
-      if (nameSegments.any { it.symbols.any { symbol -> symbol is PsiSourcedWebSymbol } })
+      if (nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.all { symbol -> symbol is PsiSourcedWebSymbol }) })
         PsiSourcedWebSymbolMatch(matchedName, nameSegments, namespace, kind, origin,
                                  explicitPriority, explicitProximity)
       else WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin,
@@ -200,11 +200,12 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
     : WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity), PsiSourcedWebSymbol {
 
     override val psiContext: PsiElement?
-      get() = super<PsiSourcedWebSymbol>.psiContext
-
-    override val source: PsiElement?
       get() = reversedSegments().flatMap { it.symbols.asSequence() }
         .mapNotNull { it.psiContext }.firstOrNull()
+
+    override val source: PsiElement?
+      get() = reversedSegments().flatMap { it.symbols }
+        .mapNotNull { (it as? PsiSourcedWebSymbol)?.source }.singleOrNull()
 
     override fun createPointer(): Pointer<PsiSourcedWebSymbolMatch> =
       object : WebSymbolMatchPointer<PsiSourcedWebSymbolMatch>(this) {
