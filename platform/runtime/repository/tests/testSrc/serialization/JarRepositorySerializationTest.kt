@@ -2,13 +2,13 @@
 package com.intellij.platform.runtime.repository.serialization
 
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer
+import com.intellij.platform.runtime.repository.xml
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.jarFile
-import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -89,8 +89,4 @@ class JarRepositorySerializationTest {
     RuntimeModuleRepositorySerialization.saveToJar(descriptors, jarFile, 0)
     jarFile.assertMatches(zipFileSpec)
   }
-
-  private fun DirectoryContentBuilder.xml(name: String, @Language("XML") content: String) {
-    file(name, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n$content")
-  } 
 }
