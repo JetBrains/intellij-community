@@ -4,6 +4,7 @@
     <inspection_tool class="03c8b094-627d-3aaa-8d8b-4a66542826cd" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Production" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="2b82dee6-0e1c-36ce-846f-749c578bd315" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AbstractMethodCallInConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidElementNotAllowed" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1043,6 +1044,11 @@
         <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
         <constraint name="Var3" nameOfExprType="String" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="DB introspection query is not tested (Microsoft)" uuid="2b82dee6-0e1c-36ce-846f-749c578bd315" problemDescriptor="The introspection query is not tested. See class MsIntroQueriesTest" text="object MsIntroQueries {  &#10;    val $Field$ = $Init$&#10;}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Field" script="&quot;import com.intellij.psi.search.GlobalSearchScopesCore&#10;import com.intellij.psi.search.searches.ReferencesSearch&#10;&#10;!ReferencesSearch.search(__context__, GlobalSearchScopesCore.projectTestScope(__context__.getProject())).any()&quot;" nameOfExprType="com\.intellij\.database\.remote\.jdba\.sql\.SqlQuery&lt;.*&gt;" maxCount="2147483647" target="true" within="" contains="" />
+        <constraint name="Init" minCount="0" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="DBE model property must be public" uuid="0899a4c2-78e7-3f01-be3c-9c46451baec3" text="class $Class$ {&#10;  @StateProperty&#10;  @Modifier(&quot;packageLocal&quot;) $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" within="" contains="" />
