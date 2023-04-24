@@ -5,6 +5,7 @@ package com.intellij.execution.impl
 
 import com.intellij.configurationStore.*
 import com.intellij.execution.*
+import com.intellij.execution.actions.ChooseRunConfigurationPopup
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runToolbar.RunToolbarSlotManager
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -1439,4 +1440,17 @@ private fun getFactoryKey(factory: ConfigurationFactory): String {
     is SimpleConfigurationType -> factory.type.id
     else -> "${factory.type.id}.${factory.id}"
   }
+}
+
+// todo convert ChooseRunConfigurationPopup to kotlin
+internal fun createFlatSettingsList(project: Project): List<ChooseRunConfigurationPopup.ItemWrapper<*>> {
+  return (RunManager.getInstanceIfCreated(project) as RunManagerImpl? ?: return emptyList()).getConfigurationsGroupedByTypeAndFolder(false)
+    .values
+    .asSequence()
+    .flatMap { map ->
+      map.values.flatten()
+    }
+    .map { ChooseRunConfigurationPopup.ItemWrapper.wrap(project, it)
+    }
+    .toList()
 }

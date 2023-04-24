@@ -5,10 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.ExecutorGroup;
-import com.intellij.execution.impl.EditConfigurationsDialog;
-import com.intellij.execution.impl.RunDialog;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.*;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
@@ -55,7 +52,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class ChooseRunConfigurationPopup implements ExecutorProvider {
   private final Project myProject;
@@ -442,7 +438,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
         myDefaultConfiguration = getDynamicIndex();
       }
 
-      boolean hasMnemonics = getValues().stream().anyMatch(wrapper -> wrapper.getMnemonic() != -1);
+      boolean hasMnemonics = ContainerUtil.exists(getValues(), wrapper -> wrapper.getMnemonic() != -1);
       if (hasMnemonics) getValues().forEach(wrapper -> wrapper.setMnemonicsEnabled(true));
     }
 
@@ -928,28 +924,27 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  public static @NotNull List<ItemWrapper> createSettingsList(@NotNull Project project,
+  public static @NotNull List<ItemWrapper<?>> createSettingsList(@NotNull Project project,
                                                               @NotNull ExecutorProvider executorProvider,
                                                               boolean isCreateEditAction) {
+    RunManager runManager = RunManager.getInstanceIfCreated(project);
+    if (runManager == null) {
+      return Collections.emptyList();
+    }
     //noinspection TestOnlyProblems
-    return createSettingsList(RunManagerImpl.getInstanceImpl(project), executorProvider, isCreateEditAction, Registry.is("run.popup.move.folders.to.top", false));
+    return createSettingsList((RunManagerImpl)runManager, executorProvider, isCreateEditAction, Registry.is("run.popup.move.folders.to.top", false));
   }
 
-  public static List<ItemWrapper> createFlatSettingsList(@NotNull Project project) {
-    return RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(false)
-      .values()
-      .stream()
-      .flatMap(map -> map.values().stream().flatMap(settings -> settings.stream()))
-      .map(settings -> ItemWrapper.wrap(project, settings))
-      .collect(Collectors.toList());
+  public static List<ItemWrapper<?>> createFlatSettingsList(@NotNull Project project) {
+    return RunManagerImplKt.createFlatSettingsList(project);
   }
 
   @TestOnly
-  public static @NotNull List<ItemWrapper> createSettingsList(@NotNull RunManagerImpl runManager,
-                                                              @NotNull ExecutorProvider executorProvider,
-                                                              boolean isCreateEditAction,
-                                                              boolean isMoveFoldersToTop) {
-    List<ItemWrapper> result = new ArrayList<>();
+  public static @NotNull List<ItemWrapper<?>> createSettingsList(@NotNull RunManagerImpl runManager,
+                                                                 @NotNull ExecutorProvider executorProvider,
+                                                                 boolean isCreateEditAction,
+                                                                 boolean isMoveFoldersToTop) {
+    List<ItemWrapper<?>> result = new ArrayList<>();
 
     if (isCreateEditAction) {
       result.add(createEditAction());
@@ -961,7 +956,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       addActionsForSelected(selectedConfiguration, project, result);
     }
 
-    Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
+    Map<RunnerAndConfigurationSettings, ItemWrapper<?>> wrappedExisting = new LinkedHashMap<>();
     List<FolderWrapper> folderWrappers = new SmartList<>();
     for (Map<String, List<RunnerAndConfigurationSettings>> folderToConfigurations : runManager.getConfigurationsGroupedByTypeAndFolder(false).values()) {
       if (isMoveFoldersToTop) {
@@ -1012,7 +1007,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
   private static @NotNull ItemWrapper wrapAndAdd(@NotNull Project project,
                                                  @NotNull RunnerAndConfigurationSettings configuration,
                                                  @Nullable RunnerAndConfigurationSettings selectedConfiguration,
-                                                 @NotNull Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting) {
+                                                 @NotNull Map<RunnerAndConfigurationSettings, ItemWrapper<?>> wrappedExisting) {
     ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
     if (configuration == selectedConfiguration) {
       wrapped.setMnemonic(1);
@@ -1038,7 +1033,9 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     return result;
   }
 
-  private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration, @NotNull Project project, @NotNull List<? super ItemWrapper> result) {
+  private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration,
+                                            @NotNull Project project,
+                                            @NotNull List<ItemWrapper<?>> result) {
     boolean isFirst = true;
     final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
     for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration.getConfiguration())) {
@@ -1110,10 +1107,11 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     return result;
   }
 
-  private static void populateWithDynamicRunners(final List<? super ItemWrapper> result,
-                                                 Map<RunnerAndConfigurationSettings, ItemWrapper> existing,
-                                                 final Project project, final RunManager manager,
-                                                 final RunnerAndConfigurationSettings selectedConfiguration) {
+  private static void populateWithDynamicRunners(List<ItemWrapper<?>> result,
+                                                 Map<RunnerAndConfigurationSettings, ItemWrapper<?>> existing,
+                                                 Project project,
+                                                 RunManager manager,
+                                                 RunnerAndConfigurationSettings selectedConfiguration) {
     if (!EventQueue.isDispatchThread()) {
       return;
     }
