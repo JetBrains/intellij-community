@@ -62,6 +62,17 @@ class ClassLoaderConfigurator(
       mainToClassPath.put(pluginId, MainInfo(mainClassLoader))
     }
 
+    if (mainDescriptor.pluginDependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
+      // dynamically enabled optional dependency module in old format
+      // based on what's happening in [configureDependenciesInOldFormat]
+      assert(moduleDescriptor.pluginClassLoader == null) { "subdescriptor $moduleDescriptor of $mainDescriptor seems to be already enabled" }
+      val mainDependentClassLoader = mainDescriptor.pluginClassLoader
+      assert(mainDependentClassLoader != null) { "plugin $mainDescriptor is not yet enabled"}
+      moduleDescriptor.pluginClassLoader = mainDependentClassLoader!!
+      configureDependenciesInOldFormat(moduleDescriptor, mainDependentClassLoader)
+      return true
+    }
+
     return configureModule(moduleDescriptor)
   }
 
@@ -77,16 +88,6 @@ class ClassLoaderConfigurator(
     val isMain = module.moduleName == null
     val dependencies = pluginSet.moduleGraph.getDependencies(module).toTypedArray()
     sortDependenciesInPlace(dependencies)
-
-    let { // dynamically enabled optional dependency module in old format
-      // based on what's happening in [configureDependenciesInOldFormat]
-      val mainModule = pluginSet.findEnabledPlugin(module.pluginId).takeIf { it !== module } ?: return@let
-      mainModule.pluginDependencies.find { it.subDescriptor === module && it.isOptional } ?: return@let
-      assert(module.pluginClassLoader == null) { "subdescriptor $module of $mainModule seems to be already enabled" }
-      assert(mainModule.pluginClassLoader != null) { "plugin $mainModule is not yet enabled"}
-      module.pluginClassLoader = mainModule.pluginClassLoader
-      return true
-    }
 
     if (isMain) {
       if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
