@@ -263,8 +263,8 @@ public final class XLineBreakpointManager {
       final int line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, mouseEvent.getY());
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (line >= 0 && line < document.getLineCount() && file != null) {
-        AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_BREAKPOINT_AT_LINE);
-        if (action == null) throw new AssertionError("'" + IdeActions.ACTION_TOGGLE_BREAKPOINT_AT_LINE + "' action not found");
+        AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
+        if (action == null) throw new AssertionError("'" + IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT + "' action not found");
         DataContext dataContext = SimpleDataContext.getSimpleContext(BREAKPOINT_LINE_KEY, line,
                                                                      DataManager.getInstance().getDataContext(mouseEvent.getComponent()));
         AnActionEvent event = AnActionEvent.createFromAnAction(action, mouseEvent, ActionPlaces.EDITOR_GUTTER, dataContext);

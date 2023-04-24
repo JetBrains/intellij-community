@@ -1092,7 +1092,6 @@
         <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction">
           <override-text place="MainMenu"/>
         </action>
-        <action id="ToggleBreakpointAtLine" class="com.intellij.xdebugger.impl.actions.ToggleBreakpointAtLineAction"/>
         <action id="ToggleTemporaryLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleTemporaryLineBreakpointAction">
           <override-text place="MainMenu"/>
         </action>
