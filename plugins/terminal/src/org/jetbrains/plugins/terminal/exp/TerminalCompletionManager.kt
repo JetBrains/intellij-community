@@ -24,12 +24,12 @@ class TerminalCompletionManager(private val session: TerminalSession) {
   }
 
   @RequiresBackgroundThread
-  fun resetPrompt(promptText: String) {
+  fun resetPrompt() {
     val model = session.model
     val disposable = Disposer.newDisposable()
     try {
       val promptRestoredFuture = checkTerminalContent(disposable) {
-        model.getAllText().replace("\n", "").endsWith(promptText)
+        model.cursorX == 0
       }
 
       // Send Ctrl+U to clear the line with typings
@@ -40,18 +40,13 @@ class TerminalCompletionManager(private val session: TerminalSession) {
 
       promptRestoredFuture.get(3000, TimeUnit.MILLISECONDS)
 
-      val allText = model.withContentLock { model.getAllText() }.replace("\n", "")
-      if (promptText.trim() != allText.trim()) {
-        // terminal printed the new prompt after the completion output
-        val promptLines = promptText.length / model.width + if (promptText.length % model.width > 0) 1 else 0
-        model.withContentLock {
-          model.clearAllExceptPrompt(promptLines)
-        }
+      model.withContentLock {
+        model.clearAllExceptPrompt(1)
       }
     }
     catch (t: Throwable) {
-      thisLogger().error("Prompt is broken after completion: promptText: '$promptText'. " +
-                         "Text buffer:\n" + model.withContentLock { model.getAllText() }, t)
+      thisLogger().error("Prompt is broken after completion. Text buffer:\n"
+                         + model.withContentLock { model.getAllText() }, t)
     }
     finally {
       Disposer.dispose(disposable)

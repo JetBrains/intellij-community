@@ -93,5 +93,10 @@ function _jedi_precmd_hook() {
 builtin typeset -ga precmd_functions
 precmd_functions+=(_jedi_precmd_hook)
 
+if [[ -n "$INTELLIJ_TERMINAL_COMMAND_BLOCKS" ]]; then
+  # always show new prompt after completion list
+  builtin unsetopt ALWAYS_LAST_PROMPT
+fi
+
 (( _jedi_restore_aliases )) && builtin setopt aliases
 'builtin' 'unset' '_jedi_restore_aliases'

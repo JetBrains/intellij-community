@@ -33,6 +33,8 @@ __intellij_configure_prompt() {
   # do not show right prompt
   builtin unset RPS1
   builtin unset RPROMPT
+  # always show new prompt after completion list
+  builtin unsetopt ALWAYS_LAST_PROMPT
 }
 
 __intellij_command_preexec() {
