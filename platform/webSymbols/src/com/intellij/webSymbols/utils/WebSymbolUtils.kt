@@ -16,9 +16,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
-import com.intellij.webSymbols.impl.toCodeCompletionItems
+import com.intellij.webSymbols.patterns.impl.applyIcons
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import java.util.*
@@ -124,6 +125,23 @@ fun WebSymbol.match(nameToMatch: String,
     emptyList()
   }
 }
+
+fun WebSymbol.toCodeCompletionItems(name: String?,
+                                    params: WebSymbolsCodeCompletionQueryParams,
+                                    context: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+  pattern?.let { pattern ->
+    context.push(this)
+    try {
+      pattern.getCompletionResults(this, context, name ?: "", params)
+        .applyIcons(this)
+    }
+    finally {
+      context.pop()
+    }
+  }
+  ?: params.queryExecutor.namesProvider
+    .getNames(namespace, kind, this.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+    .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
 fun WebSymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
   val queryNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind,

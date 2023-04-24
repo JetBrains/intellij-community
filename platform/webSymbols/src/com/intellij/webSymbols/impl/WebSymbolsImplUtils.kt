@@ -92,20 +92,3 @@ internal fun <T : WebSymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsQ
     && ((params as? WebSymbolsNameMatchQueryParams)?.abstractSymbols == true || !symbol.abstract)
     && ((params as? WebSymbolsNameMatchQueryParams)?.virtualSymbols != false || !symbol.virtual)
   }
-
-internal fun WebSymbol.toCodeCompletionItems(name: String?,
-                                             params: WebSymbolsCodeCompletionQueryParams,
-                                             context: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-  pattern?.let { pattern ->
-    context.push(this)
-    try {
-      pattern.getCompletionResults(this, context, name ?: "", params)
-        .applyIcons(this)
-    }
-    finally {
-      context.pop()
-    }
-  }
-  ?: params.queryExecutor.namesProvider
-    .getNames(namespace, kind, this.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
-    .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }
