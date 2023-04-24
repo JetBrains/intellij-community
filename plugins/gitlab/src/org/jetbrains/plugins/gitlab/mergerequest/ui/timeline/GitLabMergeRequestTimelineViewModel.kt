@@ -156,17 +156,20 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
         GitLabMergeRequestTimelineItemViewModel.Immutable(item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
         GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, mr, item.discussion).also {
-          handleDiffRequests(it)
+          handleDiffRequests(it, _diffRequests::emit)
         }
     }
+}
 
-  private fun CoroutineScope.handleDiffRequests(discussion: GitLabMergeRequestTimelineItemViewModel.Discussion) {
-    launch(start = CoroutineStart.UNDISPATCHED) {
-      discussion.diffVm.collectLatest {
-        it?.showDiffRequests?.collectLatest { req ->
-          _diffRequests.emit(req)
-        }
-      }
-    }
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun CoroutineScope.handleDiffRequests(
+  discussion: GitLabMergeRequestTimelineItemViewModel.Discussion,
+  handler: suspend (GitLabDiscussionDiffViewModel.FullDiffRequest) -> Unit
+) {
+  launch(start = CoroutineStart.UNDISPATCHED) {
+    discussion.diffVm
+      .filterNotNull()
+      .flatMapLatest { it.showDiffRequests }
+      .collectLatest(handler)
   }
 }
