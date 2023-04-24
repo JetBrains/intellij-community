@@ -81,8 +81,9 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
    */
   private boolean adjustVerticalOffsetIfNecessary() {
     Editor editor = mySupplier.getEditor();
-    // There is a possible case that the editor is configured to show virtual space at file bottom and requested position is located
-    // somewhere around. We don't want to position viewport in a way that most of its area is used to represent that virtual empty space.
+    // There is a possible case that the editor is configured to show virtual space at file bottom
+    // and the requested position is located somewhere around.
+    // We don't want to position the viewport in a way that most of its area is used to represent that virtual empty space.
     // So, we tweak vertical offset if necessary.
     int maxY = Math.max(editor.getLineHeight(), editor.getDocument().getLineCount() * editor.getLineHeight());
     int minPreferredY = maxY - getVisibleArea().height * 2 / 3;
@@ -216,8 +217,10 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     // when we calculate bounds, we assume that characters have the same width (spaceWidth),
     // it's not the most accurate way to handle side scroll offset, but definitely the fastest
     //
-    // text between this two following bounds should be visible in view rectangle after scrolling (that's the meaning of the scroll offset setting)
-    // if it is not possible e.g. view rectangle is too small to contain the whole range, then scrolling will center the targetLocation
+    // text between these two following bounds should be visible in view rectangle after scrolling
+    // (that's the meaning of the scroll offset setting)
+    // if it is not possible e.g. view rectangle is too small to contain the whole range,
+    // then scrolling will center the targetLocation
     int leftBound = targetLocation.x - scrollOffset * spaceWidth;
     int rightBound = targetLocation.x + scrollOffset * spaceWidth;
 
@@ -237,7 +240,6 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
         horizontalOffset = Math.min(leftBound, leftAfterScrollJump);
       }
     } else if (rightBound > viewRect.x + editorWidth) {
-      // todo why ScrollType.CENTER, ScrollType.CENTER_UP, ScrollType.CENTER_DOWN, are always scrolled to the right?
       int rightmostPossibleLocation = getRightmostLocation(targetLocation, textWidth, editorWidth, scrollOffset, spaceWidth);
       int rightAfterScrollJump = Math.min(rightmostPossibleLocation, viewRect.x + editorWidth + scrollJump * spaceWidth);
       horizontalOffset = Math.max(rightBound, rightAfterScrollJump) - editorWidth;
@@ -250,8 +252,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   /**
    * Gets the upmost possible y-coordinate that can be container by viewRect to satisfy two following conditions:
-   * 1. targetLocation must be still visible in the viewRect
-   * 2. there must be enough space to the bottom of targetLocation to contain offsetBottomBound
+   * 1. The targetLocation must be still visible in the viewRect
+   * 2. There must be enough space to the bottom of targetLocation to contain offsetBottomBound
    */
   private static int getTopmostLocation(@NotNull Point targetLocation, int editorHeight, int offsetBottomBound) {
     int topmostLocation = targetLocation.y - editorHeight;
@@ -263,8 +265,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   /**
    * Gets the bottommost possible y-coordinate that can be container by viewRect to satisfy two following conditions:
-   * 1. targetLocation must be still visible in the viewRect
-   * 2. there must be enough space to the top of targetLocation to contain offsetTopBound
+   * 1. The targetLocation must be still visible in the viewRect
+   * 2. There must be enough space to the top of targetLocation to contain offsetTopBound
    */
   private static int getBottommostLocation(@NotNull Point targetLocation, int textHeight, int editorHeight, int offsetTopBound) {
     int bottommostLocation = targetLocation.y + editorHeight;
@@ -276,8 +278,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   /**
    * Gets the leftmost possible x-coordinate that can be container by viewRect to satisfy two following conditions:
-   * 1. targetLocation must be still visible in the viewRect
-   * 2. there must be enough space to the right of targetLocation to satisfy scroll offset
+   * 1. The targetLocation must be still visible in the viewRect
+   * 2. There must be enough space to the right of targetLocation to satisfy the scroll offset
    */
   private static int getLeftmostLocation(@NotNull Point targetLocation, int editorWidth, int scrollOffset, int spaceWidth) {
     int leftmostLocation = targetLocation.x - editorWidth;
@@ -289,8 +291,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   /**
    * Gets the rightmost possible x-coordinate that can be container by viewRect to satisfy two following conditions:
-   * 1. targetLocation must be still visible in the viewRect
-   * 2. there must be enough space to the left of targetLocation to satisfy scroll offset
+   * 1. The targetLocation must be still visible in the viewRect
+   * 2. There must be enough space to the left of targetLocation to satisfy the scroll offset
    */
   private static int getRightmostLocation(@NotNull Point targetLocation, int textWidth, int editorWidth, int scrollOffset, int spaceWidth) {
     int rightmostLocation = targetLocation.x + editorWidth;
@@ -311,12 +313,12 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     int scrollOffset = editor.getSettings().getVerticalScrollOffset();
     int scrollJump = editor.getSettings().getVerticalScrollJump();
     // the two following lines should be both visible in view rectangle after scrolling (that's the meaning of the scroll offset setting)
-    // if it is not possible e.g. view rectangle is too small to contain both lines, then scrolling will go to the `centerPosition`
+    //  If it is not possible, e.g. view rectangle is too small to contain both lines, then scrolling will go to the `centerPosition`
     int offsetTopBound = addVerticalOffsetToPosition(editor, -scrollOffset, targetLocation);
     int offsetBottomBound = addVerticalOffsetToPosition(editor, scrollOffset, targetLocation) + lineHeight;
     int minEditorHeightToSatisfyOffsets = offsetBottomBound - offsetTopBound;
 
-    // position that we consider to be the "central" one
+    // the position that we consider to be the "central" one
     // for some historical reasons, before scroll offset support, center was actually at the 1/3 of the view rectangle
     int centerPosition;
     if (editorHeight > minEditorHeightToSatisfyOffsets) { // if editor has enough height, let the center be in its historical (expected for users) position
@@ -384,7 +386,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       // we count offset from logical line start to see previous lines (not the same line content if soft wrap is enabled)
       VisualPosition pointLineStart = getLogicalLineStart(editor, point);
       VisualPosition topLine = new VisualPosition(Math.max(0, pointLineStart.line + scrollOffset), 0);
-      // if soft wraps are enabled, last visual lines of one logical line may be not so helpful. That's why we scroll to logical line start
+      // If soft wraps are enabled, last visual lines of one logical line may be not so helpful. That's why we scroll to logical line start
       if (editor.getSettings().isUseSoftWraps()) {
         topLine = getLogicalLineStart(editor, topLine);
       }
