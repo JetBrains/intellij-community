@@ -735,11 +735,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     @Override
-    public boolean isFocusable() {
-      return super.isFocusable() || ScreenReader.isActive();
-    }
-
-    @Override
     protected void processMouseEvent(MouseEvent e) {
       if (!isMultiSelectionEnabled() &&
           (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0) {
