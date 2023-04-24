@@ -101,7 +101,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
 
   @NotNull
   protected ExtendableTextField createTextField(boolean liveErrorValidation) {
-    ExtendableTextField res = new ExtendableTextField();
+    ExtendableTextField res = createNonCustomizedTextField();
 
     Dimension minSize = res.getMinimumSize();
     Dimension prefSize = res.getPreferredSize();
@@ -135,6 +135,10 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     });
 
     return res;
+  }
+
+  protected ExtendableTextField createNonCustomizedTextField() {
+    return new ExtendableTextField();
   }
   
   public boolean hasError() {
