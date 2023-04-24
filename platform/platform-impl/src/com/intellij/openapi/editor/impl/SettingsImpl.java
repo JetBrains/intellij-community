@@ -98,7 +98,7 @@ public class SettingsImpl implements EditorSettings {
 
   private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("EditorSettings", 3);
 
-  private final CacheableBackgroundComputable<List<Integer>> mySoftMargins = new CacheableBackgroundComputable<>() {
+  private final CacheableBackgroundComputable<List<Integer>> mySoftMargins = new CacheableBackgroundComputable<>(Collections.emptyList()) {
     @Override
     protected List<Integer> computeValue(@Nullable Project project) {
       if(myEditor == null) return Collections.emptyList();
@@ -106,37 +106,39 @@ public class SettingsImpl implements EditorSettings {
     }
   };
 
-  private final CacheableBackgroundComputable<Integer> myRightMargin = new CacheableBackgroundComputable<>() {
-    @Override
-    protected Integer computeValue(@Nullable Project project) {
-      return myEditor != null
-             ? CodeStyle.getSettings(myEditor).getRightMargin(getLanguage())
-             : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(getLanguage());
-    }
-  };
-
-  private final CacheableBackgroundComputable<Integer> myTabSize = new CacheableBackgroundComputable<>() {
-    @Override
-    protected Integer computeValue(@Nullable Project project) {
-      int tabSize;
-      if (project == null) {
-        tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
+  private final CacheableBackgroundComputable<Integer> myRightMargin =
+    new CacheableBackgroundComputable<>(CodeStyleSettings.getDefaults().RIGHT_MARGIN) {
+      @Override
+      protected Integer computeValue(@Nullable Project project) {
+        return myEditor != null
+               ? CodeStyle.getSettings(myEditor).getRightMargin(getLanguage())
+               : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(getLanguage());
       }
-      else {
-        VirtualFile file = getVirtualFile();
-        if (myEditor != null && myEditor.isViewer()) {
-          FileType fileType = file != null ? file.getFileType() : null;
-          tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+    };
+
+  private final CacheableBackgroundComputable<Integer> myTabSize =
+    new CacheableBackgroundComputable<>(CodeStyleSettings.getDefaults().getIndentOptions().TAB_SIZE) {
+      @Override
+      protected Integer computeValue(@Nullable Project project) {
+        int tabSize;
+        if (project == null) {
+          tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
         }
         else {
-          tabSize = file != null ?
-                    CodeStyle.getIndentOptions(project, file).TAB_SIZE :
-                    CodeStyle.getSettings(project).getTabSize(null);
+          VirtualFile file = getVirtualFile();
+          if (myEditor != null && myEditor.isViewer()) {
+            FileType fileType = file != null ? file.getFileType() : null;
+            tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+          }
+          else {
+            tabSize = file != null ?
+                      CodeStyle.getIndentOptions(project, file).TAB_SIZE :
+                      CodeStyle.getSettings(project).getTabSize(null);
+          }
         }
+        return Integer.valueOf(Math.max(1, tabSize));
       }
-      return Integer.valueOf(Math.max(1, tabSize));
-    }
-  };
+    };
 
   public SettingsImpl() {
     this(null, null);
@@ -282,7 +284,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public int getRightMargin(Project project) {
-    return myRightMargin.getValue(project, CodeStyleSettings.getDefaults().RIGHT_MARGIN).intValue();
+    return myRightMargin.getValue(project).intValue();
   }
 
   @Override
@@ -306,7 +308,7 @@ public class SettingsImpl implements EditorSettings {
   @NotNull
   @Override
   public List<Integer> getSoftMargins() {
-    return mySoftMargins.getValue(null, Collections.emptyList());
+    return mySoftMargins.getValue(null);
   }
 
   @Override
@@ -442,7 +444,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public int getTabSize(Project project) {
-    return myTabSize.getValue(project, CodeStyleSettings.getDefaults().getIndentOptions().TAB_SIZE);
+    return myTabSize.getValue(project);
   }
 
   @Nullable
@@ -831,14 +833,16 @@ public class SettingsImpl implements EditorSettings {
 
     private @Nullable T myOverwrittenValue;
     private @Nullable T myCachedValue;
+    private @NotNull T myDefaultValue;
 
 
     private final AtomicReference<NonBlockingReadAction<T>> myCurrentReadActionRef = new AtomicReference<>();
 
     private final static Object VALUE_LOCK = new Object();
 
-    private CacheableBackgroundComputable() {
+    private CacheableBackgroundComputable(@NotNull T defaultValue) {
       myComputableSettings.add(this);
+      myDefaultValue = defaultValue;
     }
 
     private void setValue(@Nullable T overwrittenValue) {
@@ -849,11 +853,11 @@ public class SettingsImpl implements EditorSettings {
       fireEditorRefresh();
     }
 
-    private @NotNull T getValue(@Nullable Project project, @NotNull T defaultValue) {
+    private @NotNull T getValue(@Nullable Project project) {
       synchronized (VALUE_LOCK) {
         if (myOverwrittenValue != null) return myOverwrittenValue;
         if (myCachedValue != null) return myCachedValue;
-        return getDefaultAndCompute(project, defaultValue);
+        return getDefaultAndCompute(project);
       }
     }
 
@@ -865,7 +869,7 @@ public class SettingsImpl implements EditorSettings {
 
     protected abstract T computeValue(@Nullable Project project);
 
-    private @NotNull T getDefaultAndCompute(@Nullable Project project, @NotNull T defaultValue) {
+    private @NotNull T getDefaultAndCompute(@Nullable Project project) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         try {
           return computeValue(project);
@@ -884,6 +888,7 @@ public class SettingsImpl implements EditorSettings {
                 myCurrentReadActionRef.set(null);
                 synchronized (VALUE_LOCK) {
                   myCachedValue = result;
+                  myDefaultValue = result;
                 }
                 fireEditorRefresh(false);
               }
@@ -894,7 +899,7 @@ public class SettingsImpl implements EditorSettings {
           }
         }
       }
-      return defaultValue;
+      return myDefaultValue;
     }
   }
 }
