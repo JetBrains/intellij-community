@@ -140,39 +140,3 @@ private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {
     }
   }
 }
-
-/**
- * Associates the calling thread with a [job], invokes [action], and completes the job.
- * @return action result
- */
-@Internal
-fun <X> executeActionAndCompleteJob(
-  job: CompletableJob,
-  action: () -> X,
-): X {
-  try {
-    val result: X = action()
-    job.complete()
-    return result
-  }
-  catch (ce: CancellationException) {
-    job.cancel(ce)
-    throw ce
-  }
-  catch (e: Throwable) {
-    // `job.completeExceptionally(e)` will fail parent Job,
-    // which is not desired when this Job is a read action Job.
-    //
-    // ReadAction.computeCancellable {
-    //   throw X
-    // }
-    // X will be re-thrown, but the caller is not expected to become cancelled
-    // since it might catch X and act accordingly.
-    //
-    // Ideally, completeExceptionally should be used because it's more correct semantically,
-    // but read job must not fail its parent regardless of whether the parent is supervisor:
-    // https://github.com/Kotlin/kotlinx.coroutines/issues/3409
-    job.cancel(CancellationException(null, e))
-    throw e
-  }
-}
