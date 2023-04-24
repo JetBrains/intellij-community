@@ -63,8 +63,9 @@ internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEve
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
   val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
-  val recents = RunConfigurationStartHistory.getInstance(project).history().take(max(recentLimit, 0))
-  var shouldShowRecent: Boolean = recents.isNotEmpty()
+  val pinned = RunConfigurationStartHistory.getInstance(project).pinned()
+  val recents = RunConfigurationStartHistory.getInstance(project).historyWithoutPinned().take(max(recentLimit, 0))
+  var shouldShowRecent: Boolean = recents.isNotEmpty() || pinned.isNotEmpty()
 
   val shouldBeShown = { configuration: RunnerAndConfigurationSettings?, holdingFilter: Boolean ->
     when {
@@ -76,7 +77,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEve
   }
 
   val createActionFn: (RunnerAndConfigurationSettings) -> AnAction = { configuration ->
-    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e) { shouldBeShown(configuration, it) }
+    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e, pinned) { shouldBeShown(configuration, it) }
   }
   val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
     HideableDefaultActionGroup(folderName) { shouldBeShown(null, it) }
@@ -95,10 +96,19 @@ internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEve
     shouldShowRecent = false
   }
 
+  if (pinned.isNotEmpty()) {
+    actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.pinned.separator.text")))
+    for (conf in pinned) {
+      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project, e, pinned)
+      actions.add(actionGroupWithInlineActions)
+    }
+    actions.add(Separator.create())
+  }
+
   if (shouldShowRecent) {
     actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
     for (conf in recents) {
-      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project, e)
+      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project, e, pinned)
       actions.add(actionGroupWithInlineActions)
     }
     actions.add(Separator.create())
@@ -128,6 +138,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   init {
     (list as? JBList<*>)?.setExpandableItemsEnabled(false)
+    (list as? JBList<*>)?.dragEnabled = true
   }
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
@@ -182,6 +193,7 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               conf: RunnerAndConfigurationSettings,
                                               project: Project,
                                               e: AnActionEvent,
+                                              pinned: List<RunnerAndConfigurationSettings>,
                                               shouldBeShown: (Boolean) -> Boolean = { true }
 ): SelectRunConfigurationWithInlineActions {
   val activeExecutor = getActiveExecutor(project, conf)
@@ -203,6 +215,14 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
     val extraAction = ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
     result.addAction(extraAction, Constraints.FIRST)
   }
+  val wasPinned = pinned.contains(conf)
+  val text = if (wasPinned) ExecutionBundle.message("run.toolbar.widget.dropdown.unpin.action.text")
+  else ExecutionBundle.message("run.toolbar.widget.dropdown.pin.action.text")
+  result.addAction(object : AnAction(text) {
+    override fun actionPerformed(e: AnActionEvent) {
+      RunConfigurationStartHistory.getInstance(project).togglePin(conf)
+    }
+  })
   addAdditionalActionsToRunConfigurationOptions(project, e, conf, result, false)
   return result
 }
@@ -395,15 +415,21 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     @OptionTag("element")
     var history: MutableSet<Element>
 
+    @XCollection(style = XCollection.Style.v2)
+    @OptionTag("element")
+    var pinned: MutableSet<Element>
+
     var allConfigurationsExpanded: Boolean
 
     constructor() {
       history = mutableSetOf()
+      pinned = mutableSetOf()
       allConfigurationsExpanded = false
     }
 
-    internal constructor(history: MutableSet<Element>, allConfigurationsExpanded: Boolean) {
+    internal constructor(history: MutableSet<Element>, pinned: MutableSet<Element>, allConfigurationsExpanded: Boolean) {
       this.history = history
+      this.pinned = LinkedHashSet(pinned)
       this.allConfigurationsExpanded = allConfigurationsExpanded
     }
   }
@@ -414,15 +440,30 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     var setting: String? = "",
   )
 
+  fun pinned(): List<RunnerAndConfigurationSettings> {
+    val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
+    return _state.pinned.mapNotNull { settings[it.setting] }
+  }
+
+  fun historyWithoutPinned(): List<RunnerAndConfigurationSettings> {
+    val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
+    return (_state.history - _state.pinned).mapNotNull { settings[it.setting] }
+  }
+
   fun history(): List<RunnerAndConfigurationSettings> {
     val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
     return _state.history.mapNotNull { settings[it.setting] }
   }
 
+  fun togglePin(setting: RunnerAndConfigurationSettings) {
+    val newPinned = (_state.pinned.toMutableList().also { it.add(0, Element(setting.uniqueID)) }).toMutableSet()
+    _state = State(_state.history, newPinned, _state.allConfigurationsExpanded)
+  }
+
   fun register(setting: RunnerAndConfigurationSettings) {
-    _state = State(_state.history.take(max(5, recentLimit*2)).toMutableList().apply {
+    _state = State(_state.history.take(max(5, _state.pinned.size + recentLimit*2)).toMutableList().apply {
       add(0, Element(setting.uniqueID))
-    }.toMutableSet(), _state.allConfigurationsExpanded)
+    }.toMutableSet(), _state.pinned, _state.allConfigurationsExpanded)
   }
 
   private var _state = State()
