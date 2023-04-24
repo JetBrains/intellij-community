@@ -2,7 +2,7 @@
 fragment glCommit on Commit {
   sha
   shortId
-  title
+  fullTitle
   description
 
   author {

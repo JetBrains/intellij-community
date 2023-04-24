@@ -80,7 +80,7 @@ internal object GHPRDetailsComponentFactory {
                                                                createCommitInfoPresenter(commit, commitsVm.ghostUser)
                                                              },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
-          CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
+          CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(commitFilesBrowserComponent, CC().grow().push())
       add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
       add(actionsComponent, CC().growX().pushX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
@@ -106,6 +106,7 @@ internal object GHPRDetailsComponentFactory {
   private fun createCommitInfoPresenter(commit: GHCommit, ghostUser: GHUser): CommitPresenter {
     return CommitPresenter.SingleCommit(
       title = commit.messageHeadlineHTML,
+      description = commit.messageBodyHTML,
       author = (commit.author?.user ?: ghostUser).getPresentableName(),
       committedDate = commit.committedDate
     )

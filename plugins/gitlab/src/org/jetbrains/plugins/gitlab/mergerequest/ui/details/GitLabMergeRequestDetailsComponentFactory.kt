@@ -111,7 +111,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(CodeReviewDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit,
                                                              commitPresenter = { commit -> createCommitInfoPresenter(commit) },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
-          CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
+          CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
           CC().grow().push())
       add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, statusVm, detailsReviewFlowVm, avatarIconsProvider),
@@ -131,8 +131,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   }
 
   private fun createCommitInfoPresenter(commit: GitLabCommitDTO): CommitPresenter {
+    val title = commit.fullTitle.orEmpty()
+    val description = commit.description?.removePrefix(title).orEmpty()
     return CommitPresenter.SingleCommit(
-      title = commit.title.orEmpty(),
+      title = title,
+      description = description,
       author = commit.author?.name ?: commit.authorName,
       committedDate = commit.authoredDate
     )

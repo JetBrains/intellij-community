@@ -138,7 +138,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     val targetBranch = mergeRequest.targetBranch.stateIn(scope).value
     val changesState = mergeRequest.changes.stateIn(scope).value
     val commitMessage: String? = withContext(scope.coroutineContext + Dispatchers.EDT) {
-      val body = "* " + StringUtil.join(changesState.commits, { it.title }, "\n\n* ")
+      val body = "* " + StringUtil.join(changesState.commits, { it.fullTitle }, "\n\n* ")
       val dialog = ReviewMergeCommitMessageDialog(
         project,
         CollaborationToolsBundle.message("dialog.review.merge.commit.title.with.squash"),
