@@ -36,6 +36,16 @@
       "key": "Review.Timeline.Thread.Diff.AnchorLine",
       "description": "Background of an anchor line in thread diff",
       "since": "[2023.1]"
+    },
+    {
+      "key": "Review.State.Foreground",
+      "description": "Foreground of review state (opened, closed, merged, drafted)",
+      "since": "[2023.2]"
+    },
+    {
+      "key": "Review.State.Background",
+      "description": "Background of review state (opened, closed, merged, drafted)",
+      "since": "[2023.2]"
     }
   ]
 }

@@ -5,16 +5,12 @@ import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
-import com.intellij.collaboration.ui.util.bindTextHtmlIn
-import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.bindVisibilityIn
-import com.intellij.collaboration.ui.util.emptyBorders
+import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import net.miginfocom.layout.AC
@@ -50,7 +46,7 @@ object CodeReviewDetailsTitleComponentFactory {
     }
     val stateLabel = JLabel().apply {
       font = JBFont.small()
-      foreground = UIUtil.getContextHelpForeground()
+      foreground = CodeReviewColorUtil.Review.stateForeground
       border = JBUI.Borders.empty(0, 4)
       bindTextIn(scope, detailsVm.reviewRequestState.map { reviewRequestState ->
         ReviewDetailsUIUtil.getRequestStateText(reviewRequestState)
@@ -58,7 +54,7 @@ object CodeReviewDetailsTitleComponentFactory {
     }.let {
       RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
         border = JBUI.Borders.empty()
-        background = UIUtil.getPanelBackground()
+        background = CodeReviewColorUtil.Review.stateBackground
         bindVisibilityIn(scope, detailsVm.reviewRequestState.map { reviewRequestState ->
           reviewRequestState == ReviewRequestState.CLOSED ||
           reviewRequestState == ReviewRequestState.MERGED ||
