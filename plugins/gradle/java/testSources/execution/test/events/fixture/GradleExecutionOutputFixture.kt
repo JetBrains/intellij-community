@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeak
 import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
 import java.util.function.Function
 
-class GradleOutputFixture(
+class GradleExecutionOutputFixture(
   private val project: Project
 ) : IdeaTestFixture {
 
@@ -70,20 +70,47 @@ class GradleOutputFixture(
       .isEmpty()
   }
 
+  fun <R> printExecutionOutputIfFailed(action: () -> R): R {
+    try {
+      return action()
+    }
+    catch (ex: Throwable) {
+      printExecutionOutput()
+      throw ex
+    }
+  }
+
+  private fun printExecutionOutput() {
+    println("STDOUT START")
+    for ((isStdOut, text) in output.text) {
+      if (isStdOut) {
+        print(text)
+      }
+    }
+    println("STDOUT END")
+    println("STDERR START")
+    for ((isStdOut, text) in output.text) {
+      if (!isStdOut) {
+        print(text)
+      }
+    }
+    println("STDERR END")
+  }
+
   private fun installGradleEventsListener() {
     val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
 
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        val testsDescriptors = text.split("<ijLogEol/>")
-          .map { it.trim('\r', '\n', ' ') }
-          .filter { it.isNotEmpty() }
-          .mapNotNull { parseTestOperationDescriptor(it) }
-        output.testDescriptors.addAll(testsDescriptors)
+        output.text.add(stdOut to text)
+        output.testDescriptors.addAll(
+          extractTestOperationDescriptors(text)
+        )
       }
 
       override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
-        val testDescriptor = getTestOperationDescriptor(event)
-        output.testDescriptors.addIfNotNull(testDescriptor)
+        output.testDescriptors.addIfNotNull(
+          getTestOperationDescriptor(event)
+        )
       }
     }
 
@@ -99,6 +126,17 @@ class GradleOutputFixture(
     return TestOperationDescriptorImpl("", -1, "", className, methodName)
   }
 
+  private fun extractTestOperationDescriptors(text: String): List<TestOperationDescriptor> {
+    val descriptors = ArrayList<TestOperationDescriptor>()
+    for (rawDescriptor in text.split("<ijLogEol/>")) {
+      val descriptor = parseTestOperationDescriptor(rawDescriptor)
+      if (descriptor != null) {
+        descriptors.add(descriptor)
+      }
+    }
+    return descriptors
+  }
+
   private fun parseTestOperationDescriptor(descriptor: String): TestOperationDescriptor? {
     val className = StringUtil.substringAfter(descriptor, "' className='")
                       ?.let { StringUtil.substringBefore(it, "' />") }
@@ -111,6 +149,8 @@ class GradleOutputFixture(
   }
 
   private class Output {
+
+    val text: MutableList<Pair<Boolean, String>> = ArrayList()
 
     val testDescriptors: MutableList<TestOperationDescriptor> = ArrayList()
   }

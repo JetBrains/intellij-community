@@ -32,7 +32,7 @@ abstract class GradleProjectBaseTestCase {
 
   open fun patchFixtureBuilder(fixtureBuilder: GradleTestFixtureBuilder): GradleTestFixtureBuilder = fixtureBuilder
 
-  fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
+  open fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
     val patchedBuilder = patchFixtureBuilder(fixtureBuilder)
     fixture = getOrCreateGradleTestFixture(gradleVersion, patchedBuilder)
     setUp()

@@ -6,7 +6,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsS
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleTestEventTest : GradleTestEventTestCase() {
+class GradleTestEventTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource

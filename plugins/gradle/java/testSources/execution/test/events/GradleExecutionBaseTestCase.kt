@@ -7,22 +7,21 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.AbstractTestProxy
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.LocalTimeCounter
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionEnvironmentFixture
+import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionOutputFixture
 import org.jetbrains.plugins.gradle.execution.test.events.fixture.GradleExecutionViewFixture
+import org.jetbrains.plugins.gradle.execution.test.events.fixture.TestExecutionConsoleEventFixture
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.tree.assertion.TreeAssertion
 import org.jetbrains.plugins.gradle.testFramework.util.tree.buildTree
 import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyExecution
@@ -32,8 +31,8 @@ import org.junit.jupiter.api.Assertions
 
 abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
-  private lateinit var testDisposable: Disposable
-
+  private lateinit var executionOutputFixture: GradleExecutionOutputFixture
+  private lateinit var testExecutionEventFixture: TestExecutionConsoleEventFixture
   lateinit var executionEnvironmentFixture: GradleExecutionEnvironmentFixture
   lateinit var executionConsoleFixture: GradleExecutionViewFixture
   private lateinit var buildViewFixture: BuildViewTestFixture
@@ -43,7 +42,11 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
     cleanupProjectBuildDirectory()
 
-    testDisposable = Disposer.newDisposable()
+    executionOutputFixture = GradleExecutionOutputFixture(project)
+    executionOutputFixture.setUp()
+
+    testExecutionEventFixture = TestExecutionConsoleEventFixture(project)
+    testExecutionEventFixture.setUp()
 
     executionEnvironmentFixture = GradleExecutionEnvironmentFixture(project)
     executionEnvironmentFixture.setUp()
@@ -60,7 +63,8 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
       { buildViewFixture.tearDown() },
       { executionConsoleFixture.tearDown() },
       { executionEnvironmentFixture.tearDown() },
-      { Disposer.dispose(testDisposable) },
+      { testExecutionEventFixture.tearDown() },
+      { executionOutputFixture.tearDown() },
       { cleanupProjectBuildDirectory() },
       { super.tearDown() },
     )
@@ -73,20 +77,10 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     }
   }
 
-  /**
-   * Call this method inside [setUp] to print events trace to console
-   */
-  @Suppress("unused")
-  fun initTextNotificationEventsPrinter() {
-    val notificationManager = ExternalSystemProgressNotificationManager.getInstance()
-    notificationManager.addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
-      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        when (stdOut) {
-          true -> System.out.print(text)
-          else -> System.err.print(text)
-        }
-      }
-    }, testDisposable)
+  override fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
+    super.test(gradleVersion, fixtureBuilder) {
+      executionOutputFixture.printExecutionOutputIfFailed(test)
+    }
   }
 
   fun executeTasks(commandLine: String, isRunAsTest: Boolean = true) {
@@ -110,12 +104,14 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     }
   }
 
-  open fun <R> waitForAnyGradleTaskExecution(action: () -> R) {
-    executionEnvironmentFixture.assertExecutionEnvironmentIsReady {
-      waitForGradleEventDispatcherClosing {
-        waitForAnyExecution(project) {
-          org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution {
-            action()
+  fun <R> waitForAnyGradleTaskExecution(action: () -> R) {
+    executionOutputFixture.assertExecutionOutputIsReady {
+      executionEnvironmentFixture.assertExecutionEnvironmentIsReady {
+        waitForGradleEventDispatcherClosing {
+          waitForAnyExecution(project) {
+            org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution {
+              action()
+            }
           }
         }
       }
@@ -165,5 +161,23 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
   fun TreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(className: String, methodName: String? = null) {
     executionConsoleFixture.assertPsiLocation(this, className, methodName)
+  }
+
+  fun assertTestEventsContain(className: String, methodName: String? = null) {
+    executionOutputFixture.assertTestEventContain(className, methodName)
+  }
+
+  fun assertTestEventsDoesNotContain(className: String, methodName: String? = null) {
+    executionOutputFixture.assertTestEventDoesNotContain(className, methodName)
+  }
+
+  fun assertTestEventsWasNotReceived() {
+    executionOutputFixture.assertTestEventsWasNotReceived()
+  }
+
+  fun assertTestEventCount(
+    name: String, suiteStart: Int, suiteFinish: Int, testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int
+  ) {
+    testExecutionEventFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
   }
 }
