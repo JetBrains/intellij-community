@@ -28,6 +28,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     registerMetric(MaxLatencyMetric())
     registerMetric(MeanRankMetric())
     registerMetric(SessionsCountMetric())
+    registerMetric(SuggestionsCountMetric())
   }
 
   fun registerCompletionGolfMetrics() {
