@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.CancellationException;
 
 @Internal
-final class CurrentJobCancellationException extends CancellationException {
+public final class CurrentJobCancellationException extends CancellationException {
 
   CurrentJobCancellationException(@NotNull JobCanceledException e) {
     initCause(e);
@@ -16,9 +16,5 @@ final class CurrentJobCancellationException extends CancellationException {
   @Override
   public synchronized @NotNull JobCanceledException getCause() {
     return (JobCanceledException)super.getCause();
-  }
-
-  public @NotNull CancellationException getOriginalCancellationException() {
-    return getCause().getCause();
   }
 }

@@ -4,7 +4,8 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.CurrentJobCancellationException
+import com.intellij.openapi.progress.JobCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
@@ -20,25 +21,6 @@ internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContex
   }
   catch (readCe: ReadCancellationException) {
     throw CannotReadException(readCe)
-  }
-  catch (ce: CancellationException) {
-    // One of two variants is thrown:
-    // 1.
-    // CannotReadException(
-    //   CurrentJobCancellationException(JobCanceledException(
-    //     ReadCancellationException()
-    //   ))
-    // )
-    // 2.
-    // CannotReadException(
-    //   ReadCancellationException()
-    // )
-    val original = Cancellation.unwrap(ce)
-    if (original is ReadCancellationException) {
-      // cancelled normally by a write action
-      throw CannotReadException(ce)
-    }
-    throw ce // exception from the computation
   }
 }
 
@@ -64,6 +46,13 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
       readJob.complete()
       result.value
     }
+  }
+  catch (currentJobCe: CurrentJobCancellationException) {
+    val jce: JobCanceledException = currentJobCe.cause
+    if (jce.cause is ReadCancellationException) {
+      throw ReadCancellationException(jce)
+    }
+    throw currentJobCe
   }
   catch (ce: CancellationException) {
     readJob.cancel(ce)
