@@ -142,8 +142,4 @@ public final class EmptyMarkupModel implements MarkupModelEx {
     return MarkupIterator.EMPTY;
   }
 
-  @Override
-  public void addRangeHighlighter(@NotNull RangeHighlighterEx marker, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-
-  }
 }

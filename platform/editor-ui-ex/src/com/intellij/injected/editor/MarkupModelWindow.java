@@ -175,9 +175,4 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
     // todo convert
     return myHostModel.overlappingIterator(startOffset, endOffset);
   }
-
-  @Override
-  public void addRangeHighlighter(@NotNull RangeHighlighterEx marker, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-
-  }
 }

@@ -176,7 +176,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     }
   }
 
-  @Override
   public void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
                                   int start,
                                   int end,
@@ -287,7 +286,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     }
   }
 
-  private void fireAfterRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
+  void fireAfterRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.afterRemoved(segmentHighlighter);
     }

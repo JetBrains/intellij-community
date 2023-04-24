@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Key;
@@ -434,7 +433,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @Override
   protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     // we store highlighters in MarkupModel
-    ((MarkupModelEx)getMarkupModel()).addRangeHighlighter(this, start, end, greedyToLeft, greedyToRight, layer);
+    myModel.addRangeHighlighter(this, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   @Override

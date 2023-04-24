@@ -39,13 +39,6 @@ public interface MarkupModelEx extends MarkupModel {
   
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
 
-  void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
-                           int start,
-                           int end,
-                           boolean greedyToLeft,
-                           boolean greedyToRight,
-                           int layer);
-
   void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener);
 
   void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, @NotNull TextAttributes textAttributes);

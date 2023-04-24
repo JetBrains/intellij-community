@@ -102,16 +102,6 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   @Override
-  public void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
-                                  int start,
-                                  int end,
-                                  boolean greedyToLeft,
-                                  boolean greedyToRight,
-                                  int layer) {
-    myDelegate.addRangeHighlighter(marker, start, end, greedyToLeft, greedyToRight, layer);
-  }
-
-  @Override
   @NotNull
   public RangeHighlighter addRangeHighlighter(@Nullable TextAttributesKey textAttributesKey, int startOffset,
                                               int endOffset,
