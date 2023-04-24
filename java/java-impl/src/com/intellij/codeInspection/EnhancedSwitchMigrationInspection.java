@@ -582,7 +582,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       OldSwitchStatementBranch branch = branches.get(i);
       if (!isConvertibleBranch(branch, i != size - 1)) return null;
       PsiStatement[] statements = branch.getStatements();
-      if (branch.isFallthrough() || statements.length == 0) continue;
+      if (branch.isFallthrough() && statements.length == 0) continue;
+      if (statements.length == 0) return null;
       if (statements.length > maxNumberStatementsForExpression) {
         isInfo = true;
       }
