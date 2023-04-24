@@ -85,6 +85,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       val iconPanel = JPanel(BorderLayout()).apply {
         val iconLabel = JLabel(AllIcons.Ide.FatalError)
         border = JBUI.Borders.emptyRight(iconLabel.iconTextGap)
+        isOpaque = false
         add(iconLabel, BorderLayout.NORTH)
       }
 
@@ -110,6 +111,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
         })
       }
 
+      isOpaque = false
       add(iconPanel, BorderLayout.WEST)
       add(errorTextPane, BorderLayout.CENTER)
 
