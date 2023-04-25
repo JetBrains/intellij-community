@@ -203,11 +203,11 @@ class OperationLogStorageImpl(
     storageIO.close()
   }
 
-  private inner class IteratorImpl(var iterPos: Long) : OperationLogStorage.Iterator {
+  private inner class IteratorImpl private constructor(var iterPos: Long, var invalidationFlag: Boolean) : OperationLogStorage.Iterator {
     // [tag, previous operation, tag]  [tag, next operation, tag]
     //                      iterPos --^
 
-    var invalidationFlag = false
+    constructor(iterPos: Long) : this(iterPos, false)
 
     override fun hasNext(): Boolean {
       return iterPos < size() && !invalidationFlag
@@ -223,7 +223,7 @@ class OperationLogStorageImpl(
     override fun previous(): OperationReadResult = readPreceding(iterPos).alsoRetreat()
     override fun previousFiltered(mask: VfsOperationTagsMask): OperationReadResult = readPrecedingFiltered(iterPos, mask).alsoRetreat()
 
-    override fun clone(): IteratorImpl = IteratorImpl(iterPos)
+    override fun copy(): IteratorImpl = IteratorImpl(iterPos, invalidationFlag)
 
     override fun compareTo(other: OperationLogStorage.Iterator): Int {
       other as IteratorImpl

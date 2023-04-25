@@ -101,9 +101,14 @@ interface OperationLogStorage {
   /**
    * [Iterator] gets invalidated in case [OperationReadResult.Invalid] was read, and its [hasNext] and [hasPrevious]
    * will return false afterward in such case.
+   *
+   * Comparison is performed in terms of relative position, e.g. `iter1 < iter2` means that `iter1` is positioned strictly before `iter2`
    */
   interface Iterator: Comparable<Iterator>, BiDiIterator<OperationReadResult> {
-    fun clone(): Iterator
+    /**
+     * Creates a complete and independent copy of an iterator.
+     */
+    fun copy(): Iterator
 
     /**
      * @see [OperationLogStorage.readAtFiltered]
