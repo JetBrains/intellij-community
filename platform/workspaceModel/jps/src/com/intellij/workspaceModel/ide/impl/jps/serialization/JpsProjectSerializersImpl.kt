@@ -686,7 +686,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 || SourceRootEntity::class.java in entities
                 || ExcludeUrlEntity::class.java in entities
                )) {
-          val existingSerializers = fileSerializersByUrl.getValues(url)
+
+          val existingSerializers = fileSerializersByUrl.getValues(url).toSet() // Additional toSet to avoid concurrent modification IDEA-316949
+
+          //region Process change of the module group (deprecated mechanism of grouping modules)
           val moduleGroup = (entities[ModuleGroupPathEntity::class.java]?.first() as? ModuleGroupPathEntity)?.path?.joinToString("/")
           if (existingSerializers.isEmpty() || existingSerializers.any { it is ModuleImlFileEntitiesSerializer && it.modulePath.group != moduleGroup }) {
             moduleListSerializersByUrl.values.forEach { moduleListSerializer ->
@@ -706,6 +709,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
               }
             }
           }
+          //endregion
+
           for (serializer in existingSerializers) {
             val moduleListSerializer = moduleSerializers[serializer]
             val storedExternally = moduleSerializerToExternalSourceBool[serializer]

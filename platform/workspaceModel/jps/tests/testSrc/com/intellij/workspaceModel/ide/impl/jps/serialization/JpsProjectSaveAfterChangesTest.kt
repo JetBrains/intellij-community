@@ -2,10 +2,10 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
-import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -34,7 +34,7 @@ class JpsProjectSaveAfterChangesTest {
   @ValueSource(strings = ["", "util", "util,main", "main"])
   fun `modify module`(unloaded: String) {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
-    checkSaveProjectAfterChange("common/modifyIml", "common/modifyIml", unloadedModuleNames) { 
+    checkSaveProjectAfterChange("common/modifyIml", "common/modifyIml", unloadedModuleNames) {
       mainBuilder, _, unloadedEntitiesBuilder, configLocation ->
       val builder = if ("util" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
@@ -97,7 +97,7 @@ class JpsProjectSaveAfterChangesTest {
   @ValueSource(strings = ["", "newModule", "newModule,main", "main"])
   fun `add module`(unloaded: String) {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
-    checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule", unloadedModuleNames) { 
+    checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule", unloadedModuleNames) {
       mainBuilder, _, unloadedEntitiesBuilder, configLocation ->
       val builder = if ("newModule" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
       val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
@@ -119,7 +119,7 @@ class JpsProjectSaveAfterChangesTest {
   @ValueSource(strings = ["", "util", "util,main", "main"])
   fun `remove module`(unloaded: String) {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
-    checkSaveProjectAfterChange("directoryBased/removeModule", "fileBased/removeModule", unloadedModuleNames) { 
+    checkSaveProjectAfterChange("directoryBased/removeModule", "fileBased/removeModule", unloadedModuleNames) {
       mainBuilder, _, unloadedEntitiesBuilder, _ ->
       val builder = if ("util" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
@@ -159,6 +159,16 @@ class JpsProjectSaveAfterChangesTest {
     checkSaveProjectAfterChange("directoryBased/removeLibrary", "fileBased/removeLibrary") { builder, _, _, _ ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.removeEntity(junitLibrary)
+    }
+  }
+
+  @Test
+  fun `set group for the module`() {
+    checkSaveProjectAfterChange("directoryBased/addModuleGroup", "fileBased/addModuleGroup") { builder, _, _, _ ->
+      val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
+      builder addEntity ModuleGroupPathEntity(listOf("group"), utilModule.entitySource) {
+        this.module = utilModule
+      }
     }
   }
 
