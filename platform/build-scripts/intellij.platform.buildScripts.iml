@@ -111,7 +111,6 @@
     <orderEntry type="library" name="jackson-datatype-joda" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="commons-codec" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-stdlib" level="project" />
     <orderEntry type="library" name="ktor-serialization-kotlinx-json" level="project" />
     <orderEntry type="library" name="ktor-client" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
