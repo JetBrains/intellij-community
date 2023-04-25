@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## 0.0.11
+- [MERMAID-21](https://youtrack.jetbrains.com/issue/MERMAID-21) Fixed completion after front matter header
+- [MERMAID-34](https://youtrack.jetbrains.com/issue/MERMAID-34) Added more highlightable tokens for the syntax highlighter
+- [MERMAID-45](https://youtrack.jetbrains.com/issue/MERMAID-45) Fixed incorrect diagram height
+- [MERMAID-49](https://youtrack.jetbrains.com/issue/MERMAID-49) Fixed handling of empty diagrams in the preview
+- [MERMAID-54](https://youtrack.jetbrains.com/issue/MERMAID-54) Fixed preview theme updates on global theme change
+
 ## 0.0.10
 - Updated an underlying Mermaid.js version to `10.0.2`
 - [MERMAID-24](https://youtrack.jetbrains.com/issue/MERMAID-24) Added diagram preview for standalone Mermaid files (`.mmd` and `.mermaid`)
