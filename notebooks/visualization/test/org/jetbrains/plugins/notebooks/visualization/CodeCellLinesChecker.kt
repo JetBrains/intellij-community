@@ -36,11 +36,11 @@ class CodeCellLinesChecker(private val description: String,
     fun interval(cellType: NotebookCellLines.CellType,
                  lines: IntRange,
                  markers: NotebookCellLines.MarkersAtLines,
-                 language: Language? = null) {
+                 language: Language) {
       list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, language)
     }
 
-    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, language: Language? = null) {
+    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, language: Language) {
       val markers =
         if (cellType == NotebookCellLines.CellType.RAW && lines.first == 0)
           NotebookCellLines.MarkersAtLines.NO

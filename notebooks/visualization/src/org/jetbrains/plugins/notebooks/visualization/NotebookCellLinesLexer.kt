@@ -63,7 +63,7 @@ interface NotebookCellLinesLexer {
   }
 }
 
-private data class IntervalInfo(val lineNumber: Int, val cellType: CellType, val markersAtLInes: MarkersAtLines, val language: Language?)
+private data class IntervalInfo(val lineNumber: Int, val cellType: CellType, val markersAtLInes: MarkersAtLines, val language: Language)
 
 private fun toIntervalsInfo(document: Document,
                             markers: List<NotebookCellLinesLexer.Marker>): List<IntervalInfo> {
@@ -75,7 +75,7 @@ private fun toIntervalsInfo(document: Document,
   }
 
   for (marker in markers) {
-    m += IntervalInfo(document.getLineNumber(marker.offset), marker.type, MarkersAtLines.TOP, marker.language)
+    m += IntervalInfo(document.getLineNumber(marker.offset), marker.type, MarkersAtLines.TOP, marker.language!!) // marker.language is provided in makeIntervals
   }
 
   // marker for the end

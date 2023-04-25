@@ -36,7 +36,7 @@ interface NotebookCellLines {
     val type: CellType,
     val lines: IntRange,
     val markers: MarkersAtLines,
-    val language: Language?,
+    val language: Language,
   ) : Comparable<Interval> {
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
   }
