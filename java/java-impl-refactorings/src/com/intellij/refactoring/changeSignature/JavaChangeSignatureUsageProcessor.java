@@ -1279,7 +1279,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       this.myChangeInfo = changeInfo;
     }
 
-    public MultiMap<PsiElement, @DialogMessage String> findConflicts(Ref<UsageInfo[]> refUsages) {
+    private MultiMap<PsiElement, @DialogMessage String> findConflicts(Ref<UsageInfo[]> refUsages) {
       MultiMap<PsiElement, @DialogMessage String> conflictDescriptions = new MultiMap<>();
       final PsiMethod prototype = addMethodConflicts(conflictDescriptions);
       Set<UsageInfo> usagesSet = ContainerUtil.newHashSet(refUsages.get());
@@ -1333,7 +1333,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               for (int i = 0; i < toRemove.length; i++) {
                 if (toRemove[i] && i < args.length) {
                   if (RemoveUnusedVariableUtil.checkSideEffects(args[i], null, new ArrayList<>())) {
-                    conflictDescriptions.putValue(args[i], JavaRefactoringBundle.message("safe.delete.parameter.usage.warning", myChangeInfo.getOldParameterNames()[i]));
+                    final PsiParameter parameter = myChangeInfo.getMethod().getParameterList().getParameter(i);
+                    if (parameter != null) {
+                      String message =
+                        JavaRefactoringBundle.message("safe.delete.parameter.usage.warning",
+                                                      RefactoringUIUtil.getDescription(parameter, true));
+                      conflictDescriptions.putValue(args[i], StringUtil.capitalize(message));
+                    }
                   }
                 }
               }
