@@ -417,14 +417,14 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   @Bombed(
-    year = 2024, month = 1, day = 1, user = "Sergei Vorobyov",
+    year = 2024, month = 1, day = 9, user = "Sergei Vorobyov",
     description = """
       Happy New Year! Deprecation cycle has ended.
       Please remove org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.fixUpGradleCommandLine,
       And resolve IDEA-318304 issue.
     """
   )
-  fun `test hacky non test task execution`(gradleVersion: GradleVersion) {
+  fun `test hacky non-test task execution`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
