@@ -31,7 +31,7 @@ import kotlin.concurrent.write
 @Internal
 open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
                                    final override val macroSubstitutor: PathMacroSubstitutor? = null,
-                                   override val componentManager: ComponentManager? = null,
+                                   override val componentManager: ComponentManager?,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = createDefaultVirtualTracker(componentManager)) : StateStorageManager {
   @Volatile
   protected var macros: List<Macro> = Collections.emptyList()
@@ -69,12 +69,8 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   companion object {
     private fun createDefaultVirtualTracker(componentManager: ComponentManager?): StorageVirtualFileTracker? {
       return when (componentManager) {
-        null -> {
-          null
-        }
-        is Application -> {
-          StorageVirtualFileTracker(componentManager.messageBus)
-        }
+        null -> null
+        is Application -> StorageVirtualFileTracker(componentManager.messageBus)
         else -> {
           val tracker = (ApplicationManager.getApplication().stateStore.storageManager as? StateStorageManagerImpl)?.virtualFileTracker
                         ?: return null

@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
@@ -15,7 +16,9 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.impl.jps.serialization.ApplicationStoreJpsContentReader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -27,12 +30,12 @@ internal class ApplicationPathMacroManager : PathMacroManager(null)
 @NonNls const val APP_CONFIG = "\$APP_CONFIG$"
 
 open class ApplicationStoreImpl : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
-  override val storageManager = ApplicationStorageManager(ApplicationManager.getApplication(), PathMacroManager.getInstance(ApplicationManager.getApplication()))
+  override val storageManager = ApplicationStorageManager(PathMacroManager.getInstance(ApplicationManager.getApplication()))
 
   override val serviceContainer: ComponentManagerImpl
     get() = ApplicationManager.getApplication() as ComponentManagerImpl
 
-  // number of app components require some state, so, we load default state in test mode
+  // a number of app components require some state, so we load the default state in test mode
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
 
@@ -57,9 +60,10 @@ open class ApplicationStoreImpl : ComponentStoreWithExtraComponents(), Applicati
         saveSessionManager.save().appendTo(result)
       }
 
+      @Suppress("TestOnlyProblems")
       if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
         launch {
-          // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
+          // here, because no Project (and so, ProjectStoreImpl) on a Welcome Screen
           val r = service<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)
           // ignore
           r.isChanged = false
@@ -82,8 +86,10 @@ internal val appFileBasedStorageConfiguration = object: FileBasedStorageConfigur
     get() = false
 }
 
-class ApplicationStorageManager(application: Application?, pathMacroManager: PathMacroManager? = null)
-  : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor (), application) {
+class ApplicationStorageManager(pathMacroManager: PathMacroManager? = null)
+  : StateStorageManagerImpl(rootTagName = "application",
+                            macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(),
+                            componentManager = null) {
   override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
