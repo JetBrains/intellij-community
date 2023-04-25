@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -103,7 +104,8 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
       breakpoint.setLogMessage(true);
     }
     // edit breakpoint
-    Point point = new Point(mouseEvent.getPoint().x, editor.visualLineToY(breakpoint.getLine() + 1));
+    LogicalPosition position = new LogicalPosition(breakpoint.getLine() + 1, 0);
+    Point point = new Point(mouseEvent.getPoint().x, editor.logicalPositionToXY(position).y);
     DebuggerUIUtil.showXBreakpointEditorBalloon(project, point, ((EditorEx) editor).getGutterComponentEx(), false, breakpoint);
   }
 }
