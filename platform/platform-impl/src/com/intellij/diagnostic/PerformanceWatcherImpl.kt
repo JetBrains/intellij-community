@@ -21,7 +21,6 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -450,7 +449,7 @@ private fun reportCrashesIfAny() {
             .joinToString(separator = "\n", "Extra plugins:\n")
           val pluginAttachment = Attachment("plugins.txt", plugins)
           attachment.isIncluded = true
-          var attachments = arrayOf(attachment, pluginAttachment)
+          val attachments = mutableListOf(attachment, pluginAttachment)
 
           // look for extended crash logs
           val extraLog = findExtraLogFile(pid, appInfoFileLastModified)
@@ -462,10 +461,10 @@ private fun reportCrashesIfAny() {
             }
             val extraAttachment = Attachment("jbr_err.txt", jbrErrContent)
             extraAttachment.isIncluded = true
-            attachments = ArrayUtil.append(attachments, extraAttachment)
+            attachments.add(extraAttachment)
           }
           val message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------")
-          val event = LogMessage.createEvent(JBRCrash(), message, *attachments)
+          val event = LogMessage.eventOf(JBRCrash(), message, attachments)
           IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile))
           IdeaFreezeReporter.report(event)
           LifecycleUsageTriggerCollector.onCrashDetected()

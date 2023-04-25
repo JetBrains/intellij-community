@@ -124,7 +124,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
               EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(dir)));
 
               if (message != null && throwable != null && !attachments.isEmpty()) {
-                IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
+                IdeaLoggingEvent event = LogMessage.eventOf(throwable, message, attachments);
                 setAppInfo(event, appInfo);
                 report(event);
               }
@@ -427,8 +427,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         message += "\n\nThe stack is from the thread that was blocking EDT";
       }
       Attachment report = createReportAttachment(durationInSeconds, reportText);
-      return LogMessage.createEvent(new Freeze(commonStack), message,
-                                    ContainerUtil.append(attachments, report).toArray(Attachment.EMPTY_ARRAY));
+      return LogMessage.eventOf(new Freeze(commonStack), message, ContainerUtil.append(attachments, report));
     }
     return null;
   }
