@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
@@ -19,7 +18,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.util.*
 
-class StatefulEpInspection : DevKitUastInspectionBase() {
+class StatefulEpInspection : DevKitUastInspectionBase(UField::class.java, UClass::class.java) {
 
   override fun checkField(field: UField, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val uClass = field.getContainingUClass() ?: return ProblemDescriptor.EMPTY_ARRAY
@@ -79,13 +78,13 @@ class StatefulEpInspection : DevKitUastInspectionBase() {
     if (InheritanceUtil.isInheritor(typeClass, elementClass)) {
       return true
     }
-    if (type is JvmReferenceType && type.typeArguments().iterator().hasNext() &&
-        holderClasses.any { InheritanceUtil.isInheritor(typeClass, it) }) {
-      return type.typeArguments().any {
+    val typeArguments = (type as? PsiClassType)?.parameters ?: return false
+    if (typeArguments.isNotEmpty() && holderClasses.any { InheritanceUtil.isInheritor(typeClass, it) }) {
+      return typeArguments.any {
         // Kotlin's List<PsiElement> is List <? extends Element>, so we need to use bound if exists:
         val typeBound = (it as? PsiWildcardType)?.bound
         val actualType = typeBound ?: it
-        val actualPsiType = actualType as? PsiType ?: return@any false
+        val actualPsiType = actualType ?: return@any false
         isHoldingElement(actualPsiType, elementClass)
       }
     }
