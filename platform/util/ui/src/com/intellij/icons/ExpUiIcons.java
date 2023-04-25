@@ -202,7 +202,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", 1386593241, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("expui/fileTypes/text.svg", -1189613783, 2);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/fileTypes/unknown.svg", -877766617, 2);
-    /** 16x16 */ public static final @NotNull Icon Velocity = load("expui/fileTypes/velocity.svg", -1348763819, 2);
     /** 16x16 */ public static final @NotNull Icon VueJs = load("expui/fileTypes/vueJs.svg", 29321613, 0);
     /** 16x16 */ public static final @NotNull Icon Wsdl = load("expui/fileTypes/wsdl.svg", -188886368, 2);
     /** 16x16 */ public static final @NotNull Icon Xhtml = load("expui/fileTypes/xhtml.svg", -374624272, 2);

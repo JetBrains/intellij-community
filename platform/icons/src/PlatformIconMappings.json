@@ -183,7 +183,6 @@
       ],
       "image.svg": "fileTypes/image.svg",
       "unknown.svg": "fileTypes/unknown.svg",
-      "velocity.svg": "icons/velocity.svg",
       "vueJs.svg": "icons/vue.svg",
       "wsdl.svg": "fileTypes/wsdlFile.svg",
       "xhtml.svg": "fileTypes/xhtml.svg",
