@@ -2,10 +2,10 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
-import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -162,7 +162,18 @@ class JpsProjectSaveAfterChangesTest {
       builder.removeEntity(junitLibrary)
     }
   }
-  private fun unloadedHolder(unloaded: String) : UnloadedModulesNameHolder {
+
+  @Test
+  fun `set group for the module`() {
+    checkSaveProjectAfterChange("directoryBased/addModuleGroup", "fileBased/addModuleGroup") { builder, _, _, _ ->
+      val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
+      builder addEntity ModuleGroupPathEntity(listOf("group"), utilModule.entitySource) {
+        this.module = utilModule
+      }
+    }
+  }
+
+  private fun unloadedHolder(unloaded: String): UnloadedModulesNameHolder {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
     return object: UnloadedModulesNameHolder {
       override fun isUnloaded(name: String?) = name in unloadedModuleNames
