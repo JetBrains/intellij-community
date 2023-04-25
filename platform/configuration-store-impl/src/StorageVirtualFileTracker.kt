@@ -45,13 +45,8 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
     filePathToStorage.remove(path)
   }
 
-  fun remove(processor: (TrackedStorage) -> Boolean) {
-    val iterator = filePathToStorage.values.iterator()
-    for (storage in iterator) {
-      if (processor(storage)) {
-        iterator.remove()
-      }
-    }
+  fun remove(filter: (TrackedStorage) -> Boolean) {
+    filePathToStorage.values.removeIf(filter)
   }
 
   private fun addVfsChangesListener() {
