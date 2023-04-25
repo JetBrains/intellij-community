@@ -5,13 +5,16 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -26,6 +29,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   private Color myDurationColor;
   private int myDurationWidth;
   private int myDurationOffset;
+  private @Nullable Computable<String> myAccessibleStatus = null;
 
   public TestTreeRenderer(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
@@ -124,5 +128,18 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     super.paintComponent(g);
     // restore clip area if needed
     if (clip != null) g.setClip(clip);
+  }
+
+  @Nullable
+  @NlsSafe
+  @ApiStatus.Experimental
+  public String getAccessibleStatus() {
+    if (myAccessibleStatus == null) return null;
+    return myAccessibleStatus.get();
+  }
+
+  @ApiStatus.Experimental
+  public void setAccessibleStatus(@Nullable Computable<String> accessibleStatus) {
+    myAccessibleStatus = accessibleStatus;
   }
 }

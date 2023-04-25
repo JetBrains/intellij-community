@@ -112,7 +112,9 @@ public final class TestsPresentationUtil {
                                                 final TestTreeRenderer renderer) {
     IconInfo iconInfo = getIcon(testProxy, renderer.getConsoleProperties());
     renderer.setIcon(iconInfo.getIcon());
-    renderer.setAccessibleStatusText(iconInfo.getStatusText());
+    String accessibleStatusText = renderer.getAccessibleStatus();
+    if (accessibleStatusText == null) accessibleStatusText = iconInfo.getStatusText();
+    renderer.setAccessibleStatusText(accessibleStatusText);
 
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 

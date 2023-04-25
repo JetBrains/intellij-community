@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -42,7 +41,9 @@ public class SMTRunnerTestTreeView extends TestTreeView {
 
   @Override
   protected TreeCellRenderer getRenderer(final TestConsoleProperties properties) {
-    return new TestTreeRenderer(properties);
+    TestTreeRenderer renderer = new TestTreeRenderer(properties);
+    renderer.setAccessibleStatus(() -> myAccessibleStatus);
+    return renderer;
   }
 
   @Override
@@ -87,20 +88,7 @@ public class SMTRunnerTestTreeView extends TestTreeView {
   }
 
   @ApiStatus.Experimental
-  public @Nullable @Nls String getAccessibleStatus() {
-    return myAccessibleStatus;
-  }
-
-  @ApiStatus.Experimental
   public void setAccessibleStatus(@Nls @Nullable String accessibleStatus) {
     myAccessibleStatus = accessibleStatus;
-  }
-
-  @Override
-  public AccessibleContext getAccessibleContext() {
-    AccessibleContext accessibleContext = super.getAccessibleContext();
-    String status = getAccessibleStatus();
-    if (status != null && !status.isEmpty()) accessibleContext.setAccessibleDescription(status);
-    return accessibleContext;
   }
 }
