@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
@@ -401,18 +402,32 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   }
 
   fun startDumbModeBeginningTracking() {
+    logInTests("startDumbModeBeginningTracking")
     ReadAction.run<RuntimeException> {
       if (!project.isDisposed) {
         project.getService(DumbModeFromScanningTrackerService::class.java).setScanningDumbModeStartCallback(scanningDumbModeCallBack)
+      }
+      else {
+        logInTests("startDumbModeBeginningTracking didn't work: project disposed")
       }
     }
   }
 
   fun finishDumbModeBeginningTracking() {
+    logInTests("finishDumbModeBeginningTracking")
     ReadAction.run<RuntimeException> {
       if (!project.isDisposed) {
         project.getService(DumbModeFromScanningTrackerService::class.java).cleanScanningDumbModeStartCallback(scanningDumbModeCallBack)
       }
+      else {
+        logInTests("finishDumbModeBeginningTracking didn't work: project disposed")
+      }
+    }
+  }
+
+  private fun logInTests(message: String) {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      thisLogger().info(message)
     }
   }
 

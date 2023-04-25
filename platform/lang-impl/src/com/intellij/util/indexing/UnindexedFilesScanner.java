@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -568,10 +569,16 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       scanningHistory.setWasInterrupted();
       if (e instanceof ControlFlowException) {
         LOG.info("Cancelled indexing of " + myProject.getName());
+        if(ApplicationManagerEx.isInIntegrationTest()) {
+          LOG.info("Began finalization of scanning");
+        }
       }
       throw e;
     }
     finally {
+      if(ApplicationManagerEx.isInIntegrationTest()) {
+        LOG.info("Began finalization of scanning");
+      }
       scanningHistory.finishDumbModeBeginningTracking();
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.finishTotalUpdatingTime();
