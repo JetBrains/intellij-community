@@ -33,8 +33,8 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -51,7 +51,7 @@ private const val TOLERABLE_LATENCY = 100
 private const val THREAD_DUMPS_PREFIX = "threadDumps-"
 private const val DURATION_FILE_NAME = ".duration"
 private const val PID_FILE_NAME = ".pid"
-private val ourIdeStart = System.currentTimeMillis()
+private val ideStartTime = ZonedDateTime.now()
 
 internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher() {
   private val logDir = PathManager.getLogDir()
@@ -216,13 +216,13 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
   private fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, rawDump: String): Path? {
     var effectivePathPrefix = pathPrefix
     if (!effectivePathPrefix.contains('/')) {
-      effectivePathPrefix = "$THREAD_DUMPS_PREFIX$effectivePathPrefix-${formatTime(ourIdeStart)}-${buildName()}/"
+      effectivePathPrefix = "$THREAD_DUMPS_PREFIX$effectivePathPrefix-${formatTime(ideStartTime)}-${buildName()}/"
     }
     else if (!effectivePathPrefix.startsWith(THREAD_DUMPS_PREFIX)) {
       effectivePathPrefix = THREAD_DUMPS_PREFIX + effectivePathPrefix
     }
-    val now = System.currentTimeMillis()
-    val suffix = if (appendMillisecondsToFileName) "-$now" else ""
+    val now = ZonedDateTime.now()
+    val suffix = if (appendMillisecondsToFileName) "-${now.toInstant().toEpochMilli()}" else ""
     val file = logDir.resolve("$effectivePathPrefix$DUMP_PREFIX${formatTime(now)}$suffix.txt")
     val dir = file.parent
 
@@ -307,7 +307,7 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
     }
 
     private fun edtFrozen() {
-      freezeFolder = "${THREAD_DUMPS_PREFIX}freeze-${formatTime(System.currentTimeMillis())}-${buildName()}"
+      freezeFolder = "${THREAD_DUMPS_PREFIX}freeze-${formatTime(ZonedDateTime.now())}-${buildName()}"
       if (!state.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
         return
       }
@@ -527,8 +527,10 @@ private fun buildName(): String {
   return ApplicationInfo.getInstance().build.asString()
 }
 
-private fun formatTime(timeMs: Long): String {
-  return SimpleDateFormat("yyyyMMdd-HHmmss").format(Date(timeMs))
+private val dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
+
+private fun formatTime(time: ZonedDateTime): String {
+  return dateFormat.format(time)
 }
 
 private fun cleanup(dir: Path) {
@@ -550,7 +552,7 @@ internal fun getStacktraceCommonPart(commonPart: List<StackTraceElement>,
 }
 
 // same as java.lang.StackTraceElement.equals, but do not care about the line number
-fun compareStackTraceElements(el1: StackTraceElement, el2: StackTraceElement): Boolean {
+internal fun compareStackTraceElements(el1: StackTraceElement, el2: StackTraceElement): Boolean {
   return if (el1 === el2) {
     true
   }
