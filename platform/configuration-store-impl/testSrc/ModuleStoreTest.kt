@@ -4,7 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
@@ -157,7 +157,7 @@ class ModuleStoreTest {
       removeContentRoot(m2)
     }
 
-    StoreReloadManager.getInstance().reloadChangedStorageFiles()
+    StoreReloadManager.getInstance(projectRule.project).reloadChangedStorageFiles()
 
     assertChangesApplied(m1)
     assertChangesApplied(m2)
@@ -196,11 +196,11 @@ class ModuleStoreTest {
       val moduleName = "tmp-module-${Ksuid.generate()}"
       val contentRoot = tempDirManager.createVirtualDir()
 
-      withContext(Dispatchers.EDT) {
-        val module = runWriteAction {
-          ModuleManager.getInstance(project).newNonPersistentModule(moduleName, ModuleTypeId.JAVA_MODULE)
-        }
 
+      val module = writeAction {
+        ModuleManager.getInstance(project).newNonPersistentModule(moduleName, ModuleTypeId.JAVA_MODULE)
+      }
+      withContext(Dispatchers.EDT) {
         SoftAssertions.assertSoftly {
           it.assertThat(module.moduleFilePath).isEmpty()
           it.assertThat(module.isLoaded).isTrue
@@ -239,7 +239,7 @@ class ModuleStoreTest {
   }
 }
 
-inline suspend fun <T> Module.useAndDispose(task: Module.() -> T): T {
+suspend inline fun <T> Module.useAndDispose(task: Module.() -> T): T {
   try {
     return task()
   }
@@ -252,9 +252,7 @@ inline suspend fun <T> Module.useAndDispose(task: Module.() -> T): T {
 
 suspend fun ProjectRule.loadModule(file: VirtualFile): Module {
   val project = project
-  return withContext(Dispatchers.EDT) {
-    runWriteAction { ModuleManager.getInstance(project).loadModule(file.toNioPath()) }
-  }
+  return writeAction { ModuleManager.getInstance(project).loadModule(file.toNioPath()) }
 }
 
 val Module.contentRootUrls: Array<String>
@@ -262,9 +260,7 @@ val Module.contentRootUrls: Array<String>
 
 internal suspend fun ProjectRule.createModule(path: Path): Module {
   val project = project
-  return withContext(Dispatchers.EDT) {
-    runWriteAction {
-      ModuleManager.getInstance(project).newModule(path, ModuleTypeId.JAVA_MODULE)
-    }
+  return writeAction {
+    ModuleManager.getInstance(project).newModule(path, ModuleTypeId.JAVA_MODULE)
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
@@ -76,12 +77,7 @@ internal class ModuleStoreRenameTest {
 
       // should be invoked after project tearDown
       override fun after() {
-        (ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl).getVirtualFileTracker()!!.remove {
-          if (it.storageManager.componentManager == module) {
-            throw AssertionError("Storage manager is not disposed, module $module, storage $it")
-          }
-          false
-        }
+        checkStorageIsNotTracked(module)
       }
     },
     DisposeModulesRule(projectRule)
@@ -99,10 +95,8 @@ internal class ModuleStoreRenameTest {
     val oldName = module.name
     val newName = "foo"
 
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        projectRule.project.modifyModules { renameModule(module, newName) }
-      }
+    writeAction {
+      projectRule.project.modifyModules { renameModule(module, newName) }
     }
     assertModuleFileRenamed(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
@@ -178,20 +172,17 @@ internal class ModuleStoreRenameTest {
     val storage = module.storage
     val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        PsiTestUtil.addSourceContentToRoots(module, src, false)
-      }
+    writeAction {
+      PsiTestUtil.addSourceContentToRoots(module, src, false)
     }
+
     saveProjectState()
 
     val rootManager = module.rootManager as ModuleRootManagerEx
     val stateModificationCount = rootManager.modificationCountForTests
 
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        src.rename(null, "bar.dot")
-      }
+    writeAction {
+      src.rename(null, "bar.dot")
     }
 
     assertThat(stateModificationCount).isLessThan(rootManager.modificationCountForTests)

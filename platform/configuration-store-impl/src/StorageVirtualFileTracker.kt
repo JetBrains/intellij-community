@@ -3,28 +3,26 @@
 
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.util.messages.MessageBus
-import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.atomic.AtomicBoolean
 
-@ApiStatus.Internal
-class StorageVirtualFileTracker(private val messageBus: MessageBus) {
-  private val filePathToStorage: ConcurrentMap<String, TrackedStorage> = ConcurrentHashMap()
+internal class StorageVirtualFileTracker {
+  private val filePathToStorage = ConcurrentHashMap<String, TrackedStorage>()
   @Volatile
   private var hasDirectoryBasedStorages = false
 
-  private val vfsListenerAdded = AtomicBoolean()
+  @Volatile
+  private var vfsListenerIsActive = false
 
   interface TrackedStorage : StateStorage {
     val storageManager: StateStorageManagerImpl
@@ -36,9 +34,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
       hasDirectoryBasedStorages = true
     }
 
-    if (vfsListenerAdded.compareAndSet(false, true)) {
-      addVfsChangesListener()
-    }
+    vfsListenerIsActive = true
   }
 
   fun remove(path: String) {
@@ -49,79 +45,92 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
     filePathToStorage.values.removeIf(filter)
   }
 
-  private fun addVfsChangesListener() {
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) {
-        var storageEvents: LinkedHashMap<ComponentManager, LinkedHashSet<StateStorage>>? = null
-        eventLoop@ for (event in events) {
-          var storage: StateStorage?
-          if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME == event.propertyName) {
-            val oldPath = event.oldPath
-            storage = filePathToStorage.remove(oldPath)
-            if (storage != null) {
-              filePathToStorage.put(event.path, storage)
-              if (storage is FileBasedStorage) {
-                storage.setFile(null, Paths.get(event.path))
-              }
-              // we don't support DirectoryBasedStorage renaming
+  fun prepare(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+    if (!vfsListenerIsActive) {
+      return null
+    }
 
-              // StoragePathMacros.MODULE_FILE -> old path, we must update value
-              (storage.storageManager as? RenameableStateStorageManager)?.pathRenamed(Paths.get(event.path), event)
-            }
+    var storageEvents: LinkedHashMap<IComponentStore, LinkedHashSet<StateStorage>>? = null
+    eventLoop@ for (event in events) {
+      var storage: StateStorage?
+      if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME == event.propertyName) {
+        val oldPath = event.oldPath
+        storage = filePathToStorage.remove(oldPath)
+        if (storage != null) {
+          filePathToStorage.put(event.path, storage)
+          if (storage is FileBasedStorage) {
+            storage.setFile(null, Path.of(event.path))
           }
-          else {
-            val path = event.path
-            storage = filePathToStorage.get(path)
-            // We don't care about parent directory create (because it doesn't affect anything)
-            // and move (because it is not a supported case),
-            // but we should detect deletion - but again, it is not a supported case.
-            // So, we don't check if some of the registered storages located inside changed directory.
+          // we don't support DirectoryBasedStorage renaming
 
-            // but if we have DirectoryBasedStorage, we check - if file located inside it
-            if (storage == null && hasDirectoryBasedStorages && path.endsWith(FileStorageCoreUtil.DEFAULT_EXT, ignoreCase = true)) {
-              storage = filePathToStorage.get(VfsUtil.getParentDir(path))
-            }
-          }
-
-          if (storage == null) {
-            continue
-          }
-
-          when (event) {
-            is VFileMoveEvent -> {
-              if (storage is FileBasedStorage) {
-                storage.setFile(null, Paths.get(event.path))
-              }
-            }
-            is VFileCreateEvent -> {
-              if (storage is FileBasedStorage && event.requestor !is SaveSession) {
-                storage.setFile(event.file, null)
-              }
-            }
-            is VFileDeleteEvent -> {
-              if (storage is FileBasedStorage) {
-                storage.setFile(null, null)
-              }
-              else {
-                (storage as DirectoryBasedStorage).setVirtualDir(null)
-              }
-            }
-            is VFileCopyEvent -> continue@eventLoop
-          }
-
-          if (isFireStorageFileChangedEvent(event)) {
-            val componentManager = storage.storageManager.componentManager!!
-            if (storageEvents == null) {
-              storageEvents = LinkedHashMap()
-            }
-            storageEvents.computeIfAbsent(componentManager) { LinkedHashSet() }.add(storage)
-          }
-        }
-
-        if (storageEvents != null) {
-          StoreReloadManager.getInstance().storageFilesChanged(storageEvents)
+          // StoragePathMacros.MODULE_FILE -> old path, we must update value
+          (storage.storageManager as? RenameableStateStorageManager)?.pathRenamed(Path.of(event.path), event)
         }
       }
-    })
+      else {
+        val path = event.path
+        storage = filePathToStorage.get(path)
+        // We don't care about parent directory create (because it doesn't affect anything)
+        // and move (because it is not a supported case),
+        // but we should detect deletion - but again, it is not a supported case.
+        // So, we don't check if some of the registered storages located inside changed directory.
+
+        // but if we have DirectoryBasedStorage, we check - if file located inside it
+        if (storage == null && hasDirectoryBasedStorages && path.endsWith(FileStorageCoreUtil.DEFAULT_EXT, ignoreCase = true)) {
+          storage = filePathToStorage.get(VfsUtil.getParentDir(path))
+        }
+      }
+
+      if (storage == null) {
+        continue
+      }
+
+      when (event) {
+        is VFileMoveEvent -> {
+          if (storage is FileBasedStorage) {
+            storage.setFile(null, Path.of(event.path))
+          }
+        }
+        is VFileCreateEvent -> {
+          if (storage is FileBasedStorage && event.requestor !is SaveSession) {
+            storage.setFile(event.file, null)
+          }
+        }
+        is VFileDeleteEvent -> {
+          if (storage is FileBasedStorage) {
+            storage.setFile(null, null)
+          }
+          else {
+            (storage as DirectoryBasedStorage).setVirtualDir(null)
+          }
+        }
+        is VFileCopyEvent -> continue@eventLoop
+      }
+
+      if (isFireStorageFileChangedEvent(event)) {
+        val componentManager = storage.storageManager.componentManager!!
+        if (storageEvents == null) {
+          storageEvents = LinkedHashMap()
+        }
+        storageEvents.computeIfAbsent(componentManager.stateStore) { LinkedHashSet() }.add(storage)
+      }
+    }
+
+    if (storageEvents == null) {
+      return null
+    }
+
+    return object : AsyncFileListener.ChangeApplier {
+      override fun afterVfsChange() {
+        for ((store, storages) in storageEvents) {
+          val project: Project = when (val componentManager = store.storageManager.componentManager) {
+            is Project -> componentManager
+            is Module -> componentManager.project
+            else -> continue
+          }
+          StoreReloadManager.getInstance(project).storageFilesChanged(store, storages)
+        }
+      }
+    }
   }
 }

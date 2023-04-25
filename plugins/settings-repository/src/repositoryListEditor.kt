@@ -72,9 +72,9 @@ private fun deleteRepository(icsManager: IcsManager) {
   runBlockingModalWithRawProgressReporter(ModalTaskOwner.guess(), IcsBundle.message("progress.syncing.before.deleting.repository")) {
     val repositoryManager = icsManager.repositoryManager
 
-    // attempt to fetch, merge and push to ensure that latest changes in the deleted user repository will be not lost
+    // Attempt to fetch, merge and push to ensure that the latest changes in the deleted user repository will be not lost
     // yes, - delete repository doesn't mean "AAA, delete it, delete". It means just that user doesn't need it at this moment.
-    // It is user responsibility later to delete git repository or do whatever user want. Our responsibility is to not loose user changes.
+    // It is user responsibility later to delete git repository or do whatever user wants. Our responsibility is to not lose user changes.
     if (!repositoryManager.canCommit()) {
       LOG.info("Commit on repository delete skipped: repository is not committable")
       return@runBlockingModalWithRawProgressReporter
@@ -83,7 +83,7 @@ private fun deleteRepository(icsManager: IcsManager) {
     catchAndLog(asWarning = true) {
       val updater = repositoryManager.fetch()
       ensureActive()
-      // ignore result, we don't need to apply it
+      // ignore a result, we don't need to apply it
       updater.merge()
       ensureActive()
       if (!updater.definitelySkipPush) {

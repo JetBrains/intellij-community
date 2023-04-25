@@ -339,7 +339,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     private void runImpl() {
-      StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+      if (myProject != null) {
+        StoreReloadManager.Companion.getInstance(myProject).blockReloadingProjectOnExternalChanges();
+      }
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("update.label.before.update"));
@@ -497,7 +499,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     private void onSuccessImpl(final boolean wasCanceled) {
       if (!myProject.isOpen() || myProject.isDisposed()) {
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
         LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("local.history.update.from.vcs")); // TODO check why this label is needed
         return;
       }
@@ -538,7 +540,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       final boolean updateSuccess = !someSessionWasCancelled && myGroupedExceptions.isEmpty();
 
       if (myProject.isDisposed()) {
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
         return;
       }
 
@@ -589,7 +591,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
 
 
-      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+      StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
 
       if (continueChainFinal && updateSuccess) {
         if (!noMerged) {

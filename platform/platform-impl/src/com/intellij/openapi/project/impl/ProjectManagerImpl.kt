@@ -63,6 +63,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.attachToProjectAsync
+import com.intellij.platform.jps.model.impl.diagnostic.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
@@ -77,7 +78,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import com.intellij.platform.jps.model.impl.diagnostic.JpsMetrics
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -268,7 +268,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   override fun findOpenProjectByHash(locationHash: String?): Project? = openProjectByHash.get(locationHash)
 
   override fun reloadProject(project: Project) {
-    StoreReloadManager.getInstance().reloadProject(project)
+    StoreReloadManager.getInstance(project).reloadProject()
   }
 
   override fun closeProject(project: Project): Boolean {
@@ -637,7 +637,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           throw CancellationException("project is already opened")
         }
 
-        // Project is loaded and is initialized, project services and components can be accessed.
+        // The project is loaded and is initialized, project services and components can be accessed.
         // But start-up and post start-up activities are not yet executed.
         if (!initFrameEarly) {
           rawProjectDeferred?.complete(project)
@@ -1106,7 +1106,7 @@ private fun toCanonicalName(filePath: String): Path {
   catch (ignore: InvalidPathException) {
   }
   catch (e: IOException) {
-    // OK. File does not yet exist, so its canonical path will be equal to its original path.
+    // the file does not yet exist, so its canonical path will be equal to its original path
   }
   return file
 }
@@ -1327,7 +1327,7 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
     // this project is in recent projects => it was opened on this computer before
     // => most probably we already asked about its trusted state before
     // the only exception is: the project stayed in the UNKNOWN state in the previous version because it didn't utilize any dangerous features
-    // in this case we will ask since no UNKNOWN state is allowed, but on a later stage, when we'll be able to look into the project-wide storage
+    // in this case, we will ask since no UNKNOWN state is allowed, but on a later stage, when we'll be able to look into the project-wide storage
     return true
   }
 

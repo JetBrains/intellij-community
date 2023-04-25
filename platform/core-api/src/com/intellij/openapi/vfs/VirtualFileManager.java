@@ -62,7 +62,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * Refreshes the cached file systems information from the physical file systems asynchronously.
    * Launches specified action when refresh is finished.
    * <p>
-   * @param postAction - action which will be executed in write-action after refresh session finished.
+   * @param postAction - action which will be executed in write-action after the refresh session finished.
    * @return refresh session ID.
    */
   public abstract long asyncRefresh(@Nullable Runnable postAction);
@@ -189,12 +189,6 @@ public abstract class VirtualFileManager implements ModificationTracker {
     return URLUtil.extractPath(url);
   }
 
-  /**
-   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
-   */
-  @Deprecated
-  public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
-
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
@@ -210,7 +204,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
-   * This only counts modifications done in current IDE session.
+   * This only counts modifications done in the current IDE session.
    * @see #getStructureModificationCount()
    */
   @Override
@@ -218,7 +212,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * @return a number that's incremented every time something changes in the VFS structure, i.e. file hierarchy or names.
-   * This only counts modifications done in current IDE session.
+   * This only counts modifications done in the current IDE session.
    * @see #getModificationCount()
    */
   public abstract long getStructureModificationCount();

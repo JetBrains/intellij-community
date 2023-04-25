@@ -175,6 +175,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                         serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
+    <vfs.asyncListener implementation="com.intellij.configurationStore.MyAsyncVfsListener"/>
 
     <applicationService serviceInterface="com.intellij.openapi.components.PathMacroManager"
                         serviceImplementation="com.intellij.configurationStore.ApplicationPathMacroManager"/>
@@ -1219,9 +1220,8 @@
     <registryKey key="run.anything.context.recent.directory.number" defaultValue="5"
                  description="Defines storing Run Anything context combobox directories number."/>
 
-    <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
-                        serviceImplementation="com.intellij.configurationStore.StoreReloadManagerImpl"/>
-    <virtualFileManagerListener implementation="com.intellij.configurationStore.StoreReloadManagerImpl$MyVirtualFileManagerListener"/>
+    <projectService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
+                    serviceImplementation="com.intellij.configurationStore.StoreReloadManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.lightEdit.LightEditService"
                         serviceImplementation="com.intellij.ide.lightEdit.LightEditServiceImpl"/>

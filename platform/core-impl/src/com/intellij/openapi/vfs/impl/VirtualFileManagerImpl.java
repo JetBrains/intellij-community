@@ -2,7 +2,9 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -39,7 +41,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   protected static final Logger LOG = Logger.getInstance(VirtualFileManagerImpl.class);
 
   // do not use extension point name to avoid map lookup on each event publishing
-  private static final ExtensionPointImpl<VirtualFileManagerListener> MANAGER_LISTENER_EP =
+  private static final ExtensionPointImpl<@NotNull VirtualFileManagerListener> MANAGER_LISTENER_EP =
     ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
 
   private final List<? extends VirtualFileSystem> myPreCreatedFileSystems;
@@ -173,13 +175,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @Override
-  public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
-    myVirtualFileManagerListeners.add(listener);
-  }
-
-  @Override
   public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
-    addVirtualFileManagerListener(listener);
+    myVirtualFileManagerListeners.add(listener);
     Disposer.register(parentDisposable, () -> removeVirtualFileManagerListener(listener));
   }
 
@@ -202,16 +199,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public void notifyPropertyChanged(@NotNull VirtualFile virtualFile, @VirtualFile.PropName @NotNull String property, Object oldValue, Object newValue) {
     Application app = ApplicationManager.getApplication();
-    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().expireWith(app).submit(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (virtualFile.isValid()) {
-        WriteAction.run(() -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
           List<VFileEvent> events = Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
           BulkFileListener listener = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
           listener.before(events);
           listener.after(events);
         });
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   @Override

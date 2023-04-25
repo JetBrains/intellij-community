@@ -51,7 +51,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     EditorNotifications notifications = new EditorNotificationsImpl(project, project.getCoroutineScope());
     ServiceContainerUtil.replaceService(project, EditorNotifications.class, notifications, getTestRootDisposable());
     NonProjectFileWritingAccessProvider.enableChecksInTests(project);
-    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+    StoreReloadManager.Companion.getInstance(project).blockReloadingProjectOnExternalChanges();
   }
 
   @Override
@@ -75,7 +75,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     }
     finally {
       super.tearDown();
-      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed;
+      StoreReloadManager.Companion.getInstance(getProject()).unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed;
     }
   }
 

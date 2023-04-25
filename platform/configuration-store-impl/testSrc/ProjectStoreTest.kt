@@ -74,7 +74,7 @@ internal class ProjectStoreTest {
       file.write(file.readText().replace("""<option name="AAvalue" value="foo" />""", """<option name="AAvalue" value="newValue" />"""))
 
       refreshProjectConfigDir(project)
-      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+      StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 

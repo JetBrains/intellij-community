@@ -4,17 +4,17 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.AsyncFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
-import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -24,6 +24,7 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * If componentManager not specified, storage will not add file tracker
@@ -31,8 +32,9 @@ import kotlin.concurrent.write
 @Internal
 open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
                                    final override val macroSubstitutor: PathMacroSubstitutor? = null,
-                                   override val componentManager: ComponentManager?,
-                                   private val virtualFileTracker: StorageVirtualFileTracker? = createDefaultVirtualTracker(componentManager)) : StateStorageManager {
+                                   final override val componentManager: ComponentManager?) : StateStorageManager {
+  private val virtualFileTracker = createDefaultVirtualTracker(componentManager)
+
   @Volatile
   protected var macros: List<Macro> = Collections.emptyList()
 
@@ -55,36 +57,15 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   }
 
   // access under storageLock
-  @Suppress("LeakingThis")
   private var isUseVfsListener = when (componentManager) {
-    null, is Application -> ThreeState.NO
+    null -> ThreeState.NO
     else -> ThreeState.UNSURE // unsure because depends on stream provider state
   }
 
-  open fun getFileBasedStorageConfiguration(fileSpec: String) = defaultFileBasedStorageConfiguration
+  open fun getFileBasedStorageConfiguration(fileSpec: String): FileBasedStorageConfiguration = defaultFileBasedStorageConfiguration
 
   protected open val isUseXmlProlog: Boolean
     get() = true
-
-  companion object {
-    private fun createDefaultVirtualTracker(componentManager: ComponentManager?): StorageVirtualFileTracker? {
-      return when (componentManager) {
-        null -> null
-        is Application -> StorageVirtualFileTracker(componentManager.messageBus)
-        else -> {
-          val tracker = (ApplicationManager.getApplication().stateStore.storageManager as? StateStorageManagerImpl)?.virtualFileTracker
-                        ?: return null
-          Disposer.register(componentManager, Disposable {
-            tracker.remove { it.storageManager.componentManager === componentManager }
-          })
-          tracker
-        }
-      }
-    }
-  }
-
-  @TestOnly
-  fun getVirtualFileTracker() = virtualFileTracker
 
   /**
    * Returns an old map.
@@ -171,8 +152,8 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
     val storage = getCachedFileStorages(listOf(spec)).firstOrNull() ?: return
     if (storage is StorageVirtualFileTracker.TrackedStorage) {
       virtualFileTracker?.let { tracker ->
-        tracker.remove(storage.file.systemIndependentPath)
-        tracker.put(newPath.systemIndependentPath, storage)
+        tracker.remove(storage.file.invariantSeparatorsPathString)
+        tracker.put(newPath.invariantSeparatorsPathString, storage)
       }
     }
     storage.setFile(null, newPath)
@@ -199,13 +180,12 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
     }
   }
 
-  // overridden in upsource
-  protected open fun createStateStorage(storageClass: Class<out StateStorage>,
-                                        collapsedPath: String,
-                                        roamingType: RoamingType,
-                                        @Suppress("DEPRECATION", "removal") stateSplitter: Class<out StateSplitter>,
-                                        usePathMacroManager: Boolean,
-                                        exclusive: Boolean = false): StateStorage {
+  private fun createStateStorage(storageClass: Class<out StateStorage>,
+                                 collapsedPath: String,
+                                 roamingType: RoamingType,
+                                 @Suppress("DEPRECATION", "removal") stateSplitter: Class<out StateSplitter>,
+                                 usePathMacroManager: Boolean,
+                                 exclusive: Boolean = false): StateStorage {
     if (storageClass != StateStorage::class.java) {
       val constructor = storageClass.constructors.first { it.parameterCount <= 3 }
       constructor.isAccessible = true
@@ -227,7 +207,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
     if (stateSplitter != StateSplitter::class.java && stateSplitter != StateSplitterEx::class.java) {
       val storage = createDirectoryBasedStorage(filePath, collapsedPath, ReflectionUtil.newInstance(stateSplitter))
       if (storage is StorageVirtualFileTracker.TrackedStorage) {
-        virtualFileTracker?.put(filePath.systemIndependentPath, storage)
+        virtualFileTracker?.put(filePath.invariantSeparatorsPathString, storage)
       }
       return storage
     }
@@ -243,12 +223,11 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
                                          usePathMacroManager = usePathMacroManager,
                                          rootTagName = if (exclusive) null else rootTagName)
     if (isUseVfsListener == ThreeState.YES && storage is StorageVirtualFileTracker.TrackedStorage) {
-      virtualFileTracker?.put(filePath.systemIndependentPath, storage)
+      virtualFileTracker?.put(filePath.invariantSeparatorsPathString, storage)
     }
     return storage
   }
 
-  // open for upsource
   protected open fun createFileBasedStorage(path: Path,
                                             collapsedPath: String,
                                             roamingType: RoamingType,
@@ -353,9 +332,9 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
     }
   }
 
-  protected open fun clearVirtualFileTracker(virtualFileTracker: StorageVirtualFileTracker) {
+  internal open fun clearVirtualFileTracker(virtualFileTracker: StorageVirtualFileTracker) {
     for (collapsedPath in storages.keys) {
-      virtualFileTracker.remove(expandMacro(collapsedPath).systemIndependentPath)
+      virtualFileTracker.remove(expandMacro(collapsedPath).invariantSeparatorsPathString)
     }
   }
 
@@ -365,7 +344,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
         return value
       }
 
-      if (collapsedPath.length > (key.length + 2) && collapsedPath[key.length] == '/' && collapsedPath.startsWith(key)) {
+      if (collapsedPath.length > (key.length + 2) && collapsedPath.get(key.length) == '/' && collapsedPath.startsWith(key)) {
         return value.resolve(collapsedPath.substring(key.length + 1))
       }
     }
@@ -376,7 +355,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   fun collapseMacro(path: String): String {
     for ((key, value) in macros) {
       @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-      val result = (path as java.lang.String).replace(value.systemIndependentPath, key)
+      val result = (path as java.lang.String).replace(value.invariantSeparatorsPathString, key)
       if (result !== path) {
         return result
       }
@@ -399,7 +378,10 @@ internal val Storage.path: String
   get() = value.ifEmpty { file }
 
 internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
-  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE || isSpecialStorage(collapsedPath))) {
+  if (roamingType != RoamingType.DISABLED &&
+      (collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
+       collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
+       isSpecialStorage(collapsedPath))) {
     return RoamingType.DISABLED
   }
   else {
@@ -409,3 +391,37 @@ internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: St
 
 @Internal
 data class Macro(@JvmField val key: String, @JvmField var value: Path)
+
+@TestOnly
+fun checkStorageIsNotTracked(module: ComponentManager) {
+  service<StorageVirtualFileTrackerHolder>().tracker.remove {
+    if (it.storageManager.componentManager === module) {
+      throw AssertionError("Storage manager is not disposed, module $module, storage $it")
+    }
+    false
+  }
+}
+
+@Service(Service.Level.APP)
+private class StorageVirtualFileTrackerHolder {
+  @JvmField
+  val tracker = StorageVirtualFileTracker()
+}
+
+private class MyAsyncVfsListener : AsyncFileListener {
+  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+    return service<StorageVirtualFileTrackerHolder>().tracker.prepare(events)
+  }
+}
+
+private fun createDefaultVirtualTracker(componentManager: ComponentManager?): StorageVirtualFileTracker? {
+  if (componentManager == null) {
+    return null
+  }
+
+  val tracker = service<StorageVirtualFileTrackerHolder>().tracker
+  Disposer.register(componentManager, Disposable {
+    tracker.remove { it.storageManager.componentManager === componentManager }
+  })
+  return tracker
+}

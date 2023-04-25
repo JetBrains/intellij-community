@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -43,7 +42,7 @@ public final class AsyncEventSupport {
 
   public static void startListening() {
     Application app = ApplicationManager.getApplication();
-    Disposer.register(app, () -> ensureAllEventsProcessed());
+    Disposer.register(app, AsyncEventSupport::ensureAllEventsProcessed);
 
     app.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -87,7 +86,7 @@ public final class AsyncEventSupport {
       long startNs = System.nanoTime();
       boolean canceled = false;
       try {
-        ReadAction.run(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
+        ApplicationManager.getApplication().runReadAction(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
       }
       catch (ProcessCanceledException e) {
         canceled = true;

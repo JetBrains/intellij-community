@@ -6,6 +6,7 @@ import com.intellij.configurationStore.*
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.ReflectionUtil
@@ -22,7 +23,7 @@ private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(pro
 
   fun configurationFileChanged() {
     if (storages.isNotEmpty()) {
-      StoreReloadManager.getInstance().storageFilesChanged(mapOf(project to storages.values.toList()))
+      StoreReloadManager.getInstance(project).storageFilesChanged(project.stateStore, storages.values.toList())
     }
   }
 

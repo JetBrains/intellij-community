@@ -212,38 +212,41 @@ fun getPerOsSettingsStorageFolderName(): String {
   }
 }
 
-/**
- * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
- */
-@CalledInAny
-suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
-  val storeReloadManager = StoreReloadManager.getInstance()
+private suspend inline fun reloadChangedStorageFilesAndRun(project: Project, task: () -> Unit) {
+  val storeReloadManager = StoreReloadManager.getInstance(project)
   storeReloadManager.reloadChangedStorageFiles()
   storeReloadManager.blockReloadingProjectOnExternalChanges()
   try {
-    val start = System.currentTimeMillis()
-    saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
-    if (onlyProject == null) {
-      saveAllProjects(forceSavingAllSettings)
-    }
-    else {
-      saveSettings(onlyProject, forceSavingAllSettings = true)
-    }
-
-    val duration = System.currentTimeMillis() - start
-    if (duration > 1000 || LOG.isDebugEnabled) {
-      LOG.info("saveProjectsAndApp took $duration ms")
-    }
+    task()
   }
   finally {
     storeReloadManager.unblockReloadingProjectOnExternalChanges()
   }
 }
 
+/**
+ * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
+ */
 @CalledInAny
-private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
-  processOpenedProjects { project ->
-    saveSettings(project, forceSavingAllSettings)
+suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
+  val start = System.currentTimeMillis()
+  saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
+  if (onlyProject == null) {
+    processOpenedProjects { project ->
+      reloadChangedStorageFilesAndRun(project) {
+        saveSettings(project, forceSavingAllSettings)
+      }
+    }
+  }
+  else {
+    reloadChangedStorageFilesAndRun(onlyProject) {
+      saveSettings(onlyProject, forceSavingAllSettings = true)
+    }
+  }
+
+  val duration = System.currentTimeMillis() - start
+  if (duration > 1000 || LOG.isDebugEnabled) {
+    LOG.info("saveProjectsAndApp took $duration ms")
   }
 }
 

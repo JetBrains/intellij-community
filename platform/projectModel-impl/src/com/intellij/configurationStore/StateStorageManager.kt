@@ -48,8 +48,5 @@ interface StorageCreator {
 // better to reduce message bus usage
 fun isFireStorageFileChangedEvent(event: VFileEvent): Boolean {
   // ignore VFilePropertyChangeEvent because doesn't affect content
-  return when (event) {
-    is VFilePropertyChangeEvent -> false
-    else -> event.requestor !is StorageManagerFileWriteRequestor
-  }
+  return event !is VFilePropertyChangeEvent && event.requestor !is StorageManagerFileWriteRequestor
 }
