@@ -34,7 +34,7 @@ variant_size_differences
 use std::env;
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use log::{debug, error, LevelFilter, warn};
 use serde::{Deserialize, Serialize};
 use utils::{get_current_exe, jvm_property};
@@ -45,9 +45,6 @@ use {
     windows::Win32::Foundation::HANDLE,
     windows::Win32::UI::Shell
 };
-
-#[cfg(target_family = "unix")]
-use anyhow::Context;
 
 use crate::default::DefaultLaunchConfiguration;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
