@@ -17,7 +17,7 @@ class IdeVirtualFileFinderFactory : VirtualFileFinderFactory {
     override fun create(project: Project, module: ModuleDescriptor): VirtualFileFinder {
         val ideaModuleInfo = module.getCapability(ModuleInfo.Capability) as? IdeaModuleInfo
 
-        val scope = if (ideaModuleInfo is ScriptModuleInfo) {
+        val scope = if (ideaModuleInfo != null) {
             val moduleDependenciesScope = ideaModuleInfo.dependencies().map { it.contentScope }
             GlobalSearchScope.union(moduleDependenciesScope)
         } else {
