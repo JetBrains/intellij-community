@@ -31,8 +31,8 @@ public interface JsonSchemaFileProvider {
   }
 
   /**
-   * An information shown about the provided API, for example, an API version or the target platform.
-   * This is useful for auto-generated schemas targeting multiple versions of the same config
+   * Information about the provided API (e.g., an API version or the target platform).
+   * This is useful for auto-generated schemas targeting multiple versions of the same config.
    */
   @Nullable
   @Nls
@@ -41,23 +41,25 @@ public interface JsonSchemaFileProvider {
   }
 
   /**
-   * Whether this schema is shown and selectable by the user in the schema dropdown menu.
-   * Some schemas are designed to be auto-assigned and bound to very particular contexts, and thus hidden from the selector
+   * @return {@code true} if this schema is shown and selectable by the user in the schema dropdown menu.
+   * Some schemas are designed to be auto-assigned and bound to very particular contexts,
+   * and thus hidden from the selector.
    */
   default boolean isUserVisible() { return true; }
 
   /**
-   * Presentable name of the schema shown in the UI
+   * Presentable name of the schema shown in the UI.
    */
   @NotNull
   @NlsContexts.ListItem
   default String getPresentableName() { return getName(); }
 
   /**
-   * A URL from which a fresh version of a schema can be downloaded
-   * Better to have it matching the URL for the schema in the SchemaStore catalogue
-   * If for some purposes you want to have a unique URL for your schema which is not a schema file (for example, its website),
-   *  you need to postfix it with a '!'
+   * A URL to download an up-to-date schema version.
+   * <p>
+   * It's recommended to have it matching the URL for the schema in the SchemaStore catalogue.
+   * If for some reason you need to have a unique URL for your schema, which is not a schema file (for example, its website),
+   * you need to postfix it with '!'.
    */
   @Nullable
   @NonNls
