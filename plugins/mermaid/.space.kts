@@ -18,7 +18,7 @@ fun Container.publishingEnvironment(channel: String = PublishChannels.STABLE) {
   }
 }
 
-job("Mermaid / Build for 223") {
+job("Mermaid / Build for 231.8770+") {
   startOn {
     gitPush {
       enabled = true

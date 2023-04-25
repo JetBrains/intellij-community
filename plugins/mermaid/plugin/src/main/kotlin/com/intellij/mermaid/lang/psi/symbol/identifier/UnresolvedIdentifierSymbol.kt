@@ -27,6 +27,7 @@ open class UnresolvedIdentifierSymbol(
   override val targetName: String
     get() = text
 
+  // No return type is specified, so that we can compile against both pre-231.8770 and 231.8770
   override fun presentation() = SymbolNavigationService.getInstance().presentationBuilder(text).presentation()
 
   override fun createPointer(): Pointer<out UnresolvedIdentifierSymbol> {
