@@ -48,11 +48,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * @author Maxim.Medvedev
@@ -77,7 +78,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   }
 
   @Override
-  public MultiMap<PsiElement, String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages) {
+  public MultiMap<PsiElement, @DialogMessage String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages) {
     if (info instanceof JavaChangeInfo) {
       return new ConflictSearcher((JavaChangeInfo)info).findConflicts(refUsages);
     }
@@ -1278,8 +1279,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       this.myChangeInfo = changeInfo;
     }
 
-    public MultiMap<PsiElement, String> findConflicts(Ref<UsageInfo[]> refUsages) {
-      MultiMap<PsiElement, @Nls String> conflictDescriptions = new MultiMap<>();
+    public MultiMap<PsiElement, @DialogMessage String> findConflicts(Ref<UsageInfo[]> refUsages) {
+      MultiMap<PsiElement, @DialogMessage String> conflictDescriptions = new MultiMap<>();
       final PsiMethod prototype = addMethodConflicts(conflictDescriptions);
       Set<UsageInfo> usagesSet = ContainerUtil.newHashSet(refUsages.get());
       RenameUtil.removeConflictUsages(usagesSet);
@@ -1344,7 +1345,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       return conflictDescriptions;
     }
 
-    public static void checkParametersToDelete(PsiMethod method, boolean[] toRemove, MultiMap<PsiElement, @Nls String> conflictDescriptions) {
+    public static void checkParametersToDelete(PsiMethod method,
+                                               boolean[] toRemove,
+                                               MultiMap<PsiElement, @DialogMessage String> conflictDescriptions) {
       if (method instanceof SyntheticElement) return;
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiCodeBlock body = method.getBody();
@@ -1382,7 +1385,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       return null;
     }
 
-    private void checkContract(MultiMap<PsiElement, @Nls String> conflictDescriptions, PsiMethod method, boolean override) {
+    private void checkContract(MultiMap<PsiElement, @DialogMessage String> conflictDescriptions, PsiMethod method, boolean override) {
       try {
         ContractConverter.convertContract(method, myChangeInfo);
       }
@@ -1401,8 +1404,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
 
-    private void addInaccessibilityDescriptions(Set<UsageInfo> usages, MultiMap<PsiElement, @Nls String> conflictDescriptions)
-      throws IncorrectOperationException {
+    private void addInaccessibilityDescriptions(Set<UsageInfo> usages,
+                                                MultiMap<PsiElement, @DialogMessage String> conflictDescriptions) {
       PsiMethod method = myChangeInfo.getMethod();
       PsiModifierList modifierList = (PsiModifierList)method.getModifierList().copy();
       String visibility = myChangeInfo.getNewVisibility();
@@ -1441,7 +1444,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
     }
 
-    public static void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, @Nls String> conflicts, final String modifier) {
+    public static void searchForHierarchyConflicts(PsiMethod method,
+                                                   MultiMap<PsiElement, @DialogMessage String> conflicts,
+                                                   String modifier) {
       SuperMethodsSearch.search(method, ReadAction.compute(method::getContainingClass), true, false).forEach(
         new ReadActionProcessor<>() {
           @Override
@@ -1495,8 +1500,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       return JavaResolveUtil.isAccessible(method, method.getContainingClass(), modifierListCopy, overridingMethod, null, null);
     }
 
-
-    private PsiMethod addMethodConflicts(MultiMap<PsiElement, @Nls String> conflicts) {
+    private PsiMethod addMethodConflicts(MultiMap<PsiElement, @DialogMessage String> conflicts) {
       String newMethodName = myChangeInfo.getNewName();
       try {
         final PsiMethod method = myChangeInfo.getMethod();
