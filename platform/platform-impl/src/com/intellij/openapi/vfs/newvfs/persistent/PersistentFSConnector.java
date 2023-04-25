@@ -368,7 +368,15 @@ final class PersistentFSConnector {
                                            final @NotNull AbstractAttributesStorage attributes,
                                            final @NotNull RefCountingContentStorage contents) throws IOException {
     final int recordsVersion = records.getVersion();
-    if (attributes.getVersion() != recordsVersion || contents.getVersion() != recordsVersion) return -1;
+    final int attributesVersion = attributes.getVersion();
+    final int contentsVersion = contents.getVersion();
+    if (attributesVersion != recordsVersion || contentsVersion != recordsVersion) {
+      LOG.info("VFS storages are of different versions: " +
+               "records(=" + recordsVersion + "), " +
+               "attributes(=" + attributesVersion + "), " +
+               "content(=" + contentsVersion + ")");
+      return -1;
+    }
 
     return recordsVersion;
   }
