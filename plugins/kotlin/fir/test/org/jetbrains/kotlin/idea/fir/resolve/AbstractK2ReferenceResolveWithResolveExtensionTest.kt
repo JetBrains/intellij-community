@@ -16,13 +16,13 @@ abstract class AbstractK2ReferenceResolveWithResolveExtensionTest : AbstractFirR
     override fun setUp() {
         super.setUp()
         myFixture.addFileToProject("data.xml", """
-            <xml>
-                <package>generated</package>
-                <functions>
-                    <function>aaaa</function>
-                    <function>bbbb</function>
-                    <function>cccc</function>
-                </functions>
+             <xml>
+                <package>generated.pckg</package>
+                <function name = "aaaa"/>
+                <function name = "bbbb"/>
+                <class name = "CCCC">
+                    <function name = "dddd"/>
+                </class>
             </xml>
         """.trimIndent())
         project.extensionArea.getExtensionPoint(KtResolveExtensionProvider.EP_NAME)

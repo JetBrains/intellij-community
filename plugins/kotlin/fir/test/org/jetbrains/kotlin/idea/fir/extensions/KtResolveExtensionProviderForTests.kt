@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
+
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.ModificationTracker
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtension
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionFile
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionProvider
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionReferencePsiTargetsProvider
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -62,33 +64,62 @@ private class ExtensionForTests(private val xmlFile: XmlFile) : KtResolveExtensi
 }
 
 private class ExtensionFileForTest(private val rootTag: XmlTag, private val packageName: FqName) : KtResolveExtensionFile() {
-    private val functionTags by lazy {
-        rootTag.findFirstSubTag("functions")?.findSubTags("function")
+    private val functionNames by lazy {
+        rootTag.findSubTags("function").mapTo(mutableSetOf()) { Name.identifier(it.getAttributeValue("name")!!) }
     }
 
-    private val functionNames by lazy {
-        functionTags?.mapTo(mutableSetOf()) { Name.identifier(it.value.text.trim()) }.orEmpty()
+    private val classNames by lazy {
+        rootTag.findSubTags("class").mapTo(mutableSetOf()) { Name.identifier(it.getAttributeValue("name")!!) }
     }
 
     override fun buildFileText(): String = buildString {
         appendLine("package $packageName")
         appendLine()
-        functionNames.forEach { functionName ->
-            appendLine("fun $functionName() {}")
+
+        printClasses(rootTag)
+        appendLine()
+        printFunctions(rootTag)
+    }
+
+    private fun StringBuilder.printFunctions(tag: XmlTag) {
+        for (functionDeclaration in tag.findSubTags("function")) {
+            val name = functionDeclaration.getAttributeValue("name")
+            appendLine("fun $name() {}")
             appendLine()
+        }
+    }
+
+    private fun StringBuilder.printClasses(tag: XmlTag) {
+        for (classDeclaration in tag.findSubTags("class")) {
+            val name = classDeclaration.getAttributeValue("name")
+            appendLine("class $name {")
+            printClasses(classDeclaration)
+            printFunctions(classDeclaration)
+            appendLine("}")
         }
     }
 
     override fun createPsiTargetsProvider(): KtResolveExtensionReferencePsiTargetsProvider {
         return object : KtResolveExtensionReferencePsiTargetsProvider() {
             override fun KtAnalysisSession.getReferenceTargetsForSymbol(symbol: KtSymbol): Collection<PsiElement> {
-                return when (symbol) {
-                    is KtFunctionSymbol -> listOfNotNull(
-                        functionTags?.firstOrNull { it.value.text == symbol.name.asString() }
-                    )
-
-                    else -> listOf(rootTag)
+                val fqNameParts =  when (symbol) {
+                    is KtFunctionSymbol -> {
+                        val callableId = symbol.callableIdIfNonLocal ?: return listOf(rootTag)
+                        callableId.className?.pathSegments().orEmpty() + callableId.callableName
+                    }
+                    is KtClassLikeSymbol -> {
+                        symbol.classIdIfNonLocal?.relativeClassName?.pathSegments() ?: return listOf(rootTag)
+                    }
+                    else -> {
+                        return listOf(rootTag)
+                    }
                 }
+                var tag = rootTag
+                for (part in fqNameParts) {
+                    tag = tag.subTags.firstOrNull { it.getAttributeValue("name") == part.asString()  }
+                        ?: return listOf(rootTag)
+                }
+                return listOf(tag)
             }
         }
     }
@@ -106,7 +137,7 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
     }
 
     override fun getTopLevelClassifierNames(): Set<Name> {
-        return emptySet()
+        return classNames
     }
 }
 

@@ -1,7 +1,7 @@
-import generated.*
+import generated.pckg.*
 
 fun main() {
     aaa<caret>a()
 }
 
-// REF: <function>aaaa</function>
+// REF: <function name = "aaaa"/>
