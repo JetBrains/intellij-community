@@ -787,7 +787,7 @@ open class EditorsSplitters internal constructor(
       val component = parent.secondComponent
       if (component !== window.panel) {
         // reuse
-        findWindowWith(component)?.let { rightSplitWindow ->
+        windows.find { SwingUtilities.isDescendingFrom(component, it.panel) }?.let { rightSplitWindow ->
           manager.openFile(file = file, window = rightSplitWindow, options = FileEditorOpenOptions(requestFocus = requestFocus))
           return rightSplitWindow
         }
