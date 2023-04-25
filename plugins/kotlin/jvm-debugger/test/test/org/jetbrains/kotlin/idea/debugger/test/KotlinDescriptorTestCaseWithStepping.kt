@@ -21,6 +21,7 @@ import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
@@ -340,10 +341,14 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
+        addMavenDependency(compilerFacility, library, module)
+    }
+
+    fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String, module: Module) {
         val regex = Regex(MAVEN_DEPENDENCY_REGEX)
         val result = regex.matchEntire(library) ?: return
         val (_, groupId: String, artifactId: String, version: String) = result.groupValues
-        addMavenDependency(compilerFacility, groupId, artifactId, version)
+        addMavenDependency(compilerFacility, groupId, artifactId, version, module)
     }
 
     override fun createJavaParameters(mainClass: String?): JavaParameters {
@@ -354,14 +359,19 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         return params
     }
 
-    protected fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, groupId: String, artifactId: String, version: String) {
+    protected fun addMavenDependency(
+        compilerFacility: DebuggerTestCompilerFacility,
+        groupId: String, artifactId: String,
+        version: String,
+        module: Module
+    ) {
         val description = JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)
         val artifacts = loadDependencies(description)
         compilerFacility.addDependencies(artifacts.map { it.file.presentableUrl })
-        addLibraries(artifacts)
+        addLibraries(artifacts, module)
     }
 
-    private fun addLibraries(artifacts: MutableList<OrderRoot>) {
+    private fun addLibraries(artifacts: MutableList<OrderRoot>, module: Module) {
         runInEdtAndWait {
             ConfigLibraryUtil.addLibrary(module, "ARTIFACTS") {
                 for (artifact in artifacts) {

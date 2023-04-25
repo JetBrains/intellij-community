@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
 import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.ComparisonFailure
@@ -174,7 +175,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
                 if (useIrBackend()) TargetBackend.JVM_IR_WITH_IR_EVALUATOR else TargetBackend.JVM_WITH_IR_EVALUATOR
         }
 
-    protected open fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>) {
+    protected open fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
     }
 
     protected open fun createDebuggerTestCompilerFacility(
@@ -189,7 +190,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         val wholeFileContents = FileUtil.loadFile(wholeFile, true)
 
         val testFiles = createTestFiles(wholeFile, wholeFileContents)
-        configureProjectByTestFiles(testFiles)
+        configureProjectByTestFiles(testFiles, testAppDirectory)
 
         val preferences = DebuggerPreferences(myProject, wholeFileContents)
 
@@ -211,19 +212,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
             TestCompileConfiguration(useIrBackend(), lambdasGenerationScheme(), languageVersion, enabledLanguageFeatures)
         )
 
-        for (library in preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY]) {
-            if (library.startsWith("maven("))
-                addMavenDependency(compilerFacility, library)
-            else
-                compilerFacility.compileExternalLibrary(library, librarySrcDirectory, libraryOutputDirectory)
-        }
+        compileLibrariesAndTestSources(preferences, compilerFacility)
 
-        compilerFacility.compileLibrary(librarySrcDirectory, libraryOutputDirectory)
-        compilerFacility.compileTestSourcesWithCli(
-            myModule, jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory,
-            File(appOutputPath), libraryOutputDirectory
-        )
-        sourcesKtFiles = compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory)
         val mainClassName = analyzeAndFindMainClass(compilerFacility)
         breakpointCreator = BreakpointCreator(
             project,
@@ -233,6 +223,31 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         createLocalProcess(mainClassName)
         doMultiFileTest(testFiles, preferences)
+    }
+
+    private fun compileLibrariesAndTestSources(
+        preferences: DebuggerPreferences,
+        compilerFacility: DebuggerTestCompilerFacility
+    ) {
+        for (library in preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY]) {
+            if (library.startsWith("maven("))
+                addMavenDependency(compilerFacility, library)
+            else
+                compilerFacility.compileExternalLibrary(library, librarySrcDirectory, libraryOutputDirectory)
+        }
+
+        compilerFacility.compileLibrary(librarySrcDirectory, libraryOutputDirectory)
+        compileAdditionalLibraries(compilerFacility)
+        compilerFacility.compileTestSourcesWithCli(
+            myModule, jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory,
+            File(appOutputPath), libraryOutputDirectory
+        )
+        sourcesKtFiles =
+            compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory)
+    }
+
+    // Provide a hook for subclasses to compile additional libraries.
+    protected open fun compileAdditionalLibraries(compilerFacility: DebuggerTestCompilerFacility) {
     }
 
     protected open fun analyzeAndFindMainClass(compilerFacility: DebuggerTestCompilerFacility): String {
