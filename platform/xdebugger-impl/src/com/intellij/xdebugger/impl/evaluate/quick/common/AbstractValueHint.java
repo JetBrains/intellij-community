@@ -32,6 +32,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
@@ -208,6 +209,7 @@ public abstract class AbstractValueHint {
   }
 
   protected final void hideCurrentHint() {
+    EDT.assertIsEdt();
     if (myCurrentHint != null) {
       myCurrentHint.hide();
       myCurrentHint = null;
@@ -375,6 +377,7 @@ public abstract class AbstractValueHint {
   }
 
   private void showPopup(Function<Point, JBPopup> popupPresenter) {
+    EDT.assertIsEdt();
     myInsideShow = true;
     try {
       if (myEditor.isDisposed() || !isCurrentRangeValid()) {
