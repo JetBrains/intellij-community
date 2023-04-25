@@ -29,7 +29,7 @@ class EmailBlock(property: ObservableMutableProperty<String>,
             .applyToComponent {
               checkBoxEmail = this
             }
-        }.topGap(TopGap.MEDIUM)
+        }
 
         indent {
           row {

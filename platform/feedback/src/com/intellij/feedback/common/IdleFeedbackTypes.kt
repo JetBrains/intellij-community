@@ -16,6 +16,10 @@ import com.intellij.feedback.productivityMetric.bundle.ProductivityFeedbackBundl
 import com.intellij.feedback.productivityMetric.dialog.ProductivityFeedbackDialog
 import com.intellij.feedback.productivityMetric.state.ProductivityMetricFeedbackInfoService
 import com.intellij.feedback.productivityMetric.state.ProductivityMetricInfoState
+import com.intellij.feedback.pycharmUi.bundle.PyCharmUIFeedbackBundle
+import com.intellij.feedback.pycharmUi.dialog.PyCharmUIFeedbackDialog
+import com.intellij.feedback.pycharmUi.state.PyCharmUIInfoService
+import com.intellij.feedback.pycharmUi.state.PyCharmUIInfoState
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -146,6 +150,63 @@ enum class IdleFeedbackTypes {
 
     override fun updateStateAfterNotificationShowed() {
       ProductivityMetricFeedbackInfoService.getInstance().state.numberNotificationShowed += 1
+    }
+  },
+  PYCHARM_UI_FEEDBACK {
+    override val fusFeedbackId: String = "pycharm_ui_feedback"
+    override val suitableIdeVersion: String = "2023.1"
+    private val lastDayCollectFeedback = LocalDate(2023, 7, 25)
+    private val maxNumberNotificationShowed = 1
+    private val elapsedMinNumberDaysFromFirstRun = 5
+
+    override fun isSuitable(): Boolean {
+      val state = PyCharmUIInfoService.getInstance().state
+
+      return checkIdeIsSuitable() &&
+             checkIsNoDeadline() &&
+             checkIdeVersionIsSuitable() &&
+             checkFeedbackNotSent(state) &&
+             checkNotificationNumberNotExceeded(state) &&
+             checkNewUserFirstRunBeforeTime(state.newUserFirstRunDate)
+    }
+
+    override fun createNotification(forTest: Boolean): Notification {
+      return RequestFeedbackNotification(
+        "Feedback In IDE",
+        PyCharmUIFeedbackBundle.message("notification.request.feedback.title"),
+        PyCharmUIFeedbackBundle.message("notification.request.feedback.content"))
+    }
+
+    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
+      return PyCharmUIFeedbackDialog(project, forTest)
+    }
+
+    override fun updateStateAfterNotificationShowed() {
+      PyCharmUIInfoService.getInstance().state.numberNotificationShowed += 1
+    }
+
+    private fun checkIdeIsSuitable(): Boolean {
+      return PlatformUtils.isPyCharmCommunity()
+    }
+
+    private fun checkIsNoDeadline(): Boolean {
+      return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayCollectFeedback
+    }
+
+    private fun checkFeedbackNotSent(state: PyCharmUIInfoState): Boolean {
+      return !state.feedbackSent
+    }
+
+    private fun checkNotificationNumberNotExceeded(state: PyCharmUIInfoState): Boolean {
+      return state.numberNotificationShowed < maxNumberNotificationShowed
+    }
+
+    private fun checkNewUserFirstRunBeforeTime(newUserFirstRunDate: kotlinx.datetime.LocalDateTime?): Boolean {
+      if (newUserFirstRunDate == null) {
+        return false
+      }
+
+      return Duration.between(newUserFirstRunDate.toJavaLocalDateTime(), LocalDateTime.now()).toDays() >= elapsedMinNumberDaysFromFirstRun
     }
   };
 
