@@ -13,7 +13,7 @@ class ExtensionClassShouldBeFinalAndInternalInspectionTest : ExtensionClassShoul
 
   override fun setUp() {
     super.setUp()
-    myFixture.copyDirectoryToProject("resources", "resources")
+    myFixture.configureByFile("plugin.xml")
   }
 
   fun testMakeNotOpen() {
