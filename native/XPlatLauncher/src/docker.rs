@@ -13,8 +13,9 @@ use anyhow::Result;
 #[cfg(target_os = "linux")] use {
     anyhow::Context,
     log::{debug, info},
+    std::fs::File,
+    std::io::{BufReader, Read},
     std::path::PathBuf,
-    utils::read_file_to_end
 };
 
 #[cfg(any(target_os = "linux"))]
@@ -53,8 +54,11 @@ pub fn is_control_group_matches_docker(cgroup_parent_path: Option<PathBuf>) -> R
     }
 
     // Read cgroup file content
-    let cgroup_content = read_file_to_end(&cgroup_path)
-      .context(format!("Unable to read file '{}'", cgroup_path.display()))?;
+    let mut cgroup_content = String::new();
+    let cgroup_file = File::open(&cgroup_path)
+        .context(format!("Unable to open file '{}'", cgroup_path.display()))?;
+    let _n = BufReader::new(cgroup_file).read_to_string(&mut cgroup_content)
+        .context(format!("Unable to read file '{}'", cgroup_path.display()))?;
 
     // Check file contains any groups with 'docker' or 'lxc' suffix that define a container environment.
     let mut contains_docker_anchors = false;

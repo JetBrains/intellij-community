@@ -2,12 +2,12 @@
 
 use std::env;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
 use log::{debug, warn};
-use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, get_readable_file_from_env_var, is_executable, is_readable, PathExt, read_file_to_end};
+use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, get_path_from_user_config, is_executable, jvm_property, PathExt};
 
 use crate::{get_config_home, LaunchConfiguration, ProductInfo, ProductInfoLaunchField};
 
@@ -17,7 +17,7 @@ pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
     launch_data_idx: usize,
     pub ide_home: PathBuf,
-    pub ide_bin: PathBuf,
+    pub vm_options_path: PathBuf,
     pub user_config_dir: PathBuf,
     pub args: Vec<String>,
     pub launcher_base_name: String,
@@ -35,40 +35,31 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         &self.args[..]
     }
 
-    fn get_intellij_vm_options(&self) -> Result<Vec<String>> {
-        let vm_options_from_files = self.get_merged_vm_options_from_files()?;
-        let additional_jvm_arguments = &self.launch_data().additionalJvmArguments;
+    fn get_vm_options(&self) -> Result<Vec<String>> {
+        let mut vm_options = Vec::with_capacity(100);
 
-        let mut result = Vec::with_capacity(vm_options_from_files.capacity() + additional_jvm_arguments.capacity());
-        result.extend_from_slice(&vm_options_from_files);
-        result.extend_from_slice(additional_jvm_arguments);
+        // collecting JVM options from user and distribution files
+        self.collect_vm_options_from_files(&mut vm_options)?;
 
-        for i in 0..result.len() {
-            result[i] = self.expand_vars(&result[i])?;
+        // appending product-specific VM options (non-overridable, so should come last)
+        debug!("Appending product-specific VM options");
+        vm_options.extend_from_slice(&self.launch_data().additionalJvmArguments);
+
+        for vm_option in vm_options.iter_mut() {
+            *vm_option = self.expand_vars(&vm_option)?;
         }
 
-        Ok(result)
+        Ok(vm_options)
     }
 
-    fn get_properties_file(&self) -> Result<Option<PathBuf>> {
-        let env_var_name = self.product_info.productCode.to_string() + "_PROPERTIES";
-        let properties_path_from_env_var = get_path_from_env_var(&env_var_name);
-
-        let properties_file = match properties_path_from_env_var {
-            Ok(x) => Some(x),
-            Err(_) => {
-                debug!("Properties env var {env_var_name} is not set, skipping reading properties file from it");
-                None
-            }
-        };
-
-        Ok(properties_file)
+    fn get_properties_file(&self) -> Result<PathBuf> {
+        let env_var_name = self.env_var_base_name.to_owned() + "_PROPERTIES";
+        get_path_from_env_var(&env_var_name, Some(false))
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
         let class_path = &self.launch_data().bootClassPathJarNames;
         let lib_path = &self.ide_home.join("lib");
-
         let lib_path_canonical = std::fs::canonicalize(lib_path)?;
 
         let mut canonical_class_path = Vec::new();
@@ -117,26 +108,22 @@ impl DefaultLaunchConfiguration {
         let (ide_home, product_info_file) = find_ide_home(&current_exe)?;
         debug!("IDE home dir: '{ide_home:?}'");
 
-        let ide_bin = ide_home.join("bin");
-        debug!("IDE bin dir: '{ide_bin:?}'");
-
         let config_home = get_config_home()?;
         debug!("OS config dir: '{config_home:?}'");
 
         let product_info = read_product_info(&product_info_file)?;
         let launch_data_idx = Self::get_launch_data_idx(&product_info)?;
-
+        let vm_options_rel_path = &product_info.launch[launch_data_idx].vmOptionsFilePath;
+        let vm_options_path = product_info_file.parent().unwrap().join(vm_options_rel_path);
         let user_config_dir = config_home.join(&product_info.productVendor).join(&product_info.dataDirectoryName);
-
-        let vm_options_file_path = product_info.launch[launch_data_idx].vmOptionsFilePath.as_str();
-        let launcher_base_name = Self::get_launcher_base_name(vm_options_file_path);
+        let launcher_base_name = Self::get_launcher_base_name(vm_options_rel_path);
         let env_var_base_name = Self::get_env_var_base_name(&launcher_base_name);
 
         let config = DefaultLaunchConfiguration {
             product_info,
             launch_data_idx,
             ide_home,
-            ide_bin,
+            vm_options_path,
             user_config_dir,
             args,
             launcher_base_name,
@@ -236,10 +223,8 @@ impl DefaultLaunchConfiguration {
     }
 
     fn get_runtime_from_env_var(&self, env_var_name: &str) -> Result<PathBuf> {
-        let env_var = env::var(env_var_name);
-        debug!("${env_var_name} = {env_var:?}");
-        let env_var_value = env_var?;
-        Self::check_runtime(&env_var_value)
+        let path = get_path_from_env_var(env_var_name, Some(true))?;
+        Self::check_runtime_dir(&path)
     }
 
     fn get_runtime_from_user_config(&self) -> Result<PathBuf> {
@@ -247,23 +232,17 @@ impl DefaultLaunchConfiguration {
         let config_name = self.launcher_base_name.to_owned() + config_ext;
         let config_path = self.user_config_dir.join(config_name);
         debug!("Reading {config_path:?}");
-        let config_value = read_file_to_end(config_path.as_path())?;
-        debug!("Content: {:?}", config_value.trim());
-        Self::check_runtime(&config_value)
+        let mut config_raw = String::new();
+        let n = BufReader::new(File::open(&config_path)?).read_line(&mut config_raw)?;
+        debug!("  {n} bytes");
+        let path = get_path_from_user_config(&config_raw, Some(true))?;
+        Self::check_runtime_dir(&path)
     }
 
     fn get_bundled_runtime(&self) -> Result<PathBuf> {
         let jbr_dir = self.ide_home.join("jbr");
         debug!("Checking {jbr_dir:?}");
         Self::check_runtime_dir(&jbr_dir)
-    }
-
-    fn check_runtime(path: &str) -> Result<PathBuf> {
-        let path_trimmed = path.trim();
-        if path_trimmed.is_empty() {
-            bail!("Path is empty");
-        }
-        Self::check_runtime_dir(Path::new(path_trimmed))
     }
 
     fn check_runtime_dir(runtime_home: &Path) -> Result<PathBuf> {
@@ -277,136 +256,84 @@ impl DefaultLaunchConfiguration {
         Ok(java_executable)
     }
 
-    // VM_OPTIONS=""
-    // USER_GC=""
-    // if [ -n "$USER_VM_OPTIONS_FILE" ]; then
-    //   grep -E -q -e "-XX:\+.*GC" "$USER_VM_OPTIONS_FILE" && USER_GC="yes"
-    // fi
-    // if [ -n "$VM_OPTIONS_FILE" ] || [ -n "$USER_VM_OPTIONS_FILE" ]; then
-    //   if [ -z "$USER_GC" ] || [ -z "$VM_OPTIONS_FILE" ]; then
-    //     VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | grep -E -v -e "^#.*")
-    //   else
-    //     VM_OPTIONS=$({ grep -E -v -e "-XX:\+Use.*GC" "$VM_OPTIONS_FILE"; cat "$USER_VM_OPTIONS_FILE"; } 2> /dev/null | grep -E -v -e "^#.*")
-    //   fi
-    // else
-    //   message "Cannot find a VM options file"
-    // fi
-    pub fn get_merged_vm_options_from_files(&self) -> Result<Vec<String>> {
-        let vm_options_file = self.get_vm_options_file();
-        let user_vm_options_file = self.get_user_vm_options_file();
+    /// Reads VM options from both distribution and user-specific files and puts them into the given vector.
+    ///
+    /// When `<product>_VM_OPTIONS` environment variable points to an existing file, only its content is used;
+    /// otherwise, the launcher merges the distribution and user-specific files.
+    ///
+    /// Distribution options come first, so users have can override default options with their own ones.
+    /// This works, because JVM processes arguments in first-to-last, so the last one wins.
+    /// The only exception is setting a garbage collector, so when a user sets one,
+    /// the corresponding distribution option must be omitted.
+    fn collect_vm_options_from_files(&self, vm_options: &mut Vec<String>) -> Result<()> {
+        debug!("[1] Looking for custom VM options environment variable");
+        let env_var_name = self.env_var_base_name.to_owned() + "_VM_OPTIONS";
+        match get_path_from_env_var(&env_var_name, Some(false)) {
+            Ok(path) => {
+                debug!("Custom VM options file: {:?}", path);
+                read_vm_options(&path, vm_options)?;
+                let path_string = path.to_str().expect(&format!("Inconvertible path: {:?}", path));
+                vm_options.push(jvm_property!("jb.vmOptionsFile", path_string));
+                return Ok(());
+            }
+            Err(e) => { debug!("Failed: {}", e.to_string()); }
+        }
 
-        let mut errors = Vec::new();
 
-        let user_vm_options = match read_vm_options(user_vm_options_file) {
-            Ok(opts) => { opts }
+        debug!("[2] Reading main VM options file: {:?}", self.vm_options_path);
+        let mut dist_vm_options = Vec::with_capacity(50);
+        read_vm_options(&self.vm_options_path, &mut dist_vm_options)?;
+        debug!("{} lines", dist_vm_options.len());
+
+        debug!("[3] Looking for user VM options file");
+        let (user_vm_options, vm_options_path) = match self.get_user_vm_options_file() {
+            Ok(path) => {
+                debug!("Reading user VM options file: {:?}", path);
+                let mut user_vm_options = Vec::with_capacity(50);
+                read_vm_options(&path, &mut user_vm_options)?;
+                debug!("{} lines", user_vm_options.len());
+                (user_vm_options, path)
+            }
             Err(e) => {
-                errors.push(e);
-                Vec::new()
+                debug!("Failed: {}", e.to_string());
+                (Vec::new(), self.vm_options_path.clone())
             }
         };
 
         let has_user_gc = user_vm_options.iter().any(|l| is_gc_vm_option(l));
-        let vm_options = match read_vm_options(vm_options_file) {
-            Ok(opts) => {
-                if has_user_gc {
-                    opts.into_iter().filter(|l| !is_gc_vm_option(l)).collect()
-                } else {
-                    opts
-                }
-            }
-            Err(e) => {
-                errors.push(e);
-                Vec::new()
-            }
-        };
-
-        if errors.len() > 1 {
-            let user_vm_options_error = &errors[0];
-            let vm_options_error = &errors[1];
-
-            bail!("Failed to resolve any vmoptions files, user_vm_options: {user_vm_options_error:?}, vm_options: {vm_options_error:?}");
+        if has_user_gc {
+            vm_options.extend(dist_vm_options.into_iter().filter(|l| !is_gc_vm_option(l)))
+        } else {
+            vm_options.extend(dist_vm_options);
         }
 
-        return Ok([vm_options, user_vm_options].concat());
+        vm_options.extend(user_vm_options);
+
+        let path_string = vm_options_path.to_str().expect(&format!("Inconvertible path: {:?}", vm_options_path));
+        vm_options.push(jvm_property!("jb.vmOptionsFile", path_string));
+
+        return Ok(());
     }
 
-    fn get_vm_options_file_name(&self) -> Result<String> {
-        let vm_options_base_file_name = (&self.launcher_base_name).to_owned();
-        // TODO: there is a relative path in product-info json (launch), maybe use that?
-        let vm_options_file_name = vm_options_base_file_name +
-            match env::consts::OS {
-                "linux" => "64.vmoptions",
-                "macos" => ".vmoptions",
-                //TODO: check if that's actual for Windows
-                "windows" => "64.exe.vmoptions",
-                unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
-            };
-
-        Ok(vm_options_file_name)
-    }
-
-    // # ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>/<bin_name>.vmoptions]
-    // if [ -r "${IDE_HOME}.vmoptions" ]; then
-    //   USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
-    // elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions" ]; then
-    //   USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions"
-    // fi
+    /// Looks for user-editable config files near the installation (Toolbox-style)
+    /// or under the OS standard configuration directory.
     fn get_user_vm_options_file(&self) -> Result<PathBuf> {
-        let options_from_toolbox = &self.ide_home.join(".vmoptions");
-        match is_readable(options_from_toolbox) {
-            Ok(f) => { return Ok(f) }
-            Err(e) => {
-                debug!("Didn't resolve vmoptions from {options_from_toolbox:?}, details: {e}")
-            }
+        let real_ide_home = if env::consts::OS == "macos" { self.ide_home.parent().unwrap() } else { &self.ide_home };
+        let tb_file_base = real_ide_home.file_name().unwrap().to_str().unwrap();
+        let tb_file_path = real_ide_home.parent().unwrap().join(tb_file_base.to_string() + ".vmoptions");
+        debug!("Checking {:?}", tb_file_path);
+        if tb_file_path.is_file() {
+            return Ok(tb_file_path);
         }
 
-        let vm_options_file_name = self.get_vm_options_file_name()?;
-
-        let options_from_ide = self.user_config_dir.join(vm_options_file_name);
-
-        is_readable(options_from_ide)
-    }
-
-    // # shellcheck disable=SC2154
-    // if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; then
-    //   # 1. $<IDE_NAME>_VM_OPTIONS
-    //   VM_OPTIONS_FILE="$__product_uc___VM_OPTIONS"
-    // else
-    //   # 2. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions ...
-    //   if [ -r "${IDE_BIN_HOME}/__vm_options__64.vmoptions" ]; then
-    //     VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__64.vmoptions"
-    //   else
-    //     test "${OS_TYPE}" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
-    //     if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions" ]; then
-    //       VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions"
-    //     fi
-    //   fi
-    fn get_vm_options_file(&self) -> Result<PathBuf> {
-        let product_code = (&self.product_info.productCode).to_owned();
-        let env_var_name = product_code + "_VM_OPTIONS";
-
-        match get_readable_file_from_env_var(env_var_name.as_str()) {
-            Ok(f) => { return Ok(f) }
-            Err(e) => { debug!("Didn't resolve vm options file from {env_var_name} env var, details: {e}") }
-        };
-
-        let vm_options_file_name = self.get_vm_options_file_name()?;
-        let vm_options_from_ide_bin = &self.ide_bin.join(vm_options_file_name.as_str());
-        match is_readable(vm_options_from_ide_bin) {
-            Ok(f) => { return Ok(f); }
-            Err(e) => { debug!("Didn't resolve vm options file from base bin dir {vm_options_from_ide_bin:?}, details: {e}") }
+        let user_file_name = self.vm_options_path.file_name().unwrap();
+        let user_file_path = self.user_config_dir.join(user_file_name);
+        debug!("Checking {:?}", user_file_path);
+        if user_file_path.is_file() {
+            return Ok(user_file_path);
         }
 
-        let os_specific_dir = match env::consts::OS {
-            "linux" => "linux",
-            "macos" => "mac",
-            //TODO: check if that's actual for Windows
-            "windows" => "windows",
-            unsupported_os => bail!("Unsupported OS: {unsupported_os}"),
-        };
-
-        let os_specific_vm_options = self.ide_bin.join(os_specific_dir).join(vm_options_file_name);
-        is_readable(os_specific_vm_options)
+        bail!("User-editable config files not found");
     }
 
     fn expand_vars(&self, value: &str) -> Result<String> {
@@ -436,17 +363,15 @@ fn get_bin_java_path(java_home: &Path) -> PathBuf {
     java_home.join("Contents/Home/bin/java")
 }
 
-fn read_vm_options(path: Result<PathBuf>) -> Result<Vec<String>> {
-    // let file = File::open(path?)?;
-    let content = read_file_to_end(&path?)?;
+fn read_vm_options(path: &Path, vm_options: &mut Vec<String>) -> Result<()> {
+    let file = File::open(path)?;
+    let error = format!("Cannot read: {:?}", path);
+    BufReader::new(file).lines()
+        .map(|l| l.expect(&error).trim().to_string())
+        .filter(|l| !(l.is_empty() || l.starts_with("#")))
+        .for_each(|l| vm_options.push(l));
 
-    // TODO: Lines(self.split_terminator('\n').map(LinesAnyMap))
-    let lines = content.lines()
-        .filter(|l| !l.starts_with("#"))
-        .map(|l| l.to_string())
-        .collect();
-
-    Ok(lines)
+    Ok(())
 }
 
 fn is_gc_vm_option(s: &str) -> bool {

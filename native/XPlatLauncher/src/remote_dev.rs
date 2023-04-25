@@ -1,13 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 use std::{env, fs};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use log::{debug, info};
-use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, read_file_to_end};
+use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var};
 
 use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
 use crate::docker::is_running_in_docker;
@@ -25,25 +26,21 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         self.default.get_args()
     }
 
-    fn get_intellij_vm_options(&self) -> Result<Vec<String>> {
-        let default_vm_options = self.default.get_intellij_vm_options()?;
+    fn get_vm_options(&self) -> Result<Vec<String>> {
+        let mut vm_options = self.default.get_vm_options()?;
 
         // TODO: add default Xmx to productInfo as right now we patch the user one
-        let mut patched_xmx: Vec<String> = default_vm_options
-            .into_iter()
-            .filter(|vm| !vm.starts_with("-Xmx"))
-            .collect();
+        vm_options.push("-Xmx2048m".to_string());
 
-        patched_xmx.push("-Xmx2048m".to_string());
-        Ok(patched_xmx)
+        Ok(vm_options)
     }
 
-    fn get_properties_file(&self) -> Result<Option<PathBuf>> {
+    fn get_properties_file(&self) -> Result<PathBuf> {
         let remote_dev_properties = self.get_remote_dev_properties();
         let remote_dev_properties_file = self.write_merged_properties_file(&remote_dev_properties?[..])
             .context("Failed to write remote dev IDE properties file")?;
 
-        Ok(Some(remote_dev_properties_file))
+        Ok(remote_dev_properties_file)
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
@@ -107,13 +104,13 @@ impl DefaultLaunchConfiguration {
         per_project_config_dir_name: &str) -> Result<PathBuf> {
         debug!("Per-project {human_readable_name} name: {per_project_config_dir_name:?}");
 
-        let specific_dir = match get_path_from_env_var(specific_dir_env_var_name) {
+        let specific_dir = match get_path_from_env_var(specific_dir_env_var_name, None) {
             Ok(x) => {
                 debug!("{human_readable_name}: {specific_dir_env_var_name} is set to {x:?}, will use it as a target dir");
                 x
             },
             Err(_) => {
-                let base_dir = match get_path_from_env_var(base_dir_env_var_name) {
+                let base_dir = match get_path_from_env_var(base_dir_env_var_name, None) {
                     Ok(x) => {
                         debug!("{human_readable_name}: {base_dir_env_var_name} is set to {x:?}, will use it as a base dir");
                         x
@@ -390,11 +387,11 @@ impl RemoteDevLaunchConfiguration {
         // let default_properties = self.default.get_properties_file();
 
         // TODO: use IDE-specific properties file
-        let distribution_properties = self.default.ide_bin.join("idea.properties");
-        let default_properties = read_file_to_end(&distribution_properties).context("Failed to read IDE properties file")?;
+        let dist_properties_path = self.default.ide_home.join("bin").join("idea.properties");
+        let dist_properties_file = File::open(&dist_properties_path).context("Failed to open IDE properties file")?;
 
-        for l in default_properties.lines() {
-            writeln!(&mut writer, "{l}")?;
+        for l in BufReader::new(dist_properties_file).lines() {
+            writeln!(&mut writer, "{}", l.context("Failed to read IDE properties file")?)?;
         }
 
         for p in remote_dev_properties {

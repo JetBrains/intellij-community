@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-use std::{env, fs};
-use std::ffi::OsStr;
-use std::fs::File;
-use std::io::{BufReader, Read};
+
+use std::env;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
@@ -38,12 +36,6 @@ pub fn is_executable(_path: &Path) -> Result<bool> {
     Ok(true)
 }
 
-pub fn get_readable_file_from_env_var<S:AsRef<OsStr>>(env_var_name: S) -> Result<PathBuf> {
-    let file = get_path_from_env_var(env_var_name)?;
-    let _path_buf = is_readable(&file)?;
-    Ok(file)
-}
-
 pub fn get_current_exe() -> PathBuf {
     match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
         Ok(x) => {
@@ -54,38 +46,28 @@ pub fn get_current_exe() -> PathBuf {
     }
 }
 
-pub fn get_path_from_env_var<S:AsRef<OsStr>>(env_var_name: S) -> Result<PathBuf> {
-    let env_var_value = env::var(env_var_name)?;
+pub fn get_path_from_env_var(env_var_name: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
+    let env_var = env::var(env_var_name);
+    debug!("${env_var_name} = {env_var:?}");
+    get_path_from_user_config(&env_var?, expecting_dir)
+}
 
-    if env_var_value.is_empty() {
-        bail!("Env var {env_var_value} is not set, skipping resolving path from it")
+pub fn get_path_from_user_config(config_raw: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
+    let config_value = config_raw.trim();
+    if config_value.is_empty() {
+        bail!("Empty path");
     }
 
-    let path = PathBuf::from(env_var_value.as_str());
+    let path = PathBuf::from(config_value);
+    if let Some(expecting_dir) = expecting_dir {
+        if expecting_dir && !path.is_dir() {
+            bail!("Not a directory: {:?}", path);
+        } else if !expecting_dir && !path.is_file() {
+            bail!("Not a file: {:?}", path);
+        }
+    }
+
     Ok(path)
-}
-
-pub fn is_readable<P: AsRef<Path>>(file: P) -> Result<PathBuf> {
-    // TODO: seems like the best possible x-plat way to verify whether the file is readable
-    // note: file is closed when we exit the scope
-    {
-        let _file = fs::OpenOptions::new().read(true).open(&file)?;
-    }
-
-    Ok(file.as_ref().to_path_buf())
-}
-
-pub fn read_file_to_end(path: &Path) -> Result<String> {
-    let file = File::open(path)?;
-    let mut reader = BufReader::new(file);
-
-    let mut content = String::from("");
-    let bytes_read = reader.read_to_string(&mut content)?;
-
-    debug!("Read {bytes_read} bytes from {path:?}");
-    debug!("Contents of {path:?}: {content}");
-
-    Ok(content)
 }
 
 pub trait PathExt {
@@ -99,4 +81,9 @@ impl PathExt for Path {
             Some(s) => Ok(s.to_path_buf()),
         }
     }
+}
+
+#[macro_export]
+macro_rules! jvm_property {
+    ( $name:expr, $value:expr ) => { format!("-D{}={}", $name, $value) }
 }

@@ -6,6 +6,7 @@ mod tests {
     use std::{env, fs};
     use std::collections::HashMap;
     use std::path::PathBuf;
+    use utils::jvm_property;
 
     use crate::utils::*;
 
@@ -78,7 +79,7 @@ mod tests {
         assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-Done.user.option=whatever");
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
-        assert_vm_option_presence(&dump, &format!("-Djb.vmOptionsFile={}", temp_file.to_str().unwrap()));
+        assert_vm_option_presence(&dump, &jvm_property!("jb.vmOptionsFile", temp_file.to_str().unwrap()));
 
         assert_vm_option_absence(&dump, "-XX:+UseG1GC");
         assert_vm_option_absence(&dump, "-Dsun.io.useCanonCaches=false");
@@ -95,7 +96,7 @@ mod tests {
         assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-XX:+UseG1GC");
         assert_vm_option_presence(&dump, "-Dsun.io.useCanonCaches=false");
-        assert_vm_option_presence(&dump, &format!("-Didea.properties.file={}", temp_file.to_str().unwrap()));
+        assert_vm_option_presence(&dump, &jvm_property!("idea.properties.file", temp_file.to_str().unwrap()));
     }
 
     #[test]
@@ -107,7 +108,7 @@ mod tests {
 
         assert_vm_option_presence(&dump, "-Done.user.option=whatever");
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
-        assert_vm_option_presence(&dump, &format!("-Djb.vmOptionsFile={}", vm_options_file.to_str().unwrap()));
+        assert_vm_option_presence(&dump, &jvm_property!("jb.vmOptionsFile", vm_options_file.to_str().unwrap()));
     }
 
     #[test]

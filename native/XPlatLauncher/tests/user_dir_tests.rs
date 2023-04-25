@@ -4,6 +4,7 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::sync::Mutex;
+    use utils::jvm_property;
 
     use crate::utils::*;
 
@@ -36,6 +37,6 @@ mod tests {
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
         assert_vm_option_presence(&dump, "-Done.user.option=whatever");
-        assert_vm_option_presence(&dump, &format!("-Djb.vmOptionsFile={}", vm_options_file.to_str().unwrap()));
+        assert_vm_option_presence(&dump, &jvm_property!("jb.vmOptionsFile", vm_options_file.to_str().unwrap()));
     }
 }
