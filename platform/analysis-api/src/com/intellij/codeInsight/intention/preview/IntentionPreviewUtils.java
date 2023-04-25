@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.preview;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModNavigate;
 import com.intellij.modcommand.ModUpdatePsiFile;
@@ -157,8 +158,8 @@ public final class IntentionPreviewUtils {
         if (info != null) {
           return IntentionPreviewInfo.EMPTY;
         }
-        if (file == modFile.file()) {
-          info = new IntentionPreviewInfo.Diff(modFile.newText());
+        if (file == modFile.file() || InjectedLanguageManager.getInstance(project).getTopLevelFile(file) == modFile.file()) {
+          info = new IntentionPreviewInfo.Diff(modFile.oldText(), modFile.newText());
         } else {
           info = new IntentionPreviewInfo.CustomDiff(modFile.file().getFileType(), modFile.file().getName(), modFile.oldText(),
                                                      modFile.newText());

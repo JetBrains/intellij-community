@@ -84,20 +84,27 @@ public interface IntentionPreviewInfo {
    * without actual PSI changes.
    */
   class Diff implements IntentionPreviewInfo {
+    private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
 
     /**
+     * @param origText old text of the current file
      * @param modifiedText new text for the current file
      */
-    public Diff(@NotNull String modifiedText) { 
+    public Diff(@NotNull String origText, @NotNull String modifiedText) {
+      myOrigText = origText;
       myModifiedText = modifiedText;
     }
 
     /**
      * @return new text for the current file
      */
-    public String modifiedText() {
+    public @NotNull String modifiedText() {
       return myModifiedText;
+    }
+
+    public @NotNull String originalText() {
+      return myOrigText;
     }
   }
   
