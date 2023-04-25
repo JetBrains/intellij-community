@@ -120,6 +120,7 @@ public class Menu extends MenuItem {
   }
 
   @SuppressWarnings("SSBasedInspection")
+  synchronized
   void disposeChildren(int delayMs) {
     if (delayMs <= 0) {
       for (MenuItem item : myItems) {
