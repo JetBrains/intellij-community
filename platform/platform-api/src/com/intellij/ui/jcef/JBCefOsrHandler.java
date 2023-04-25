@@ -186,7 +186,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     do {
       boolean contentOutdated = myContentOutdated;
       myContentOutdated = false;
-      if (vi == null || vi.getWidth() == myComponent.getWidth() || vi.getWidth() != myComponent.getHeight()) {
+      if (vi == null || vi.getWidth() != myComponent.getWidth() || vi.getHeight() != myComponent.getHeight()) {
         vi = createVolatileImage();
       }
       else if (contentOutdated) {
