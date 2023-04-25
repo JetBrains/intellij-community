@@ -885,7 +885,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private final class MyMarkerTree extends HardReferencingRangeMarkerTree<FoldRegionImpl> {
     private boolean inCollectCall;
 
-    private MyMarkerTree(Document document) {
+    private MyMarkerTree(@NotNull Document document) {
       super(document);
     }
 

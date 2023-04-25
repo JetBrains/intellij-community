@@ -52,13 +52,13 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     //  private boolean allDeltasUpAreNull;  // true if all deltas up the tree (including this node) are 0. Has valid value only if modCount == IntervalTreeImpl.this.modCount
 
     @NotNull
-    private final IntervalTreeImpl<E> myIntervalTree;
+    private final IntervalTreeImpl<E> myTree;
 
-    IntervalNode(@NotNull IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
+    IntervalNode(@NotNull IntervalTreeImpl<E> tree, @NotNull E key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
-      myIntervalTree = intervalTree;
+      myTree = tree;
       myRange = TextRangeScalarUtil.toScalarRange(start, end);
-      intervals = new SmartList<>(createGetter(key));
+      intervals = new SmartList<>(tree.createGetter(key));
       setValid(true);
     }
 
@@ -105,7 +105,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
           }
         }
         if (purgeDead) {
-          myIntervalTree.assertUnderWriteLock();
+          myTree.assertUnderWriteLock();
           removeIntervalInternal(i);
         }
       }
@@ -115,15 +115,15 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     // removes the interval and the node, if node became empty
     // returns true if node was removed
     private boolean removeInterval(@NotNull E key) {
-      myIntervalTree.checkBelongsToTheTree(key, true);
-      myIntervalTree.assertUnderWriteLock();
+      myTree.checkBelongsToTheTree(key, true);
+      myTree.assertUnderWriteLock();
       for (int i = intervals.size() - 1; i >= 0; i--) {
         Supplier<? extends E> interval = intervals.get(i);
         E t = interval.get();
         if (t == key) {
           removeIntervalInternal(i);
           if (intervals.isEmpty()) {
-            myIntervalTree.removeNode(this);
+            myTree.removeNode(this);
             return true;
           }
           return false;
@@ -142,17 +142,17 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     void removeIntervalInternal(int i) {
       intervals.remove(i);
       if (isAttachedToTree()) {   // for detached node, do not update tree node count
-        assert myIntervalTree.keySize > 0 : myIntervalTree.keySize;
-        myIntervalTree.keySize--;
+        assert myTree.keySize > 0 : myTree.keySize;
+        myTree.keySize--;
       }
     }
 
     void addInterval(@NotNull E interval) {
-      myIntervalTree.assertUnderWriteLock();
-      intervals.add(createGetter(interval));
+      myTree.assertUnderWriteLock();
+      intervals.add(myTree.createGetter(interval));
       if (isAttachedToTree()) { // for detached node, do not update tree node count
-        myIntervalTree.keySize++;
-        myIntervalTree.setNode(interval, this);
+        myTree.keySize++;
+        myTree.setNode(interval, this);
       }
     }
 
@@ -163,36 +163,20 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       }
     }
 
-    private Supplier<? extends E> createGetter(@NotNull E interval) {
-      return myIntervalTree.keepIntervalsOnWeakReferences() ? new WeakReferencedGetter<>(interval, myIntervalTree.myReferenceQueue) : () -> interval;
-    }
-
-    private static final class WeakReferencedGetter<T> extends WeakReference<T> implements Supplier<T> {
-      private WeakReferencedGetter(@NotNull T referent, @NotNull ReferenceQueue<? super T> q) {
-        super(referent, q);
-      }
-
-      @NonNls
-      @Override
-      public String toString() {
-        return "Ref: " + get();
-      }
-    }
-
     int computeDeltaUpToRoot() {
       restart:
       while (true) { // have to restart on failure to update cached offsets in case of concurrent modification
         if (!isValid()) return 0;
-        int treeModCount = myIntervalTree.getModCount();
+        int treeModCount = myTree.getModCount();
         long packedOffsets = cachedDeltaUpToRoot;
         if (modCount(packedOffsets) == treeModCount) {
           return deltaUpToRoot(packedOffsets);
         }
         try {
-          myIntervalTree.l.readLock().lock();
+          myTree.l.readLock().lock();
 
           IntervalNode<E> node = this;
-          IntervalNode<E> treeRoot = myIntervalTree.getRoot();
+          IntervalNode<E> treeRoot = myTree.getRoot();
           if (treeRoot == null) return delta; // someone modified the tree in the meantime
           int deltaUp = 0;
           boolean allDeltasAreNull = true;
@@ -237,7 +221,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
           return deltaUp;
         }
         finally {
-          myIntervalTree.l.readLock().unlock();
+          myTree.l.readLock().unlock();
         }
       }
     }
@@ -287,7 +271,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
 
     @NotNull
     public IntervalTreeImpl<E> getTree() {
-      return myIntervalTree;
+      return myTree;
     }
 
     /**
@@ -310,7 +294,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
 
     private boolean tryToSetCachedValues(int deltaUpToRoot, boolean allDeltasUpAreNull, int treeModCount) {
-      if (myIntervalTree.getModCount() != treeModCount) return false;
+      if (myTree.getModCount() != treeModCount) return false;
       long newValue = packValues(deltaUpToRoot, allDeltasUpAreNull, treeModCount);
       long oldValue = cachedDeltaUpToRoot;
       return cachedDeltaUpdater.compareAndSet(this, oldValue, newValue);
@@ -368,6 +352,23 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     @Override
     public String toString() {
       return "Node: " + intervals;
+    }
+  }
+
+  @NotNull
+  private Supplier<? extends T> createGetter(@NotNull T interval) {
+    return keepIntervalsOnWeakReferences() ? new WeakReferencedGetter<>(interval, myReferenceQueue) : () -> interval;
+  }
+
+  private static final class WeakReferencedGetter<T> extends WeakReference<T> implements Supplier<T> {
+    private WeakReferencedGetter(@NotNull T referent, @NotNull ReferenceQueue<? super T> q) {
+      super(referent, q);
+    }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "Ref: " + get();
     }
   }
 

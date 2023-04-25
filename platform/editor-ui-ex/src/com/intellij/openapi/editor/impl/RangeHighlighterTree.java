@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,9 +9,13 @@ import java.util.function.Supplier;
 final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   private final MarkupModelImpl myMarkupModel;
 
-  RangeHighlighterTree(@NotNull Document document, @NotNull MarkupModelImpl markupModel) {
-    super(document);
+  RangeHighlighterTree(@NotNull MarkupModelImpl markupModel) {
+    super(markupModel.getDocument());
     myMarkupModel = markupModel;
+  }
+
+  void dispose() {
+    dispose(myMarkupModel.getDocument());
   }
 
   @Override

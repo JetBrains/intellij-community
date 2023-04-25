@@ -169,7 +169,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     oldTree.copyRangeMarkersTo(this, tabSize);
   }
 
-  // track GC of RangeMarkerTree: means no-one is interested in range markers for this file anymore
+  // track GC of RangeMarkerTree: means no one is interested in range markers for this file anymore
   private static final ReferenceQueue<RangeMarkerTree<RangeMarkerEx>> rmTreeQueue = new ReferenceQueue<>();
   private static class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMarkerEx>> {
     @NotNull
@@ -846,7 +846,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
     void rethrowPCE() {
       if (myException instanceof ProcessCanceledException) {
-        // the case of some wise inspection modifying non-physical document during highlighting to be interrupted
+        // the case of some wise inspection modifying a non-physical document during highlighting to be interrupted
         throw (ProcessCanceledException)myException;
       }
     }

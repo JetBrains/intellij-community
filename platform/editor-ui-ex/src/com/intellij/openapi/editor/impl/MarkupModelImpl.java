@@ -52,14 +52,14 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   MarkupModelImpl(@NotNull DocumentEx document) {
     myDocument = document;
-    myHighlighterTree = new RangeHighlighterTree(document, this);
-    myHighlighterTreeForLines = new RangeHighlighterTree(document, this);
+    myHighlighterTree = new RangeHighlighterTree(this);
+    myHighlighterTreeForLines = new RangeHighlighterTree(this);
   }
 
   @Override
   public void dispose() {
-    myHighlighterTree.dispose(myDocument);
-    myHighlighterTreeForLines.dispose(myDocument);
+    myHighlighterTree.dispose();
+    myHighlighterTreeForLines.dispose();
   }
 
   @Override
