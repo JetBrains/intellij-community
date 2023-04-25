@@ -122,6 +122,7 @@ open class DebuggerTestCompilerFacility(
                 classesDir
             )
         }
+        classesDir.refreshAndToVirtualFile()?.let { KtUsefulTestCase.refreshRecursively(it) }
     }
 
     fun compileTestSourcesWithCli(
