@@ -79,7 +79,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
           val tracker = (ApplicationManager.getApplication().stateStore.storageManager as? StateStorageManagerImpl)?.virtualFileTracker
                         ?: return null
           Disposer.register(componentManager, Disposable {
-            tracker.remove { it.storageManager.componentManager == componentManager }
+            tracker.remove { it.storageManager.componentManager === componentManager }
           })
           tracker
         }
