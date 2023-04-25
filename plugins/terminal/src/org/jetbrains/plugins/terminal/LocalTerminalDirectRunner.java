@@ -84,6 +84,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       case FISH_NAME -> "fish/init.fish";
       default -> null;
     };
+    if (rcfile == null && isPowerShell(shellName)) {
+      rcfile = "shell-integrations/powershell/powershell-integration.ps1";
+    }
     if (rcfile != null) {
       try {
         return findAbsolutePath(rcfile);
@@ -93,6 +96,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
     }
     return null;
+  }
+
+  private static boolean isPowerShell(@NotNull String shellName) {
+    return shellName.equalsIgnoreCase("powershell") ||
+           shellName.equalsIgnoreCase("powershell.exe") ||
+           shellName.equalsIgnoreCase("pwsh") ||
+           shellName.equalsIgnoreCase("pwsh.exe");
   }
 
   @NotNull
@@ -453,6 +463,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
         shellType = ShellType.FISH;
+      }
+      else if (isPowerShell(shellName)) {
+        resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFilePath));
+        shellType = ShellType.POWERSHELL;
+        withCommandBlocks = true;
       }
     }
 

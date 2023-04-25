@@ -233,6 +233,7 @@ object CommunityRepositoryModules {
       spec.withResource("resources/bash/jediterm-bash.in", "bash")
       spec.withResource("resources/fish/init.fish", "fish")
       spec.withResource("resources/pwsh/pwsh.ps1", "pwsh")
+      spec.withResource("resources/shell-integrations", "shell-integrations")
     },
     plugin("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)

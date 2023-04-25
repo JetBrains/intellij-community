@@ -4,5 +4,5 @@ package org.jetbrains.plugins.terminal.util
 data class ShellIntegration(val shellType: ShellType, val withCommandBlocks: Boolean)
 
 enum class ShellType {
-  ZSH, BASH, FISH
+  ZSH, BASH, FISH, POWERSHELL
 }
