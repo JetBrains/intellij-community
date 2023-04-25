@@ -19,7 +19,6 @@ import java.awt.Color
 import java.awt.Point
 import java.io.IOException
 import java.io.StringReader
-import java.lang.IllegalStateException
 import javax.swing.JEditorPane
 import javax.swing.text.html.HTMLEditorKit
 
@@ -75,7 +74,11 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
     val psiFileFactory = PsiFileFactory.getInstance(defaultProject)
 
     val defaultFile = psiFileFactory.createFileFromText(PlainTextLanguage.INSTANCE, "")
-    val content = codeSnippet.text().let { it.substringBefore("\n") + "\n" + it.substringAfter("\n").trimIndent() }
+    val content = codeSnippet.text().let { text ->
+      val beforeFirstNewline = text.substringBefore("\n")
+      val afterFirstNewline = text.substringAfter("\n", "").trimIndent()
+      if (afterFirstNewline.isEmpty()) beforeFirstNewline else "$beforeFirstNewline\n$afterFirstNewline"
+    }
       .trimEnd()
       .replaceIndent("  ")
     var snippet: String
