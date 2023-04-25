@@ -57,6 +57,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.MessageCategory;
@@ -617,7 +618,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     PyRemotePathMapper pathMapper =
       PydevConsoleRunnerUtil.createTargetEnvironmentPathMapper(myProject, sdk, myConsoleSettings, targetEnvironment);
     ProcessHandler processHandler =
-      PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, targetedCommandLine.getCharset(), pathMapper);
+      PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, targetedCommandLine.getCharset(), pathMapper, true);
     return new TargetProcessHandlerFactory(processHandler, process, commandLineString, communicationServer, targetEnvironment);
   }
 
