@@ -16,7 +16,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -28,7 +28,7 @@ import kotlin.concurrent.write
 /**
  * If componentManager not specified, storage will not add file tracker
  */
-@ApiStatus.Internal
+@Internal
 open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
                                    final override val macroSubstitutor: PathMacroSubstitutor? = null,
                                    override val componentManager: ComponentManager? = null,
@@ -91,7 +91,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   fun getVirtualFileTracker() = virtualFileTracker
 
   /**
-   * Returns old map.
+   * Returns an old map.
    */
   fun setMacros(map: List<Macro>): List<Macro> {
     val oldValue = macros
@@ -114,7 +114,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
 
   protected open fun normalizeFileSpec(fileSpec: String): String {
     val path = FileUtilRt.toSystemIndependentName(fileSpec)
-    // fileSpec for directory based storage could be erroneously specified as "name/"
+    // fileSpec for directory-based storage could be erroneously specified as "name/"
     return if (path.endsWith('/')) path.substring(0, path.length - 1) else path
   }
 
@@ -122,7 +122,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   fun getOrCreateStorage(collapsedPath: String,
                          roamingType: RoamingType,
                          storageClass: Class<out StateStorage> = StateStorage::class.java,
-                         @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java,
+                         @Suppress("DEPRECATION", "removal") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java,
                          exclusive: Boolean = false,
                          storageCustomizer: (StateStorage.() -> Unit)? = null,
                          storageCreator: StorageCreator? = null,
@@ -207,7 +207,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   protected open fun createStateStorage(storageClass: Class<out StateStorage>,
                                         collapsedPath: String,
                                         roamingType: RoamingType,
-                                        @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter>,
+                                        @Suppress("DEPRECATION", "removal") stateSplitter: Class<out StateSplitter>,
                                         usePathMacroManager: Boolean,
                                         exclusive: Boolean = false): StateStorage {
     if (storageClass != StateStorage::class.java) {
@@ -227,7 +227,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
     }
 
     val filePath = expandMacro(collapsedPath)
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "removal")
     if (stateSplitter != StateSplitter::class.java && stateSplitter != StateSplitterEx::class.java) {
       val storage = createDirectoryBasedStorage(filePath, collapsedPath, ReflectionUtil.newInstance(stateSplitter))
       if (storage is StorageVirtualFileTracker.TrackedStorage) {
@@ -282,7 +282,9 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   }
 
   // open for upsource
-  protected open fun createDirectoryBasedStorage(file: Path, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage {
+  protected open fun createDirectoryBasedStorage(file: Path,
+                                                 collapsedPath: String,
+                                                 @Suppress("DEPRECATION", "removal") splitter: StateSplitter): StateStorage {
     return object : DirectoryBasedStorage(file, splitter, macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
       override val storageManager = this@StateStorageManagerImpl
     }
@@ -394,13 +396,11 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
 }
 
-fun removeMacroIfStartsWith(path: String, macro: String): String {
-  return path.removePrefix("$macro/")
-}
+fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")
 
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION", "removal")
 internal val Storage.path: String
-  get() = if (value.isEmpty()) file else value
+  get() = value.ifEmpty { file }
 
 internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
   if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE || isSpecialStorage(collapsedPath))) {
@@ -411,4 +411,5 @@ internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: St
   }
 }
 
-data class Macro(val key: String, var value: Path)
+@Internal
+data class Macro(@JvmField val key: String, @JvmField var value: Path)

@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.ComponentManager
@@ -75,8 +77,10 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
           else {
             val path = event.path
             storage = filePathToStorage.get(path)
-            // we don't care about parent directory create (because it doesn't affect anything) and move (because it is not supported case),
-            // but we should detect deletion - but again, it is not supported case. So, we don't check if some of registered storages located inside changed directory.
+            // We don't care about parent directory create (because it doesn't affect anything)
+            // and move (because it is not a supported case),
+            // but we should detect deletion - but again, it is not a supported case.
+            // So, we don't check if some of the registered storages located inside changed directory.
 
             // but if we have DirectoryBasedStorage, we check - if file located inside it
             if (storage == null && hasDirectoryBasedStorages && path.endsWith(FileStorageCoreUtil.DEFAULT_EXT, ignoreCase = true)) {
