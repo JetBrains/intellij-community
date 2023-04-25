@@ -474,12 +474,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   /**
-   * To be deprecated.
-   * <p>
-   * The legacy implementation based on {@link GeneralCommandLine}. The new
-   * implementation based on Targets API could be found in
+   * The legacy implementation based on {@link GeneralCommandLine}. The new implementation based on Targets API could be found in
    * {@link #createProcessUsingTargetsAPI(Sdk)}.
+   * <p>
+   * The method is going to be removed when the flag {@code python.use.targets.api} is eliminated.
    */
+  @ApiStatus.Obsolete
   @NotNull
   private ConsoleProcessCreationResult createProcess(@NotNull Sdk sdk) throws ExecutionException {
     PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(sdk);
@@ -747,7 +747,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   /**
    * Corresponds to disabled {@code python.use.targets.api} registry flag and using a local Python interpreter.
+   * <p>
+   * The class is going to be removed when the flag {@code python.use.targets.api} is eliminated.
    */
+  @ApiStatus.Obsolete
   private static final class LegacyLocalProcessHandlerCreator extends ConsoleProcessCreationResult {
     private LegacyLocalProcessHandlerCreator(@NotNull Process process,
                                              @NotNull String commandLineString,
@@ -764,7 +767,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   /**
    * Corresponds to disabled {@code python.use.targets.api} registry flag and a remote Python interpreter with
    * {@link Sdk#getSdkAdditionalData()} of legacy {@link PyRemoteSdkAdditionalDataBase} class.
+   * <p>
+   * The class is going to be removed when the flag {@code python.use.targets.api} is eliminated.
    */
+  @ApiStatus.Obsolete
   private static final class LegacyRemoteSdkProcessHandlerCreator extends ConsoleProcessCreationResult {
     private final @NotNull PyRemoteSdkAdditionalDataBase mySdkAdditionalData;
     private final @NotNull Project myProject;
