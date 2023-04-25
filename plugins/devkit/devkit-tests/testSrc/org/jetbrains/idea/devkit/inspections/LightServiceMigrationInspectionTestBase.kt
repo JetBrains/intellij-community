@@ -12,7 +12,12 @@ abstract class LightServiceMigrationInspectionTestBase : LightDevKitInspectionFi
       package com.intellij.openapi.components;
       public interface PersistentStateComponent<T> { }
     """)
-    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Attribute { String value() default \"\";}")
+    myFixture.addClass("""
+      //language=java
+      package com.intellij.util.xmlb.annotations;
+      
+      public @interface Attribute { String value() default ""; }
+    """)
     myFixture.addClass(
       //language=java
       """
@@ -30,7 +35,7 @@ abstract class LightServiceMigrationInspectionTestBase : LightDevKitInspectionFi
         @Attribute("preload")
         public PreloadMode preload;
 
-        enum PreloadMode {}
+        public enum PreloadMode {}
       }
     """)
     myFixture.addClass(
