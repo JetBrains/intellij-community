@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -54,10 +54,6 @@ public final class ProgressRunner<R> {
      * Arbitrary thread with the ability to execute read actions.
      */
     POOLED,
-    /**
-     * Use only to open project on start-up.
-     */
-    FJ
   }
 
   private static final Logger LOG = Logger.getInstance(ProgressRunner.class);
@@ -302,7 +298,7 @@ public final class ProgressRunner<R> {
       String reason = ApplicationManager.getApplication().isWriteAccessAllowed() ? "inside Write Action" : "not modal execution";
       @NonNls String failedConstraints = "";
       if (isModal) failedConstraints += "Use Modal execution; ";
-      if (myThreadToUse == ThreadToUse.POOLED || myThreadToUse == ThreadToUse.FJ) failedConstraints += "Use pooled thread; ";
+      if (myThreadToUse == ThreadToUse.POOLED) failedConstraints += "Use pooled thread; ";
       failedConstraints = failedConstraints.isEmpty() ? "none" : failedConstraints;
       Logger.getInstance(ProgressRunner.class)
         .warn("Forced to sync exec on EDT. Reason: " + reason + ". Failed constraints: " + failedConstraints, new Throwable());
@@ -457,9 +453,6 @@ public final class ProgressRunner<R> {
     switch (myThreadToUse) {
       case POOLED:
         resultFuture = CompletableFuture.supplyAsync(callable, AppExecutorUtil.getAppExecutorService());
-        break;
-      case FJ:
-        resultFuture = CompletableFuture.supplyAsync(callable, ForkJoinPool.commonPool());
         break;
       case WRITE:
         resultFuture = new CompletableFuture<>();
