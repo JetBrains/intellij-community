@@ -1082,6 +1082,16 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");
         }
 
+        @TestMetadata("BeforeCallee.kt")
+        public void testBeforeCallee() throws Exception {
+            runTest("../completion/testData/handlers/basic/BeforeCallee.kt");
+        }
+
+        @TestMetadata("BeforeParameterType.kt")
+        public void testBeforeParameterType() throws Exception {
+            runTest("../completion/testData/handlers/basic/BeforeParameterType.kt");
+        }
+
         @TestMetadata("ClassKeywordBeforeName.kt")
         public void testClassKeywordBeforeName() throws Exception {
             runTest("../completion/testData/handlers/basic/ClassKeywordBeforeName.kt");

@@ -9,6 +9,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
@@ -68,6 +70,8 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 // add temporary prefix and suffix
                 token?.parent !is KtNameReferenceExpression -> "$;val v:" to "$"
 
+                caretInTheMiddleOfElement(context) -> "" to ".f"
+
                 else -> "" to ""
             }
 
@@ -89,6 +93,12 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 context.document.deleteString(fqNameRangeMarker.endOffset, rangeMarker.endOffset)
             }
         }
+    }
+
+    private fun caretInTheMiddleOfElement(context: InsertionContext): Boolean {
+        val caretOffset = context.editor.caretModel.offset
+        val element = context.file.findElementAt(caretOffset) ?: return false
+        return element.startOffset < caretOffset && caretOffset < element.endOffset
     }
 
     private fun PsiElement.isCallableDeclarationIdentifier(): Boolean =
