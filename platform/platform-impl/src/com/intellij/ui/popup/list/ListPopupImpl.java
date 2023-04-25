@@ -780,6 +780,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private final class MyListSelectionModel extends DefaultListSelectionModel {
+    private boolean myInitialSelectionSet = false;
+
     private MyListSelectionModel() {
       setSelectionMode(isMultiSelectionEnabled() ? MULTIPLE_INTERVAL_SELECTION : SINGLE_SELECTION);
     }
@@ -796,7 +798,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       if (getSelectionMode() == SINGLE_SELECTION) {
         int index = findSelectableIndex(index0, getLeadSelectionIndex());
         if (0 <= index) super.setSelectionInterval(index, index);
-        if (index == 0) fireValueChanged(0, 0); // enforce listeners to be notified about initial selection
+        if (index == 0 && !myInitialSelectionSet) {
+          myInitialSelectionSet = true;
+          fireValueChanged(0, 0); // enforce listeners to be notified about initial selection
+        }
       }
       else {
         super.setSelectionInterval(index0, index1); // TODO: support when needed
