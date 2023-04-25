@@ -43,8 +43,8 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade"
             serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.IdeFe10AnalysisFacade"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.SourceNavigationService"
-            serviceImplementation="org.jetbrains.kotlin.idea.decompiler.navigation.Fe10SourceNavigationService"/>
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
+            serviceImplementation="org.jetbrains.kotlin.idea.decompiler.navigation.Fe10LibrarySourceScopeService"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 

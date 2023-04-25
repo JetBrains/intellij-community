@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.SourceNavigationService
+import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.SmartList
 
 @ApiStatus.Internal
-class Fe10SourceNavigationService: SourceNavigationService {
+class Fe10LibrarySourceScopeService: LibrarySourceScopeService {
     override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> =
         SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, project)
 

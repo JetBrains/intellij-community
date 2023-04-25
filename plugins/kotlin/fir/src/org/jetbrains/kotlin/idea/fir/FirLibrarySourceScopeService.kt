@@ -12,12 +12,12 @@ import org.jetbrains.kotlin.idea.base.projectStructure.collectLibraryBinariesMod
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.SourceNavigationService
+import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.utils.SmartList
 
 @ApiStatus.Internal
-class FirSourceNavigationService: SourceNavigationService {
+class FirLibrarySourceScopeService: LibrarySourceScopeService {
     override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> {
         val binaryModuleInfos = ModuleInfoProvider.getInstance(project)
             .collectLibraryBinariesModuleInfos(virtualFile)
