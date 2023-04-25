@@ -21,6 +21,12 @@ class PortableCompilationCache(private val context: CompilationContext) {
     private var isAlreadyUpdated = false
   }
 
+  init {
+    require(IS_ENABLED) {
+      "JPS Caches are expected to be enabled"
+    }
+  }
+
   private val git = Git(context.paths.projectHome)
 
   /**
@@ -39,7 +45,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   /**
    * Server which stores [PortableCompilationCache]
    */
-  inner class RemoteCache(context: CompilationContext) {
+  internal inner class RemoteCache(context: CompilationContext) {
     val url by lazy { require(URL_PROPERTY, "Remote Cache url", context) }
     val uploadUrl by lazy { require(UPLOAD_URL_PROPERTY, "Remote Cache upload url", context) }
     val authHeader by lazy {
@@ -60,7 +66,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
   private var forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
   private var forceRebuild = bool(FORCE_REBUILD_PROPERTY)
-  val remoteCache = RemoteCache(context)
+  private val remoteCache = RemoteCache(context)
   private val jpsCaches by lazy { JpsCaches(context) }
   private val remoteGitUrl by lazy {
     val result = require(GIT_REPOSITORY_URL_PROPERTY, "Repository url", context)
@@ -90,9 +96,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
    */
   fun downloadCacheAndCompileProject() {
-    check(IS_ENABLED) {
-      "JPS Caches are expected to be enabled"
-    }
     synchronized(PortableCompilationCache) {
       if (isAlreadyUpdated) {
         context.messages.info("PortableCompilationCache is already updated")
