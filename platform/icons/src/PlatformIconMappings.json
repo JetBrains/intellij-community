@@ -674,6 +674,7 @@
       "settingSync.svg": "toolwindows/settingSync.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
       "todo.svg": "toolwindows/toolWindowTodo.svg",
+      "toolWindowVariableView.svg": "toolwindows/toolWindowVariableView.svg",
       "vcs.svg": "toolwindows/toolWindowChanges.svg",
       "web.svg": "toolwindows/webToolWindow.svg"
     },
