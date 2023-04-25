@@ -772,6 +772,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/stringTemplate/NotEmptyPrefix.kt");
         }
 
+        @TestMetadata("QualifiedThis.kt")
+        public void testQualifiedThis() throws Exception {
+            runTest("../testData/handlers/basic/stringTemplate/QualifiedThis.kt");
+        }
+
         @TestMetadata("Replace.kt")
         public void testReplace() throws Exception {
             runTest("../testData/handlers/basic/stringTemplate/Replace.kt");

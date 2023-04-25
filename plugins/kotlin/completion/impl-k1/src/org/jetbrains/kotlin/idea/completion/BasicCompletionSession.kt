@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -649,13 +650,12 @@ class BasicCompletionSession(
                                     prefix,
                                     resolutionFacade
                                 ).map {
-                                    var lookupElementBuilder = it.createLookupElement()
-                                    if (lookupElementBuilder.lookupString != "this") {
-                                        lookupElementBuilder = lookupElementBuilder.withInsertHandler { context, _ ->
+                                    val lookupElementBuilder = it.createLookupElement()
+                                    lookupElementBuilder.applyIf(lookupElementBuilder.lookupString != "this") {
+                                        withInsertHandler { context, _ ->
                                             surroundWithBracesIfInStringTemplate(context)
                                         }
                                     }
-                                    lookupElementBuilder
                                 })
                         } else {
                             // for completion in secondary constructor delegation call
