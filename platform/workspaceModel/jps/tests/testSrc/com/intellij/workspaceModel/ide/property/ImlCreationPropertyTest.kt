@@ -29,6 +29,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -71,6 +72,8 @@ class ImlCreationPropertyTest {
 
   @Test
   fun createAndSave() {
+    Assumptions.assumeTrue(UsefulTestCase.IS_UNDER_TEAMCITY, "Skip slow test on local run")
+
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
         configLocation.baseDirectoryUrl.toPath().toFile().listFiles()?.forEach { it.deleteRecursively() }

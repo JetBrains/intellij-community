@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
@@ -20,10 +21,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
-import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @TestApplication
@@ -89,6 +88,11 @@ class WorkspaceModelPerformanceTest {
       ApplicationManagerEx.setInStressTest(false)
       Disposer.setDebugMode(disposerDebugMode)
     }
+  }
+
+  @BeforeEach
+  fun setUp() {
+    Assumptions.assumeTrue(UsefulTestCase.IS_UNDER_TEAMCITY, "Skip slow test on local run")
   }
 
   @Test
