@@ -61,15 +61,15 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testResolveStringFromUast() {
-        doCheck("ResolveStringFromUast", ::checkResolveStringFromUast)
+        checkResolveStringFromUast(myFixture, project)
     }
 
     fun testMultiResolve() {
-        doCheck("MultiResolve", ::checkMultiResolve)
+        checkMultiResolve(myFixture)
     }
 
     fun testMultiResolveJava() {
-        doCheck("MultiResolveJava", ::checkMultiResolveJava)
+        checkMultiResolveJava(myFixture)
     }
 
     fun testMultiResolveJavaAmbiguous() {
@@ -77,15 +77,15 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testResolveFromBaseJava() {
-        doCheck("ResolveFromBaseJava", ::checkResolveFromBaseJava)
+        checkResolveFromBaseJava(myFixture)
     }
 
     fun testMultiResolveInClass() {
-        doCheck("MultiResolveInClass", ::checkMultiResolveInClass)
+        checkMultiResolveInClass(myFixture)
     }
 
     fun testResolveToFacade() {
-        doCheck("ResolveToFacade", ::checkResolveToFacade)
+        checkResolveToFacade(myFixture)
     }
 
     fun testMultiConstructorResolve() {
@@ -97,19 +97,19 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testMultiResolveJvmOverloads() {
-        doCheck("MultiResolveJvmOverloads", ::checkMultiResolveJvmOverloads)
+        checkMultiResolveJvmOverloads(myFixture)
     }
 
     fun testLocalResolve() {
-        doCheck("LocalResolve", ::checkLocalResolve)
+        checkLocalResolve(myFixture)
     }
 
     fun testResolveLocalDefaultConstructor() {
-        doCheck("ResolveLocalDefaultConstructor", ::checkResolveLocalDefaultConstructor)
+        checkResolveLocalDefaultConstructor(myFixture)
     }
 
     fun testResolveJavaClassAsAnonymousObjectSuperType() {
-        doCheck("ResolveJavaClassAsAnonymousObjectSuperType", ::checkResolveJavaClassAsAnonymousObjectSuperType)
+        checkResolveJavaClassAsAnonymousObjectSuperType(myFixture)
     }
 
     fun testResolveCompiledAnnotation() {
@@ -117,59 +117,59 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testResolveExplicitLambdaParameter() {
-        doCheck("ResolveExplicitLambdaParameter", ::checkResolveExplicitLambdaParameter)
+        checkResolveExplicitLambdaParameter(myFixture)
     }
 
     fun testResolveImplicitLambdaParameter() {
-        doCheck("ResolveImplicitLambdaParameter", ::checkResolveImplicitLambdaParameter)
+        checkResolveImplicitLambdaParameter(myFixture)
     }
 
     fun testResolveSyntheticMethod() {
-        doCheck("ResolveSyntheticMethod", ::checkResolveSyntheticMethod)
+        checkResolveSyntheticMethod(myFixture)
     }
 
     fun testMapFunctions() {
-        doCheck("MapFunctions", ::checkMapFunctions)
+        checkMapFunctions(myFixture)
     }
 
     fun testListIterator() {
-        doCheck("ListIterator", ::checkListIterator)
+        checkListIterator(myFixture)
     }
 
     fun testStringJVM() {
-        doCheck("StringJVM", ::checkStringJVM)
+        checkStringJVM(myFixture)
     }
 
     fun testArgumentMappingDefaultValue() {
-        doCheck("ArgumentMappingDefaultValue", ::checkArgumentMappingDefaultValue)
+        checkArgumentMappingDefaultValue(myFixture)
     }
 
     fun testArgumentMappingExtensionFunction() {
-        doCheck("ArgumentMappingExtensionFunction", ::checkArgumentMappingExtensionFunction)
+        checkArgumentMappingExtensionFunction(myFixture)
     }
 
     fun testArgumentMappingVararg() {
-        doCheck("ArgumentMappingVararg", ::checkArgumentMappingVararg)
+        checkArgumentMappingVararg(myFixture)
     }
 
     fun testArgumentMappingOOBE() {
-        doCheck("ArgumentMappingOOBE", ::checkArgumentMappingOOBE)
+        checkArgumentMappingOOBE(myFixture)
     }
 
     fun testSyntheticEnumMethods() {
-        doCheck("SyntheticEnumMethods", ::checkSyntheticEnumMethods)
+        checkSyntheticEnumMethods(myFixture)
     }
 
     fun testArrayAccessOverloads() {
-        doCheck("ArrayAccessOverloads", ::checkArrayAccessOverloads)
+        checkArrayAccessOverloads(myFixture)
     }
 
     fun testOperatorOverloads() {
-        doCheck("OperatorOverloads", ::checkOperatorOverloads)
+        checkOperatorOverloads(myFixture)
     }
 
     fun testOperatorMultiResolvable() {
-        doCheck("OperatorMultiResolvable", ::checkOperatorMultiResolvable)
+        checkOperatorMultiResolvable(myFixture)
     }
 
     fun testResolveSyntheticJavaPropertyCompoundAccess() {
@@ -177,27 +177,27 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testResolveSyntheticJavaPropertyAccessor() {
-        doCheck("ResolveSyntheticJavaPropertyAccessor", ::checkResolveSyntheticJavaPropertyAccessor)
+        checkResolveSyntheticJavaPropertyAccessor(myFixture)
     }
 
     fun testResolveKotlinPropertyAccessor() {
-        doCheck("ResolveKotlinPropertyAccessor", ::checkResolveKotlinPropertyAccessor)
+        checkResolveKotlinPropertyAccessor(myFixture)
     }
 
     fun testResolveStaticImportFromObject() {
-        doCheck("ResolveStaticImportFromObject", ::checkResolveStaticImportFromObject)
+        checkResolveStaticImportFromObject(myFixture)
     }
 
     fun testResolveToSubstituteOverride() {
-        doCheck("ResolveToSubstituteOverride", ::checkResolveToSubstituteOverride)
+        checkResolveToSubstituteOverride(myFixture)
     }
 
     fun testResolveEnumEntrySuperType() {
-        doCheck("TypeReferenceFromEnumEntry", ::checkResolveEnumEntrySuperType)
+        checkResolveEnumEntrySuperType(myFixture)
     }
 
     fun testResolveLambdaInvoke() {
-        doCheck("LambdaInvoke", ::checkLambdaInvoke)
+        checkLambdaInvoke(myFixture)
     }
 
     fun testIsMethodCallCanBeOneOfInvoke() {
