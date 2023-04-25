@@ -36,12 +36,20 @@ def exec_table_command(init_command, command_type, f_globals, f_locals):
         is_exception_on_eval = is_error_on_eval(tmp_var)
         if is_exception_on_eval:
             return False, tmp_var.result
-        res += str(type(tmp_var))
+
+        table_provider = __get_table_provider(tmp_var)
+
+        if not table_provider:
+            raise RuntimeError('No table data provider for: {}'.format(type(tmp_var)))
+
+        res += table_provider.get_type(tmp_var)
         res += NEXT_VALUE_SEPARATOR
-        res += str(tmp_var.shape[0])
+        res += table_provider.get_shape(tmp_var)
         res += NEXT_VALUE_SEPARATOR
-        res += repr(tmp_var.head().to_html(notebook=True,
-                                           max_cols=MAX_COLS))
+        res += table_provider.get_head(tmp_var, MAX_COLS)
+        res += NEXT_VALUE_SEPARATOR
+        res += table_provider.get_column_types(tmp_var)
+
     elif command_type == TableCommandType.SLICE:
         import pandas as pd
         _jb_max_cols = pd.get_option('display.max_columns')
@@ -54,4 +62,16 @@ def exec_table_command(init_command, command_type, f_globals, f_locals):
         res += repr(tmp_var.to_html(notebook=True,
                                     max_cols=MAX_COLS))
         pd.set_option('display.max_colwidth', _jb_max_colwidth)
+
     return True, res
+
+
+def __get_table_provider(output: str):
+    output_type = type(output)
+
+    table_provider = None
+    if '{}.{}'.format(output_type.__module__,
+                      output_type.__name__) == 'pandas.core.frame.DataFrame':
+        import _pydevd_bundle.tables.pydevd_pandas as table_provider
+
+    return table_provider
