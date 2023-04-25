@@ -428,10 +428,6 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/my-EleMeNt/js/properties/", customElementsManifests = listOf("basic"))
   }
 
-  fun testBasicCustomElementsManifest8() {
-    doTest("html/elements/my-element/js/static-properties/", customElementsManifests = listOf("basic"))
-  }
-
   fun testNestedPattern1() {
     webSymbolsQueryExecutorFactory.addScope(
       object : WebSymbolsScope {

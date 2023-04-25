@@ -17,10 +17,7 @@ class CustomElementsMemberSymbol private constructor(
     get() = WebSymbol.NAMESPACE_JS
 
   override val kind: SymbolKind
-    get() = if (contribution.static == true)
-      WebSymbol.KIND_JS_STATIC_PROPERTIES
-    else
-      WebSymbol.KIND_JS_PROPERTIES
+    get() = WebSymbol.KIND_JS_PROPERTIES
 
   override val type: Any?
     get() = if (contribution is ClassMethod)
@@ -34,7 +31,9 @@ class CustomElementsMemberSymbol private constructor(
   companion object {
     fun create(member: MemberBase, origin: CustomElementsJsonOrigin): CustomElementsMemberSymbol? {
       if (member !is CustomElementsMember) return null
-      if (member.privacy.let { it == ClassField.Privacy.PRIVATE || it == ClassField.Privacy.PROTECTED }) return null
+      if (member.privacy.let { it == ClassField.Privacy.PRIVATE || it == ClassField.Privacy.PROTECTED }
+          || member.static == true)
+        return null
       val name = member.name ?: return null
       return CustomElementsMemberSymbol(name, member, origin)
     }

@@ -171,7 +171,6 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
 
     const val KIND_JS_EVENTS = "events"
     const val KIND_JS_PROPERTIES = "properties"
-    const val KIND_JS_STATIC_PROPERTIES = "static-properties"
     const val KIND_JS_STRING_LITERALS = "string-literals"
 
     /** Specify language to inject in an HTML element */
