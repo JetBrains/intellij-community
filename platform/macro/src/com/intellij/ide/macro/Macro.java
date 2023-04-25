@@ -49,6 +49,15 @@ public abstract class Macro {
     return expand(dataContext);
   }
 
+  public @Nullable String preview(@NotNull DataContext dataContext) {
+    try {
+      return expand(dataContext);
+    }
+    catch (ExecutionCancelledException ignore) {
+      return null;
+    }
+  }
+
   @NotNull
   protected static String getPath(@NotNull VirtualFile file) {
     return file.getPath().replace('/', File.separatorChar);

@@ -291,12 +291,7 @@ public final class MacrosDialog extends DialogWrapper {
 
     @Override
     public @NotNull String getPreview() {
-      try {
-        return StringUtil.notNullize(myMacro.expand(myDataContext));
-      }
-      catch (Macro.ExecutionCancelledException ignore) {
-        return "";
-      }
+      return StringUtil.notNullize(myMacro.preview(myDataContext));
     }
 
     public @NotNull String toString() {
