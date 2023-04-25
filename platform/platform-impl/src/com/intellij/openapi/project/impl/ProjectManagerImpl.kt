@@ -77,7 +77,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.jps.diagnostic.JpsMetrics
+import com.intellij.platform.jps.model.impl.diagnostic.JpsMetrics
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException

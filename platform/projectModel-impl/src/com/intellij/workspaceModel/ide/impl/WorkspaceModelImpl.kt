@@ -29,7 +29,7 @@ import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.jps.diagnostic.JpsMetrics
+import com.intellij.platform.jps.model.impl.diagnostic.JpsMetrics
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
