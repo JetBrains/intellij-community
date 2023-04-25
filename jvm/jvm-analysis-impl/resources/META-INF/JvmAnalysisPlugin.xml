@@ -191,7 +191,6 @@
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
-    <codeInsight.externalLibraryResolver implementation="com.intellij.codeInspection.sourceToSink.CheckerQualExternalLibraryResolver"/>
     <inspectionCustomComponent implementation="com.intellij.codeInsight.options.JavaInspectionButtons"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">

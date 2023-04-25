@@ -23,7 +23,7 @@ class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(
   fun testKotlinPropertyPropagateFix() {
     prepareCheckFramework()
     myFixture.configureByFile("Property.kt")
-    val propagateAction = myFixture.getAvailableIntention("Propagate safe annotation from 'getF'")!!
+    val propagateAction = myFixture.getAvailableIntention("Show propagation tree from 'getF'")!!
     myFixture.launchAction(propagateAction)
     myFixture.checkResultByFile("Property.after.kt")
   }

@@ -17,10 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.ULocalVariable;
 import org.jetbrains.uast.UastContextKt;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
 
@@ -32,13 +29,14 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
 
   @Nullable
   private final String firstAnnotation;
+  @NotNull
+  private final UntaintedContext myContext;
 
-  TaintValueFactory(@NotNull List<String> taintedAnnotations,
-                    @NotNull List<String> unTaintedAnnotations,
-                    @Nullable String firstAnnotation) {
-    this.myTaintedAnnotations = new HashSet<>(taintedAnnotations);
-    this.myUnTaintedAnnotations = new HashSet<>(unTaintedAnnotations);
-    this.firstAnnotation = firstAnnotation;
+  TaintValueFactory(@NotNull UntaintedContext context) {
+    this.myTaintedAnnotations = new HashSet<>(context.taintedAnnotations);
+    this.myUnTaintedAnnotations = new HashSet<>(context.unTaintedAnnotations);
+    this.firstAnnotation = context.firstAnnotation();
+    this.myContext = context;
   }
 
   @Override
@@ -107,7 +105,7 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
       .findFirst().orElse(TaintValue.UNKNOWN);
   }
 
-  @NotNull TaintValue of(@NotNull PsiModifierListOwner annotationOwner) {
+  private @NotNull TaintValue of(@NotNull PsiModifierListOwner annotationOwner) {
     HashSet<String> allNames = new HashSet<>();
     allNames.addAll(myUnTaintedAnnotations);
     allNames.addAll(myTaintedAnnotations);
@@ -190,5 +188,24 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     }
     Set<PsiAnnotation.TargetType> targets = AnnotationTargetUtil.getAnnotationTargets(annotationClass);
     return targets == null ? Set.of() : targets;
+  }
+
+  record UntaintedContext(@NotNull List<String> taintedAnnotations,
+                          @NotNull List<String> unTaintedAnnotations,
+                          @Nullable String firstAnnotation,
+                          @NotNull List<String> methodClass, @NotNull List<String> methodPatterns,
+                          @NotNull List<String> fieldClass, @NotNull List<String> fieldPatterns) {
+
+    public UntaintedContext copy() {
+      return new UntaintedContext(new ArrayList<>(taintedAnnotations), new ArrayList<>(unTaintedAnnotations),
+                                  firstAnnotation,
+                                  new ArrayList<>(methodClass), new ArrayList<>(methodPatterns),
+                                  new ArrayList<>(fieldClass), new ArrayList<>(fieldPatterns));
+    }
+  }
+
+  @NotNull
+  UntaintedContext getContext() {
+    return myContext;
   }
 }

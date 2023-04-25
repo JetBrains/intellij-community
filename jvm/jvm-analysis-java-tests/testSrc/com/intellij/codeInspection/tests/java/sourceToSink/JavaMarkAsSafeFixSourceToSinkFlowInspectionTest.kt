@@ -74,4 +74,28 @@ class JavaMarkAsSafeFixSourceToSinkFlowInspectionTest : SourceToSinkFlowInspecti
     prepareJsr()
     myFixture.testQuickFix("CommonCasesJsr.java", "Mark 's1' as requiring validation", true)
   }
+
+  fun `test unknown field`() {
+    prepareCheckFramework()
+    myFixture.testQuickFix("UnknownField.java", "Mark 's' as requiring validation", true)
+  }
+
+  fun `test unknown method`() {
+    prepareCheckFramework()
+    myFixture.testQuickFix("UnknownMethod.java", "Mark 's' as requiring validation", true)
+  }
+
+  fun `test tainted method`() {
+    prepareCheckFramework()
+    myFixture.testQuickFixUnavailable("TaintedMethod.java", "Mark 's' as requiring validation")
+  }
+
+  fun `test recursive 2 path`() {
+    prepareCheckFramework()
+    myFixture.testQuickFix("RecursiveTwoPaths.java", "Mark 's' as requiring validation", true)
+  }
+  fun `test recursive`() {
+    prepareCheckFramework()
+    myFixture.testQuickFix("Recursive.java", "Mark 'id' as requiring validation", true)
+  }
 }

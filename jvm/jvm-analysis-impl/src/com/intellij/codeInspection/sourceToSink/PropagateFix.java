@@ -35,12 +35,16 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @NotNull
   private final TaintValueFactory myTaintValueFactory;
 
+  private final boolean supportRefactoring;
+
   public PropagateFix(@NotNull PsiElement psiElement,
                       @NotNull String name,
-                      @NotNull TaintValueFactory taintValueFactory) {
+                      @NotNull TaintValueFactory taintValueFactory,
+                      boolean supportRefactoring) {
     super(psiElement);
     myName = name;
     myTaintValueFactory = taintValueFactory;
+    this.supportRefactoring = supportRefactoring;
   }
 
   @Override
@@ -76,15 +80,15 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
       Set<TaintNode> toAnnotate = new HashSet<>();
       toAnnotate = PropagateAnnotationPanel.getSelectedElements(root, toAnnotate);
       if (toAnnotate == null || root.myTaintValue == TaintValue.TAINTED) return;
-      annotate(project, toAnnotate, true);
+      annotate(project, toAnnotate);
       return;
     }
     Consumer<Collection<TaintNode>> callback = toAnnotate -> {
-      annotate(project, toAnnotate, false);
+      annotate(project, toAnnotate);
       ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
       if (toolWindow != null) toolWindow.hide();
     };
-    PropagateAnnotationPanel panel = new PropagateAnnotationPanel(project, root, callback);
+    PropagateAnnotationPanel panel = new PropagateAnnotationPanel(project, root, callback, supportRefactoring);
     String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
     ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
     if (toolWindow == null) return;
@@ -113,11 +117,11 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.family");
   }
 
-  private void annotate(@NotNull Project project, @NotNull Collection<TaintNode> toAnnotate, boolean isHeadlessMode) {
+  private void annotate(@NotNull Project project, @NotNull Collection<TaintNode> toAnnotate) {
     List<TaintNode> nonMarkedNodes = ContainerUtil.filter(toAnnotate, this::isNonMarked);
     Set<PsiElement> psiElements = getPsiElements(nonMarkedNodes);
     if (psiElements == null) return;
-    MarkAsSafeFix.markAsSafe(project, psiElements, isHeadlessMode, this.myTaintValueFactory);
+    MarkAsSafeFix.markAsSafe(project, psiElements, this.myTaintValueFactory);
   }
 
   private boolean isNonMarked(@NotNull TaintNode taintNode) {

@@ -1,15 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
+import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.util.PsiClassRenderingInfo;
+import com.intellij.ide.util.PsiElementRenderingInfo;
+import com.intellij.ide.util.PsiMethodRenderingInfo;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 
 public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
@@ -25,6 +39,8 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
   private boolean isExcluded;
 
   @Nullable
+  private final Icon myIcon;
+  @Nullable
   private final TaintValueFactory myTaintValueFactory;
 
   TaintNode(@Nullable TaintNode parent,
@@ -35,6 +51,8 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     myPsiElement = psiElement == null ? null : SmartPointerManager.createPointer(psiElement);
     myRef = ref == null ? null : SmartPointerManager.createPointer(ref);
     myTaintValueFactory = taintValueFactory;
+    int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
+    myIcon = psiElement == null ? null : psiElement.getIcon(flags);
   }
 
   @Override
@@ -86,6 +104,66 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
       children.add(child);
     }
     return children;
+  }
+
+  @Override
+  protected @NotNull PresentationData createPresentation() {
+    PresentationData data = new PresentationData();
+    PsiElement psiElement = this.getPsiElement();
+    if (psiElement == null) {
+      append(data, UsageViewBundle.message("node.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
+      return data;
+    }
+    appendPsiElement(data, psiElement);
+    if (!this.isTaintFlowRoot) return data;
+    String unsafeFlow = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.unsafe.flow");
+    SimpleTextAttributes attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, UIUtil.getLabelInfoForeground());
+    append(data, unsafeFlow, attributes);
+    return data;
+  }
+
+  private static void append(@NotNull PresentationData data,
+                             @NlsContexts.Label @NotNull String message, @NotNull SimpleTextAttributes attributes) {
+    data.addText(message, attributes);
+  }
+
+  private void appendPsiElement(@NotNull PresentationData data, @NotNull PsiElement psiElement) {
+    TaintNode taintNode = this;
+    data.setIcon(myIcon);
+    int style = taintNode.isExcluded() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN;
+    Color color = taintNode.myTaintValue == TaintValue.TAINTED ? NamedColorUtil.getErrorForeground() : null;
+    SimpleTextAttributes attributes = new SimpleTextAttributes(style, color);
+    PsiMethod psiMethod = ObjectUtils.tryCast(psiElement, PsiMethod.class);
+    if (psiMethod != null) {
+      PsiMethodRenderingInfo renderingInfo = new PsiMethodRenderingInfo(true);
+      String text = renderingInfo.getPresentableText(psiMethod);
+      append(data, text, attributes);
+      return;
+    }
+    PsiVariable psiVariable = ObjectUtils.tryCast(psiElement, PsiVariable.class);
+    if (psiVariable != null) {
+      String varText =
+        PsiFormatUtil.formatVariable(psiVariable, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
+      append(data, varText, attributes);
+      PsiNameIdentifierOwner parent = PsiTreeUtil.getParentOfType(psiVariable, PsiClass.class, PsiMethod.class);
+      Color placeColor = attributes.getFgColor();
+      if (placeColor == null) placeColor = UIUtil.getLabelInfoForeground();
+      SimpleTextAttributes placeAttribute = new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, placeColor);
+      if (parent instanceof PsiMethod) {
+        PsiMethodRenderingInfo renderingInfo = new PsiMethodRenderingInfo(true);
+        append(data, ": " + renderingInfo.getPresentableText((PsiMethod)parent), placeAttribute);
+      }
+      else if (parent instanceof PsiClass) {
+        PsiElementRenderingInfo<PsiClass> renderingInfo = PsiClassRenderingInfo.INSTANCE;
+        append(data, ": " + renderingInfo.getPresentableText((PsiClass)parent), placeAttribute);
+      }
+      return;
+    }
+    PsiNamedElement namedElement = ObjectUtils.tryCast(psiElement, PsiNamedElement.class);
+    if (namedElement == null) return;
+    String name = namedElement.getName();
+    if (name == null) return;
+    append(data, name, attributes);
   }
 
   private void markTainted() {

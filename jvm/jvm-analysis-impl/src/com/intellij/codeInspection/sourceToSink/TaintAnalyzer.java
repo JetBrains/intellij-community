@@ -82,7 +82,9 @@ public class TaintAnalyzer {
     return codeBlock == null ? TaintValue.UNTAINTED : analyze(taintValue, codeBlock, psiVariable);
   }
 
-  private @NotNull TaintValue analyze(@NotNull TaintValue taintValue, @NotNull UBlockExpression codeBlock, @NotNull PsiVariable psiVariable) {
+  private @NotNull TaintValue analyze(@NotNull TaintValue taintValue,
+                                      @NotNull UBlockExpression codeBlock,
+                                      @NotNull PsiVariable psiVariable) {
     class VarAnalyzer extends AbstractUastVisitor {
       private TaintValue myTaintValue;
 

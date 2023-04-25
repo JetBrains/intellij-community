@@ -5,14 +5,10 @@ import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.ide.util.PsiClassRenderingInfo;
-import com.intellij.ide.util.PsiElementRenderingInfo;
-import com.intellij.ide.util.PsiMethodRenderingInfo;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -22,29 +18,32 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
-import com.intellij.util.ui.NamedColorUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -69,6 +68,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER;
+
 public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
   private final Tree myTree;
@@ -78,17 +79,22 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
   private final PropagateTreeListener myTreeSelectionListener;
   private final @NotNull Consumer<? super Collection<@NotNull TaintNode>> myCallback;
   private Content myContent;
+  private final boolean mySupportRefactoring;
 
-  PropagateAnnotationPanel(@NotNull Project project, @NotNull TaintNode root, @NotNull Consumer<? super Collection<@NotNull TaintNode>> callback) {
+  PropagateAnnotationPanel(@NotNull Project project,
+                           @NotNull TaintNode root,
+                           @NotNull Consumer<? super Collection<@NotNull TaintNode>> callback,
+                           boolean supportRefactoring) {
     super(new BorderLayout());
     myTree = PropagateTree.create(this, root);
     myRoot = root;
     myProject = project;
     myCallback = callback;
+    mySupportRefactoring = supportRefactoring;
 
     Editor usageEditor = createEditor();
     Editor memberEditor = createEditor();
-    myTreeSelectionListener = new PropagateTreeListener(usageEditor, memberEditor, myRoot);
+    myTreeSelectionListener = new PropagateTreeListener(usageEditor, memberEditor);
     myTree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
 
     Splitter splitter = new Splitter(false, .6f);
@@ -115,21 +121,23 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
   private @NotNull JPanel createToolbar() {
     JPanel panel = new JPanel(new BorderLayout());
-    String annotateText = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.annotate");
-    JButton annotateButton = new JButton(annotateText);
-    annotateButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        ToolWindow toolWindow = ProblemsView.getToolWindow(myProject);
-        if (toolWindow == null) return;
-        ContentManager contentManager = toolWindow.getContentManager();
-        contentManager.removeContent(myContent, true);
-        myContent.release();
-        Set<TaintNode> toAnnotate = getSelectedElements(myRoot, new HashSet<>());
-        if (toAnnotate != null) myCallback.accept(toAnnotate);
-      }
-    });
-    panel.add(annotateButton, BorderLayout.WEST);
+    if (mySupportRefactoring) {
+      String annotateText = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.annotate");
+      JButton annotateButton = new JButton(annotateText);
+      annotateButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          ToolWindow toolWindow = ProblemsView.getToolWindow(myProject);
+          if (toolWindow == null) return;
+          ContentManager contentManager = toolWindow.getContentManager();
+          contentManager.removeContent(myContent, true);
+          myContent.release();
+          Set<TaintNode> toAnnotate = getSelectedElements(myRoot, new HashSet<>());
+          if (toAnnotate != null) myCallback.accept(toAnnotate);
+        }
+      });
+      panel.add(annotateButton, BorderLayout.WEST);
+    }
     return panel;
   }
 
@@ -182,9 +190,9 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
     return memberComponent;
   }
 
-  private static void addTreeActions(@NotNull Tree tree, @NotNull TaintNode root) {
+  private void addTreeActions(@NotNull Tree tree, @NotNull TaintNode root) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    if (root.myTaintValue != TaintValue.TAINTED) {
+    if (root.myTaintValue != TaintValue.TAINTED && mySupportRefactoring) {
       actionGroup.addAll(createIncludeExcludeActions(tree));
     }
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
@@ -253,15 +261,12 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
     private final ElementEditor myUsageEditor;
     private final ElementEditor myMemberEditor;
-    private final TaintNode myRoot;
     private final Alarm myAlarm = new Alarm();
 
     private PropagateTreeListener(@NotNull Editor usageEditor,
-                                  @NotNull Editor memberEditor,
-                                  @NotNull TaintNode root) {
-      myUsageEditor = new ElementEditor(usageEditor, "propagate.from.empty.text");
-      myMemberEditor = new ElementEditor(memberEditor, "propagate.to.empty.text");
-      myRoot = root;
+                                  @NotNull Editor memberEditor) {
+      myUsageEditor = new ElementEditor(usageEditor);
+      myMemberEditor = new ElementEditor(memberEditor);
     }
 
     @Override
@@ -274,12 +279,12 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
     }
 
     void updateEditorTexts(@NotNull TaintNode taintNode) {
-      if (taintNode == myRoot || taintNode.getParentDescriptor() == null) {
-        myUsageEditor.show(null, null);
-        myMemberEditor.show(null, null);
-        return;
-      }
+      //clear all
+      myUsageEditor.show(null, null);
+      myMemberEditor.show(null, null);
+
       PsiElement usage = taintNode.getRef();
+      usage = MarkAsSafeFix.getSourcePsi(usage);
       if (usage == null) return;
       PsiElement parentPsi = getParentPsi(usage);
       if (parentPsi == null) return;
@@ -288,6 +293,8 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       myUsageEditor.show(parentPsi, usageHighlight);
 
       PsiElement element = taintNode.getPsiElement();
+      if (element == null) return;
+      element = MarkAsSafeFix.getSourcePsi(element);
       if (element == null) return;
       PsiElement elementHighlight = getIdentifier(element);
       if (elementHighlight == null) return;
@@ -318,17 +325,14 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
       private final Editor myEditor;
       private final Collection<RangeHighlighter> myHighlighters = new ArrayList<>();
-      private final String myEmptyText;
 
-      private ElementEditor(Editor editor, String emptyText) {
+      private ElementEditor(Editor editor) {
         myEditor = editor;
-        myEmptyText = emptyText;
       }
 
       public void show(@Nullable PsiElement element, @Nullable PsiElement toHighlight) {
         if (element == null || toHighlight == null) {
-          String text = JvmAnalysisBundle.message(myEmptyText);
-          ApplicationManager.getApplication().runWriteAction(() -> myEditor.getDocument().setText(text));
+          ApplicationManager.getApplication().runWriteAction(() -> myEditor.getDocument().setText(""));
           return;
         }
         ElementModel model = ElementModel.create(element, toHighlight);
@@ -419,6 +423,13 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
     @Override
     public @Nullable Object getData(@NotNull String dataId) {
+      if (BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId);
+      }
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId) {
       if (!CommonDataKeys.PSI_ELEMENT.is(dataId)) return null;
       TaintNode[] selectedNodes = getSelectedNodes(TaintNode.class, null);
       if (selectedNodes.length != 1) return null;
@@ -438,18 +449,17 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       PropagateTree tree = new PropagateTree(treeModel);
       tree.setRootVisible(false);
       tree.setShowsRootHandles(true);
-      tree.setCellRenderer(new PropagateTree.PropagateTreeRenderer());
       TreeUtil.installActions(tree);
       EditSourceOnDoubleClickHandler.install(tree);
       return tree;
     }
 
     private static class PropagateTreeModel extends BaseTreeModel<TaintNode> implements InvokerSupplier {
-      
+
       private final TaintNode myRootWrapper;
 
-      private PropagateTreeModel(TaintNode wrapper) { 
-        myRootWrapper = wrapper; 
+      private PropagateTreeModel(TaintNode wrapper) {
+        myRootWrapper = wrapper;
       }
 
       @Override
@@ -467,71 +477,6 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       @Override
       public @NotNull Invoker getInvoker() {
         return Invoker.forBackgroundThreadWithReadAction(this);
-      }
-    }
-
-    private static class PropagateTreeRenderer extends ColoredTreeCellRenderer {
-
-      @Override
-      public void customizeCellRenderer(@NotNull JTree tree,
-                                        Object value,
-                                        boolean selected,
-                                        boolean expanded,
-                                        boolean leaf,
-                                        int row,
-                                        boolean hasFocus) {
-        TaintNode taintNode = ObjectUtils.tryCast(value, TaintNode.class);
-        if (taintNode == null) return;
-        PsiElement psiElement = taintNode.getPsiElement();
-        if (psiElement == null) {
-          append(UsageViewBundle.message("node.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
-          return;
-        }
-        appendPsiElement(psiElement, taintNode);
-        if (!taintNode.isTaintFlowRoot) return;
-        String unsafeFlow = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.unsafe.flow");
-        SimpleTextAttributes attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, UIUtil.getLabelInfoForeground());
-        append(unsafeFlow, attributes);
-      }
-
-      private void appendPsiElement(@NotNull PsiElement psiElement, @NotNull TaintNode taintNode) {
-        int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
-        setIcon(ReadAction.compute(() -> psiElement.getIcon(flags)));
-        int style = taintNode.isExcluded() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN;
-        Color color;
-        color = taintNode.myTaintValue == TaintValue.TAINTED ? NamedColorUtil.getErrorForeground() : null;
-        SimpleTextAttributes attributes = new SimpleTextAttributes(style, color);
-        PsiMethod psiMethod = ObjectUtils.tryCast(psiElement, PsiMethod.class);
-        if (psiMethod != null) {
-          PsiMethodRenderingInfo renderingInfo = new PsiMethodRenderingInfo(true);
-          String text = renderingInfo.getPresentableText(psiMethod);
-          append(text, attributes);
-          return;
-        }
-        PsiVariable psiVariable = ObjectUtils.tryCast(psiElement, PsiVariable.class);
-        if (psiVariable != null) {
-          String varText =
-            PsiFormatUtil.formatVariable(psiVariable, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
-          append(varText, attributes);
-          PsiNameIdentifierOwner parent = PsiTreeUtil.getParentOfType(psiVariable, PsiClass.class, PsiMethod.class);
-          Color placeColor = attributes.getFgColor();
-          if (placeColor == null) placeColor = UIUtil.getLabelInfoForeground();
-          SimpleTextAttributes placeAttribute = new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, placeColor);
-          if (parent instanceof PsiMethod) {
-            PsiMethodRenderingInfo renderingInfo = new PsiMethodRenderingInfo(true);
-            append(": " + renderingInfo.getPresentableText((PsiMethod)parent), placeAttribute);
-          }
-          else if (parent instanceof PsiClass) {
-            PsiElementRenderingInfo<PsiClass> renderingInfo = PsiClassRenderingInfo.INSTANCE;
-            append(": " + renderingInfo.getPresentableText((PsiClass)parent), placeAttribute);
-          }
-          return;
-        }
-        PsiNamedElement namedElement = ObjectUtils.tryCast(psiElement, PsiNamedElement.class);
-        if (namedElement == null) return;
-        String name = namedElement.getName();
-        if (name == null) return;
-        append(name, attributes);
       }
     }
   }
