@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.compiler.configuration
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.*
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.AbstractLazyFileOutputProducer
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducer
@@ -59,6 +58,8 @@ internal class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileO
 private class LazyDistDirLayoutProducer(version: String, private val unpackedDistDestination: File) :
     AbstractLazyFileOutputProducer<List<File>, Unit>("${LazyDistDirLayoutProducer::class.java.name}-$version") {
 
+    private val kotlinVersion = IdeKotlinVersion.parse(version).getOrThrow()
+
     override fun produceOutput(input: List<File>, computationContext: Unit): List<File> { // inputs are jarsInMavenRepo
         unpackedDistDestination.deleteRecursively()
         val lib = unpackedDistDestination.resolve("lib")
@@ -93,14 +94,38 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
         if (jarInMavenRepo.name == KotlinArtifactNames.JETBRAINS_ANNOTATIONS) {
             return jarInMavenRepo.name
         }
-        if (nameWithoutExtension.startsWith("kotlin-maven-serialization")) {
-            return "kotlinx-serialization-compiler-plugin.jar"
+
+        // Starting Kotlin 1.9.0 release compiler plugins were decoupled from related maven plugin and added into kotlinc dist
+        // Related issues:
+        // - https://youtrack.jetbrains.com/issue/KT-52811
+        // - https://youtrack.jetbrains.com/issue/KTI-38
+        if (kotlinVersion <= IdeKotlinVersion.parse("1.8.255").getOrThrow()) {
+            if (nameWithoutExtension.startsWith("kotlin-maven-serialization")) {
+                return "kotlinx-serialization-compiler-plugin.jar"
+            }
+            if (nameWithoutExtension.startsWith("kotlin-maven-sam-with-receiver") || nameWithoutExtension.startsWith("kotlin-maven-allopen") ||
+                nameWithoutExtension.startsWith("kotlin-maven-lombok") || nameWithoutExtension.startsWith("kotlin-maven-noarg")
+            ) {
+                return nameWithoutExtension.removePrefix("kotlin-maven-").removeSuffix("-$version") + "-compiler-plugin.jar"
+            }
+        } else {
+            val compilerPluginNames = listOf(
+                "kotlin-sam-with-receiver-compiler-plugin",
+                "kotlin-allopen-compiler-plugin",
+                "kotlin-lombok-compiler-plugin",
+                "kotlin-noarg-compiler-plugin",
+                "kotlin-assignment-compiler-plugin"
+            )
+
+            if (compilerPluginNames.any { nameWithoutExtension.startsWith(it) }) {
+                return nameWithoutExtension.removePrefix("kotlin-").removeSuffix("-$version") + ".jar"
+            }
+
+            if (nameWithoutExtension.startsWith("kotlinx-serialization-compiler-plugin")) {
+                return nameWithoutExtension.removeSuffix("-$version") + ".jar"
+            }
         }
-        if (nameWithoutExtension.startsWith("kotlin-maven-sam-with-receiver") || nameWithoutExtension.startsWith("kotlin-maven-allopen") ||
-            nameWithoutExtension.startsWith("kotlin-maven-lombok") || nameWithoutExtension.startsWith("kotlin-maven-noarg")
-        ) {
-            return nameWithoutExtension.removePrefix("kotlin-maven-").removeSuffix("-$version") + "-compiler-plugin.jar"
-        }
+
         if (nameWithoutExtension.startsWith("kotlin-android-extensions-runtime")) {
             return "android-extensions-runtime.jar"
         }
