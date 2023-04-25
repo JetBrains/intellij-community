@@ -54,9 +54,11 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
       ConsentOptions.needToShowUsageStatsConsent() -> {
         updateCached.join()
         return {
+/* Android Studio: b/200625563
           prepareAndExecuteInEdt {
             showDataSharingAgreement()
           }
+Android Studio: b/200625563 */
           false
         }
       }
