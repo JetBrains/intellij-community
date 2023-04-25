@@ -22,6 +22,8 @@
   <applicationListeners>
     <listener class="com.intellij.feedback.localization.service.LocalizationFeedbackStartupListener"
               topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.feedback.pycharmUi.state.NewUserFirstRunDateTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <actions>
