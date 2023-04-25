@@ -25,6 +25,11 @@ public final class ChronoUtil {
   public static final String CHRONO_FIELD = "java.time.temporal.ChronoField";
   public static final String CHRONO_UNIT = "java.time.temporal.ChronoUnit";
 
+  public static final CallMatcher FORMAT_PATTERN_METHOD_MATCHER = CallMatcher.anyOf(
+    CallMatcher.instanceCall("java.text.SimpleDateFormat", "applyPattern", "applyLocalizedPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
+    CallMatcher.staticCall("java.time.format.DateTimeFormatter", "ofPattern"),
+    CallMatcher.instanceCall("java.time.format.DateTimeFormatterBuilder", "appendPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING)
+  );
   public static final CallMatcher CHRONO_GET_MATCHERS = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_TIME_LOCAL_DATE, "get").parameterTypes(TEMPORAL_FIELD),
     CallMatcher.instanceCall(CommonClassNames.JAVA_TIME_LOCAL_DATE_TIME, "get").parameterTypes(TEMPORAL_FIELD),

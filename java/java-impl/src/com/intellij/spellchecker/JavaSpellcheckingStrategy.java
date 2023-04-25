@@ -2,6 +2,7 @@
 package com.intellij.spellchecker;
 
 import com.intellij.codeInspection.SuppressManager;
+import com.intellij.codeInspection.util.ChronoUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
@@ -9,7 +10,6 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -27,14 +27,7 @@ public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
 
 
   private static final CallMapper<ArgumentMatcher> SKIP_ARGUMENT_METHOD_HANDLER = new CallMapper<>(
-    CallHandler.of(CallMatcher.staticCall("java.time.format.DateTimeFormatter", "ofPattern"),
-                   methodCall -> argumentNumber(0, methodCall)),
-    CallHandler.of(CallMatcher.instanceCall("java.time.format.DateTimeFormatterBuilder", "appendPattern"),
-                   methodCall -> argumentNumber(0, methodCall)),
-    CallHandler.of(CallMatcher.instanceCall("java.text.SimpleDateFormat", "applyPattern"),
-                   methodCall -> argumentNumber(0, methodCall)),
-    CallHandler.of(CallMatcher.instanceCall("java.text.SimpleDateFormat", "applyLocalizedPattern"),
-                   methodCall -> argumentNumber(0, methodCall))
+    CallHandler.of(ChronoUtil.FORMAT_PATTERN_METHOD_MATCHER, methodCall -> argumentNumber(0, methodCall))
   );
 
   private static final Map<String, BiPredicate<PsiNewExpression, PsiElement>> SKIP_ARGUMENT_CONSTRUCTOR_HANDLER =

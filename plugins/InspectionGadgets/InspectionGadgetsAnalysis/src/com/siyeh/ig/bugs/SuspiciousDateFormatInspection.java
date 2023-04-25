@@ -11,7 +11,6 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.*;
@@ -20,14 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
+import static com.intellij.codeInspection.util.ChronoUtil.FORMAT_PATTERN_METHOD_MATCHER;
 
 public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final CallMatcher PATTERN_METHODS = anyOf(
-    instanceCall("java.text.SimpleDateFormat", "applyPattern", "applyLocalizedPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
-    staticCall("java.time.format.DateTimeFormatter", "ofPattern"),
-    instanceCall("java.time.format.DateTimeFormatterBuilder", "appendPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING)
-  );
 
   @NotNull
   @Override
@@ -35,7 +29,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-        if (PATTERN_METHODS.test(call)) {
+        if (FORMAT_PATTERN_METHOD_MATCHER.test(call)) {
           ExpressionUtils.nonStructuralChildren(call.getArgumentList().getExpressions()[0]).forEach(this::processExpression);
         }
       }
