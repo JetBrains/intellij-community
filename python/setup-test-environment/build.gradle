@@ -160,21 +160,21 @@ envs {
   createPython("py37_tensorflow1_oldpaths",
                python37version,
                ["tensorflow < 1.15.0rc0"],
-               "tensorflow1\ntensorflow_oldpaths",
+               "tensorflow1\ntensorflow_oldpaths\npython3.7",
                true)
   createPython("py37_tensorflow1_newpaths",
                python37version,
                ["tensorflow >= 1.15.0rc0, < 2.0.0a0"],
-               "tensorflow1\ntensorflow_newpaths",
+               "tensorflow1\ntensorflow_newpaths\npython3.7",
                true)
   createPython("py37_tensorflow2_newpaths",
                python37version,
                ["tensorflow >= 2.0.0rc0"],
-               "tensorflow2\ntensorflow_newpaths",
+               "tensorflow2\ntensorflow_newpaths\npython3.7",
                true)
 
   if (isUnix) {
-    createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
+    createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt\npython3.7", true)
   }
 }
 
