@@ -34,6 +34,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -347,6 +348,8 @@ internal class WorkspaceProjectImporter(
       .filter { it.contentRoots.isEmpty() }
       .forEach { currentStorage.removeEntity(it) }
 
+    retainPreviouslyExcludedFolders(currentStorage, newStorage)
+
     currentStorage.replaceBySource({ isMavenEntity(it) }, newStorage)
 
     // Now we have some modules with duplicating content roots. One content root existed before and another one exported from maven.
@@ -391,6 +394,34 @@ internal class WorkspaceProjectImporter(
           currentStorage.removeEntity(from)
         }
       }
+  }
+
+  // if a folder was excluded in legacy import, keep it excluded in workspace import as well
+  private fun retainPreviouslyExcludedFolders(currentStorage: MutableEntityStorage, newStorage: MutableEntityStorage) {
+    val virtualFileManager = VirtualFileUrlManager.getInstance(myProject)
+    val previouslyExcludedUrls = currentStorage.entities(ExcludeUrlEntity::class.java)
+    val newExcludedUrlMap = newStorage.entities(ExcludeUrlEntity::class.java).associateBy({ it.url }, { it })
+    val newContentRootMap = newStorage.entities(ContentRootEntity::class.java).associateBy({ it.url }, { it })
+    for (previouslyExcludedUrl in previouslyExcludedUrls) {
+      val url = previouslyExcludedUrl.url
+      if (!newExcludedUrlMap.containsKey(url)) {
+        var parentUrl: VirtualFileUrl? = url
+        while (parentUrl != null) {
+          val newContentRoot = newContentRootMap[parentUrl]
+          if (newContentRoot != null) {
+            if (!newContentRoot.excludedUrls.map { it.url }.contains(url)) {
+              newStorage.modifyEntity(newContentRoot) {
+                val excludedUrls = this.excludedUrls.toMutableList()
+                excludedUrls.add(ExcludeUrlEntity(url, previouslyExcludedUrl.entitySource))
+                this.excludedUrls = excludedUrls
+              }
+            }
+            break
+          }
+          parentUrl = virtualFileManager.getParentVirtualUrl(parentUrl)
+        }
+      }
+    }
   }
 
   private fun mapEntitiesToModulesAndRunAfterModelApplied(appliedStorage: EntityStorage,
