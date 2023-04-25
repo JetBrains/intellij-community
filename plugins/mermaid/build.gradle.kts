@@ -1,8 +1,13 @@
 import com.intellij.mermaid.build.*
-import org.gradle.util.internal.VersionNumber
 
-group = properties("pluginGroup")
-version = properties("pluginVersion")
+group = "com.intellij.mermaid"
+version = obtainVersion()
+
+fun obtainVersion(): String {
+  val base = properties("pluginVersion")
+  val suffix = findProperty("versionSuffix") ?: return base
+  return "$base-$suffix"
+}
 
 subprojects {
   group = rootProject.group
