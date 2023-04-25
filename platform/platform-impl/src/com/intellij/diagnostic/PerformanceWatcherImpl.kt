@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.diagnostic
 
 import com.intellij.execution.process.OSProcessUtil
@@ -14,7 +16,6 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.RegistryManager
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
+import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -72,7 +74,7 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
 
   init {
     val application = ApplicationManager.getApplication() ?: throw ExtensionNotApplicableException.create()
-    val registryManager = application.getService(RegistryManager::class.java)
+    val registryManager = RegistryManager.getInstance()
     unresponsiveInterval = registryManager["performance.watcher.unresponsive.interval.ms"]
     if (!application.isHeadlessEnvironment) {
       val cancelingListener: RegistryValueListener = object : RegistryValueListener {
@@ -94,7 +96,7 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
       }
       unresponsiveInterval.addListener(cancelingListener, this)
       if (ApplicationInfoImpl.getShadowInstance().isEAP) {
-        val ourReasonableThreadPoolSize = registryManager["reasonable.application.thread.pool.size"]
+        val ourReasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size")
         val service = AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService
         val allAvailableProcessors = Runtime.getRuntime().availableProcessors()
         service.setNewThreadListener { _, _ ->
@@ -420,9 +422,8 @@ private fun reportCrashesIfAny() {
     // Only report if on JetBrains jre
     if (SystemInfo.isJetBrainsJvm && Files.isRegularFile(appInfoFile) && Files.isRegularFile(pidFile)) {
       val pid = Files.readString(pidFile)
-      val crashFiles = ((File(SystemProperties.getUserHome()).listFiles { file: File ->
-        file.name.startsWith("java_error_in") && file.name.endsWith(
-          "$pid.log") && file.isFile
+      val crashFiles = ((File(SystemProperties.getUserHome()).listFiles { file ->
+        file.name.startsWith("java_error_in") && file.name.endsWith("$pid.log") && file.isFile
       }) ?: arrayOfNulls(0))
       val appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis()
       for (file in crashFiles) {
@@ -431,7 +432,7 @@ private fun reportCrashesIfAny() {
             LOG.info("Crash file $file is too big to report")
             break
           }
-          val content = FileUtil.loadFile(file)
+          val content = Files.readString(file.toPath())
           // TODO: maybe we need to notify the user
           if (content.contains("fuck_the_regulations")) {
             break
@@ -445,7 +446,7 @@ private fun reportCrashesIfAny() {
             .filter { it.isEnabled && !it.isBundled }
             .map(::getPluginInfoByDescriptor)
             .filter(PluginInfo::isSafeToReport)
-            .map { (_, id, version): PluginInfo -> "$id ($version)" }
+            .map { "${it.id} (${it.version})" }
             .joinToString(separator = "\n", "Extra plugins:\n")
           val pluginAttachment = Attachment("plugins.txt", plugins)
           attachment.isIncluded = true
@@ -454,7 +455,7 @@ private fun reportCrashesIfAny() {
           // look for extended crash logs
           val extraLog = findExtraLogFile(pid, appInfoFileLastModified)
           if (extraLog != null) {
-            val jbrErrContent = FileUtil.loadFile(extraLog)
+            val jbrErrContent = Files.readString(extraLog)
             // Detect crashes caused by OOME
             if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
               LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true)
@@ -481,13 +482,18 @@ private fun reportCrashesIfAny() {
   }
 }
 
-private fun findExtraLogFile(pid: String, lastModified: Long): File? {
+private fun findExtraLogFile(pid: String, lastModified: Long): Path? {
   if (!SystemInfo.isMac) {
     return null
   }
+
   val logFileName = "jbr_err_pid$pid.log"
-  val candidates = java.util.List.of(File(SystemProperties.getUserHome(), logFileName), File(logFileName))
-  return candidates.find { file -> file.isFile && file.lastModified() > lastModified }
+  return sequenceOf(Path.of(SystemProperties.getUserHome(), logFileName), Path.of(logFileName))
+    .firstOrNull { file ->
+      file.basicAttributesIfExists()?.let {
+        it.isRegularFile && it.lastModifiedTime().toMillis() > lastModified
+      } ?: false
+    }
 }
 
 private val publisher: IdePerformanceListener?
@@ -522,15 +528,12 @@ private fun ageInDays(file: Path): Long {
 private val samplingInterval: Int
   get() = 1000
 
-private fun buildName(): String {
-  return ApplicationInfo.getInstance().build.asString()
-}
+private fun buildName(): String = ApplicationInfo.getInstance().build.asString()
 
+@Suppress("SpellCheckingInspection")
 private val dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
 
-private fun formatTime(time: ZonedDateTime): String {
-  return dateFormat.format(time)
-}
+private fun formatTime(time: ZonedDateTime): String = dateFormat.format(time)
 
 private fun cleanup(dir: Path) {
   Files.deleteIfExists(dir.resolve(DURATION_FILE_NAME))
@@ -540,7 +543,7 @@ internal fun getStacktraceCommonPart(commonPart: List<StackTraceElement>,
                                      stackTraceElements: Array<StackTraceElement>): List<StackTraceElement> {
   var i = 0
   while (i < commonPart.size && i < stackTraceElements.size) {
-    val el1 = commonPart[commonPart.size - i - 1]
+    val el1 = commonPart.get(commonPart.size - i - 1)
     val el2 = stackTraceElements[stackTraceElements.size - i - 1]
     if (!compareStackTraceElements(el1, el2)) {
       return commonPart.subList(commonPart.size - i, commonPart.size)
@@ -552,10 +555,12 @@ internal fun getStacktraceCommonPart(commonPart: List<StackTraceElement>,
 
 // same as java.lang.StackTraceElement.equals, but do not care about the line number
 internal fun compareStackTraceElements(el1: StackTraceElement, el2: StackTraceElement): Boolean {
-  return if (el1 === el2) {
-    true
+  if (el1 === el2) {
+    return true
   }
-  else el1.className == el2.className && el1.methodName == el2.methodName && el1.fileName == el2.fileName
+  else {
+    return el1.className == el2.className && el1.methodName == el2.methodName && el1.fileName == el2.fileName
+  }
 }
 
 private enum class CheckerState {
