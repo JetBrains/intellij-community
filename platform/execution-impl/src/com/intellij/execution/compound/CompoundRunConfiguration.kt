@@ -5,6 +5,7 @@ import com.intellij.execution.*
 import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.compareTypesForUi
 import com.intellij.execution.runToolbar.RunToolbarProcessData
@@ -229,4 +230,12 @@ class TypeNameTarget() : BaseState() {
   var type by string()
   var name by string()
   var targetId by string()
+}
+
+class CompoundBeforeRunDelegate: RunConfigurationBeforeRunProviderDelegate {
+  override fun beforeRun(environment: ExecutionEnvironment) {
+    if (environment.runnerAndConfigurationSettings?.configuration is CompoundRunConfiguration) {
+      environment.putUserData(ExecutionManager.EXECUTION_SKIP_RUN, true)
+    }
+  }
 }

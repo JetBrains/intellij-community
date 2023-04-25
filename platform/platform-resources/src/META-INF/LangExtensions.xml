@@ -787,6 +787,7 @@
     <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
     <projectService serviceImplementation="com.intellij.execution.RunConfigurationProducerService"/>
     <configurationType implementation="com.intellij.execution.compound.CompoundRunConfigurationType"/>
+    <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.execution.compound.CompoundBeforeRunDelegate"/>
     <projectConfigurable groupId="build" id="Runtime.Targets.Configurable" bundle="messages.IdeBundle"
                          key="configurable.Runtime.Targets.Configurable.display.name"
                          provider="com.intellij.execution.target.TargetEnvironmentsConfigurableProvider"/>
