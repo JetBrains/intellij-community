@@ -14,12 +14,16 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.Alarm
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 
 private const val ALPHA = (255 * 0.8).toInt()
+private const val MENU_HIDE_DELAY = 300
 
 internal class ExpandableMenu(private val frameHeader: FrameHeader) {
 
@@ -27,10 +31,19 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
   lateinit var headerContent: JComponent
   private var expandedMenuBar: JPanel? = null
   private val shadowComponent = ShadowComponent()
+  private val alarm = Alarm()
   private val rootPane: JRootPane?
     get() = SwingUtilities.getRootPane(headerContent)
 
   init {
+    MenuSelectionManager.defaultManager().addChangeListener {
+      alarm.cancelAllRequests()
+      if (MenuSelectionManager.defaultManager().selectedPath.isNullOrEmpty()) {
+        // Right after resetting selectedPath another menu can be shown, so don't hide main menu immediately
+        alarm.addRequest({ hideExpandedMenuBar() }, MENU_HIDE_DELAY)
+      }
+    }
+
     frameHeader.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         updateBounds()
@@ -42,15 +55,13 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
     return SystemInfoRt.isWindows && Registry.`is`("ide.windows.main.menu.expand.horizontal")
   }
 
-  // todo compact mode
-  // todo hint under menu
   fun switchState(actionToShow: AnAction? = null) {
     if (expandedMenuBar != null && actionToShow == null) {
-      removeExpandedMenuBar()
+      hideExpandedMenuBar()
       return
     }
 
-    removeExpandedMenuBar()
+    hideExpandedMenuBar()
     val layeredPane = rootPane?.layeredPane ?: return
 
     expandedMenuBar = panel {
@@ -107,7 +118,7 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
     }
   }
 
-  private fun removeExpandedMenuBar() {
+  private fun hideExpandedMenuBar() {
     if (expandedMenuBar != null) {
       rootPane?.layeredPane?.remove(expandedMenuBar)
       expandedMenuBar = null
@@ -120,13 +131,20 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
     IdeBundle.messagePointer("main.toolbar.expanded.menu.close"), ExpUiIcons.General.Close) {
 
     override fun actionPerformed(e: AnActionEvent) {
-      removeExpandedMenuBar()
+      hideExpandedMenuBar()
     }
   }
 
-  private class ShadowComponent : JComponent() {
+  private inner class ShadowComponent : JComponent() {
+
     init {
       isOpaque = false
+
+      addMouseListener(object : MouseAdapter() {
+        override fun mousePressed(e: MouseEvent?) {
+          hideExpandedMenuBar()
+        }
+      })
     }
 
     override fun paint(g: Graphics?) {
