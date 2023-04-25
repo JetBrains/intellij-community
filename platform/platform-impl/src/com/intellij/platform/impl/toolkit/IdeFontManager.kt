@@ -2,10 +2,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.impl.toolkit
 
-import com.intellij.openapi.diagnostic.logger
 import sun.awt.FontConfiguration
 import sun.font.CompositeFontDescriptor
 import sun.font.SunFontManager
+import java.awt.Font
 import java.io.File
 import java.nio.charset.Charset
 import java.util.*
@@ -13,10 +13,20 @@ import java.util.*
 class IdeFontManager : SunFontManager() {
   companion object {
     internal fun getDefaultIdeFont(): Array<String>? {
-      val interFontPath = System.getProperty("java.home") + File.separator + "lib" + File.separator +
-                          "fonts" + File.separator + "Inter-Regular.otf"
-      if (File(interFontPath).exists()) {
-        return arrayOf("Inter", interFontPath)
+      val fontPath = System.getProperty("java.home") + File.separator + "lib" + File.separator +
+                     "fonts" + File.separator + "Inter-Regular.otf"
+      if (File(fontPath).exists()) {
+        return arrayOf("Inter Regular", fontPath)
+      }
+
+      return null
+    }
+
+    internal fun getDefaultIdeMonospacedFont(): Array<String>? {
+      val fontPath = System.getProperty("java.home") + File.separator + "lib" + File.separator +
+                     "fonts" + File.separator + "JetBrainsMono-Regular.ttf"
+      if (File(fontPath).exists()) {
+        return arrayOf("JetBrains Mono Regular", fontPath)
       }
 
       return null
@@ -29,10 +39,7 @@ class IdeFontManager : SunFontManager() {
 
   override fun getDefaultPlatformFont(): Array<String> {
     return getDefaultIdeFont()
-           ?: run {
-             logger<IdeFontManager>().error("Default font is not available")
-             return arrayOf("Dialog", "")
-           }
+           ?: arrayOf("Dialog", "")
   }
 
   override fun getInstalledFontFamilyNames(requestedLocale: Locale): Array<String> {
@@ -85,24 +92,29 @@ private class IdeFontConfiguration : FontConfiguration {
   }
 
   override fun get2DCompositeFontInfo(): Array<CompositeFontDescriptor> {
-    val fontNames = mutableListOf<String>()
-    val fontPaths = mutableListOf<String>()
-
     val ideFont = IdeFontManager.getDefaultIdeFont()
-    if (ideFont != null) {
-      fontNames += ideFont[0]
-      fontPaths += ideFont[1]
-    }
-
-    if (fontNames.isEmpty()) {
+    val ideMonospacedFont = IdeFontManager.getDefaultIdeMonospacedFont()
+    if (ideFont == null || ideMonospacedFont == null) {
       return emptyArray()
     }
+
+    val fontNames = arrayOf(ideFont[0])
+    val fontPaths = arrayOf(ideFont[1])
+    val monospacedFontNames = arrayOf(ideMonospacedFont[0])
+    val monospacedFontPaths = arrayOf(ideMonospacedFont[1])
 
     val result = mutableListOf<CompositeFontDescriptor>()
     for (fontId in 0 until NUM_FONTS) {
       for (styleId in 0 until NUM_STYLES) {
-        val faceName = publicFontNames[fontId] + "." + styleNames[styleId]
-        result += CompositeFontDescriptor(faceName, 1, fontNames.toTypedArray(), fontPaths.toTypedArray(), null, null)
+        val fontName = publicFontNames[fontId]
+        val styleName = styleNames[styleId]
+        val faceName = "$fontName.$styleName"
+        if (fontName == Font.MONOSPACED) {
+          result += CompositeFontDescriptor(faceName, 1, monospacedFontNames, monospacedFontPaths, null, null)
+        }
+        else {
+          result += CompositeFontDescriptor(faceName, 1, fontNames, fontPaths, null, null)
+        }
       }
     }
     return result.toTypedArray()
