@@ -258,6 +258,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {
             model("extensions/references", pattern = KT_WITHOUT_DOTS)
         }
+
+        testClass<AbstractK2JvmBasicCompletionTestWithResolveExtension> {
+            model("extensions/completion", pattern = KT_WITHOUT_DOTS)
+        }
     }
 
     testGroup("uast/uast-kotlin-fir/tests") {
