@@ -186,14 +186,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private @NotNull Function<? super String, ? extends Component> mySeparatorCreator = (name) -> new MySeparator(name);
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
-    this(place, actionGroup, horizontal, false);
+    this(place, actionGroup, horizontal, false, true);
   }
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
-                           boolean decorateButtons) {
-    this(place, actionGroup, horizontal, decorateButtons, null, null);
+                           boolean decorateButtons,
+                           boolean customizable) {
+    this(place, actionGroup, horizontal, decorateButtons, customizable, null, null);
   }
 
 
@@ -201,6 +202,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
                            boolean decorateButtons,
+                           boolean customizable,
                            @Nullable ActionGroup popupActionGroup,
                            @Nullable String popupActionId) {
     super(null);
@@ -252,11 +254,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
 
-    if (popupActionGroup == null) {
-      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
+    if (customizable) {
+      if (popupActionGroup == null) {
+        myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
+      }
+      else {
+        myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), place);
+      }
     }
     else {
-      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), place);
+      myPopupHandler = popupActionGroup != null
+                       ? PopupHandler.installPopupMenu(this.getComponent(), popupActionGroup, place)
+                       : null;
     }
   }
 
@@ -1661,7 +1670,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                  @NotNull ActionGroup actionGroup,
                  final boolean horizontal,
                  @NotNull ActionToolbarImpl parent) {
-      super(place, actionGroup, horizontal, false);
+      super(place, actionGroup, horizontal, false, true);
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
       setBorder(myParent.getBorder());

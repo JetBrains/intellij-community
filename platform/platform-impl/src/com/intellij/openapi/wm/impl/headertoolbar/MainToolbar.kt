@@ -126,7 +126,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 typealias LayoutCallBack = () -> Unit
 
 private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: LayoutCallBack?, customizationGroup: ActionGroup?, customizationGroupID: String)
-  : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, customizationGroup, customizationGroupID) {
+  : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, true, customizationGroup, customizationGroupID) {
 
   private val iconUpdater = HeaderIconUpdater()
 

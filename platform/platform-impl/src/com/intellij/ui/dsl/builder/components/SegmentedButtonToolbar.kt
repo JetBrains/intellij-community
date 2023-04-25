@@ -35,7 +35,7 @@ import kotlin.math.roundToInt
 @Deprecated("Use Row.segmentedButton")
 @ApiStatus.ScheduledForRemoval
 class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfiguration: SpacingConfiguration) :
-  ActionToolbarImpl("ButtonSelector", actionGroup, true, true) {
+  ActionToolbarImpl("ButtonSelector", actionGroup, true, true, true) {
 
   init {
     isFocusable = true
