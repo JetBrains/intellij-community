@@ -97,6 +97,8 @@
                         serviceImplementation="com.intellij.formatting.FormattingProgressTaskFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.ex.util.EditorFacade"
                         serviceImplementation="com.intellij.formatting.EditorFacadeImpl"/>
+    <applicationService serviceInterface="com.intellij.lang.injection.InjectionEditService"
+                        serviceImplementation="com.intellij.codeInsight.intention.impl.InjectionEditServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
                         serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
