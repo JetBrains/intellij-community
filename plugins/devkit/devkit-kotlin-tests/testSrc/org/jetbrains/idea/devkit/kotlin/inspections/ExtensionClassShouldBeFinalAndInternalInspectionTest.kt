@@ -2,18 +2,17 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.ExtensionClassShouldBeFinalAndPackagePrivateInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/extensionClassShouldBeFinalAndInternal")
-class ExtensionClassShouldBeFinalAndInternalInspectionTest : LightDevKitInspectionFixTestBase() {
+class ExtensionClassShouldBeFinalAndInternalInspectionTest : ExtensionClassShouldBeFinalAndPackagePrivateInspectionTestBase() {
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldBeFinalAndInternal/"
   override fun getFileExtension(): String = "kt"
 
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(ExtensionClassShouldBeFinalAndInternalInspection())
     myFixture.copyDirectoryToProject("resources", "resources")
   }
 

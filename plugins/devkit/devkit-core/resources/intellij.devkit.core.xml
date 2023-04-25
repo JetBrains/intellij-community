@@ -459,6 +459,8 @@
     <cancellationCheckProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
     <visitorProviderForRBCInspection language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
+    <extensionClassModifiersCheckerProvider language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection$ExtensionClassModifiersCheckerProviderForJava"/>
   </extensions>
 
   <extensionPoints>
@@ -476,6 +478,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements=" org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.extensionClassModifiersCheckerProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements=" org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection$ExtensionClassModifiersCheckerProvider"/>
     </extensionPoint>
   </extensionPoints>
 
