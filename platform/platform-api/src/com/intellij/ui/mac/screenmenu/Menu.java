@@ -238,7 +238,7 @@ public class Menu extends MenuItem {
         });
       }
       else {
-        invokeWithLWCToolkit(myOnOpen, () -> endFill(false/*already on AppKit thread*/), myComponent);
+        invokeWithLWCToolkit(myOnOpen, () -> endFill(false/*already on AppKit thread*/), myComponent, true);
       }
     }
   }
@@ -255,7 +255,7 @@ public class Menu extends MenuItem {
     // NOTE: don't clear native hierarchy here (see IDEA-315910)
     // It will be done when menu opens next time.
 
-    if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent);
+    if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent, false);
   }
 
   //
@@ -338,14 +338,19 @@ public class Menu extends MenuItem {
     return IS_ENABLED;
   }
 
-  private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker) {
+  private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker, boolean wait) {
     try {
       Class<?> toolkitClass = Class.forName("sun.lwawt.macosx.LWCToolkit");
       @SuppressWarnings("deprecation")
-      Method invokeMethod = ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeAndWait", Runnable.class, Component.class, boolean.class, int.class);
+      Method invokeMethod = wait ?
+        ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeAndWait", Runnable.class, Component.class, boolean.class, int.class) :
+        ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeLater", Runnable.class, Component.class);
       if (invokeMethod != null) {
         try {
-          invokeMethod.invoke(toolkitClass, r, invoker, true, -1);
+          if (wait)
+            invokeMethod.invoke(toolkitClass, r, invoker, true, -1);
+          else
+            invokeMethod.invoke(toolkitClass, r, invoker);
         }
         catch (Exception e) {
           // suppress InvocationTargetException as in openjdk implementation (see com.apple.laf.ScreenMenu.java)
