@@ -79,6 +79,29 @@ public interface IntentionPreviewInfo {
   };
 
   /**
+   * Diff preview applied to the current file when new text is not actually written.
+   * Could be used as an alternative to {@link #DIFF} when we can generate the target text
+   * without actual PSI changes.
+   */
+  class Diff implements IntentionPreviewInfo {
+    private final @NotNull String myModifiedText;
+
+    /**
+     * @param modifiedText new text for the current file
+     */
+    public Diff(@NotNull String modifiedText) { 
+      myModifiedText = modifiedText;
+    }
+
+    /**
+     * @return new text for the current file
+     */
+    public String modifiedText() {
+      return myModifiedText;
+    }
+  }
+  
+  /**
    * Diff preview where original text and new text are explicitly displayed.
    * Could be used to generate custom diff previews (e.g. when changes are to be applied to another file).
    * <p>

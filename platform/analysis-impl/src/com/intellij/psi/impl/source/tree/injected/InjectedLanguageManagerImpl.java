@@ -242,6 +242,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   @Override
   public int mapInjectedOffsetToUnescaped(@NotNull PsiFile injectedFile, int injectedOffset) {
+    if (injectedOffset < 0) return injectedOffset;
     var visitor = new PsiRecursiveElementWalkingVisitor() {
       int unescapedOffset = 0;
       int escapedOffset = 0;

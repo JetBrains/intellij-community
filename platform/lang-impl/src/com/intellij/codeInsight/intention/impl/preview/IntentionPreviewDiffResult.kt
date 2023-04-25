@@ -6,36 +6,30 @@ import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.fragments.LineFragmentImpl
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.DumbProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
 import one.util.streamex.StreamEx
 
-data class IntentionPreviewDiffResult(val psiFile: PsiFile,
-                                      val origFile: PsiFile,
+data class IntentionPreviewDiffResult(val fileType: FileType,
+                                      val newText: String,
+                                      val origText: String,
                                       val lineFragments: List<LineFragment>,
                                       val normalDiff: Boolean = true,
                                       val fileName: String? = null,
                                       val policy: ComparisonPolicy) : IntentionPreviewInfo {
   fun createDiffs(): List<DiffInfo> {
-    val result = this
-    val origFile = result.origFile
-    val psiFileCopy: PsiFile = result.psiFile
-    val fileText = psiFileCopy.text
-    val origText = origFile.text
-    val diff = squash(result.lineFragments)
+    val diff = squash(lineFragments)
     val diffs = diff.mapNotNull { fragment ->
-      val start = getOffset(fileText, fragment.startLine2)
-      val end = getOffset(fileText, fragment.endLine2)
+      val start = getOffset(newText, fragment.startLine2)
+      val end = getOffset(newText, fragment.endLine2)
       if (start > end) return@mapNotNull null
 
       val origStart = getOffset(origText, fragment.startLine1)
       val origEnd = getOffset(origText, fragment.endLine1)
       if (origStart > origEnd) return@mapNotNull null
 
-      val newText = fileText.substring(start, end).trimStart('\n').trimEnd('\n').trimIndent()
+      val newText = newText.substring(start, end).trimStart('\n').trimEnd('\n').trimIndent()
       val oldText = origText.substring(origStart, origEnd).trimStart('\n').trimEnd('\n').trimIndent()
 
       val deleted = newText.isBlank()
@@ -99,11 +93,11 @@ data class IntentionPreviewDiffResult(val psiFile: PsiFile,
 
   companion object {
     @JvmStatic
-    fun fromCustomDiff(project: Project, result: IntentionPreviewInfo.CustomDiff): IntentionPreviewDiffResult {
-      val fileFactory = PsiFileFactory.getInstance(project)
+    fun fromCustomDiff(result: IntentionPreviewInfo.CustomDiff): IntentionPreviewDiffResult {
       return IntentionPreviewDiffResult(
-        fileFactory.createFileFromText("__dummy__", result.fileType(), result.modifiedText()),
-        fileFactory.createFileFromText("__dummy__", result.fileType(), result.originalText()),
+        result.fileType(),
+        result.modifiedText(),
+        result.originalText(),
         ComparisonManager.getInstance().compareLines(result.originalText(), result.modifiedText(),
                                                      ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
         fileName = result.fileName(),

@@ -158,8 +158,7 @@ public final class IntentionPreviewUtils {
           return IntentionPreviewInfo.EMPTY;
         }
         if (file == modFile.file()) {
-          modFile.execute(project);
-          info = IntentionPreviewInfo.DIFF;
+          info = new IntentionPreviewInfo.Diff(modFile.newText());
         } else {
           info = new IntentionPreviewInfo.CustomDiff(modFile.file().getFileType(), modFile.file().getName(), modFile.oldText(),
                                                      modFile.newText());

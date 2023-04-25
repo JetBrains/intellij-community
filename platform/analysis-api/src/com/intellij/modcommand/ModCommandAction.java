@@ -7,6 +7,8 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -89,6 +91,15 @@ public interface ModCommandAction {
    * @param selection selection
    */
   record ActionContext(@NotNull Project project, @NotNull PsiFile file, int offset, @NotNull TextRange selection) {
-    
+    /**
+     * @param editor editor the action is invoked in
+     * @param file file the action is invoked on
+     * @return ActionContext
+     */
+    public static @NotNull ModCommandAction.ActionContext from(@NotNull Editor editor, @NotNull PsiFile file) {
+      SelectionModel model = editor.getSelectionModel();
+      return new ActionContext(file.getProject(), file, editor.getCaretModel().getOffset(),
+                                                TextRange.create(model.getSelectionStart(), model.getSelectionEnd()));
+    }
   }
 }

@@ -1,10 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModNavigate;
-import com.intellij.modcommand.ModNothing;
-import com.intellij.modcommand.ModUpdatePsiFile;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -15,7 +13,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,24 +69,18 @@ public final class ModCommands {
     PsiFile origFile = orig.getContainingFile();
     VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
     Project project = origFile.getProject();
-    Editor origEditor =
-      origVirtualFile != null && FileEditorManager.getInstance(project).getSelectedEditor(origVirtualFile) instanceof TextEditor textEditor
-      ?
-      textEditor.getEditor()
-      : null;
-    PsiFile copyFile = (PsiFile)origFile.copy();
+    ModCommandAction.ActionContext actionContext = createContext(project, origFile);
+    PsiFile copyFile = actionContext.file();
+    String oldText = copyFile.getText();
     E copy = PsiTreeUtil.findSameElementInCopy(orig, copyFile);
     PostprocessReformattingAspect aspect = PostprocessReformattingAspect.getInstance(project);
     PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     Document document = copyFile.getViewProvider().getDocument();
     var context = new PsiUpdateContext() {
-      @Nullable RangeMarker mySelectionRange =
-        origEditor == null ? null :
-        document.createRangeMarker(origEditor.getSelectionModel().getSelectionStart(), origEditor.getSelectionModel().getSelectionEnd(),
-                                   true);
-      @Nullable RangeMarker myCaretRange =
-        origEditor == null ? null :
-        document.createRangeMarker(origEditor.getCaretModel().getOffset(), origEditor.getCaretModel().getOffset(), true);
+      @Nullable RangeMarker mySelectionRange = actionContext.selection().getStartOffset() == -1 ? null :
+        document.createRangeMarker(actionContext.selection().getStartOffset(), actionContext.selection().getEndOffset(), true);
+      @Nullable RangeMarker myCaretRange = actionContext.offset() == -1 ? null :
+        document.createRangeMarker(actionContext.offset(), actionContext.offset(), true);
 
       @Override
       public void select(@NotNull PsiElement element) {
@@ -121,7 +115,6 @@ public final class ModCommands {
       () -> aspect.forcePostprocessFormatInside(copyFile, () -> updater.accept(copy, context)));
     manager.commitDocument(document);
     manager.doPostponedOperationsAndUnblockDocument(document);
-    String oldText = origFile.getText();
     String newText = copyFile.getText();
     ModCommand command = oldText.equals(newText) ? new ModNothing() : new ModUpdatePsiFile(origFile, oldText, newText);
     if (origVirtualFile != null) {
@@ -144,5 +137,37 @@ public final class ModCommands {
       context.myCaretRange.dispose();
     }
     return command;
+  }
+
+  private static ModCommandAction.@NotNull ActionContext createContext(Project project, PsiFile origFile) {
+    var manager = InjectedLanguageManager.getInstance(project);
+    VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
+    Editor origEditor =
+      origVirtualFile != null && FileEditorManager.getInstance(project).getSelectedEditor(origVirtualFile) instanceof TextEditor textEditor
+      ?
+      textEditor.getEditor()
+      : null;
+    boolean injectedFragment = manager.isInjectedFragment(origFile);
+    int offset = -1, start = -1, end = -1;
+    if (origEditor != null) {
+      if (injectedFragment) {
+        origEditor = EditorWindowTracker.getInstance().getEditorForInjectedFile(origEditor, origFile);
+      }
+      offset = origEditor.getCaretModel().getOffset();
+      start = origEditor.getSelectionModel().getSelectionStart();
+      end = origEditor.getSelectionModel().getSelectionEnd();
+    }
+    PsiFile copyFile;
+    if (!injectedFragment) {
+      copyFile = (PsiFile)origFile.copy();
+    } else {
+      copyFile = PsiFileFactory.getInstance(project).createFileFromText(
+        origFile.getName(), origFile.getFileType(), manager.getUnescapedText(origFile),
+        LocalTimeCounter.currentTime(), false);
+      offset = manager.mapInjectedOffsetToUnescaped(origFile, offset);
+      start = manager.mapInjectedOffsetToUnescaped(origFile, start);
+      end = manager.mapInjectedOffsetToUnescaped(origFile, end);
+    }
+    return new ModCommandAction.ActionContext(project, copyFile, offset, TextRange.create(start, end));
   }
 }

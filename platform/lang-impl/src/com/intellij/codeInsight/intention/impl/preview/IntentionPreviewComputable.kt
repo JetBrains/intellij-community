@@ -17,6 +17,8 @@ import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.modcommand.ModCommandAction.ActionContext
+import com.intellij.modcommand.ModCommandActionWrapper
 import com.intellij.model.SideEffectGuard
 import com.intellij.model.SideEffectGuard.SideEffectNotAllowedException
 import com.intellij.openapi.diagnostic.logger
@@ -26,7 +28,9 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.util.LocalTimeCounter
 import java.io.IOException
@@ -92,7 +96,8 @@ internal class IntentionPreviewComputable(private val project: Project,
   }
 
   private fun invokePreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo? {
-    var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
+    var info: IntentionPreviewInfo = getModActionPreview(origFile, origEditor)
+    if (info != IntentionPreviewInfo.EMPTY) return info
     var fileToCopy = action.getElementToMakeWritable(origFile)?.containingFile ?: origFile
     val psiFileCopy: PsiFile
     val editorCopy: IntentionPreviewEditor
@@ -130,26 +135,52 @@ internal class IntentionPreviewComputable(private val project: Project,
     val manager = PsiDocumentManager.getInstance(project)
     manager.commitDocument(editorCopy.document)
     manager.doPostponedOperationsAndUnblockDocument(editorCopy.document)
-    return when (val result = info) {
+    return convertResult(info, psiFileCopy, fileToCopy, anotherFile)
+  }
+  
+  private fun convertResult(info: IntentionPreviewInfo,
+                            copyFile: PsiFile,
+                            origFile: PsiFile,
+                            anotherFile: Boolean): IntentionPreviewInfo? {
+    return when (info) {
       IntentionPreviewInfo.DIFF,
       IntentionPreviewInfo.DIFF_NO_TRIM -> {
-        val document = psiFileCopy.viewProvider.document
+        val document = copyFile.viewProvider.document
         val policy = if (info == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
+        val text = origFile.text
         IntentionPreviewDiffResult(
-          psiFile = psiFileCopy,
-          origFile = fileToCopy,
+          fileType = copyFile.fileType,
+          newText = document.text,
+          origText = text,
           policy = policy,
-          fileName = if (anotherFile) psiFileCopy.name else null,
+          fileName = if (anotherFile) copyFile.name else null,
           normalDiff = !anotherFile,
-          lineFragments = ComparisonManager.getInstance().compareLines(fileToCopy.text, document.text, policy,
+          lineFragments = ComparisonManager.getInstance().compareLines(text, document.text, policy,
                                                                        DumbProgressIndicator.INSTANCE))
       }
+      is IntentionPreviewInfo.Diff -> {
+        val text = origFile.text
+        IntentionPreviewDiffResult(
+          fileType = origFile.fileType,
+          newText = info.modifiedText(),
+          origText = text,
+          policy = ComparisonPolicy.DEFAULT,
+          fileName = null,
+          normalDiff = true,
+          lineFragments = ComparisonManager.getInstance().compareLines(
+            text, info.modifiedText(), ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE))
+      }
       IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
-      is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(project, result)
-      else -> result
+      is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(info)
+      else -> info
     }
   }
 
+  private fun getModActionPreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo {
+    val unwrapped = ModCommandActionWrapper.unwrap(action) ?: return IntentionPreviewInfo.EMPTY
+    return convertResult(unwrapped.generatePreview(ActionContext.from(origEditor, origFile)), 
+      origFile, origFile, false) ?: IntentionPreviewInfo.EMPTY
+  }
 
   private fun generateFallbackDiff(editorCopy: IntentionPreviewEditor, psiFileCopy: PsiFile): IntentionPreviewInfo {
     // Fallback algorithm for intention actions that don't support preview normally

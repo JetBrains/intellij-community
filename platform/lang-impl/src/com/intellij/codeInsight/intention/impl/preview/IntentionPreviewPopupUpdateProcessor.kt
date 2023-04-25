@@ -231,7 +231,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                        action: IntentionAction,
                        originalFile: PsiFile,
                        originalEditor: Editor): String? {
-      return (getPreviewInfo(project, action, originalFile, originalEditor) as? IntentionPreviewDiffResult)?.psiFile?.text
+      return (getPreviewInfo(project, action, originalFile, originalEditor) as? IntentionPreviewDiffResult)?.newText
     }
 
     /**
@@ -246,7 +246,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                           originalFile: PsiFile,
                           originalEditor: Editor): String {
       return when (val info = getPreviewInfo(project, action, originalFile, originalEditor)) {
-        is IntentionPreviewDiffResult -> info.psiFile.text
+        is IntentionPreviewDiffResult -> info.newText
         is Html -> info.content().toString()
         else -> ""
       }
