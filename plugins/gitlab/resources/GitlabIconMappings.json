@@ -2,9 +2,9 @@
   "org": {
     "jetbrains": {
       "plugins": {
-        "github": {
+        "gitlab": {
           "expui": {
-            "gitLabToolWindow.svg": "org/jetbrains/plugins/github/gitLabToolWindow.svg"
+            "gitLabToolWindow.svg": "org/jetbrains/plugins/gitlab/gitLabToolWindow.svg"
           }
         }
       }
