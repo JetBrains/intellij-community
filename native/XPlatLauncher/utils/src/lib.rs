@@ -37,13 +37,7 @@ pub fn is_executable(_path: &Path) -> Result<bool> {
 }
 
 pub fn get_current_exe() -> PathBuf {
-    match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
-        Ok(x) => {
-            debug!("Using exe path from XPLAT_LAUNCHER_CURRENT_EXE_PATH: {x:?}");
-            x
-        }
-        Err(_) => { env::current_exe().expect("Failed to get current executable path") }
-    }
+    env::current_exe().expect("Failed to get current executable path")
 }
 
 pub fn get_path_from_env_var(env_var_name: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
