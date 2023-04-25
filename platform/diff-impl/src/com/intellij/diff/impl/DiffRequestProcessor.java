@@ -937,6 +937,13 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     runWithScrollPolicy(fromDifferences, ScrollToPolicy.LAST_CHANGE, navigationTask);
   }
 
+  /**
+   * This is a workaround for use cases, when {@code navigationTask} updates some external state (ex: selection in JTree),
+   * and this update triggers an uncontrollable listener that calls {@link #updateRequest()}
+   * without knowledge about requested {@link ScrollToPolicy}.
+   * <p>
+   * Thus, we make sure any synchronous {@link #updateRequest} calls from {@code navigationTask} will use specified scroll policy.
+   */
   private void runWithScrollPolicy(boolean fromDifferences, @NotNull ScrollToPolicy lastChange, @NotNull Runnable navigationTask) {
     if (fromDifferences) {
       assert myCurrentScrollToPolicy == null;
