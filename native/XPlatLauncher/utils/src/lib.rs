@@ -26,12 +26,11 @@ pub fn canonical_non_unc(path: &Path) -> Result<String> {
 
 #[cfg(target_family = "unix")]
 pub fn is_executable(path: &Path) -> Result<bool> {
-    let permissions = path.metadata()?.permissions();
-    let is_executable = permissions.mode() & 0o111 != 0;
-    Ok(path.is_file() && is_executable)
+    let metadata = path.metadata()?;
+    Ok(metadata.is_file() && (metadata.permissions().mode() & 0o111 != 0))
 }
 
-#[cfg(any(target_os = "windows"))]
+#[cfg(target_os = "windows")]
 pub fn is_executable(_path: &Path) -> Result<bool> {
     Ok(true)
 }

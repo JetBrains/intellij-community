@@ -103,13 +103,13 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 impl DefaultLaunchConfiguration {
     pub fn new(args: Vec<String>) -> Result<Self> {
         let current_exe = get_current_exe();
-        debug!("Executable path: '{current_exe:?}'");
+        debug!("Executable path: {current_exe:?}");
 
         let (ide_home, product_info_file) = find_ide_home(&current_exe)?;
-        debug!("IDE home dir: '{ide_home:?}'");
+        debug!("IDE home dir: {ide_home:?}");
 
         let config_home = get_config_home()?;
-        debug!("OS config dir: '{config_home:?}'");
+        debug!("OS config dir: {config_home:?}");
 
         let product_info = read_product_info(&product_info_file)?;
         let launch_data_idx = Self::get_launch_data_idx(&product_info)?;

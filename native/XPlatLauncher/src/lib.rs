@@ -139,7 +139,7 @@ pub struct ProductInfo {
     pub productCode: String,
     pub productVendor: String,
     pub dataDirectoryName: String,
-    pub launch: Vec<ProductInfoLaunchField>,
+    pub launch: Vec<ProductInfoLaunchField>
 }
 
 #[allow(non_snake_case)]
@@ -274,23 +274,23 @@ pub fn is_running_in_docker() -> Result<bool> {
     docker::is_running_in_docker()
 }
 
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_docker_env_file_exist(home_path: Option<PathBuf>) -> Result<bool> {
     docker::is_docker_env_file_exist(home_path)
 }
 
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_docker_init_file_exist(home_path: Option<PathBuf>) -> Result<bool> {
     docker::is_docker_init_file_exist(home_path)
 }
 
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_control_group_matches_docker(cgroup_path: Option<PathBuf>) -> bool {
     docker::is_control_group_matches_docker(cgroup_path)
         .expect("Unable to detect Docker environment by cgroup file.")
 }
 
-#[cfg(any(target_os = "windows"))]
+#[cfg(target_os = "windows")]
 pub fn is_service_present(service_name: &str) -> bool {
     docker::is_service_present(service_name)
         .expect("Unable to detect Docker environment by getting windows service 'cexecsvc'.")

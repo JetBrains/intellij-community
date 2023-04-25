@@ -191,7 +191,7 @@ fn gradle_command_wrapper(gradle_command: &str) {
         .arg(gradle_command)
         .current_dir("./resources/TestProject")
         .output()
-        .expect(format!("Failed to execute gradlew :{gradle_command}").as_str());
+        .expect(&format!("Failed to execute gradlew :{gradle_command}"));
 
     command_handler(&command_to_execute);
 }
@@ -471,7 +471,7 @@ impl LauncherRunResult {
     pub fn dump(self) -> IntellijMainDumpedLaunchParameters {
         let err_message = format!("Dump was not collected: {:?}", self);
         match self.dump {
-            Some(result) => result.expect(err_message.as_str()),
+            Some(result) => result.expect(&err_message),
             None => panic!("Dump was not requested; add `.with_dump()` to the run specification")
         }
     }
@@ -598,14 +598,14 @@ fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParam
     let mut reader = BufReader::new(file);
     let mut text = String::new();
     reader.read_to_string(&mut text)?;
-    let dump: IntellijMainDumpedLaunchParameters = serde_json::from_str(text.as_str())?;
+    let dump: IntellijMainDumpedLaunchParameters = serde_json::from_str(&text)?;
     Ok(dump)
 }
 
 pub fn test_runtime_selection(result: LauncherRunResult, expected_rt: PathBuf) {
     let rt_line = result.stdout.lines().into_iter()
         .find(|line| line.contains("Resolved runtime: "))
-        .expect(format!("The 'Resolved runtime:' line is not in the output: {}", result.stdout).as_str());
+        .expect(&format!("The 'Resolved runtime:' line is not in the output: {}", result.stdout));
     let resolved_rt = rt_line.split_once("Resolved runtime: ").unwrap().1;
     let actual_rt = &resolved_rt[1..resolved_rt.len() - 1].replace("\\\\", "\\");
 
