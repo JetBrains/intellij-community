@@ -33,9 +33,6 @@ fun Project.findBooleanProperty(name: String): Boolean {
 val Project.isAutomatedBuild: Boolean
   get() = findBooleanProperty("automatedProductionBuild") || System.getenv("AUTOMATED_PRODUCTION_BUILD") != null
 
-val Project.mainVersion: VersionNumber
-  get() = VersionNumber.parse(properties("pluginVersion"))
-
 val Project.publishChannel: PublishChannel
   get() = PublishChannel.parse(System.getenv("MARKETPLACE_CHANNEL"))
 
