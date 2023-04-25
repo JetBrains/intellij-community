@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.event.PomModelEvent;
@@ -54,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 
 public final class PostprocessReformattingAspectImpl extends PostprocessReformattingAspect {
   private static final Logger LOG = Logger.getInstance(PostprocessReformattingAspectImpl.class);
@@ -242,7 +240,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
 
   private static boolean wasEdgeChild(TreeChangeImpl treeChange, ASTNode oldChild) {
     List<ASTNode> initial = treeChange.getInitialChildren();
-    return initial.size() > 0 && (oldChild == initial.get(0) || oldChild == initial.get(initial.size() - 1));
+    return !initial.isEmpty() && (oldChild == initial.get(0) || oldChild == initial.get(initial.size() - 1));
   }
 
   private static boolean isRightAfterErrorElement(ASTNode _node) {
@@ -327,7 +325,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
         sb.append(" and ").append(nodes.size() - count).append(" more.");
         break;
       }
-      if (sb.length() > 0) sb.append(", ");
+      if (!sb.isEmpty()) sb.append(", ");
       sb.append(node.getElementType()).append(node.getTextRange());
       count ++;
     }
@@ -622,7 +620,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
           return true;
         }
 
-        private Iterable<TextRange> getEnabledRanges(@NotNull PsiElement element) {
+        private static Iterable<TextRange> getEnabledRanges(@NotNull PsiElement element) {
           List<TextRange> disabledRanges = new ArrayList<>();
           for (DisabledIndentRangesProvider rangesProvider : DisabledIndentRangesProvider.EP_NAME.getExtensions()) {
             Collection<TextRange> providedDisabledRanges = rangesProvider.getDisabledIndentRanges(element);
