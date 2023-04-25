@@ -7,31 +7,33 @@ import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "read-only",
+    "kind",
     "events",
     "properties",
     "symbols"
 })
-public class JsProperty
+public class JsSymbol
     extends BaseContribution
     implements JsContributionsHost
 {
 
     /**
-     * Specifies whether the property is read only.
+     * Kind of the symbol. Default is variable.
      * 
      */
-    @JsonProperty("read-only")
-    @JsonPropertyDescription("Specifies whether the property is read only.")
-    private Boolean readOnly;
+    @JsonProperty("kind")
+    @JsonPropertyDescription("Kind of the symbol. Default is variable.")
+    private JsSymbol.Kind kind;
     /**
      * DOM events
      * 
@@ -57,21 +59,21 @@ public class JsProperty
     private Map<String, GenericJsContributions> additionalProperties = new HashMap<String, GenericJsContributions>();
 
     /**
-     * Specifies whether the property is read only.
+     * Kind of the symbol. Default is variable.
      * 
      */
-    @JsonProperty("read-only")
-    public Boolean getReadOnly() {
-        return readOnly;
+    @JsonProperty("kind")
+    public JsSymbol.Kind getKind() {
+        return kind;
     }
 
     /**
-     * Specifies whether the property is read only.
+     * Kind of the symbol. Default is variable.
      * 
      */
-    @JsonProperty("read-only")
-    public void setReadOnly(Boolean readOnly) {
-        this.readOnly = readOnly;
+    @JsonProperty("kind")
+    public void setKind(JsSymbol.Kind kind) {
+        this.kind = kind;
     }
 
     /**
@@ -136,6 +138,56 @@ public class JsProperty
     @JsonAnySetter
     public void setAdditionalProperty(String name, GenericJsContributions value) {
         this.additionalProperties.put(name, value);
+    }
+
+
+    /**
+     * Kind of the symbol. Default is variable.
+     * 
+     */
+    public enum Kind {
+
+        VARIABLE("Variable"),
+        FUNCTION("Function"),
+        NAMESPACE("Namespace"),
+        CLASS("Class"),
+        INTERFACE("Interface"),
+        ENUM("Enum"),
+        ALIAS("Alias"),
+        MODULE("Module");
+        private final String value;
+        private final static Map<String, JsSymbol.Kind> CONSTANTS = new HashMap<String, JsSymbol.Kind>();
+
+        static {
+            for (JsSymbol.Kind c: values()) {
+                CONSTANTS.put(c.value, c);
+            }
+        }
+
+        private Kind(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return this.value;
+        }
+
+        @JsonValue
+        public String value() {
+            return this.value;
+        }
+
+        @JsonCreator
+        public static JsSymbol.Kind fromValue(String value) {
+            JsSymbol.Kind constant = CONSTANTS.get(value);
+            if (constant == null) {
+                throw new IllegalArgumentException(value);
+            } else {
+                return constant;
+            }
+        }
+
     }
 
 }

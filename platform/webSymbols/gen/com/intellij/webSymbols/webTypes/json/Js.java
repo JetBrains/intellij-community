@@ -21,7 +21,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "events",
-    "properties"
+    "properties",
+    "symbols"
 })
 public class Js implements JsContributionsHost
 {
@@ -40,6 +41,13 @@ public class Js implements JsContributionsHost
     @JsonProperty("properties")
     @JsonPropertyDescription("JavaScript properties of an object, HTML tag, framework component, etc.")
     private List<JsProperty> properties = new ArrayList<JsProperty>();
+    /**
+     * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
+     * 
+     */
+    @JsonProperty("symbols")
+    @JsonPropertyDescription("Symbols available for JavaScript resolve. TypeScript resolve is not supported.")
+    private List<JsSymbol> symbols = new ArrayList<JsSymbol>();
     @JsonIgnore
     private Map<String, GenericJsContributions> additionalProperties = new HashMap<String, GenericJsContributions>();
 
@@ -77,6 +85,24 @@ public class Js implements JsContributionsHost
     @JsonProperty("properties")
     public void setProperties(List<JsProperty> properties) {
         this.properties = properties;
+    }
+
+    /**
+     * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
+     * 
+     */
+    @JsonProperty("symbols")
+    public List<JsSymbol> getSymbols() {
+        return symbols;
+    }
+
+    /**
+     * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
+     * 
+     */
+    @JsonProperty("symbols")
+    public void setSymbols(List<JsSymbol> symbols) {
+        this.symbols = symbols;
     }
 
     @JsonAnyGetter

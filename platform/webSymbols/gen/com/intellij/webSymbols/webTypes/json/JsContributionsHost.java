@@ -12,7 +12,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "events",
-    "properties"
+    "properties",
+    "symbols"
 })
 public interface JsContributionsHost
     extends GenericContributionsHost
@@ -46,6 +47,20 @@ public interface JsContributionsHost
      */
     @JsonProperty("properties")
     public void setProperties(List<JsProperty> properties);
+
+    /**
+     * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
+     * 
+     */
+    @JsonProperty("symbols")
+    public List<JsSymbol> getSymbols();
+
+    /**
+     * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
+     * 
+     */
+    @JsonProperty("symbols")
+    public void setSymbols(List<JsSymbol> symbols);
 
     @JsonAnyGetter
     public Map<String, GenericJsContributions> getAdditionalProperties();

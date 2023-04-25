@@ -20,7 +20,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "events"
+    "events",
+    "symbols"
 })
 public class JsGlobal {
 
@@ -31,6 +32,13 @@ public class JsGlobal {
     @JsonProperty("events")
     @JsonPropertyDescription("DOM events")
     private List<GenericJsContribution> events = new ArrayList<GenericJsContribution>();
+    /**
+     * Globally available symbols for JavaScript resolve. TypeScript resolve is not supported. Please note that these symbols will override any normally available global JavaScript symbols.
+     * 
+     */
+    @JsonProperty("symbols")
+    @JsonPropertyDescription("Globally available symbols for JavaScript resolve. TypeScript resolve is not supported. Please note that these symbols will override any normally available global JavaScript symbols.")
+    private List<JsSymbol> symbols = new ArrayList<JsSymbol>();
     @JsonIgnore
     private Map<String, GenericJsContributions> additionalProperties = new HashMap<String, GenericJsContributions>();
 
@@ -50,6 +58,24 @@ public class JsGlobal {
     @JsonProperty("events")
     public void setEvents(List<GenericJsContribution> events) {
         this.events = events;
+    }
+
+    /**
+     * Globally available symbols for JavaScript resolve. TypeScript resolve is not supported. Please note that these symbols will override any normally available global JavaScript symbols.
+     * 
+     */
+    @JsonProperty("symbols")
+    public List<JsSymbol> getSymbols() {
+        return symbols;
+    }
+
+    /**
+     * Globally available symbols for JavaScript resolve. TypeScript resolve is not supported. Please note that these symbols will override any normally available global JavaScript symbols.
+     * 
+     */
+    @JsonProperty("symbols")
+    public void setSymbols(List<JsSymbol> symbols) {
+        this.symbols = symbols;
     }
 
     @JsonAnyGetter

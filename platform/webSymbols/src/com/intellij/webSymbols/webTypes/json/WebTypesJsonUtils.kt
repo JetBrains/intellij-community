@@ -13,17 +13,20 @@ import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_JS_EVENTS
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_JS_PROPERTIES
+import com.intellij.webSymbols.WebSymbol.Companion.KIND_JS_SYMBOLS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_CSS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_ARGUMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
+import com.intellij.webSymbols.WebSymbol.Companion.PROP_KIND
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_READ_ONLY
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.js.WebSymbolJsKind
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -112,7 +115,8 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
     )
     is JsContributionsHost -> sequenceOf(
       Pair(KIND_JS_EVENTS, this.events),
-      Pair(KIND_JS_PROPERTIES, this.properties)
+      Pair(KIND_JS_PROPERTIES, this.properties),
+      Pair(KIND_JS_SYMBOLS, this.symbols),
     )
     else -> emptySequence()
   })
@@ -121,7 +125,11 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
             .filter { it.second.isNotEmpty() })
 
 private fun JsGlobal.collectDirectContributions(): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
-  (events?.let { sequenceOf(Triple(NAMESPACE_JS, KIND_JS_EVENTS, it)) } ?: emptySequence())
+  sequenceOf(
+    Triple(NAMESPACE_JS, KIND_JS_EVENTS, this.events),
+    Triple(NAMESPACE_JS, KIND_JS_SYMBOLS, this.symbols),
+  )
+    .filter { it.third.isNotEmpty() }
     .plus(additionalProperties.asSequence()
             .filter { (name, _) -> !WebTypesSymbol.WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS.contains(name) }
             .map { (name, list) -> Triple(NAMESPACE_JS, name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
@@ -150,6 +158,9 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
           is CssPseudoClass -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
           is CssPseudoElement -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
           is JsProperty -> if (this.readOnly == true) sequenceOf(Pair(PROP_READ_ONLY, true)) else emptySequence()
+          is JsSymbol -> this.kind?.let { kind -> WebSymbolJsKind.values().firstOrNull { it.name.equals(kind.value(), true) } }
+                           ?.let { sequenceOf(Pair(PROP_KIND, it)) }
+                         ?: emptySequence()
           else -> emptySequence()
         }
       )

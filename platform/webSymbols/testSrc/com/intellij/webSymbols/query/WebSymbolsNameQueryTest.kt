@@ -400,6 +400,10 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
            "reference-with-complex-name-conversion")
   }
 
+  fun testJsGlobalSymbols() {
+    doTest("js/symbols", null, "js-globals")
+  }
+
   fun testBasicCustomElementsManifest1() {
     doTest("html/elements/my-EleMeNt", customElementsManifests = listOf("basic"))
   }

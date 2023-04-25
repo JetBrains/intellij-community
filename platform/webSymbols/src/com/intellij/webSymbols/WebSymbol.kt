@@ -15,6 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.js.WebSymbolJsKind
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.matchedNameOrName
@@ -171,6 +172,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
 
     const val KIND_JS_EVENTS = "events"
     const val KIND_JS_PROPERTIES = "properties"
+    const val KIND_JS_SYMBOLS = "symbols"
     const val KIND_JS_STRING_LITERALS = "string-literals"
 
     /** Specify language to inject in an HTML element */
@@ -192,5 +194,10 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
      * the property is read-only. Defaults to false.
      **/
     const val PROP_READ_ONLY = "read-only"
+    /**
+     * Name of [WebSymbolJsKind] property used by JS symbols to specify kind of the symbol.
+     * By default, symbol is treated as [WebSymbolJsKind.Variable].
+     **/
+    const val PROP_KIND = "kind"
   }
 }
