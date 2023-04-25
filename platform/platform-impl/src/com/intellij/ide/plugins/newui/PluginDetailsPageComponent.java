@@ -1035,8 +1035,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       if (myMarketplace && myPlugin instanceof PluginNode node) {
         String feature = ContainerUtil.getFirstItem(node.getSuggestedFeatures());
         if (feature != null) {
-          mySuggestedFeatures.setText(
-            "dependency".equals(feature) ? IdeBundle.message("plugins.configurable.suggested.features.dependency") : feature); //NON-NLS
+          mySuggestedFeatures.setText(feature); //NON-NLS
           mySuggestedFeatures.setVisible(true);
         }
       }

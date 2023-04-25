@@ -256,10 +256,15 @@ open class PluginAdvertiserServiceImpl(
 
     result.removeAll { localPluginIdMap[it.pluginId]?.isEnabled == true }
 
-    result.forEach {
-      val features = featuresMap[it.pluginId]
+    result.forEach { descriptor ->
+      val features = featuresMap[descriptor.pluginId]
       if (features.isNotEmpty()) {
-        (it as PluginNode).suggestedFeatures = features.map { f -> f.featureDisplayName }.toSet()
+        val suggestedFeatures = features.filter { "dependency" == it.featureDisplayName }.map {
+          IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
+        }
+        if (suggestedFeatures.isNotEmpty()) {
+          (descriptor as PluginNode).suggestedFeatures = suggestedFeatures
+        }
       }
     }
 
