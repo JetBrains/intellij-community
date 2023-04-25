@@ -152,10 +152,14 @@ internal open class FirCallableCompletionContributor(
 
         if (shouldCompleteTopLevelCallablesFromIndex) {
             val topLevelCallables = indexHelper.getTopLevelCallables(scopeNameFilter)
-            topLevelCallables.asSequence()
+            val callablesFromIndex = topLevelCallables.asSequence()
                 .filterNot { it.canDefinitelyNotBeSeenFromOtherFile() }
                 .filter { it.canBeAnalysed() }
                 .map { it.getSymbol() as KtCallableSymbol }
+
+            val callablesFromExtensions = getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(scopeNameFilter)
+
+            (callablesFromIndex + callablesFromExtensions)
                 .filter { it !in extensionMembers && visibilityChecker.isVisible(it) }
                 .forEach { addCallableSymbolToCompletion(context, it, getOptions(it), scopeKind = null) }
         }
