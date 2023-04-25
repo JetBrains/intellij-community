@@ -465,6 +465,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon UpFolder = load("expui/nodes/upFolder.svg", 1693042536, 2);
     /** 16x16 */ public static final @NotNull Icon Variable = load("expui/nodes/variable.svg", -63862704, 2);
     /** 16x16 */ public static final @NotNull Icon WarningIntroduction = load("expui/nodes/warningIntroduction.svg", -937000652, 2);
+    /** 16x16 */ public static final @NotNull Icon WebFolder = load("expui/nodes/webFolder.svg", 1815514632, 2);
   }
 
   public static final class ObjectBrowser {

@@ -531,7 +531,8 @@
       "unloadedModule.svg": "modules/unloadedModule.svg",
       "upFolder.svg": "nodes/upFolder.svg",
       "variable.svg": "nodes/variable.svg",
-      "warningIntroduction.svg": "nodes/warningIntroduction.svg"
+      "warningIntroduction.svg": "nodes/warningIntroduction.svg",
+      "webFolder.svg": "nodes/webFolder.svg"
     },
     "objectBrowser": {
       "compactEmptyPackages.svg": "objectBrowser/compactEmptyPackages.svg",
