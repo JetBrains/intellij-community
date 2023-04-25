@@ -3196,7 +3196,7 @@ private class AccessibleTabPage(private val parent: JBTabsImpl,
   }
 
   // AccessibleContext methods
-  override fun getAccessibleName(): String {
+  override fun getAccessibleName(): String? {
     var name = accessibleName
     if (name == null) {
       name = parent.getClientProperty(ACCESSIBLE_NAME_PROPERTY) as String?
@@ -3213,7 +3213,7 @@ private class AccessibleTabPage(private val parent: JBTabsImpl,
     return name
   }
 
-  override fun getAccessibleDescription(): String {
+  override fun getAccessibleDescription(): String? {
     var description = accessibleDescription
     if (description == null) {
       description = parent.getClientProperty(ACCESSIBLE_DESCRIPTION_PROPERTY) as String?
