@@ -18,5 +18,4 @@ Provides support for creating diagrams with [Mermaid](https://mermaid-js.github.
 
 Plugins are required to use SemVer for its versioning.
 
-* Nightly versions are marked with `nightly.X` qualifier, where `X` indicates current nightly iteration. During publishing of a new nightly version, build process checks obtains the latest published version from Marketplace and adjusts the current version accordingly.
-* Local builds by default are marked with `dev` qualifier.
+* Nightly versions are marked with `nightly.X` qualifier, where `X` indicates current nightly iteration.
