@@ -47,6 +47,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -67,7 +68,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final Document myDocument;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;
-  private final Object2IntMap<HighlightSeverity> errorCount = new Object2IntOpenHashMap<>();
+  private final Object2IntMap<HighlightSeverity> errorCount = Object2IntMaps.synchronize(new Object2IntOpenHashMap<>());
   private final @NotNull UIController myUIController;
   private final boolean inLibrary; // true if getPsiFile() is in library sources
   private final boolean shouldHighlight;
@@ -183,7 +184,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     HighlightSeverity infoSeverity = info.getSeverity();
     if (infoSeverity.myVal <= HighlightSeverity.TEXT_ATTRIBUTES.myVal) return;
 
-    errorCount.put(infoSeverity, errorCount.getInt(infoSeverity) + delta);
+    errorCount.mergeInt(infoSeverity, delta, Integer::sum);
   }
 
   /**

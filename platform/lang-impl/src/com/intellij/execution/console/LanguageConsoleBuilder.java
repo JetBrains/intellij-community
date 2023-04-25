@@ -315,7 +315,7 @@ public final class LanguageConsoleBuilder {
       private final ConsoleGutterComponent lineEndGutter;
 
       private Task gutterSizeUpdater;
-      private RangeHighlighter lineSeparatorPainter;
+      private volatile RangeHighlighter lineSeparatorPainter;
 
       private final CustomHighlighterRenderer renderer = new CustomHighlighterRenderer() {
         @Override

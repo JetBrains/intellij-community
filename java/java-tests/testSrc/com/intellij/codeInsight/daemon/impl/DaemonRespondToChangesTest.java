@@ -101,9 +101,9 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ref.GCWatcher;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -705,24 +705,24 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infos = doHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY);
     assertEquals(3, infos.size());
 
-    int[] count = {0};
+    AtomicInteger count = new AtomicInteger();
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        count[0]++;
+        count.incrementAndGet();
       }
 
       @Override
       public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
-        count[0]++;
+        count.incrementAndGet();
       }
     });
 
     type(' ');
     highlightErrors();
 
-    assertEquals(0, count[0]);
+    assertEquals(0, count.get());
   }
 
   public void testLineMarkersReuse() throws Throwable {
@@ -756,17 +756,19 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
         if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
-        List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-        if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) == null) return; // not line marker
-
-        changed.add(highlighter+": \n"+reason);
+        EdtInvocationManager.invokeLaterIfNeeded(() -> {
+          List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+          if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) != null) {
+            changed.add(highlighter + ": \n" + reason);
+          } // else not line marker
+        });
       }
     });
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     List<HighlightInfo> infosAfter = CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{/*Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS*/}, false);
     assertNotEmpty(filter(infosAfter, HighlightSeverity.ERROR));
-
+    UIUtil.dispatchAllInvocationEvents();
     assertEmpty(changed);
     List<LineMarkerInfo<?>> lineMarkersAfter = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
     assertEquals(lineMarkersAfter.size(), lineMarkers.size());
@@ -808,15 +810,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
         if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
-        List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-        if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) == null) return; // not line marker
-
-        changed.add(highlighter+": \n"+reason);
+        EdtInvocationManager.invokeLaterIfNeeded(() -> {
+          List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+          if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) != null) {
+            changed.add(highlighter + ": \n" + reason);
+          } // else not line marker
+        });
       }
     });
 
     assertEmpty(highlightErrors());
-
+    UIUtil.dispatchAllInvocationEvents();
     assertSize(2, DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject()));
 
     assertEmpty(changed);
@@ -1651,7 +1655,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(errorDescription, info.getDescription());
 
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, false);
-    boolean[] errorRemoved = {false};
+    AtomicBoolean errorRemoved = new AtomicBoolean();
 
     model.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
@@ -1660,7 +1664,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         if (info == null) return;
         String description = info.getDescription();
         if (errorDescription.equals(description)) {
-          errorRemoved[0] = true;
+          errorRemoved.set(true);
 
           List<ProgressableTextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(document);
           GeneralHighlightingPass ghp = null;
@@ -1680,7 +1684,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     List<HighlightInfo> errors = highlightErrors();
     assertEmpty(errors);
-    assertTrue(errorRemoved[0]);
+    assertTrue(errorRemoved.get());
   }
 
   public void testDaemonWorksForDefaultProjectSinceItIsNeededInSettingsDialogForSomeReason() {
@@ -2190,7 +2194,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testLightBulbIsHiddenWhenFixRangeIsCollapsed() {
-    configureByText(JavaFileType.INSTANCE, "class S { void foo() { boolean var; if (<selection>va<caret>r</selection>) {}} }");
+    configureByText(JavaFileType.INSTANCE, "class S { void foo() { boolean <selection>var; if (va<caret>r</selection>) {}} }");
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
 
@@ -3372,7 +3376,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testHighlightInfoMustImmediatelyShowItselfOnScreenRightAfterCreation() {
     AtomicBoolean xxxMustBeVisible = new AtomicBoolean();
-    HighlightVisitor visitor = new MyHighlightVisitor(xxxMustBeVisible);
+    HighlightVisitor visitor = new MyHighlightCommentsSubstringVisitor(xxxMustBeVisible);
     myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
     @Language("JAVA")
     String text = """
@@ -3405,11 +3409,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     return ContainerUtil.filter(infos, h -> h.getDescription() != null && h.getDescription().startsWith("MY: "));
   }
 
-  private static class MyHighlightVisitor implements HighlightVisitor {
+  private static class MyHighlightCommentsSubstringVisitor implements HighlightVisitor {
     private final AtomicBoolean xxxMustBeVisible;
     private HighlightInfoHolder myHolder;
 
-    MyHighlightVisitor(@NotNull AtomicBoolean xxxMustBeVisible) {
+    MyHighlightCommentsSubstringVisitor(@NotNull AtomicBoolean xxxMustBeVisible) {
       this.xxxMustBeVisible = xxxMustBeVisible;
     }
 
@@ -3441,8 +3445,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     @Override
     public @NotNull HighlightVisitor clone() {
-      return new MyHighlightVisitor(xxxMustBeVisible);
+      return new MyHighlightCommentsSubstringVisitor(xxxMustBeVisible);
     }
   }
+
 }
 

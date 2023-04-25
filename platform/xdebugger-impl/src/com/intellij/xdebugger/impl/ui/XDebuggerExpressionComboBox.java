@@ -21,6 +21,7 @@ import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
@@ -194,7 +196,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
           }
           foldNewLines(editor);
           editor.getFilteredDocumentMarkupModel().addMarkupModelListener(((EditorImpl)editor).getDisposable(), new MarkupModelListener() {
-            int errors = 0;
+            private final AtomicInteger errors = new AtomicInteger();
             @Override
             public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
               processHighlighter(highlighter, true);
@@ -208,10 +210,14 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
             void processHighlighter(@NotNull RangeHighlighterEx highlighter, boolean add) {
               HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
               if (info != null && HighlightSeverity.ERROR.equals(info.getSeverity())) {
-                errors += add ? 1 : -1;
-                if (errors == 0 || errors == 1) {
-                  myComboBox.putClientProperty("JComponent.outline", errors > 0 ? "error" : null);
-                  myComboBox.repaint();
+                int value = errors.addAndGet(add ? 1 : -1);
+                if (value == 0 || value == 1) {
+                  EdtInvocationManager.invokeLaterIfNeeded(() -> {
+                    if (myComboBox.isShowing()) {
+                      myComboBox.putClientProperty("JComponent.outline", value > 0 ? "error" : null);
+                      myComboBox.repaint();
+                    }
+                  });
                 }
               }
             }
