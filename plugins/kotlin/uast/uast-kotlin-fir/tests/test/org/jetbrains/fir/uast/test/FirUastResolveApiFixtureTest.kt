@@ -215,4 +215,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testIsMethodCallCanBeOneOfImportAliased() {
         checkIsMethodCallCanBeOneOfImportAliased(myFixture)
     }
+
+    fun testParentOfParameterOfCatchClause() {
+        checkParentOfParameterOfCatchClause(myFixture)
+    }
 }

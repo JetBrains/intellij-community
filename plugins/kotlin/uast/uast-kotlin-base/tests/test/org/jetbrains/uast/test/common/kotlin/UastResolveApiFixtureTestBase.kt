@@ -1383,7 +1383,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         myFixture.checkIsMethodNameCanBeOneOf(listOf("invoke"))
     }
 
-
     fun checkIsMethodCallCanBeOneOfRegularMethod(myFixture: JavaCodeInsightTestFixture) {
         @Language("kotlin")
         val mainCode = """               
@@ -1424,7 +1423,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
     private fun JavaCodeInsightTestFixture.checkIsMethodNameCanBeOneOf(names: Collection<String>) {
         var call: UCallExpression? = null
-        val uFile =  file.toUElement() as KotlinUFile
+        val uFile = file.toUElement() as KotlinUFile
         uFile.accept(
             object : AbstractUastVisitor() {
                 override fun visitCallExpression(node: UCallExpression): Boolean {
@@ -1442,6 +1441,33 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertTrue(call is KotlinUFunctionCallExpression)
         val ktCall = call as KotlinUFunctionCallExpression
         TestCase.assertTrue("expected method name to be one of ${names}", ktCall.methodNameCanBeOneOf(names))
+    }
+
+    fun checkParentOfParameterOfCatchClause(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                try {
+                } catch (exception : Exception) {
+                  println(exception)
+                }
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(object : AbstractUastVisitor() {
+            private var catchClause: UCatchClause? = null
+
+            override fun visitCatchClause(node: UCatchClause): Boolean {
+                catchClause = node
+                return super.visitCatchClause(node)
+            }
+
+            override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+                val resolved = node.resolve()?.toUElement()
+                TestCase.assertTrue(resolved?.uastParent is UCatchClause)
+                TestCase.assertEquals(catchClause, resolved)
+                return super.visitSimpleNameReferenceExpression(node)
+            }
+        })
     }
 
 }
