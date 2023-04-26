@@ -19,7 +19,7 @@ class RatingBlock(myProperty: ObservableMutableProperty<Int>,
           .errorOnApply(CommonFeedbackBundle.message("dialog.feedback.rating.required")) {
             it.myRating == 0
           }
-      }
+      }.bottomGap(BottomGap.MEDIUM)
     }
   }
 }
