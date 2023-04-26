@@ -2,9 +2,7 @@
 package com.intellij.ui.mac
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -56,17 +54,12 @@ object MacFullScreenControlsManager {
     }
   }
 
-  fun updateForCompactMode(e: AnActionEvent) {
-    if (enabled()) {
-      val helper = ProjectFrameHelper.getFrameHelper(WindowManager.getInstance().getFrame(e.project))
-      if (helper != null) {
-        updateForPresentationMode(helper)
-      }
-    }
+  fun updateForCompactMode() {
+    updateForPresentationMode()
   }
 
-  fun updateForPresentationMode(helper: ProjectFrameHelper) {
-    if (helper.isInFullScreen && enabled()) {
+  fun updateForPresentationMode() {
+    if (enabled()) {
       ApplicationManager.getApplication().invokeLater {
         val frames = getAllFrameWindows()
         Foundation.executeOnMainThread(true, false) {
@@ -83,7 +76,7 @@ object MacFullScreenControlsManager {
     }
   }
 
-  fun updateForDistractionFreeMode(enter: Boolean, fromZendMode: Boolean, project: Project?) {
+  fun updateForDistractionFreeMode(enter: Boolean, fromZendMode: Boolean) {
     if (enabled()) {
       if (enter) {
         System.setProperty("apple.awt.distraction.free.mode", "true")
@@ -92,8 +85,7 @@ object MacFullScreenControlsManager {
         System.clearProperty("apple.awt.distraction.free.mode")
       }
 
-      val frame = WindowManager.getInstance().getIdeFrame(project)
-      if (frame != null && frame.isInFullScreen && (enter || !fromZendMode)) {
+      if (enter || !fromZendMode) {
         ApplicationManager.getApplication().invokeLater {
           val frames = getAllFrameWindows()
           Foundation.executeOnMainThread(true, false) {

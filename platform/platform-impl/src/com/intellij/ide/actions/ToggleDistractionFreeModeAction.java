@@ -71,7 +71,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     PropertiesComponent.getInstance().setValue(LAST_ENTER_VALUE, String.valueOf(enter));
 
     if (SystemInfo.isMac) {
-      MacFullScreenControlsManager.INSTANCE.updateForDistractionFreeMode(enter, myFromZendMode, e.getProject());
+      MacFullScreenControlsManager.INSTANCE.updateForDistractionFreeMode(enter, myFromZendMode);
     }
 
     applyAndSave(PropertiesComponent.getInstance(),

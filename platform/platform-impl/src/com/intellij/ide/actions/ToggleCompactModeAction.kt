@@ -25,7 +25,7 @@ class ToggleCompactModeAction: DumbAwareToggleAction() {
       UISettings.getInstance().uiDensity = newValue
       LafManager.getInstance().applyDensity()
       if (SystemInfo.isMac) {
-        MacFullScreenControlsManager.updateForCompactMode(e)
+        MacFullScreenControlsManager.updateForCompactMode()
       }
     }
   }

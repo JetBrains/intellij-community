@@ -76,7 +76,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     }
 
     if (SystemInfo.isMac) {
-      MacFullScreenControlsManager.INSTANCE.updateForPresentationMode(frame);
+      MacFullScreenControlsManager.INSTANCE.updateForPresentationMode();
     }
 
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
