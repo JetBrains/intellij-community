@@ -72,7 +72,7 @@ public final class WelcomeScreenComponentFactory {
     String applicationName = getAppName();
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
-    appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
+    appName.setFont(JBFont.create(appName.getFont().deriveFont(Font.PLAIN), false));
 
     ActionLink copyAbout = new ActionLink("", EmptyIcon.ICON_16, createCopyAboutAction());
     copyAbout.setHoveringIcon(AllIcons.Actions.Copy);

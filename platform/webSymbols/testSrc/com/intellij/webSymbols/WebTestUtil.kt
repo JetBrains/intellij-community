@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.documentation.impl.computeDocumentationBlocking
+import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -349,8 +349,9 @@ fun CodeInsightTestFixture.assertUnresolvedReference(signature: String, okWithNo
   }
   assertNotNull("Expected not null reference for signature '$signature' at offset $offsetBySignature in file\n${file.text}", ref)
   val resolved = ref!!.resolve()
-  assertNull("Expected that reference for signature '$signature' at offset $offsetBySignature resolves to null but resolved to $resolved (${resolved?.text}) in file ${resolved?.containingFile?.name}",
-             resolved)
+  assertNull(
+    "Expected that reference for signature '$signature' at offset $offsetBySignature resolves to null but resolved to $resolved (${resolved?.text}) in file ${resolved?.containingFile?.name}",
+    resolved)
   if (ref is PsiPolyVariantReference) {
     assertEmpty(ref.multiResolve(false))
   }
@@ -468,7 +469,10 @@ fun CodeInsightTestFixture.testWebSymbolRename(fileAfter: String, newName: Strin
   checkResultByFile(fileAfter)
 }
 
-fun doCompletionItemsTest(fixture: CodeInsightTestFixture, fileName: String) {
+fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
+                          fileName: String,
+                          goldFileWithExtension: Boolean = false,
+                          renderPresentedText: Boolean = false) {
   val fileNameNoExt = FileUtil.getNameWithoutExtension(fileName)
   fixture.configureByFile(fileName)
   WriteAction.runAndWait<Throwable> { WebSymbolsQueryExecutorFactory.getInstance(fixture.project) }
@@ -499,8 +503,8 @@ fun doCompletionItemsTest(fixture: CodeInsightTestFixture, fileName: String) {
       fixture.completeBasic()
 
       fixture.checkListByFile(
-        fixture.renderLookupItems(true, true, true),
-        "gold/${fileNameNoExt}.${index}.txt", !strict)
+        fixture.renderLookupItems(true, true, true, renderPresentedText = renderPresentedText),
+        "gold/${if (goldFileWithExtension) fileName else fileNameNoExt}.${index}.txt", !strict)
 
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }

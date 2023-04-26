@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.ui.popup;
 
-import com.intellij.ui.IconReplacer;
+import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;

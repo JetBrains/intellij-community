@@ -4,6 +4,7 @@ package com.intellij.build;
 import com.intellij.build.events.*;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -120,7 +121,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
   private final ExecutionNode myBuildProgressRootNode;
   private final Set<Predicate<? super ExecutionNode>> myNodeFilters;
   private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
-  private final Set<BuildEvent> myDeferredEvents = ContainerUtil.newConcurrentSet();
+  private final Set<BuildEvent> myDeferredEvents = ConcurrentCollectionFactory.createConcurrentSet();
 
   /**
    * @deprecated BuildViewSettingsProvider is not used anymore.
@@ -140,7 +141,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor
                         ? (DefaultBuildDescriptor)buildDescriptor
                         : new DefaultBuildDescriptor(buildDescriptor);
-    myNodeFilters = ContainerUtil.newConcurrentSet();
+    myNodeFilters = ConcurrentCollectionFactory.createConcurrentSet();
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
     myNavigateToTheFirstErrorLocation = isNavigateToTheFirstErrorLocation(project, buildDescriptor);
 
@@ -381,7 +382,9 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         nodesMap.put(eventId, currentNode);
       }
       else {
-        LOG.warn("start event id collision found:" + eventId + ", was also in node: " + currentNode.getTitle());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("start event id collision found:" + eventId + ", was also in node: " + currentNode.getTitle());
+        }
         return;
       }
     }

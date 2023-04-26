@@ -170,6 +170,6 @@ internal class KotlinFirStructureElementPresentation(
     }
 
     private fun withRightArrow(str: String): String {
-        return if (StartupUiUtil.getLabelFont().canDisplay(rightArrow)) rightArrow + str else "->$str"
+        return if (StartupUiUtil.labelFont.canDisplay(rightArrow)) rightArrow + str else "->$str"
     }
 }

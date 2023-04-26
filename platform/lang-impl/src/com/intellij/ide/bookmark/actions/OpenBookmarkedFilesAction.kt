@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
-import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.FileBookmark
 import com.intellij.ide.bookmark.ui.tree.GroupNode
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -9,8 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 
-class OpenBookmarkedFilesAction : DumbAwareAction(BookmarkBundle.messagePointer("open.all.bookmarked.files")) {
-
+internal class OpenBookmarkedFilesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.bookmarkNodes?.all { it is GroupNode } ?: false
   }

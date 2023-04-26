@@ -17,8 +17,10 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.ui.mac.MacFullScreenControlsManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,6 +62,10 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     }
 
     PropertiesComponent.getInstance().setValue(LAST_ENTER_VALUE, String.valueOf(enter));
+
+    if (SystemInfo.isMac) {
+      MacFullScreenControlsManager.INSTANCE.updateForDistractionFreeMode(enter);
+    }
 
     applyAndSave(PropertiesComponent.getInstance(),
                  UISettings.getInstance(),

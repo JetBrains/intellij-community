@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.DoubleClickListener;
@@ -25,6 +26,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -73,6 +75,14 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  public boolean isCleanup() {
+    return isCleanupAllowed() && myConfiguration.isCleanup();
+  }
+
+  private boolean isCleanupAllowed() {
+    return ContainerUtil.exists(myConfiguration.getPatterns(), p -> p.replacement() != null);
   }
 
   @NotNull
@@ -160,14 +170,23 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
   private void performEditMetaData(@NotNull Component context) {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
     final InspectionProfileModifiableModel profile = getInspectionProfile(context);
-    if (profile == null) {
+    if (profile == null || project == null) {
       return;
     }
     final CustomRegExpInspection inspection = getRegExpInspection(profile);
-    final MetaDataDialog dialog = new MetaDataDialog(project, inspection, myConfiguration, false);
+    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, myConfiguration);
+    if (isCleanupAllowed()) {
+      dialog.showCleanupOption(myConfiguration.isCleanup());
+    }
     if (!dialog.showAndGet()) {
       return;
     }
+    myConfiguration.setName(dialog.getName());
+    myConfiguration.setDescription(dialog.getDescription());
+    myConfiguration.setSuppressId(dialog.getSuppressId());
+    myConfiguration.setProblemDescriptor(dialog.getProblemDescriptor());
+    myConfiguration.setCleanup(dialog.isCleanup());
+
     inspection.updateConfiguration(myConfiguration);
     profile.setModified(true);
     profile.getProfileManager().fireProfileChanged(profile);
@@ -227,12 +246,9 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     saveChangesToProfile(list);
   }
 
-  private void saveChangesToProfile(JList<InspectionPattern> list) {
+  private static void saveChangesToProfile(JList<InspectionPattern> list) {
     final InspectionProfileModifiableModel profile = getInspectionProfile(list);
-    if (profile == null) return;
-    final CustomRegExpInspection inspection = getRegExpInspection(profile);
-    inspection.updateConfiguration(myConfiguration);
-    profile.setModified(true);
+    if (profile != null) profile.setModified(true);
   }
 
   @NotNull

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
 import com.intellij.util.asSafely
@@ -85,7 +85,7 @@ class LanguageWordInCommentCompletionContributor : CompletionContributor() {
 class LanguageCommentFolding : FoldingBuilderEx() {
   override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
     return SmartList<FoldingDescriptor>().also { result ->
-      root.accept(object : PsiRecursiveElementVisitor() {
+      root.accept(object : PsiRecursiveElementWalkingVisitor() {
         override fun visitComment(comment: PsiComment) {
           super.visitComment(comment)
           if (getLanguageRange(comment) != null) {

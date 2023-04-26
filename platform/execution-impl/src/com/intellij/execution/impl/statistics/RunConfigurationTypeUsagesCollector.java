@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
@@ -34,7 +34,7 @@ import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 14);
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 15);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", RunConfigurationUtilValidator.class);
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory",
                                                                                                RunConfigurationUtilValidator.class);

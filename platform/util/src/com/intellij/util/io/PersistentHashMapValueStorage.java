@@ -19,10 +19,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
+
+import static java.nio.file.StandardOpenOption.READ;
 
 public final class PersistentHashMapValueStorage {
   @Nullable
@@ -858,20 +859,20 @@ public final class PersistentHashMapValueStorage {
   }
 
   private static final class FileReader implements RAReader {
-    private final UnInterruptibleFileChannel myFile;
+    private final ResilientFileChannel fileChannel;
 
     private FileReader(Path file) throws IOException {
-      myFile = new UnInterruptibleFileChannel(file, StandardOpenOption.READ);
+      fileChannel = new ResilientFileChannel(file, READ);
     }
 
     @Override
     public void get(final long addr, final byte[] dst, final int off, final int len) throws IOException {
-      myFile.read(ByteBuffer.wrap(dst, off, len), addr);
+      fileChannel.read(ByteBuffer.wrap(dst, off, len), addr);
     }
 
     @Override
     public void dispose() throws IOException {
-      myFile.close();
+      fileChannel.close();
     }
   }
 

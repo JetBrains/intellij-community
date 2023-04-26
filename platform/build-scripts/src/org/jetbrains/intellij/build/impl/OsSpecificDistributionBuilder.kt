@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
@@ -31,6 +31,8 @@ interface OsSpecificDistributionBuilder {
   suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
 
   suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
+
+  fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture)
 
   @Deprecated("Please specify architecture explicitly", replaceWith = ReplaceWith("generateExecutableFilesPatterns(includeRuntime, arch)"))
   fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {

@@ -31,6 +31,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -104,6 +105,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private LinkPanel myBugtrackerUrl;
   private LinkPanel myDocumentationUrl;
   private LinkPanel mySourceCodeUrl;
+  private JEditorPane mySuggestedFeatures;
   private JBScrollPane myBottomScrollPane;
   private final List<JBScrollPane> myScrollPanes = new ArrayList<>();
   private JEditorPane myDescriptionComponent;
@@ -153,10 +155,6 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     setEmptyState(EmptyState.NONE_SELECTED);
   }
 
-  @Nullable IdeaPluginDescriptor getPlugin() {
-    return myPlugin;
-  }
-
   IdeaPluginDescriptor getDescriptorForActions() {
     return !myMarketplace || myInstalledDescriptorForMarketplace == null ? myPlugin : myInstalledDescriptorForMarketplace;
   }
@@ -179,7 +177,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     if (key == 1) {
       if (myEmptyPanel == null) {
         myEmptyPanel = new JBPanelWithEmptyText();
-        myEmptyPanel.setBorder(new CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insets(1, 0, 0, 0)));
+        myEmptyPanel.setBorder(new CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1)));
         myEmptyPanel.setOpaque(true);
         myEmptyPanel.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
         myLoadingIcon.setOpaque(true);
@@ -244,6 +242,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     topPanel.add(myNameAndButtons);
     topPanel.add(mySuggestedIdeBanner, VerticalLayout.FILL_HORIZONTAL);
+
+    mySuggestedFeatures = new JEditorPane();
+    UIUtil.convertToLabel(mySuggestedFeatures);
+    PluginManagerConfigurable.setTinyFont(mySuggestedFeatures);
+    mySuggestedFeatures.setCaret(EmptyCaret.INSTANCE);
+
+    topPanel.add(mySuggestedFeatures, VerticalLayout.FILL_HORIZONTAL);
 
     myNameAndButtons.add(myVersion1 = new JBLabel().setCopyable(true));
 
@@ -742,13 +747,11 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     Font font = StartupUiUtil.getLabelFont();
 
-    if (font != null) {
-      int size = font.getSize();
-      sheet.addRule("h3 { font-size: " + (size + 3) + "; font-weight: bold; }");
-      sheet.addRule("h2 { font-size: " + (size + 5) + "; font-weight: bold; }");
-      sheet.addRule("h1 { font-size: " + (size + 9) + "; font-weight: bold; }");
-      sheet.addRule("h0 { font-size: " + (size + 12) + "; font-weight: bold; }");
-    }
+    int size = font.getSize();
+    sheet.addRule("h3 { font-size: " + (size + 3) + "; font-weight: bold; }");
+    sheet.addRule("h2 { font-size: " + (size + 5) + "; font-weight: bold; }");
+    sheet.addRule("h1 { font-size: " + (size + 9) + "; font-weight: bold; }");
+    sheet.addRule("h0 { font-size: " + (size + 12) + "; font-weight: bold; }");
 
     JEditorPane editorPane = new JEditorPane();
     editorPane.setEditable(false);
@@ -761,7 +764,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     return editorPane;
   }
 
-  public void showPlugins(@NotNull List<? extends ListPluginComponent> selection) {
+  public void showPlugins(@NotNull List<ListPluginComponent> selection) {
     int size = selection.size();
     showPlugin(size == 1 ? selection.get(0) : null, size > 1);
   }
@@ -814,7 +817,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             component.setPluginDescriptor(pluginNode);
           });
         }
-        else if (myUpdateOnly && (node.getScreenShots() == null || node.getReviewComments() == null)) {
+        else if (node.getScreenShots() == null || node.getReviewComments() == null) {
           syncLoading = false;
           doLoad(component, () -> {
             MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
@@ -1027,6 +1030,17 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       myDate.setVisible(date != null);
     }
 
+    if (mySuggestedFeatures != null) {
+      mySuggestedFeatures.setVisible(false);
+      if (myMarketplace && myPlugin instanceof PluginNode node) {
+        String feature = ContainerUtil.getFirstItem(node.getSuggestedFeatures());
+        if (feature != null) {
+          mySuggestedFeatures.setText(feature); //NON-NLS
+          mySuggestedFeatures.setVisible(true);
+        }
+      }
+    }
+
     for (JBScrollPane scrollPane : myScrollPanes) {
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     }
@@ -1130,15 +1144,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     if (productCode == null) {
       if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null &&
           !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode())) {
-        String message;
-        if (myUpdateDescriptor instanceof PluginNode && ((PluginNode)myUpdateDescriptor).getTags().contains(Tags.Freemium.name())) {
-          message = IdeBundle.message("label.next.plugin.version.is.freemium");
-        }
-        else {
-          message = IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or");
-        }
-        myLicensePanel.setText(message, true, false);
-        myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
+        myLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is"), true, false);
+        myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor, true);
         myLicensePanel.setVisible(true);
       }
       else {
@@ -1154,7 +1161,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         message = IdeBundle.message("label.use.the.trial.for.up.to.30.days.or");
       }
       myLicensePanel.setText(message, false, false);
-      myLicensePanel.showBuyPlugin(() -> plugin);
+      myLicensePanel.showBuyPlugin(() -> plugin, false);
 
       // if the plugin requires commercial IDE, we do not show trial/price message
       boolean requiresCommercialIde = plugin instanceof PluginNode

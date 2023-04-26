@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -185,15 +186,11 @@ public final class PsiPrecedenceUtil {
     if (parentPrecedence > childPrecedence) {
       if (ignoreClarifyingParentheses) {
         if (expression instanceof PsiPolyadicExpression) {
-          if (parentExpression instanceof PsiPolyadicExpression ||
-              parentExpression instanceof PsiConditionalExpression ||
-              parentExpression instanceof PsiInstanceOfExpression) {
-            return true;
-          }
+          return parentExpression instanceof PsiPolyadicExpression ||
+                 parentExpression instanceof PsiConditionalExpression ||
+                 parentExpression instanceof PsiInstanceOfExpression;
         }
-        else if (expression instanceof PsiInstanceOfExpression) {
-          return true;
-        }
+        else return expression instanceof PsiInstanceOfExpression;
       }
       return false;
     }
@@ -208,10 +205,8 @@ public final class PsiPrecedenceUtil {
       if (!parentType.equals(childType)) {
         return true;
       }
-      if (childType.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
-          !PsiTreeUtil.isAncestor(parentPolyadicExpression.getOperands()[0], childPolyadicExpression, true)) {
-        final PsiExpression[] operands = childPolyadicExpression.getOperands();
-        return !childType.equals(operands[0].getType()) && !childType.equals(operands[1].getType());
+      if (childType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return areStringParenthesesNeeded(childPolyadicExpression, parentPolyadicExpression, null);
       }
       else if (childType.equals(PsiTypes.booleanType())) {
         final PsiExpression[] operands = childPolyadicExpression.getOperands();
@@ -252,6 +247,51 @@ public final class PsiPrecedenceUtil {
       }
     }
     return parentPrecedence < childPrecedence;
+  }
+
+  /**
+   * Determines if parentheses are needed around the specified {@code childStringConcatenation} to retain
+   * the same semantics (i.e. if removing the parentheses will change the behaviour of the code).
+   *
+   * @param childStringConcatenation  a string concatenation which is or is going to be used as an operand of
+   *                                  the parent string concatenation.
+   * @param parentStringConcatenation  a string concatenation
+   * @param anchor  the operand of the {@code parentStringConcatenation} that contains or will be replaced
+   *                with the childStringConcatenation. If null, {@code childStringConcatenation} will be
+   *                used as {@code anchor}.
+   * @return {@code true}, if parentheses are required, {@code false} otherwise.
+   */
+  public static boolean areStringParenthesesNeeded(@NotNull PsiPolyadicExpression childStringConcatenation,
+                                                   @NotNull PsiPolyadicExpression parentStringConcatenation,
+                                                   @Nullable PsiElement anchor) {
+    PsiExpression[] childOperands = childStringConcatenation.getOperands();
+    PsiType firstType = childOperands[0].getType();
+    if (firstType != null && firstType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      return false;
+    }
+    PsiType secondType = childOperands[1].getType();
+    if (secondType != null && !secondType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      return true;
+    }
+    PsiExpression[] parentOperands = parentStringConcatenation.getOperands();
+    PsiType firstParentType = parentOperands[0].getType();
+    if (firstParentType != null && firstParentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      return false;
+    }
+    if (anchor == null) {
+      anchor = childStringConcatenation;
+    }
+    for (int i = 1; i < parentOperands.length; i++) {
+      PsiExpression operand = parentOperands[i];
+      if (PsiTreeUtil.isAncestor(operand, anchor, false)) {
+        return true;
+      }
+      final PsiType type = operand.getType();
+      if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return false;
+      }
+    }
+    return false;
   }
 
   public static boolean areParenthesesNeeded(PsiJavaToken compoundAssignmentToken, PsiExpression rhs) {

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.core.script.configuration
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
@@ -457,12 +458,14 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
             file.originalFile.virtualFile?.let { virtualFile ->
                 val state = cache[virtualFile]
                 if (state == null || forceSync || !state.isUpToDate(project, virtualFile, file)) {
-                    reloadOutOfDateConfiguration(
-                        file,
-                        forceSync = forceSync,
-                        isFirstLoad = state == null,
-                        skipNotification = skipNotification
-                    )
+                    runReadAction {
+                        reloadOutOfDateConfiguration(
+                            file,
+                            forceSync = forceSync,
+                            isFirstLoad = state == null,
+                            skipNotification = skipNotification
+                        )
+                    }
                 }
             }
         }

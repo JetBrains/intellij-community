@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.messages.Topic
+import it.unimi.dsi.fastutil.longs.LongSet
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.ZonedDateTime
 
@@ -26,6 +28,7 @@ interface ProjectIndexingHistoryListener {
   fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
 }
 
+@ApiStatus.Obsolete
 interface ProjectIndexingHistory {
   val project: Project
   val indexingReason: String?
@@ -36,6 +39,37 @@ interface ProjectIndexingHistory {
   val totalStatsPerFileType: Map<String, StatsPerFileType>
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
   val visibleTimeToAllThreadsTimeRatio: Double
+}
+
+interface ProjectIndexingActivityHistory {
+  val project: Project
+  val type: IndexDiagnosticDumper.IndexingActivityType
+}
+
+
+interface ProjectScanningHistory : ProjectIndexingActivityHistory {
+  override val project: Project
+  val scanningReason: String?
+  val scanningSessionId: Long
+  val times: ScanningTimes
+  val scanningStatistics: List<JsonScanningStatistics>
+
+  override val type
+    get() = IndexDiagnosticDumper.IndexingActivityType.Scanning
+}
+
+interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
+  override val project: Project
+  val indexingSessionId: Long
+  val times: DumbIndexingTimes
+  val refreshedScanningStatistics: JsonScanningStatistics?
+  val providerStatistics: List<JsonFileProviderIndexStatistics>
+  val totalStatsPerFileType: Map<String, StatsPerFileType>
+  val totalStatsPerIndexer: Map<String, StatsPerIndexer>
+  val visibleTimeToAllThreadsTimeRatio: Double
+
+  override val type
+    get() = IndexDiagnosticDumper.IndexingActivityType.DumbIndexing
 }
 
 /**
@@ -74,12 +108,10 @@ enum class ScanningType(val isFull: Boolean) {
   REFRESH(false);
 
   companion object {
-    fun merge(first: ScanningType, second: ScanningType): ScanningType = returnFirstFound(first, second,
-                                                                                          FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL,
-                                                                                          PARTIAL_FORCED, PARTIAL,
-                                                                                          REFRESH)
+    fun merge(first: ScanningType, second: ScanningType): ScanningType = returnFirstFound(first, second)
 
-    private fun returnFirstFound(first: ScanningType, second: ScanningType, vararg types: ScanningType): ScanningType {
+    private fun returnFirstFound(first: ScanningType, second: ScanningType): ScanningType {
+      val types = listOf(FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL, PARTIAL_FORCED, PARTIAL, REFRESH)
       for (type in types) {
         if (first == type || second == type) return type
       }
@@ -124,6 +156,37 @@ interface IndexingTimes {
   var creatingIteratorsDuration: Duration
   val scanFilesDuration: Duration
   val suspendedDuration: Duration
+  val appliedAllValuesSeparately: Boolean
+  val separateValueApplicationVisibleTime: TimeNano
+  val wasInterrupted: Boolean
+}
+
+interface ScanningTimes {
+  val scanningReason: String?
+  val scanningType: ScanningType
+  val scanningId: Long
+  val updatingStart: ZonedDateTime
+  val totalUpdatingTime: TimeNano
+  val updatingEnd: ZonedDateTime
+  val dumbModeStart: ZonedDateTime?
+  val dumbModeWithPausesDuration: Duration
+  val dumbModeWithoutPausesDuration: Duration
+  val delayedPushPropertiesStageDuration: Duration
+  val indexExtensionsDuration: Duration
+  var creatingIteratorsDuration: Duration
+  val collectingIndexableFilesDuration: Duration
+  val pausedDuration: Duration
+  val wasInterrupted: Boolean
+}
+
+interface DumbIndexingTimes {
+  val scanningIds: LongSet
+  val updatingStart: ZonedDateTime
+  val totalUpdatingTime: TimeNano
+  val updatingEnd: ZonedDateTime
+  val contentLoadingVisibleDuration: Duration
+  val refreshedScanFilesDuration: Duration
+  val pausedDuration: Duration
   val appliedAllValuesSeparately: Boolean
   val separateValueApplicationVisibleTime: TimeNano
   val wasInterrupted: Boolean

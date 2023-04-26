@@ -65,13 +65,11 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -109,7 +107,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     myPopup = new IntentionPopup(project, file, editor, cachedIntentions);
     Disposer.register(this, myPopup);
 
-    myLightBulbPanel = new LightBulbPanel(project, file, editor, LightBulbUtil.getIcon(cachedIntentions));
+    myLightBulbPanel =
+      new LightBulbPanel(project, file, editor, LightBulbUtil.getIcon(cachedIntentions), cachedIntentions.getTopLevelActions());
     myComponentHint = new MyComponentHint(myLightBulbPanel);
 
     EditorUtil.disposeWithEditor(myEditor, this);
@@ -426,19 +425,37 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private final RowIcon myInactiveIcon;
     private final JLabel myIconLabel;
 
-    LightBulbPanel(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, @NotNull Icon smartTagIcon) {
+    LightBulbPanel(@NotNull Project project,
+                   @NotNull PsiFile file,
+                   @NotNull Editor editor,
+                   @NotNull Icon smartTagIcon,
+                   @NotNull Set<AnAction> topLevelActions) {
       setLayout(new BorderLayout());
       setOpaque(false);
 
       IconManager iconManager = IconManager.getInstance();
-      myHighlightedIcon = iconManager.createRowIcon(smartTagIcon, AllIcons.General.ArrowDown);
-      myInactiveIcon = iconManager.createRowIcon(smartTagIcon, ourInactiveArrowIcon);
+      if (!topLevelActions.isEmpty()) {
+        Icon icon = topLevelActions.iterator().next().getTemplatePresentation().getIcon();
+        myHighlightedIcon = iconManager.createRowIcon(icon, smartTagIcon, AllIcons.General.ArrowDown);
+        myInactiveIcon = iconManager.createRowIcon(icon, smartTagIcon, ourInactiveArrowIcon);
+      }
+      else {
+        myHighlightedIcon = iconManager.createRowIcon(smartTagIcon, AllIcons.General.ArrowDown);
+        myInactiveIcon = iconManager.createRowIcon(smartTagIcon, ourInactiveArrowIcon);
+      }
 
       myIconLabel = new JLabel(myInactiveIcon);
       myIconLabel.setOpaque(false);
       myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
 
-      add(myIconLabel, BorderLayout.CENTER);
+      if (Registry.is("debugger.inlayRunToCursor") && !topLevelActions.isEmpty()) {
+        DefaultActionGroup actions = new DefaultActionGroup(List.copyOf(topLevelActions));
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("Any", actions, true);
+        add(toolbar.getComponent(), BorderLayout.CENTER);
+      }
+      else {
+        add(myIconLabel, BorderLayout.CENTER);
+      }
       setBorder(LightBulbUtil.createInactiveBorder(editor));
     }
 
@@ -570,13 +587,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     }
 
-    /**
-     * Hide preview temporarily when submenu is shown
-     */
-    void hidePreview() {
-      myPreviewPopupUpdateProcessor.hideTemporarily();
-    }
-
     @Override
     public void beforeTreeDispose() {
       // The flag has to be set early. Child's dispose() can call `cancelled` and it must be a no-op at this point.
@@ -652,11 +662,27 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
               .coalesceBy(popup)
               .finishOnUiThread(ModalityState.any(), Runnable::run)
               .submit(AppExecutorUtil.getAppExecutorService());
-          } else {
+          }
+          else {
             context.dropHighlight();
           }
         }
       };
+      ((ListPopupImpl)popup.myListPopup).getList().addFocusListener(new FocusListener() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+            popup.showPreview();
+          }
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+          if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+            popup.myPreviewPopupUpdateProcessor.hide();
+          }
+        }
+      });
       popup.myListPopup.addListSelectionListener(selectionListener);
 
       popup.myListPopup.addListener(new JBPopupListener() {
@@ -696,8 +722,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     /**
      * Manages highlighting in the editor when action defines it.
-     * @see SuppressIntentionActionFromFix#getContainer(PsiElement) 
-     * @see CustomizableIntentionAction#getRangesToHighlight(Editor, PsiFile) 
+     *
+     * @see SuppressIntentionActionFromFix#getContainer(PsiElement)
+     * @see CustomizableIntentionAction#getRangesToHighlight(Editor, PsiFile)
      */
     private static final class HighlightingContext {
       private final IntentionPopup myPopup;
@@ -733,7 +760,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           injectionHighlighter.dropHighlight();
         }
       }
-      
+
       boolean mayHaveHighlighting(@NotNull IntentionAction action) {
         return action instanceof SuppressIntentionActionFromFix || action instanceof CustomizableIntentionAction;
       }

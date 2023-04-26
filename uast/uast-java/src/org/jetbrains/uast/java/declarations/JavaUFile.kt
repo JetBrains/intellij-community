@@ -4,7 +4,6 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments

@@ -14,22 +14,22 @@ public final class TasksCoreIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, TasksCoreIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Asana = load("icons/asana.svg", 1864376790, 0);
-  /** 16x16 */ public static final @NotNull Icon Assembla = load("icons/assembla.svg", 1035996829, 2);
-  /** 16x16 */ public static final @NotNull Icon Bugzilla = load("icons/bugzilla.svg", -2135887857, 0);
-  /** 13x13 */ public static final @NotNull Icon Clock = load("icons/clock.svg", 286428539, 2);
-  /** 16x16 */ public static final @NotNull Icon Fogbugz = load("icons/fogbugz.svg", 146605553, 0);
-  /** 16x16 */ public static final @NotNull Icon Gitlab = load("icons/gitlab.svg", -2126746492, 0);
-  /** 16x16 */ public static final @NotNull Icon Jira = load("icons/jira.svg", 1796037789, 0);
-  /** 16x16 */ public static final @NotNull Icon Lighthouse = load("icons/lighthouse.svg", -640926501, 0);
-  /** 16x16 */ public static final @NotNull Icon Mantis = load("icons/mantis.svg", 1480262408, 0);
-  /** 16x16 */ public static final @NotNull Icon Pivotal = load("icons/pivotal.svg", -1726119559, 0);
-  /** 16x16 */ public static final @NotNull Icon Redmine = load("icons/redmine.svg", 1864160554, 0);
-  /** 16x16 */ public static final @NotNull Icon SavedContext = load("icons/savedContext.svg", -378061277, 0);
-  /** 16x16 */ public static final @NotNull Icon Sprintly = load("icons/sprintly.svg", 1606239800, 0);
-  /** 16x16 */ public static final @NotNull Icon StartTimer = load("icons/startTimer.svg", -151242702, 2);
-  /** 16x16 */ public static final @NotNull Icon StopTimer = load("icons/stopTimer.svg", -1712088809, 2);
-  /** 16x16 */ public static final @NotNull Icon Trac = load("icons/trac.svg", 826956339, 0);
-  /** 16x16 */ public static final @NotNull Icon Trello = load("icons/trello.svg", 1471188641, 0);
-  /** 16x16 */ public static final @NotNull Icon Youtrack = load("icons/youtrack.svg", 1835522694, 0);
+  /** 16x16 */ public static final @NotNull Icon Asana = load("icons/asana.svg", 1875307316, 0);
+  /** 16x16 */ public static final @NotNull Icon Assembla = load("icons/assembla.svg", 526472910, 2);
+  /** 16x16 */ public static final @NotNull Icon Bugzilla = load("icons/bugzilla.svg", -1716103067, 0);
+  /** 13x13 */ public static final @NotNull Icon Clock = load("icons/clock.svg", 724100218, 2);
+  /** 16x16 */ public static final @NotNull Icon Fogbugz = load("icons/fogbugz.svg", -719146675, 0);
+  /** 16x16 */ public static final @NotNull Icon Gitlab = load("icons/gitlab.svg", 2030247168, 0);
+  /** 16x16 */ public static final @NotNull Icon Jira = load("icons/jira.svg", -617052944, 0);
+  /** 16x16 */ public static final @NotNull Icon Lighthouse = load("icons/lighthouse.svg", 1132138968, 0);
+  /** 16x16 */ public static final @NotNull Icon Mantis = load("icons/mantis.svg", 92302063, 0);
+  /** 16x16 */ public static final @NotNull Icon Pivotal = load("icons/pivotal.svg", 619448185, 0);
+  /** 16x16 */ public static final @NotNull Icon Redmine = load("icons/redmine.svg", -1831206731, 0);
+  /** 16x16 */ public static final @NotNull Icon SavedContext = load("icons/savedContext.svg", 1398039316, 0);
+  /** 16x16 */ public static final @NotNull Icon Sprintly = load("icons/sprintly.svg", -594827049, 0);
+  /** 16x16 */ public static final @NotNull Icon StartTimer = load("icons/startTimer.svg", -1592835535, 2);
+  /** 16x16 */ public static final @NotNull Icon StopTimer = load("icons/stopTimer.svg", -466283408, 2);
+  /** 16x16 */ public static final @NotNull Icon Trac = load("icons/trac.svg", 1352855589, 0);
+  /** 16x16 */ public static final @NotNull Icon Trello = load("icons/trello.svg", -56565450, 0);
+  /** 16x16 */ public static final @NotNull Icon Youtrack = load("icons/youtrack.svg", 804346137, 0);
 }

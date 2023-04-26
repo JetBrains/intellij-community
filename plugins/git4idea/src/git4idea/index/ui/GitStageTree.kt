@@ -45,7 +45,7 @@ import javax.swing.tree.DefaultTreeModel
 abstract class GitStageTree(project: Project,
                             private val settings: GitStageUiSettings,
                             parentDisposable: Disposable) :
-  HoverChangesTree(project, false, true) {
+  AsyncChangesTree(project, false, true) {
 
   protected abstract val state: GitStageTracker.State
   protected abstract val ignoredFilePaths: Map<VirtualFile, List<FilePath>>
@@ -61,6 +61,21 @@ abstract class GitStageTree(project: Project,
         rebuildTree()
       }
     }, parentDisposable)
+
+    object : HoverChangesTree(this@GitStageTree) {
+      override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
+        if (node == root) return null
+        if (node is ChangesBrowserGitFileStatusNode) {
+          val hoverIcon = createHoverIcon(node)
+          if (hoverIcon != null) return hoverIcon
+        }
+        val statusNode = allUnder(node).iterateUserObjects(GitFileStatusNode::class.java).first()
+                         ?: return null
+        val operation = operations.find { it.matches(statusNode) } ?: return null
+        if (operation.icon == null) return null
+        return GitStageHoverIcon(operation)
+      }
+    }.install()
   }
 
   override fun getToggleClickCount(): Int = 2
@@ -73,38 +88,29 @@ abstract class GitStageTree(project: Project,
 
   protected abstract fun createHoverIcon(node: ChangesBrowserGitFileStatusNode): HoverIcon?
 
-  override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
-    if (node == root) return null
-    if (node is ChangesBrowserGitFileStatusNode) {
-      val hoverIcon = createHoverIcon(node)
-      if (hoverIcon != null) return hoverIcon
-    }
-    val statusNode = allUnder(node).iterateUserObjects(GitFileStatusNode::class.java).first()
-                     ?: return null
-    val operation = operations.find { it.matches(statusNode) } ?: return null
-    if (operation.icon == null) return null
-    return GitStageHoverIcon(operation)
-  }
-
-  override fun rebuildTree() {
-    val builder = MyTreeModelBuilder(myProject, groupingSupport.grouping)
-
-    builder.createKindNode(NodeKind.STAGED)
-    builder.createKindNode(NodeKind.UNSTAGED)
-
-    state.forEachStatus(*NodeKind.values()) { root, status, kind ->
-      builder.insertStatus(root, status, kind)
-    }
-
-    if (settings.ignoredFilesShown()) {
-      builder.insertIgnoredPaths(ignoredFilePaths)
-    }
-
-    customizeTreeModel(builder)
-    updateTreeModel(builder.build())
-  }
-
   protected open fun customizeTreeModel(builder: TreeModelBuilder) = Unit
+
+  override val changesTreeModel: AsyncChangesTreeModel = GitStateTreeModel()
+
+  private inner class GitStateTreeModel : SimpleAsyncChangesTreeModel() {
+    override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+      val builder = MyTreeModelBuilder(myProject, grouping)
+
+      builder.createKindNode(NodeKind.STAGED)
+      builder.createKindNode(NodeKind.UNSTAGED)
+
+      state.forEachStatus(*NodeKind.values()) { root, status, kind ->
+        builder.insertStatus(root, status, kind)
+      }
+
+      if (settings.ignoredFilesShown()) {
+        builder.insertIgnoredPaths(ignoredFilePaths)
+      }
+
+      customizeTreeModel(builder)
+      return builder.build()
+    }
+  }
 
   override fun getData(dataId: String): Any? {
     return when {
@@ -313,7 +319,7 @@ abstract class GitStageTree(project: Project,
   }
 
   private class MyUntrackedNode(project: Project, files: List<FilePath>) :
-    ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project, files).show() }) {
+    ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project).show() }) {
     init {
       markAsHelperNode()
       setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)

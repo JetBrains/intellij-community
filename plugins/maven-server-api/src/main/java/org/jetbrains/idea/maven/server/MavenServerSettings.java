@@ -18,15 +18,10 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Properties;
 
 public class MavenServerSettings implements Serializable, Cloneable {
-  public enum UpdatePolicy {
-    ALWAYS_UPDATE, DO_NOT_UPDATE
-  }
-
   /**
    * do not use debug level {@link MavenServerConsole#LEVEL_DEBUG} by default, it can pollute logs
    */
@@ -37,8 +32,6 @@ public class MavenServerSettings implements Serializable, Cloneable {
   @Nullable private String myLocalRepository;
   @NotNull private Properties myUserProperties = new Properties();
   private boolean isOffline;
-  @NotNull private UpdatePolicy myPluginUpdatePolicy = UpdatePolicy.DO_NOT_UPDATE;
-  @NotNull private UpdatePolicy mySnapshotUpdatePolicy = UpdatePolicy.ALWAYS_UPDATE;
 
   private String projectJdk;
 
@@ -110,24 +103,6 @@ public class MavenServerSettings implements Serializable, Cloneable {
 
   public void setOffline(boolean offline) {
     isOffline = offline;
-  }
-
-  @NotNull
-  public UpdatePolicy getPluginUpdatePolicy() {
-    return myPluginUpdatePolicy;
-  }
-
-  public void setPluginUpdatePolicy(@NotNull UpdatePolicy pluginUpdatePolicy) {
-    myPluginUpdatePolicy = pluginUpdatePolicy;
-  }
-
-  @NotNull
-  public UpdatePolicy getSnapshotUpdatePolicy() {
-    return mySnapshotUpdatePolicy;
-  }
-
-  public void setSnapshotUpdatePolicy(@NotNull UpdatePolicy snapshotUpdatePolicy) {
-    mySnapshotUpdatePolicy = snapshotUpdatePolicy;
   }
 
   @Override

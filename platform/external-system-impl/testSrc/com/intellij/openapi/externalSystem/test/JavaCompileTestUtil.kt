@@ -15,7 +15,7 @@ import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope
 import com.intellij.task.ProjectTaskManager
 import com.intellij.testFramework.CompilerTester
-import com.intellij.testFramework.concurrency.waitForPromise
+import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlin.time.Duration.Companion.minutes
 
@@ -25,7 +25,7 @@ fun compileModules(project: Project, useProjectTaskManager: Boolean, vararg modu
   if (useProjectTaskManager) {
     val projectTaskManager = ProjectTaskManager.getInstance(project)
     val promise = projectTaskManager.build(*modules.toTypedArray())
-    promise.waitForPromise(2.minutes)
+    promise.waitForPromiseAndPumpEdt(2.minutes)
   }
   else {
     compile(project, ModuleCompileScope(project, modules.toTypedArray(), false))
@@ -37,7 +37,7 @@ fun buildArtifacts(project: Project, useProjectTaskManager: Boolean, vararg arti
   if (useProjectTaskManager) {
     val projectTaskManager = ProjectTaskManager.getInstance(project)
     val promise = projectTaskManager.build(*artifacts.toTypedArray())
-    promise.waitForPromise(2.minutes)
+    promise.waitForPromiseAndPumpEdt(2.minutes)
   }
   else {
     compile(project, ArtifactCompileScope.createArtifactsScope(project, artifacts))

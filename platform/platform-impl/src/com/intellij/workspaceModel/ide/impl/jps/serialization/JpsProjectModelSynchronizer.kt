@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.isFireStorageFileChangedEvent
 import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
@@ -42,11 +41,13 @@ import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -58,6 +59,40 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     fun getInstance(project: Project): JpsProjectModelSynchronizer = project.service()
 
     private val LOG = logger<JpsProjectModelSynchronizer>()
+
+    private val jpsLoadProjectToEmptyStorageTimeMs: AtomicLong = AtomicLong()
+    private val reloadProjectEntitiesTimeMs: AtomicLong = AtomicLong()
+    private val applyLoadedStorageTimeMs: AtomicLong = AtomicLong()
+    private val saveChangedProjectEntitiesTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val jpsLoadProjectToEmptyStorageTimeGauge = meter.gaugeBuilder("jps.load.project.to.empty.storage.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val reloadProjectEntitiesTimeGauge = meter.gaugeBuilder("jps.reload.project.entities.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val applyLoadedStorageTimeGauge = meter.gaugeBuilder("jps.apply.loaded.storage.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val saveChangedProjectEntitiesTimeGauge = meter.gaugeBuilder("jps.save.changed.project.entities.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          jpsLoadProjectToEmptyStorageTimeGauge.record(jpsLoadProjectToEmptyStorageTimeMs.get())
+          reloadProjectEntitiesTimeGauge.record(reloadProjectEntitiesTimeMs.get())
+          applyLoadedStorageTimeGauge.record(applyLoadedStorageTimeMs.get())
+          saveChangedProjectEntitiesTimeGauge.record(saveChangedProjectEntitiesTimeMs.get())
+        },
+        jpsLoadProjectToEmptyStorageTimeGauge, reloadProjectEntitiesTimeGauge,
+        applyLoadedStorageTimeGauge, saveChangedProjectEntitiesTimeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
@@ -78,6 +113,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   suspend fun reloadProjectEntities() {
+    val start = System.currentTimeMillis()
+
     if (StoreReloadManager.getInstance().isReloadBlocked()) {
       LOG.debug("Skip reloading because it's blocked")
       return
@@ -141,6 +178,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
       }
     }
+
+    reloadProjectEntitiesTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
   private inline fun <T> loadAndReportErrors(action: (ErrorReporter) -> T): T {
@@ -222,19 +261,25 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   suspend fun loadProjectToEmptyStorage(project: Project): LoadedProjectEntities? {
+    val start = System.currentTimeMillis()
+
     val configLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
-    activity = startActivity("project files loading", ActivityCategory.DEFAULT)
+    activity = startActivity("project workspace model loading")
     childActivity = activity?.startChild("serializers creation")
+
     val serializers = prepareSerializers()
     registerListener()
     val builder = MutableEntityStorage.create()
     val orphanage = MutableEntityStorage.create()
     val unloadedEntitiesBuilder = MutableEntityStorage.create()
-    if (!WorkspaceModelInitialTestContent.hasInitialContent) {
+
+    val loadedProjectEntities = if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity?.endAndStart("loading entities from files")
       val unloadedModuleNamesHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
-      val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNamesHolder, it) }
+      val sourcesToUpdate = loadAndReportErrors {
+        serializers.loadAll(fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNamesHolder, it)
+      }
       fileContentReader.clearCache()
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       if (GlobalLibraryTableBridge.isEnabled()) {
@@ -244,18 +289,23 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         builder.addDiff(mutableStorage)
       }
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
-      return LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)
+      LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)
     }
     else {
       childActivity?.end()
       childActivity = null
       activity?.end()
       activity = null
-      return null
+      null
     }
+
+    jpsLoadProjectToEmptyStorageTimeMs.addAndGet(System.currentTimeMillis() - start)
+    return loadedProjectEntities
   }
 
   suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?) {
+    val start = System.currentTimeMillis()
+
     if (projectEntities == null) {
       return
     }
@@ -295,6 +345,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     activity?.end()
     activity = null
+
+    applyLoadedStorageTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
   suspend fun loadProject(project: Project) {
@@ -340,6 +392,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
+    val start = System.currentTimeMillis()
     LOG.debug("Saving project entities")
     val data = serializers.get()
     if (data == null) {
@@ -355,6 +408,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
     LOG.debugValues("Saving affected entities", affectedSources)
     data.saveEntities(storage, unloadedEntitiesStorage, affectedSources, writer)
+
+    saveChangedProjectEntitiesTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
   fun convertToDirectoryBasedFormat() {
@@ -363,7 +418,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       newSerializers.changeEntitySourcesToDirectoryBasedFormat(it)
     }
     val moduleSources = WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java).map { it.entitySource }
-    val unloadedModuleSources = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(ModuleEntity::class.java).map { it.entitySource }
+    val unloadedModuleSources = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(
+      ModuleEntity::class.java).map { it.entitySource }
     synchronized(sourcesToSave) {
       //to trigger save for modules.xml
       sourcesToSave.addAll(moduleSources)

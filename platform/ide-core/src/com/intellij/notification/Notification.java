@@ -278,7 +278,7 @@ public class Notification {
 
   public @NotNull @LinkLabel String getDropDownText() {
     if (myDropDownText == null) {
-      myDropDownText = IdeCoreBundle.message("link.label.actions");
+      myDropDownText = IdeCoreBundle.message("notifications.action.more");
     }
     return myDropDownText;
   }

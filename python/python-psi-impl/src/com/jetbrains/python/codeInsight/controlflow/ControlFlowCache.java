@@ -17,10 +17,13 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.openapi.util.Key;
-import com.intellij.reference.SoftReference;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 
 public final class ControlFlowCache {
@@ -39,7 +42,7 @@ public final class ControlFlowCache {
   public static ControlFlow getControlFlow(@NotNull ScopeOwner element,
                                            @NotNull PyControlFlowBuilder controlFlowBuilder) {
     SoftReference<ControlFlow> ref = element.getUserData(CONTROL_FLOW_KEY);
-    ControlFlow flow = SoftReference.dereference(ref);
+    ControlFlow flow = dereference(ref);
     if (flow == null) {
       flow = controlFlowBuilder.buildControlFlow(element);
       element.putUserData(CONTROL_FLOW_KEY, new SoftReference<>(flow));
@@ -55,7 +58,7 @@ public final class ControlFlowCache {
   @NotNull
   public static Scope getScope(@NotNull ScopeOwner element) {
     SoftReference<Scope> ref = element.getUserData(SCOPE_KEY);
-    Scope scope = SoftReference.dereference(ref);
+    Scope scope = dereference(ref);
     if (scope == null) {
       scope = new ScopeImpl(element);
       element.putUserData(SCOPE_KEY, new SoftReference<>(scope));

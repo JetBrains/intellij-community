@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -105,7 +106,7 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
 
     // computed in GroovyPostHighlightingPass.doCollectInformation()
     boolean isInContent = true;
-    return !errors && DaemonListeners.canChangeFileSilently(myFile, isInContent);
+    return !errors && DaemonListeners.canChangeFileSilently(myFile, isInContent, ThreeState.UNSURE);
   }
 
   private static boolean containsErrorsPreventingOptimize(GroovyFile myFile, Document myDocument) {

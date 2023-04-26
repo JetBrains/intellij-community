@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
@@ -34,7 +35,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModule
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
-import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.FqName
@@ -99,7 +99,7 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
 
     override fun librariesTracker(element: PsiElement): ModificationTracker =
-        LibraryModificationTracker.getInstance(project)
+        JavaLibraryModificationTracker.getInstance(project)
 
     override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> =
         KotlinPackageIndexUtils.getSubPackageFqNames(

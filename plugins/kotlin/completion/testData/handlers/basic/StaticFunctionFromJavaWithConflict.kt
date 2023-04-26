@@ -4,4 +4,4 @@ fun buildTemplates() {
 }
 
 // ELEMENT: binarySearch
-// TAIL_TEXT: "(a: IntArray!, key: Int) (java.util)"
+// TAIL_TEXT: "(IntArray, Int) for Arrays in java.util"

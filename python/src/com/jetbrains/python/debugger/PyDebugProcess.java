@@ -231,6 +231,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             getSession().positionReached(createSuspendContext(threadInfo));
           }
         }
+        PyFrameListener.publisher().frameChanged();
         for (PyFrameListener listener : myFrameListeners) {
           listener.frameChanged();
         }
@@ -238,9 +239,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
       @Override
       public void sessionStopped() {
+        PyFrameListener.publisher().sessionStopped(null);
         XDebugSessionListener.super.sessionStopped();
         for (PyFrameListener listener : myFrameListeners) {
-          listener.sessionStopped();
+          listener.sessionStopped(null);
         }
       }
     });
@@ -1422,7 +1424,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (pyType == null) {
       PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
       PyPsiFacade psiFacade = PyPsiFacade.getInstance(getProject());
-      PsiFile dummyFile = generator.createDummyFile(((PyFile)file).getLanguageLevel(), "");
+      PsiFile dummyFile = generator.createDummyFile((LanguageLevel.forElement(file)), "");
       Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(file);
       dummyFile.putUserData(ModuleUtilCore.KEY_MODULE, moduleForFile);
 

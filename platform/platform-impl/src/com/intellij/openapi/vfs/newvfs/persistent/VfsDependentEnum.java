@@ -20,12 +20,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @deprecated not that thing one should use, left only for backward compatibility
- * There is no need for the complications around VFS timestamp -- {@link com.intellij.util.io.SimpleStringPersistentEnumerator}
- * will do the job just fine, if we can guarantee its storage is re-created on VFS refresh.
+ * @deprecated not used anymore, just waited for the case to remove it completely
  */
-// TODO remove once persistent fs version updated
-@SuppressWarnings("DeprecatedIsStillUsed")
 @ApiStatus.Internal
 @Deprecated
 final class VfsDependentEnum {
@@ -94,6 +90,8 @@ final class VfsDependentEnum {
       try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(myFile)))) {
         long vfsVersion = DataInputOutputUtil.readTIME(input);
 
+        //TODO RC: I want to remove that staff (dependency on FSRecords()), but
+        //         I want to make sure VFS _rebuilds_ after that change
         if (vfsVersion != FSRecords.getCreationTimestamp()) {
           // vfs was rebuilt, so the list will be rebuilt
           deleteFile = true;

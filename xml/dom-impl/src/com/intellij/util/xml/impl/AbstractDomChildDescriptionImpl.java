@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.presentation.Presentation;
@@ -123,20 +123,6 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   @Override
   public boolean isValid() {
     return true;
-  }
-
-  @Override
-  public void navigate(boolean requestFocus) {
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
   }
 
   @Override

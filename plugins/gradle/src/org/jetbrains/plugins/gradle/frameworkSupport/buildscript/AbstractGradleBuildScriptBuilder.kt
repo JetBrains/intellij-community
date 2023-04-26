@@ -37,7 +37,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addApiDependency(string(dependency), sourceSet)
 
   override fun addApiDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isSupportedJavaLibraryPlugin(gradleVersion)) "api" else "compile"
+    val scope = if (isJavaLibraryPluginSupported(gradleVersion)) "api" else "compile"
     addDependency(scope, dependency, sourceSet)
   }
 
@@ -51,7 +51,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addImplementationDependency(string(dependency), sourceSet)
 
   override fun addImplementationDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isSupportedImplementationScope(gradleVersion)) "implementation" else "compile"
+    val scope = if (isImplementationScopeSupported(gradleVersion)) "implementation" else "compile"
     addDependency(scope, dependency, sourceSet)
   }
 
@@ -59,7 +59,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addRuntimeOnlyDependency(string(dependency), sourceSet)
 
   override fun addRuntimeOnlyDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isSupportedRuntimeOnlyScope(gradleVersion)) "runtimeOnly" else "runtime"
+    val scope = if (isRuntimeOnlyScopeSupported(gradleVersion)) "runtimeOnly" else "runtime"
     addDependency(scope, dependency, sourceSet)
   }
 
@@ -116,7 +116,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     withPlugin("java")
 
   override fun withJavaLibraryPlugin() =
-    if (isSupportedJavaLibraryPlugin(gradleVersion))
+    if (isJavaLibraryPluginSupported(gradleVersion))
       withPlugin("java-library")
     else
       withJavaPlugin()
@@ -139,7 +139,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun withGroovyPlugin(version: String): BSB = apply {
     withPlugin("groovy")
     withMavenCentral()
-    if (isSupportedGroovyApache(version)) {
+    if (isGroovyApacheSupported(version)) {
       addImplementationDependency("org.apache.groovy:groovy:$version")
     }
     else {
@@ -165,7 +165,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun withJUnit() = apply {
-    when (isSupportedJUnit5(gradleVersion)) {
+    when (isJunit5Supported(gradleVersion)) {
       true -> withJUnit5()
       else -> withJUnit4()
     }
@@ -177,15 +177,16 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun withJUnit5() = apply {
-    assert(isSupportedJUnit5(gradleVersion))
+    assert(isJunit5Supported(gradleVersion))
     withMavenCentral()
-    when (isSupportedPlatformDependency(gradleVersion)) {
+    when (isPlatformDependencySupported(gradleVersion)) {
       true -> {
         addTestImplementationDependency(call("platform", "org.junit:junit-bom:$junit5Version"))
         addTestImplementationDependency("org.junit.jupiter:junit-jupiter")
       }
       else -> {
         addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
+        addTestImplementationDependency("org.junit.jupiter:junit-jupiter-params:$junit5Version")
         addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
       }
     }

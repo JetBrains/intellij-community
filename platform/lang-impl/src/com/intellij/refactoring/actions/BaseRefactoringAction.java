@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -194,7 +194,12 @@ public abstract class BaseRefactoringAction extends AnAction {
         return;
       }
       final PsiElement[] elements = getPsiElementArray(dataContext);
-      final boolean isEnabled = isEnabledOnDataContext(dataContext) || elements.length != 0 && isEnabledOnElements(elements);
+      boolean availableForLanguage = ContainerUtil.exists(elements, element -> isAvailableForLanguage(element.getLanguage()));
+      if (!availableForLanguage) {
+        hideAction(e);
+        return;
+      }
+      final boolean isEnabled = isEnabledOnDataContext(dataContext) || isEnabledOnElements(elements);
       if (!isEnabled) {
         disableAction(e);
       }

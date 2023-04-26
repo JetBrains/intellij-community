@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.stubs;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -62,7 +63,8 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   private @Nullable TopLevelFQNames getScriptTopLevelNames() {
-    if (getTopLevelNames() == null) return null;
+    TopLevelFQNames names = ReadAction.compute(() -> getTopLevelNames());
+    if (names == null) return null;
 
     TopLevelFQNames topLevelFQNames = myTopLevelScriptFQNames;
     StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
@@ -111,7 +113,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   @NotNull
   public List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
     if (scope.getModelBranchesAffectingScope().isEmpty()) {
-      TopLevelFQNames names = getTopLevelNames();
+      TopLevelFQNames names = ReadAction.compute(() -> getTopLevelNames());
       if (names != null) {
         String topLevelName = toTopLevelName(name);
         if (!names.names.contains(topLevelName)) {
@@ -122,11 +124,13 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
     if (DumbService.getInstance(myProject).isAlternativeResolveEnabled()) {
       return Collections.emptyList();
     }
-    List<PsiClass> result = new ArrayList<>();
     GlobalSearchScope actualScope = inSource ? new GrSourceFilterScope(scope) : scope;
-    result.addAll(StubIndex.getElements(GrFullClassNameStringIndex.KEY, name, myProject, actualScope, PsiClass.class));
-    result.addAll(getScriptClassesByFQName(name, scope, inSource));
-    return result;
+    return ReadAction.compute(() -> {
+      List<PsiClass> result = new ArrayList<>();
+      result.addAll(StubIndex.getElements(GrFullClassNameStringIndex.KEY, name, myProject, actualScope, PsiClass.class));
+      result.addAll(getScriptClassesByFQName(name, scope, inSource));
+      return result;
+    });
   }
 
   @Override

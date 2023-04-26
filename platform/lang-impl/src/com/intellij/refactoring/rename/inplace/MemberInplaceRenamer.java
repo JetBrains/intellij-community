@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -213,8 +213,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  protected void performRefactoringRename(final String newName,
-                                          final StartMarkAction markAction) {
+  protected void performRefactoringRename(String newName, StartMarkAction markAction) {
     try {
       final PsiNamedElement variable = getVariable();
       if (variable != null && !newName.equals(myOldName)) {
@@ -252,11 +251,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       }
     }
     finally {
+      if (mySuggestedNameInfo != null) mySuggestedNameInfo.nameChosen(newName);
       try {
-        Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-        if (editor instanceof EditorImpl) {
-          ((EditorImpl)editor).stopDumbLater();
-        }
+        stopDumbLaterIfPossible();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);

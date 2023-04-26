@@ -3,7 +3,6 @@ package com.intellij.core;
 
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
@@ -25,7 +24,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
@@ -45,9 +43,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
-import com.intellij.util.Consumer;
 import com.intellij.util.KeyedLazyInstanceEP;
-import com.intellij.util.Processor;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import org.jetbrains.annotations.NonNls;
@@ -59,8 +55,6 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 
 public class CoreApplicationEnvironment {
@@ -143,30 +137,7 @@ public class CoreApplicationEnvironment {
 
   @NotNull
   protected JobLauncher createJobLauncher() {
-    return new JobLauncher() {
-      @Override
-      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                         ProgressIndicator progress,
-                                                         boolean runInReadAction,
-                                                         boolean failFastOnAcquireReadAction,
-                                                         @NotNull Processor<? super T> thingProcessor) {
-        for (T thing : things) {
-          if (!thingProcessor.process(thing))
-            return false;
-        }
-        return true;
-      }
-
-      @NotNull
-      @Override
-      public Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<? super Future<?>> onDoneCallback) {
-        action.run();
-        if (onDoneCallback != null) {
-          onDoneCallback.consume(CompletableFuture.completedFuture(null));
-        }
-        return Job.nullJob();
-      }
-    };
+    return new CoreJobLauncher();
   }
 
   @NotNull

@@ -1,25 +1,38 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
-import com.intellij.util.SVGLoader
-import kotlinx.coroutines.*
-import kotlin.time.Duration.Companion.minutes
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.caches.CachesInvalidator
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.ui.svg.getSvgIconCacheFile
+import com.intellij.ui.svg.getSvgIconCacheInvalidMarkerFile
+import com.intellij.ui.svg.svgCache
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
 
 // icons maybe loaded before app loaded, so, SvgCacheMapper cannot be as a service
-private class IconDbMaintainer(coroutineScope: CoroutineScope) {
+private class IconDbMaintainer : AppLifecycleListener {
   init {
-    coroutineScope.launch(CoroutineName("auto-save icon cache")) {
-      try {
-        while (true) {
-          delay(5.minutes)
-          SVGLoader.persistentCache?.save()
-        }
-      }
-      finally {
-        withContext(NonCancellable) {
-          SVGLoader.persistentCache?.close()
-        }
-      }
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override fun appWillBeClosed(isRestart: Boolean) {
+    svgCache?.close()
+  }
+}
+
+private class IconCacheInvalidator : CachesInvalidator() {
+  override fun invalidateCaches() {
+    val svgIconCacheFile = getSvgIconCacheFile()
+    val markerFile = getSvgIconCacheInvalidMarkerFile(svgIconCacheFile)
+    if (Files.exists(svgIconCacheFile)) {
+      Files.write(markerFile, ByteArray(0), StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+    }
+    else {
+      Files.deleteIfExists(markerFile)
     }
   }
 }

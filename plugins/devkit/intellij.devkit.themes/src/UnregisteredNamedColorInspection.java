@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactory;
+import org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactoryKt;
 import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
@@ -114,7 +114,7 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
           final Collection<VirtualFile> metadataFiles =
-            FilenameIndex.getAllFilesByExt(project, ThemeMetadataJsonSchemaProviderFactory.EXTENSION);
+            FilenameIndex.getAllFilesByExt(project, ThemeMetadataJsonSchemaProviderFactoryKt.THEME_METADATA_JSON_EXTENSION);
           if (metadataFiles.isEmpty()) return;
 
           final PsiFile[] psiFiles =

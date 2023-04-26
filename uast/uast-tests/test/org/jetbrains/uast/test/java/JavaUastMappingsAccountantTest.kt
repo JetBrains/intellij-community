@@ -4,10 +4,10 @@ package org.jetbrains.uast.test.java
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.test.common.PsiClassToString
-import org.jetbrains.uast.test.common.UastMappingsAccountantTest
-import org.jetbrains.uast.test.common.UastMappingsAccountantTestBase
-import org.jetbrains.uast.test.common.sourcesFromDirRecursive
+import com.intellij.platform.uast.testFramework.common.PsiClassToString
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTest
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTestBase
+import com.intellij.platform.uast.testFramework.common.sourcesFromDirRecursive
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File

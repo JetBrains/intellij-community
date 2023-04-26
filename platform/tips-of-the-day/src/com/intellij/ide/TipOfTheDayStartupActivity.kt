@@ -12,7 +12,9 @@ import com.intellij.util.PlatformUtils
 
 private class TipOfTheDayStartupActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment || PlatformUtils.isRider() || !GeneralSettings.getInstance().isShowTipsOnStartup) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment ||
+        PlatformUtils.isRider() ||
+        !GeneralSettings.getInstance().isShowTipsOnStartup) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -20,7 +22,8 @@ private class TipOfTheDayStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val tipManager = TipAndTrickManager.getInstance()
     if (tipManager.canShowDialogAutomaticallyNow(project)
-        && WindowManager.getInstance().mostRecentFocusedWindow is IdeFrame) { // prevent tip dialog showing when any popup already open
+        // prevent tip dialog showing when any popup already open
+        && WindowManager.getInstance().mostRecentFocusedWindow is IdeFrame) {
       TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.automatically)
       tipManager.showTipDialog(project)
     }

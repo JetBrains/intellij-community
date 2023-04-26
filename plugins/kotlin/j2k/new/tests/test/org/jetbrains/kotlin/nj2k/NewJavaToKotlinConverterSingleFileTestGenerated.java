@@ -1129,6 +1129,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("Arrays.java")
+        public void testArrays() throws Exception {
+            runTest("testData/newJ2k/collections/Arrays.java");
+        }
+
         @TestMetadata("common.java")
         public void testCommon() throws Exception {
             runTest("testData/newJ2k/collections/common.java");
@@ -1555,6 +1560,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("AssignFieldInsideSetter2.java")
         public void testAssignFieldInsideSetter2() throws Exception {
             runTest("testData/newJ2k/detectProperties/AssignFieldInsideSetter2.java");
+        }
+
+        @TestMetadata("callPropertySetterWithoutArguments.java")
+        public void testCallPropertySetterWithoutArguments() throws Exception {
+            runTest("testData/newJ2k/detectProperties/callPropertySetterWithoutArguments.java");
         }
 
         @TestMetadata("CannotDropOnlySetter.java")
@@ -2669,6 +2679,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/function/overrideAndOpen.java");
         }
 
+        @TestMetadata("overrideExtensionFunction.java")
+        public void testOverrideExtensionFunction() throws Exception {
+            runTest("testData/newJ2k/function/overrideExtensionFunction.java");
+        }
+
         @TestMetadata("overrideObject.java")
         public void testOverrideObject() throws Exception {
             runTest("testData/newJ2k/function/overrideObject.java");
@@ -3560,6 +3575,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("cloneable2.java")
         public void testCloneable2() throws Exception {
             runTest("testData/newJ2k/javaStandardMethods/cloneable2.java");
+        }
+
+        @TestMetadata("notAvailableInAny.java")
+        public void testNotAvailableInAny() throws Exception {
+            runTest("testData/newJ2k/javaStandardMethods/notAvailableInAny.java");
         }
     }
 
@@ -4909,6 +4929,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("MapGetOrDefault.java")
         public void testMapGetOrDefault() throws Exception {
             runTest("testData/newJ2k/postProcessing/MapGetOrDefault.java");
+        }
+
+        @TestMetadata("mutablePropertyAnnotatedWithJpaColumn.java")
+        public void testMutablePropertyAnnotatedWithJpaColumn() throws Exception {
+            runTest("testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaColumn.java");
         }
 
         @TestMetadata("NotIs.java")

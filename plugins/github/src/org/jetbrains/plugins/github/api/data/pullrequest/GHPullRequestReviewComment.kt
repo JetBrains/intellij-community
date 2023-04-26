@@ -10,20 +10,19 @@ import org.jetbrains.plugins.github.api.data.GHNode
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/pullRequestReviewComment.graphql")
-open class GHPullRequestReviewComment(id: String,
-                                      val databaseId: Long,
-                                      val url: String,
-                                      author: GHActor?,
-                                      body: String,
-                                      createdAt: Date,
-                                      val state: GHPullRequestReviewCommentState,
-                                      val commit: GHCommitHash?,
-                                      val originalCommit: GHCommitHash?,
-                                      val replyTo: GHNode?,
-                                      val diffHunk: String,
-                                      @JsonProperty("pullRequestReview") pullRequestReview: GHNode?,
-                                      val viewerCanDelete: Boolean,
-                                      val viewerCanUpdate: Boolean)
+class GHPullRequestReviewComment(id: String,
+                                 val databaseId: Long,
+                                 val url: String,
+                                 author: GHActor?,
+                                 body: String,
+                                 createdAt: Date,
+                                 val state: GHPullRequestReviewCommentState,
+                                 val commit: GHCommitHash?,
+                                 val originalCommit: GHCommitHash?,
+                                 val diffHunk: String,
+                                 @JsonProperty("pullRequestReview") pullRequestReview: GHNode?,
+                                 val viewerCanDelete: Boolean,
+                                 val viewerCanUpdate: Boolean)
   : GHComment(id, author, body, createdAt) {
   val reviewId = pullRequestReview?.id
 }

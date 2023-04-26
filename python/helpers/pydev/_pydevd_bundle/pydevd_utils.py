@@ -22,6 +22,8 @@ import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_asyncio_util.pydevd_asyncio_utils import eval_async_expression_in_context
+from array import array
+from collections import deque
 
 
 def _normpath(filename):
@@ -557,9 +559,9 @@ def dump_threads(stream=None):
 
 
 def take_first_n_coll_elements(coll, n):
-    if coll.__class__ in (list, tuple):
+    if coll.__class__ in (list, tuple, array):
         return coll[:n]
-    elif coll.__class__ in (set, frozenset):
+    elif coll.__class__ in (set, frozenset, deque):
         buf = []
         for i, x in enumerate(coll):
             if i >= n:
@@ -620,49 +622,11 @@ def should_evaluate_shape():
     return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
 
 
-def _series_to_str(s, max_items):
-    res = []
-    s = s.iloc[:max_items]
-    for item in s.items():
-        # item: (index, value)
-        res.append(str(item))
-    return ' '.join(res)
-
-
-def _df_to_str(value):
-    # Avoid using df.iteritems() or df.values[i], because it works very slow for large data frames
-    # df.__str__() is already optimised and works fast enough
-    res = []
-    rows = value.split('\n')
-    for (i, r) in enumerate(rows):
-        if i == 0:
-            res.append(r.strip())
-        else:
-            res.append("[%s]" % r)
-    return ' '.join(res)
-
-
-def pandas_to_str(df, type_name, str_value, max_items):
-    try:
-        if type_name == "Series":
-            return _series_to_str(df, max_items)
-        elif type_name == "DataFrame":
-            return _df_to_str(str_value)
-        else:
-            return str(df)
-    except Exception as e:
-        pydev_log.warn("Failed to format pandas variable: " + str(e))
-        return str(df)
-
-
-def format_numpy_array(num_array, max_items):
-    return str(num_array[:max_items]).replace('\n', ',').strip()
-
-
 def is_in_unittests_debugging_mode():
     debugger = get_global_debugger()
     if debugger:
         return debugger.stop_on_failed_tests
+
 
 def is_current_thread_main_thread():
     if hasattr(threading, 'main_thread'):

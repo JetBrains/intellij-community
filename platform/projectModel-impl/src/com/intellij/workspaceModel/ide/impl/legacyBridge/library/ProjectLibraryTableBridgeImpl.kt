@@ -140,12 +140,12 @@ class ProjectLibraryTableBridgeImpl(
     }
 
     if (targetBuilder == null) {
-      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
-        for ((entity, library) in libraries) {
-          it.mutableLibraryMap.addIfAbsent(entity, library)
-        }
-      }
       withContext(Dispatchers.EDT) {
+        (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
+          for ((entity, library) in libraries) {
+            it.mutableLibraryMap.addIfAbsent(entity, library)
+          }
+        }
         ApplicationManager.getApplication().runWriteAction {
           for ((_, library) in libraries) {
             dispatcher.multicaster.afterLibraryAdded(library)

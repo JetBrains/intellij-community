@@ -36,10 +36,10 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
   companion object {
     internal val PARENTINLIST_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeAbstractEntity::class.java,
                                                                                 SimpleAbstractEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeAbstractEntity::class.java,
                                                                             SimpleAbstractEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
+                                                                            ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentChainEntity::class.java,
                                                                                 CompositeAbstractEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
@@ -52,8 +52,8 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
 
   }
 
-  override val parentInList: CompositeAbstractEntity
-    get() = snapshot.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this)!!
+  override val parentInList: CompositeAbstractEntity?
+    get() = snapshot.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this)
 
   override val children: List<SimpleAbstractEntity>
     get() = snapshot.extractOneToAbstractManyChildren<SimpleAbstractEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
@@ -101,16 +101,6 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (_diff != null) {
-        if (_diff.extractOneToAbstractManyParent<WorkspaceEntityBase>(PARENTINLIST_CONNECTION_ID, this) == null) {
-          error("Field SimpleAbstractEntity#parentInList should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] == null) {
-          error("Field SimpleAbstractEntity#parentInList should be initialized")
-        }
-      }
       // Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
@@ -145,15 +135,15 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
 
       }
 
-    override var parentInList: CompositeAbstractEntity
+    override var parentInList: CompositeAbstractEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                                PARENTINLIST_CONNECTION_ID)]!! as CompositeAbstractEntity
+                                                                                                                PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)]!! as CompositeAbstractEntity
+          this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity
         }
       }
       set(value) {
@@ -298,14 +288,13 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return CompositeChildAbstractEntity(entitySource) {
-      parents.filterIsInstance<CompositeAbstractEntity>().singleOrNull()?.let { this.parentInList = it }
+      this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().singleOrNull()
       this.parentEntity = parents.filterIsInstance<ParentChainEntity>().singleOrNull()
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
-    res.add(CompositeAbstractEntity::class.java)
     return res
   }
 

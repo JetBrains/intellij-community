@@ -14,6 +14,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.Time.DAY
 import com.intellij.util.Time.WEEK
@@ -90,6 +91,9 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
   }
 
   private fun getNameFeatures(element: Any, searchQuery: String): Collection<EventPair<*>> {
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
+    if (psiElement is PsiFileSystemItem) return emptyList() // The name features for files are provided by SearchEverywhereFileFeaturesProvider
+
     return getElementName(element)?.let {
       getNameMatchingFeatures(it, searchQuery)
     } ?: emptyList()

@@ -9,6 +9,7 @@ import java.nio.channels.FileChannel.MapMode
 import java.nio.channels.WritableByteChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.zip.CRC32
@@ -22,6 +23,20 @@ private const val compressThreshold = 8 * 1024
 // 8 MB (as JDK)
 private const val mappedTransferSize = 8L * 1024L * 1024L
 
+fun transformZipUsingTempFile(file: Path, task: (ZipFileWriter) -> Unit) {
+  val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
+  try {
+    ZipFileWriter(channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE))).use {
+      task(it)
+    }
+    Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+  }
+  finally {
+    Files.deleteIfExists(tempFile)
+  }
+}
+
+
 inline fun writeNewZip(file: Path,
                        compress: Boolean = false,
                        withOptimizedMetadataEnabled: Boolean = !compress,
@@ -34,7 +49,7 @@ inline fun writeNewZip(file: Path,
   }
 }
 
-// you must pass SeekableByteChannel if files will be written (`file` method)
+// you must pass SeekableByteChannel if files are written (`file` method)
 class ZipFileWriter(channel: WritableByteChannel,
                     private val deflater: Deflater? = null,
                     withOptimizedMetadataEnabled: Boolean = deflater == null) : AutoCloseable {

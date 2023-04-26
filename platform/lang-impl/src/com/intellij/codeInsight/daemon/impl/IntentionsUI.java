@@ -36,7 +36,7 @@ public abstract class IntentionsUI {
     hide();
   }
 
-  public void invalidateForEditor(@NotNull Editor editor) {
+  void invalidateForEditor(@NotNull Editor editor) {
     myCachedIntentions.updateAndGet(
       cachedIntentions -> cachedIntentions != null && editor == cachedIntentions.getEditor() ? null : cachedIntentions);
     hideForEditor(editor);

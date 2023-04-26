@@ -89,7 +89,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
   private final Map<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> myDiff = new HashMap<>();
   private final Map<PluginId, Boolean> myRequiredPluginsForProject = new HashMap<>();
-  private final Map<IdeaPluginDescriptorImpl, Boolean> myRequiresRestart = new HashMap<>();
   private final Set<IdeaPluginDescriptor> myUninstalled = new HashSet<>();
 
   private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
@@ -410,8 +409,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           runInstallOperation(operation, info, modalityState);
         }
 
-        private @Nullable PluginNode toPluginNode(@NotNull IdeaPluginDescriptor descriptor,
-                                                  @NotNull ProgressIndicator indicator) {
+        private static @Nullable PluginNode toPluginNode(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicator indicator) {
           if (descriptor instanceof PluginNode) {
             PluginNode pluginNode = (PluginNode)descriptor;
             return pluginNode.detailsLoaded() ?
@@ -847,12 +845,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                                                          id.getIdString()::equals));
   }
 
-  boolean requiresRestart(@NotNull IdeaPluginDescriptor descriptor) {
-    return myRequiresRestart
-      .computeIfAbsent(descriptor instanceof IdeaPluginDescriptorImpl ? (IdeaPluginDescriptorImpl)descriptor : null,
-                       it -> it == null || DynamicPlugins.INSTANCE.checkCanUnloadWithoutRestart(it) != null);
-  }
-
   boolean isUninstalled(@NotNull IdeaPluginDescriptor descriptor) {
     return myUninstalled.contains(descriptor);
   }
@@ -1263,13 +1255,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   private final Map<String, Icon> myIcons = new HashMap<>(); // local cache for PluginLogo WeakValueMap
 
-  @NotNull
-  public Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean error, boolean disabled) {
+  public @NotNull Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean error, boolean disabled) {
+
+
     String key = descriptor.getPluginId().getIdString() + big + error + disabled;
     Icon icon = myIcons.get(key);
     if (icon == null) {
       icon = PluginLogo.getIcon(descriptor, big, error, disabled);
-      if (icon != PluginLogo.getDefault().getIcon(big, error, disabled)) {
+      if (icon != PluginLogo.INSTANCE.getDefault$intellij_platform_ide_impl().getIcon(big, error, disabled)) {
         myIcons.put(key, icon);
       }
     }

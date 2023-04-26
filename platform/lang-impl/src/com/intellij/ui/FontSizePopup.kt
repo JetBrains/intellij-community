@@ -17,12 +17,8 @@ import com.intellij.ui.components.JBSlider
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.FlowLayout
@@ -126,7 +122,8 @@ private fun createFontSizePopup(model: FontSizeModel): JBPopup {
   slider.addChangeListener {
     model.value = values[slider.value]
   }
-  val updateSliderJob = CoroutineScope(Dispatchers.EDT).launch(start = CoroutineStart.UNDISPATCHED) {
+  @OptIn(DelicateCoroutinesApi::class)
+  val updateSliderJob = GlobalScope.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
     // The size can be changed externally, e.g. by scrolling mouse wheel.
     // This coroutine reflects the model changes in the UI.
     model.updates.collect {

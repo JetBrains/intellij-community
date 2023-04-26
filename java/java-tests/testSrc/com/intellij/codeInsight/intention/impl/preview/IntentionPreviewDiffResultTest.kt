@@ -135,7 +135,7 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
   }
 
   private fun createDiffs(origText: String, modifiedText: String): String {
-    return fromCustomDiff(project, CustomDiff(JavaFileType.INSTANCE, origText, modifiedText)).createDiffs().map { diffInfo ->
+    return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, origText, modifiedText)).createDiffs().map { diffInfo ->
       val addends = diffInfo.fragments.flatMap { fragment ->
         listOf(fragment.start to when (fragment.type) {
           IntentionPreviewDiffResult.HighlightingType.ADDED -> "#+"

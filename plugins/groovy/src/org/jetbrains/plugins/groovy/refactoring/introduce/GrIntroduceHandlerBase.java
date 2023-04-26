@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
@@ -304,13 +305,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
                                   @Nullable final StringPartInfo stringPart) {
     final Scope[] scopes = findPossibleScopes(expression, variable, stringPart, editor);
 
-    Pass<Scope> callback = new Pass<>() {
-      @Override
-      public void pass(Scope scope) {
+    Consumer<? super Scope> callback = scope-> {
         GrIntroduceContext context = getContext(project, editor, expression, variable, stringPart, scope);
         invokeImpl(project, context, editor);
-      }
-    };
+      };
 
     if (scopes.length == 0) {
       CommonRefactoringUtil.showErrorHint(
@@ -321,7 +319,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       );
     }
     else if (scopes.length == 1) {
-      callback.pass(scopes[0]);
+      callback.accept(scopes[0]);
     }
     else {
       showScopeChooser(scopes, callback, editor);
@@ -400,7 +398,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     });
   }
 
-  protected abstract void showScopeChooser(Scope[] scopes, Pass<Scope> callback, Editor editor);
+  protected abstract void showScopeChooser(Scope[] scopes, Consumer<? super Scope> callback, Editor editor);
 
   public GrIntroduceContext getContext(@NotNull Project project,
                                        @NotNull Editor editor,
@@ -445,12 +443,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
       if (isInplace(context.getEditor(), context.getPlace())) {
         Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = getOccurrenceOptions(context);
-        new IntroduceOccurrencesChooser(editor).showChooser(new Pass<>() {
-          @Override
-          public void pass(final OccurrencesChooser.ReplaceChoice choice) {
-            getIntroducer(context, choice).startInplaceIntroduceTemplate();
-          }
-        }, occurrencesMap);
+        new IntroduceOccurrencesChooser(editor).showChooser(occurrencesMap,choice->
+                    getIntroducer(context, choice).startInplaceIntroduceTemplate());
       }
       else {
         final Settings settings = showDialog(context);

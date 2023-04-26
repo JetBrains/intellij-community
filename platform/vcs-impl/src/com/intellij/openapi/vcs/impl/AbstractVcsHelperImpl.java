@@ -389,7 +389,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   @Override
   public void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable String title) {
     LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
-    panel.setChanges(changelist, null);
+    panel.setChangeList(changelist, null);
     ChangeListViewerDialog.show(myProject, title, panel);
   }
 

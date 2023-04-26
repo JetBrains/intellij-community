@@ -414,7 +414,6 @@ fun checkExtract(files: ExtractTestFiles, checkAdditionalAfterdata: Boolean = fa
     try {
         runInEdtAndWait {
             runReadAction {
-                // To make extraction work in `kotlin.scripts.as.entities=true` mode it's crucial to load dependencies in advance
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(files.mainFile)
             }
         }

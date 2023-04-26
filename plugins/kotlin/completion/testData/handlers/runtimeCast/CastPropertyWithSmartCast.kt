@@ -10,3 +10,4 @@ open class B: A {
 
 // INVOCATION_COUNT: 1
 // RUNTIME_TYPE: B
+// AUTOCOMPLETE_SETTING: true

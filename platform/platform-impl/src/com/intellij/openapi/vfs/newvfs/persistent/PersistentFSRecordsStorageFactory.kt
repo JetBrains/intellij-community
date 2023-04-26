@@ -17,9 +17,25 @@ object PersistentFSRecordsStorageFactory {
     OVER_MMAPPED_FILE
   }
 
-  @JvmField
-  val RECORDS_STORAGE_KIND =
-    RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage-impl", RecordsStorageKind.REGULAR.name));
+  private var RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage-impl", RecordsStorageKind.OVER_MMAPPED_FILE.name))
+
+
+  @JvmStatic
+  fun getRecordsStorageImplementation(): RecordsStorageKind = RECORDS_STORAGE_KIND
+
+  @VisibleForTesting
+  @JvmStatic
+  @JvmName("setRecordsStorageImplementation")
+  fun setRecordsStorageImplementation(value: RecordsStorageKind) {
+    RECORDS_STORAGE_KIND = value;
+  }
+
+  @VisibleForTesting
+  @JvmStatic
+  @JvmName("resetRecordsStorageImplementation")
+  fun resetRecordsStorageImplementation() {
+    RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage-impl", RecordsStorageKind.REGULAR.name))
+  }
 
 
   @JvmStatic
@@ -74,7 +90,7 @@ object PersistentFSRecordsStorageFactory {
     if (!PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
       throw AssertionError(
         "Bug: PageCacheUtils.LOCK_FREE_VFS_ENABLED=false " +
-        "=> can't create PersistentFSRecordsOverLockFreePagedStorage is FilePageCacheLockFree is disabled")
+        "=> can't create PersistentFSRecordsOverLockFreePagedStorage if FilePageCacheLockFree is disabled")
     }
 
     val recordsArePageAligned = pageSize % recordLength == 0
@@ -88,6 +104,12 @@ object PersistentFSRecordsStorageFactory {
       pageSize,
       IOUtil.useNativeByteOrderForByteBuffers()
     )
-    return PersistentFSRecordsOverLockFreePagedStorage(storage)
+    try {
+      return PersistentFSRecordsOverLockFreePagedStorage(storage)
+    }
+    catch (t: Throwable) {
+      storage.close()
+      throw t
+    }
   }
 }

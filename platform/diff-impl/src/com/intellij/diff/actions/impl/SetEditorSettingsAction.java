@@ -14,13 +14,13 @@ import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -175,7 +175,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     ActionGroup gutterGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP);
-    List<AnAction> result = ContainerUtil.newArrayList(gutterGroup.getChildren(e));
+    List<AnAction> result = new ArrayList<>(Arrays.asList(gutterGroup.getChildren(e)));
     result.add(Separator.getInstance());
     replaceOrAppend(result, editorSettingsGroup, new DefaultActionGroup(actions));
     return result.toArray(AnAction.EMPTY_ARRAY);

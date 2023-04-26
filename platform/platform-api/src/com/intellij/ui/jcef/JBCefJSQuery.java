@@ -10,6 +10,7 @@ import org.cef.browser.CefMessageRouter;
 import org.cef.callback.CefQueryCallback;
 import org.cef.handler.CefMessageRouterHandler;
 import org.cef.handler.CefMessageRouterHandlerAdapter;
+import org.cef.misc.CefLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,8 @@ import java.util.function.Function;
  * @author tav
  */
 public final class JBCefJSQuery implements JBCefDisposable {
+  static private final boolean DEBUG_JS = Boolean.getBoolean("ide.browser.jcef.debug.js");
+
   private final @NotNull JSQueryFunc myFunc;
   private final @NotNull JBCefClient myJBCefClient;
   private final @NotNull DisposeHelper myDisposeHelper = new DisposeHelper();
@@ -119,6 +122,8 @@ public final class JBCefJSQuery implements JBCefDisposable {
                              boolean persistent,
                              CefQueryCallback callback)
       {
+        if (DEBUG_JS)
+          CefLog.Debug("onQuery: browser=%s, frame=%s, qid=%d, request=%s", browser, frame, query_id, request);
         Response response = handler.apply(request);
         if (callback != null && response != null) {
           if (response.isSuccess() && response.hasResponse()) {
@@ -130,6 +135,12 @@ public final class JBCefJSQuery implements JBCefDisposable {
           callback.success("");
         }
         return true;
+      }
+
+      @Override
+      public void onQueryCanceled(CefBrowser browser, CefFrame frame, long queryId) {
+        if (DEBUG_JS)
+          CefLog.Debug("onQueryCanceled: browser=%s, frame=%s, qid=%d", browser, frame, queryId);
       }
     }, false);
     myHandlerMap.put(handler, cefHandler);

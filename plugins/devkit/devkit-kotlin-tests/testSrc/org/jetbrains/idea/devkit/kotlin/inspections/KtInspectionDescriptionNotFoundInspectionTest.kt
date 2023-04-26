@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.LocalInspectionEP
@@ -9,7 +9,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import java.nio.file.Paths
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/inspectionDescription")
 class KtInspectionDescriptionNotFoundInspectionTest : JavaCodeInsightFixtureTestCase() {
@@ -21,9 +20,6 @@ class KtInspectionDescriptionNotFoundInspectionTest : JavaCodeInsightFixtureTest
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(LanguageExtensionPoint::class.java))
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(LocalInspectionEP::class.java))
-    moduleBuilder.addLibrary("platform-resources",
-                             Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP::class.java))
-                               .resolveSibling("intellij.platform.resources").toString())
   }
 
   @Throws(Exception::class)

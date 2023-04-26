@@ -25,7 +25,10 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.*;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
+import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -390,7 +393,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
         onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
                              EditorUtil.attributesImpactFontStyle(attributes),
@@ -936,11 +939,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void reinitSettings() {
-    reinitSettings(true);
+    reinitSettings(true, true);
   }
 
   @RequiresEdt
-  private void reinitSettings(boolean updateGutterSize) {
+  void reinitSettings(boolean updateGutterSize, boolean reinitSettings) {
     for (EditorColorsScheme scheme = myScheme;
          scheme instanceof DelegateColorScheme;
          scheme = ((DelegateColorScheme)scheme).getDelegate()) {
@@ -952,7 +955,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
-    mySettings.reinitSettings();
+    if (reinitSettings) {
+      mySettings.reinitSettings();
+    }
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
@@ -2621,7 +2626,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
           else {
             if (caretShift != 0) {
-              if (myMousePressedEvent != null) {
+              if (myMousePressedEvent != null && myGutterComponent.getGutterRenderer(e.getPoint()) == null) {
                 if (mySettings.isDndEnabled()) {
                   if (!myDragStarted) {
                     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -3346,13 +3351,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static void logSchemeChangeIfNeeded(EditorColorsScheme scheme) {
-    if (!LOG.isDebugEnabled() || !(scheme instanceof EditorColorsSchemeImpl)) return;
+    if (!LOG.isDebugEnabled()) return;
     EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
-    boolean isGlobal = colorsManager != null && colorsManager.getGlobalScheme() == scheme;
+    if (colorsManager == null) return;
 
-    LOG.debug("Will set mutable scheme to editor (isGlobal=%b, presentationMode=%b)"
-                .formatted(isGlobal, UISettings.getInstance().getPresentationMode()));
-    LOG.debug(ExceptionUtil.currentStackTrace());
+    EditorColorsScheme globalScheme = colorsManager.getGlobalScheme();
+    boolean isGlobal = (scheme == globalScheme);
+    boolean isBounded = (scheme instanceof MyColorSchemeDelegate);
+
+    while (!isGlobal && !isBounded && scheme instanceof DelegateColorScheme) {
+      scheme = ((DelegateColorScheme)scheme).getDelegate();
+      if (scheme == globalScheme) isGlobal = true;
+      if (scheme instanceof MyColorSchemeDelegate) isBounded = true;
+    }
+
+    if (isGlobal && !isBounded) {
+      LOG.debug("Will set the unbounded global scheme to editor (presentationMode=%b)"
+                  .formatted(UISettings.getInstance().getPresentationMode()));
+      LOG.debug(ExceptionUtil.currentStackTrace());
+    }
   }
 
   @Override
@@ -3410,6 +3427,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @MouseSelectionState
   private int getMouseSelectionState() {
     return myMouseSelectionState;
+  }
+
+  /**
+   * Update baseline selection if {@link Caret#selectWordAtCaret} action was performed asynchronously.
+   *
+   * @see #selectWordAtCaret(boolean)
+   */
+  @ApiStatus.Internal
+  public void updateMouseWordSelectionStateToCaret() {
+    if (myMouseSelectionState != MOUSE_SELECTION_STATE_WORD_SELECTED) return;
+    Caret caret = getCaretModel().getCurrentCaret();
+    mySavedSelectionStart = caret.getSelectionStart();
+    mySavedSelectionEnd = caret.getSelectionEnd();
+    caret.moveToOffset(mySavedSelectionEnd);
   }
 
   private void setMouseSelectionState(@MouseSelectionState int mouseSelectionState) {
@@ -3880,10 +3911,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         EVENT_LOG.debug(e.toString());
       }
       runMouseExitedCommand(e);
-      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
-      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
-        myGutterComponent.mouseExited(e);
-      }
+      myGutterComponent.mouseExited(e);
     }
 
     private void runMousePressedCommand(final @NotNull MouseEvent e) {
@@ -4288,6 +4316,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
+  /**
+   * Enter click-and-drag selection mode: select words only.
+   */
   private void selectWordAtCaret(boolean honorCamelCase) {
     Caret caret = getCaretModel().getCurrentCaret();
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
@@ -4296,9 +4327,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     setMouseSelectionState(MOUSE_SELECTION_STATE_WORD_SELECTED);
     mySavedSelectionStart = caret.getSelectionStart();
     mySavedSelectionEnd = caret.getSelectionEnd();
-    caret.moveToOffset(mySavedSelectionEnd);
+    getCaretModel().moveToOffset(mySavedSelectionEnd);
   }
 
+  /**
+   * Enter click-and-drag selection mode: select lines only.
+   */
   private void selectLineAtCaret(boolean moveToEnd) {
     Caret caret = getCaretModel().getCurrentCaret();
     caret.selectLineAtCaret();
@@ -4621,12 +4655,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setEditorFontSize(float fontSize) {
-      if (fontSize < MIN_FONT_SIZE) {
-        fontSize = MIN_FONT_SIZE;
+      float originalSize = UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D());
+
+      float minSize = Math.min(MIN_FONT_SIZE, originalSize);
+      if (fontSize < minSize) {
+        fontSize = minSize;
       }
-      if (fontSize > myMaxFontSize) {
-        fontSize = myMaxFontSize;
+
+      float maxSize = Math.max(myMaxFontSize, originalSize);
+      if (fontSize > maxSize) {
+        fontSize = maxSize;
       }
+
       if (fontSize == myFontSize) {
         return;
       }
@@ -4635,7 +4675,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(super.getEditorFontSize2D())) {
+      if (fontSize == originalSize) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {
@@ -4720,6 +4760,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void updateGlobalScheme() {
+      for (
+        EditorColorsScheme scheme = this;
+        scheme instanceof DelegateColorScheme delegateColorScheme;
+        scheme = delegateColorScheme.getDelegate()
+      ) {
+        if (scheme instanceof MyColorSchemeDelegate myColorSchemeDelegate) {
+          myColorSchemeDelegate.updateDelegate();
+        }
+      }
+    }
+
+    private void updateDelegate() {
       setDelegate(myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme);
     }
 
@@ -5034,7 +5086,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       mySettings.reinitSettings();
       int newTabSize = EditorUtil.getTabSize(this);
       if (oldTabSize != newTabSize) {
-        reinitSettings(false);
+        reinitSettings(false, true);
       }
       else {
         // cover the case of right margin update

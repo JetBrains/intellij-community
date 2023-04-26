@@ -14,6 +14,6 @@ public final class EditorconfigIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, EditorconfigIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 12x12 */ public static final @NotNull Icon PartiallyOverridden = load("icons/partiallyOverridden.svg", 943272741, 2);
-  /** 12x12 */ public static final @NotNull Icon PartiallyOverriding = load("icons/partiallyOverriding.svg", -1269558088, 2);
+  /** 12x12 */ public static final @NotNull Icon PartiallyOverridden = load("icons/partiallyOverridden.svg", -1065510870, 2);
+  /** 12x12 */ public static final @NotNull Icon PartiallyOverriding = load("icons/partiallyOverriding.svg", -63836440, 2);
 }

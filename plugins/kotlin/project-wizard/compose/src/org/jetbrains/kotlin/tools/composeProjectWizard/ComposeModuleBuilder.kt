@@ -97,8 +97,11 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
         )
 
         assets.addAll(standardAssetsProvider.getGradlewAssets())
-        assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
 
+        if (starterContext.isCreatingNewProject) {
+            assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+        }
+        
         if (configType == ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM) {
             if (platform == ComposePWInitialStep.ComposePlatform.DESKTOP) {
                 assets.add(

@@ -5,17 +5,19 @@ package com.intellij.ide.impl;
 import com.intellij.ide.CompositeSelectInTarget;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.actions.SelectInTargetPreferringEditorContext;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.IdeUICustomization;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
 
 
-public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, DumbAware {
+public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, DumbAware, SelectInTargetPreferringEditorContext {
   @Override
   @NotNull
   public Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {

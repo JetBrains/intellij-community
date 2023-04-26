@@ -10,6 +10,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SimpleModificationTracker
 import kotlinx.serialization.Serializable
 
+@Service
 @State(name = "ErrorReportConfigurable", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>, SimpleModificationTracker() {
   companion object {

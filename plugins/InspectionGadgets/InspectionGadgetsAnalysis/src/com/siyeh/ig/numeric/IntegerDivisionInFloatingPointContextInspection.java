@@ -115,11 +115,12 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
 
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!(descriptor.getPsiElement() instanceof PsiBinaryExpression expression)) {
+      if (!(descriptor.getPsiElement() instanceof PsiPolyadicExpression expression)) {
         return;
       }
-
-      PsiExpression operand = expression.getLOperand();
+      PsiExpression[] operands = expression.getOperands();
+      if (operands.length < 1) return;
+      PsiExpression operand = operands[0];
       CommentTracker tracker = new CommentTracker();
       String text = tracker.text(operand, ParenthesesUtils.TYPE_CAST_PRECEDENCE);
       tracker.replace(operand, "(" + myCastTo + ")" + text);

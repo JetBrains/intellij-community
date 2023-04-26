@@ -3,11 +3,10 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.build.events.impl.FailureResultImpl;
-import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
 import com.intellij.build.issue.BuildIssue;
@@ -93,10 +92,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThreeState;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
@@ -457,8 +453,7 @@ public final class ExternalSystemUtil {
               String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
                                                           externalSystemId.getReadableName(), projectName);
               DataContext dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
-              com.intellij.build.events.FailureResult failureResult =
-                createFailureResult(title, e, externalSystemId, project, dataContext);
+              FailureResult failureResult = createFailureResult(title, e, externalSystemId, project, dataContext);
               finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                          BuildBundle.message("build.status.failed"), failureResult));
               processHandler.notifyProcessTerminated(1);
@@ -545,8 +540,7 @@ public final class ExternalSystemUtil {
           ExternalSystemTaskId id = resolveProjectTask.getId();
           String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
                                                       externalSystemId.getReadableName(), projectName);
-          com.intellij.build.events.FailureResult failureResult =
-            createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
+          FailureResult failureResult = createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
           finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                      BuildBundle.message("build.status.failed"), failureResult));
 
@@ -784,56 +778,18 @@ public final class ExternalSystemUtil {
     return navigatable == null || navigatable == NonNavigatable.INSTANCE;
   }
 
-  public static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {
-    ExternalSystemProgressEvent progressEvent = taskExecutionEvent.getProgressEvent();
-    String displayName = progressEvent.getDescriptor().getDisplayName();
-    long eventTime = progressEvent.getDescriptor().getEventTime();
-    Object parentEventId = ObjectUtils.chooseNotNull(progressEvent.getParentEventId(), taskExecutionEvent.getId());
-
-    AbstractBuildEvent buildEvent;
-    if (progressEvent instanceof ExternalSystemStartEvent) {
-      buildEvent = new StartEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
+  public static @NotNull BuildEvent convert(@NotNull ExternalSystemTaskExecutionEvent event) {
+    var buildEvent = ExternalSystemProgressEventConverter.convertBuildEvent(event);
+    if (buildEvent == null) {
+      // Migrated old fallback from previous implementation
+      return new OutputBuildEventImpl(
+        event.getProgressEvent().getEventId(),
+        ObjectUtils.chooseNotNull(event.getProgressEvent().getParentEventId(), event.getId()),
+        event.getProgressEvent().getDescriptor().getDisplayName(),
+        true
+      );
     }
-    else if (progressEvent instanceof ExternalSystemFinishEvent) {
-      final EventResult eventResult;
-      final OperationResult operationResult = ((ExternalSystemFinishEvent<?>)progressEvent).getOperationResult();
-      if (operationResult instanceof FailureResult) {
-        List<com.intellij.build.events.Failure> failures = new SmartList<>();
-        for (Failure failure : ((FailureResult)operationResult).getFailures()) {
-          failures.add(convert(failure));
-        }
-        eventResult = new FailureResultImpl(failures);
-      }
-      else if (operationResult instanceof SkippedResult) {
-        eventResult = new SkippedResultImpl();
-      }
-      else if (operationResult instanceof SuccessResult) {
-        eventResult = new SuccessResultImpl(((SuccessResult)operationResult).isUpToDate());
-      }
-      else {
-        eventResult = new SuccessResultImpl();
-      }
-      buildEvent = new FinishEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName, eventResult);
-    }
-    else if (progressEvent instanceof ExternalSystemStatusEvent statusEvent) {
-      buildEvent = new ProgressBuildEventImpl(progressEvent.getEventId(), progressEvent.getParentEventId(), eventTime, displayName,
-                                              statusEvent.getTotal(), statusEvent.getProgress(), statusEvent.getUnit());
-    }
-    else {
-      buildEvent = new OutputBuildEventImpl(progressEvent.getEventId(), parentEventId, displayName, true);
-    }
-
-    String hint = progressEvent.getDescriptor().getHint();
-    buildEvent.setHint(hint);
     return buildEvent;
-  }
-
-  private static com.intellij.build.events.Failure convert(Failure failure) {
-    List<com.intellij.build.events.Failure> causes = new SmartList<>();
-    for (Failure cause : failure.getCauses()) {
-      causes.add(convert(cause));
-    }
-    return new FailureImpl(failure.getMessage(), failure.getDescription(), causes);
   }
 
   public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
@@ -1173,7 +1129,7 @@ public final class ExternalSystemUtil {
 
   public static boolean isNoBackgroundMode() {
     return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment());
+            || ApplicationManager.getApplication().isHeadlessEnvironment() && !PlatformUtils.isFleetBackend());
   }
 
   private interface TaskUnderProgress {

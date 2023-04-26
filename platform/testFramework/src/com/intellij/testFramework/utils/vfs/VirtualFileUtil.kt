@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.SystemIndependent
@@ -20,9 +21,7 @@ fun VirtualFile.getDocument(): Document {
 
 @RequiresReadLock
 fun VirtualFile.getPsiFile(project: Project): PsiFile {
-  return checkNotNull(findPsiFile(project)) {
-    "Cannot find PSI file for $path"
-  }
+  return PsiUtilCore.getPsiFile(project, this)
 }
 
 @RequiresReadLock
@@ -79,7 +78,6 @@ fun VirtualFile.deleteChildrenRecursively(relativePath: @SystemIndependent Strin
   findFileOrDirectory(relativePath)?.deleteChildrenRecursively(predicate)
 }
 
-@RequiresWriteLock
 fun Path.refreshAndGetVirtualFile(): VirtualFile {
   val file = refreshAndFindVirtualFile()
   if (file == null) {
@@ -88,7 +86,6 @@ fun Path.refreshAndGetVirtualFile(): VirtualFile {
   return file
 }
 
-@RequiresWriteLock
 fun Path.refreshAndGetVirtualDirectory(): VirtualFile {
   val directory = refreshAndFindVirtualDirectory()
   if (directory == null) {

@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -29,9 +30,9 @@ import java.util.Collection;
  * @author Eugene Zhuravlev
  */
 public interface CompileContext extends UserDataHolder, MessageHandler {
-  ProjectDescriptor getProjectDescriptor();
+  @NotNull ProjectDescriptor getProjectDescriptor();
 
-  CompileScope getScope();
+  @NotNull CompileScope getScope();
 
   /**
    * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderUtil#isForcedRecompilationAllJavaModules(CompileContext)} for java-related usages
@@ -46,25 +47,25 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
    * Registers a listener which will receive events about files which are created, modified or deleted by the build process. In order to
    * ensure that no events are lost this method may be called in {@link Builder#buildStarted}'s implementation.
    */
-  void addBuildListener(BuildListener listener);
+  void addBuildListener(@NotNull BuildListener listener);
 
-  void removeBuildListener(BuildListener listener);
+  void removeBuildListener(@NotNull BuildListener listener);
 
-  boolean shouldDifferentiate(ModuleChunk chunk);
+  boolean shouldDifferentiate(@NotNull ModuleChunk chunk);
 
-  CanceledStatus getCancelStatus();
+  @NotNull CanceledStatus getCancelStatus();
 
   void checkCanceled() throws ProjectBuildException;
 
-  BuildLoggingManager getLoggingManager();
+  @NotNull BuildLoggingManager getLoggingManager();
 
   void setDone(float done);
 
   long getCompilationStartStamp(BuildTarget<?> target);
 
-  void setCompilationStartStamp(Collection<? extends BuildTarget<?>> target, long stamp);
+  void setCompilationStartStamp(@NotNull Collection<? extends BuildTarget<?>> target, long stamp);
 
-  void markNonIncremental(ModuleBuildTarget target);
+  void markNonIncremental(@NotNull ModuleBuildTarget target);
 
-  void clearNonIncrementalMark(ModuleBuildTarget target);
+  void clearNonIncrementalMark(@NotNull ModuleBuildTarget target);
 }

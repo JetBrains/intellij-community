@@ -554,9 +554,16 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     task {
+      val textToFind = "result / values"
+      triggerOnEditorText(textToFind, centerOffset = textToFind.length)
+    }
+
+    task {
       text(JavaLessonsBundle.message("java.onboarding.type.division",
                                      code(" / values")))
-      text(JavaLessonsBundle.message("java.onboarding.invoke.completion"))
+      text(JavaLessonsBundle.message("java.onboarding.invoke.completion", code(".")))
+      text(JavaLessonsBundle.message("java.onboarding.invoke.completion.balloon", code(".")),
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerAndBorderHighlight().listItem { // no highlighting
         it.isToStringContains("length")
       }
@@ -576,9 +583,16 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   private fun LessonContext.contextActions() {
     val quickFixMessage = InspectionGadgetsBundle.message("foreach.replace.quickfix")
     caret(sample.getPosition(3))
+
+    task {
+      triggerOnEditorText("for", highlightBorder = true)
+    }
+
     task("ShowIntentionActions") {
       text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.warning.1"))
       text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.warning.2", action(it)))
+      text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.warning.balloon", action(it)),
+           LearningBalloonConfig(Balloon.Position.above, width = 0, cornerToPointerDistance = 80))
       triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(quickFixMessage)
       }
@@ -604,8 +618,15 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     caret("RAGE")
+
+    task {
+      triggerOnEditorText("AVERAGE")
+    }
+
     task("ShowIntentionActions") {
       text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.code", action(it)))
+      text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.code.balloon", action(it)),
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       val intentionMessage = getIntentionMessage(project)
       triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(intentionMessage)
@@ -649,7 +670,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
         }
       }
       text(JavaLessonsBundle.message("java.onboarding.search.everywhere.description",
-                                     strong("AVERAGE"), strong(JavaLessonsBundle.message("toggle.case.part"))))
+                                     code("AVERAGE"), code(JavaLessonsBundle.message("toggle.case.part"))))
       triggerAndBorderHighlight().listItem { item ->
         val value = (item as? GotoActionModel.MatchedValue)?.value
         (value as? GotoActionModel.ActionWrapper)?.action is ToggleCaseAction

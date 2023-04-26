@@ -50,12 +50,12 @@
             area="IDEA_PROJECT"
             dynamic="true"/>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kotlinTestFramework"
-            interface="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.caches.resolve.resolveOptimizingOptionsProvider"
             interface="org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.ktModuleFactory"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory"
             dynamic="true"/>
   </extensionPoints>
 
@@ -432,6 +432,12 @@
             id="Kotlin dist downloading failed"
             displayType="STICKY_BALLOON"
             key="kotlin.dist.downloading.failed.group.name"
+    />
+    <notificationGroup
+            id="Configure Kotlin"
+            displayType="STICKY_BALLOON"
+            key="configure.kotlin"
+            bundle="messages.KotlinProjectConfigurationBundle"
     />
   </extensions>
 

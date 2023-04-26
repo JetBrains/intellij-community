@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
@@ -12,9 +13,7 @@ import java.nio.file.Path
 
 @ApiStatus.Experimental
 class EnabledOnDemandPluginsState : PluginEnabler {
-
   companion object {
-
     private const val ENABLED_PLUGINS_FILENAME: @NonNls String = "enabled_on_demand_plugins.txt"
 
     private var enabledPluginIds_: MutableSet<PluginId>? = null
@@ -22,7 +21,8 @@ class EnabledOnDemandPluginsState : PluginEnabler {
     private val defaultFilePath: Path
       get() = PathManager.getConfigDir().resolve(ENABLED_PLUGINS_FILENAME)
 
-    private val LOG get() = logger<EnabledOnDemandPluginsState>()
+    private val LOG: Logger
+      get() = logger<EnabledOnDemandPluginsState>()
 
     @JvmStatic
     fun getInstance(): EnabledOnDemandPluginsState = ApplicationManager.getApplication().service()
@@ -37,10 +37,12 @@ class EnabledOnDemandPluginsState : PluginEnabler {
         synchronized(EnabledOnDemandPluginsState::class.java) {
           var result = enabledPluginIds_
           if (result == null) {
-            result = if (IdeaPluginDescriptorImpl.isOnDemandEnabled)
+            result = if (isOnDemandPluginEnabled) {
               LinkedHashSet(PluginManagerCore.tryReadPluginIdsFromFile(defaultFilePath, LOG))
-            else
+            }
+            else {
               mutableSetOf()
+            }
             enabledPluginIds_ = result
           }
           return result
@@ -52,12 +54,11 @@ class EnabledOnDemandPluginsState : PluginEnabler {
 
     @JvmStatic
     fun setEnabledState(descriptors: Collection<IdeaPluginDescriptor>, enabled: Boolean): Boolean {
-      if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) {
+      if (!isOnDemandPluginEnabled) {
         return false
       }
 
-      val pluginIds = descriptors.filter { it.isOnDemand }
-        .toPluginIdSet()
+      val pluginIds = descriptors.filter { it.isOnDemand }.toPluginIdSet()
       LOG.info(pluginIds.joinedPluginIds("load on demand"))
 
       val enabledPluginIds = enabledPluginIds as MutableSet
@@ -67,7 +68,7 @@ class EnabledOnDemandPluginsState : PluginEnabler {
   }
 
   init {
-    if (IdeaPluginDescriptorImpl.isOnDemandEnabled) {
+    if (isOnDemandPluginEnabled) {
       LOG.info(enabledPluginIds.joinedPluginIds("load"))
     }
   }

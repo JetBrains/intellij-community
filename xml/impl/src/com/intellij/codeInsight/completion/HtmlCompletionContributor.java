@@ -192,13 +192,12 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
   }
 
   @Contract("null->false")
-  private static boolean shouldTryDeselectingFirstPopupItem(@Nullable Lookup lookup) {
-    PsiFile file = doIfNotNull(lookup, Lookup::getPsiFile);
+  public static boolean shouldTryDeselectingFirstPopupItem(@Nullable PsiElement element) {
+    PsiFile file = doIfNotNull(element, PsiElement::getContainingFile);
     if (file == null || !isHtmlElementInTextCompletionEnabledForFile(file)) {
       return false;
     }
-    PsiElement element = lookup.getPsiElement();
-    if (element == null || isDeselectingFirstPopupItemDisabled(element)) {
+    if (isDeselectingFirstPopupItemDisabled(element)) {
       return false;
     }
     IElementType elementType = element.getNode().getElementType();
@@ -318,12 +317,12 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     }
   }
 
+  // rewrite it with CompletionPreselectionBehaviourProvider
   public static class HtmlElementInTextLookupManagerListener implements LookupManagerListener {
-
     @Override
     public void activeLookupChanged(@Nullable Lookup oldLookup,
                                     @Nullable Lookup newLookup) {
-      if (newLookup instanceof LookupImpl lookup && shouldTryDeselectingFirstPopupItem(newLookup)) {
+      if (newLookup instanceof LookupImpl lookup && shouldTryDeselectingFirstPopupItem(newLookup.getPsiElement())) {
         lookup.setPrefixChangeListener(new PrefixChangeListener() {
           @Override
           public void afterAppend(char c) {

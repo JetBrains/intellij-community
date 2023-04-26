@@ -110,7 +110,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (!myExtension.hasAnyExtensions()) {
-      e.getPresentation().setVisible(false);
+      e.getPresentation().setEnabledAndVisible(false);
     }
     else {
       boolean enabled = isEnabled(e);

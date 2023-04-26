@@ -3,7 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.ui.dsl.gridLayout.*
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 
 enum class RightGap {
@@ -98,6 +98,12 @@ interface CellBase<out T : CellBase<T>> {
   /**
    * Overrides all gaps around the cell by [customGaps]. Should be used rarely for very specific cases
    */
+  @Deprecated("Use customize(UnscaledGaps) instead")
   fun customize(customGaps: Gaps): CellBase<T>
+
+  /**
+   * Overrides all gaps around the cell by [customGaps]. Should be used rarely for very specific cases
+   */
+  fun customize(customGaps: UnscaledGaps): CellBase<T>
 
 }

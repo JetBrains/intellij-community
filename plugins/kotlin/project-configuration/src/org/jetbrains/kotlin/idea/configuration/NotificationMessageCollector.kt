@@ -42,7 +42,7 @@ class NotificationMessageCollector(
             @Suppress("DialogTitleCapitalization")
             val title = KotlinProjectConfigurationBundle.message("configure.kotlin")
 
-            return NotificationMessageCollector(project, "Configure Kotlin: info notification", title)
+            return NotificationMessageCollector(project, "Configure Kotlin", title)
         }
     }
 }

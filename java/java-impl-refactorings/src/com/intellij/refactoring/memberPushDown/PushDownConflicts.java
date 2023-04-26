@@ -23,14 +23,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class PushDownConflicts {
   private final PsiClass myClass;
   private final Set<PsiMember> myMovedMembers;
   private final Set<PsiMethod> myAbstractMembers;
-  private final MultiMap<PsiElement, String> myConflicts;
+  private final MultiMap<PsiElement, @DialogMessage String> myConflicts;
 
-
-  public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos, MultiMap<PsiElement, String> conflicts) {
+  public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos, MultiMap<PsiElement, @DialogMessage String> conflicts) {
     myClass = aClass;
 
     myMovedMembers = new HashSet<>();
@@ -48,7 +49,7 @@ public class PushDownConflicts {
     myConflicts = conflicts;
   }
 
-  public MultiMap<PsiElement, String> getConflicts() {
+  public MultiMap<PsiElement, @DialogMessage String> getConflicts() {
     return myConflicts;
   }
 

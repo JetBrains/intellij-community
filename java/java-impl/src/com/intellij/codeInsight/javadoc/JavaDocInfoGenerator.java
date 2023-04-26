@@ -16,12 +16,12 @@ import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaDocumentationProvider;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -72,10 +72,14 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInsight.javadoc.SnippetMarkup.*;
 
 
 public class JavaDocInfoGenerator {
@@ -646,7 +650,7 @@ public class JavaDocInfoGenerator {
     }
 
     if (docURLs != null) {
-      if (buffer.length() > 0 && elementHasSourceCode()) {
+      if (!buffer.isEmpty() && elementHasSourceCode()) {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
       }
       else {
@@ -1812,36 +1816,119 @@ public class JavaDocInfoGenerator {
       return;
     }
     PsiSnippetDocTagBody body = value.getBody();
+    PsiSnippetAttributeList list = value.getAttributeList();
+    PsiSnippetAttribute regionAttribute = list.getAttribute(PsiSnippetAttribute.REGION_ATTRIBUTE);
+    String region = regionAttribute == null || regionAttribute.getValue() == null ? null :
+                    regionAttribute.getValue().getValue();
+    PsiSnippetAttribute idAttr = list.getAttribute(PsiSnippetAttribute.ID_ATTRIBUTE);
+    String id = idAttr == null || idAttr.getValue() == null ? null : idAttr.getValue().getValue();
+    String preTag = id == null ? "<pre>" : "<pre id=\"" + StringUtil.escapeXmlEntities(id) + "\">";
     if (body != null) {
-      buffer.append("<pre>");
       List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(snippetTag.getProject()).getInjectedPsiFiles(snippetTag);
       PsiElement element = files != null ? files.get(0).first : null;
-      if (element != null && element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
-        generateJavaSnippetBody(buffer, element);
+      buffer.append(preTag);
+      generateSnippetBody(buffer, element != null ? element : body, region);
+      buffer.append("</pre>");
+    } else {
+      PsiSnippetAttribute refAttribute = list.getAttribute(PsiSnippetAttribute.CLASS_ATTRIBUTE);
+      if (refAttribute == null) {
+        refAttribute = list.getAttribute(PsiSnippetAttribute.FILE_ATTRIBUTE);
       }
-      else {
-        for (PsiElement contentElement : body.getContent()) {
-          buffer.append('\n').append(contentElement.getText());
+      if (refAttribute != null) {
+        PsiSnippetAttributeValue attrValue = refAttribute.getValue();
+        if (attrValue != null) {
+          PsiReference ref = attrValue.getReference();
+          PsiElement resolved = ref == null ? null : ref.resolve();
+          if (resolved instanceof PsiFile file) {
+            buffer.append(preTag);
+            generateSnippetBody(buffer, file, region);
+            buffer.append("</pre>");
+          }
+          else {
+            buffer.append(getSpanForUnresolvedItem()).append(JavaBundle.message("javadoc.snippet.not.found",
+                                                                                attrValue.getValue()))
+              .append("</span>");
+          }
         }
       }
-      buffer.append("</pre>");
     }
   }
 
-  private void generateJavaSnippetBody(@NotNull StringBuilder buffer, PsiElement element) {
+  private void generateSnippetBody(@NotNull StringBuilder buffer, @NotNull PsiElement fileOrBody, @Nullable String region) {
+    SnippetMarkup markup = fromElement(fileOrBody);
+    if (!markup.hasMarkup(region)) {
+      TextRange range = markup.getRegionRange(region);
+      if (range == null) {
+        buffer.append(getSpanForUnresolvedItem()).append(JavaBundle.message("javadoc.snippet.region.not.found", region))
+          .append("</span>");
+      } else if (fileOrBody instanceof PsiJavaFile) {
+        // Normal Java highlighting is only for regions without markup
+        generateJavaSnippetBody(buffer, fileOrBody, 
+                                e -> {
+                                  TextRange textRange = e.getTextRange();
+                                  return range.intersects(textRange) && markup.isTextPart(textRange);
+                                });
+      } else {
+        buffer.append(markup.getTextWithoutMarkup(region));
+      }
+      return;
+    }
+    markup.visitSnippet(region, true, new SnippetVisitor() {
+      @Override
+      public void visitPlainText(@NotNull PlainText plainText,
+                                 @NotNull List<@NotNull LocationMarkupNode> activeNodes) {
+        String content = plainText.content();
+        for (LocationMarkupNode node : activeNodes) {
+          UnaryOperator<String> replacement;
+          if (node instanceof Highlight highlight) {
+            replacement = switch (highlight.type()) {
+              case BOLD -> orig -> "<b>" + orig + "</b>";
+              case ITALIC -> orig -> "<i>" + orig + "</i>";
+              case HIGHLIGHTED -> {
+                TextAttributes attributes =
+                  EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+                yield orig -> getStyledSpan(true, attributes, orig);
+              }
+            };
+          }
+          else if (node instanceof Link link) {
+            replacement = orig -> {
+              StringBuilder buffer = new StringBuilder();
+              DocumentationManagerUtil.createHyperlink(buffer, link.target(), orig, link.linkType() == LinkType.LINKPLAIN);
+              return buffer.toString();
+            };
+          }
+          else {
+            throw new AssertionError(node.toString());
+          }
+          int pos = 0;
+          StringBuilder sb = new StringBuilder();
+          for (TextRange range : node.selector().ranges(content)) {
+            sb.append(content, pos, range.getStartOffset());
+            sb.append(replacement.apply(range.substring(content)));
+            pos = range.getEndOffset();
+          }
+          sb.append(content, pos, content.length());
+          content = sb.toString();
+        }
+        buffer.append(content);
+      }
+
+      @Override
+      public void visitError(@NotNull ErrorMarkup errorMarkup) {
+        buffer.append(getSpanForUnresolvedItem()).append("[").append(errorMarkup.message()).append("]</span>\n");
+      }
+    });
+  }
+
+  private void generateJavaSnippetBody(@NotNull StringBuilder buffer, @NotNull PsiElement element, @NotNull Predicate<PsiElement> filter) {
     PsiFile containingFile = element.getContainingFile();
     SyntaxTraverser.psiTraverser(containingFile)
       .filter(e -> e.getFirstChild() == null)
+      .filter(e -> e.getTextLength() > 0)
+      .filter(filter::test)
       .forEach(e -> {
         String text = e.getText();
-        if (text.isEmpty()) return;
-        if (e instanceof PsiComment && text.startsWith("//")) { //todo: ignore markup as in JDK now
-          int idx = text.lastIndexOf("// @");
-          if (idx >= 0) {
-            buffer.append(text, 0, idx);
-            return;
-          }
-        }
         JavaDocHighlightingManager manager = getHighlightingManager();
         if (e instanceof PsiIdentifier) {
           PsiElement parent = e.getParent();
@@ -2861,7 +2948,7 @@ public class JavaDocInfoGenerator {
     for (; cls != null; cls = cls.getContainingClass()) {
       String name = cls.getName();
       if (name == null) break;
-      if (result.length() > 0) result.insert(0, '.');
+      if (!result.isEmpty()) result.insert(0, '.');
       result.insert(0, name);
     }
     return result.toString();

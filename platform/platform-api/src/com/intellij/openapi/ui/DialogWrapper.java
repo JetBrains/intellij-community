@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -228,7 +228,7 @@ public abstract class DialogWrapper {
     myCreateSouthSection = createSouth;
     initResizeListener();
     createDefaultActions();
-    if(myPeer.getWindow() != null) {
+    if(myPeer.getWindow() != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ToolbarUtil.setTransparentTitleBar(myPeer.getWindow(), myPeer.getRootPane(),
                                          runnable -> Disposer.register(myDisposable, () -> runnable.run()));
     }
@@ -1460,6 +1460,7 @@ public abstract class DialogWrapper {
     myCrossClosesWindow = crossClosesWindow;
   }
 
+  /** @see #setOKButtonText(String) for mnemonic hadling */
   protected final void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
@@ -1489,9 +1490,11 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @param text action without mnemonic. If mnemonic is set, presentation would be shifted by one to the left
-   *             {@link AbstractButton#setText(String)}
-   *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
+   * Passed action text WILL be processed by {@link #extractMnemonic(String)} if setter is called before the {@link #init()}.
+   * It WILL NOT be processed if setter is called after the {@link #init()}.
+   *
+   * @see AbstractButton#setText(String)
+   * @see AbstractButton#updateDisplayedMnemonicIndex(String, int)
    */
   protected final void setOKButtonText(@NlsContexts.Button @NotNull String text) {
     myOKAction.putValue(Action.NAME, text);
@@ -1759,29 +1762,20 @@ public abstract class DialogWrapper {
   private void logCloseDialogEvent(int exitCode) {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
-      String dialogId = getClass().getName();
-      if (Strings.isNotEmpty(dialogId)) {
-        FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
-      }
+      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(getClass(), exitCode);
     }
   }
 
   private void logShowDialogEvent() {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
-      String dialogId = getClass().getName();
-      if (Strings.isNotEmpty(dialogId)) {
-        FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
-      }
+      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(getClass());
     }
   }
 
   private void logClickOnHelpDialogEvent() {
     if (!canRecordDialogId()) return;
-    String dialogId = getClass().getName();
-    if (Strings.isNotEmpty(dialogId)) {
-      FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(dialogId, getClass());
-    }
+    FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(getClass());
   }
 
   /**

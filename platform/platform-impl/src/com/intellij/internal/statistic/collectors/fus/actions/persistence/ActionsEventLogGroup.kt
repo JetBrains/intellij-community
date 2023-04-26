@@ -16,7 +16,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_FINISHED_EVENT_ID = "action.finished"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 70)
+    val GROUP = EventLogGroup("actions", 71)
 
     @JvmField
     val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
@@ -25,7 +25,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val ACTION_CLASS = EventFields.StringValidatedByCustomRule("class", ClassNameRuleValidator::class.java)
 
     @JvmField
-    val ACTION_PARENT = EventFields.StringValidatedByCustomRule("parent", ClassNameRuleValidator::class.java)
+    val ACTION_PARENT = EventFields.Class("parent")
 
     @JvmField
     val TOGGLE_ACTION = EventFields.Boolean("enable")

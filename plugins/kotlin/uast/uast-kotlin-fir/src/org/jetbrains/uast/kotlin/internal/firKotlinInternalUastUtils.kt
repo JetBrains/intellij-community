@@ -258,6 +258,15 @@ internal fun KtAnalysisSession.receiverType(
     )
 }
 
+internal fun KtAnalysisSession.isInheritedGenericType(ktType: KtType?): Boolean {
+    if (ktType == null) return false
+    return ktType is KtTypeParameterType &&
+        // explicitly nullable, e.g., T?
+        !ktType.isMarkedNullable &&
+        // non-null upper bound, e.g., T : Any
+        nullability(ktType) != KtTypeNullability.NON_NULLABLE
+}
+
 internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
@@ -267,17 +276,8 @@ internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? 
         KtTypeNullability.NON_NULLABLE
 }
 
-internal fun KtAnalysisSession.nullability(ktCallableDeclaration: KtCallableDeclaration): KtTypeNullability? {
-    val ktType = (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
-    return nullability(ktType)
-}
-
-internal fun KtAnalysisSession.nullability(ktDeclaration: KtDeclaration): KtTypeNullability? {
-    return nullability(ktDeclaration.getReturnKtType())
-}
-
-internal fun KtAnalysisSession.nullability(ktExpression: KtExpression): KtTypeNullability? {
-    return nullability(ktExpression.getKtType())
+internal fun KtAnalysisSession.getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
+    return (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
 }
 
 /**

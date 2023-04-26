@@ -65,6 +65,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   };
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
+  private static final HighlightingPerformanceAssert HIGHLIGHTING_PERFORMANCE_ASSERT = new HighlightingPerformanceAssert();
+
   final boolean myUpdateAll;
   @NotNull
   final ProperTextRange myPriorityRange;
@@ -103,6 +105,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private @NotNull PsiFile getFile() {
     return myFile;
+  }
+
+  public static void assertHighlightingPassNotRunning() {
+    HIGHLIGHTING_PERFORMANCE_ASSERT.assertHighlightingPassNotRunning();
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
@@ -278,8 +284,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     boolean success = analyzeByVisitors(visitors, holder, 0, () -> {
       LongStack nestedRange = new LongStack();
       Stack<List<HighlightInfo>> nestedInfos = new Stack<>();
-      runVisitors(elements1, ranges1, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
-                  nestedRange, nestedInfos);
+
+      try (var ignored = HIGHLIGHTING_PERFORMANCE_ASSERT.runPass()) {
+        runVisitors(elements1, ranges1, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
+                    nestedRange, nestedInfos);
+      }
+
       boolean priorityIntersectionHasElements = myPriorityRange.intersectsStrict(myRestrictRange);
       if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
         myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());

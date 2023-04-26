@@ -407,20 +407,11 @@
                  defaultValue="false"
                  description="Temporarily disable the action of the import docs from google"/>
 
-    <registryKey key="markdown.google.accounts.enable"
-                 defaultValue="false"
-                 description="Temporarily disabling the use of Google accounts, as the functionality is available only for internal users"/>
-
     <registryKey key="markdown.experimental.boundary.precise.scroll.enable"
                  defaultValue="true"
                  description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
                               Any opened Markdown editors should be manually reopened.
                               Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
-
-    <registryKey key="markdown.experimental.frontmatter.support.enable"
-                 defaultValue="true"
-                 description="Enables experimental front matter support"
-                 restartRequired="true"/>
 
     <registryKey key="markdown.experimental.header.level.inference.enable"
                  defaultValue="false"
@@ -429,6 +420,14 @@
     <registryKey key="markdown.validate.short.links"
                  defaultValue="false"
                  description="Enables validation for short style links by checking existing labeled link definitions in the current file."/>
+
+    <registryKey key="markdown.experimental.show.frontmatter.in.preview"
+                 defaultValue="false"
+                 description="Enables displaying of front matter headers in the preview."/>
+
+    <registryKey key="markdown.experimental.allow.external.requests"
+                 defaultValue="true"
+                 description="Enables requests for external resources from the preview (e.g. non-local images)."/>
     <!--endregion-->
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>

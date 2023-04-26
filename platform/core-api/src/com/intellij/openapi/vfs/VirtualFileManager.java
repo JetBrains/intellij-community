@@ -61,10 +61,15 @@ public abstract class VirtualFileManager implements ModificationTracker {
   /**
    * Refreshes the cached file systems information from the physical file systems asynchronously.
    * Launches specified action when refresh is finished.
-   *
+   * <p>
+   * @param postAction - action which will be executed in write-action after refresh session finished.
    * @return refresh session ID.
    */
   public abstract long asyncRefresh(@Nullable Runnable postAction);
+
+  public final long asyncRefresh() {
+    return asyncRefresh(null);
+  }
 
   public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 

@@ -7,14 +7,12 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
+import com.jediterm.core.util.TermSize
 import java.awt.Cursor
 import java.awt.Dimension
-import java.awt.Font
-import java.awt.image.BufferedImage
 import javax.swing.JScrollPane
-import kotlin.math.ceil
+import kotlin.math.max
 
 object TerminalUiUtils {
   fun createEditor(document: Document, project: Project, settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
@@ -23,7 +21,6 @@ object TerminalUiUtils {
     editor.setCustomCursor(this, Cursor.getDefaultCursor())
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-    editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
     editor.gutterComponentEx.isPaintBackground = false
 
     editor.colorsScheme.apply {
@@ -46,19 +43,13 @@ object TerminalUiUtils {
     return editor
   }
 
-  fun calculateCharSize(font: Font, lineSpacing: Float): Dimension {
-    val img: BufferedImage = ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB)
-    val graphics = img.createGraphics().also { it.font = font }
-    try {
-      val metrics = graphics.fontMetrics
-      val width = metrics.charWidth('W')
-      val metricsHeight = metrics.height
-      val height = ceil(metricsHeight * lineSpacing).toInt()
-      return Dimension(width, height)
-    }
-    finally {
-      img.flush()
-      graphics.dispose()
-    }
+  fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension): TermSize {
+    val width = componentSize.width / charSize.width
+    val height = componentSize.height / charSize.height
+    return ensureTermMinimumSize(TermSize(width, height))
+  }
+
+  private fun ensureTermMinimumSize(size: TermSize): TermSize {
+    return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
   }
 }

@@ -18,7 +18,7 @@ interface TreeEntity : WorkspaceEntity {
   val data: String
 
   val children: List<@Child TreeEntity>
-  val parentEntity: TreeEntity
+  val parentEntity: TreeEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -26,7 +26,7 @@ interface TreeEntity : WorkspaceEntity {
     override var entitySource: EntitySource
     override var data: String
     override var children: List<TreeEntity>
-    override var parentEntity: TreeEntity
+    override var parentEntity: TreeEntity?
   }
 
   companion object : Type<TreeEntity, Builder>() {

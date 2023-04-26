@@ -12,11 +12,6 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/intellij-dependencies" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="jcenter-proxy" />
-      <option name="name" value="JCenter on Bintray" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/jcenter.bintray.com" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="3e981f81-9991-429f-bed8-5e9b000571d9" />
       <option name="name" value="3e981f81-9991-429f-bed8-5e9b000571d9" />
       <option name="url" value="https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2" />

@@ -8,6 +8,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
+import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
@@ -18,13 +20,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
 import java.util.List;
 
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
@@ -36,8 +35,6 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
 
   @NotNull
   private static final ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
-
-  private static final EnumSet<StandardOpenOption> WRITE_OPTION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
   @NotNull
   public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
@@ -128,7 +125,7 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     throws IOException {
     synchronized (myInputStreamLock) {
       try {
-        return useChannel(ch -> {
+        return executeOp(ch -> {
           ch.position(0);
           return consumer.fun(Channels.newInputStream(ch));
         }, true);
@@ -139,10 +136,11 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     }
   }
 
-  public <R> @NotNull R readChannel(@NotNull ThrowableNotNullFunction<? super ReadableByteChannel, R, ? extends IOException> consumer) throws IOException {
+  public <R> @NotNull R readChannel(@NotNull ThrowableNotNullFunction<? super ReadableByteChannel, R, ? extends IOException> consumer)
+    throws IOException {
     synchronized (myInputStreamLock) {
       try {
-        return useChannel(ch -> {
+        return executeOp(ch -> {
           ch.position(0);
           return consumer.fun(ch);
         }, true);
@@ -153,16 +151,14 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     }
   }
 
-  <R> R useChannel(@NotNull OpenChannelsCache.ChannelProcessor<R> processor, boolean read) throws IOException {
-    if (myStorageLockContext.useChannelCache()) {
-      return CHANNELS_CACHE.useChannel(myFile, processor, read);
-    }
-    else {
-      myStorageLockContext.getBufferCache().incrementUncachedFileAccess();
-      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(myFile, read)) {
-        return processor.process(desc.getChannel());
-      }
-    }
+  <R> R executeOp(final @NotNull FileChannelOperation<R> operation,
+                  final boolean readOnly) throws IOException {
+    return myStorageLockContext.executeOp(myFile, operation, readOnly);
+  }
+
+  <R> R executeIdempotentOp(final @NotNull FileChannelIdempotentOperation<R> operation,
+                            final boolean readOnly) throws IOException {
+    return myStorageLockContext.executeIdempotentOp(myFile, operation, readOnly);
   }
 
   public void putInt(long addr, int value) throws IOException {
@@ -377,19 +373,19 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     long delta = newSize - oldSize;
     mySize = -1;
     if (delta > 0) {
-      //CHANNELS_CACHE.useChannel(myFile, channel -> {
-      //  channel.write(ByteBuffer.allocate(1), newSize - 1);
-      //});
-      try (FileChannel channel = new UnInterruptibleFileChannel(myFile, WRITE_OPTION)) {
+      myStorageLockContext.executeOp(myFile, channel -> {
         channel.write(ByteBuffer.allocate(1), newSize - 1);
-      }
+        return null;
+      }, false);
+
       mySize = newSize;
       fillWithZeros(oldSize, delta);
     }
     else {
-      try (FileChannel channel = new UnInterruptibleFileChannel(myFile, WRITE_OPTION)) {
+      myStorageLockContext.executeOp(myFile, channel -> {
         channel.truncate(newSize);
-      }
+        return null;
+      }, false);
       mySize = newSize;
     }
   }
@@ -404,7 +400,11 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     long remaining = length;
     while (remaining > 0) {
       final int toFill = (int)Math.min(remaining, MAX_FILLER_SIZE);
-      assert toFill > 0 : "toFill: " + toFill + " -- must be positive (length: " + length + ", remaining: " + remaining + ")";
+      if (toFill <= 0) {
+        throw new AssertionError(
+          "Bug: toFill(=" + toFill + ") -- must be positive. " +
+          "Details: from: " + from + ", length: " + length + " -> offset: " + offset + ", remaining: " + remaining);
+      }
 
       put(offset, zeroes, 0, toFill);
 

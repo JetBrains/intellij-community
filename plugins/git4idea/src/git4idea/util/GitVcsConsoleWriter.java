@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitVcsConsoleWriter {
   private static final Logger LOG = Logger.getInstance(GitVcsConsoleWriter.class);
 

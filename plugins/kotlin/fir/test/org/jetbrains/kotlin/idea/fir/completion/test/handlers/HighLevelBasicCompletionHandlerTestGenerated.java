@@ -237,6 +237,29 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/extensionReceiver")
+        public static class ExtensionReceiver extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ExtensionReceiverTypeArg.kt")
+            public void testExtensionReceiverTypeArg() throws Exception {
+                runTest("../completion/testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeArg.kt");
+            }
+
+            @TestMetadata("ExtensionReceiverTypeNotImported.kt")
+            public void testExtensionReceiverTypeNotImported() throws Exception {
+                runTest("../completion/testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeNotImported.kt");
+            }
+
+            @TestMetadata("ExtensionReceiverTypeNotImported2.kt")
+            public void testExtensionReceiverTypeNotImported2() throws Exception {
+                runTest("../completion/testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeNotImported2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/testData/handlers/basic/highOrderFunctions")
         public static class HighOrderFunctions extends AbstractHighLevelBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -313,6 +336,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/highOrderFunctions/InsertFunctionWithSingleParameterWithBrace.kt");
             }
 
+            @TestMetadata("InsertFunctionWithSingleParameterWithParenthesis.kt")
+            public void testInsertFunctionWithSingleParameterWithParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/highOrderFunctions/InsertFunctionWithSingleParameterWithParenthesis.kt");
+            }
+
             @TestMetadata("OptionalParameters1.kt")
             public void testOptionalParameters1() throws Exception {
                 runTest("../completion/testData/handlers/basic/highOrderFunctions/OptionalParameters1.kt");
@@ -336,6 +364,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("ReplaceByLambdaTemplateNoClosingParenth.kt")
             public void testReplaceByLambdaTemplateNoClosingParenth() throws Exception {
                 runTest("../completion/testData/handlers/basic/highOrderFunctions/ReplaceByLambdaTemplateNoClosingParenth.kt");
+            }
+
+            @TestMetadata("ReplaceFunctionWithSingleParameter.kt")
+            public void testReplaceFunctionWithSingleParameter() throws Exception {
+                runTest("../completion/testData/handlers/basic/highOrderFunctions/ReplaceFunctionWithSingleParameter.kt");
             }
 
             @TestMetadata("SameTypeParameters.kt")
@@ -823,6 +856,26 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             public void testTypeArgumentsFromParameters() throws Exception {
                 runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromParameters.kt");
             }
+
+            @TestMetadata("TypeArgumentsFromReturnType.kt")
+            public void testTypeArgumentsFromReturnType() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType.kt");
+            }
+
+            @TestMetadata("TypeArgumentsFromReturnType2.kt")
+            public void testTypeArgumentsFromReturnType2() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType2.kt");
+            }
+
+            @TestMetadata("TypeArgumentsFromReturnType3.kt")
+            public void testTypeArgumentsFromReturnType3() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType3.kt");
+            }
+
+            @TestMetadata("TypeArgumentsFromReturnType4.kt")
+            public void testTypeArgumentsFromReturnType4() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType4.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -960,6 +1013,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/AddLabelToReturn.kt");
             }
 
+            @TestMetadata("AfterPackageName.kt")
+            public void testAfterPackageName() throws Exception {
+                runTest("../completion/testData/handlers/basic/AfterPackageName.kt");
+            }
+
+            @TestMetadata("AfterPackageName2.kt")
+            public void testAfterPackageName2() throws Exception {
+                runTest("../completion/testData/handlers/basic/AfterPackageName2.kt");
+            }
+
             @TestMetadata("AmbiguousSuperMethod.kt")
             public void testAmbiguousSuperMethod() throws Exception {
                 runTest("../completion/testData/handlers/basic/AmbiguousSuperMethod.kt");
@@ -1028,11 +1091,6 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("ExtensionPropertyFromSameFile.kt")
             public void testExtensionPropertyFromSameFile() throws Exception {
                 runTest("../completion/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
-            }
-
-            @TestMetadata("ExtensionReceiverTypeArg.kt")
-            public void testExtensionReceiverTypeArg() throws Exception {
-                runTest("../completion/testData/handlers/basic/ExtensionReceiverTypeArg.kt");
             }
 
             @TestMetadata("FirstTypeArgument.kt")

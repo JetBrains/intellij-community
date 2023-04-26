@@ -15,11 +15,24 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
     CustomLayoutActionGroup(it)
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+    if (e == null) {
+      AnAction.EMPTY_ARRAY
+    }
+    else {
+      childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
+    }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-  private class CustomLayoutActionGroup(@NlsSafe private val layoutName: String) : ActionGroup(), DumbAware {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isPopupGroup = e.place != ActionPlaces.MAIN_MENU // to be used as a popup, e.g., in toolbars
+  }
+
+  private class CustomLayoutActionGroup(
+    @NlsSafe private val layoutName: String
+  ) : ActionGroup(ActionsBundle.message("group.CustomLayoutActionsGroup.text"), true), DumbAware {
 
     private val children = arrayOf<AnAction>(
       Apply(layoutName),
@@ -27,10 +40,6 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
       Separator(),
       Delete(layoutName),
     )
-
-    init {
-      templatePresentation.isPopupGroup = true
-    }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

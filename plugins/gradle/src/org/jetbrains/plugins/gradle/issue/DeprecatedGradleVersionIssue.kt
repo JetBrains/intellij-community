@@ -55,7 +55,7 @@ class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: St
   }
 
   companion object {
-    private val minimalRecommendedVersion: GradleVersion = GradleVersion.version("3.0")
+    private val minimalRecommendedVersion: GradleVersion = GradleVersion.version(GradleConstants.MINIMAL_RECOMMENDED_GRADLE_VERSION)
     @JvmStatic
     fun isDeprecated(gradleVersion: GradleVersion): Boolean {
       return gradleVersion < minimalRecommendedVersion

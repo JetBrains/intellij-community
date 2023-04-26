@@ -10,10 +10,6 @@
             <add-to-group group-id="KotlinToolsGroup"/>
         </action>
 
-        <action id="ConfigureKotlinJsInProject" class="org.jetbrains.kotlin.idea.actions.ConfigureKotlinJsInProjectAction">
-            <add-to-group group-id="KotlinToolsGroup"/>
-        </action>
-
         <action id="ShowKotlinBytecode" class="org.jetbrains.kotlin.idea.actions.ShowKotlinBytecodeAction">
             <add-to-group group-id="KotlinToolsGroup"/>
         </action>

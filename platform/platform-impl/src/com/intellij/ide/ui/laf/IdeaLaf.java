@@ -3,11 +3,9 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredSideBorder;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.TableActions;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import kotlin.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +68,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("TableUI", BegTableUI.class.getName());
     defaults.put("TreeUI", BegTreeUI.class.getName());
 
-    defaults.put("TabbedPane.tabInsets", ExperimentalUI.isNewUI() ? JBUI.insets(0, 12) : new Insets(0, 4, 0, 4));
+    defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
     defaults.put("ToolTip.background", TOOLTIP_BACKGROUND_COLOR);
     defaults.put("ToolTip.border", new ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1));
     defaults.put("Tree.ancestorInputMap", null);

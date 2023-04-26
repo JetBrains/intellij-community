@@ -7,7 +7,8 @@ import io.opentelemetry.sdk.metrics.data.AggregationTemporality
 import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 
-class FilteredMetricsExporter(private val underlyingExporter: MetricExporter, private val predicate: (MetricData) -> Boolean): MetricExporter {
+class FilteredMetricsExporter(private val underlyingExporter: MetricExporter,
+                              private val predicate: (MetricData) -> Boolean = { true }) : MetricExporter {
   override fun getAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality {
     return underlyingExporter.getAggregationTemporality(instrumentType)
   }

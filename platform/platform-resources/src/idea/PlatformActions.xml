@@ -632,6 +632,7 @@
           <group id="UIToggleActions">
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
+            <action id="MainMenuAsSeparateToolbarAction" class="com.intellij.ide.actions.MainMenuAsSeparateToolbarAction"/>
             <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
             <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
             <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>
@@ -746,7 +747,9 @@
           <group id="CustomLayoutsGroup" class="com.intellij.ide.actions.CustomLayoutsActionGroup" />
           <separator/>
           <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
-          <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
+          <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction">
+            <synonym key="action.StoreDefaultLayout.synonym" />
+          </action>
           <action id="StoreNewLayout" class="com.intellij.ide.actions.StoreNewLayoutAction" />
         </group>
         <separator/>
@@ -852,7 +855,7 @@
         <separator/>
         <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Help"/>
         <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction"/>
-        <action id="ActivateMeetNewUIToolWindow" class="com.intellij.ide.ui.experimental.meetNewUi.ActivateMeetNewUIToolWindowAction"/>
+        <action id="MeetNewUIAction" class="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUIAction"/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
         <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>
@@ -937,16 +940,18 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
-    <group id="MainToolbarLeft" searchable="false">
-      <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
-    </group>
-    <group id="MainToolbarCenter" searchable="false">
-      <!--suppress PluginXmlCapitalization -->
-      <action id="main.toolbar.Filename" class="com.intellij.openapi.wm.impl.headertoolbar.FilenameToolbarWidgetAction"/>
-    </group>
-    <group id="MainToolbarRight" searchable="false">
-      <reference ref="SearchEverywhere"/>
-      <reference ref="SettingsEntryPoint"/>
+    <group id="MainToolbarNewUI" >
+      <group id="MainToolbarLeft" searchable="false">
+        <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
+      </group>
+      <group id="MainToolbarCenter" searchable="false">
+        <!--suppress PluginXmlCapitalization -->
+        <action id="main.toolbar.Filename" class="com.intellij.openapi.wm.impl.headertoolbar.FilenameToolbarWidgetAction"/>
+      </group>
+      <group id="MainToolbarRight" searchable="false">
+        <reference ref="SearchEverywhere"/>
+        <reference ref="SettingsEntryPoint"/>
+      </group>
     </group>
 
     <group id="NavBarVcsGroup"/>
@@ -1117,6 +1122,15 @@
     </group>
 
     <group id="FileChooserToolbar">
+      <action id="FileChooser.GoBackward" class="com.intellij.openapi.fileChooser.actions.GoToHistoryAction$Backward"
+              icon="AllIcons.Actions.Back" use-shortcut-of="Back"/>
+      <action id="FileChooser.GoForward" class="com.intellij.openapi.fileChooser.actions.GoToHistoryAction$Forward"
+              icon="AllIcons.Actions.Forward" use-shortcut-of="Forward"/>
+      <action id="FileChooser.GoToParent" class="com.intellij.openapi.fileChooser.actions.GoToParentDirectoryAction"
+              icon="AllIcons.Nodes.UpFolder"/>
+      <action id="FileChooser.GoToRoot" class="com.intellij.openapi.fileChooser.actions.GoToRootDirectoryAction"
+              icon="AllIcons.Nodes.Servlet"/>
+      <separator/>
       <action id="FileChooser.GotoHome" class="com.intellij.openapi.fileChooser.actions.GotoHomeAction"
               icon="AllIcons.Nodes.HomeFolder"/>
       <action id="FileChooser.GoToWslHome" class="com.intellij.openapi.fileChooser.actions.GoToWslHomeAction"
@@ -1135,18 +1149,14 @@
       <separator/>
       <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
               icon="AllIcons.Actions.Refresh" use-shortcut-of="Synchronize"/>
-      <action id="FileChooser.ShowHidden" class="com.intellij.openapi.fileChooser.actions.ToggleVisibilityAction"
-              icon="AllIcons.Actions.ToggleVisibility"/>
-      <action id="FileChooser.TogglePathBar" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"
-              icon="AllIcons.Debugger.Console"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="FileChooserList">
-      <action id="FileChooserList.Root" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$Root"/>
-      <action id="FileChooserList.LevelUp" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$LevelUp"
-              icon="AllIcons.Nodes.UpFolder"/>
+    <group id="FileChooserSettings">
+      <action id="FileChooser.ShowHidden" class="com.intellij.openapi.fileChooser.actions.ToggleVisibilityAction"/>
+      <action id="FileChooser.TogglePathBar" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"/>
+      <action id="FileChooser.ToggleDetection" class="com.intellij.openapi.fileChooser.actions.ToggleProjectDetectionAction"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
@@ -1189,6 +1199,7 @@
         <action id="DropPluginError" internal="true" class="com.intellij.diagnostic.DropPluginErrorAction"/>
         <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
       </group>
+      <action id="SimulateFreeze" class="com.intellij.diagnostic.SimulateFreeze" />
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <group id="Internal.Trust" popup="true">
@@ -1204,7 +1215,9 @@
         <synonym text="Enter Dumb Mode"/>
       </action>
       <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
-      <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>
+      <action id="SkipWindowDeactivationEvents" class="com.intellij.internal.SkipWindowDeactivationEventsAction" internal="true">
+        <synonym text="Disable ProcessCanceledException"/>
+      </action>
       <action id="ResetGotItTooltips" internal="true" class="com.intellij.internal.ResetGotItTooltips"/>
       <action id="ListPersistentStateComponents" internal="true"
               class="com.intellij.internal.components.ListPersistentStateComponentsAction"/>
@@ -1561,6 +1574,7 @@
 
     <group id="ActivateToolWindowActions" searchable="false">
       <action id="ActivateFindToolWindow" class="com.intellij.find.actions.ActivateFindToolWindowAction"/>
+      <action id="ActivateMeetNewUIToolWindow" class="com.intellij.ide.ui.experimental.meetNewUi.ActivateMeetNewUIToolWindowAction"/>
     </group>
 
     <action class="com.intellij.diagnostic.ResetWindowsDefenderNotification" id="ResetWindowsDefenderNotification"/>

@@ -505,6 +505,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/invalidArgument.kt");
         }
 
+        @TestMetadata("javaGet.kt")
+        public void testJavaGet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/javaGet.kt");
+        }
+
+        @TestMetadata("javaSet.kt")
+        public void testJavaSet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/javaSet.kt");
+        }
+
+        @TestMetadata("javaSet2.kt")
+        public void testJavaSet2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/javaSet2.kt");
+        }
+
         @TestMetadata("missingDefaultArgument.kt")
         public void testMissingDefaultArgument() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/missingDefaultArgument.kt");
@@ -523,6 +538,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("notOperator.kt")
         public void testNotOperator() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/notOperator.kt");
+        }
+
+        @TestMetadata("overriddenSet.kt")
+        public void testOverriddenSet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/overriddenSet.kt");
         }
 
         @TestMetadata("qualifier.kt")
@@ -2129,6 +2149,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableObject3.kt");
         }
 
+        @TestMetadata("notApplicableObject4.kt")
+        public void testNotApplicableObject4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableObject4.kt");
+        }
+
         @TestMetadata("notApplicableOuterClass.kt")
         public void testNotApplicableOuterClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableOuterClass.kt");
@@ -2346,6 +2371,39 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/canBePrimaryConstructorProperty")
+        public static class CanBePrimaryConstructorProperty extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("commentAfter.kt")
+            public void testCommentAfter() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/commentAfter.kt");
+            }
+
+            @TestMetadata("commentAhead.kt")
+            public void testCommentAhead() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/commentAhead.kt");
+            }
+
+            @TestMetadata("protectedOpenVar.kt")
+            public void testProtectedOpenVar() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/protectedOpenVar.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/simple.kt");
+            }
+
+            @TestMetadata("vararg.kt")
+            public void testVararg() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/vararg.kt");
+            }
+        }
+
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/destructuringWrongNameInspection")
         public static class DestructuringWrongNameInspection extends AbstractK2LocalInspectionTest {

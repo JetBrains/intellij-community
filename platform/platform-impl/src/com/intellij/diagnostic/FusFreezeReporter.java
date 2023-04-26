@@ -1,20 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.internal.DebugAttachDetector;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 final class FusFreezeReporter implements IdePerformanceListener {
-  final boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
+  static final boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
   private volatile long myPreviousLoggedUIResponse = 0;
   private static final int TOLERABLE_UI_LATENCY = 100;
 
   @Override
-  public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
+  public void uiFreezeFinished(long durationMs, @Nullable Path reportDir) {
     if (!isDebugEnabled) {
       LifecycleUsageTriggerCollector.onFreeze(durationMs);
     }

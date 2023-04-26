@@ -4,11 +4,10 @@ package com.intellij.feedback.common.dialog
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 
-abstract class BaseFeedbackDialog(project: Project?) : DialogWrapper(project) {
+abstract class BaseFeedbackDialog(protected val myProject: Project?) : DialogWrapper(myProject) {
 
   protected abstract val feedbackJsonVersion: Int
   protected abstract val feedbackReportId: String
-  protected abstract val feedbackPrivacyConsentType: String
 
   init {
     isResizable = false

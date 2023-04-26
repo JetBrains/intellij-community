@@ -33,9 +33,12 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     }
 
     protected fun getReferentFilesForElementUnderCaret(): Set<String>? {
+        return getReferentFiles(findDeclarationAtCaret(), true)
+    }
+
+    protected open fun findDeclarationAtCaret(): PsiElement {
         val elementAtCaret = myFixture.elementAtCaret
-        val declarationAtCaret = elementAtCaret.parentOfType<PsiNamedElement>(withSelf = true) ?: error("declaration at caret not found")
-        return getReferentFiles(declarationAtCaret, true)
+        return elementAtCaret.parentOfType<PsiNamedElement>(withSelf = true) ?: error("declaration at caret not found")
     }
 
     protected fun getReferentFiles(element: PsiElement, withJavaIndex: Boolean): Set<String>? {

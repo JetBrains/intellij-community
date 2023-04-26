@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -1085,6 +1085,16 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
           for (Tools tools : inspectionTools) {
             InspectionToolWrapper<?, ?> tool = tools.getEnabledTool(file, includeDoNotShow);
+            if (tool != null && profile instanceof InspectionProfileImpl profileImpl) {
+              @NotNull Set<InspectionToolWrapper<?, ?>> other = new HashSet<>();
+              profileImpl.collectDependentInspections(tool, other, getProject());
+              for (InspectionToolWrapper<?, ?> wrapper : other) {
+                if (wrapper instanceof LocalInspectionToolWrapper) {
+                  lTools.add((LocalInspectionToolWrapper)wrapper);
+                  wrapper.initialize(GlobalInspectionContextImpl.this);
+                }
+              }
+            }
             if (tool instanceof GlobalInspectionToolWrapper) {
               tool = ((GlobalInspectionToolWrapper)tool).getSharedLocalInspectionToolWrapper();
             }
@@ -1129,7 +1139,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           BatchModeDescriptorsUtil.addProblemDescriptors(descriptors,
                                                          toolPresentation,
                                                          true,
-                                                         GlobalInspectionContextImpl.this,
+                                                         this,
                                                          toolWrapper.getTool());
         }
       });

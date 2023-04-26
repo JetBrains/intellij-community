@@ -31,7 +31,7 @@ import org.jetbrains.concurrency.Promises;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentMap;
 
-public abstract class JavaTestFramework implements TestFramework {
+public abstract class JavaTestFramework implements JvmTestFramework {
   @Override
   public boolean isLibraryAttached(@NotNull Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
@@ -50,6 +50,7 @@ public abstract class JavaTestFramework implements TestFramework {
     return null;
   }
 
+  @Override
   public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
     return null;
   }
@@ -240,7 +241,4 @@ public abstract class JavaTestFramework implements TestFramework {
     return isTestMethod(element, true);
   }
 
-  public boolean isMyConfigurationType(ConfigurationType type) {
-    return false;
-  }
 }

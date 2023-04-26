@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume
 import org.junit.ClassRule
@@ -214,6 +215,31 @@ abstract class LibraryTableTestCase {
     }
     assertThat(eventsCount).isEqualTo(1)
     eventsCount = 0
+
+    libraryTable.libraries.forEach { assertThat(it.getUrls(OrderRootType.CLASSES)[0]).isEqualTo("/a/b/c.jar") }
+    edit { model -> model.libraries.forEach { model.removeLibrary(it) } }
+  }
+
+  @Test
+  fun `use single builder at library update`() {
+    Assume.assumeFalse("Test isn't applicable for CustomLibraryTable", libraryTable is CustomLibraryTableImpl)
+
+    val libraryNames = listOf("a", "b", "c")
+    edit { model ->
+      val mutableStorage = (model as LegacyBridgeModifiableBase).diff
+      val libModifiableModels = libraryNames.map { libraryName ->
+        val library = model.createLibrary(libraryName)
+        val libModifiableModel = (library as LibraryBridgeImpl).getModifiableModelToTargetBuilder()
+        libModifiableModel.addRoot("/a/b/c.jar", OrderRootType.CLASSES)
+        libModifiableModel
+      }
+
+      assertThat(mutableStorage.entities(LibraryEntity::class.java).map { it.name }.toSet())
+        .containsAll(libraryNames)
+      assertThat(mutableStorage.entities(LibraryEntity::class.java).map { it.roots[0].url.url }.toSet())
+        .containsAll(listOf("/a/b/c.jar"))
+      libModifiableModels.forEach { it.commit() }
+    }
 
     libraryTable.libraries.forEach { assertThat(it.getUrls(OrderRootType.CLASSES)[0]).isEqualTo("/a/b/c.jar") }
     edit { model -> model.libraries.forEach { model.removeLibrary(it) } }

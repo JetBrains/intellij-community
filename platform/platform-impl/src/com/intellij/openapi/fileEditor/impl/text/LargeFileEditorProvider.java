@@ -3,7 +3,6 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
@@ -40,9 +39,7 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
   public static class LargeTextFileEditor extends TextEditorImpl {
     LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
       super(project, file, provider);
-      if (getEditor() instanceof EditorEx editor) {
-        editor.setViewer(true);
-      }
+      getEditor().setViewer(true);
     }
   }
 

@@ -7,6 +7,8 @@
   <property name="uber.dir" value="${build.dir}/jps-bootstrap.out.lib" />
   <property environment="env"/>
   <property prefix="dependencies" file="${community.home}/build/dependencies/dependencies.properties" />
+  <property name="retry.attempts" value="7"/>
+  <property name="retry.delay" value="1000"/>
 
   <mkdir dir="${build.dir}" />
 
@@ -31,10 +33,12 @@
 
   <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists">
     <mkdir dir="${maven.resolver.ant.tasks.cache.dir}" />
-    <get
-      src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/${maven.resolver.ant.tasks.file.path}/${maven.resolver.ant.tasks.file.name}"
-      dest="${maven.resolver.ant.tasks.cache.file}.tmp"
-      verbose="true"/>
+    <retry retrycount="${retry.attempts}" retrydelay="${retry.delay}">
+      <get
+        src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/${maven.resolver.ant.tasks.file.path}/${maven.resolver.ant.tasks.file.name}"
+        dest="${maven.resolver.ant.tasks.cache.file}.tmp"
+        verbose="true"/>
+    </retry>
     <move
       file="${maven.resolver.ant.tasks.cache.file}.tmp"
       tofile="${maven.resolver.ant.tasks.cache.file}"
@@ -54,21 +58,25 @@
 
     <resolver:pom file="${jps.bootstrap.dir}/pom.xml" id="jps.bootstrap.pom"/>
 
-    <resolver:resolve failOnMissingAttachments="true">
-      <resolver:remoterepos refid="remoterepos.buildscript"/>
-      <resolver:dependencies pomRef="jps.bootstrap.pom">
-        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-jps-plugin-classpath" version="${kotlinc.version}" />
-      </resolver:dependencies>
-      <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
-    </resolver:resolve>
+    <retry retrycount="${retry.attempts}" retrydelay="${retry.delay}">
+      <resolver:resolve failOnMissingAttachments="true">
+        <resolver:remoterepos refid="remoterepos.buildscript"/>
+        <resolver:dependencies pomRef="jps.bootstrap.pom">
+          <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-jps-plugin-classpath" version="${kotlinc.version}" />
+        </resolver:dependencies>
+        <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
+      </resolver:resolve>
+    </retry>
 
-    <resolver:resolve failOnMissingAttachments="true">
-      <resolver:remoterepos refid="remoterepos.buildscript"/>
-      <resolver:dependencies>
-        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-compiler" version="${kotlinc.version}" />
-      </resolver:dependencies>
-      <resolver:path refid="classpath.kotlin.compiler" classpath="runtime"/>
-    </resolver:resolve>
+    <retry retrycount="${retry.attempts}" retrydelay="${retry.delay}">
+      <resolver:resolve failOnMissingAttachments="true">
+        <resolver:remoterepos refid="remoterepos.buildscript"/>
+        <resolver:dependencies>
+          <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-compiler" version="${kotlinc.version}" />
+        </resolver:dependencies>
+        <resolver:path refid="classpath.kotlin.compiler" classpath="runtime"/>
+      </resolver:resolve>
+    </retry>
 
     <delete dir="${classes.dir}" />
     <java

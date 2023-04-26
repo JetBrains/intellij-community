@@ -235,7 +235,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                               ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
 
-    myChangesBrowser = new PushLogChangesBrowser(project, false, false, myChangesLoadingPane, modalityState);
+    myChangesBrowser = new PushLogChangesBrowser(project, false, false, myChangesLoadingPane);
     myChangesBrowser.hideViewerBorder();
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
@@ -298,6 +298,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
   @Override
   public void dispose() {
+    myChangesBrowser.shutdown();
   }
 
   public void highlightNodeOrFirst(@Nullable RepositoryNode repositoryNode, boolean shouldScrollTo) {

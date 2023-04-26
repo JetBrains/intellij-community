@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven
 
 import com.intellij.build.BuildProgressListener
@@ -8,6 +8,8 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
+import com.intellij.ide.environment.EnvironmentService
+import com.intellij.ide.impl.ProjectOpenKeyProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
@@ -17,6 +19,7 @@ import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjec
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.openapi.module.LanguageLevelUtil.getNextLanguageLevel
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -66,6 +69,13 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     val basePath = context.projectPath.pathString
     val pomXmlFile = basePath + "/" + MavenConstants.POM_XML
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
+
+    val service = service<EnvironmentService>()
+    val projectSelectionKey = runBlockingCancellable { service.getValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, "Maven") }
+    if (projectSelectionKey != "Maven") {
+      // something else was selected to open the project
+      return
+    }
 
     val mavenProjectAware = ExternalSystemUnlinkedProjectAware.getInstance(MavenUtil.SYSTEM_ID)!!
     val isMavenProjectLinked = mavenProjectAware.isLinkedProject(project, basePath)

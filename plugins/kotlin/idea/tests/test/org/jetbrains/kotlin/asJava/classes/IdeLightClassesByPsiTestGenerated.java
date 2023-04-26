@@ -391,6 +391,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unresolvedWithAliasedImport.kt"));
         }
 
+        @TestMetadata("unsafePropertyInitializers.kt")
+        public void testUnsafePropertyInitializers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unsafePropertyInitializers.kt"));
+        }
+
         @TestMetadata("valueClassInSignature.kt")
         public void testValueClassInSignature() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/valueClassInSignature.kt"));

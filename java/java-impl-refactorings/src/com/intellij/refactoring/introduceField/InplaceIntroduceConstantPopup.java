@@ -5,7 +5,6 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -140,7 +139,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       field = BaseExpressionToFieldHandler.ConvertToFieldRunnable
         .appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, parentClass, parentClass, field,
                      anchorMember);
-      myFieldRangeStart = myEditor.getDocument().createRangeMarker(field.getTextRange());
+      updateVariable(field);
       return field;
     });
   }
@@ -252,19 +251,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     if (myReplaceAllCb.isVisible()) {
       JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL = isReplaceAllOccurrences();
     }
-    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
-      if (getLocalVariable() != null) {
-        final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-          new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myOccurrences);
-        fieldRunnable.run();
-      }
-      else {
-        final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
-          new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(), myOccurrences,
-                                                                  getAnchorElementIfAll(), getAnchorElement(), myEditor, getParentClass());
-        convertToFieldRunnable.run();
-      }
-    });
+    performIntroduce(settings);
   }
 
   @Override

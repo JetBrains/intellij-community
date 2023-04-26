@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +20,6 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class BoundedTaskExecutorTest extends CatchLogErrorsInAllThreadsTestCase {
   private static final Logger LOG = Logger.getInstance(BoundedTaskExecutorTest.class);
@@ -254,7 +254,7 @@ public class BoundedTaskExecutorTest extends CatchLogErrorsInAllThreadsTestCase 
         assertTrue(waitCompleted.await(1, TimeUnit.MINUTES));
         assertTrue(future.isDone());
       }
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
           ((BoundedTaskExecutor)executor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
         }
@@ -331,7 +331,7 @@ public class BoundedTaskExecutorTest extends CatchLogErrorsInAllThreadsTestCase 
       LOG.debug("nMaxThreads = " + nMaxThreads);
       ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getPoolName(),nMaxThreads);
       int N = 1000000;
-      Set<Thread> workers = ContainerUtil.newConcurrentSet();
+      Set<Thread> workers = ConcurrentCollectionFactory.createConcurrentSet();
 
       CountDownLatch allStarted = new CountDownLatch(1);
       List<Future<?>> saturate = ContainerUtil.map(Collections.nCopies(nMaxThreads, null), o -> executor.submit(new Runnable() {

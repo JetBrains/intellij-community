@@ -98,8 +98,6 @@ def main() -> None:
     for path in chain(Path("stdlib").rglob("*.pyi"), Path("stubs").rglob("*.pyi")):
         if "@python2" in path.parts:
             continue
-        if Path("stubs/protobuf/google/protobuf") in path.parents:  # TODO: fix protobuf stubs
-            continue
 
         with open(path) as f:
             stub = f.read()

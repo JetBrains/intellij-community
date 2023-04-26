@@ -46,6 +46,7 @@ import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author Maxim.Mossienko
@@ -80,6 +81,8 @@ public final class HtmlUtil {
     "Host", "If-Match", "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Last-Modified", "Location",
     "Max-Forwards", "Pragma", "Proxy-Authenticate", "Proxy-Authorization", "Range", "Referer", "Refresh", "Retry-After", "Server", "TE",
     "Trailer", "Transfer-Encoding", "Upgrade", "User-Agent", "Vary", "Via", "Warning", "WWW-Authenticate"};
+  private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
+  private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
 
   private HtmlUtil() {
   }
@@ -529,6 +532,34 @@ public final class HtmlUtil {
     String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
     return Objects.equals(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
            Objects.equals(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
+  }
+
+  /**
+   * Checks if the specified string starts with an HTML tag, and if it does, it returns the tag name.
+   *
+   * @param line the string to check if it starts with an HTML tag
+   * @return if the input starts with an HTML tag, it returns the tag name, otherwise {@code null}
+   */
+  public static String getStartTag(@NotNull String line) {
+    if (startsWithTag(line)) {
+      int tagStart = line.indexOf("<");
+      if (tagStart >= 0) {
+        tagStart ++;
+        for (int i = tagStart; i < line.length(); i ++) {
+          if (!Character.isAlphabetic(line.charAt(i))) {
+            return line.substring(tagStart,i);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean startsWithTag(@NotNull String line) {
+    if (line.trim().startsWith("<")) {
+      return HTML_TAG_PATTERN.matcher(line).matches();
+    }
+    return false;
   }
 
   private static class TerminateException extends RuntimeException {

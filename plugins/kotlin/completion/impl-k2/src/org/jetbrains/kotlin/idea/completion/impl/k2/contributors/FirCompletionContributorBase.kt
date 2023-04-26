@@ -8,8 +8,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -22,12 +22,12 @@ import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider.getCallableMetadata
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.priority
+import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -69,14 +69,14 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected val scopeNameFilter: KtScopeNameFilter =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
-    abstract fun KtAnalysisSession.complete(positionContext: C)
+    abstract fun KtAnalysisSession.complete(positionContext: C, weighingContext: WeighingContext)
 
     protected fun KtAnalysisSession.addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any hidden deprecated items.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         with(lookupElementFactory) {
-            createLookupElement(symbol, importStrategyDetector)
+            createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
                 .let(sink::addElement)
         }
     }
@@ -84,6 +84,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected fun KtAnalysisSession.addClassifierSymbolToCompletion(
         symbol: KtClassifierSymbol,
         context: WeighingContext,
+        scopeKind: KtScopeKind?,
         importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategy(symbol),
     ) {
         if (symbol !is KtNamedSymbol) return
@@ -95,8 +96,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
                 is KtTypeParameterSymbol -> createLookupElement(symbol, importStrategyDetector)
             }
         } ?: return
-        lookup.availableWithoutImport = importingStrategy == ImportStrategy.DoNothing
-        applyWeighers(context, lookup, symbol, KtSubstitutor.Empty(token))
+
+        applyWeighers(context, lookup, symbol, scopeKind, KtSubstitutor.Empty(token))
         sink.addElement(lookup)
     }
 
@@ -104,6 +105,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         context: WeighingContext,
         symbol: KtCallableSymbol,
         options: CallableInsertionOptions,
+        scopeKind: KtScopeKind?,
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
         priority: ItemPriority? = null,
         explicitReceiverTypeHint: KtType? = null,
@@ -117,11 +119,11 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         // Don't offer any deprecated items that could leads to compile errors.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         val lookup = with(lookupElementFactory) {
-            createCallableLookupElement(name, symbol, options, substitutor)
+            createCallableLookupElement(name, symbol, options, substitutor, context.expectedType)
         }
         priority?.let { lookup.priority = it }
-        lookup.callableWeight = getCallableMetadata(context, symbol, substitutor)
-        applyWeighers(context, lookup, symbol, substitutor)
+
+        applyWeighers(context, lookup, symbol, scopeKind, substitutor)
         sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))
     }
 
@@ -179,23 +181,19 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         context: WeighingContext,
         lookupElement: LookupElement,
         symbol: KtSymbol,
+        scopeKind: KtScopeKind?,
         substitutor: KtSubstitutor,
     ): LookupElement = lookupElement.apply {
-        with(Weighers) { applyWeighsToLookupElement(context, lookupElement, symbol, substitutor) }
+        with(Weighers) { applyWeighsToLookupElement(context, lookupElement, symbol, scopeKind, substitutor) }
     }
 }
-
-internal var LookupElement.availableWithoutImport: Boolean by NotNullableUserDataProperty(Key("KOTLIN_AVAILABLE_FROM_CURRENT_SCOPE"), true)
 
 internal fun <C : FirRawPositionCompletionContext> KtAnalysisSession.complete(
     contextContributor: FirCompletionContributorBase<C>,
     positionContext: C,
+    weighingContext: WeighingContext
 ) {
     with(contextContributor) {
-        complete(positionContext)
+        complete(positionContext, weighingContext)
     }
 }
-
-internal var LookupElement.callableWeight by UserDataProperty(Key<CallableMetadataProvider.CallableMetadata>("KOTLIN_CALLABlE_WEIGHT"))
-    private set
-

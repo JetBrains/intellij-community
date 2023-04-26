@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UpdateScaleHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       leftSidebarHolder.add(quickAccessPanel, BorderLayout.SOUTH);
     }
 
-    leftSidebarHolder.setPreferredSize(new Dimension(JBUI.scale(224), leftSidebarHolder.getPreferredSize().height));
+    updateLeftSidebarHolderSize();
 
     JComponent centralPanel = mainPanel;
     JComponent mainPanelToolbar = createMainPanelToolbar(this);
@@ -83,6 +84,16 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     }
 
     loadTabs(welcomeTabFactories);
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) updateLeftSidebarHolderSize();
+  }
+
+  private void updateLeftSidebarHolderSize() {
+    leftSidebarHolder.setPreferredSize(new Dimension(JBUI.scale(224), leftSidebarHolder.getPreferredSize().height));
   }
 
   @Override
@@ -163,6 +174,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       toolbar.setMinimumButtonSize(new JBDimension(26, 26));
       JComponent toolbarComponent = toolbar.getComponent();
 
+      toolbarComponent.setOpaque(false);
       toolbarComponent.setBorder(null);
       result.add(toolbarComponent);
     }
@@ -207,9 +219,11 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   public abstract static class DefaultWelcomeScreenTab implements WelcomeScreenTab, Accessible {
     protected final JComponent myKeyComponent;
+    private final UpdateScaleHelper keyUpdateScaleHelper = new UpdateScaleHelper();
     private final JBLabel myLabel;
     private final WelcomeScreenEventCollector.TabType myType;
     private JComponent myAssociatedComponent;
+    private final UpdateScaleHelper associatedUpdateScaleHelper = new UpdateScaleHelper();
 
     public DefaultWelcomeScreenTab(@NotNull @Nls String tabName) {
       this(tabName, null, WelcomeScreenEventCollector.TabType.TabNavOther);
@@ -233,6 +247,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     @Override
     @NotNull
     public JComponent getKeyComponent(@NotNull JComponent parent) {
+      keyUpdateScaleHelper.saveScaleAndUpdateUIIfChanged(myKeyComponent);
       return myKeyComponent;
     }
 
@@ -242,6 +257,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       if (myAssociatedComponent == null) {
         myAssociatedComponent = buildComponent();
       }
+      associatedUpdateScaleHelper.saveScaleAndUpdateUIIfChanged(myAssociatedComponent);
       return myAssociatedComponent;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -44,13 +44,13 @@ internal object UpdateInstaller {
 
     val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
-    val jdk = getRuntimeSuffix()
+    val runtime = if (CpuArch.isArm64()) "-aarch64" else ""
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
-      val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
+      val patchName = "${product}-${from}-${to}-patch${runtime}-${PatchInfo.OS_SUFFIX}.jar"
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
@@ -194,10 +194,4 @@ internal object UpdateInstaller {
   }
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
-
-  private fun getRuntimeSuffix(): String = when {
-    SystemInfo.isUnix && !SystemInfo.isMac && !Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-no-jbr"
-    (SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows) && CpuArch.isArm64() -> "-aarch64"
-    else -> ""
-  }
 }

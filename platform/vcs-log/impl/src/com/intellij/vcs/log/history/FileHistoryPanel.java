@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -30,6 +31,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
+import com.intellij.vcs.log.ui.frame.ComponentQuickActionProvider;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -95,6 +97,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     };
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
     mySpeedSearch = new FileHistorySpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
+    mySpeedSearch.setupListeners();
 
     myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
       return new CommitDetailsPanel(commit -> {
@@ -252,6 +255,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       .ifEq(VcsLogInternalDataKeys.LOG_DIFF_HANDLER).thenGet(() -> myFileHistoryModel.getDiffHandler())
       .ifEq(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW).thenGet(() -> myEditorDiffPreview)
       .ifEq(VcsLogInternalDataKeys.FILE_HISTORY_MODEL).thenGet(() -> myFileHistoryModel.createSnapshot())
+      .ifEq(QuickActionProvider.KEY).thenGet(() -> new ComponentQuickActionProvider(this))
       .orNull();
   }
 

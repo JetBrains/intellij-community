@@ -22,7 +22,7 @@ fun main(args: Array<String>) = try {
   echo("Syncing icons..")
   checkIcons(context)
   echo("Generating classes..")
-  generateIconClasses(dbFile = null)
+  generateIconClasses()
   val changes = gitStatus(project, includeUntracked = true).all().asSequence().filter {
     val file = project.resolve(it)
     isImage(file) || file.extension == "java" || file.extension == "kt"

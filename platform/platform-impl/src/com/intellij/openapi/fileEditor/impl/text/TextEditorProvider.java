@@ -66,7 +66,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
   }
 
   @Override
-  public @NotNull FileEditor createEditor(@NotNull Project project, final @NotNull VirtualFile file) {
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     LOG.assertTrue(accept(project, file));
     return new TextEditorImpl(project, file, this);
   }
@@ -246,7 +246,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
     return pos == null ? 0 : pos.column;
   }
 
-  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState) {
+  protected void setStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull TextEditorState state, boolean exactState) {
     TextEditorState.CaretState[] carets = state.CARETS;
     if (carets.length > 0) {
       List<CaretState> states = new ArrayList<>(carets.length);
@@ -259,25 +259,32 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
       editor.getCaretModel().setCaretsAndSelections(states, false);
     }
 
-    final int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
-    Runnable scrollingRunnable = () -> {
-      if (!editor.isDisposed()) {
-        editor.getScrollingModel().disableAnimation();
-        if (relativeCaretPosition != Integer.MAX_VALUE) {
-          EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
-        }
-        if (!exactState) editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getScrollingModel().enableAnimation();
-      }
-    };
+    int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        scrollingRunnable.run();
+      // not safe to optimize doWhenFirstShown and execute runnable right away if `isShowing() == true`,
+      // let's check only here for now
+      if (ApplicationManager.getApplication().isUnitTestMode() || editor.getContentComponent().isShowing()) {
+        scrollToCaret(editor, exactState, relativeCaretPosition);
       }
       else {
-        UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
+        UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), () -> {
+          if (!editor.isDisposed()) {
+            scrollToCaret(editor, exactState, relativeCaretPosition);
+          }
+        });
       }
     });
+  }
+
+  private static void scrollToCaret(Editor editor, boolean exactState, int relativeCaretPosition) {
+    editor.getScrollingModel().disableAnimation();
+    if (relativeCaretPosition != Integer.MAX_VALUE) {
+      EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
+    }
+    if (!exactState) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+    editor.getScrollingModel().enableAnimation();
   }
 
   @Override

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
@@ -99,8 +100,8 @@ interface SmartUpdateStep {
 
 const val IDE_RESTARTED_KEY = "smart.update.ide.restarted"
 
-class IdeRestartedActivity: StartupActivity {
-  override fun runActivity(project: Project) {
+class IdeRestartedActivity: ProjectActivity {
+  override suspend fun execute(project: Project) {
     if (PropertiesComponent.getInstance().isTrueValue(IDE_RESTARTED_KEY)) {
       PropertiesComponent.getInstance().setValue(IDE_RESTARTED_KEY, false)
       project.service<SmartUpdate>().execute(project)

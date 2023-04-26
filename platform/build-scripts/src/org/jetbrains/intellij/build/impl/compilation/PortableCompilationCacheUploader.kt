@@ -80,9 +80,10 @@ internal class PortableCompilationCacheUploader(
   }
 
   private fun uploadToS3() {
-    spanBuilder("aws s3 sync").useWithScope {
-      context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
-      println("##teamcity[setParameter name='jps.caches.aws.sync.skip' value='true']")
+    if (remoteCache.shouldBeSyncedToS3) {
+      spanBuilder("aws s3 sync").useWithScope {
+        context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
+      }
     }
   }
 
@@ -96,14 +97,18 @@ internal class PortableCompilationCacheUploader(
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
-    moveFile(zipFile, s3Folder.resolve(cachePath))
+    if (remoteCache.shouldBeSyncedToS3) {
+      moveFile(zipFile, s3Folder.resolve(cachePath))
+    }
   }
 
   private fun uploadMetadata() {
     val metadataPath = "metadata/$commitHash"
     val sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
-    moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    if (remoteCache.shouldBeSyncedToS3) {
+      moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    }
   }
 
   private fun uploadCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>,
@@ -124,7 +129,9 @@ internal class PortableCompilationCacheUploader(
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()
         }
-        moveFile(zipFile, s3Folder.resolve(sourcePath))
+        if (remoteCache.shouldBeSyncedToS3) {
+          moveFile(zipFile, s3Folder.resolve(sourcePath))
+        }
       }
     }
   }

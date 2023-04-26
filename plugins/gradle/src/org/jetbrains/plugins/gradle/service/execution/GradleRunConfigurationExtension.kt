@@ -22,16 +22,16 @@ class GradleRunConfigurationExtension
       GradleBundle.message("gradle.tasks.script.debugging"),
       GradleBundle.message("gradle.settings.title"),
       null,
-      GradleRunConfiguration::isScriptDebugEnabled,
-      GradleRunConfiguration::setScriptDebugEnabled
+      GradleRunConfiguration::isDebugServerProcess,
+      GradleRunConfiguration::setDebugServerProcess
     )
     addTag(
       "gradle.tasks.reattach.debug.process.fragment",
       GradleBundle.message("gradle.tasks.reattach.debug.process"),
       GradleBundle.message("gradle.settings.title"),
       GradleBundle.message("gradle.tasks.reattach.debug.process.comment"),
-      GradleRunConfiguration::isReattachDebugProcess,
-      GradleRunConfiguration::setReattachDebugProcess
+      { !isReattachDebugProcess },
+      { isReattachDebugProcess = !it }
     )
     addTag(
       "gradle.tasks.debugging.all.fragment",
@@ -42,12 +42,12 @@ class GradleRunConfigurationExtension
       GradleRunConfiguration::setDebugAllEnabled
     )
     addTag(
-      "gradle.tasks.tests.force.fragment",
+      "gradle.tasks.run_as_test.fragment",
       GradleBundle.message("gradle.tasks.tests.force"),
       GradleBundle.message("gradle.settings.title"),
       GradleBundle.message("gradle.tasks.tests.force.comment"),
-      GradleRunConfiguration::isForceTestExecution,
-      GradleRunConfiguration::setForceTestExecution
+      GradleRunConfiguration::isRunAsTest,
+      GradleRunConfiguration::setRunAsTest
     )
   }
 

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls
 private typealias TrackerState = ChangelistsLocalLineStatusTracker.State
 private typealias FullTrackerState = ChangelistsLocalLineStatusTracker.FullState
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "LineStatusTrackerManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 @NonNls
 class PartialLineStatusTrackerManagerState(private val project: Project) : PersistentStateComponent<Element> {

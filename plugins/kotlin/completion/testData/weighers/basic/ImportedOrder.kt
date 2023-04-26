@@ -1,3 +1,6 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+
 import ppp1.*
 import ppp3.MyClass6
 import ppp1.MyClass7 as AnotherClass7

@@ -5,6 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.telemetry.IJTracer;
+import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
@@ -44,12 +47,17 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -105,7 +113,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       ApplicationManager.getApplication().isUnitTestMode() ? 0 : Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
   }
 
-  private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   @TestOnly
@@ -246,7 +253,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action) {
     Runnable actionDecorated = ClientId.decorateRunnable(action);
-    return ourThreadExecutorsService.submit(new Runnable() {
+    return AppExecutorUtil.getAppExecutorService().submit(new Runnable() {
       @Override
       public void run() {
         if (isDisposed()) {
@@ -277,7 +284,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
     Callable<T> actionDecorated = ClientId.decorateCallable(action);
-    return ourThreadExecutorsService.submit(new Callable<>() {
+    return AppExecutorUtil.getAppExecutorService().submit(new Callable<>() {
       @Override
       public T call() {
         if (isDisposed()) {
@@ -345,6 +352,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       runnable = captured.getFirst();
       expired = captured.getSecond();
     }
+    invokeLaterRaw(runnable, state, expired);
+  }
+
+  @Override
+  public void invokeLaterRaw(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
     // Don't need to enable implicit read, as Write Intent lock includes Explicit Read
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
@@ -445,7 +457,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       runnable.run();
       return;
     }
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       runIntendedWriteActionOnCurrentThread(runnable);
       return;
     }
@@ -583,8 +595,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void doExit(int flags, boolean restart, String @NotNull [] beforeRestart) {
+    IJTracer tracer = TraceManager.INSTANCE.getTracer("exitApp");
+    Span exitSpan = tracer.spanBuilder("application.exit").startSpan();
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
-    try {
+    try(Scope scope = exitSpan.makeCurrent()) {
       if (!force && !confirmExitIfNeeded(BitUtil.isSet(flags, EXIT_CONFIRMED))) {
         return;
       }
@@ -598,8 +612,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
       stopServicePreloading();
 
+
       if (BitUtil.isSet(flags, SAVE)) {
-        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this);
+        TraceUtil.runWithSpanThrows(tracer, "saveSettingsOnExit", (span) -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
       }
 
       if (isInstantShutdownPossible()) {
@@ -617,22 +632,28 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
-      boolean success = true;
-      ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
-      if (manager != null) {
-        try {
-          if (!manager.closeAndDisposeAllProjects(!force)) {
-            success = false;
+      boolean success = TraceUtil.computeWithSpanThrows(tracer, "disposeProjects", (span) -> {
+        ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
+        if (manager != null) {
+          try {
+            if (!manager.closeAndDisposeAllProjects(!force)) {
+              return false;
+            }
+          }
+          catch (Throwable e) {
+            LOG.error(e);
           }
         }
-        catch (Throwable e) {
-          LOG.error(e);
+        try {
+          //noinspection TestOnlyProblems
+          disposeContainer();
         }
-      }
-      if (success) {
-        //noinspection TestOnlyProblems
-        disposeContainer();
-      }
+        catch (Throwable t) {
+          LOG.error(t);
+        }
+        return true;
+      });
+
 
       //noinspection SpellCheckingInspection
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
@@ -655,9 +676,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           exitCode = AppExitCodes.RESTART_FAILED;
         }
       }
+      scope.close();
+      exitSpan.end();
       System.exit(exitCode);
     }
     finally {
+      exitSpan.end();
       myExitInProgress = false;
     }
   }
@@ -816,23 +840,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @ApiStatus.Internal
   public boolean isCurrentWriteOnEdt() {
     return EDT.isEdt(myLock.writeThread);
-  }
-
-  @Override
-  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
-    invokeLaterOnWriteThread(action, modal, getDisposed());
-  }
-
-  @Override
-  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
-    Runnable r = myTransactionGuard.wrapLaterInvocation(action, modal);
-    // EDT == Write Thread in legacy mode
-    LaterInvocator.invokeLater(modal, expired, wrapWithRunIntendedWriteAction(r));
-  }
-
-  @Override
-  public void invokeLaterOnWriteThread(@NotNull Runnable action) {
-    invokeLaterOnWriteThread(action, getDefaultModalityState());
   }
 
   @Override
@@ -1015,7 +1022,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION);
+      LOG.error(createThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION));
     }
   }
 
@@ -1056,8 +1063,13 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private static void throwThreadAccessException(@NotNull @NonNls String message) {
-    throw new RuntimeExceptionWithAttachments(message + DOCUMENTATION_LINK + "\n" + getThreadDetails(),
-                                              new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+    throw createThreadAccessException(message);
+  }
+
+  @NotNull
+  private static RuntimeExceptionWithAttachments createThreadAccessException(@NonNls @NotNull String message) {
+    return new RuntimeExceptionWithAttachments(message + DOCUMENTATION_LINK + "\n" + getThreadDetails(),
+                                               new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
   @NotNull

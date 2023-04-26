@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.model.presentation.SymbolPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import icons.GradleIcons
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.model.ExternalProject
@@ -14,7 +14,7 @@ class GradleRootProjectSymbol(rootProjectPath: String) : GradleProjectSymbol(roo
 
   override val qualifiedName: String get() = rootProjectName
 
-  override fun getSymbolPresentation(): SymbolPresentation = rootProjectPresentation
+  override fun presentation(): TargetPresentation = rootProjectPresentation
 
   override fun externalProject(rootProject: ExternalProject): ExternalProject = rootProject
 
@@ -22,10 +22,9 @@ class GradleRootProjectSymbol(rootProjectPath: String) : GradleProjectSymbol(roo
 
     const val rootProjectName = ":"
 
-    private val rootProjectPresentation: SymbolPresentation = SymbolPresentation.create(
-      GradleIcons.Gradle,
-      rootProjectName,
-      GradleBundle.message("gradle.root.project")
-    )
+    private val rootProjectPresentation: TargetPresentation = TargetPresentation
+      .builder(GradleBundle.message("gradle.root.project"))
+      .icon(GradleIcons.Gradle)
+      .presentation()
   }
 }

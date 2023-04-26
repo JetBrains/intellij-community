@@ -10,9 +10,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JCEFHtmlPanel
+import com.intellij.util.net.NetUtils
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefRequestHandlerAdapter
+import org.cef.handler.CefResourceRequestHandler
+import org.cef.handler.CefResourceRequestHandlerAdapter
+import org.cef.misc.BoolRef
 import org.cef.network.CefRequest
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
@@ -20,6 +24,7 @@ import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.ui.preview.*
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.*
 import org.jetbrains.annotations.ApiStatus
+import java.net.URL
 import java.nio.file.Path
 
 class MarkdownJCEFHtmlPanel(
@@ -217,6 +222,25 @@ class MarkdownJCEFHtmlPanel(
   }
 
   private inner class MyFilteringRequestHandler: CefRequestHandlerAdapter() {
+    override fun getResourceRequestHandler(
+      browser: CefBrowser?,
+      frame: CefFrame?,
+      request: CefRequest,
+      isNavigation: Boolean,
+      isDownload: Boolean,
+      requestInitiator: String?,
+      disableDefaultHandling: BoolRef?
+    ): CefResourceRequestHandler? {
+      if (Registry.`is`("markdown.experimental.allow.external.requests", true)) {
+        return null
+      }
+      val url = runCatching { URL(request.url) }.getOrNull() ?: return null
+      if (!NetUtils.isLocalhost(url.host)) {
+        return ProhibitingResourceRequestHandler
+      }
+      return null
+    }
+
     override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, user_gesture: Boolean, is_redirect: Boolean): Boolean {
       if (request.resourceType == CefRequest.ResourceType.RT_CSP_REPORT) {
         logger.warn("""
@@ -263,5 +287,11 @@ class MarkdownJCEFHtmlPanel(
     private val baseStyles = emptyList<String>()
 
     private fun isOffScreenRendering(): Boolean = Registry.`is`("ide.browser.jcef.markdownView.osr.enabled")
+
+    private object ProhibitingResourceRequestHandler: CefResourceRequestHandlerAdapter() {
+      override fun onBeforeResourceLoad(browser: CefBrowser?, frame: CefFrame?, request: CefRequest): Boolean {
+        return true
+      }
+    }
   }
 }

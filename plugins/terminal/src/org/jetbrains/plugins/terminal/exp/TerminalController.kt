@@ -141,8 +141,7 @@ class TerminalController(private val model: TerminalModel,
   }
 
   private fun scrollY(cursorY: Int): Int {
-    model.lock()
-    return try {
+    return model.withContentLock {
       if (cursorY > scrollRegionBottom) {
         model.scrollArea(scrollRegionTop, scrollRegionBottom, scrollRegionBottom - cursorY)
         scrollRegionBottom
@@ -151,9 +150,6 @@ class TerminalController(private val model: TerminalModel,
         scrollRegionTop
       }
       else cursorY
-    }
-    finally {
-      model.unlock()
     }
   }
 
@@ -199,8 +195,7 @@ class TerminalController(private val model: TerminalModel,
   }
 
   private fun writeDecodedCharacters(chars: CharArray) {
-    model.lock()
-    try {
+    model.withContentLock {
       if (cursorYChanged && chars.isNotEmpty()) {
         cursorYChanged = false
         if (model.cursorY > 1) {
@@ -215,9 +210,6 @@ class TerminalController(private val model: TerminalModel,
         model.writeString(model.cursorX, newCursorY, characters)
         model.setCursor(model.cursorX + characters.size, newCursorY)
       }
-    }
-    finally {
-      model.unlock()
     }
   }
 
@@ -260,15 +252,11 @@ class TerminalController(private val model: TerminalModel,
     //Moves the cursor up one line in the same
     //column. If the cursor is at the top margin,
     //the page scrolls down.
-    model.lock()
-    try {
+    model.withContentLock {
       if (model.cursorY == scrollRegionTop) {
         model.scrollArea(scrollRegionTop, scrollRegionBottom, 1)
       }
       else model.setCursor(model.cursorX, model.cursorY - 1)
-    }
-    finally {
-      model.unlock()
     }
   }
 
@@ -276,8 +264,7 @@ class TerminalController(private val model: TerminalModel,
     //Moves the cursor down one line in the
     //same column. If the cursor is at the
     //bottom margin, the page scrolls up
-    model.lock()
-    try {
+    model.withContentLock {
       if (model.cursorY == scrollRegionBottom) {
         model.scrollArea(scrollRegionTop, scrollRegionBottom, -1)
       }
@@ -287,35 +274,24 @@ class TerminalController(private val model: TerminalModel,
         model.setCursor(newCursorX, newCursorY)
       }
     }
-    finally {
-      model.unlock()
-    }
   }
 
   override fun nextLine() {
-    model.lock()
-    try {
+    model.withContentLock {
       if (model.cursorY == scrollRegionBottom) {
         model.scrollArea(scrollRegionTop, scrollRegionBottom, -1)
         model.setCursor(0, model.cursorY)
       }
       else model.setCursor(0, model.cursorY + 1)
     }
-    finally {
-      model.unlock()
-    }
   }
 
   override fun fillScreen(c: Char) {
-    model.lock()
-    try {
+    model.withContentLock {
       val chars = adjustCharBuffer(CharArray(model.width) { c })
       for (row in 1..model.height) {
         model.writeString(0, row, chars)
       }
-    }
-    finally {
-      model.unlock()
     }
   }
 
@@ -395,12 +371,8 @@ class TerminalController(private val model: TerminalModel,
   }
 
   override fun scrollDown(count: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       model.scrollArea(scrollRegionTop, scrollRegionBottom, count)
-    }
-    finally {
-      model.unlock()
     }
   }
 
@@ -439,28 +411,20 @@ class TerminalController(private val model: TerminalModel,
   }
 
   override fun cursorUp(countY: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       cursorYChanged = true
       val cursorY = max(model.cursorY - countY, scrollingRegionTop())
       val cursorX = adjustX(model.cursorX, cursorY, -1)
       model.setCursor(cursorX, cursorY)
     }
-    finally {
-      model.unlock()
-    }
   }
 
   override fun cursorDown(dY: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       cursorYChanged = true
       val cursorY = min(model.cursorY + dY, scrollingRegionBottom())
       val cursorX = adjustX(model.cursorX, cursorY, -1)
       model.setCursor(cursorX, cursorY)
-    }
-    finally {
-      model.unlock()
     }
   }
 
@@ -481,8 +445,7 @@ class TerminalController(private val model: TerminalModel,
   }
 
   override fun eraseInLine(arg: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       when (arg) {
         0 -> {
           if (model.cursorX < model.width) {
@@ -499,18 +462,11 @@ class TerminalController(private val model: TerminalModel,
         else -> LOG.warn("Unsupported erase in line mode: $arg")
       }
     }
-    finally {
-      model.unlock()
-    }
   }
 
   override fun deleteCharacters(count: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       model.deleteCharacters(model.cursorX, model.cursorY - 1, count)
-    }
-    finally {
-      model.unlock()
     }
   }
 
@@ -519,8 +475,7 @@ class TerminalController(private val model: TerminalModel,
   override fun getTerminalHeight(): Int = model.height
 
   override fun eraseInDisplay(arg: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       val (beginY, endY) = when (arg) {
         0 -> {
           // Initial line
@@ -549,18 +504,11 @@ class TerminalController(private val model: TerminalModel,
         clearLines(beginY, endY)
       }
     }
-    finally {
-      model.unlock()
-    }
   }
 
   private fun clearLines(beginY: Int, endY: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       model.clearLines(beginY, endY)
-    }
-    finally {
-      model.unlock()
     }
   }
 
@@ -653,22 +601,14 @@ class TerminalController(private val model: TerminalModel,
   override fun getStyleState(): StyleState = model.styleState
 
   override fun insertLines(count: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       model.insertLines(model.cursorY - 1, count, scrollRegionBottom)
-    }
-    finally {
-      model.unlock()
     }
   }
 
   override fun deleteLines(count: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       model.deleteLines(model.cursorY - 1, count, scrollRegionBottom)
-    }
-    finally {
-      model.unlock()
     }
   }
 
@@ -679,23 +619,15 @@ class TerminalController(private val model: TerminalModel,
   override fun eraseCharacters(count: Int) {
     //Clear the next n characters on the cursor's line, including the cursor's
     //position.
-    model.lock()
-    try {
+    model.withContentLock {
       model.eraseCharacters(model.cursorX, model.cursorX + count, model.cursorY - 1)
-    }
-    finally {
-      model.unlock()
     }
   }
 
   override fun insertBlankCharacters(count: Int) {
-    model.lock()
-    try {
+    model.withContentLock {
       val extent = min(count, model.width - model.cursorX)
       model.insertBlankCharacters(model.cursorX, model.cursorY - 1, extent)
-    }
-    finally {
-      model.unlock()
     }
   }
 

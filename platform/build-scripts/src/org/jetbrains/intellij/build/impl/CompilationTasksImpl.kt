@@ -45,6 +45,17 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
     }
   }
 
+  override fun generateRuntimeModuleRepository() {
+    if (context.compilationData.runtimeModuleRepositoryGenerated) {
+      Span.current().addEvent("runtime module repository is already generated")
+    }
+    else {
+      spanBuilder("generate runtime module repository").useWithScope {
+        JpsCompilationRunner(context).generateRuntimeModuleRepository()
+      }
+    }
+  }
+
   override fun compileAllModulesAndTests() {
     compileModules(moduleNames = null, includingTestsInModules = null)
   }

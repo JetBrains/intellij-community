@@ -126,7 +126,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
       doMultiFileAutoImportTest("Import", fix -> {
         final List<ImportCandidateHolder> candidates = fix.getCandidates();
         final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText());
-        assertSameElements(names, "os.path.commonpath()");
+        assertSameElements(names, "os.path.commonpath");
         return true;
       });
     };
@@ -224,7 +224,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   public void testExistingImportsAlwaysSuggestedFirstEvenIfNonProject() {
     doMultiFileAutoImportTest("Import", quickfix -> {
       final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText());
-      assertOrderedEquals(candidates, "datetime(date) from datetime", "mod.datetime");
+      assertOrderedEquals(candidates, "datetime from datetime", "mod.datetime");
       return false;
     });
   }
@@ -247,7 +247,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   // PY-20100
   public void testAlwaysSplitFromImports() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
-    doMultiFileAutoImportTest("Import 'mod.bar()'");
+    doMultiFileAutoImportTest("Import 'mod.bar'");
   }
 
   // PY-20976
@@ -260,7 +260,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
           "os/path.py",
           "",
           (___) -> doTestProposedImportsOrdering(
-            "path from sys", "first.path", "first.second.path()", "os.path", "first._third.path")
+            "path from sys", "first.path", "first.second.path", "os.path", "first._third.path")
         )
     );
   }
@@ -285,7 +285,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-20976
   public void testOrderingSymbolBeforeModule() {
-    doTestProposedImportsOrdering("first.module.foo()", "first.a.foo");
+    doTestProposedImportsOrdering("first.module.foo", "first.a.foo");
   }
 
   // PY-20976

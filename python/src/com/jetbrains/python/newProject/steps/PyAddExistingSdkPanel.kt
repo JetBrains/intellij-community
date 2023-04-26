@@ -2,6 +2,7 @@
 package com.jetbrains.python.newProject.steps
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -24,9 +25,11 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PyProjectSynchronizerProvider
 import com.jetbrains.python.remote.PythonSshInterpreterManager
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.targetEnvConfiguration
 import com.jetbrains.python.sdk.sdkSeemsValid
 import java.awt.BorderLayout
 import java.awt.Component
@@ -78,7 +81,8 @@ class PyAddExistingSdkPanel(project: Project?,
 
   init {
     layout = BorderLayout()
-    val sdksForNewProject = existingSdks.filter { it.associatedModulePath == null }
+    val sdksForNewProject = existingSdks.filter { it.associatedModulePath == null &&
+                                                  !needAssociateConfigurationWithModule(it.targetEnvConfiguration) }
     val interpreterComponent: JComponent
     if (Registry.`is`("python.use.targets.api")) {
       val preselectedSdk = sdksForNewProject.firstOrNull { it == preferredSdk }
@@ -114,6 +118,11 @@ class PyAddExistingSdkPanel(project: Project?,
       .panel
     add(formPanel, BorderLayout.NORTH)
     update()
+  }
+
+  private fun needAssociateConfigurationWithModule(configuration: TargetEnvironmentConfiguration?): Boolean {
+    if (configuration == null) return false
+    return PythonInterpreterTargetEnvironmentFactory.by(configuration)?.needAssociateWithModule() ?: false
   }
 
   override fun validateAll(): List<ValidationInfo> =

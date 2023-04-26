@@ -7864,6 +7864,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/functionReference5.kt");
                 }
 
+                @TestMetadata("implicitToExplicit.kt")
+                public void testImplicitToExplicit() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/implicitToExplicit.kt");
+                }
+
                 @TestMetadata("keepInUserCodeRuntime.kt")
                 public void testKeepInUserCodeRuntime() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/keepInUserCodeRuntime.kt");
@@ -10357,6 +10362,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/modifiers/openMemberInFinalClass4.kt");
             }
 
+            @TestMetadata("openMemberInObject.kt")
+            public void testOpenMemberInObject() throws Exception {
+                runTest("testData/quickfix/modifiers/openMemberInObject.kt");
+            }
+
             @TestMetadata("openModifierInEnum.kt")
             public void testOpenModifierInEnum() throws Exception {
                 runTest("testData/quickfix/modifiers/openModifierInEnum.kt");
@@ -10984,6 +10994,71 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("override.kt")
         public void testOverride() throws Exception {
             runTest("testData/quickfix/optIn/override.kt");
+        }
+
+        @TestMetadata("propagateOptIn.kt")
+        public void testPropagateOptIn() throws Exception {
+            runTest("testData/quickfix/optIn/propagateOptIn.kt");
+        }
+
+        @TestMetadata("propagateOptIn2.kt")
+        public void testPropagateOptIn2() throws Exception {
+            runTest("testData/quickfix/optIn/propagateOptIn2.kt");
+        }
+
+        @TestMetadata("propagateOptIn3.kt")
+        public void testPropagateOptIn3() throws Exception {
+            runTest("testData/quickfix/optIn/propagateOptIn3.kt");
+        }
+
+        @TestMetadata("propagateOptIn4.kt")
+        public void testPropagateOptIn4() throws Exception {
+            runTest("testData/quickfix/optIn/propagateOptIn4.kt");
+        }
+
+        @TestMetadata("propagateOptIn5.kt")
+        public void testPropagateOptIn5() throws Exception {
+            runTest("testData/quickfix/optIn/propagateOptIn5.kt");
+        }
+
+        @TestMetadata("propagateOptIn6.kt")
+        public void testPropagateOptIn6() throws Exception {
+            runTest("testData/quickfix/optIn/propagateOptIn6.kt");
+        }
+
+        @TestMetadata("propagateOptIn7.kt")
+        public void testPropagateOptIn7() throws Exception {
+            runTest("testData/quickfix/optIn/propagateOptIn7.kt");
+        }
+
+        @TestMetadata("propagateOptIn8.kt")
+        public void testPropagateOptIn8() throws Exception {
+            runTest("testData/quickfix/optIn/propagateOptIn8.kt");
+        }
+
+        @TestMetadata("propagateSubclassOptInRequired.kt")
+        public void testPropagateSubclassOptInRequired() throws Exception {
+            runTest("testData/quickfix/optIn/propagateSubclassOptInRequired.kt");
+        }
+
+        @TestMetadata("propagateSubclassOptInRequired2.kt")
+        public void testPropagateSubclassOptInRequired2() throws Exception {
+            runTest("testData/quickfix/optIn/propagateSubclassOptInRequired2.kt");
+        }
+
+        @TestMetadata("propagateSubclassOptInRequired3.kt")
+        public void testPropagateSubclassOptInRequired3() throws Exception {
+            runTest("testData/quickfix/optIn/propagateSubclassOptInRequired3.kt");
+        }
+
+        @TestMetadata("propagateSubclassOptInRequired4.kt")
+        public void testPropagateSubclassOptInRequired4() throws Exception {
+            runTest("testData/quickfix/optIn/propagateSubclassOptInRequired4.kt");
+        }
+
+        @TestMetadata("propagateSubclassOptInRequired5.kt")
+        public void testPropagateSubclassOptInRequired5() throws Exception {
+            runTest("testData/quickfix/optIn/propagateSubclassOptInRequired5.kt");
         }
 
         @TestMetadata("propertyInConstructor.kt")
@@ -12616,6 +12691,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/reorderParameters/simple.kt");
+        }
+
+        @TestMetadata("withUnchangedParameter.kt")
+        public void testWithUnchangedParameter() throws Exception {
+            runTest("testData/quickfix/reorderParameters/withUnchangedParameter.kt");
+        }
+
+        @TestMetadata("withUnchangedParameter2.kt")
+        public void testWithUnchangedParameter2() throws Exception {
+            runTest("testData/quickfix/reorderParameters/withUnchangedParameter2.kt");
         }
     }
 

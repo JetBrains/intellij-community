@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
+
 package com.intellij.ide.plugins
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -37,6 +38,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProv
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.EdtRule
@@ -54,6 +56,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.random.Random
 
 @RunsInEdt
 class DynamicPluginsTest {
@@ -812,7 +815,72 @@ class DynamicPluginsTest {
     pluginDescriptor.depends(dependsOn.id, optionalDependencyDescriptor)
     return loadPluginWithText(pluginDescriptor)
   }
+
+  @Test
+  fun `registry access of key from same plugin`() {
+    /**
+     * This is a tricky one & possibly flaky. The point here is to make sure that registry keys, that are declared in the same config,
+     * are initialized before other extensions: there might be tricky cases of extension point listeners triggering some plugin's internal
+     * logic that tries to access the registry.
+     * See https://youtrack.jetbrains.com/issue/IDEA-254324
+     *
+     * So the problem in the current implementation is that extensions are initialized in an order that
+     * HashMap<String (extension point name), Collection<ExtensionDescriptor>> gives. So if there is an extension point with such a name
+     * that precedes com.intellij.registryKey in this map, it will be initialized before the registry keys.
+     *
+     * This scenario might become obsolete if HashMap implementation changes so that the order of keys changes or if plugin initialization
+     * code changes. This test breaks as of revision 6be3a648dd07e4f675d40ab9553709446b06717c.
+     */
+    val rnd = Random(239)
+    val pool: List<Char> = ('a'..'z') + ('A'..'Z')
+
+    val idParent = "test.batya"
+    val antiHashMapKeys = listOf(
+      "roGjzgGTyI", // this one goes before com.intellij.registryKey
+      "OMEBtHDTCw" // this one goes after com.intellij.registryKey, so the test is green in this case
+    ) + (0..10).map { (0 until 10).map { pool.random(rnd) }.joinToString("") }
+
+    for (antiHashMap in antiHashMapKeys) {
+      val parentPlugin = PluginBuilder()
+        .id(idParent)
+        .extensionPoints("""<extensionPoint qualifiedName="$idParent.$antiHashMap" interface="java.lang.Runnable" dynamic="true"/>""")
+
+      val id = "test.plugin"
+      loadPluginWithText(parentPlugin).use {
+        val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint<Runnable>("$idParent.$antiHashMap")
+        ep.addChangeListener({ ep.extensionList.forEach(Runnable::run) }, it)
+        val plugin = PluginBuilder()
+          .id(id)
+          .depends(parentPlugin.id)
+          .extensions("""<registryKey key="test.plugin.registry.key" defaultValue="true" description="sample text"/>""")
+          .extensions("""<$antiHashMap implementation="${MyServiceAccessor::class.java.name}"/>""", idParent)
+          .extensions("""<applicationService serviceImplementation="${MyRegistryAccessor::class.java.name}"/>""")
+
+        loadPluginWithText(plugin).use {
+          check(service<MyRegistryAccessor>().invocations == 1)
+        }
+      }
+    }
+  }
 }
+
+@InternalIgnoreDependencyViolation
+private class MyServiceAccessor : Runnable {
+  override fun run() {
+    service<MyRegistryAccessor>().accessRegistry()
+  }
+}
+
+private class MyRegistryAccessor {
+  var invocations: Int = 0
+
+  fun accessRegistry() {
+    @Suppress("UnresolvedPluginConfigReference")
+    check(Registry.get("test.plugin.registry.key").asBoolean())
+    invocations++
+  }
+}
+
 
 private class MyUISettingsListener : UISettingsListener {
   override fun uiSettingsChanged(uiSettings: UISettings) {

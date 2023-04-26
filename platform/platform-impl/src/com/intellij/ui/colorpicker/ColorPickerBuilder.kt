@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.JBColor
 import com.intellij.ui.picker.ColorListener
-import com.intellij.util.Function
+import com.intellij.ui.picker.ColorPickerPopupCloseListener
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.Component
@@ -53,6 +53,7 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false, private val sho
   private var focusedComponentIndex = -1
   private val actionMap = mutableMapOf<KeyStroke, Action>()
   private val colorListeners = mutableListOf<ColorListenerInfo>()
+  private var popupCloseListener: ColorPickerPopupCloseListener? = null
 
   fun setOriginalColor(originalColor: Color?) = apply { this.originalColor = originalColor }
 
@@ -122,6 +123,10 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false, private val sho
     colorListeners.add(ColorListenerInfo(colorListener, invokeOnEveryColorChange))
   }
 
+  fun setPopupCloseListener(popupCloseListener: ColorPickerPopupCloseListener?) {
+    this.popupCloseListener = popupCloseListener
+  }
+
   fun build(): LightCalloutPopup {
     if (componentsToBuild.isEmpty()) {
       throw IllegalStateException("The Color Picker should have at least one picking component.")
@@ -172,8 +177,14 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false, private val sho
     colorListeners.forEach { model.addListener(it.colorListener, it.invokeOnEveryColorChange) }
 
     return LightCalloutPopup(panel,
-                             closedCallback = { model.onClose() },
-                             cancelCallBack = { model.onCancel() })
+                             closedCallback = {
+                               model.onClose()
+                               popupCloseListener?.onPopupClosed()
+                             },
+                             cancelCallBack = {
+                               model.onCancel()
+                               popupCloseListener?.onPopupClosed()
+                             })
   }
 }
 

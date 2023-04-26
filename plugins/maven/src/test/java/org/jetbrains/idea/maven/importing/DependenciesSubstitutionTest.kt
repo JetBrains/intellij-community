@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectResolver
 import org.junit.Test
@@ -58,7 +58,7 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
     val files = listOf(file)
 
     myProjectsManager.initForTests()
-    myProjectResolver = MavenProjectResolver(getProjectsTree())
+    myProjectResolver = MavenProjectResolver.getInstance(myProject)
 
     myProjectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles(emptyList(), emptyList()), null)
 

@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Register via {@link TextEditorHighlightingPassFactoryRegistrar}.
+ * <p>
+ * Implement {@link com.intellij.openapi.project.DumbAware} to allow creating {@link HighlightingPass} during index updates
  */
 public interface TextEditorHighlightingPassFactory {
   /**

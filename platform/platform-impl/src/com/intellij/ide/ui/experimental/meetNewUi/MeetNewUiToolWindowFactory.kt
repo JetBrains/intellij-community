@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.meetNewUi
 
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
@@ -13,14 +13,13 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
 
-class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
-
+private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun isApplicable(project: Project): Boolean {
     return ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.meetNewUi")
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    val title = IdeBundle.message("meetnewui.toolwindow.title", ApplicationNamesInfo.getInstance().fullProductName)
+    val title = IdeBundle.message("meetnewui.toolwindow.title")
     toolWindow.title = title
     toolWindow.stripeTitle = title
     val contentManager = toolWindow.contentManager
@@ -29,6 +28,8 @@ class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun init(toolWindow: ToolWindow) {
+    toolWindow.setIcon(ExpUiIcons.Toolwindow.MeetNewUi)
+
     val project = toolWindow.project
     val propertiesComponent = PropertiesComponent.getInstance()
     if (isNotificationSilentMode(project) || !propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH)) {

@@ -8,8 +8,10 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSetting
 import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -41,13 +43,13 @@ public final class StatisticsUploadAssistant {
     }
 
     UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    return !isDisableCollectStatistics() && !getForceDisableCollectionOverride() &&
+    return !isDisableCollectStatistics() && !isCollectionForceDisabled() &&
            ((settings != null && settings.isAllowed()) || isLocalStatisticsWithoutReport());
   }
 
   private static boolean isForceCollectEnabled() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    return externalEventLogSettings != null && externalEventLogSettings.forceCollectionWithoutRecord();
+    return externalEventLogSettings != null && externalEventLogSettings.forceLoggingAlwaysEnabled();
   }
 
   public static boolean isCollectAllowedOrForced() {
@@ -75,9 +77,15 @@ public final class StatisticsUploadAssistant {
     return externalEventLogSettings != null && externalEventLogSettings.isCollectAllowedOverride();
   }
 
-  private static boolean getForceDisableCollectionOverride() {
+  public static boolean isCollectionForceDisabled() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     return externalEventLogSettings != null && externalEventLogSettings.forceDisableCollectionConsent();
+  }
+
+  @NlsContexts.DetailedDescription
+  public static @Nullable String getConsentWarning() {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    return externalEventLogSettings == null ? null : externalEventLogSettings.getConsentWarning();
   }
 
   private static boolean isHeadlessStatisticsEnabled() {

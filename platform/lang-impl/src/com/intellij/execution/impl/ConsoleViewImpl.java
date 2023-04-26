@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.impl;
 
@@ -588,7 +588,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected void disposeEditor() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       Editor editor = getEditor();
       if (!editor.isDisposed()) {
         EditorFactory.getInstance().releaseEditor(editor);
@@ -812,7 +812,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public Object getData(@NotNull String dataId) {
-    Editor editor = getEditor();
+    EditorEx editor = (EditorEx)getEditor();
     if (editor == null) {
       return null;
     }
@@ -835,6 +835,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
       return this;
     }
+    if (CommonDataKeys.CARET.is(dataId)) {
+      return editor.getCaretModel().getCurrentCaret();
+    }
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return editor.getCopyProvider();
+    }
+
     return null;
   }
 

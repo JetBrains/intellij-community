@@ -121,38 +121,26 @@ public abstract class SubstrateRef {
 
     @Override
     public boolean isValid() {
-      StubElement<?> parent = myStub.getParentStub();
-      if (parent == null) {
-        reportInvalidStubHierarchyError(myStub);
-        return false;
-      }
-      PsiElement psi = parent.getPsi();
+      PsiFileStub<?> fileStub = myStub.getContainingFileStub();
+      if (fileStub == null) return false;
+      PsiFile psi = fileStub.getPsi();
       return psi != null && psi.isValid();
     }
 
     @NotNull
     @Override
     public PsiFile getContainingFile() {
-      StubElement<?> stub = myStub;
-      while (!(stub instanceof PsiFileStub)) {
-        StubElement<?> parentStub = stub.getParentStub();
-        if (parentStub == null) {
-          return reportInvalidStubHierarchyError(stub);
-        }
-        stub = parentStub;
+      PsiFileStub<?> stub = myStub.getContainingFileStub();
+      if (stub == null) {
+        throw new PsiInvalidElementAccessException(myStub.getPsi(),
+                                                   "stub hierarchy is invalid: " + this + " (" + getClass() + ")" +
+                                                   " has null containing file stub", null);
       }
-      PsiFile psi = (PsiFile)stub.getPsi();
+      PsiFile psi = stub.getPsi();
       if (psi != null) {
         return psi;
       }
-      return reportFileInvalidError((PsiFileStub<?>)stub);
-    }
-
-    private PsiFile reportInvalidStubHierarchyError(@NotNull StubElement<?> stub) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-      throw new PsiInvalidElementAccessException(myStub.getPsi(),
-                                                 "stub hierarchy is invalid: the parent of " + stub + " (" + stub.getClass() + ")" +
-                                                 " is null, even though it's not a PsiFileStub", null);
+      return reportFileInvalidError(stub);
     }
 
     private PsiFile reportFileInvalidError(@NotNull PsiFileStub<?> stub) {

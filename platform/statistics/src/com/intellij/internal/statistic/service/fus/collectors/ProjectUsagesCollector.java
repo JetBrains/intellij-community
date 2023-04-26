@@ -69,7 +69,7 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
    */
   public @NotNull CancellablePromise<? extends Set<MetricEvent>> getMetrics(@NotNull Project project, @Nullable ProgressIndicator indicator) {
     if (requiresReadAccess()) {
-      NonBlockingReadAction<Set<MetricEvent>> action = ReadAction.nonBlocking(() -> getMetrics(project));
+      NonBlockingReadAction<Set<MetricEvent>> action = ReadAction.nonBlocking(() -> project.isDisposed() ? Collections.emptySet() : getMetrics(project));
       if (indicator != null) {
         action = action.wrapProgress(indicator);
       }

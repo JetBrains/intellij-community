@@ -430,20 +430,6 @@ public class XPathEvalAction extends XPathAction {
         public ItemPresentation getPresentation() {
             return myItemPresentation;
         }
-
-        @Override
-        public void navigate(boolean requestFocus) {
-        }
-
-        @Override
-        public boolean canNavigate() {
-            return false;
-        }
-
-        @Override
-        public boolean canNavigateToSource() {
-            return false;
-        }
     }
 
     private static class MyUsageSearcher implements UsageSearcher {

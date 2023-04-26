@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.facet.FacetManager
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
-import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -86,7 +86,7 @@ fun Project.waitIndexingComplete(indexingReason: String? = null) {
 fun closeAndDeleteProject() = LightPlatformTestCase.closeAndDeleteProject()
 
 fun invalidateLibraryCache(project: Project) {
-    LibraryModificationTracker.getInstance(project).incModificationCount()
+    JavaLibraryModificationTracker.incModificationCount(project)
 }
 
 fun Document.extractMarkerOffset(project: Project, caretMarker: String = "<caret>"): Int {

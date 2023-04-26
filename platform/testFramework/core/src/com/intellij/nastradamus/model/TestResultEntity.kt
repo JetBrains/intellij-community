@@ -27,9 +27,6 @@ data class TestResultEntity(
   val runOrder: Int,
   val duration: Long, // in milliseconds
 
-  @JsonProperty("build_type")
-  val buildType: String,
-
   @JsonProperty("build_status_message")
   val buildStatusMessage: String,
 

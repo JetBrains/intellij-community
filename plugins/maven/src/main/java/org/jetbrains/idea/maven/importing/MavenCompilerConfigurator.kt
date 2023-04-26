@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.build.events.MessageEvent
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
@@ -12,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.text.nullize
@@ -47,13 +45,12 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
   override fun resolve(project: Project,
                        mavenProject: MavenProject,
                        nativeMavenProject: NativeMavenProjectHolder,
-                       embedder: MavenEmbedderWrapper,
-                       context: ResolveContext) {
+                       embedder: MavenEmbedderWrapper) {
     if (!super.isApplicable(mavenProject)) return
     if (!Registry.`is`("maven.import.compiler.arguments", true) ||  !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return
 
     val defaultCompilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
-      it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder, context)
+      it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder)
     }
     if (project.getUserData(DEFAULT_COMPILER_EXTENSION) == null) {
       project.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)

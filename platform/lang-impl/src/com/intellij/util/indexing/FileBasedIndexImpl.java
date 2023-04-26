@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.google.common.collect.Iterators;
 import com.intellij.AppTopics;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -145,7 +146,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final SimpleMessageBusConnection myConnection;
   private final FileDocumentManager myFileDocumentManager;
 
-  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = ContainerUtil.newConcurrentSet();
+  private final Set<ID<?, ?>> myUpToDateIndicesForUnsavedOrTransactedDocuments = ConcurrentCollectionFactory.createConcurrentSet();
   private volatile SmartFMap<Document, PsiFile> myTransactionMap = SmartFMap.emptyMap();
 
   final boolean myIsUnitTestMode;
@@ -643,7 +644,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           dirtyFileIds.add(fileId);
         }
         dirtyFileIds.addAll(myStaleIds);
-        PersistentDirtyFilesQueue.INSTANCE.storeIndexingQueue(dirtyFileIds);
+        PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), dirtyFileIds, ManagingFS.getInstance().getCreationTimestamp());
         getChangedFilesCollector().clearFilesToUpdate();
 
         IndexingStamp.flushCaches();
@@ -1499,7 +1500,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         boolean shouldClearAllIndexedStates = fc == null;
         for (ID<?, ?> indexId : currentIndexedStates) {
           ProgressManager.checkCanceled();
-          if (shouldClearAllIndexedStates || getIndex(indexId).getIndexingStateForFile(inputId, fc).updateRequired()) {
+          if (shouldClearAllIndexedStates || shouldIndexFile(fc, indexId).updateRequired()) {
             ProgressManager.checkCanceled();
             SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fc, inputId, writeIndexSeparately);
             if (remover == null) {
@@ -1679,8 +1680,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  @ApiStatus.Internal
   @Nullable("null in case index value removal is not necessary or immediate removal failed")
-  private SingleIndexValueRemover createSingleIndexRemover(@NotNull ID<?, ?> indexId,
+  SingleIndexValueRemover createSingleIndexRemover(@NotNull ID<?, ?> indexId,
                                                            @Nullable VirtualFile file,
                                                            @Nullable FileContent fileContent,
                                                            int inputId,

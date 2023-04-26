@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.ComponentListPanelFactory
-import com.intellij.collaboration.ui.SimpleHtmlPane
-import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -15,8 +12,8 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindChild
-import com.intellij.collaboration.ui.util.bindEnabled
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -81,8 +78,8 @@ object GitLabMergeRequestTimelineComponentFactory {
       add(timelinePanel)
     }
 
-    panel.bindChild(cs, vm.newNoteVm, null) { noteCs, editVm ->
-      editVm?.let { createNewNoteField(project, avatarIconsProvider, noteCs, it) }
+    panel.bindChildIn(cs, vm.newNoteVm, null) { editVm ->
+      editVm?.let { createNewNoteField(project, avatarIconsProvider, it) }
     }
 
     return ScrollPaneFactory.createScrollPane(panel, true).apply {
@@ -124,14 +121,14 @@ object GitLabMergeRequestTimelineComponentFactory {
     }
   }
 
-  private fun createNewNoteField(project: Project,
-                                 iconsProvider: IconsProvider<GitLabUserDTO>,
-                                 noteCs: CoroutineScope,
-                                 editVm: NewGitLabNoteViewModel): JComponent {
+  private fun CoroutineScope.createNewNoteField(project: Project,
+                                                iconsProvider: IconsProvider<GitLabUserDTO>,
+                                                editVm: NewGitLabNoteViewModel): JComponent {
+    val noteCs = this
     val submitAction = swingAction(CollaborationToolsBundle.message("review.comments.reply.action")) {
       editVm.submit()
     }.apply {
-      bindEnabled(noteCs, editVm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
+      bindEnabledIn(noteCs, editVm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
     }
 
     val actions = CommentInputActionsComponentFactory.Config(
@@ -199,7 +196,9 @@ object GitLabMergeRequestTimelineComponentFactory {
     StyleSheetUtil.loadStyleSheet("""ul {margin: 0}""")
   }
 
-  private fun createCommitsListPane(commits: @NlsSafe String) = SimpleHtmlPane(noUlGapsStyleSheet, commits)
+  private fun createCommitsListPane(commits: @NlsSafe String) = SimpleHtmlPane(noUlGapsStyleSheet).apply {
+    setHtmlBody(commits)
+  }
 
   private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItem.LabelEvent): JComponent {
     val text = when (item.event.actionEnum) {

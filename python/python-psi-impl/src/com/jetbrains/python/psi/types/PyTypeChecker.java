@@ -766,7 +766,7 @@ public final class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type, boolean genericsAreUnknown, @NotNull TypeEvalContext context) {
-    if (type == null || (genericsAreUnknown && type instanceof PyGenericType)) {
+    if (type == null || (genericsAreUnknown && type instanceof PyTypeParameterType)) {
       return true;
     }
     if (type instanceof PyFunctionType) {

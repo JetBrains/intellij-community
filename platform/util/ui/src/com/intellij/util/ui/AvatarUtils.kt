@@ -17,27 +17,31 @@ class AvatarIcon(private val targetSize: Int,
                  private val gradientSeed: String,
                  private val avatarName: String,
                  private val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
-  private var myCachedImage: BufferedImage? = null
-  private var myCachedImageScale: Double? = null
+  private var cachedImage: BufferedImage? = null
+  private var cachedImageScale: Double? = null
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     g as Graphics2D
     val iconSize = getIconSize()
     val scale = g.transform.scaleX
-
-    if (scale != myCachedImageScale) {
-      myCachedImage = null
+    if (scale != cachedImageScale) {
+      cachedImage = null
     }
 
-    var cachedImage = myCachedImage
+    var cachedImage = cachedImage
     if (cachedImage == null) {
-      cachedImage = generateColoredAvatar(g.deviceConfiguration, iconSize, arcRatio, gradientSeed, avatarName, palette)
-      myCachedImage = cachedImage
-      myCachedImageScale = scale
+      cachedImage = generateColoredAvatar(gc = g.deviceConfiguration,
+                                          size = iconSize,
+                                          arcRatio = arcRatio,
+                                          gradientSeed = gradientSeed,
+                                          name = avatarName,
+                                          palette = palette)
+      this.cachedImage = cachedImage
+      cachedImageScale = scale
     }
 
     withTxAndClipAligned(g, x, y, cachedImage.width, cachedImage.height) { gg ->
-      UIUtil.drawImage(gg, cachedImage, 0, 0, null)
+      drawImage(g = gg, image = cachedImage)
     }
   }
 
@@ -59,8 +63,9 @@ object AvatarUtils {
                             name: String,
                             size: Int = 64,
                             arcRatio: Double = 0.0,
-                            palette: ColorPalette = AvatarPalette): BufferedImage =
-    generateColoredAvatar(null, size, arcRatio, gradientSeed, name, palette)
+                            palette: ColorPalette = AvatarPalette): BufferedImage {
+    return generateColoredAvatar(null, size, arcRatio, gradientSeed, name, palette)
+  }
 
   internal fun generateColoredAvatar(gc: GraphicsConfiguration?,
                                      size: Int,
@@ -120,53 +125,51 @@ internal object Avatars {
         .joinToString("").uppercase()
   }
 
-  private fun generateFromCamelCase(text: String) =
-    text.filterIndexed { index, c -> index == 0 || c.isUpperCase() }
+  private fun generateFromCamelCase(text: String): String {
+    return text.filterIndexed { index, c -> index == 0 || c.isUpperCase() }
       .take(2)
       .uppercase()
+  }
 
   fun initials(firstName: String, lastName: String): String {
     return listOf(firstName, lastName).joinToString("") { it.first().toString() }
   }
 }
 
-abstract class ColorPalette {
-
-  abstract val gradients: Array<Pair<Color, Color>>
+interface ColorPalette {
+  val gradients: Array<Pair<Color, Color>>
 
   fun gradient(seed: String? = null): Pair<Color, Color> {
-    val keyCode = if (seed != null) {
-      abs(seed.hashCode()) % gradients.size
-    }
-    else 0
+    val keyCode = if (seed == null) 0 else abs(seed.hashCode()) % gradients.size
     return gradients[keyCode]
   }
 }
 
-object AvatarPalette : ColorPalette() {
-
+private object AvatarPalette : ColorPalette {
   override val gradients: Array<Pair<Color, Color>>
-    get() = arrayOf(
-      Color(0x60A800) to Color(0xD5CA00),
-      Color(0x0A81F6) to Color(0x0A81F6),
-      Color(0xAB3AF2) to Color(0xE40568),
-      Color(0x21D370) to Color(0x03E9E1),
-      Color(0x765AF8) to Color(0x5A91F8),
-      Color(0x9F2AFF) to Color(0xE9A80B),
-      Color(0x3BA1FF) to Color(0x36E97D),
-      Color(0x9E54FF) to Color(0x0ACFF6),
-      Color(0xD50F6B) to Color(0xE73AE8),
-      Color(0x00C243) to Color(0x00FFFF),
-      Color(0xB345F1) to Color(0x669DFF),
-      Color(0xED5502) to Color(0xE73AE8),
-      Color(0x4BE098) to Color(0x627FFF),
-      Color(0x765AF8) to Color(0xC059EE),
-      Color(0xED358C) to Color(0xDBED18),
-      Color(0x168BFA) to Color(0x26F7C7),
-      Color(0x9039D0) to Color(0xC239D0),
-      Color(0xED358C) to Color(0xF9902E),
-      Color(0x9D4CFF) to Color(0x39D3C3),
-      Color(0x9F2AFF) to Color(0xFD56FD),
-      Color(0xFF7500) to Color(0xFFCA00)
-    )
+    get() {
+      return arrayOf(
+        Color(0x60A800) to Color(0xD5CA00),
+        Color(0x0A81F6) to Color(0x0A81F6),
+        Color(0xAB3AF2) to Color(0xE40568),
+        Color(0x21D370) to Color(0x03E9E1),
+        Color(0x765AF8) to Color(0x5A91F8),
+        Color(0x9F2AFF) to Color(0xE9A80B),
+        Color(0x3BA1FF) to Color(0x36E97D),
+        Color(0x9E54FF) to Color(0x0ACFF6),
+        Color(0xD50F6B) to Color(0xE73AE8),
+        Color(0x00C243) to Color(0x00FFFF),
+        Color(0xB345F1) to Color(0x669DFF),
+        Color(0xED5502) to Color(0xE73AE8),
+        Color(0x4BE098) to Color(0x627FFF),
+        Color(0x765AF8) to Color(0xC059EE),
+        Color(0xED358C) to Color(0xDBED18),
+        Color(0x168BFA) to Color(0x26F7C7),
+        Color(0x9039D0) to Color(0xC239D0),
+        Color(0xED358C) to Color(0xF9902E),
+        Color(0x9D4CFF) to Color(0x39D3C3),
+        Color(0x9F2AFF) to Color(0xFD56FD),
+        Color(0xFF7500) to Color(0xFFCA00)
+      )
+    }
 }

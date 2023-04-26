@@ -4,10 +4,10 @@ package com.intellij.lang.documentation.symbol.impl
 import com.intellij.model.Symbol
 import com.intellij.model.psi.impl.targetSymbols
 import com.intellij.openapi.project.Project
-import com.intellij.platform.documentation.DocumentationSymbol
-import com.intellij.platform.documentation.DocumentationTarget
-import com.intellij.platform.documentation.DocumentationTargetProvider
-import com.intellij.platform.documentation.SymbolDocumentationTargetProvider
+import com.intellij.platform.backend.documentation.DocumentationSymbol
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationTargetProvider
+import com.intellij.platform.backend.documentation.SymbolDocumentationTargetProvider
 import com.intellij.psi.PsiFile
 
 /**

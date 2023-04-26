@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
+import java.nio.charset.StandardCharsets
+import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
@@ -18,8 +20,10 @@ class ShellCommandManager(terminal: Terminal) {
   init {
     terminal.addCustomCommandListener(TerminalCustomCommandListener {
       when (it.getOrNull(0)) {
+        "initialized" -> fireInitialized()
         "command_started" -> processCommandStartedEvent(it)
         "command_finished" -> processCommandFinishedEvent(it)
+        "command_history" -> processCommandHistoryEvent(it)
       }
     })
   }
@@ -29,8 +33,9 @@ class ShellCommandManager(terminal: Terminal) {
     val currentDirectory = event.getOrNull(2)
     if (command != null && command.startsWith("command=") &&
         currentDirectory != null && currentDirectory.startsWith("current_directory=")) {
-      val commandRun = CommandRun(System.nanoTime(), currentDirectory.removePrefix("current_directory="),
-                                  command.removePrefix("command="))
+      val commandRun = CommandRun(System.nanoTime(),
+                                  decodeHex(currentDirectory.removePrefix("current_directory=")),
+                                  decodeHex(command.removePrefix("command=")))
       this.commandRun = commandRun
       fireCommandStarted(commandRun)
     }
@@ -49,7 +54,7 @@ class ShellCommandManager(terminal: Terminal) {
       }
       val commandRun = this.commandRun
       if (commandRun != null) {
-        val newDirectory = currentDirectoryField.removePrefix("current_directory=")
+        val newDirectory = decodeHex(currentDirectoryField.removePrefix("current_directory="))
         if (commandRun.workingDirectory != newDirectory) {
           fireDirectoryChanged(newDirectory)
         }
@@ -58,21 +63,37 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
+  private fun processCommandHistoryEvent(event: List<String>) {
+    val history = event.getOrNull(1)
+    if (history != null && history.startsWith("history_string=")) {
+      fireCommandHistoryReceived(decodeHex(history.removePrefix("history_string=")))
+    }
+  }
+
+  private fun fireInitialized() {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: initialized")
+    }
+    for (listener in listeners) {
+      listener.initialized()
+    }
+  }
+
   private fun fireCommandStarted(commandRun: CommandRun) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: command_started - $commandRun")
+    }
     for (listener in listeners) {
       listener.commandStarted(commandRun.command)
-    }
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Started $commandRun")
     }
   }
 
   private fun fireCommandFinished(commandRun: CommandRun, exitCode: Int) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: command_finished - $commandRun, exit code: $exitCode")
+    }
     for (listener in listeners) {
       listener.commandFinished(commandRun.command, exitCode, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - commandRun.commandStartedNano))
-    }
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Finished $commandRun, exit code: $exitCode")
     }
   }
 
@@ -85,11 +106,27 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
-  fun addListener(listener: ShellCommandListener, parentDisposable: Disposable) {
-    listeners.add(listener)
-    Disposer.register(parentDisposable) {
-      listeners.remove(listener)
+  private fun fireCommandHistoryReceived(history: String) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Shell event: command_history of ${history.length} size")
     }
+    for (listener in listeners) {
+      listener.commandHistoryReceived(history)
+    }
+  }
+
+  fun addListener(listener: ShellCommandListener, parentDisposable: Disposable? = null) {
+    listeners.add(listener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) {
+        listeners.remove(listener)
+      }
+    }
+  }
+
+  private fun decodeHex(hexStr: String): String {
+    val bytes = HexFormat.of().parseHex(hexStr)
+    return String(bytes, StandardCharsets.UTF_8)
   }
 
   companion object {
@@ -98,11 +135,17 @@ class ShellCommandManager(terminal: Terminal) {
 }
 
 interface ShellCommandListener {
+  /** Fired before the first prompt is printed */
+  fun initialized() {}
+
   fun commandStarted(command: String) {}
 
+  /** Fired after command is executed and before prompt is printed */
   fun commandFinished(command: String, exitCode: Int, duration: Long) {}
 
   fun directoryChanged(newDirectory: String) {}
+
+  fun commandHistoryReceived(history: String) {}
 }
 
 private class CommandRun(val commandStartedNano: Long, val workingDirectory: String, val command: String) {

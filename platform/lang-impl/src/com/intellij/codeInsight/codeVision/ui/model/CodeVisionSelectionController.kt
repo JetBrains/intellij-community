@@ -69,7 +69,11 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
           hoveredEntry.view(lt) { entryLifetime, _ ->
             hovered.value?.repaint()
             editor.mousePressed().advise(entryLifetime) {
-              entryPressHandler(it)
+              entryRightClickHandler(it)
+            }
+
+            editor.mouseClicked().advise(entryLifetime) {
+              entryLeftClickHandler(it)
             }
 
             editor.mouseReleased().advise(entryLifetime) {
@@ -105,24 +109,33 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
     }
   }
 
-  private fun entryPressHandler(event: EditorMouseEvent) {
-    val mouseEvent: MouseEvent = event.mouseEvent
-
-    val entry = checkEditorMousePosition(mouseEvent.point) ?: return
+  private fun consumeEvent(event: EditorMouseEvent): CodeVisionEntry? {
+    val entry = checkEditorMousePosition(event.mouseEvent.point) ?: return null
+    entry.putUserData(codeVisionEntryMouseEventKey, event.mouseEvent)
     editor.contentComponent.requestFocus()
     event.consume()
+    return entry
+  }
 
-    val rangeLensesModel = hovered.value?.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel ?: return
+  private fun findRangeLensesModel(): RangeCodeVisionModel? {
+    return hovered.value?.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel
+  }
 
-    entry.putUserData(codeVisionEntryMouseEventKey, mouseEvent)
-    if (SwingUtilities.isLeftMouseButton(mouseEvent)) {
-      logger.trace { "entryPressHandler :: isLeftMouseButton" }
-      rangeLensesModel.handleLensClick(entry)
-    }
-    else if (SwingUtilities.isRightMouseButton(mouseEvent)) {
-      logger.trace { "entryPressHandler :: isRightMouseButton" }
-      rangeLensesModel.handleLensRightClick()
-    }
+  private fun entryRightClickHandler(event: EditorMouseEvent){
+    if (!SwingUtilities.isRightMouseButton(event.mouseEvent)) return
+    consumeEvent(event) ?: return
+    val rangeLensesModel = findRangeLensesModel() ?: return
+    logger.trace { "entryPressHandler :: isRightMouseButton" }
+    rangeLensesModel.handleLensRightClick()
+  }
+
+  private fun entryLeftClickHandler(event: EditorMouseEvent){
+    val mouseEvent = event.mouseEvent
+    if (!SwingUtilities.isLeftMouseButton(mouseEvent) || mouseEvent.isShiftDown) return
+    val entry = consumeEvent(event) ?: return
+    val rangeLensesModel = findRangeLensesModel() ?: return
+    logger.trace { "entryPressHandler :: isLeftMouseButton" }
+    rangeLensesModel.handleLensClick(entry)
   }
 
   private fun updateCursor(hasHoveredEntry: Boolean) {

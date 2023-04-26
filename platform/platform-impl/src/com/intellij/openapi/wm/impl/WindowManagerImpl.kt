@@ -39,6 +39,7 @@ import java.awt.event.ComponentListener
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JDialog
 import javax.swing.JFrame
+import javax.swing.JOptionPane
 import javax.swing.JWindow
 
 private val LOG = logger<WindowManagerImpl>()
@@ -91,7 +92,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
-        getFrameHelper(project)?.let {
+        val helper = getFrameHelper(project)
+        LOG.info("=== Release(${helper != null}) frame on closed project ===")
+        helper?.let {
           releaseFrame(it)
         }
       }
@@ -289,6 +292,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
         frameToReuse.set(releasedFrameHelper.frame)
         releasedFrameHelper.frame.doSetRootPane(null)
         releasedFrameHelper.frame.setFrameHelper(null)
+        if (JOptionPane.getRootFrame() === releasedFrameHelper.frame) {
+          JOptionPane.setRootFrame(null)
+        }
       }
     }
 

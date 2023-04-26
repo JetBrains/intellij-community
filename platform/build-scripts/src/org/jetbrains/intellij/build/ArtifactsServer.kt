@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build
 interface ArtifactsServer {
   /**
    * Returns full URL which can be used to download an artifact.
-   * @param relativePath path to an artifact from {@link org.jetbrains.intellij.build.BuildPaths#artifacts} directory
+   * @param relativePath path to an artifact from [org.jetbrains.intellij.build.BuildPaths.artifacts] directory
    */
   fun urlToArtifact(context: BuildContext, relativePath: String): String?
 }

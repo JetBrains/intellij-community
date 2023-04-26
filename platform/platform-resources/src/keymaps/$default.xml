@@ -1064,6 +1064,12 @@
     <keyboard-shortcut first-keystroke="alt shift I"/>
   </action>
 
+  <action id="FileChooser.GoToParent">
+    <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+  </action>
+  <action id="FileChooser.GoToRoot">
+    <keyboard-shortcut first-keystroke="control BACK_SLASH"/>
+  </action>
   <action id="FileChooser.GotoHome">
     <keyboard-shortcut first-keystroke="control 1"/>
   </action>
@@ -1082,12 +1088,6 @@
   </action>
   <action id="FileChooser.TogglePathBar">
     <keyboard-shortcut first-keystroke="control P"/>
-  </action>
-  <action id="FileChooserList.Root">
-    <keyboard-shortcut first-keystroke="control BACK_SLASH"/>
-  </action>
-  <action id="FileChooserList.LevelUp">
-    <keyboard-shortcut first-keystroke="BACK_SPACE"/>
   </action>
 
   <action id="PopupHector">

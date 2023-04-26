@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.diagnostic.telemetry.TraceManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,7 +76,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   /** Computation to be executed -- possible, wrapped into some monitoring */
   private final Callable<? extends T> myActualComputation;
 
-  private static final Set<Submission<?>> ourTasks = ContainerUtil.newConcurrentSet();
+  private static final Set<Submission<?>> ourTasks = ConcurrentCollectionFactory.createConcurrentSet();
   private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 
@@ -272,10 +274,16 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           cancel();
           break;
         }
-        //noinspection Convert2Lambda,Anonymous2MethodRef
-        Disposable child = new Disposable() { // not a lambda to create a separate object for each parent
+        Disposable child = new CheckedDisposable() {
+          private volatile boolean disposed;
+          @Override
+          public boolean isDisposed() {
+            return disposed;
+          }
+
           @Override
           public void dispose() {
+            disposed = true;
             cancel();
           }
         };

@@ -31,9 +31,9 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
 
   companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, false)
+                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, true)
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
@@ -48,8 +48,8 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
   override val children: List<TreeEntity>
     get() = snapshot.extractOneToManyChildren<TreeEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
-  override val parentEntity: TreeEntity
-    get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)!!
+  override val parentEntity: TreeEntity?
+    get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -102,16 +102,6 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
       else {
         if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
           error("Field TreeEntity#children should be initialized")
-        }
-      }
-      if (_diff != null) {
-        if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
-          error("Field TreeEntity#parentEntity should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] == null) {
-          error("Field TreeEntity#parentEntity should be initialized")
         }
       }
     }
@@ -192,15 +182,15 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
         changedProperty.add("children")
       }
 
-    override var parentEntity: TreeEntity
+    override var parentEntity: TreeEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                        PARENTENTITY_CONNECTION_ID)]!! as TreeEntity
+                                                                                                        PARENTENTITY_CONNECTION_ID)] as? TreeEntity
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as TreeEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? TreeEntity
         }
       }
       set(value) {
@@ -269,13 +259,12 @@ class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return TreeEntity(data, entitySource) {
-      parents.filterIsInstance<TreeEntity>().singleOrNull()?.let { this.parentEntity = it }
+      this.parentEntity = parents.filterIsInstance<TreeEntity>().singleOrNull()
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
-    res.add(TreeEntity::class.java)
     return res
   }
 

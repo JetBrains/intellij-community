@@ -13,7 +13,7 @@ import org.jetbrains.uast.UastContext
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
 import org.jetbrains.uast.java.JavaUastLanguagePlugin
-import org.jetbrains.uast.test.env.AbstractCoreEnvironment
+import com.intellij.platform.uast.testFramework.env.AbstractCoreEnvironment
 import java.io.File
 
 abstract class AbstractTestWithCoreEnvironment : TestCase() {

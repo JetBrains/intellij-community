@@ -15,12 +15,11 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
 
@@ -253,28 +252,6 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root, "Module 'foo' not found");
-  }
-
-  private static String toString(MavenGeneralSettings settings) {
-    return "MavenGeneralSettings{" +
-           "workOffline=" + settings.isWorkOffline() +
-           ", mavenHome='" + settings.getMavenHome() + '\'' +
-           ", mavenSettingsFile='" + settings.getUserSettingsFile() + '\'' +
-           ", overriddenLocalRepository='" + settings.getLocalRepository() + '\'' +
-           ", printErrorStackTraces=" + settings.isPrintErrorStackTraces() +
-           ", usePluginRegistry=" + settings.isUsePluginRegistry() +
-           ", nonRecursive=" + settings.isNonRecursive() +
-           ", alwaysUpdateSnapshots=" + settings.isAlwaysUpdateSnapshots() +
-           ", threads='" + settings.getThreads() + '\'' +
-           ", outputLevel=" + settings.getOutputLevel() +
-           ", checksumPolicy=" + settings.getChecksumPolicy() +
-           ", failureBehavior=" + settings.getFailureBehavior() +
-           ", pluginUpdatePolicy=" + settings.getPluginUpdatePolicy() +
-           ", myEffectiveLocalRepositoryCache=" + settings.getEffectiveLocalRepository() +
-           //", myDefaultPluginsCache=" + settings.myDefaultPluginsCache +
-           //", myBulkUpdateLevel=" + settings.myBulkUpdateLevel +
-           //", myListeners=" + settings.myListeners +
-           '}';
   }
 
   @Test

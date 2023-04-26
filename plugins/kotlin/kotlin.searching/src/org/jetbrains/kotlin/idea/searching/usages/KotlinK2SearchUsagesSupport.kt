@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.idea.searching.usages
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
+import kotlinx.coroutines.Runnable
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -20,6 +23,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
@@ -105,6 +109,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 is KtDestructuringDeclarationEntry -> false
                 is KtCallableDeclaration -> {
                     if (target.isTopLevelCallable()) return@any false
+                    if (target === declaration) return@any false
                     analyze(target) {
                         if (!declaration.canBeAnalysed()) return@any false
                         val targetSymbol = target.getSymbol() as? KtCallableSymbol ?: return@any false
@@ -273,7 +278,17 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     ?.let { it.isInheritable() || it.isEnum() } == true &&
                 isOverridableBySymbol(declaration)
 
-    override fun isInheritable(ktClass: KtClass): Boolean = isOverridableBySymbol(ktClass)
+    override fun isInheritable(ktClass: KtClass): Boolean {
+        if (ApplicationManager.getApplication().isDispatchThread) {
+            return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                Runnable { isOverridableBySymbol(ktClass) },
+                KotlinBundle.message("dialog.title.resolving.inheritable.status"),
+                true,
+                ktClass.project
+            )
+        }
+        return isOverridableBySymbol(ktClass)
+    }
 
     private fun isOverridableBySymbol(declaration: KtDeclaration) = analyzeWithReadAction(declaration) {
         var declarationSymbol : KtSymbol? = declaration.getSymbol()

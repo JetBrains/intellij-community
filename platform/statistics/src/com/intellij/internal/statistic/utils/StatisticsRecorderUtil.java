@@ -63,8 +63,4 @@ public final class StatisticsRecorderUtil {
   private static boolean isFusInternalTestMode() {
     return Boolean.getBoolean(IDEA_FUS_RECORDER_INTERNAL_MODE);
   }
-
-  public static boolean isForceCollectionEnabled(@NotNull String recorderId) {
-    return StatisticsEventLogProviderUtil.getEventLogProvider(recorderId).isForceCollectionEnabled();
-  }
 }

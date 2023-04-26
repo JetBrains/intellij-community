@@ -142,8 +142,9 @@ public final class ObjectUtils {
   }
 
   /**
-   * Do not use in Kotlin.
+   * @deprecated Use {@code if (obj != null) ...} instead
    */
+  @Deprecated
   public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super T> consumer) {
     if (obj != null) {
       consumer.consume(obj);

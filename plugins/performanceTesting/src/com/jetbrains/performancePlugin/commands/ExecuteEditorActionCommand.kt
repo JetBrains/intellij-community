@@ -33,18 +33,18 @@ class ExecuteEditorActionCommand(text: String, line: Int) : PlaybackCommandCorou
     val spanRef = Ref<Span>()
     val scopeRef = Ref<Scope>()
     val connection = context.project.messageBus.simpleConnect()
-    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, scopeRef)
+    val project = context.project
+    val editor = FileEditorManager.getInstance(project).selectedTextEditor
+    if (editor == null) {
+      throw IllegalStateException("editor is null")
+    }
     withContext(Dispatchers.EDT) {
-      val project = context.project
-      val editor = FileEditorManager.getInstance(project).selectedTextEditor
-      if (editor == null) {
-        throw IllegalStateException("editor is null")
-      }
       spanRef.set(span.startSpan())
       scopeRef.set(spanRef.get().makeCurrent())
       executeAction(editor, parameter)
+      val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, scopeRef)
+      job.waitForComplete()
     }
-    job.waitForComplete()
   }
 
   fun executeAction(editor: Editor, actionId: String) {

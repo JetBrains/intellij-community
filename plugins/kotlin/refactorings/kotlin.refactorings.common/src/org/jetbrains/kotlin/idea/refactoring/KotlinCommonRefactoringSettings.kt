@@ -19,6 +19,11 @@ interface KotlinCommonRefactoringSettings {
     var RENAME_SEARCH_IN_COMMENTS_FOR_PROPERTY: Boolean
     var RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION: Boolean
     var RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER: Boolean
+    var MOVE_PREVIEW_USAGES: Boolean
+    var MOVE_SEARCH_IN_COMMENTS: Boolean
+    var MOVE_SEARCH_FOR_TEXT: Boolean
+    var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean
+    var MOVE_MPP_DECLARATIONS: Boolean
 
     companion object {
         @JvmStatic

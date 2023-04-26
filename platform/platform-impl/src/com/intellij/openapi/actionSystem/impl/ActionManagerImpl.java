@@ -393,8 +393,9 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static @NotNull ActionToolbarImpl createActionToolbarImpl(@NotNull String place,
                                                                     @NotNull ActionGroup group,
                                                                     boolean horizontal,
-                                                                    boolean decorateButtons) {
-    ActionToolbarImpl toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons);
+                                                                    boolean decorateButtons,
+                                                                    boolean customizable) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl(place, group, horizontal, decorateButtons, customizable);
     managerPublisher().toolbarCreated(place, group, horizontal, toolbar);
     return toolbar;
   }
@@ -453,12 +454,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   @Override
   public @NotNull ActionToolbar createActionToolbar(final @NotNull String place, final @NotNull ActionGroup group, final boolean horizontal) {
-    return createActionToolbar(place, group, horizontal, false);
+    return createActionToolbar(place, group, horizontal, false, true);
   }
 
   @Override
-  public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons) {
-    return createActionToolbarImpl(place, group, horizontal, decorateButtons);
+  public @NotNull ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons, boolean customizable) {
+    return createActionToolbarImpl(place, group, horizontal, decorateButtons, customizable);
   }
 
   @Override
@@ -466,7 +467,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                                     @NotNull ActionGroup group,
                                                     boolean horizontal,
                                                     @NotNull Function<? super String, ? extends Component> separatorCreator) {
-    ActionToolbarImpl toolbar = createActionToolbarImpl(place, group, horizontal, false);
+    ActionToolbarImpl toolbar = createActionToolbarImpl(place, group, horizontal, false, true);
     toolbar.setSeparatorCreator(separatorCreator);
     return toolbar;
   }

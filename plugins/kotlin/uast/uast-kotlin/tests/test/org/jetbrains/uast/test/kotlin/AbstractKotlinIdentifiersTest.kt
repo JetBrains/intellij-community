@@ -5,8 +5,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.uast.test.common.kotlin.IdentifiersTestBase
 import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.uast.*
-import org.jetbrains.uast.test.common.UElementToParentMap
-import org.jetbrains.uast.test.common.visitUFileAndGetResult
+import com.intellij.platform.uast.testFramework.common.UElementToParentMap
+import com.intellij.platform.uast.testFramework.common.visitUFileAndGetResult
 import java.io.File
 import kotlin.test.assertNotNull
 

@@ -304,6 +304,16 @@ class ObjectEventData(private val values: List<EventPair<*>>) {
     }
     return data.build()
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ObjectEventData
+
+    if (values != other.values) return false
+    return true
+  }
 }
 
 class EventFieldDelegate<T>(val eventField: EventField<T>) {

@@ -6,7 +6,7 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.test.common.RenderLogTestBase
+import com.intellij.platform.uast.testFramework.common.RenderLogTestBase
 import org.jetbrains.uast.visitor.UastVisitor
 
 abstract class AbstractJavaRenderLogTest : AbstractJavaUastTest(), RenderLogTestBase {

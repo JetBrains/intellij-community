@@ -18,8 +18,7 @@ import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInf
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptDependenciesSourcesScope
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.utils.yieldIfNotNull
@@ -48,7 +47,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
     ) {
         val isBinary = virtualFile.fileType.isKotlinBinary
 
-        if (isBinary && virtualFile in getAllScriptsDependenciesClassFilesScope(project)) {
+        if (isBinary && virtualFile in ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope()) {
             if (isLibrarySource) {
                 register(ScriptDependenciesSourceInfo.ForProject(project))
             } else {
@@ -56,7 +55,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
             }
         }
 
-        if (!isBinary && virtualFile in getAllScriptDependenciesSourcesScope(project)) {
+        if (!isBinary && virtualFile in ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSourcesScope()) {
             register(ScriptDependenciesSourceInfo.ForProject(project))
         }
     }

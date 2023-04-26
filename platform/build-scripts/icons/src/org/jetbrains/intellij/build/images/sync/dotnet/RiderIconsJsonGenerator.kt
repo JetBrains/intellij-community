@@ -23,13 +23,15 @@ object RiderIconsJsonGenerator {
 
     data class ExpuiItem(val expuiFile: Path, val originFile: Path)
 
+    val postfixSymbols = listOf('@', '_')
     val expuiItems = expuiFolders.flatMap { folder ->
       folder.walkTopDown()
         .filter { it.isFile && it.extension.lowercase() == "svg" }
-        .groupBy { g -> g.name.takeWhile { c -> c.isLetter() } }
-        .map { g ->
-          g.value.first { it.nameWithoutExtension == g.key }
-            .let { ExpuiItem(it.toPath(), folder.parentFile.resolve(it.relativeTo(folder)).toPath()) }
+        .groupBy { g -> g.nameWithoutExtension.takeWhile { c -> !postfixSymbols.contains(c) } }
+        .map { g -> // We want to know if there is file with postfix which does not have main file
+          g.value.firstOrNull { it.nameWithoutExtension == g.key }
+            ?.let { ExpuiItem(it.toPath(), folder.parentFile.resolve(it.relativeTo(folder)).toPath()) }
+          ?: error("Can't find file without postfix with name ${g.key} among files: [${g.value.joinToString(", ") { it.path }}]")
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.compiler.CompilationException;
@@ -22,7 +21,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
@@ -155,7 +153,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
                                            @NotNull Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
     throws EvaluateException {
     if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
-      return ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
+      return ReadAction.compute(() -> {
         try {
           XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
           JavaSdkVersion javaVersion = getJavaVersion(currentSession);

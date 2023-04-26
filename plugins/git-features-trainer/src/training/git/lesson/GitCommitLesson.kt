@@ -15,8 +15,6 @@ import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
@@ -37,6 +35,7 @@ import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickChangeElement
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.git.GitLessonsUtil.openCommitWindow
+import training.git.GitLessonsUtil.openGitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
@@ -197,16 +196,9 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task("ActivateVersionControlToolWindow") {
-      val gitWindowName = GitBundle.message("git4idea.vcs.name")
-      text(GitLessonsBundle.message("git.commit.open.git.window", action(it),
-                                    icon(AllIcons.Toolwindows.ToolWindowChanges), strong(gitWindowName)))
-      text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(gitWindowName)),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
-      stateCheck {
-        val toolWindowManager = ToolWindowManager.getInstance(project)
-        toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
-      }
-      test { actions(it) }
+      openGitWindow(GitLessonsBundle.message("git.commit.open.git.window", action(it),
+                                             icon(AllIcons.Toolwindows.ToolWindowChanges),
+                                             strong(GitBundle.message("git4idea.vcs.name"))))
     }
 
     resetGitLogWindow()

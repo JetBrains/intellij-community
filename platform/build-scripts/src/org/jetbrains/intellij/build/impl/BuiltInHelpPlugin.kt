@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -80,14 +82,20 @@ private fun pluginXml(buildContext: BuildContext, version: String): String {
 </idea-plugin>"""
 }
 
+/**
+ * Required due to write lock in [org.apache.lucene.index.IndexWriter.IndexWriter]
+ */
+private val helpIndexerMutex = Mutex()
+
 private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
   spanBuilder("index help topics").useWithScope {
-    runIdea(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
-            args = listOf(resourceRoot.resolve("search").toString(),
-                          resourceRoot.resolve("topics").toString()),
-            jvmArgs = emptyList(),
-            classPath = classPath)
-
+    helpIndexerMutex.withLock {
+      runIdea(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
+              args = listOf(resourceRoot.resolve("search").toString(),
+                            resourceRoot.resolve("topics").toString()),
+              jvmArgs = emptyList(),
+              classPath = classPath)
+    }
     writeNewZip(assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)
       archiver.setRootDir(resourceRoot)

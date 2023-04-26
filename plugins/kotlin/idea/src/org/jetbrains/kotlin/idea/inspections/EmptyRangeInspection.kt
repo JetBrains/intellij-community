@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.collections.isIterable
@@ -24,8 +21,13 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.EmptyRange]
  */
 class EmptyRangeInspection : AbstractRangeInspection() {
-    override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) =
-        visitRangeImpl<Nothing>(range, context, type, holder)
+    override fun visitRange(
+        range: KtExpression,
+        context: Lazy<BindingContext>,
+        type: RangeKtExpressionType,
+        holder: ProblemsHolder,
+        session: LocalInspectionToolSession
+    ) = visitRangeImpl<Nothing>(range, context, type, holder)
 
     private fun <T> visitRangeImpl(
         range: KtExpression,

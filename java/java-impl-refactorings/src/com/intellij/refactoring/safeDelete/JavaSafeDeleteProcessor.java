@@ -57,6 +57,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   private static final Logger LOG = Logger.getInstance(JavaSafeDeleteProcessor.class);
 
@@ -270,7 +272,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   @Override
-  public Collection<String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] elements, UsageInfo @NotNull [] usages) {
+  public Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] elements, UsageInfo @NotNull [] usages) {
     String methodRefFound = null;
     if (element instanceof PsiMethod || element instanceof PsiParameter) {
       PsiMethod method;
@@ -304,7 +306,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   @Override
-  public Collection<String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete) {
+  public Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete) {
     if (element instanceof PsiMethod) {
       PsiClass containingClass = ((PsiMethod)element).getContainingClass();
 
@@ -1019,7 +1021,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
            file.getClasses().length == 1;
   }
 
-  public static void collectMethodConflicts(MultiMap<PsiElement, String> conflicts, PsiMethod method, PsiParameter parameter) {
+  public static void collectMethodConflicts(MultiMap<PsiElement, @DialogMessage String> conflicts, PsiMethod method, PsiParameter parameter) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass != null) {
       int parameterIndex = method.getParameterList().getParameterIndex(parameter);

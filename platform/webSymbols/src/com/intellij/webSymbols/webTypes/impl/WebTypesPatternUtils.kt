@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes.impl
 
+import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -10,24 +13,25 @@ import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.json.*
 
-internal fun NamePatternRoot.wrap(defaultDisplayName: String?): WebSymbolsPattern =
+internal fun NamePatternRoot.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): WebSymbolsPattern =
   when (val value = value) {
     is String -> RegExpPattern(value)
-    is NamePatternBase -> value.wrap(defaultDisplayName)
+    is NamePatternBase -> value.wrap(defaultDisplayName, origin)
     else -> throw IllegalArgumentException(value::class.java.name)
   }
 
-internal fun NamePatternBase.wrap(defaultDisplayName: String?): WebSymbolsPattern =
+internal fun NamePatternBase.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): WebSymbolsPattern =
   when (this) {
     is NamePatternRegex -> RegExpPattern(regex, caseSensitive == true)
-    is NamePatternDefault -> ComplexPattern(WebTypesComplexPatternConfigProvider(this, defaultDisplayName))
+    is NamePatternDefault -> ComplexPattern(WebTypesComplexPatternConfigProvider(this, defaultDisplayName, origin))
     else -> throw IllegalArgumentException(this::class.java.name)
   }
 
 @Suppress("UNCHECKED_CAST")
-internal fun NamePatternTemplate.wrap(defaultDisplayName: String?): WebSymbolsPattern =
+internal fun NamePatternTemplate.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): WebSymbolsPattern =
   when (val value = value) {
     is String -> when {
       value == "#item" -> SymbolReferencePattern(defaultDisplayName)
@@ -36,29 +40,31 @@ internal fun NamePatternTemplate.wrap(defaultDisplayName: String?): WebSymbolsPa
       value == "$..." -> CompletionAutoPopupPattern(true)
       else -> StaticPattern(value)
     }
-    is NamePatternBase -> value.wrap(defaultDisplayName)
-    is List<*> -> SequencePattern(SequencePatternPatternsProvider(value as List<NamePatternTemplate>))
+    is NamePatternBase -> value.wrap(defaultDisplayName, origin)
+    is List<*> -> SequencePattern(SequencePatternPatternsProvider(value as List<NamePatternTemplate>, origin))
     else -> throw IllegalArgumentException(value::class.java.name)
   }
 
-private class SequencePatternPatternsProvider(private val list: List<NamePatternTemplate>) : () -> List<WebSymbolsPattern> {
+private class SequencePatternPatternsProvider(private val list: List<NamePatternTemplate>,
+                                              private val origin: WebTypesJsonOrigin) : () -> List<WebSymbolsPattern> {
   override fun invoke(): List<WebSymbolsPattern> =
-    list.map { it.wrap(null) }
+    list.map { it.wrap(null, origin) }
 }
 
 private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatternDefault,
-                                                   private val defaultDisplayName: String?) : ComplexPatternConfigProvider {
+                                                   private val defaultDisplayName: String?,
+                                                   private val origin: WebTypesJsonOrigin) : ComplexPatternConfigProvider {
 
   override fun getPatterns(): List<WebSymbolsPattern> =
     pattern.or.asSequence()
-      .map { it.wrap(defaultDisplayName) }
+      .map { it.wrap(defaultDisplayName, origin) }
       .let {
         val template = pattern.template
         if (template.isEmpty()) {
           it
         }
         else {
-          it.plus(SequencePattern(SequencePatternPatternsProvider(template)))
+          it.plus(SequencePattern(SequencePatternPatternsProvider(template, origin)))
         }
       }
       .toList()
@@ -74,7 +80,8 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     val delegate = pattern.delegate?.resolve(null, scopeStack, queryParams.queryExecutor)?.firstOrNull()
 
     // Allow delegate pattern to override settings
-    val isDeprecated = delegate?.deprecated ?: pattern.deprecated
+    val deprecation = delegate?.apiStatus?.asSafely<WebSymbol.Deprecated>()
+                      ?: pattern.toApiStatus(origin)?.asSafely<WebSymbol.Deprecated>()
     val isRequired = (delegate?.required ?: pattern.required) != false
     val priority = delegate?.priority ?: pattern.priority?.wrap()
     val proximity = delegate?.proximity ?: pattern.proximity
@@ -82,7 +89,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     val unique = pattern.unique != false
 
     val symbolsResolver = createSymbolsResolver(delegate)
-    return ComplexPatternOptions(delegate, isDeprecated, isRequired, priority, proximity, repeats, unique, symbolsResolver)
+    return ComplexPatternOptions(delegate, deprecation, isRequired, priority, proximity, repeats, unique, symbolsResolver)
   }
 
   private fun createSymbolsResolver(delegate: WebSymbol?) =

@@ -481,17 +481,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.p1", "project.p2");
 
     final List<LibraryOrderEntry> moduleLibDepsP1 = getModuleLibDeps("project.p1", "Gradle: dep");
-    final boolean isGradleNewerThen_2_4 = GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("2.4")) > 0;
     for (LibraryOrderEntry libDep : moduleLibDepsP1) {
-      assertEquals("Dependency must be " + (isGradleNewerThen_2_4 ? "module" : "project") + " level: " + libDep.toString(),
-                   isGradleNewerThen_2_4, libDep.isModuleLevel());
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
       assertEquals("Wrong library dependency", depP1Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
     }
 
     final List<LibraryOrderEntry> moduleLibDepsP2 = getModuleLibDeps("project.p2", "Gradle: dep");
     for (LibraryOrderEntry libDep : moduleLibDepsP2) {
-      assertEquals("Dependency must be " + (isGradleNewerThen_2_4 ? "module" : "project") + " level: " + libDep.toString(),
-                   isGradleNewerThen_2_4, libDep.isModuleLevel());
+      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
       assertEquals("Wrong library dependency", depP2Jar.getUrl(), libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
     }
   }
@@ -817,6 +814,126 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.api", "project.impl");
 
     assertModuleModuleDepScope("project.impl", "project.api", DependencyScope.TEST);
+  }
+
+
+  @Test
+  public void testProjectDependencyOnCustomArtifacts() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mySourceSet }
+                          tasks.create("myJar", Jar) {
+                            dependsOn compileMySourceSetJava
+                          """ +  archiveBaseName + """
+                            from sourceSets.mySourceSet.output
+                          }
+                          artifacts { myConfig myJar }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mySourceSet",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDepScope("project.impl.main", "project.api.mySourceSet", DependencyScope.COMPILE);
+  }
+
+  @Test
+  public void testProjectDependencyOnCustomArtifacts2() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    String propertyBasedFromClasses;
+    if (isGradleOlderThan("4.0")) {
+      propertyBasedFromClasses = "new File(project.buildDir, 'classes/mySourceSet')";
+    } else if (isGradleOlderThan("4.1")) {
+      propertyBasedFromClasses = "new File(project.buildDir, 'classes/java/mySourceSet')";
+    } else {
+      propertyBasedFromClasses = "project.layout.getBuildDirectory().dir('classes/java/mySourceSet')";
+    }
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mySourceSet }
+                          tasks.create("myJar", Jar) {
+                            dependsOn compileMySourceSetJava
+                          """ + archiveBaseName + """
+                           from\s""" + propertyBasedFromClasses + """
+                            from new File(project.buildDir, "resources/mySourceSet")
+                          }
+                          artifacts { myConfig myJar }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mySourceSet",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDepScope("project.impl.main", "project.api.mySourceSet", DependencyScope.COMPILE);
+  }
+
+  /**
+   * At the moment, IDEA does not support depending on an artifact containing output of multiple source sets.
+   * There is only one source set to choose as the module dependency.
+   * "Owning" sourceSet should be preferred for a jar task with name equal to sourceSet.getJarTaskName()
+   */
+  @Test
+  public void testProjectDependencyOnArtifactsContainingMultipleSourceSets() throws Exception {
+    createSettingsFile("include 'api', 'impl' ");
+    String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
+
+    importProject(
+      createBuildScriptBuilder()
+        .allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)
+        .project(":api", it -> {
+          it
+            .addPostfix("""
+                          configurations { myConfig }
+                          sourceSets { mainX }
+                          jar { from sourceSets.mainX.output }
+                          def mainXJarTask = tasks.create(sourceSets.mainX.getJarTaskName(), Jar) {
+                            """ +  archiveBaseName + """
+                            from sourceSets.mainX.output
+                          }
+                          artifacts { myConfig mainXJarTask }
+                          """);
+        })
+        .project(":impl", it -> {
+          it.addImplementationDependency(it.project(":api"));
+          it.addTestImplementationDependency(it.project(":api", "myConfig"));
+        })
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test",
+                  "project.api", "project.api.main", "project.api.test", "project.api.mainX",
+                  "project.impl", "project.impl.main", "project.impl.test");
+
+    assertModuleModuleDeps("project.impl.main", "project.api.main"); // does not depend on mainX
+    assertModuleModuleDeps("project.impl.test", "project.impl.main", "project.api.main", "project.api.mainX");
   }
 
   @Test

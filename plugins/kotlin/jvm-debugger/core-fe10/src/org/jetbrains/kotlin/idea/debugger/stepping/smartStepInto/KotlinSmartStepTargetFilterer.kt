@@ -7,9 +7,7 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.*
 import java.util.*
 
 class KotlinSmartStepTargetFilterer(
@@ -58,10 +56,20 @@ class KotlinSmartStepTargetFilterer(
 
     private fun KotlinMethodSmartStepTarget.matches(owner: String, name: String, signature: String, currentCount: Int): Boolean {
         if (methodInfo.name == name && ordinal == currentCount) {
-            val lightClassMethod = getDeclaration()?.getLightClassMethod() ?: return false
+            val declaration = getDeclaration() ?: return false
+            if (declaration is KtClass) {
+                // it means the method is, in fact, the implicit primary constructor
+                return primaryConstructorMatches(declaration, owner, name, signature)
+            }
+            val lightClassMethod = declaration.getLightClassMethod() ?: return false
             return lightClassMethod.matches(owner, name, signature, debugProcess)
         }
         return false
+    }
+
+    private fun primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {
+        return name == "<init>" && signature == "()V" &&
+                owner.replace('/', '.') == declaration.fqName?.asString()
     }
 
     fun getUnvisitedTargets(): List<KotlinMethodSmartStepTarget> =
@@ -80,7 +88,7 @@ private fun String.getSignatureWithoutFirstArgument() =
 
 private fun KtDeclaration.getLightClassMethod(): PsiMethod? =
     when (this) {
-        is KtNamedFunction    -> LightClassUtil.getLightClassMethod(this)
+        is KtFunction -> LightClassUtil.getLightClassMethod(this)
         is KtPropertyAccessor -> LightClassUtil.getLightClassPropertyMethods(property).getter
         else -> null
     }

@@ -66,7 +66,7 @@ private val excludeAction = object : MarkExcludeRootAction() {
  *
  * Not internal service. Can be used directly in related modules.
  */
-@Service
+@Service(Service.Level.PROJECT)
 class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(project, project) {
   private val queue = MergingUpdateQueue("IgnoredToExcludedSynchronizer", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 

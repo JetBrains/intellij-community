@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.ui.UISettings;
@@ -14,7 +15,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -494,10 +498,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   public static Icon getEditorWithPreviewIcon(boolean isVerticalSplit) {
     if (ExperimentalUI.isNewUI()) {
-      return isVerticalSplit ? IconLoader.getIcon("expui/general/editorPreviewVertical.svg", AllIcons.class)
-                             : IconLoader.getIcon("expui/general/editorPreview.svg", AllIcons.class);
+      return isVerticalSplit ? ExpUiIcons.General.EditorPreviewVertical : ExpUiIcons.General.EditorPreview;
     }
-    return isVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
+    else {
+      return isVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
+    }
   }
 
   private class ChangeViewModeAction extends ToggleAction implements DumbAware {

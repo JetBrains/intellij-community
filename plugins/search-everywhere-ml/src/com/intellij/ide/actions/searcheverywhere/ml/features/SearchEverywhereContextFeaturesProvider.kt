@@ -69,7 +69,7 @@ internal class SearchEverywhereContextFeaturesProvider {
 
     fun getFieldsDeclaration(): List<EventField<*>> = arrayListOf(globalMaxUsage, globalMinUsage)
 
-    fun getGlobalUsageStatistics(stats: ActionsGlobalSummaryManager.ActionsGlobalTotalSummary) : List<EventPair<*>> {
+    fun getGlobalUsageStatistics(stats: ActionsGlobalSummaryManager.ActionsGlobalTotalSummary): List<EventPair<*>> {
       return arrayListOf<EventPair<*>>(
         globalMaxUsage.with(stats.maxUsageCount()),
         globalMinUsage.with(stats.minUsageCount())

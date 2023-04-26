@@ -31,20 +31,13 @@ public interface MarkupModelEx extends MarkupModel {
   @Nullable
   RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes);
 
-  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleOrColorChanged);
-
-  void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter);
-
-  void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter);
-
+  /**
+   * @deprecated use {@code RangeHighlighterEx.setXXX()} methods to fire changes
+   */
+  @Deprecated
+  default void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {}
+  
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
-
-  void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
-                           int start,
-                           int end,
-                           boolean greedyToLeft,
-                           boolean greedyToRight,
-                           int layer);
 
   void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener);
 
@@ -55,11 +48,6 @@ public interface MarkupModelEx extends MarkupModel {
 
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
-
-  @NotNull
-  MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                         int endOffset,
-                                                         boolean onlyRenderedInGutter);
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull
@@ -72,12 +60,12 @@ public interface MarkupModelEx extends MarkupModel {
                                                             @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction);
 
   /**
-   * Consider using {@link #addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)}
-   * unless it's really necessary.
+   * @deprecated use {@link #addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)}
    * Creating a highlighter with hard-coded {@link TextAttributes} makes it stay the same in all {@link EditorColorsScheme}
    * An editor can provide a custom scheme different from the global one, also a user can change the global scheme explicitly.
    * Using the overload taking a {@link TextAttributesKey} will make the platform take care of all these cases.
    */
+  @Deprecated
   @NotNull
   default RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                     int endOffset,
@@ -96,6 +84,6 @@ public interface MarkupModelEx extends MarkupModel {
     });
   }
 
-  // runs change attributes action and fires highlighterChanged event if there were changes
+  // run change attributes action and fire highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction);
 }

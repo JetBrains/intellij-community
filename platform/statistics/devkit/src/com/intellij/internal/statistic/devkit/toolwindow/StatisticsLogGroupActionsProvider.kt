@@ -10,6 +10,6 @@ interface StatisticsLogGroupActionsProvider {
   fun getActions(groupId: String, eventId: String, eventData: String): List<AnAction>
 
   companion object {
-    val EP_NAME = ExtensionPointName<StatisticsLogGroupActionsProvider>("com.intellij.statisticsLogGroupActionsProvider")
+    val EP_NAME = ExtensionPointName<StatisticsLogGroupActionsProvider>("com.intellij.internal.statistic.devkit.toolwindow.logGroupActionsProvider")
   }
 }

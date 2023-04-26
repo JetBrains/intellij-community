@@ -29,11 +29,12 @@ class GitLabMergeRequestDTO(
   val author: GitLabUserDTO,
   val targetProject: GitLabProjectDTO,
   val sourceProject: GitLabProjectDTO,
+  val userPermissions: GitLabMergeRequestPermissionsDTO,
   approvedBy: UserCoreConnection,
   assignees: AssigneeConnection,
   reviewers: ReviewerConnection,
   commits: CommitConnection,
-  val userPermissions: UserPermissions
+  labels: LabelConnection
 ) : GitLabMergeRequestId {
   val approvedBy: List<GitLabUserDTO> = approvedBy.nodes
 
@@ -42,6 +43,8 @@ class GitLabMergeRequestDTO(
   val reviewers: List<GitLabUserDTO> = reviewers.nodes
 
   val commits: List<GitLabCommitDTO> = commits.nodes
+
+  val labels: List<GitLabLabelDTO> = labels.nodes
 
   class UserCoreConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
     : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
@@ -55,7 +58,6 @@ class GitLabMergeRequestDTO(
   class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCommitDTO>)
     : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
 
-  data class UserPermissions(
-    val createNote: Boolean
-  )
+  class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
+    : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
 }

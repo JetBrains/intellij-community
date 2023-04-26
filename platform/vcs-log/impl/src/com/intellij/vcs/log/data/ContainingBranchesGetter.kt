@@ -17,6 +17,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import org.jetbrains.annotations.CalledInAny
 import java.awt.EventQueue
+import java.util.function.Predicate
 
 /**
  * Provides capabilities to asynchronously calculate "contained in branches" information.
@@ -119,7 +120,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
   }
 
   @CalledInAny
-  fun getContainedInCurrentBranchCondition(root: VirtualFile) =
+  fun getContainedInCurrentBranchCondition(root: VirtualFile): Predicate<Int> =
     conditionsCache.getContainedInCurrentBranchCondition(root)
 
   @CalledInAny

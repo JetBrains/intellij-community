@@ -6,11 +6,13 @@ import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
@@ -79,6 +81,11 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
       }
 
       val sdk = SdkConfigurationUtil.createSdk(existingSdks, generateSdkHomePath(data), PythonSdkType.getInstance(), data, name)
+
+      if (project != null && project.modules.isNotEmpty() &&
+          PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() ?: false) {
+        sdk.associateWithModule(project.modules[0], null)
+      }
 
       sdk.versionString = sdkVersion
 

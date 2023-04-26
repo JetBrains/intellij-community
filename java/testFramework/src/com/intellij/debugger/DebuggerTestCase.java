@@ -156,7 +156,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected void disposeSession(final DebuggerSession debuggerSession) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)debuggerSession::dispose);
+    UIUtil.invokeAndWaitIfNeeded(debuggerSession::dispose);
   }
 
   protected void createLocalProcess(String className) throws ExecutionException {
@@ -333,7 +333,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     final RemoteState remoteState = new RemoteStateState(myProject, remoteConnection);
 
     final DebuggerSession[] debuggerSession = new DebuggerSession[1];
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
         ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
           .runProfile(new MockConfiguration(myProject))
@@ -356,7 +356,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected void createBreakpoints(final String className) {
     final PsiFile psiFile = ReadAction.compute(() -> {
       PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
-      assertNotNull(psiClass);
+      assertNotNull(className, psiClass);
       return psiClass.getContainingFile();
     });
 
@@ -447,7 +447,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   private DebuggerContextImpl createDebuggerContext(final SuspendContextImpl suspendContext, StackFrameProxyImpl stackFrame) {
     final DebuggerSession[] session = new DebuggerSession[1];
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       session[0] = DebuggerManagerEx.getInstanceEx(myProject).getSession(suspendContext.getDebugProcess());
     });
 

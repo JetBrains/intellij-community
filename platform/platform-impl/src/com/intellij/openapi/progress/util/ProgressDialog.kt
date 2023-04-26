@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -165,7 +166,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   }
 
   fun hide() {
-    ApplicationManager.getApplication().invokeLater(this::hideImmediately, ModalityState.any())
+    ApplicationManager.getApplication().invokeLater(ContextAwareRunnable(this::hideImmediately), ModalityState.any())
   }
 
   fun hideImmediately() {

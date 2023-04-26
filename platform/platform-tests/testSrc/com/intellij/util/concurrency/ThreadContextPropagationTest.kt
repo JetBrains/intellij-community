@@ -3,11 +3,15 @@ package com.intellij.util.concurrency
 
 import com.intellij.concurrency.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.progress.timeoutRunBlocking
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.timeoutRunBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertSame
@@ -22,6 +26,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertNull
 
 @TestApplication
 @ExtendWith(ThreadContextPropagationTest.Enabler::class)
@@ -34,7 +39,7 @@ class ThreadContextPropagationTest {
       invocationContext: ReflectiveInvocationContext<Method>,
       extensionContext: ExtensionContext,
     ) {
-      Propagation.runWithContextPropagationEnabled {
+      runWithContextPropagationEnabled {
         invocation.proceed()
       }
     }
@@ -112,7 +117,7 @@ class ThreadContextPropagationTest {
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
     return suspendCancellableCoroutine { continuation ->
       val element = TestElement("element")
-      withThreadContext(element) {                                       // install context in calling thread
+       installThreadContext(element).use {                               // install context in calling thread
         submit {                                                         // switch to another thread
           val result: Result<Unit> = runCatching {
             assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
@@ -163,6 +168,15 @@ class ThreadContextPropagationTest {
       }
       future = service.scheduleWithFixedDelay(runOnce, 10, 10, TimeUnit.MILLISECONDS)
       canStart.up()
+    }
+  }
+
+  @Test
+  fun `EDT dispatcher does not capture thread context`() = timeoutRunBlocking {
+    blockingContext {
+      launch(Dispatchers.EDT) {
+        assertNull(currentThreadContextOrNull())
+      }
     }
   }
 }

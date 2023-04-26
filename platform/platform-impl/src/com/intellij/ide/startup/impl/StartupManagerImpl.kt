@@ -61,7 +61,7 @@ private val tracer by lazy { TraceManager.getTracer("startupManager") }
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5-seconds delay after project opening.
  */
-private val BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName<Any>("com.intellij.backgroundPostStartupActivity")
+val BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName<Any>("com.intellij.backgroundPostStartupActivity")
 private val EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100)
 private const val DUMB_AWARE_PASSED = 1
 private const val ALL_PASSED = 2
@@ -200,6 +200,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           && pluginId.idString != "com.intellij.clion.performanceTesting"
           && pluginId.idString != "com.intellij.appcode"
           && pluginId.idString != "com.intellij.kmm"
+          && pluginId.idString != "com.intellij.clion.plugin"
           && pluginId.idString != "org.jetbrains.plugins.clion.radler") {
         LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
         continue
@@ -272,15 +273,16 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           return@processExtensions
         }
         else if (!isProjectLightEditCompatible) {
-          if (edtActivity.get() == null) {
-            edtActivity.set(StartUpMeasurer.startActivity("project post-startup edt activities"))
-          }
-
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           counter.incrementAndGet()
           blockingContext {
             dumbService.runWhenSmart {
               traceContext.makeCurrent()
+
+              if (edtActivity.get() == null) {
+                edtActivity.set(StartUpMeasurer.startActivity("project post-startup edt activities"))
+              }
+
               val duration = runActivityAndMeasureDuration(activity as StartupActivity, pluginDescriptor.pluginId)
               if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
                 reportUiFreeze(uiFreezeWarned)
@@ -461,25 +463,27 @@ private fun scheduleBackgroundPostStartupActivities(project: Project, coroutineS
 
 private fun CoroutineScope.runBackgroundPostStartupActivities(activities: Sequence<Any>, project: Project) {
   for (activity in activities.filter { project !is LightEditCompatible || it is LightEditCompatible }) {
-    try {
-      if (activity is ProjectActivity) {
-        launch {
+    launch {
+      try {
+        if (activity is ProjectActivity) {
           activity.execute(project)
         }
+        else {
+          blockingContext {
+            @Suppress("UsagesOfObsoleteApi")
+            (activity as StartupActivity).runActivity(project)
+          }
+        }
       }
-      else {
-        @Suppress("UsagesOfObsoleteApi")
-        (activity as StartupActivity).runActivity(project)
-      }
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      if (e is ControlFlowException) {
+      catch (e: CancellationException) {
         throw e
       }
-      LOG.error(e)
+      catch (e: Throwable) {
+        if (e is ControlFlowException) {
+          throw e
+        }
+        LOG.error(e)
+      }
     }
   }
 }

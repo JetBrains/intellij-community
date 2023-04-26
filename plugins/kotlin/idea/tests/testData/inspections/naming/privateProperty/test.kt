@@ -24,6 +24,10 @@ class D {
 
     private val FOO_BAR: String
 
+    private val FOOBAR: String
+
+    private val `bad char` = ""
+
     companion object {
         val Foo: String = ""
 
@@ -41,6 +45,8 @@ interface Parameter {
 class ParameterImpl(
     override val interface_p1: String,
     private val ctor_private: String,
+    private val CtorPrivate: String,
+    private val `ctor Private`: String,
     val ctor_val: String,
     var ctor_var: String,
     ctor_param: String,

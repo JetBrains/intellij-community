@@ -24,7 +24,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE;
  */
 abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
 
-  private static final CallMatcher OBJECT_EQUALS =
+  static final CallMatcher OBJECT_EQUALS =
     CallMatcher.instanceCall(JAVA_LANG_OBJECT, "equals").parameterTypes(JAVA_LANG_OBJECT);
   private static final CallMatcher STATIC_EQUALS =
     CallMatcher.anyOf(

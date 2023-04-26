@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -439,15 +438,11 @@ public final class PluginInstaller {
       shutdownOrRestartAppAfterInstall(descriptor);
     }
     else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        boolean loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
+      boolean loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
 
-        if (!loaded) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            shutdownOrRestartAppAfterInstall(descriptor);
-          });
-        }
-      }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), false, project, parentComponent);
+      if (!loaded) {
+        shutdownOrRestartAppAfterInstall(descriptor);
+      }
     }
   }
 

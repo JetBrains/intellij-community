@@ -17,7 +17,7 @@ class SqliteIntPreparedStatement internal constructor(private val connection: Sq
   init {
     val db = connection.db
     synchronized(db) {
-      pointer = db.prepareForStatement(sql)
+      pointer = db.prepareForStatement(sql.encodeToByteArray())
       columnCount = db.column_count(pointer.pointer)
       paramCount = db.bind_parameter_count(pointer.pointer)
     }

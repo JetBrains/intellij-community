@@ -52,14 +52,14 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   MarkupModelImpl(@NotNull DocumentEx document) {
     myDocument = document;
-    myHighlighterTree = new RangeHighlighterTree(document, this);
-    myHighlighterTreeForLines = new RangeHighlighterTree(document, this);
+    myHighlighterTree = new RangeHighlighterTree(this);
+    myHighlighterTreeForLines = new RangeHighlighterTree(this);
   }
 
   @Override
   public void dispose() {
-    myHighlighterTree.dispose(myDocument);
-    myHighlighterTreeForLines.dispose(myDocument);
+    myHighlighterTree.dispose();
+    myHighlighterTreeForLines.dispose();
   }
 
   @Override
@@ -176,7 +176,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     }
   }
 
-  @Override
   public void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
                                   int start,
                                   int end,
@@ -256,32 +255,39 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     ((RangeHighlighterEx)highlighter).setTextAttributes(textAttributes);
   }
 
+  /**
+   * @deprecated use {@code RangeHighlighterEx.setXXX()} methods to fire changes
+   */
+  @Deprecated
   @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
-                                    boolean renderersChanged, boolean fontStyleOrColorChanged) {
-    fireAttributesChanged(segmentHighlighter, renderersChanged, fontStyleOrColorChanged, fontStyleOrColorChanged);
+  public void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
+    fireAttributesChanged(highlighter, renderersChanged, fontStyleOrColorChanged, fontStyleOrColorChanged);
   }
 
-  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
+  void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter,
                              boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    if (segmentHighlighter.isValid()) {
+    if (highlighter.isValid()) {
       for (MarkupModelListener listener : myListeners) {
-        listener.attributesChanged(segmentHighlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
+        listener.attributesChanged(highlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
       }
     }
   }
 
-  @Override
-  public void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter) {
+  private void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.afterAdded(segmentHighlighter);
     }
   }
 
-  @Override
-  public void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
+  void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.beforeRemoved(segmentHighlighter);
+    }
+  }
+
+  void fireAfterRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
+    for (MarkupModelListener listener : myListeners) {
+      listener.afterRemoved(segmentHighlighter);
     }
   }
 
@@ -289,7 +295,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public boolean containsHighlighter(@NotNull final RangeHighlighter highlighter) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Processor<RangeHighlighterEx> equalId = h -> h.getId() != ((RangeHighlighterEx)highlighter).getId();
-    return !treeFor(highlighter).processOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), equalId);
+    return highlighter.isValid() && !treeFor(highlighter).processOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), equalId);
   }
 
   @Override
@@ -322,20 +328,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return IntervalTreeImpl
       .mergingOverlappingIterator(myHighlighterTree, new ProperTextRange(startOffset, endOffset), myHighlighterTreeForLines,
                                   roundToLineBoundaries(getDocument(), startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
-  }
-
-  @NotNull
-  @Override
-  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                                int endOffset,
-                                                                boolean onlyRenderedInGutter) {
-    startOffset = Math.max(0,startOffset);
-    endOffset = Math.max(startOffset, endOffset);
-    MarkupIterator<RangeHighlighterEx> exact = myHighlighterTree
-      .overlappingIterator(new ProperTextRange(startOffset, endOffset), onlyRenderedInGutter);
-    MarkupIterator<RangeHighlighterEx> lines = myHighlighterTreeForLines
-      .overlappingIterator(roundToLineBoundaries(getDocument(), startOffset, endOffset), onlyRenderedInGutter);
-    return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
   }
 
   @NotNull

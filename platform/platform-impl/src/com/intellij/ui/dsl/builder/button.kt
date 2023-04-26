@@ -38,6 +38,11 @@ fun <T : AbstractButton> Cell<T>.bindSelected(getter: () -> Boolean, setter: (Bo
   return bindSelected(MutableProperty(getter, setter))
 }
 
+fun <T : AbstractButton> Cell<T>.selected(value: Boolean): Cell<T> {
+  component.isSelected = value
+  return this
+}
+
 fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEvent, component: T) -> Unit): Cell<T> {
   component.addActionListener(ActionListener { actionListener(it, component) })
   return this

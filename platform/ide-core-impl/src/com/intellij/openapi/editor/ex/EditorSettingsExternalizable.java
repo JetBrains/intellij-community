@@ -233,7 +233,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     for (SoftWrapAppliancePlaces placeToStore : myPlacesToUseSoftWraps) {
       buffer.append(placeToStore).append(COMPOSITE_PROPERTY_SEPARATOR);
     }
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
     myOptions.USE_SOFT_WRAPS = buffer.toString();

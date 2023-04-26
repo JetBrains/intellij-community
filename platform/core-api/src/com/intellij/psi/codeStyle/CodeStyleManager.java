@@ -139,11 +139,27 @@ public abstract class CodeStyleManager  {
    */
   public abstract void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException;
 
-  public abstract void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException;
+  /**
+   * @deprecated Use {@link #reformatChanges(PsiFile, ChangedRangesInfo)}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed") // from reformatChanges() for backwards compatibility with plugins.
+  @Deprecated
+  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException {
+    throw new IncorrectOperationException("Deprecated method");
+  }
 
+  public void reformatChanges(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException {
+    reformatTextWithContext(file, info);
+  }
+
+  /**
+   * @deprecated Use {@code FormattingService.formatRanges(file,rangesInfo,canChangeWhiteSpaceOnly,quickFormat} with
+   * {@code rangesInfo.isExpandToContext() == true}
+   */
+  @Deprecated
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException {
     List<TextRange> rangesList = new ArrayList<>(ranges);
-    reformatTextWithContext(file, new ChangedRangesInfo(rangesList, null));
+    reformatChanges(file, new ChangedRangesInfo(rangesList, null));
   }
 
   /**

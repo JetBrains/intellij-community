@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-internal class ToggleDefaultGroupAction : DumbAwareAction(messagePointer("default.bookmark.group.mark.action.text")) {
+internal class ToggleDefaultGroupAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

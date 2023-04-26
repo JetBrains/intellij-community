@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
@@ -50,7 +50,7 @@ final class PersistentFSAttributeAccessor {
 
   //======== RC: methods to access attributesStorage raw byteBuffer, if storage supports it
 
-  protected boolean supportsRawAccess() {
+  boolean supportsRawAccess() {
     return attributesStorage instanceof AttributesStorageOverBlobStorage;
   }
 
@@ -61,11 +61,10 @@ final class PersistentFSAttributeAccessor {
    *
    * @return null if an appropriate attribute record does not exist
    */
-  protected <R> @Nullable R readAttributeRaw(final int fileId,
-                                             final @NotNull FileAttribute attribute,
-                                             final ByteBufferReader<R> reader) throws IOException {
-    if (attributesStorage instanceof AttributesStorageOverBlobStorage) {
-      final AttributesStorageOverBlobStorage storage = (AttributesStorageOverBlobStorage)attributesStorage;
+  <R> @Nullable R readAttributeRaw(final int fileId,
+                                   final @NotNull FileAttribute attribute,
+                                   final ByteBufferReader<R> reader) throws IOException {
+    if (attributesStorage instanceof AttributesStorageOverBlobStorage storage) {
       return storage.readAttributeRaw(connection, fileId, attribute, buffer -> {
         if (attribute.isVersioned()) {
           final int actualVersion = DataInputOutputUtil.readINT(buffer);
@@ -84,8 +83,7 @@ final class PersistentFSAttributeAccessor {
   public void writeAttributeRaw(final int fileId,
                                 final @NotNull FileAttribute attribute,
                                 final ByteBufferWriter writer) {
-    if (attributesStorage instanceof AttributesStorageOverBlobStorage) {
-      final AttributesStorageOverBlobStorage storage = (AttributesStorageOverBlobStorage)attributesStorage;
+    if (attributesStorage instanceof AttributesStorageOverBlobStorage storage) {
       throw new UnsupportedOperationException("Method not implemented yet");
       //TODO RC: drill hole for storage.writeAttributeRaw(connection, fileId, attribute, writer)
       //return storage.writeAttribute(connection, fileId, attribute, buffer -> {
@@ -108,6 +106,7 @@ final class PersistentFSAttributeAccessor {
   @NotNull
   public AttributeOutputStream writeAttribute(final int fileId,
                                               final @NotNull FileAttribute attribute) {
+    //TODO RC: we need to check fileId here, and throw exception if it is not valid
     final AttributeOutputStream attributeStream = attributesStorage.writeAttribute(connection, fileId, attribute);
     if (attribute.isVersioned()) {
       try {

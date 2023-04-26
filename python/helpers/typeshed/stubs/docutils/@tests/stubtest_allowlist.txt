@@ -4,7 +4,6 @@ docutils.frontend.ConfigParser.read
 docutils.frontend.OptionParser.__getattr__
 docutils.io.FileOutput.__getattr__
 docutils.io.FileOutput.__init__
-docutils.io.Input.__getattr__
 docutils.io.Input.__init__
 docutils.languages.LanguageImporter.__getattr__
 docutils.nodes.Element.__getattr__

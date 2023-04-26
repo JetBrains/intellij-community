@@ -517,7 +517,7 @@ class InternalDecoratorImpl internal constructor(
   fun updateActiveAndHoverState() {
     val isHoverAlphaAnimationEnabled =
       toolWindow.toolWindowManager.isNewUi &&
-      AdvancedSettings.getBoolean("ide.show.tool.window.icons.on.hover")
+      !AdvancedSettings.getBoolean("ide.always.show.tool.window.header.icons")
     val narrow = this.toolWindow.decorator?.width?.let { it < JBUI.scale(120) } ?: false
     val isVisible = narrow || !isHoverAlphaAnimationEnabled || isWindowHovered || header.isPopupShowing || toolWindow.isActive
 

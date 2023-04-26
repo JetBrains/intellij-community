@@ -64,22 +64,22 @@ public class IntentionDescriptionPanel {
 
     myBeforePanel = new JPanel();
     examplePanel.add(PanelFactory.panel(myBeforePanel)
-                  .withLabel(CodeInsightBundle.message("border.title.before"))
-                  .moveLabelOnTop()
-                  .resizeX(true)
-                  .resizeY(true)
-                  .createPanel(),
-                constraint.nextLine()
+                       .withLabel(CodeInsightBundle.message("border.title.before"))
+                       .moveLabelOnTop()
+                       .resizeX(true)
+                       .resizeY(true)
+                       .createPanel(),
+                     constraint.nextLine()
     );
 
     myAfterPanel = new JPanel();
     examplePanel.add(PanelFactory.panel(myAfterPanel)
-                  .withLabel(CodeInsightBundle.message("border.title.after"))
-                  .moveLabelOnTop()
-                  .resizeX(true)
-                  .resizeY(true)
-                  .createPanel(),
-                constraint.nextLine()
+                       .withLabel(CodeInsightBundle.message("border.title.after"))
+                       .moveLabelOnTop()
+                       .resizeX(true)
+                       .resizeY(true)
+                       .createPanel(),
+                     constraint.nextLine()
     );
 
     OnePixelSplitter mySplitter = new OnePixelSplitter(true,
@@ -105,7 +105,8 @@ public class IntentionDescriptionPanel {
                   settings.select(configurable).doWhenDone(() -> {
                     if (searchTextField != null && search != null) searchTextField.setText(search);
                   });
-                } else {
+                }
+                else {
                   Project project = context.getData(CommonDataKeys.PROJECT);
                   ShowSettingsUtilImpl.showSettingsDialog(project, configId, search);
                 }
@@ -123,7 +124,7 @@ public class IntentionDescriptionPanel {
     });
   }
 
-  public void reset(IntentionActionMetaData actionMetaData, String filter)  {
+  public void reset(IntentionActionMetaData actionMetaData, String filter) {
     try {
       TextDescriptor url = actionMetaData.getDescription();
       String description = StringUtil.isEmpty(url.getText()) ?
@@ -142,13 +143,16 @@ public class IntentionDescriptionPanel {
     }
   }
 
-  public void reset(String intentionCategory)  {
+  public void reset(String intentionCategory) {
     try {
-      DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, CodeInsightBundle.message("intention.settings.category.text", intentionCategory));
+      DescriptionEditorPaneKt.readHTML(myDescriptionBrowser,
+                                       CodeInsightBundle.message("intention.settings.category.text", intentionCategory));
 
-      TextDescriptor beforeTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
+      TextDescriptor beforeTemplate =
+        new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
       showUsages(myBeforePanel, myBeforeUsagePanels, new TextDescriptor[]{beforeTemplate});
-      TextDescriptor afterTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
+      TextDescriptor afterTemplate =
+        new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
       showUsages(myAfterPanel, myAfterUsagePanels, new TextDescriptor[]{afterTemplate});
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());

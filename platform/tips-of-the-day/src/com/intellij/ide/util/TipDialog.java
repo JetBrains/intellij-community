@@ -34,7 +34,7 @@ public final class TipDialog extends DialogWrapper {
 
   private boolean showRequestScheduled = false;
 
-  TipDialog(@Nullable final Project project, @NotNull final TipsSortingResult sortingResult) {
+  TipDialog(final @Nullable Project project, final @NotNull TipsSortingResult sortingResult) {
     super(project, true);
     setModal(false);
     setTitle(IdeBundle.message("title.tip.of.the.day"));
@@ -49,7 +49,7 @@ public final class TipDialog extends DialogWrapper {
         adjustSizeToContent();
       }
     });
-    myShowActions = sortingResult.getTips().size() > 1;
+    myShowActions = sortingResult.tips.size() > 1;
     if (myShowActions) {
       setDoNotAskOption(myTipPanel);
     }
@@ -72,9 +72,8 @@ public final class TipDialog extends DialogWrapper {
     setSize(prefSize.width, height);
   }
 
-  @NotNull
   @Override
-  protected DialogStyle getStyle() {
+  protected @NotNull DialogStyle getStyle() {
     return DialogStyle.COMPACT;
   }
 
@@ -157,9 +156,8 @@ public final class TipDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myPreferredFocusedComponent;
   }
 }

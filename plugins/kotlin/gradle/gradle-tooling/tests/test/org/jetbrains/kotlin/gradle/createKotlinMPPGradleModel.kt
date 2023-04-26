@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
-import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.*
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.tooling.core.MutableExtras
@@ -26,7 +24,6 @@ internal fun createKotlinMPPGradleModel(
         targets = targets.toList(),
         extraFeatures = extraFeatures,
         kotlinNativeHome = kotlinNativeHome,
-        cacheAware = CompilerArgumentsCacheAwareImpl(),
         kotlinGradlePluginVersion = kotlinGradlePluginVersion
     )
 }
@@ -79,9 +76,7 @@ internal fun createKotlinCompilation(
     allSourceSets: Set<KotlinSourceSet> = emptySet(),
     dependencies: Iterable<KotlinDependencyId> = emptyList(),
     output: KotlinCompilationOutput = createKotlinCompilationOutput(),
-    arguments: KotlinCompilationArguments = createKotlinCompilationArguments(),
-    dependencyClasspath: Iterable<String> = emptyList(),
-    cachedArgsInfo: CachedArgsInfo<*> = createCachedArgsInfo(),
+    compilerArguments: List<String> = emptyList(),
     kotlinTaskProperties: KotlinTaskProperties = createKotlinTaskProperties(),
     nativeExtensions: KotlinNativeCompilationExtensions? = null,
     associateCompilations: Set<KotlinCompilationCoordinates> = emptySet(),
@@ -93,9 +88,7 @@ internal fun createKotlinCompilation(
         allSourceSets = allSourceSets,
         dependencies = dependencies.toList().toTypedArray(),
         output = output,
-        arguments = arguments,
-        dependencyClasspath = dependencyClasspath.toList().toTypedArray(),
-        cachedArgsInfo = cachedArgsInfo,
+        compilerArguments = compilerArguments,
         kotlinTaskProperties = kotlinTaskProperties,
         nativeExtensions = nativeExtensions,
         associateCompilations = associateCompilations,
@@ -110,31 +103,6 @@ internal fun createKotlinCompilationOutput(): KotlinCompilationOutputImpl {
         resourcesDir = null
     )
 }
-
-@Suppress("DEPRECATION_ERROR")
-internal fun createKotlinCompilationArguments(): KotlinCompilationArgumentsImpl {
-    return KotlinCompilationArgumentsImpl(
-        defaultArguments = emptyArray(),
-        currentArguments = emptyArray()
-    )
-}
-
-internal fun createCachedArgsBucket(): CachedCompilerArgumentsBucket = CachedCompilerArgumentsBucket(
-    compilerArgumentsClassName = KotlinCachedRegularCompilerArgument(0),
-    singleArguments = emptyMap(),
-    classpathParts = KotlinCachedMultipleCompilerArgument(emptyList()),
-    multipleArguments = emptyMap(),
-    flagArguments = emptyMap(),
-    internalArguments = emptyList(),
-    freeArgs = emptyList()
-)
-
-internal fun createCachedArgsInfo(): CachedArgsInfo<*> = CachedExtractedArgsInfo(
-    cacheOriginIdentifier = RandomUtils.nextLong(),
-    currentCompilerArguments = createCachedArgsBucket(),
-    defaultCompilerArguments = createCachedArgsBucket(),
-    dependencyClasspath = emptyList()
-)
 
 internal fun createKotlinTaskProperties(): KotlinTaskPropertiesImpl {
     return KotlinTaskPropertiesImpl(

@@ -8,8 +8,6 @@ import com.intellij.util.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.WeakHashMap;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -363,6 +361,9 @@ public final class ContainerUtil {
     return new THashSet<>();
   }
 
+  /**
+   * Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSet()} instead, if available
+   */
   @Contract(pure = true)
   public static @NotNull <T> Set<@NotNull T> newConcurrentSet() {
     //noinspection SSBasedInspection
@@ -782,17 +783,6 @@ public final class ContainerUtil {
     }
   }
 
-  /**
-   * @return read-only list consisting of the elements from the input collection
-   */
-  @Unmodifiable
-  public static @NotNull <T> List<T> collect(@NotNull Iterator<? extends T> iterator) {
-    if (!iterator.hasNext()) return emptyList();
-    List<T> list = new ArrayList<>();
-    addAll(list, iterator);
-    return list;
-  }
-
   @Contract(pure = true)
   public static @NotNull <K, V> Map<K, V> newMapFromKeys(@NotNull Iterator<? extends K> keys, @NotNull Convertor<? super K, ? extends V> valueConvertor) {
     Map<K, V> map = new HashMap<>();
@@ -850,6 +840,10 @@ public final class ContainerUtil {
     return true;
   }
 
+  /**
+   * Call {@code processor} on each element of {@code list} sequentially
+   * @return true if all {@link Processor#process(Object)} returned true; false otherwise
+   */
   public static <T> boolean process(@NotNull List<? extends T> list, @NotNull Processor<? super T> processor) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = list.size(); i < size; i++) {
@@ -1238,12 +1232,38 @@ public final class ContainerUtil {
   }
 
   /**
+   * @return read-only list consisting of the elements from the input collection
+   */
+  @Unmodifiable
+  public static @NotNull <T> List<T> collect(@NotNull Iterator<? extends T> iterator) {
+    if (!iterator.hasNext()) return emptyList();
+    List<T> list = new ArrayList<>();
+    addAll(list, iterator);
+    return list;
+  }
+
+  /**
    * @return read-only list consisting of the elements from the {@code iterator} of the specified class
    */
   @Unmodifiable
   public static @NotNull <T> List<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
     //noinspection unchecked
-    return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
+    return collect((Iterator<T>)iterator, t->instanceOf.value(t));
+  }
+  /**
+   * @return read-only list consisting of the elements from the {@code iterator} satisfying the {@code predicate}
+   */
+  @Unmodifiable
+  public static @NotNull <T> List<T> collect(@NotNull Iterator<? extends T> iterator, @NotNull java.util.function.Predicate<? super T> predicate) {
+    if (!iterator.hasNext()) return emptyList();
+    List<T> list = new ArrayList<>();
+    while (iterator.hasNext()) {
+      T o = iterator.next();
+      if (predicate.test(o)) {
+        list.add(o);
+      }
+    }
+    return unmodifiableOrEmptyList(list);
   }
 
   @Contract(mutates = "param1")

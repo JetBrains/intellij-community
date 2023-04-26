@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
-import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -41,6 +40,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   private static final @NonNls String HELP_ID = "reference.changesToolWindow.log";
@@ -77,7 +77,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     ApplicationManager.getApplication().invokeLater(this::updateHighlighters, o -> myDisposableFlag.isDisposed());
 
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
-    myUiProperties.addChangeListener(myPropertiesListener);
+    myUiProperties.addChangeListener(myPropertiesListener, this);
 
     myHistory = VcsLogUiUtil.installNavigationHistory(this);
 
@@ -197,7 +197,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
 
   @Override
   public void dispose() {
-    myUiProperties.removeChangeListener(myPropertiesListener);
     super.dispose();
   }
 

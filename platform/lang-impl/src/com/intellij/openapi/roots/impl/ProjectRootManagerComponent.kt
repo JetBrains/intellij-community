@@ -38,7 +38,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
-import com.intellij.util.indexing.roots.IndexingRootsCollectionUtil
+import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
@@ -50,6 +50,8 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 private val LOG = logger<ProjectRootManagerComponent>()
 private val LOG_CACHES_UPDATE by lazy(LazyThreadSafetyMode.NONE) {
@@ -72,8 +74,9 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   var rootsToWatch: MutableSet<WatchRequest> = CollectionFactory.createSmallMemoryFootprintSet()
     private set
 
-  // accessed in EDT
   private var rootPointersDisposable = Disposer.newDisposable()
+  private var lastInProgressRootPointersDisposable: Disposable? = null
+  private val rootWatchLock = ReentrantLock()
 
   private val rootsChangedListener: VirtualFilePointerListener = object : VirtualFilePointerListener {
     private fun getPointersChanges(pointers: Array<VirtualFilePointer>): RootsChangeRescanningInfo {
@@ -182,15 +185,19 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     LocalFileSystem.getInstance().removeWatchedRoots(rootsToWatch)
   }
 
-  @RequiresEdt
   private fun addRootsToWatch() {
     if (myProject.isDefault) {
       return
     }
 
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
-    val oldDisposable = rootPointersDisposable
-    val newDisposable = Disposer.newDisposable()
+    val oldDisposable: Disposable
+    val newDisposable: Disposable
+    rootWatchLock.withLock {
+      oldDisposable = rootPointersDisposable
+      newDisposable = Disposer.newDisposable()
+      lastInProgressRootPointersDisposable = newDisposable
+    }
+
     if (ApplicationManager.getApplication().isUnitTestMode) {
       val watchRoots = collectWatchRoots(newDisposable)
       postCollect(newDisposable, oldDisposable, watchRoots)
@@ -200,9 +207,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       myProject.coroutineScope.launch {
         val job = launch(start = CoroutineStart.LAZY) {
           val watchRoots = readAction { collectWatchRoots(newDisposable) }
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            postCollect(newDisposable, oldDisposable, watchRoots)
-          }
+          postCollect(newDisposable, oldDisposable, watchRoots)
         }
         collectWatchRootsJob.getAndSet(job)?.cancelAndJoin()
         job.start()
@@ -210,12 +215,19 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
   }
 
-  private fun postCollect(newDisposable: Disposable, oldDisposable: Disposable, watchRoots: Pair<Set<String>, Set<String>>) {
-    rootPointersDisposable = newDisposable
-    // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
-    // instead, just increment/decrement their usage count
-    Disposer.dispose(oldDisposable)
-    rootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(rootsToWatch, watchRoots.first, watchRoots.second)
+  private fun postCollect(newDisposable: Disposable,
+                          oldDisposable: Disposable,
+                          watchRoots: Pair<Set<String>, Set<String>>) = rootWatchLock.withLock {
+    if (rootPointersDisposable == oldDisposable && lastInProgressRootPointersDisposable == newDisposable) {
+      rootPointersDisposable = newDisposable
+      // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
+      // instead, just increment/decrement their usage count
+      Disposer.dispose(oldDisposable)
+      rootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(rootsToWatch, watchRoots.first, watchRoots.second)
+    }
+    else {
+      Disposer.dispose(newDisposable)
+    }
   }
 
   override fun fireBeforeRootsChangeEvent(fileTypes: Boolean) {
@@ -339,29 +351,23 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   }
 
   private fun collectCustomWorkspaceWatchRoots(recursivePaths: MutableSet<String>) {
-    val settings = IndexingRootsCollectionUtil.IndexingRootsCollectionSettings()
+    val settings = WorkspaceIndexingRootsBuilder.Companion.Settings()
     settings.retainCondition = Condition<WorkspaceFileIndexContributor<out WorkspaceEntity>> {
       it !is PlatformInternalWorkspaceFileIndexContributor && it !is SkipAddingToWatchedRoots
     }
-    val roots = IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, WorkspaceModel.getInstance(
-      project).currentSnapshot, settings)
+    val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(project,
+                                                                                 WorkspaceModel.getInstance(project).currentSnapshot,
+                                                                                 settings)
 
     fun register(rootFiles: Collection<VirtualFile>, name: String) {
       WATCH_ROOTS_LOG.trace { "  $name from workspace entities: ${rootFiles}" }
       rootFiles.forEach { recursivePaths.add(it.path) }
     }
 
-    for (contentEntityRoot in roots.contentEntityRoots) {
-      register(contentEntityRoot.roots, "content roots")
-    }
-
-    for (moduleRoot in roots.moduleRoots) {
-      register(moduleRoot.roots, "module content roots")
-    }
-
-    for (externalRoot in roots.externalEntityRoots) {
-      register(externalRoot.roots, "external roots")
-      register(externalRoot.sourceRoots, "external source roots")
+    builder.forEachModuleContentEntitiesRoots { roots -> register(roots, "module content roots") }
+    builder.forEachContentEntitiesRoots { roots -> register(roots, "content roots") }
+    builder.forEachExternalEntitiesRoots({ roots -> register(roots, "external roots") }) { sourceRoots ->
+      register(sourceRoots, "external source roots")
     }
   }
 
@@ -394,7 +400,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   override fun dispose() {}
 
   @TestOnly
-  fun disposeVirtualFilePointersAfterTest() {
+  fun disposeVirtualFilePointersAfterTest() = rootWatchLock.withLock {
     Disposer.dispose(rootPointersDisposable)
   }
 

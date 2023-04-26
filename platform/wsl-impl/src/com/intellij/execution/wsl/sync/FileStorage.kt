@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.wsl.AbstractWslDistribution
+import com.intellij.execution.wsl.sync.WslHashFilters.Companion.EMPTY_FILTERS
 
 
 /**
@@ -12,8 +13,7 @@ import com.intellij.execution.wsl.AbstractWslDistribution
  */
 abstract class FileStorage<MyFileType, OtherSideFileType>(
   protected val dir: MyFileType,
-  protected val distro: AbstractWslDistribution,
-  protected val filters: WslHashFilters
+  protected val distro: AbstractWslDistribution
 ) {
 
   /**
@@ -22,11 +22,14 @@ abstract class FileStorage<MyFileType, OtherSideFileType>(
   abstract fun createSymLinks(links: Map<FilePathRelativeToDir, FilePathRelativeToDir>)
 
   /**
-   * List of [WslHashRecord] (file + hash) and map of `source->target` links.
-   * [skipHashCalculation] saves time by skipping hash (hence [WslHashRecord.hash] is 0).
+   * [filters] determine which files to process.
+   * [skipHash] saves time by skipping hash (hence each [WslHashRecord.hash] in [WslSyncData.hashes] is 0).
    * Such records can't be used for sync, but only to copy all files
+   * [useStubs] specifies whether files for stubbing will be reported.
    */
-  abstract fun getHashesAndLinks(skipHashCalculation: Boolean): Pair<List<WslHashRecord>, Map<FilePathRelativeToDir, FilePathRelativeToDir>>
+  abstract fun calculateSyncData(filters: WslHashFilters = EMPTY_FILTERS,
+                                 skipHash: Boolean = false,
+                                 useStubs: Boolean = false): WslSyncData
 
   /**
    * is [dir] empty
@@ -35,6 +38,7 @@ abstract class FileStorage<MyFileType, OtherSideFileType>(
   abstract fun removeFiles(filesToRemove: Collection<FilePathRelativeToDir>)
   abstract fun createTempFile(): MyFileType
   abstract fun removeTempFile(file: MyFileType)
+  abstract fun createStubs(files: Collection<FilePathRelativeToDir>)
 
   /**
    * tar [files] and copy to [destTar]

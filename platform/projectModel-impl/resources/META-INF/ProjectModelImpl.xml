@@ -78,9 +78,6 @@
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ExcludedRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.UnloadedContentRootFileIndexContributor"/>
-    <registryKey key="platform.projectModel.workspace.model.file.index" defaultValue="true"
-                 description="Use new implementation of ProjectFileIndex based on WorkspaceModel with incremental updates"
-                 restartRequired="true"/>
     <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="true" restartRequired="true"
                  description="Enable additional checks after replaceBySource and addDiff"/>
     <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"

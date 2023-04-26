@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -25,11 +26,13 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
             return false
         }
 
+        val supportsExtendedMainConvention = function.languageVersionSettings.supportsFeature(LanguageFeature.ExtendedMainConvention)
+
         val isTopLevel = function.isTopLevel
         val parameterCount = function.valueParameters.size + (if (function.receiverTypeReference != null) 1 else 0)
 
         if (parameterCount == 0) {
-            if (!isTopLevel || !function.languageVersionSettings.supportsFeature(LanguageFeature.ExtendedMainConvention)) {
+            if (!isTopLevel || !configuration.allowParameterless || !supportsExtendedMainConvention) {
                 return false
             }
         } else if (parameterCount > 1) {
@@ -45,7 +48,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                         ?: return false
 
                     val parameterType = parameterTypeReference.getKtType()
-                    if (!parameterType.isSubTypeOf(buildMainParameterType())) {
+                    if (!parameterType.isResolvedClassType() || !parameterType.isSubTypeOf(buildMainParameterType())) {
                         return false
                     }
                 }
@@ -56,7 +59,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                 }
 
                 val jvmName = getJvmName(functionSymbol) ?: functionSymbol.name.asString()
-                if (jvmName != "main") {
+                if (jvmName != KotlinMainFunctionDetector.MAIN_FUNCTION_NAME) {
                     return false
                 }
 
@@ -64,8 +67,22 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                     return false
                 }
 
-                if (!isTopLevel && configuration.checkJvmStaticAnnotation) {
-                    if (!functionSymbol.hasAnnotation(StandardClassIds.Annotations.JvmStatic)) {
+                if (!isTopLevel) {
+                    val containingClass = functionSymbol.originalContainingClassForOverride ?: return false
+                    val annotationJvmStatic = StandardClassIds.Annotations.JvmStatic
+                    return containingClass.classKind.isObject
+                            && (!configuration.checkJvmStaticAnnotation || functionSymbol.hasAnnotation(annotationJvmStatic))
+
+                }
+
+                if (parameterCount == 0) {
+                    // We do not support parameterless entry points having JvmName("name") but different real names
+                    // See more at https://github.com/Kotlin/KEEP/blob/master/proposals/enhancing-main-convention.md#parameterless-main
+                    if (function.name.toString() != KotlinMainFunctionDetector.MAIN_FUNCTION_NAME) return false
+
+                    val functionsInFile = function.containingKtFile.declarations.filterIsInstance<KtNamedFunction>()
+                    // Parameterless function is considered as an entry point only if there's no entry point with an array parameter
+                    if (functionsInFile.any { isMain(it, configuration.with { allowParameterless = false }) }) {
                         return false
                     }
                 }
@@ -78,11 +95,17 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
     private fun KtAnalysisSession.buildMainParameterType(): KtType {
         return buildClassType(StandardClassIds.Array) {
             val argumentType = buildClassType(StandardClassIds.String) {
-                nullability = KtTypeNullability.NULLABLE
+                nullability = KtTypeNullability.NON_NULLABLE
             }
 
             argument(argumentType, Variance.OUT_VARIANCE)
             nullability = KtTypeNullability.NULLABLE
         }
+    }
+
+    context(KtAnalysisSession)
+    private fun KtType.isResolvedClassType(): Boolean = when (this) {
+        is KtNonErrorClassType -> ownTypeArguments.mapNotNull { it.type }.all { it.isResolvedClassType() }
+        else -> false
     }
 }

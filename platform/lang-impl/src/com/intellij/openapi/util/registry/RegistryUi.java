@@ -550,7 +550,7 @@ public class RegistryUi implements Disposable {
       int modelRow = table.convertRowIndexToModel(row);
       myValue = ((MyTableModel)table.getModel()).getRegistryValue(modelRow);
       if (myValue.asColor(null) != null) {
-        final Color color = ColorChooser.chooseColor(table, IdeBundle.message("dialog.title.choose.color"), myValue.asColor(JBColor.WHITE));
+        final Color color = ColorChooserService.getInstance().showDialog(table, IdeBundle.message("dialog.title.choose.color"), myValue.asColor(JBColor.WHITE));
         if (color != null) {
           setValue(myValue, color.getRed() + "," + color.getGreen() + "," + color.getBlue());
           keyChanged(myValue.getKey());

@@ -3,3 +3,5 @@
 package classCompletionImport
 
 fun other() : SortedS<caret>
+
+// AUTOCOMPLETE_SETTING: true

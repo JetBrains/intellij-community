@@ -1,19 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JarBuilder")
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RAW_RUN_BLOCKING")
 
 package org.jetbrains.intellij.build.tasks
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.io.*
+import java.nio.ByteBuffer
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.util.function.IntConsumer
 import java.util.zip.Deflater
 
 const val UTIL_JAR = "util.jar"
+const val BOOT_JAR = "boot.jar"
 const val UTIL_RT_JAR = "util_rt.jar"
 const val UTIL_8_JAR = "util-8.jar"
 
@@ -25,14 +30,14 @@ sealed interface Source {
 }
 
 private val USER_HOME = Path.of(System.getProperty("user.home"))
-private val MAVEN_REPO = USER_HOME.resolve(".m2/repository")
+val MAVEN_REPO: Path = USER_HOME.resolve(".m2/repository")
 
 internal val isWindows: Boolean = System.getProperty("os.name").startsWith("windows", ignoreCase = true)
 
 data class ZipSource(
   @JvmField val file: Path,
   @JvmField val excludes: List<Regex> = emptyList(),
-  @JvmField val isPreSignedCandidate: Boolean = false,
+  @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
   override val filter: ((String) -> Boolean)? = null,
   override val sizeConsumer: IntConsumer? = null,
 ) : Source, Comparable<ZipSource> {
@@ -53,7 +58,8 @@ data class ZipSource(
 data class DirSource(@JvmField val dir: Path,
                      @JvmField val excludes: List<PathMatcher> = emptyList(),
                      override val sizeConsumer: IntConsumer? = null,
-                     @JvmField val prefix: String = "") : Source {
+                     @JvmField val prefix: String = "",
+                     @JvmField val removeModuleInfo: Boolean = true) : Source {
   override fun toString(): String {
     val shortPath = if (dir.startsWith(USER_HOME)) "~/${USER_HOME.relativize(dir)}" else dir.toString()
     return "dir(dir=$shortPath, excludes=${excludes.size})"
@@ -81,12 +87,24 @@ data class InMemoryContentSource(@JvmField val relativePath: String,
   }
 }
 
-@JvmOverloads
-fun buildJar(targetFile: Path,
-             sources: List<Source>,
-             compress: Boolean = false,
-             dryRun: Boolean = false,
-             nativeFiles: MutableMap<ZipSource, MutableList<String>>? = null) {
+interface NativeFileHandler {
+  val sourceToNativeFiles: MutableMap<ZipSource, List<String>>
+
+  suspend fun sign(name: String, data: ByteBuffer): Path?
+}
+
+@Obsolete
+fun buildJarSync(targetFile: Path, sources: List<Source>) {
+  runBlocking {
+    buildJar(targetFile, sources)
+  }
+}
+
+suspend fun buildJar(targetFile: Path,
+                     sources: List<Source>,
+                     compress: Boolean = false,
+                     dryRun: Boolean = false,
+                     nativeFileHandler: NativeFileHandler? = null) {
   if (dryRun) {
     for (source in sources) {
       source.sizeConsumer?.accept(0)
@@ -104,7 +122,7 @@ fun buildJar(targetFile: Path,
         when (source) {
           is DirSource -> {
             val archiver = ZipArchiver(zipCreator, fileAdded = {
-              if (uniqueNames.putIfAbsent(it, source.dir) == null) {
+              if (uniqueNames.putIfAbsent(it, source.dir) == null && (!source.removeModuleInfo || it != "module-info.class")) {
                 packageIndexBuilder?.addFile(it)
                 true
               }
@@ -130,38 +148,13 @@ fun buildJar(targetFile: Path,
           }
 
           is ZipSource -> {
-            val sourceFile = source.file
-            val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
-            readZipFile(sourceFile) { name, entry ->
-              if (nativeFiles != null && source.isPreSignedCandidate && isNative(name)) {
-                if (isDuplicated(uniqueNames, name, sourceFile)) {
-                  return@readZipFile
-                }
-
-                nativeFiles.computeIfAbsent(source) { mutableListOf() }.add(name)
-              }
-              else {
-                val filter = source.filter
-                val isIncluded = if (filter == null) {
-                  checkName(name = name,
-                            excludes = source.excludes,
-                            includeManifest = sources.size == 1,
-                            requiresMavenFiles = requiresMavenFiles)
-                }
-                else {
-                  filter(name)
-                }
-
-                if (isIncluded) {
-                  if (isDuplicated(uniqueNames, name, sourceFile)) {
-                    return@readZipFile
-                  }
-
-                  packageIndexBuilder?.addFile(name)
-                  zipCreator.uncompressedData(name, entry.getByteBuffer())
-                }
-              }
-            }
+            handleZipSource(source = source,
+                            targetFile = targetFile,
+                            nativeFileHandler = nativeFileHandler,
+                            uniqueNames = uniqueNames,
+                            sources = sources,
+                            packageIndexBuilder = packageIndexBuilder,
+                            zipCreator = zipCreator)
           }
         }
 
@@ -173,7 +166,70 @@ fun buildJar(targetFile: Path,
   }
 }
 
-private fun isDuplicated(uniqueNames: HashMap<String, Path>, name: String, sourceFile: Path): Boolean {
+private suspend fun handleZipSource(source: ZipSource,
+                                    targetFile: Path,
+                                    nativeFileHandler: NativeFileHandler?,
+                                    uniqueNames: MutableMap<String, Path>,
+                                    sources: List<Source>,
+                                    packageIndexBuilder: PackageIndexBuilder?,
+                                    zipCreator: ZipFileWriter) {
+  val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
+  val nativeFiles = if (nativeFileHandler == null) {
+    null
+  }
+  else {
+    lazy(LazyThreadSafetyMode.NONE) {
+      val list = mutableListOf<String>()
+      check(nativeFileHandler.sourceToNativeFiles.put(source, list) == null)
+      list
+    }
+  }
+
+  val sourceFile = source.file
+  // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
+  // ability to read data without setting channel position, as setting channel position will require synchronization
+  suspendAwareReadZipFile(sourceFile) { name: String, dataSupplier: () -> ByteBuffer ->
+    val filter = source.filter
+    val isIncluded = if (filter == null) {
+      checkNameForZipSource(name = name,
+                            excludes = source.excludes,
+                            includeManifest = sources.size == 1,
+                            requiresMavenFiles = requiresMavenFiles)
+    }
+    else {
+      filter(name)
+    }
+
+    if (isIncluded && !isDuplicated(uniqueNames, name, sourceFile)) {
+      if (nativeFileHandler != null && isNative(name)) {
+        if (source.isPreSignedAndExtractedCandidate) {
+          nativeFiles!!.value.add(name)
+        }
+        else {
+          packageIndexBuilder?.addFile(name)
+
+          // sign it
+          val data = dataSupplier()
+          val file = nativeFileHandler.sign(name, data)
+          if (file == null) {
+            zipCreator.uncompressedData(name, dataSupplier())
+          }
+          else {
+            zipCreator.file(name, file)
+            Files.delete(file)
+          }
+        }
+      }
+      else {
+        packageIndexBuilder?.addFile(name)
+
+        zipCreator.uncompressedData(name, dataSupplier())
+      }
+    }
+  }
+}
+
+private fun isDuplicated(uniqueNames: MutableMap<String, Path>, name: String, sourceFile: Path): Boolean {
   val old = uniqueNames.putIfAbsent(name, sourceFile) ?: return false
   Span.current().addEvent("$name is duplicated and ignored", Attributes.of(
     AttributeKey.stringKey("firstSource"), old.toString(),
@@ -182,12 +238,13 @@ private fun isDuplicated(uniqueNames: HashMap<String, Path>, name: String, sourc
   return true
 }
 
-private fun isNative(name: String): Boolean {
+fun isNative(name: String): Boolean {
   return name.endsWith(".jnilib") ||
          name.endsWith(".dylib") ||
          name.endsWith(".so") ||
          name.endsWith(".exe") ||
          name.endsWith(".dll") ||
+         name.endsWith(".node") ||
          name.endsWith(".tbd")
 }
 
@@ -202,10 +259,20 @@ private fun getIgnoredNames(): Set<String> {
   set.add("pom.xml")
   set.add("about.html")
   set.add("module-info.class")
+  set.add("META-INF/versions/9/module-info.class")
+  // default is ok (modules not used)
+  set.add("META-INF/versions/9/kotlin/reflect/jvm/internal/impl/serialization/deserialization/builtins/BuiltInsResourceLoader.class")
+  set.add("META-INF/versions/9/org/apache/xmlbeans/impl/tool/MavenPluginResolver.class")
   set.add("META-INF/services/javax.xml.parsers.SAXParserFactory")
   set.add("META-INF/services/javax.xml.stream.XMLEventFactory")
   set.add("META-INF/services/javax.xml.parsers.DocumentBuilderFactory")
   set.add("META-INF/services/javax.xml.datatype.DatatypeFactory")
+
+  set.add("META-INF/services/com.fasterxml.jackson.core.ObjectCodec")
+  set.add("META-INF/services/com.fasterxml.jackson.core.JsonFactory")
+  set.add("META-INF/services/reactor.blockhound.integration.BlockHoundIntegration")
+
+  set.add("META-INF/io.netty.versions.properties")
 
   set.add("com/sun/jna/aix-ppc/libjnidispatch.a")
   set.add("com/sun/jna/aix-ppc64/libjnidispatch.a")
@@ -235,15 +302,15 @@ private fun getIgnoredNames(): Set<String> {
       set.add("META-INF/$name.md")
     }
   }
-  return set
+  return java.util.Set.copyOf(set)
 }
 
 private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
 
-private fun checkName(name: String,
-                      excludes: List<Regex>,
-                      includeManifest: Boolean,
-                      requiresMavenFiles: Boolean): Boolean {
+private fun checkNameForZipSource(name: String,
+                                  excludes: List<Regex>,
+                                  includeManifest: Boolean,
+                                  requiresMavenFiles: Boolean): Boolean {
   @Suppress("SpellCheckingInspection")
   return !ignoredNames.contains(name) &&
          excludes.none { it.matches(name) } &&
@@ -285,9 +352,16 @@ private fun checkName(name: String,
          // XmlRPC lib
          !name.startsWith("org/xml/sax/") &&
 
+         !name.startsWith("META-INF/versions/9/org/apache/logging/log4j/") &&
+         !name.startsWith("META-INF/versions/9/org/bouncycastle/") &&
+         !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
+         !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
+
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&
          (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
          !name.startsWith("META-INF/INDEX.LIST") &&
-         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
+         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
+         // we replace lib class by our own patched version
+         !name.startsWith("net/sf/cglib/core/AbstractClassGenerator")
 }

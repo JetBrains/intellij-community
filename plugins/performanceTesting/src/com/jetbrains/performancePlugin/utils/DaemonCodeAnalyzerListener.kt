@@ -5,11 +5,12 @@ import com.intellij.openapi.util.Ref
 import com.intellij.util.messages.SimpleMessageBusConnection
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
+import kotlinx.coroutines.future.asDeferred
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
-object DaemonCodeAnalyzerListener {
-
+internal object DaemonCodeAnalyzerListener {
   /**
    * Listen to the SimpleMessageBusConnection to receive notifications when the daemon finishes.
    *
@@ -34,12 +35,12 @@ object DaemonCodeAnalyzerListener {
   }
 }
 
-class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnection,
-                               private val spanRef: Ref<Span>,
-                               private val scopeRef: Ref<Scope>, timeoutInSeconds: Long = 0) {
+internal class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnection,
+                                        private val spanRef: Ref<Span>,
+                                        private val scopeRef: Ref<Scope>, timeoutInSeconds: Long = 0) {
   private val job = CompletableFuture<Unit>()
   private var suppressErrors: Boolean = false
-  private var timoutErrorMessage = "Timeout on waiting for demon code analyzer complete for $timeoutInSeconds seconds"
+  private var errorMessage = "Timeout on waiting for demon code analyzer complete for $timeoutInSeconds seconds"
 
   init {
     if (timeoutInSeconds > 0) {
@@ -55,16 +56,29 @@ class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnectio
   }
 
   fun withErrorMessage(message: String) {
-    timoutErrorMessage = message
+    errorMessage = message
   }
 
-  fun waitForComplete() {
+  fun blockingWaitForComplete() {
     try {
       job.join()
     }
+    catch (e: CancellationException) {
+      throw e
+    }
     catch (e: Exception) {
       if (!suppressErrors)
-        throw IllegalStateException(timoutErrorMessage, e)
+        throw IllegalStateException(errorMessage, e)
+    }
+  }
+
+  suspend fun waitForComplete() {
+    try {
+      job.asDeferred().join()
+    }
+    catch (e: Exception) {
+      if (!suppressErrors)
+        throw IllegalStateException(errorMessage, e)
     }
   }
 
@@ -82,6 +96,6 @@ class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnectio
   }
 
   fun onError(action: (e: Throwable) -> Unit) {
-    job.exceptionally { action.invoke(it) }
+    job.exceptionally(action::invoke)
   }
 }

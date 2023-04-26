@@ -257,6 +257,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   }
 
   private GlobalMenuLinux(@NotNull JFrame frame) {
+    assert ourLib != null;
     LOG.info("created instance of GlobalMenuLinux for frame: " + frame);
 
     final long xid = _getX11WindowXid(frame);
@@ -326,7 +327,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   @Override
   public void dispose() {
     // exec at EDT
-    if (ourLib == null || myIsDisposed) {
+    if (myIsDisposed) {
       return;
     }
 
@@ -335,6 +336,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     if (myWindowHandle != null) {
       _trace("scheduled destroying of GlobalMenuLinux for frame %s | xid=0x%X", myFrame, myXid);
       ourLib.releaseWindowOnMainLoop(myWindowHandle, myOnWindowReleased);
+    }
+    else {
+      _trace("scheduled destroying of unused GlobalMenuLinux for frame %s | xid=0x%X", myFrame, myXid);
+      ourLib.execOnMainLoop(myOnWindowReleased);
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -79,6 +79,17 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
       });
     }
     return editorWindow.get();
+  }
+
+  @Override
+  public @NotNull Editor getEditorForInjectedFile(@NotNull Editor hostEditor, @NotNull PsiFile injectedFile) {
+    if (!(injectedFile.getViewProvider().getDocument() instanceof DocumentWindowImpl dw)) {
+      throw new IllegalArgumentException("File is not injection");
+    }
+    if (!(hostEditor instanceof EditorImpl ed)) {
+      throw new IllegalArgumentException("Wrong editor implementation");
+    }
+    return createEditor(dw, ed, injectedFile);
   }
 
   @Override

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NonNls;
@@ -126,8 +124,8 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     byte[] bytes = getPersistence().contentsToByteArray(this, cacheContent);
     if (!isCharsetSet()) {
       // optimisation: take the opportunity to not load bytes again in getCharset()
-      // use getByFile() to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
-      FileType fileType = ObjectUtils.notNull(((FileTypeManagerEx)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
+      // use getFileTypeByFile(..., bytes) to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
+      FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByFile(this, bytes);
 
       if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary() && bytes.length != 0) {
         try {

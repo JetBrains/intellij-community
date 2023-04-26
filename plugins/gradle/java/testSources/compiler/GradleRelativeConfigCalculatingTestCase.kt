@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.test.compileModules
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.utils.io.children
+import com.intellij.testFramework.utils.io.getChildren
 import com.intellij.testFramework.utils.io.deleteRecursively
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
@@ -60,8 +60,8 @@ abstract class GradleRelativeConfigCalculatingTestCase : GradleTestCase() {
   private fun Project.getGradleJpsResourceConfigs(type: String): List<Path> {
     val resourceDirectory = getProjectSystemDirectory()
       .getResolvedPath("targets/gradle-resources-$type")
-    val mainDirectory = resourceDirectory.children.single { it.name.startsWith("$name.main") }
-    val testDirectory = resourceDirectory.children.single { it.name.startsWith("$name.test") }
+    val mainDirectory = resourceDirectory.getChildren().single { it.name.startsWith("$name.main") }
+    val testDirectory = resourceDirectory.getChildren().single { it.name.startsWith("$name.test") }
     val mainConfig = mainDirectory.getResolvedPath("config.dat")
     val testConfig = testDirectory.getResolvedPath("config.dat")
     Assertions.assertTrue(mainConfig.exists(), "File doesn't exists $mainConfig")

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -22,9 +23,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 
-public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
+public final class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
-  private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
+  private final Set<CheckCanceledHook> myHooks = ConcurrentCollectionFactory.createConcurrentSet();
   private volatile boolean myRunSleepHook; // optimization: to avoid adding/removing mySleepHook to myHooks constantly this flag is used
 
   public ProgressManagerImpl() {

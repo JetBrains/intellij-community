@@ -35,6 +35,14 @@
 
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEnterHandler"
                          id="terminalEnter" order="first"/>
+    <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretUpHandler"
+                         id="terminalUp" order="first"/>
+    <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretDownHandler"
+                         id="terminalDown" order="first"/>
+    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEscapeHandler"
+                         id="terminalEscape" order="first"/>
+    <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCommandHistoryCharFilter"
+                       id="terminal" order="first"/>
     <completion.contributor language="TEXT" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCompletionContributor"
                             order="first"/>
 

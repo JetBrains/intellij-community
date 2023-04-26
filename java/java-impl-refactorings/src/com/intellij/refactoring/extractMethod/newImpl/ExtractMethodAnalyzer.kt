@@ -14,13 +14,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findRequiredTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.haveReferenceToScope
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.normalizedAnchor
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.uniqueNameOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.withBoxedType
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
@@ -59,10 +58,10 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
     throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), flowOutput.statements + listOfNotNull(outputVariable))
   }
 
-  val anchor = findClassMember(elements.first())
-                        ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.class.not.found"), elements.first().containingFile)
+  val targetClass = PsiTreeUtil.getContextOfType(elements.first(), PsiClass::class.java)
+                    ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.class.not.found"), elements.first().containingFile)
 
-  var extractOptions = ExtractOptions(anchor, elements, flowOutput, dataOutput)
+  var extractOptions = ExtractOptions(targetClass, elements, flowOutput, dataOutput)
 
   val inputParameters = analyzer.findExternalReferences()
     .map { externalReference -> inputParameterOf(externalReference) }
@@ -76,14 +75,12 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
     dataOutput = normalizeDataOutput(dataOutput, flowOutput, elements, exposedVariables.mapNotNull { it.name }),
     thrownExceptions = analyzer.findThrownExceptions(),
     requiredVariablesInside = analyzer.findUndeclaredVariables().filterNot { it.name in parameterNames },
-    typeParameters = findUsedTypeParameters((anchor as? PsiTypeParameterListOwner)?.typeParameterList, elements),
+    typeParameters = findRequiredTypeParameters(targetClass, elements),
     inputParameters = inputParameters,
     exposedLocalVariables = exposedVariables
   )
 
   extractOptions = ExtractMethodPipeline.withCastedParameters(extractOptions)
-
-  val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(elements.first()), PsiClass::class.java)!!
 
   val localWriteViolations = analyzer.findInstanceMemberUsages(targetClass, elements)
     .filter { localUsage -> PsiUtil.isAccessedForWriting(localUsage.reference) && localUsage.member.hasModifierProperty(PsiModifier.FINAL) }
@@ -130,12 +127,6 @@ private fun normalizeType(type: PsiType): PsiType {
   } else {
     GenericsUtil.getVariableTypeByExpressionType(type)
   }
-}
-
-fun findClassMember(element: PsiElement): PsiMember? {
-  val holderTypes = arrayOf(PsiMethod::class.java, PsiField::class.java, PsiClassInitializer::class.java)
-  val anchor = PsiTreeUtil.getNonStrictParentOfType(ExtractMethodHelper.getValidParentOf(element), *holderTypes) ?: return null
-  return normalizedAnchor(anchor)
 }
 
 private fun findFlowOutput(analyzer: CodeFragmentAnalyzer): FlowOutput? {

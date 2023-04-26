@@ -11,6 +11,7 @@ class GitLabCommitDTO(
   val shortId: String,
   val title: @NlsSafe String?,
   val description: @NlsSafe String?,
-  val author: GitLabUserDTO,
+  val author: GitLabUserDTO?,
+  val authorName: String,
   val authoredDate: Date
 )

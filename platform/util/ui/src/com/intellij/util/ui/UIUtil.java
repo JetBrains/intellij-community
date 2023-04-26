@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.*;
+import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -314,7 +315,6 @@ public final class UIUtil {
 
   public static final char MNEMONIC = BundleBase.MNEMONIC;
   public static final @NlsSafe String HTML_MIME = "text/html";
-  public static final @NonNls String JSLIDER_ISFILLED = "JSlider.isFilled";
   public static final @NonNls String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
   /**
    * Prevent component DataContext from returning parent editor
@@ -655,7 +655,7 @@ public final class UIUtil {
       int width = fontMetrics.stringWidth(s);
 
       if (width >= widthLimit - fontMetrics.charWidth('w')) {
-        if (currentLine.length() > 0) {
+        if (!currentLine.isEmpty()) {
           lines.add(currentLine.toString());
           currentLine = new StringBuilder();
         }
@@ -677,7 +677,6 @@ public final class UIUtil {
   public static void setActionNameAndMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     assignMnemonic(text, action);
 
-    //noinspection HardCodedStringLiteral
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
   }
@@ -948,10 +947,6 @@ public final class UIUtil {
     return UIManager.getFont("Menu.font");
   }
 
-  public static Color getSeparatorShadow() {
-    return UIManager.getColor("Separator.shadow");
-  }
-
   /**
    * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
    */
@@ -1201,30 +1196,6 @@ public final class UIUtil {
     return SystemInfoRt.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 
-  public static String @NotNull [] getValidFontNames(final boolean familyName) {
-    Set<String> result = new TreeSet<>();
-
-    // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
-    for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
-      try {
-        if (FontUtil.isValidFont(font)) {
-          result.add(familyName ? font.getFamily() : font.getName());
-        }
-      }
-      catch (Exception ignore) {
-        // JRE has problems working with the font. Just skip.
-      }
-    }
-
-    // add label font (if isn't listed among above)
-    Font labelFont = StartupUiUtil.getLabelFont();
-    if (labelFont != null && FontUtil.isValidFont(labelFont)) {
-      result.add(familyName ? labelFont.getFamily() : labelFont.getName());
-    }
-
-    return ArrayUtilRt.toStringArray(result);
-  }
-
   public static String @NotNull [] getStandardFontSizes() {
     return STANDARD_FONT_SIZES;
   }
@@ -1271,10 +1242,6 @@ public final class UIUtil {
     sb.append(Integer.toHexString(color.getGreen()));
     if (color.getBlue() < 16) sb.append('0');
     sb.append(Integer.toHexString(color.getBlue()));
-  }
-
-  public static void drawDottedRectangle(@NotNull Graphics g, @NotNull Rectangle r) {
-    drawDottedRectangle(g, r.x, r.y, r.x + r.width, r.y + r.height);
   }
 
   /**
@@ -1517,7 +1484,7 @@ public final class UIUtil {
    */
   public static @NotNull BufferedImage createImage(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
     if (JreHiDpiUtil.isJreHiDPI(gc)) {
-      return RetinaImage.create(gc, width, height, type, rm);
+      return new HiDPIImage(gc, width, height, type, rm);
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(rm.round(width), rm.round(height), type);
@@ -1567,10 +1534,6 @@ public final class UIUtil {
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
     component.addPropertyChangeListener("ancestor", listener);
-  }
-
-  public static void removeParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
-    component.removePropertyChangeListener("ancestor", listener);
   }
 
   public static void drawVDottedLine(@NotNull Graphics2D g, int lineX, int startY, int endY, final @Nullable Color bgColor, final Color fgColor) {
@@ -1784,7 +1747,11 @@ public final class UIUtil {
   /**
    * Provides all input event modifiers including deprecated, since they are still used in IntelliJ platform
    */
-  @MagicConstant(flags = {Event.SHIFT_MASK, Event.CTRL_MASK, Event.META_MASK, Event.ALT_MASK, InputEvent.SHIFT_DOWN_MASK, InputEvent.CTRL_DOWN_MASK, InputEvent.META_DOWN_MASK, InputEvent.ALT_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK, InputEvent.BUTTON2_DOWN_MASK, InputEvent.BUTTON3_DOWN_MASK, InputEvent.ALT_GRAPH_DOWN_MASK})
+  @MagicConstant(flags = {
+    Event.SHIFT_MASK, Event.CTRL_MASK, Event.META_MASK, Event.ALT_MASK, InputEvent.SHIFT_DOWN_MASK,
+    InputEvent.CTRL_DOWN_MASK, InputEvent.META_DOWN_MASK, InputEvent.ALT_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK,
+    InputEvent.BUTTON2_DOWN_MASK, InputEvent.BUTTON3_DOWN_MASK, InputEvent.ALT_GRAPH_DOWN_MASK,
+  })
   public static int getAllModifiers(@NotNull InputEvent event) {
     return event.getModifiers() | event.getModifiersEx();
   }
@@ -1887,7 +1854,7 @@ public final class UIUtil {
    * @deprecated use {@link com.intellij.openapi.wm.IdeFocusManager}
    */
   @Deprecated
-  public static void requestFocus(final @NotNull JComponent c) {
+  public static void requestFocus(@NotNull JComponent c) {
     if (c.isShowing()) {
       c.requestFocus();
     }
@@ -1896,7 +1863,7 @@ public final class UIUtil {
     }
   }
 
-  //Whitelist for component types that provide obvious 'focused' view
+  // whitelist for component types that provide obvious 'focused' view
   public static boolean canDisplayFocusedState(@NotNull Component component) {
     return component instanceof JTextComponent || component instanceof AbstractButton || component instanceof JComboBox;
   }
@@ -2062,8 +2029,8 @@ public final class UIUtil {
   public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html, final int hPadding) {
     final @NlsSafe String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = StartupUiUtil.getLabelFont();
-    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : JBUIScale.scale(11);
+    @NonNls String family = font.getFamily();
+    int size = font.getSize();
     return "<html><style>body { font-family: "
            + family + "; font-size: "
            + size + ";} ul li {list-style-type:circle;}</style>"
@@ -2072,31 +2039,6 @@ public final class UIUtil {
 
   public static @NotNull String addPadding(@NotNull String html, int hPadding) {
     return String.format("<p style=\"margin: 0 %dpx 0 %dpx;\">%s</p>", hPadding, hPadding, html);
-  }
-
-  public static @NotNull String convertSpace2Nbsp(@NotNull String html) {
-    @NonNls StringBuilder result = new StringBuilder();
-    int currentPos = 0;
-    int braces = 0;
-    while (currentPos < html.length()) {
-      String each = html.substring(currentPos, currentPos + 1);
-      if ("<".equals(each)) {
-        braces++;
-      }
-      else if (">".equals(each)) {
-        braces--;
-      }
-
-      if (" ".equals(each) && braces == 0) {
-        result.append("&nbsp;");
-      }
-      else {
-        result.append(each);
-      }
-      currentPos++;
-    }
-
-    return result.toString();
   }
 
   /**
@@ -2119,8 +2061,8 @@ public final class UIUtil {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
+  @ApiStatus.Obsolete
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
     EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
   }
@@ -2135,41 +2077,12 @@ public final class UIUtil {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param computable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
-  public static <T> T invokeAndWaitIfNeeded(final @NotNull Computable<T> computable) {
+  @ApiStatus.Obsolete
+  public static <T> T invokeAndWaitIfNeeded(@NotNull Computable<T> computable) {
     final Ref<T> result = Ref.create();
-    invokeAndWaitIfNeeded((Runnable)() -> result.set(computable.compute()));
+    EdtInvocationManager.invokeAndWaitIfNeeded(() -> result.set(computable.compute()));
     return result.get();
-  }
-
-  /**
-   * Please use Application.invokeAndWait() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
-   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
-   *
-   * Invoke and wait in the event dispatch thread
-   * or in the current thread if the current thread
-   * is event queue thread.
-   * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
-   *
-   * @param runnable a runnable to invoke
-   */
-  public static void invokeAndWaitIfNeeded(final @NotNull ThrowableRunnable<?> runnable) throws Throwable {
-    if (EDT.isCurrentThreadEdt()) {
-      runnable.run();
-    }
-    else {
-      final Ref<Throwable> ref = Ref.create();
-      EdtInvocationManager.getInstance().invokeAndWait(() -> {
-        try {
-          runnable.run();
-        }
-        catch (Throwable throwable) {
-          ref.set(throwable);
-        }
-      });
-      if (!ref.isNull()) throw ref.get();
-    }
   }
 
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
@@ -2223,40 +2136,12 @@ public final class UIUtil {
     return g instanceof PrintGraphics || g instanceof PrinterGraphics;
   }
 
-  public static int getSelectedButton(@NotNull ButtonGroup group) {
-    Enumeration<AbstractButton> enumeration = group.getElements();
-    int i = 0;
-    while (enumeration.hasMoreElements()) {
-      AbstractButton button = enumeration.nextElement();
-      if (group.isSelected(button.getModel())) {
-        return i;
-      }
-      i++;
-    }
-    return -1;
-  }
-
-  public static void setSelectedButton(@NotNull ButtonGroup group, int index) {
-    Enumeration<AbstractButton> enumeration = group.getElements();
-    int i = 0;
-    while (enumeration.hasMoreElements()) {
-      AbstractButton button = enumeration.nextElement();
-      group.setSelected(button.getModel(), index == i);
-      i++;
-    }
-  }
-
   public static boolean isSelectionButtonDown(@NotNull MouseEvent e) {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
   }
 
   public static boolean isToggleListSelectionEvent(@NotNull MouseEvent e) {
     return SwingUtilities.isLeftMouseButton(e) && (SystemInfoRt.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
-  }
-
-  @SuppressWarnings("deprecation")
-  public static void setComboBoxEditorBounds(int x, int y, int width, int height, @NotNull JComponent editor) {
-    editor.reshape(x, y, width, height);
   }
 
   /**
@@ -2628,22 +2513,6 @@ public final class UIUtil {
     addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
   }
 
-  public static void adjustWindowToMinimumSize(final Window window) {
-    if (window == null) return;
-    final Dimension minSize = window.getMinimumSize();
-    final Dimension size = window.getSize();
-    final Dimension newSize = new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
-
-    if (!newSize.equals(size)) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        if (window.isShowing()) {
-          window.setSize(newSize);
-        }
-      });
-    }
-  }
-
   public static int getLcdContrastValue() {
     int lcdContrastValue = LoadingState.APP_STARTED.isOccurred() ? Registry.intValue("lcd.contrast.value", 0) : 0;
     if (lcdContrastValue == 0) {
@@ -2740,7 +2609,9 @@ public final class UIUtil {
     if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
     if (StringUtil.isNotEmpty(candidate)) {
       candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
-      if (builder.length() > 0) builder.append(' ');
+      if (!builder.isEmpty()) {
+        builder.append(' ');
+      }
       builder.append(StringUtil.removeHtmlTags(candidate).trim());
     }
     if (component instanceof Container) {
@@ -3465,7 +3336,7 @@ public final class UIUtil {
                                @Nullable Rectangle dstBounds,
                                @Nullable Rectangle srcBounds,
                                @Nullable ImageObserver observer) {
-    StartupUiUtil.drawImage(g, image, dstBounds, srcBounds, null, observer);
+    StartupUiUtilKt.drawImage(g, image, dstBounds, srcBounds, null, observer);
   }
 
   /**

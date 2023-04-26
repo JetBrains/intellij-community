@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class ToOrdinaryStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
-    KotlinBundle.lazyMessage("to.ordinary.string.literal")
+    KotlinBundle.lazyMessage("convert.to.ordinary.string.literal")
 ), LowPriorityAction {
     companion object {
         private val TRIM_INDENT_FUNCTIONS = listOf(FqName("kotlin.text.trimIndent"), FqName("kotlin.text.trimMargin"))

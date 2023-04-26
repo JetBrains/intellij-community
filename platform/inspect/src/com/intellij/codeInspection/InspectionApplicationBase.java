@@ -379,6 +379,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     int timeout = Registry.intValue("batch.inspections.startup.activities.timeout", 180);
     try {
       FutureKt.asCompletableFuture(StartupManager.getInstance(project).getAllActivitiesPassedFuture()).get(timeout, TimeUnit.MINUTES);
+      waitForInvokeLaterActivities();
       LOG.info("Startup activities finished");
     }
     catch (TimeoutException e) {
@@ -450,10 +451,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private static void waitForInvokeLaterActivities() {
-    ApplicationManager.getApplication().invokeAndWait(
-      () -> {
-      },
-      ModalityState.any());
+    for (int i = 0; i < 3; i++) {
+      ApplicationManager.getApplication().invokeAndWait(() -> { }, ModalityState.any());
+    }
   }
 
   private void runAnalysis(Project project,

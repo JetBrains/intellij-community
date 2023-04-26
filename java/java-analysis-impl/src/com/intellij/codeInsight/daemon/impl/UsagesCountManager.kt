@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -15,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.ConcurrentMap
 
 
+@Service(Service.Level.PROJECT)
 class UsagesCountManager @NonInjectable constructor(project: Project, private val usagesCounter: UsagesCounter): Disposable {
 
   @Suppress("unused")
@@ -45,6 +47,9 @@ class UsagesCountManager @NonInjectable constructor(project: Project, private va
 
   fun countMemberUsages(file: PsiFile, member: PsiMember): Int {
     val virtualFile = PsiUtilCore.getVirtualFile(file)
+    if (virtualFile == null) {
+      return usagesCounter.countUsages(file, findSuperMembers(member), GlobalSearchScope.allScope(file.project))
+    }
     return externalUsagesCache.getOrPut(virtualFile) { FileUsagesCache() }.countMemberUsagesCached(usagesCounter, file, member)
   }
 
@@ -66,21 +71,24 @@ private class FileUsagesCache {
   private val externalUsagesCache: ConcurrentMap<String, Int> = ContainerUtil.createConcurrentWeakKeySoftValueMap()
 
   fun countMemberUsagesCached(usagesCounter: UsagesCountManager.UsagesCounter, file: PsiFile, member: PsiMember): Int {
-    val methodMembers = if (member is PsiMethod) DeepestSuperMethodsSearch.search(member).findAll().toList() else emptyList()
-    val superMembers = methodMembers.ifEmpty { listOf(member) }
+    val key = QualifiedNameProviderUtil.getQualifiedName(member)
+    val superMembers = findSuperMembers(member)
+    if (key == null) {
+      return usagesCounter.countUsages(file, superMembers, GlobalSearchScope.allScope(file.project))
+    }
+    //external usages should be counted first to ensure heavy cases are skipped and to avoid freezes in ScopeOptimizer
+    //CompilerReferenceServiceBase#getScopeWithCodeReferences method invokes kotlin resolve and can be very slow
     val localScope = GlobalSearchScope.fileScope(file)
     val externalScope = GlobalSearchScope.notScope(localScope)
-
-    val internalUsages = usagesCounter.countUsages(file, superMembers, localScope)
-    if (internalUsages < 0) return internalUsages
-    val key = QualifiedNameProviderUtil.getQualifiedName(member)
-    val externalUsages = if (key != null) {
-      externalUsagesCache.getOrPut(key) { usagesCounter.countUsages(file, superMembers, externalScope) }
-    }
-    else {
-      usagesCounter.countUsages(file, superMembers, externalScope)
-    }
+    val externalUsages = externalUsagesCache.getOrPut(key) { usagesCounter.countUsages(file, superMembers, externalScope) }
     if (externalUsages < 0) return externalUsages
-    return externalUsages + internalUsages
+    val localUsages = usagesCounter.countUsages(file, superMembers, localScope)
+    if (localUsages < 0) return localUsages
+    return externalUsages + localUsages
   }
+}
+
+private fun findSuperMembers(member: PsiMember): List<PsiMember> {
+  val methodMembers = if (member is PsiMethod) DeepestSuperMethodsSearch.search(member).findAll().toList() else emptyList()
+  return methodMembers.ifEmpty { listOf(member) }
 }

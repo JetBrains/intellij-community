@@ -42,6 +42,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(OpenProjectView.PREFIX, OpenProjectView::new),
       Map.entry(MoveDirectoryCommand.PREFIX, MoveDirectoryCommand::new),
       Map.entry(RunClassInPlugin.PREFIX, RunClassInPlugin::new),
+      Map.entry(RunServiceInPlugin.PREFIX, RunServiceInPlugin::new),
       Map.entry(SetupProjectSdkCommand.PREFIX, SetupProjectSdkCommand::new),
       Map.entry(OpenProjectCommand.PREFIX, OpenProjectCommand::new),
       Map.entry(CodeAnalysisCommand.PREFIX, CodeAnalysisCommand::new),
@@ -75,7 +76,11 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(CloseAllTabsCommand.PREFIX, CloseAllTabsCommand::new),
       Map.entry(CollectAllFilesCommand.PREFIX, CollectAllFilesCommand::new),
       Map.entry(ExecuteEditorActionCommand.PREFIX, ExecuteEditorActionCommand::new),
-      Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new)
+      Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new),
+      Map.entry(AssertFindUsagesCommand.PREFIX, AssertFindUsagesCommand::new),
+      Map.entry(SetBreakpointCommand.PREFIX, SetBreakpointCommand::new),
+      Map.entry(DebugRunConfigurationCommand.PREFIX, DebugRunConfigurationCommand::new),
+      Map.entry(DebugStepCommand.PREFIX, DebugStepCommand::new)
     );
   }
 }

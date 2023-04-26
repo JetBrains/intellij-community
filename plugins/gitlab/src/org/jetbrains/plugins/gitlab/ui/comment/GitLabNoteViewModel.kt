@@ -18,10 +18,11 @@ interface GitLabNoteViewModel {
   val author: GitLabUserDTO
   val createdAt: Date
 
+  val discussionState: Flow<GitLabDiscussionStateContainer>
+
   val actionsVm: GitLabNoteAdminActionsViewModel?
 
-  val resolveVm: GitLabDiscussionResolveViewModel?
-
+  val body: Flow<@Nls String>
   val htmlBody: Flow<@Nls String>
 }
 
@@ -30,7 +31,7 @@ private val LOG = logger<GitLabNoteViewModel>()
 class GitLabNoteViewModelImpl(
   parentCs: CoroutineScope,
   note: GitLabNote,
-  override val resolveVm: GitLabDiscussionResolveViewModel? = null
+  override val discussionState: Flow<GitLabDiscussionStateContainer>
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
@@ -42,7 +43,7 @@ class GitLabNoteViewModelImpl(
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, note) else null
 
-  private val body: Flow<String> = note.body
+  override val body: Flow<String> = note.body
   override val htmlBody: Flow<String> = body.map { GitLabUIUtil.convertToHtml(it) }.modelFlow(cs, LOG)
 
   suspend fun destroy() {

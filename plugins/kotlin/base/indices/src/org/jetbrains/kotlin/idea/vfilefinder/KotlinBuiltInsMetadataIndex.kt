@@ -7,6 +7,7 @@ import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
+import org.jetbrains.kotlin.idea.base.indices.names.readKotlinMetadataDefinition
 import org.jetbrains.kotlin.name.FqName
 
 class KotlinBuiltInsMetadataIndex : KotlinFileIndexBase() {
@@ -22,13 +23,16 @@ class KotlinBuiltInsMetadataIndex : KotlinFileIndexBase() {
 
     override fun getVersion() = VERSION
 
-    private val VERSION = 1
+    private val VERSION = 4
 
     private val INDEXER = indexer { fileContent ->
-        if (fileContent.fileType == KotlinBuiltInFileType &&
-            fileContent.fileName.endsWith(JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION)) {
-            val builtins = BuiltInDefinitionFile.read(fileContent.content, fileContent.file.parent)
-            (builtins as? BuiltInDefinitionFile)?.packageFqName
-        } else null
+        val packageFqName =
+            if (fileContent.fileType == KotlinBuiltInFileType &&
+                fileContent.fileName.endsWith(JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION)
+            ) {
+                val builtins = readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile
+                builtins?.packageFqName
+            } else null
+        packageFqName
     }
 }

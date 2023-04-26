@@ -36,6 +36,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
 import org.jetbrains.idea.packagesearch.HashingAlgorithm
 import org.jetbrains.idea.packagesearch.PackageSearchServiceConfig
+import org.jetbrains.idea.packagesearch.SortMetric
 import org.jetbrains.idea.reposearch.DependencySearchBundle
 import org.jetbrains.packagesearch.api.statistics.ApiStatisticsResponse
 import org.jetbrains.packagesearch.api.v2.ApiPackageResponse
@@ -84,6 +85,7 @@ class PackageSearchApiClient(
           host = config.host
           path("api/")
         }
+        headers(config.headers)
       }
       install(HttpTimeout) {
         requestTimeout = config.timeout
@@ -111,6 +113,7 @@ class PackageSearchApiClient(
     searchQuery: String,
     onlyStable: Boolean = false,
     onlyMpp: Boolean = false,
+    sortMetric: SortMetric = SortMetric.NONE,
     repositoryIds: List<String> = emptyList()
   ): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
     if (searchQuery.isEmpty()) {
@@ -124,6 +127,9 @@ class PackageSearchApiClient(
           append("query", searchQuery)
           append("onlyStable", onlyStable)
           append("onlyMpp", onlyMpp)
+          if (sortMetric != SortMetric.NONE) {
+            append("sort_by", sortMetric.parameterName)
+          }
           if (repositoryIds.isNotEmpty()) {
             append("repositoryIds", repositoryIds)
           }

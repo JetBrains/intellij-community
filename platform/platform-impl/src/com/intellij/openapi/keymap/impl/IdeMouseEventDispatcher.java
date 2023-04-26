@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
@@ -396,7 +397,7 @@ public final class IdeMouseEventDispatcher {
 
   public static boolean isDiagramViewComponent(@Nullable Component component) {
     // in production yfiles classes is obfuscated
-    return UIUtil.isClientPropertyTrue(component, "Diagram-View-Component-Key");
+    return component != null && ClientProperty.isTrue((Component)component, "Diagram-View-Component-Key");
   }
 
   public void blockNextEvents(@NotNull MouseEvent e, @NotNull IdeEventQueue.BlockMode blockMode) {

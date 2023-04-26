@@ -6,8 +6,14 @@ package org.jetbrains.kotlin.idea.completion.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
-import org.jetbrains.kotlin.idea.completion.contributors.callableWeight
+import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider.getCallableMetadata
+import org.jetbrains.kotlin.psi.UserDataProperty
 
 internal object CallableWeigher {
     const val WEIGHER_ID = "kotlin.callableWeigher"
@@ -26,18 +32,6 @@ internal object CallableWeigher {
         THIS_TYPE_EXTENSION,
         BASE_TYPE_EXTENSION,
         OTHER
-    }
-
-    private data class CompoundWeight(val weight1: Weight1, val receiverIndex: Int, val weight2: Weight2) : Comparable<CompoundWeight> {
-        override fun compareTo(other: CompoundWeight): Int {
-            return compareValuesBy(
-                this,
-                other,
-                { it.weight1 },
-                { it.receiverIndex },
-                { it.weight2 },
-            )
-        }
     }
 
     object Weigher : LookupElementWeigher(WEIGHER_ID) {
@@ -64,7 +58,23 @@ internal object CallableWeigher {
                 CallableMetadataProvider.CallableKind.BaseTypeExtension -> Weight2.BASE_TYPE_EXTENSION
                 else -> Weight2.OTHER
             }
-            return CompoundWeight(w1, weight.receiverIndex ?: Int.MAX_VALUE, w2)
+
+            return CompoundWeight3(w1, weight.scopeIndex ?: Int.MAX_VALUE, w2)
         }
     }
+
+    fun KtAnalysisSession.addWeight(
+        context: WeighingContext,
+        lookupElement: LookupElement,
+        symbol: KtSymbol,
+        substitutor: KtSubstitutor,
+        scopeKind: KtScopeKind?
+    ) {
+        lookupElement.callableWeight = getCallableMetadata(context, symbol, substitutor, scopeKind)
+    }
+
+    internal var LookupElement.callableWeight: CallableMetadataProvider.CallableMetadata? by UserDataProperty(
+        Key<CallableMetadataProvider.CallableMetadata>("KOTLIN_CALLABlE_WEIGHT")
+    )
+        private set
 }

@@ -9,9 +9,10 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Implement this interface and register the implementation as `com.intellij.workspaceModel.fileIndexContributor` extension in plugin.xml 
- * file to specify which files mentioned in WorkSpace Model entities should be considered as part of the workspace.
+ * file to specify which files and directories mentioned in WorkSpace Model entities should be considered as part of the workspace.
  *
- * [WorkspaceFileIndex] can be used to access data collected from the contributors. 
+ * [WorkspaceFileIndex] can be used to access data collected from the contributors.
+ * See [the package documentation](psi_element://com.intellij.workspaceModel.core.fileIndex) for more details.
  */
 @ApiStatus.OverrideOnly
 interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
@@ -173,6 +174,17 @@ interface WorkspaceFileSetRegistrar {
    * @param entity first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
    */
   fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity)
+
+  /**
+   * Includes [file] to the workspace. Note, that unlike the default [registerFileSet], files under [file] won't be included. 
+   * @param kind specify kind which will be assigned to the files
+   * @param entity first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
+   * @param customData optional custom data which will be associated with the root and can be accessed via [WorkspaceFileSetWithCustomData].
+   */
+  fun registerNonRecursiveFileSet(file: VirtualFileUrl,
+                                  kind: WorkspaceFileKind,
+                                  entity: WorkspaceEntity,
+                                  customData: WorkspaceFileSetData?)
 
   /**
    * A variant of [registerExclusionCondition] function which takes [VirtualFile] instead of [VirtualFileUrl].

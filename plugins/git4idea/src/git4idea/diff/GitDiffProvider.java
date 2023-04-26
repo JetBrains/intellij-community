@@ -42,7 +42,7 @@ import static com.intellij.openapi.vcs.history.VcsDiffUtil.createChangesWithCurr
 /**
  * Git diff provider
  */
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitDiffProvider implements DiffProvider, DiffMixin {
   /**
    * The context project

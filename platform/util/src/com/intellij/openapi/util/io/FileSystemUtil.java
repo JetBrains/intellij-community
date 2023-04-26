@@ -127,7 +127,7 @@ public final class FileSystemUtil {
       else {
         realPath = ourMediator.resolveSymLink(path);
       }
-      if (realPath != null && (SystemInfo.isWindows && realPath.startsWith("\\\\") || new File(realPath).exists())) {
+      if (realPath != null && (SystemInfo.isWindows && realPath.startsWith("\\\\") || Files.exists(Paths.get(realPath)))) {
         return realPath;
       }
     }

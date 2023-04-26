@@ -4,8 +4,8 @@ from m1 import f, g, C, stub_only
 def test_overloaded_function(x):
     g(<warning descr="Expected type 'dict', got 'int' instead">f(10)</warning>)
     g(<warning descr="Expected type 'dict', got 'str' instead">f('foo')</warning>)
-    g(<warning descr="Expected type 'dict', got 'str | int' instead">f(<warning descr="Unexpected type(s):(dict[int, int])Possible type(s):(str)(int)">{1: 2}</warning>)</warning>)
-    g(<warning descr="Expected type 'dict', got 'str | int' instead">f(x)</warning>)
+    g(<warning descr="Expected type 'dict', got 'int | str' instead">f(<warning descr="Unexpected type(s):(dict[int, int])Possible type(s):(int)(str)">{1: 2}</warning>)</warning>)
+    g(<warning descr="Expected type 'dict', got 'int | str' instead">f(x)</warning>)
 
 
 def test_overloaded_subscription_operator_parameters():
@@ -25,5 +25,5 @@ def test_overloaded_binary_operator_parameters():
 def test_stub_only_function(x):
     g(<warning descr="Expected type 'dict', got 'int' instead">stub_only(10)</warning>)
     g(<warning descr="Expected type 'dict', got 'str' instead">stub_only('foo')</warning>)
-    g(<warning descr="Expected type 'dict', got 'str | int' instead">stub_only(x)</warning>)
-    g(<warning descr="Expected type 'dict', got 'str | int' instead">stub_only(<warning descr="Unexpected type(s):(dict[int, int])Possible type(s):(str)(int)">{1: 2}</warning>)</warning>)
+    g(<warning descr="Expected type 'dict', got 'int | str' instead">stub_only(x)</warning>)
+    g(<warning descr="Expected type 'dict', got 'int | str' instead">stub_only(<warning descr="Unexpected type(s):(dict[int, int])Possible type(s):(int)(str)">{1: 2}</warning>)</warning>)

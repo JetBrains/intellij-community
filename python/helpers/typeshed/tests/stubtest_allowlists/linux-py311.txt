@@ -1,5 +1,4 @@
 _?curses.color_pair
-distutils.command.build_ext.__warningregistry__
 mmap.MAP_STACK
 (os|posix).EFD_CLOEXEC
 (os|posix).EFD_NONBLOCK

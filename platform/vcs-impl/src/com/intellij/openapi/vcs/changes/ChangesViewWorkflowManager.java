@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class ChangesViewWorkflowManager implements Disposable {
   @Topic.ProjectLevel
   public static final Topic<ChangesViewWorkflowListener> TOPIC =

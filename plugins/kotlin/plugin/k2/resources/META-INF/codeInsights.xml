@@ -5,5 +5,7 @@
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.SymbolBasedShortenReferencesFacility"/>
   </extensions>
-
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.projectStructure.NonUnderContentKtModuleFactory"/>
+  </extensions>
 </idea-plugin>

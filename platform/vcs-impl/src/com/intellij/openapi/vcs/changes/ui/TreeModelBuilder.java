@@ -444,10 +444,10 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     if (myProject != null && !ApplicationManager.getApplication().isDispatchThread()) {
       // Incrementally fill background colors
       // read lock is required for background colors calculation as it requires project file index
+      // no return value expected. incremental computation is handled inside precalculateFileColors
+      //noinspection deprecation
       ReadAction.nonBlocking(() -> {
         precalculateFileColors(myProject, myRoot);
-        // skip deprecation warning about com.intellij.openapi.application.ReadAction.nonBlocking(java.lang.Runnable)
-        return 1;
       }).executeSynchronously();
     }
 
@@ -464,7 +464,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @RequiresReadLock
   private static void precalculateFileColors(@NotNull Project project, @NotNull ChangesBrowserNode<?> root) {
     root.traverse().forEach(node -> {
-      node.getBackgroundColorCached(project);
+      node.preparePresentationDataCaches(project);
       // Allow to interrupt read lock
       ProgressManager.checkCanceled();
     });

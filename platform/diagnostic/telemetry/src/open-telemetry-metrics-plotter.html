@@ -1,14 +1,25 @@
 <!--
 Page visualises *.csv files produced by CsvMetricsExporter -- i.e. OTel metrics exported in csv format
 
-Uses jquery for DOM manipulation and plotly.js for plotting.
+Uses 'jquery' for DOM manipulation, 'plotly.js' for plotting, and SumoSelect for nice <select> UI
+(all under MIT license)
+
+To add a new 'predefined' chart -- add apt function to a PLOTTERS array. Use already added functions
+as an example
 -->
 <html>
 <head>
+  <!-- license: MIT (https://github.com/jquery/jquery/blob/main/LICENSE.txt) -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
-  <!--    <script src="https://cdn.plot.ly/plotly-2.17.0.js" charset="utf-8"></script>-->
+  <!-- license: MIT (https://github.com/plotly/plotly.js/blob/master/LICENSE) -->
   <script src="https://cdn.plot.ly/plotly-2.17.0.min.js"></script>
+
+  <!-- Enhanced select with multi-option selection:
+       (https://github.com/HemantNegi/jquery.sumoselect)
+       (license: MIT) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.4.9/jquery.sumoselect.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.4.9/sumoselect.min.css">
 
   <style lang="css">
     body {
@@ -200,17 +211,19 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       cursor: pointer;
 
       background-color: lightblue;
+
+
     }
 
     /* open/close markers */
     div > div.caption::before {
       content: '-';
-      font-family: Monospace;
+      font-family: monospaced;
     }
 
     div.hidden > div.caption::before {
       content: '+';
-      font-family: Monospace;
+      font-family: monospaced;
     }
 
     div.plot {
@@ -222,6 +235,13 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       display: none;
     }
 
+
+    /* ========== SumoSelect customization ========= */
+
+    .SumoSelect {
+      width: 35em;
+      font-size: 12pt;
+    }
   </style>
 
   <!-- General objects/helpers: Point, TimeSeries, formatting methods -->
@@ -343,7 +363,8 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
     })
   </script>
 
-  <!-- Plotting -->
+  <!-- Plotting: templates, plotting functions, predefined charts -->
+  <!-- -->
   <script lang="js">
     document.loadedAndParsedData = {
       parsedCSV: null,        //parseFileContents() -> Array[ {name:String, startedAt:Date, value:Float} ]
@@ -392,6 +413,145 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       )
     }
 
+    /* @param caption: String, plot title
+     * @param domElementOrId container to plot into: id, DOM element, or jQuery object
+     * @param dataToPlot: [{name, color, series, visible?}]
+     * @param yaxis: optional {range, ...}
+     */
+    function plotTimeSeries(caption, domElementOrId, dataToPlot, yaxis) {
+      let domElement
+      if (domElementOrId instanceof jQuery) {
+        domElement = domElementOrId[0]
+      }
+      else if (typeof (domElementOrId) == 'string') {
+        domElement = $("#" + domElementOrId)[0]
+      }
+      else if (domElementOrId.id) {
+        domElement = $(domElementOrId)[0]
+      }
+      else {
+        throw `Unrecognized ${domElementOrId}: should be (ID | DOM element | jQuery object)`
+      }
+      console.log(`plotTimeSeries(${caption}, ${domElement.id}, ${dataToPlot.length} plots, ...)`)
+      //RC: seems like Plotly purge previous plot by itself anyway
+      // if (element.plot) {
+      //     Plotly.purge(canvasElement);
+      // }
+      const plotlyTrace = dataToPlot.map(row => {
+        const trace = {
+          name: row.name,
+          line: {color: row.color},
+          marker: {color: row.color},
+          x: row.series.timestamps(),
+          y: row.series.values()
+        }
+        if (row.visible === 'legendonly') {
+          trace.visible = 'legendonly'
+        }
+        return trace
+      })
+
+      const layout = {
+        template: PLOTLY_TEMPLATE,
+        title: caption,
+        xaxis: {range: document.loadedAndParsedData.dateRange}
+      }
+      if (typeof (yaxis) !== 'undefined') {
+        layout.yaxis = yaxis
+      }
+      domElement.plot = Plotly.newPlot(
+        domElement,
+        plotlyTrace,
+        layout,
+        PLOTLY_CONFIG
+      )
+      document.plots.push(domElement)
+      return domElement
+    }
+
+    //==== Plots for specific subsystem, tailored and customized: ============
+
+    function plotBasicJVMCharts() {
+      if (!document.loadedAndParsedData.parsedCSV) {
+        console.log("Error: .loadedAndParsedData is not loaded")
+        return
+      }
+
+      const usedHeapBytes = extractTimeSeries("JVM.usedHeapBytes")
+      const maxHeapBytes = extractTimeSeries("JVM.maxHeapBytes")
+      const usedNativeBytes = extractTimeSeries("JVM.usedNativeBytes")
+      const maxNativeBytes = extractTimeSeries("JVM.maxNativeBytes")
+      const threadsCount = extractTimeSeries("JVM.threadCount")
+
+      console.log("JVM events: " + usedHeapBytes.length())
+
+
+      plotTimeSeries(
+        'Heap memory use',
+        'jvmBasics_Heap_Chart',
+        [{
+          name: 'Used heap, Mb',
+          color: 'green',
+          series: usedHeapBytes.mulScalar(1.0 / 1024 / 1024)
+        }, {
+          name: 'Max heap, Mb',
+          color: 'red',
+          series: maxHeapBytes.mulScalar(1.0 / 1024 / 1024)
+        }],
+        /*yaxis:*/ {
+          title: 'Mb'
+        }
+      )
+
+      const nativeMemoryNotLimited = maxNativeBytes.values().every(value => value <= 0)
+      if (nativeMemoryNotLimited) {
+        plotTimeSeries(
+          'Off-Heap (native) memory use',
+          'jvmBasics_OffHeap_Chart',
+          [{
+            name: 'Used native, Mb',
+            color: 'green',
+            series: usedNativeBytes.mulScalar(1.0 / 1024 / 1024)
+          }],
+          /*yaxis:*/ {
+            title: 'Mb'
+          }
+        )
+      }
+      else {
+        plotTimeSeries(
+          'Off-Heap (native) memory use',
+          'jvmBasics_OffHeap_Chart',
+          [{
+            name: 'Used native, Mb',
+            color: 'green',
+            series: usedNativeBytes.mulScalar(1.0 / 1024 / 1024)
+          }, {
+            name: 'Max native, Mb',
+            color: 'red',
+            series: maxNativeBytes.mulScalar(1.0 / 1024 / 1024)
+          }],
+          /*yaxis:*/ {
+            title: 'Mb'
+          }
+        )
+      }
+
+
+      plotTimeSeries(
+        'Threads count',
+        'jvmBasics_Threads_Chart',
+        [{
+          name: 'threads count',
+          color: 'blue',
+          series: threadsCount
+        }],
+        /*yaxis:*/ {
+          title: 'threads'
+        }
+      )
+
+    }
 
     function plotFilePageCacheCharts() {
       if (!document.loadedAndParsedData.parsedCSV) {
@@ -406,14 +566,15 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       const pageLoadsTimeUs = extractTimeSeries("FilePageCache.totalPageLoadsUs")
       const pageDisposalTimeUs = extractTimeSeries("FilePageCache.totalPageDisposalsUs")
 
-      const timeRange = document.loadedAndParsedData.dateRange
+      const bufferCacheHits = extractTimeSeries("DirectByteBufferAllocator.hits")
+      const bufferCacheMisses = extractTimeSeries("DirectByteBufferAllocator.misses")
+      const buffersReclaimed = extractTimeSeries("DirectByteBufferAllocator.reclaimed")
+      const buffersDisposed = extractTimeSeries("DirectByteBufferAllocator.disposed")
+      const totalSizeOfBuffersInCacheBytes = extractTimeSeries("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes")
+      const totalSizeOfBuffersAllocatedBytes = extractTimeSeries("DirectByteBufferAllocator.totalSizeOfBuffersAllocatedInBytes")
+
 
       console.log("FPC fast hits: " + pageFastHits)
-      console.log("FPC hits: " + pageHits)
-      console.log("FPC misses: " + pageMisses)
-      console.log("FPC Loads: " + pageLoads)
-      console.log("FPC load times: " + pageLoadsTimeUs)
-      console.log("FPC disposal times: " + pageDisposalTimeUs)
 
       const totalPagesRequested = pageFastHits.plus(pageHits).plus(pageMisses).plus(pageLoads)
       const pageFastHitsPercent = pageFastHits.div(totalPagesRequested).mulScalar(100)
@@ -447,6 +608,37 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
           autorange: true
         }
       )
+
+      //DirectBufferAllocator charts:
+
+      plotTimeSeries(
+        'DirectBufferAllocator: caching stats',
+        $("#directBufferAllocator_Counts_Chart"),
+        [
+          {name: 'Cache hits', color: 'green', series: bufferCacheHits},
+          {name: 'Cache misses', color: 'red', series: bufferCacheMisses},
+          //RC: buffers disposed & re-used are quite niche -- turn them off by default:
+          {name: 'Buffers disposed', color: 'yellow', series: buffersDisposed, visible: 'legendonly'},
+          {name: 'Buffers re-used', color: 'blue', series: buffersReclaimed, visible: 'legendonly'},
+        ],
+        /*yaxis: */ {
+          title: '',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'DirectBufferAllocator: native memory usage',
+        $("#directBufferAllocator_Bytes_Chart"),
+        [
+          {name: 'ByteBuffers allocated, Mb', color: 'red', series: totalSizeOfBuffersAllocatedBytes.mulScalar(1/1024/1024)},
+          {name: 'ByteBuffers in cache, Mb', color: 'green', series: totalSizeOfBuffersInCacheBytes.mulScalar(1/1024/1024)}
+        ],
+        /*yaxis: */ {
+          title: 'Mb',
+          autorange: true
+        }
+      )
     }
 
     function plotAWTQueueCharts() {
@@ -456,9 +648,9 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       }
 
       const awtEventsCount = extractTimeSeries("AWTEventQueue.eventsDispatched")
-      const awtDispatchTimeMaxMs = extractTimeSeries("AWTEventQueue.dispatchTimeMaxNs").mulScalar(0.000_001 /* ns-> ms */)
-      const awtDispatchTime90PMs = extractTimeSeries("AWTEventQueue.dispatchTime90PNs").mulScalar(0.000_001 /* ns-> ms */)
-      const awtDispatchTimeAvgMs = extractTimeSeries("AWTEventQueue.dispatchTimeAvgNs").mulScalar(0.000_001 /* ns-> ms */)
+      const awtDispatchTimeMaxMs = extractTimeSeries("AWTEventQueue.dispatchTimeMaxNs").mulScalar(1e-6 /* ns-> ms */)
+      const awtDispatchTime90PMs = extractTimeSeries("AWTEventQueue.dispatchTime90PNs").mulScalar(1e-6 /* ns-> ms */)
+      const awtDispatchTimeAvgMs = extractTimeSeries("AWTEventQueue.dispatchTimeAvgNs").mulScalar(1e-6 /* ns-> ms */)
 
       console.log("AWT events: " + awtEventsCount)
       console.log("AWT dispatch time avg: " + awtDispatchTimeAvgMs)
@@ -578,101 +770,7 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
         }
       )
 
-      /*
-      TODO RC: a lot of issues with shared-axis plots, decided to avoid them for now
-      awtEventsDispatched.plot = Plotly.newPlot(awtEventsDispatched,
-          /!* data: *!/     [{
-              type: 'scatter',
-              mode: 'lines+markers',
-              name: 'Events dispatched',
-              line: {
-                  color: 'blue',
-                  width: 1.5
-              },
-              marker: {
-                  color: 'blue',
-                  size: 2
-              },
-              connectgaps: true,
-              x: awtEventsCount.timestamps(),
-              y: awtEventsCount.values(),
-              xaxis: 'x',
-              yaxis: 'y1'
-          }, {
-              type: 'scatter',
-              mode: 'lines+markers',
-              name: 'Event dispatch time, avg (ms)',
-              line: {
-                  color: 'green',
-                  width: 1.5
-              },
-              marker: {
-                  color: 'green',
-                  size: 2
-              },
-              x: awtDispatchTimeAvgMs.timestamps(),
-              y: awtDispatchTimeAvgMs.values(),
-              xaxis: 'x',
-              yaxis: 'y2'
-          }, {
-              type: 'scatter',
-              mode: 'lines+markers',
-              name: 'Event dispatch time, 90% (ms)',
-              line: {
-                  color: 'orange',
-                  width: 1.5
-              },
-              marker: {
-                  color: 'orange',
-                  size: 2
-              },
-              x: awtDispatchTime90PMs.timestamps(),
-              y: awtDispatchTime90PMs.values(),
-              xaxis: 'x',
-              yaxis: 'y2'
-          }, {
-              type: 'scatter',
-              mode: 'lines+markers',
-              name: 'Event dispatch time, MAX (ms)',
-              line: {
-                  color: 'red',
-                  width: 1.5
-              },
-              marker: {
-                  color: 'red',
-                  size: 2
-              },
-              x: awtDispatchTimeMaxMs.timestamps(),
-              y: awtDispatchTimeMaxMs.values(),
-              xaxis: 'x',
-              yaxis: 'y2'
-          }],
-          /!* layout: *!/   {
-              template: 'seaborn',
-              // title: 'AWT event queue: events count',
-              showlegend: true,
-              legend: {x: 1, y: 1, xanchor: 'right'},
-              margin: {l: 40, r: 20, t: 40, b: 40},
-              grid: {
-                  rows: 2,
-                  columns: 1,
-                  subplots: [['xy1'], ['xy2']]
-              },
-              xaxis: {
-                  type: 'date',
-                  range: timeRange
-              },
-              yaxis1: {
-                  title: 'events',
-                  autorange: true
-              },
-              yaxis2: {
-                  title: 'ms',
-                  autorange: true
-              }
-          },
-          PLOTLY_CONFIG
-      );*/
+
     }
 
     function plotNonBlockingReadActionChart() {
@@ -721,21 +819,107 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       )
     }
 
-    function extractAndPlotTimeSeries(nameOfSeriesToPlot) {
+    function plotIndexesCharts() {
       if (!document.loadedAndParsedData.parsedCSV) {
         console.log("Error: .loadedAndParsedData is not loaded")
         return
       }
-      const timeSeries = extractTimeSeries(nameOfSeriesToPlot)
-      if (timeSeries) {
-        console.log(`Plot series: ${nameOfSeriesToPlot}, ${timeSeries}`)
-        const canvas = $("#customChartPlotly")
-        plotCustomTimeSeries(nameOfSeriesToPlot, timeSeries, canvas)
+
+      const allKeysLookups = extractTimeSeries("Indexes.allKeys.lookups")
+      const allKeysLookupsAvgMs = extractTimeSeries("Indexes.allKeys.lookupDurationAvgMs")
+      const allKeysLookups90PMs = extractTimeSeries("Indexes.allKeys.lookupDuration90PMs")
+      const allKeysLookupsMaxMs = extractTimeSeries("Indexes.allKeys.lookupDurationMaxMs")
+
+      const stubIndexLookups = extractTimeSeries("Indexes.stubs.lookups")
+      const stubIndexLookupsAvgMs = extractTimeSeries("Indexes.stubs.lookupDurationAvgMs")
+      const stubIndexLookups90PMs = extractTimeSeries("Indexes.stubs.lookupDuration90PMs")
+      const stubIndexLookupsMaxMs = extractTimeSeries("Indexes.stubs.lookupDurationMaxMs")
+
+      const entriesIndexLookups = extractTimeSeries("Indexes.entries.lookups")
+      const entriesIndexLookupsAvgMs = extractTimeSeries("Indexes.entries.lookupDurationAvgMs")
+      const entriesIndexLookups90PMs = extractTimeSeries("Indexes.entries.lookupDuration90PMs")
+      const entriesIndexLookupsMaxMs = extractTimeSeries("Indexes.entries.lookupDurationMaxMs")
+
+      console.log("Indexes events: " + stubIndexLookups.length())
+
+      const totalTimeSpentInIndexLookupsMs = allKeysLookups.mul(allKeysLookupsAvgMs)
+        .plus(stubIndexLookups.mul(stubIndexLookupsAvgMs))
+        .plus(entriesIndexLookups.mul(entriesIndexLookupsAvgMs))
+
+      const maxIndexLookupDurationMs = allKeysLookupsMaxMs
+        .combine(stubIndexLookupsMaxMs, Math.max)
+        .combine(entriesIndexLookupsMaxMs, Math.max)
+
+      plotTimeSeries(
+        'Indexes lookups count',
+        'indexes_Lookups_Chart',
+        [{
+          name: 'Stub lookups',
+          color: 'green',
+          series: stubIndexLookups
+        }, {
+          name: 'Entries lookups',
+          color: 'orange',
+          series: entriesIndexLookups
+        }, {
+          name: 'All-keys lookups',
+          color: 'blue',
+          series: allKeysLookups
+        }],
+        /*yaxis:*/ {
+          title: 'count'
+        }
+      )
+
+      plotTimeSeries(
+        'Indexes lookup duration: total(stub+entries+allKeys), and MAX(stub,entries,allKeys)',
+        'indexes_Durations_Chart',
+        [{
+          name: 'total time spent, sec',
+          color: 'green',
+          series: totalTimeSpentInIndexLookupsMs.mulScalar(1 / 1000) //ms->sec
+        }, {
+          name: 'MAX, sec',
+          color: 'red',
+          series: maxIndexLookupDurationMs.mulScalar(1 / 1000) //ms->sec
+        }],
+        /*yaxis:*/ {
+          title: 'sec'
+        }
+      )
+    }
+
+    //====== 'Custom' plot: =================
+
+    /**namesOfSeriesToPlot: array of strings, names of time series in a document.loadedAndParsedData.parsedCSV */
+    function extractAndPlotCustomTimeSeries(namesOfSeriesToPlot) {
+      if (!document.loadedAndParsedData.parsedCSV) {
+        console.log("Error: .loadedAndParsedData is not loaded")
+        return
       }
-      else {
-        console.log(`Error: .loadedAndParsedData.parsedCSV[${nameOfSeriesToPlot}] is not exists`)
-        console.log(document.loadedAndParsedData.parsedCSV)
+      const canvasElementToPlotOn = $("#customChartPlotly")
+      if (!Array.isArray(namesOfSeriesToPlot)) { //legacy version: not an array, just a string
+        namesOfSeriesToPlot = [namesOfSeriesToPlot]
       }
+      const title = namesOfSeriesToPlot.join(', ')
+      const dataToPlot = namesOfSeriesToPlot.map((timeSeriesName) => {
+        const timeSeries = extractTimeSeries(timeSeriesName)
+        if (!timeSeries) {
+          console.log(`Error: .loadedAndParsedData.parsedCSV[${timeSeriesName}] is not exists`)
+          console.log(document.loadedAndParsedData.parsedCSV)
+        }
+        return {
+          name: timeSeriesName,
+          series: timeSeries
+        }
+      }).filter((dataRow) => {
+        return dataRow.series != null
+      })
+      plotTimeSeries(
+        title,
+        canvasElementToPlotOn,
+        dataToPlot
+      )
     }
 
     function plotCustomTimeSeries(title, timeSeries, canvasElement) {
@@ -750,67 +934,29 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       )
     }
 
-    /* @param caption: String, plot title
-     * @param domElementOrId container to plot into: id, DOM element, or jQuery object
-     * @param dataToPlot: [{name, color, series, visible?}]
-     * @param yaxis: optional {range, ...}
-     */
-    function plotTimeSeries(caption, domElementOrId, dataToPlot, yaxis) {
-      let domElement
-      if (domElementOrId instanceof jQuery) {
-        domElement = domElementOrId[0]
-      }
-      else if (typeof (domElementOrId) == 'string') {
-        domElement = $("#" + domElementOrId)[0]
-      }
-      else if (domElementOrId.id) {
-        domElement = $(domElementOrId)[0]
-      }
-      else {
-        throw `Unrecognized ${domElementOrId}: should be (ID | DOM element | jQuery object)`
-      }
-      console.log(`plotTimeSeries(${caption}, ${domElement.id}, ${dataToPlot.length} plots, ...)`)
-      //RC: seems like Plotly purge previous plot by itself anyway
-      // if (element.plot) {
-      //     Plotly.purge(canvasElement);
-      // }
-      const plotlyTrace = dataToPlot.map(row => {
-        const trace = {
-          name: row.name,
-          line: {color: row.color},
-          marker: {color: row.color},
-          x: row.series.timestamps(),
-          y: row.series.values()
-        }
-        if (row.visible === 'legendonly') {
-          trace.visible = 'legendonly'
-        }
-        return trace
-      })
 
-      const layout = {
-        template: PLOTLY_TEMPLATE,
-        title: caption,
-        xaxis: {range: document.loadedAndParsedData.dateRange}
+    //================= List of all 'plotter' functions:      =================
+    // Append newly created plotters here, to be automatically caught on file loading:
+    const PLOTTERS = [
+      plotBasicJVMCharts,
+      plotAWTQueueCharts,
+      plotFlushQueueCharts,
+      plotNonBlockingReadActionChart,
+      plotIndexesCharts,
+      plotFilePageCacheCharts,
+      () => {//Initialize 'custom plot' with something, so it doesn't look empty:
+        const names = document.loadedAndParsedData.names
+        //TODO check #timeSeriesChooser selected options, and if there are options present in names --
+        //     plot them. 
+        if (names && names.length > 0) {
+          extractAndPlotCustomTimeSeries([names[0]])
+        }
       }
-      if (typeof (yaxis) !== 'undefined') {
-        layout.yaxis = yaxis
-      }
-      domElement.plot = Plotly.newPlot(
-        domElement,
-        plotlyTrace,
-        layout,
-        PLOTLY_CONFIG
-      )
-      document.plots.push(domElement)
-      return domElement
-    }
-
+    ]
   </script>
 
-  <!-- Files loading -->
+  <!-- File(s) loading and binding all together: -->
   <script lang="js">
-
     function readFiles(files) {
       console.log("Files: " + files.length)
       if (files.length === 0) {
@@ -832,7 +978,7 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
         .map(file => file.size)
         .reduce((total, size) => total + size, 0)
 
-      new Promise((resolve, reject) => {
+      const loadingChain = new Promise((resolve, reject) => {
         let fileContents = []
         for (file of files) {
           const fileName = file.name
@@ -873,59 +1019,60 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
           document.loadedAndParsedData.dateRange = [new Date(minTs), new Date(maxTs)]
 
           $("#filesLoadedInfo")
-            .text(`Loaded ${files.length} files: ${totalFileSize.formatSizeAsHumanReadable()}, ${csvRows.length} points`)
+            .html(`Loaded <b>${files.length} file(s)</b>: ${totalFileSize.formatSizeAsHumanReadable()}, <b>${csvRows.length}</b> points`)
             .attr('title', fileNames)
           $("#pointsLoadedInfo").html(
-            `Interval covered: [${new Date(minTs).toLocaleString()}  &mdash;  ${new Date(maxTs).toLocaleString()}]`
+            `Interval covered: [${new Date(minTs).toLocaleString()}  &mdash;  ${new Date(maxTs).toLocaleString()}] (local TZ)`
           )
           document.progressBar.show(`Parsed ${files.length} files, ${totalFileSize.formatSizeAsHumanReadable()}, plotting...`)
           document.progressBar.update(74)
           return csvRows
         })
-        .then(onDataLoaded)
-        //RC: plot predefined charts:
-        .then(plotAWTQueueCharts)
-        .then(() => {
-          document.progressBar.update(80)
-        })
-        .then(plotFlushQueueCharts)
-        .then(() => {
-          document.progressBar.update(85)
-        })
-        .then(plotNonBlockingReadActionChart)
-        .then(() => {
-          document.progressBar.update(90)
-        })
-        .then(plotFilePageCacheCharts)
-        .then(() => {
-          document.progressBar.hide()
-        })
-        .then(() => {
-          //RC: 'connect' plots x-axes so that all plots show the same datetime range:
-          for (const plot of document.plots) {
-            //FIXME RC: 'reset axis' doesn't issue plotly_relayout?
-            plot.on('plotly_relayout', (eventData) => {
-              const from = eventData['xaxis.range[0]']
-              const to = eventData['xaxis.range[1]']
-              $(document.body).css('cursor', 'progress')
-              try {
-                if (from && to) {
-                  console.log(`${plot.id}: x-axis range: [${from}, ${to}]`)
-                  for (otherPlot of document.plots) {
-                    if (otherPlot !== plot) {
-                      console.log(`\treLayout: ${otherPlot.id}`)
-                      Plotly.relayout(otherPlot, {'xaxis.range': [from, to]})
-                    }
+        .then(updateUIAfterDataLoaded)
+
+
+      //Plot charts:
+      const progressPerPlotter = (100 - 80 - 1) / PLOTTERS.length
+      loadingChain.then(() => {
+        document.progressBar.update(80)
+      })
+      for (const plotter of PLOTTERS) {
+        loadingChain
+          .then(plotter)
+          .then(() => {
+            document.progressBar.update(document.progressBar.currentValue() + progressPerPlotter)
+          })
+      }
+      loadingChain.then(() => {
+        document.progressBar.update(80)
+        document.progressBar.hide()
+      })
+
+      //'connect' plots x-axes so that all plots show the same datetime range:
+      loadingChain.then(() => {
+        for (const plot of document.plots) {
+          //FIXME RC: 'reset axis' doesn't issue plotly_relayout?
+          plot.on('plotly_relayout', (eventData) => {
+            const from = eventData['xaxis.range[0]']
+            const to = eventData['xaxis.range[1]']
+            $(document.body).css('cursor', 'progress')
+            try {
+              if (from && to) {
+                console.log(`${plot.id}: x-axis range: [${from}, ${to}]`)
+                for (otherPlot of document.plots) {
+                  if (otherPlot !== plot) {
+                    console.log(`\treLayout: ${otherPlot.id}`)
+                    Plotly.relayout(otherPlot, {'xaxis.range': [from, to]})
                   }
                 }
               }
-              finally {
-                $(document.body).css('cursor', 'default')
-              }
-            })
-          }
-
-        })
+            }
+            finally {
+              $(document.body).css('cursor', 'default')
+            }
+          })
+        }
+      })
     }
 
     /* @param contents: String, multi-lines csv
@@ -957,37 +1104,42 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
     }
 
     /* Updates UI after CSV data is loaded */
-    function onDataLoaded(data) {
+    function updateUIAfterDataLoaded(data) {
       const names = document.loadedAndParsedData.names
 
+      //Enhance default html <select multi> with nice UI:
       const timeSeriesChooser = $("#timeSeriesChooser")
+      //TODO: keep 'selected' options if there are some (i.e. if it is not the first file loaded in a session)
       timeSeriesChooser.html("")
       for (const name of names.sort()) {
         timeSeriesChooser.append(`<option value="${name}">${name}</option>`)
       }
-      //click on <select> propagates to parent .caption, and click on .caption collapses/expands
-      // the apt section, which is frustrating => to prevent it I stop the propagation:
-      timeSeriesChooser.on('click', e => {
-        e.stopPropagation()
+      timeSeriesChooser.SumoSelect({
+        placeholder: 'Choose time series to plot...',
+        max: 6,
+        csvDispCount: 6,
+
+        search: true
+
+        // clearAll: true -- has some issues
       })
 
-      if (names && names.length > 0) {
-        extractAndPlotTimeSeries(names[0])
-      }
 
+      //TODO RC: Unfinished work: setup _time-range_ chooser -- so user could limit plots to subset
+      //         of datetime range covered in files.
+      //         (For now #timeRangeChooser is hidden to not distract users)
+      const timeRangeChooser = $("#timeRangeChooser")
+      timeRangeChooser.append(`<option value="">---all---</option>`)
 
-      //TODO setup time-range chooser:
-      const $timeRangeChooser = $("#timeRangeChooser")
-      $timeRangeChooser.append(`<option value="">---all---</option>`)
-
-      //TODO RC: how to iterate time range hour by hour?
       const min = document.loadedAndParsedData.dateRange[0]
       const max = document.loadedAndParsedData.dateRange[1]
+      //RC how to iterate time range hour by hour?
       // for(v=min; v<max; v++) {
-      //     $timeRangeChooser.append(`<option value="">---all---</option>`)
+      //     $timeRangeChooser.append(`<option value="${v}">${v}</option>`)
       // }
     }
   </script>
+  <title>OTel.Metrics Plotter (*.csv)</title>
 </head>
 <body>
 
@@ -1026,14 +1178,14 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
 
           <dt>Why do I need it?</dt>
           <dd>Maybe you don't need it. But it is quite easy to try and see yourself: drag-n-drop
-            any <span style="font-family: Monospace">open-telemetry-metrics.*.csv</span>
+            any <span style="font-family: monospaced">open-telemetry-metrics.*.csv</span>
             file onto the page.
           </dd>
 
           <dt>There to find <span style="font-family: Monospace">open-telemetry-metrics.*.csv</span>
             files?
           </dt>
-          <dd>In IDE logs folder (menu: <span style="font-family: Monospace">Help/Show logs in Finder</span>)</dd>
+          <dd>In IDE logs folder (menu: <span style="font-family: monospaced">Help/Show logs in Finder</span>)</dd>
         </dl>
       </div>
     </div>
@@ -1053,8 +1205,8 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
 
       <!--            class="fileInputLabel"-->
       <label id="fileInputLabel" for="fileInput" autofocus>
-        To view another file(s): Drag & Drop <span style="font-family: monospace">*.csv</span> file(s) on the page,
-        or click here for file-open dialog.
+        To view another file(s): <b>Drag & Drop</b> <span style="font-family: monospace">*.csv</span> file(s) on the page,
+        or <b>click</b> here to use file-choosing dialog.
       </label>
       <input type="file"
              id="fileInput"
@@ -1069,17 +1221,23 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
 </div>
 
 <div id="plots">
-  <div id="AWTQueue" class="blockOfPlots">
+  <div id="jvmBasics" class="blockOfPlots">
 
-    <div class="caption">AWT Event-dispatching queue:</div>
+    <div class="caption">JVM: heap, native memory, threads</div>
+
+    <div id="jvmBasics_Heap_Chart" class="plot hideable"></div>
+    <div id="jvmBasics_OffHeap_Chart" class="plot hideable"></div>
+    <div id="jvmBasics_Threads_Chart" class="plot hideable"></div>
+  </div>
+
+  <div id="AWT_and_Flush_Queues" class="blockOfPlots">
+
+    <div class="caption">EDT: AWT & Flush Queues:</div>
 
     <div id="EDT_awtEventsDispatchedChart" class="plot hideable"></div>
     <div id="EDT_awtEventsTimingsChart" class="plot hideable"></div>
-  </div>
 
-  <div id="FlushQueue" class="blockOfPlots">
-
-    <div class="caption">FlushQueue (tasks dispatching):</div>
+    <!--<div class="caption">FlushQueue (tasks dispatching):</div>-->
 
     <div id="FlushQueue_tasksExecutedChart" class="plot hideable"></div>
     <div id="FlushQueue_tasksWaitingTimesChart" class="plot hideable"></div>
@@ -1094,21 +1252,38 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
     <div id="NonBlockingReads_TimesChart" class="plot hideable"></div>
   </div>
 
+  <div id="indexes" class="blockOfPlots">
+
+    <div class="caption">Indexes: lookups count & duration</div>
+
+    <div id="indexes_Lookups_Chart" class="plot hideable"></div>
+    <div id="indexes_Durations_Chart" class="plot hideable"></div>
+
+  </div>
+
   <div id="filePageCache" class="blockOfPlots">
 
     <div class="caption">FilePageCache:</div>
 
     <div id="filePageCache_HitsMisses_Chart" class="plot hideable"></div>
     <div id="filePageCache_Times_Chart" class="plot hideable"></div>
+
+    <div id="directBufferAllocator_Counts_Chart" class="plot hideable"></div>
+    <div id="directBufferAllocator_Bytes_Chart" class="plot hideable"></div>
+
+
   </div>
 
   <div id="custom" class="blockOfPlots">
     <div class="caption">
-      <label for="timeSeriesChooser">Custom plot:</label>
-      <select name="timeSeriesChooser" id="timeSeriesChooser" onchange="extractAndPlotTimeSeries(this.value)">
-        <option value="">----nothing----</option>
+      <label for="timeSeriesChooser">Plot other:</label>
+      <select name="timeSeriesChooser" id="timeSeriesChooser"
+              multiple
+              onchange="extractAndPlotCustomTimeSeries($(this).val())">
       </select>
+      (no more than 6 time series at once)
     </div>
+
 
     <div id="customChartPlotly" class="plot hideable"></div>
   </div>
@@ -1196,27 +1371,36 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
     const percentsPane = $("#progressBar #percents")
     progressBarGlassPane.hide()
 
+    let percentValue = 0
     document.progressBar = {
       show: (caption) => {
         textPane.text(caption)
-        percentsPane.text(0)
+        percentsPane.text(percentValue.toFixed(0))
         progressBarGlassPane.show()
       },
       update: (percents) => {
+        percentValue = percents
         percentsPane.text(percents.toFixed(0))
       },
       hide: () => {
         progressBarGlassPane.hide()
+      },
+      currentValue: () => {
+        return percentValue
       }
     }
   }
   initProgressBar()
 
 
-  //setup panels close/open by clicking on caption:
+  //setup panels close/open by clicking on the panel caption:
   $('.caption').on('click', (event) => {
-    const parent = $(event.target.parentElement)
-    parent.toggleClass('hidden')
+    //ignore clicks propagated from elements _inside_ .caption -- those elements could
+    // have their own use for mouse clicks, so don't interfere with them:
+    if (event.currentTarget === event.target) {
+      const parent = $(event.currentTarget.parentElement)
+      parent.toggleClass('hidden')
+    }
   })
 
 </script>

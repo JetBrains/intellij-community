@@ -20,7 +20,7 @@ private class WorkingCopyInfoPanel : HtmlPanel() {
   var info: WCInfo? = null
   var upgradeFormats: Collection<WorkingCopyFormat> = emptyList()
 
-  override fun getBodyFont(): Font = StartupUiUtil.getLabelFont()
+  override fun getBodyFont(): Font = StartupUiUtil.labelFont
   override fun getBody(): String = getBodyHtml().toString()
   override fun hyperlinkUpdate(e: HyperlinkEvent) = Unit
 

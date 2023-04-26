@@ -3,7 +3,6 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiPostfixExpression
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 

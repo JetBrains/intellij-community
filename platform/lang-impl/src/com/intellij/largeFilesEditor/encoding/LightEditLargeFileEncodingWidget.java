@@ -30,6 +30,7 @@ public class LightEditLargeFileEncodingWidget extends LargeFileEncodingWidget im
   }
 
   @Override
+  @NotNull
   public StatusBarWidget copy() {
     return new LightEditLargeFileEncodingWidget(getProject());
   }

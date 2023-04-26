@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.Semaphore
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.RequestOrigin
@@ -12,8 +13,11 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.*
 import com.jediterm.terminal.model.JediTerminal.ResizeHandler
 import java.awt.Dimension
+import kotlin.math.min
 
 class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
+  val commandExecutionSemaphore: Semaphore = Semaphore()
+
   val width: Int
     get() = textBuffer.width
   val height: Int
@@ -134,10 +138,13 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     textBuffer.processScreenLines(yStart, count, consumer)
   }
 
-  fun getAllText(): String {
+  fun getAllText(updatedCursorX: Int = cursorX, updatedCursorY: Int = cursorY): String {
     val builder = StringBuilder()
     for (ind in -historyLinesCount until screenLinesCount) {
-      val text = getLine(ind).text
+      var text = getLine(ind).text
+      if (ind == updatedCursorY - 1) {
+        text = text.substring(0, min(updatedCursorX, text.length))
+      }
       builder.append(text)
       if (text.isNotEmpty()) {
         builder.append('\n')
@@ -219,23 +226,23 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     method.invoke(textBuffer)
   }
 
-  fun clearAllExceptPrompt() {
-    textBuffer.scrollArea(1, 1 - cursorY, height)
+  fun clearAllExceptPrompt(promptLines: Int = 1) {
+    textBuffer.scrollArea(1, promptLines - cursorY, height)
     textBuffer.clearHistory()
-    cursorY = 1
+    cursorY = promptLines
   }
 
-  fun lock() = textBuffer.lock()
+  fun lockContent() = textBuffer.lock()
 
-  fun unlock() = textBuffer.unlock()
+  fun unlockContent() = textBuffer.unlock()
 
-  inline fun <T> withLock(callable: () -> T): T {
-    lock()
+  inline fun <T> withContentLock(callable: () -> T): T {
+    lockContent()
     return try {
       callable()
     }
     finally {
-      unlock()
+      unlockContent()
     }
   }
 
@@ -245,7 +252,15 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   private val cursorListeners: MutableList<CursorListener> = mutableListOf()
 
   fun addContentListener(listener: ContentListener, parentDisposable: Disposable? = null) {
-    val terminalListener = TerminalModelListener { listener.onContentChanged() }
+    val terminalListener = object : TerminalModelListenerEx {
+      override fun modelChanged() {
+        listener.onContentChanged()
+      }
+
+      override fun textWritten(x: Int, y: Int, text: String) {
+        listener.onTextWritten(x, y, text)
+      }
+    }
     textBuffer.addModelListener(terminalListener)
     if (parentDisposable != null) {
       Disposer.register(parentDisposable) {
@@ -264,6 +279,8 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
 
   interface ContentListener {
     fun onContentChanged() {}
+
+    fun onTextWritten(x: Int, y: Int, text: String) {}
   }
 
   interface TerminalListener {

@@ -3,7 +3,7 @@
 
 package com.intellij.util.messages.impl
 
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
@@ -398,7 +398,7 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
 }
 
 private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Throwable?): Throwable? {
-  withClientId(job.clientId).use {
+  ClientId.withClientId(job.clientId).use {
     jobQueue.current = job
     val handlers = job.handlers
     var error = prevError

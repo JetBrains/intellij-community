@@ -2,9 +2,9 @@
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.*;
 /**
  * @author anna
  */
-public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements PriorityAction {
+public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAction implements PriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToAtomicIntention.class);
   private final Map<PsiType, String> myFromToMap = Map.of(
     PsiTypes.intType(), AtomicInteger.class.getName(),

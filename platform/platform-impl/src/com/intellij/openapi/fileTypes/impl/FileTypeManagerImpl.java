@@ -41,6 +41,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
@@ -127,7 +128,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<String, StandardFileType> myStandardFileTypes = new LinkedHashMap<>();
   private final SchemeManager<FileTypeWithDescriptor> mySchemeManager;
 
-  protected FileTypeManagerImpl() {
+  protected FileTypeManagerImpl(@NotNull CoroutineScope coroutineScope) {
     NonLazySchemeProcessor<FileTypeWithDescriptor, FileTypeWithDescriptor> abstractTypesProcessor = new NonLazySchemeProcessor<>() {
       @Override
       public @NotNull FileTypeWithDescriptor readScheme(@NotNull Element element, boolean duringLoad) {
@@ -187,7 +188,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     };
     mySchemeManager = SchemeManagerFactory.getInstance().create(FILE_SPEC, abstractTypesProcessor, null, null, SettingsCategory.CODE);
 
-    myDetectionService = new FileTypeDetectionService(this);
+    myDetectionService = new FileTypeDetectionService(this, coroutineScope);
     Disposer.register(this, myDetectionService);
 
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
@@ -694,20 +695,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType requestedFileType) {
+    FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
+    if (temporarilyFixedFileType != null) return temporarilyFixedFileType.equals(requestedFileType);
+
     FileType overriddenFileType = FileTypeOverrider.EP_NAME.computeSafeIfAny(overrider -> overrider.getOverriddenFileType(file));
     if (overriddenFileType != null) {
       return overriddenFileType.equals(requestedFileType);
-    }
-
-    Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
-    if (fixedType != null && fixedType.getFirst().equals(file)) {
-      FileType fileType = fixedType.getSecond();
-      if (fileType != null) {
-        if (toLog()) {
-          log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
-        }
-        return fileType.equals(requestedFileType);
-      }
     }
 
     if (file instanceof LightVirtualFile) {
@@ -742,6 +735,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public @NotNull FileType getFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
+    FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
+    if (temporarilyFixedFileType != null) return temporarilyFixedFileType;
+
     FileType overriddenFileType = FileTypeOverrider.EP_NAME.computeSafeIfAny(overrider -> overrider.getOverriddenFileType(file));
     if (overriddenFileType != null) {
       return overriddenFileType;
@@ -766,18 +762,23 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return myDetectionService.getOrDetectFromContent(file, content, fileTypeByName);
   }
 
-  // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
-  @SuppressWarnings("DanglingJavadoc")
-  @Override
-  public @Nullable FileType getByFile(@NotNull VirtualFile file) {
+  private FileType getTemporarilyFixedFileType(@NotNull VirtualFile file) {
+    FileType fileType = null;
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
     if (fixedType != null && fixedType.getFirst().equals(file)) {
-      FileType fileType = fixedType.getSecond();
+      fileType = fixedType.getSecond();
       if (toLog()) {
-        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in "+Thread.currentThread());
+        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
       }
-      return fileType;
     }
+    return fileType;
+  }
+
+  // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
+  @SuppressWarnings("DanglingJavadoc")
+  @Nullable FileType getByFile(@NotNull VirtualFile file) {
+    FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
+    if (temporarilyFixedFileType != null) return temporarilyFixedFileType;
 
     if (file instanceof LightVirtualFile) {
       FileType fileType = ((LightVirtualFile)file).getAssignedFileType();

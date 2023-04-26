@@ -9,6 +9,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -69,7 +70,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public boolean isMyLanguage(@NotNull Language language) {
-    return language instanceof XMLLanguage;
+    return language instanceof XMLLanguage &&
+           (!language.getID().equals("JSP") || ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @Override
@@ -260,9 +262,9 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         createLegacyConfiguration(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol"), "<li> not contained in <ul> or <ol>",
                                   "[!within( <ul> or <ol> )]<li />", getHtmlXml(), HtmlFileType.INSTANCE),
         createLegacyConfiguration(SSRBundle.message("predefined.configuration.xml.attribute.referencing.java.class"), "xml attribute referencing java class",
-                                  "<'_tag 'attribute=\"'_value:[ref( classes, interfaces & enums )]\"/>", getHtmlXml(), XmlFileType.INSTANCE),
+                                  "<'_tag 'attribute=\"'_value:[ref( classes, interfaces \\& enums )]\"/>", getHtmlXml(), XmlFileType.INSTANCE),
         createConfiguration(SSRBundle.message("predefined.template.xml.tag.without.specific.attribute"), "XML tag without a specific attribute",
-          "<'_tag '_attr{0,0}:attributeName />", getHtmlXml(), XmlFileType.INSTANCE),
+                            "<'_tag '_attr{0,0}:attributeName />", getHtmlXml(), XmlFileType.INSTANCE),
       };
     }
 

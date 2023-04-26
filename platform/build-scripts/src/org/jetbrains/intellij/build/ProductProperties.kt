@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -6,6 +6,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -13,12 +14,16 @@ import java.util.*
 import java.util.function.BiPredicate
 
 /**
- * Describes distribution of an IntelliJ-based IDE. Override this class and build distribution of your product.
+ * Describes distribution of an IntelliJ-based IDE. Override this class and build a distribution of your product.
  */
 abstract class ProductProperties {
   /**
-   *  The base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case
-   * (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip).
+   * The base name (i.e. a name without the extension and architecture suffix)
+   * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx),
+   * usually a short product name in lower case (`"idea"` for IntelliJ IDEA, `"webstorm"` for WebStorm, etc.).
+   *
+   * **Important:** please make sure that this property and the `//names@script` attribute in the product's `*ApplicationInfo.xml` file
+   * have the same value.
    */
   abstract val baseFileName: String
 
@@ -56,7 +61,8 @@ abstract class ProductProperties {
   var fastInstanceActivation: Boolean = true
 
   /**
-   * An entry point into application's Java code, usually [com.intellij.idea.Main].
+   * An entry point into application's Java code, usually [com.intellij.idea.Main]. 
+   * Use [BuildContext.ideMainClassName] if you need to access this value in the build scripts.
    */
   var mainClassName: String = "com.intellij.idea.Main"
 
@@ -108,9 +114,8 @@ abstract class ProductProperties {
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with an added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1).
    */
-  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-    return "${appInfo.productName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
-  }
+  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+    "${appInfo.productName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
   /**
    * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
@@ -151,6 +156,13 @@ abstract class ProductProperties {
    * Cross-platform distribution is required for [plugins development](https://github.com/JetBrains/gradle-intellij-plugin).
    */
   var buildCrossPlatformDistribution: Boolean = false
+
+  /**
+   * Set to `true` if the product can be started using [com.intellij.platform.runtime.loader.Loader]. 
+   * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
+   */
+  @ApiStatus.Experimental
+  var supportModularLoading: Boolean = false
 
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
@@ -233,17 +245,16 @@ abstract class ProductProperties {
   var runtimeDistribution: JetBrainsRuntimeDistribution = JetBrainsRuntimeDistribution.JCEF
 
   /**
-   * A prefix for names of environment variables used by Windows and Linux distributions
+   * A prefix for names of environment variables used by product distributions
    * to allow users to customize location of the product runtime (`<PRODUCT>_JDK` variable),
    * *.vmoptions file (`<PRODUCT>_VM_OPTIONS`), `idea.properties` file (`<PRODUCT>_PROPERTIES`).
    */
-  open fun getEnvironmentVariableBaseName(appInfo: ApplicationInfoProperties) = appInfo.upperCaseProductName
+  open fun getEnvironmentVariableBaseName(appInfo: ApplicationInfoProperties) = appInfo.launcherName.uppercase().replace('-', '_')
 
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-  }
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) { }
 
   /**
    * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
@@ -268,6 +279,12 @@ abstract class ProductProperties {
    */
   @ApiStatus.Internal
   open fun addRemoteDevelopmentLibraries(): Boolean = productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+
+  /**
+   * Checks whether some necessary conditions specific for the product are met and report errors via [BuildContext.messages] if they aren't.
+   */
+  @ApiStatus.Experimental
+  open fun validateLayout(platformLayout: PlatformLayout, context: BuildContext) {}
 
   /**
    * Build steps which are always skipped for this product.

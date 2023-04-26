@@ -61,12 +61,24 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   }
 
   public void setError(@NlsContexts.DialogMessage String error) {
-    myTextField.putClientProperty("JComponent.outline", error != null ? "error" : null);
+    setMessage(error, false);
+  }
+
+  public void setWarning(@NlsContexts.DialogMessage String warning) {
+    setMessage(warning, true);
+  }
+
+  private void setMessage(@NlsContexts.DialogMessage String message, boolean isWarning) {
+    myTextField.putClientProperty("JComponent.outline", message != null ? (isWarning ? "warning" : "error") : null);
 
     if (myErrorPopup != null && !myErrorPopup.isDisposed()) Disposer.dispose(myErrorPopup);
-    if (error == null) return;
+    if (message == null) return;
 
-    ComponentPopupBuilder popupBuilder = ComponentValidator.createPopupBuilder(new ValidationInfo(error, myTextField), errorHint -> {
+    ValidationInfo validationInfo = new ValidationInfo(message, myTextField);
+    if (isWarning) {
+      validationInfo.asWarning();
+    }
+    ComponentPopupBuilder popupBuilder = ComponentValidator.createPopupBuilder(validationInfo, errorHint -> {
       Insets insets = myTextField.getInsets();
       Dimension hintSize = errorHint.getPreferredSize();
       Point point = new Point(0, insets.top - JBUIScale.scale(6) - hintSize.height);
@@ -89,7 +101,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
 
   @NotNull
   protected ExtendableTextField createTextField(boolean liveErrorValidation) {
-    ExtendableTextField res = new ExtendableTextField();
+    ExtendableTextField res = createNonCustomizedTextField();
 
     Dimension minSize = res.getMinimumSize();
     Dimension prefSize = res.getPreferredSize();
@@ -123,6 +135,10 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     });
 
     return res;
+  }
+
+  protected ExtendableTextField createNonCustomizedTextField() {
+    return new ExtendableTextField();
   }
   
   public boolean hasError() {

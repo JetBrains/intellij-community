@@ -576,6 +576,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/DefaultObjectInShortReferenceFormCall.kt");
         }
 
+        @TestMetadata("EnumEntriesInJdk.kt")
+        public void testEnumEntriesInJdk() throws Exception {
+            runTest("testData/resolve/references/EnumEntriesInJdk.kt");
+        }
+
         @TestMetadata("EnumValues.kt")
         public void testEnumValues() throws Exception {
             runTest("testData/resolve/references/EnumValues.kt");
@@ -679,6 +684,16 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @TestMetadata("InVaragReferenceInNamedParameter.kt")
         public void testInVaragReferenceInNamedParameter() throws Exception {
             runTest("testData/resolve/references/InVaragReferenceInNamedParameter.kt");
+        }
+
+        @TestMetadata("incOperatorOnObject.kt")
+        public void testIncOperatorOnObject() throws Exception {
+            runTest("testData/resolve/references/incOperatorOnObject.kt");
+        }
+
+        @TestMetadata("incOperatorOnObject_unresolved.kt")
+        public void testIncOperatorOnObject_unresolved() throws Exception {
+            runTest("testData/resolve/references/incOperatorOnObject_unresolved.kt");
         }
 
         @TestMetadata("JavaAnnotationParameter.kt")

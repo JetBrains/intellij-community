@@ -132,7 +132,9 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
       assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
                                        ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_GRADLEW_PROPERTIES)))
       assets.addAll(standardAssetsProvider.getGradlewAssets())
-      assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+      if (starterContext.isCreatingNewProject) {
+        assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+      }
     }
     else if (starterContext.projectType == MAVEN_PROJECT) {
       assets.add(GeneratorTemplateFile("pom.xml", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_POM_XML)))
@@ -140,7 +142,9 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
       assets.add(GeneratorTemplateFile(standardAssetsProvider.mavenWrapperPropertiesLocation,
                                        ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_MVNW_PROPERTIES)))
       assets.addAll(standardAssetsProvider.getMvnwAssets())
-      assets.addAll(standardAssetsProvider.getMavenIgnoreAssets())
+      if (starterContext.isCreatingNewProject) {
+        assets.addAll(standardAssetsProvider.getMavenIgnoreAssets())
+      }
     }
 
     val packagePath = getPackagePath(starterContext.group, starterContext.artifact)

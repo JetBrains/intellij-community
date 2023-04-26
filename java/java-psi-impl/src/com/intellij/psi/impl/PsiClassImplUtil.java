@@ -32,6 +32,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
+import kotlin.jvm.functions.Function1;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 
 public final class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiClassImplUtil.class);
@@ -216,7 +216,7 @@ public final class PsiClassImplUtil {
     }
   }
 
-  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = r -> {
+  private static final Function1<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = r -> {
     if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) {
       return null;
     }

@@ -5,3 +5,4 @@
 fun main(args: Array<String>) {
     throw IllegalAccessException<caret> //Press Ctrl+Space and select it
 }
+// AUTOCOMPLETE_SETTING: true

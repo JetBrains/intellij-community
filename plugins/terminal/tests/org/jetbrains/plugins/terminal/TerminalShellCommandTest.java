@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class TerminalShellCommandTest extends TestCase {
   public void testDontAddAnything() {
@@ -32,17 +33,23 @@ public class TerminalShellCommandTest extends TestCase {
 
   public void testAddRcConfig() {
     if (SystemInfo.isUnix) {
-      hasRcConfig("bash -i", "jediterm-bash.in", Maps.newHashMap());
-      hasRcConfig("bash --login", "jediterm-bash.in", Maps.newHashMap());
+      hasRcConfig("bash -i", "bash/jediterm-bash.in", Maps.newHashMap());
+      hasRcConfig("bash --login", "bash/jediterm-bash.in", Maps.newHashMap());
       Map<String, String> envs = Maps.newHashMap();
-      hasRcConfig("bash --rcfile ~/.bashrc", "jediterm-bash.in", envs);
+      hasRcConfig("bash --rcfile ~/.bashrc", "bash/jediterm-bash.in", envs);
       assertTrue(envs.get("JEDITERM_USER_RCFILE").contains(".bashrc"));
     }
   }
 
   private static List<String> getCommand(@NotNull String shellPath, @NotNull Map<String, String> envs, boolean shellIntegration) {
     List<String> shellCommand = LocalTerminalDirectRunner.convertShellPathToCommand(shellPath);
-    return shellIntegration ? LocalTerminalDirectRunner.injectShellIntegration(shellCommand, envs, null) : shellCommand;
+    if (shellIntegration) {
+      ShellStartupOptions options = LocalTerminalDirectRunner.injectShellIntegration(shellCommand, envs);
+      envs.clear();
+      envs.putAll(options.getEnvVariables());
+      return Objects.requireNonNull(options.getShellCommand());
+    }
+    return shellCommand;
   }
 
   private static void hasRcConfig(String path, String configName, Map<String, String> envs) {

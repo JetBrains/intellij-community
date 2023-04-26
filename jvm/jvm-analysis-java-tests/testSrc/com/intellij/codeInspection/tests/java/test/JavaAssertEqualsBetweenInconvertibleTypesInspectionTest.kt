@@ -70,10 +70,10 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
       class MyTest {
         @org.junit.jupiter.api.Test
         void myTest() {
-          Assertions.assertThat("foo").<warning descr="'isEqualTo()' between objects of inconvertible types 'int' and 'String'">isEqualTo</warning>(2);
+          Assertions.assertThat("foo").<warning descr="'isEqualTo()' between objects of inconvertible types 'String' and 'int'">isEqualTo</warning>(2);
           Assertions.assertThat("foo").isEqualTo("bar");
-          Assertions.assertThat("foo").describedAs("foo").<warning descr="'isEqualTo()' between objects of inconvertible types 'int' and 'String'">isEqualTo</warning>(2);
-          Assertions.assertThat("foo").as("foo").<warning descr="'isEqualTo()' between objects of inconvertible types 'int' and 'String'">isEqualTo</warning>(2);
+          Assertions.assertThat("foo").describedAs("foo").<warning descr="'isEqualTo()' between objects of inconvertible types 'String' and 'int'">isEqualTo</warning>(2);
+          Assertions.assertThat("foo").as("foo").<warning descr="'isEqualTo()' between objects of inconvertible types 'String' and 'int'">isEqualTo</warning>(2);
         }
       }
     """.trimIndent())
@@ -119,8 +119,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
       class MyTest {
         @org.junit.jupiter.api.Test
         void myTest() {
-          Assertions.assertThat("java").as("test").<weak_warning descr="Possibly redundant assertion: incompatible types are compared 'int' and 'String'">isNotEqualTo</weak_warning>(1);
-          Assertions.assertThat(new int[0]).describedAs("test").<weak_warning descr="Possibly redundant assertion: incompatible types are compared 'double' and 'int[]'">isNotEqualTo</weak_warning>(1.0);
+          Assertions.assertThat("java").as("test").<weak_warning descr="Possibly redundant assertion: incompatible types are compared 'String' and 'int'">isNotEqualTo</weak_warning>(1);
+          Assertions.assertThat(new int[0]).describedAs("test").<weak_warning descr="Possibly redundant assertion: incompatible types are compared 'int[]' and 'double'">isNotEqualTo</weak_warning>(1.0);
           Assertions.assertThat(new int[0]).isNotEqualTo(new int[1]); //ok
         }
       }
@@ -167,8 +167,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
       class MyTest {
         @org.junit.jupiter.api.Test
         void myTest() {
-          assertThat("java").as("test").<warning descr="Redundant assertion: incompatible types are compared 'int' and 'String'">isNotSameAs</warning>(1);
-          assertThat(new int[0]).describedAs("test").<warning descr="Redundant assertion: incompatible types are compared 'double' and 'int[]'">isNotSameAs</warning>(1.0);
+          assertThat("java").as("test").<warning descr="Redundant assertion: incompatible types are compared 'String' and 'int'">isNotSameAs</warning>(1);
+          assertThat(new int[0]).describedAs("test").<warning descr="Redundant assertion: incompatible types are compared 'int[]' and 'double'">isNotSameAs</warning>(1.0);
           assertThat(new int[0]).isNotSameAs(new int[1]); //ok
         }
       }
@@ -213,9 +213,9 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
       class MyTest {
         @org.junit.jupiter.api.Test
         void myTest() {
-          assertThat(1).<warning descr="'isSameAs()' between objects of inconvertible types 'String' and 'int'">isSameAs</warning>("foo");
-          assertThat("foo").describedAs("foo").<warning descr="'isSameAs()' between objects of inconvertible types 'int' and 'String'">isSameAs</warning>(2);
-          assertThat(new int[2]).as("array").<warning descr="'isSameAs()' between objects of inconvertible types 'int' and 'int[]'">isSameAs</warning>(2);
+          assertThat(1).<warning descr="'isSameAs()' between objects of inconvertible types 'int' and 'String'">isSameAs</warning>("foo");
+          assertThat("foo").describedAs("foo").<warning descr="'isSameAs()' between objects of inconvertible types 'String' and 'int'">isSameAs</warning>(2);
+          assertThat(new int[2]).as("array").<warning descr="'isSameAs()' between objects of inconvertible types 'int[]' and 'int'">isSameAs</warning>(2);
           assertThat(1).isSameAs(2); // ok
         }
       }
@@ -233,6 +233,21 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
                       .as("Mapping to String")
                       .extracting(Object::toString)
                       .isEqualTo("1");
+          }
+          
+          @org.junit.jupiter.api.Test
+          void testExtractingNoHighlightLambda() {
+              Assertions.assertThat(Integer.valueOf(1))
+                      .as("Mapping to String")
+                      .extracting((value) -> value.toString())
+                      .isEqualTo("1");
+          }          
+          
+          @org.junit.jupiter.api.Test
+          void testDescribeAs() {
+              Assertions.assertThat(Integer.valueOf(1))
+                      .describedAs("Mapping to String")
+                      .isEqualTo(1);
           }
       }
     """.trimIndent())

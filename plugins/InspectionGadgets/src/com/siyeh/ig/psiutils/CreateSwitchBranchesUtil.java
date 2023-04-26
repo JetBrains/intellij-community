@@ -35,7 +35,8 @@ public final class CreateSwitchBranchesUtil {
    */
   public static @NotNull @Nls String getActionName(Collection<String> names) {
     if (names.size() == 1) {
-      return InspectionGadgetsBundle.message("create.missing.switch.branch", names.iterator().next());
+      return InspectionGadgetsBundle.message("create.missing.switch.branch",
+                                             StreamEx.of(names).collect(Joining.with("").maxChars(50).cutAfterDelimiter()));
     }
     return InspectionGadgetsBundle.message("create.missing.switch.branches", formatMissingBranches(names));
   }

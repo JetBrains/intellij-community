@@ -4,7 +4,7 @@ package com.intellij.collaboration.ui
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bind
+import com.intellij.collaboration.ui.util.bindIn
 import com.intellij.collaboration.ui.util.getName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -38,7 +38,7 @@ class AccountSelectorComponentFactory<A : Account>(
              actions: StateFlow<List<Action>> = MutableStateFlow(emptyList())): JComponent {
 
     val comboModel = ComboBoxWithActionsModel<A>().apply {
-      bind(scope, accountsState, selectionState, actions, Comparator.comparing { it.name })
+      bindIn(scope, accountsState, selectionState, actions, Comparator.comparing { it.name })
 
       if (size > 0) {
         for (i in 0 until size) {

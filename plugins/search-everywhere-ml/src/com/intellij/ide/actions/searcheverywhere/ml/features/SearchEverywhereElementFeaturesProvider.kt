@@ -66,12 +66,6 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>>
 
-  internal fun addIfTrue(result: MutableList<EventPair<*>>, key: BooleanEventField, value: Boolean) {
-    if (value) {
-      result.add(key.with(true))
-    }
-  }
-
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101
     return value
@@ -108,5 +102,12 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       }
     }
     return result
+  }
+}
+
+@ApiStatus.Internal
+fun MutableCollection<EventPair<*>>.addIfTrue(key: BooleanEventField, value: Boolean) {
+  if (value) {
+    this.add(key.with(true))
   }
 }

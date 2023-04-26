@@ -74,5 +74,7 @@ interface CompilationTasks {
   fun buildProjectArtifacts(artifactNames: Set<String>)
 
   fun resolveProjectDependencies()
+  
+  fun generateRuntimeModuleRepository()
 }
 

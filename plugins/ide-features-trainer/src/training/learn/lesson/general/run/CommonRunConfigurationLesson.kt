@@ -10,8 +10,8 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.PopupFactoryImpl
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import training.dsl.*
 import training.learn.LessonsBundle
@@ -31,7 +31,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
 
   protected val demoWithParametersName: String get() = "$demoConfigurationName with parameters"
 
-  private val runIcon: Icon by lazy { IconUtil.toStrokeIcon(AllIcons.Actions.Execute, JBUI.CurrentTheme.RunWidget.RUN_MODE_ICON) }
+  private val runIcon: Icon by lazy { toStrokeIcon(AllIcons.Actions.Execute, JBUI.CurrentTheme.RunWidget.RUN_MODE_ICON) }
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {

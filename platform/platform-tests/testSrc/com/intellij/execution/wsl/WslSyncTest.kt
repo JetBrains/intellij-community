@@ -2,7 +2,6 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.wsl.sync.*
-import com.intellij.execution.wsl.sync.WslHashFilters.Companion.EMPTY_FILTERS
 import com.intellij.execution.wsl.sync.WslHashFilters.WslHashFiltersBuilder
 import com.intellij.execution.wsl.sync.WslHashMatcher.Factory.basename
 import com.intellij.execution.wsl.sync.WslHashMatcher.Factory.extension
@@ -64,7 +63,7 @@ class WslSyncTest(private val linToWin: Boolean) {
       for (source in sources) {
         storage.createSymLinks(mapOf(Pair(source, target)))
       }
-      return storage.getHashesAndLinks(false).second
+      return storage.calculateSyncData().links
     }
   }
 
@@ -90,13 +89,13 @@ class WslSyncTest(private val linToWin: Boolean) {
     if (linToWin) {
       val dir = linuxDirRule.dir
       wslRule.wsl.executeOnWsl(1000, "mkdir", "${dir}/target")
-      storage = LinuxFileStorage(dir, wslRule.wsl, EMPTY_FILTERS)
+      storage = LinuxFileStorage(dir, wslRule.wsl)
     }
     else {
       val dir = winDirRule.newDirectoryPath()
       val targetDir = dir.resolve("target")
       targetDir.createDirectory()
-      storage = WindowsFileStorage(dir, wslRule.wsl, EMPTY_FILTERS)
+      storage = WindowsFileStorage(dir, wslRule.wsl)
     }
 
     val links = createAndGetLinks(storage, FilePathRelativeToDir("target"), *sources)
@@ -112,8 +111,8 @@ class WslSyncTest(private val linToWin: Boolean) {
     val to: FileStorage<*, *>
     val winRoot = winDirRule.newDirectoryPath()
     val linRoot = linuxDirRule.dir
-    val win = WindowsFileStorage(winRoot, wslRule.wsl, EMPTY_FILTERS)
-    val lin = LinuxFileStorage(linRoot, wslRule.wsl, EMPTY_FILTERS)
+    val win = WindowsFileStorage(winRoot, wslRule.wsl)
+    val lin = LinuxFileStorage(linRoot, wslRule.wsl)
     if (!linToWin) {
       winRoot.resolve("target dir").createDirectory().resolve("file.txt").createFile()
       winRoot.resolve("dir_to_ignore").createDirectory()
@@ -132,13 +131,13 @@ class WslSyncTest(private val linToWin: Boolean) {
     }
     to.createSymLinks(mapOf(Pair(FilePathRelativeToDir("dir_to_ignore/foo"), FilePathRelativeToDir("target dir"))))
     WslSync.syncWslFolders(linRoot, winRoot, wslRule.wsl, linToWinCopy = linToWin)
-    val links = to.getHashesAndLinks(false).second
+    val links = to.calculateSyncData().links
     for (source in sources) {
       Assert.assertEquals("target dir", links[source]?.asWindowsPath)
     }
     to.createSymLinks(mapOf(Pair(FilePathRelativeToDir("remove_me"), FilePathRelativeToDir("target dir"))))
     WslSync.syncWslFolders(linRoot, winRoot, wslRule.wsl, linToWinCopy = linToWin)
-    Assert.assertEquals(null, to.getHashesAndLinks(false).second[FilePathRelativeToDir("remove_me")])
+    Assert.assertEquals(null, to.calculateSyncData().links[FilePathRelativeToDir("remove_me")])
     for (source in sources) {
       Assert.assertEquals("target dir", links[source]?.asWindowsPath)
     }
@@ -177,6 +176,8 @@ class WslSyncTest(private val linToWin: Boolean) {
     val modifyEachFile = 3
 
     val windowsDir = winDirRule.newDirectoryPath()
+    val executable = "execfile"
+    val execTxt = "exec.txt"
     val fileNames = (0..numberOfFiles).map { "$it-по-русски.txt" }
 
     val srcDir = if (linToWin) linuxDirAsPath else windowsDir
@@ -185,8 +186,13 @@ class WslSyncTest(private val linToWin: Boolean) {
     for (fileName in fileNames) {
       srcDir.resolve(fileName).writeText("hello $fileName")
     }
+    srcDir.resolve(executable).writeText("#!/bin/sh")
+    srcDir.resolve(execTxt).writeText(" $executable   ") // Must be marked executable on Linux
 
     WslSync.syncWslFolders(linuxDirRule.dir, windowsDir, wslRule.wsl, linToWin)
+    if (!linToWin) {
+      wslRule.wsl.runCommand("${linuxDirRule.dir}/$executable").getOrThrow()
+    }
 
     val modificationTimes = mutableMapOf<Path, FileTime>()
     for (fileName in fileNames) {
@@ -195,7 +201,7 @@ class WslSyncTest(private val linToWin: Boolean) {
       Assert.assertEquals("Copied with wrong content", "hello $fileName", file.readText())
       modificationTimes[file] = file.lastModified()
     }
-    Assert.assertEquals(fileNames.size, dstDir.toFile().list()!!.size)
+    Assert.assertEquals(fileNames.size + 2, dstDir.toFile().list()!!.size) // +  exec files
 
     Thread.sleep(1000) // To check modification time
 
@@ -245,7 +251,8 @@ class WslSyncTest(private val linToWin: Boolean) {
         .exclude(*extensions("dll", "gz", "zip"),
                  basename("debug"),
                  fullname("idea.log"))
-        .build()
+        .build(),
+      false
     )
   }
 
@@ -259,6 +266,7 @@ class WslSyncTest(private val linToWin: Boolean) {
                  basename("debug"),
                  fullname("idea.log"))
         .build(),
+      false
     )
   }
 
@@ -274,12 +282,44 @@ class WslSyncTest(private val linToWin: Boolean) {
         .include(extension("tar.gz"),
                  fullname("debug.in"))
         .build(),
+      false
+    )
+  }
+
+  @Test
+  fun syncWithExcludesAndStubs() {
+    doSyncAndAssertFilePresence(
+      setOf(),
+      setOf("файл.dll", "файл.gz", "файл.zip", "debug", "debug.out", "idea.log",
+            "файл.py", "файл.tar.gz", "файл.java", "файл-dll", "ddebug", "debug.in", "idea.log.bck"),
+      WslHashFiltersBuilder()
+        .exclude(*extensions("dll", "gz", "zip"),
+                 basename("debug"),
+                 fullname("idea.log"))
+        .build(),
+      true
+    )
+  }
+
+  @Test
+  fun syncWithIncludesAndStubs() {
+    doSyncAndAssertFilePresence(
+      setOf(),
+      setOf("файл.dll", "файл.gz", "файл.zip", "debug", "debug.out", "idea.log",
+            "файл.py", "файл.tar.gz", "файл.java", "файл-dll", "ddebug", "debug.in", "idea.log.bck"),
+      WslHashFiltersBuilder()
+        .include(*extensions("dll", "gz", "zip"),
+                 basename("debug"),
+                 fullname("idea.log"))
+        .build(),
+      true
     )
   }
 
   private fun doSyncAndAssertFilePresence(fileNamesToIgnore: Set<String>,
                                           fileNamesToSync: Set<String>,
-                                          filters: WslHashFilters) {
+                                          filters: WslHashFilters,
+                                          useStubs: Boolean) {
     val windowsDir = winDirRule.newDirectoryPath()
     val allFileNames = fileNamesToSync + fileNamesToIgnore
 
@@ -290,7 +330,7 @@ class WslSyncTest(private val linToWin: Boolean) {
       srcDir.resolve(fileName).writeText("hello $fileName")
     }
 
-    WslSync.syncWslFolders(linuxDirRule.dir, windowsDir, wslRule.wsl, linToWin, filters)
+    WslSync.syncWslFolders(linuxDirRule.dir, windowsDir, wslRule.wsl, linToWin, filters, useStubs)
 
     for (fileName in allFileNames) {
       val file = dstDir.resolve(fileName)
@@ -299,6 +339,9 @@ class WslSyncTest(private val linToWin: Boolean) {
       }
       else {
         Assert.assertTrue("File ${file} must be copied", file.exists())
+        if (useStubs && !filters.isFileNameOk(file.fileName.toString())) {
+          Assert.assertEquals("File ${file} must be stubbed", "", file.readText().trim())
+        }
       }
     }
     Assert.assertEquals("Not all files synced", fileNamesToSync.size, dstDir.toFile().list()!!.size)

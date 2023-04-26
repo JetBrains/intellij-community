@@ -16,6 +16,7 @@
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
 
@@ -37,17 +38,17 @@ public class BuildRootDescriptorImpl extends BuildRootDescriptor {
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return FileUtilRt.toSystemIndependentName(myRoot.getAbsolutePath());
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return myRoot;
   }
 
   @Override
-  public BuildTarget<?> getTarget() {
+  public @NotNull BuildTarget<?> getTarget() {
     return myTarget;
   }
 

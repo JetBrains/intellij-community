@@ -29,7 +29,6 @@ fun rootTask(): CoroutineContext = MeasureCoroutineTime
 
 /**
  * This function is designed to be used instead of `withContext(CoroutineName("subtask")) { ... }`.
- * See https://github.com/Kotlin/kotlinx.coroutines/issues/3414
  */
 suspend fun <X> subtask(
   name: String,
@@ -37,12 +36,20 @@ suspend fun <X> subtask(
   action: suspend CoroutineScope.() -> X,
 ): X {
   val namedContext = context + CoroutineName(name)
-  val measurer = coroutineContext[CoroutineTimeMeasurerKey]
-  return if (measurer == null) {
-    withContext(namedContext, action)
+  if (coroutineContext[CoroutineTimeMeasurerKey] == null) {
+    return withContext(namedContext, action)
   }
-  else {
-    withContext(namedContext + measurer.copyForChild(), action)
+  return coroutineScope {
+    @OptIn(ExperimentalStdlibApi::class)
+    val start = if (coroutineContext[CoroutineDispatcher] == context[CoroutineDispatcher]) {
+      // mimic withContext behaviour with its UndispatchedCoroutine
+      CoroutineStart.UNDISPATCHED
+    }
+    else {
+      CoroutineStart.DEFAULT
+    }
+    // async forces the framework to call CopyableThreadContextElement#copyForChild
+    async(namedContext, start, action).await()
   }
 }
 

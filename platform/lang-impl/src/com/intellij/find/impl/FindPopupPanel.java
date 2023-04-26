@@ -63,7 +63,6 @@ import com.intellij.ui.components.*;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.render.RendererPanelsUtilsKt;
 import com.intellij.ui.render.RenderingUtil;
@@ -810,13 +809,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       UIUtil.setOpaqueRecursively(myScopeDetailsPanel, false);
       myResultsPreviewTable.setBackground(background);
       previewPanel.setBackground(background);
-      scopesPanel.setBorder(JBUI.Borders.empty(4, 20));
+      scopesPanel.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.FindPopup.scopesPanelInsets()));
       myScopeSelectionToolbar.setBorder(JBUI.Borders.empty());
 
       Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
       //noinspection UseDPIAwareInsets
       myPreviewSplitter.setBlindZone(() -> new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
-      bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
+      bottomPanel.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.FindPopup.bottomPanelInsets()));
       bottomPanel.setBackground(JBUI.CurrentTheme.Advertiser.background());
       scrollPane.setBorder(JBUI.Borders.emptyBottom(4));
     } else {
@@ -1869,7 +1868,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
   }
 
   private class MyShowFilterPopupAction extends DumbAwareAction {
-    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
     private final DefaultActionGroup mySwitchContextGroup;
 
     MyShowFilterPopupAction() {
@@ -1891,11 +1889,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) == null) return;
-      if (myPopupState.isRecentlyHidden()) return;
 
       ListPopup listPopup =
         JBPopupFactory.getInstance().createActionGroupPopup(null, mySwitchContextGroup, e.getDataContext(), false, null, 10);
-      myPopupState.prepareToShow(listPopup);
       listPopup.showUnderneathOf(myFilterContextButton);
     }
   }

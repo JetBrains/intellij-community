@@ -2,7 +2,6 @@
 package org.jetbrains.ikv;
 
 import com.intellij.util.lang.Murmur3_32Hash;
-import org.jetbrains.xxh3.Xxh3;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.Random;
@@ -31,10 +30,5 @@ public class HashBenchmark {
   @Benchmark
   public int murmur3() {
     return Murmur3_32Hash.MURMUR3_32.hashBytes(data, 0, data.length);
-  }
-
-  @Benchmark
-  public int xxh3() {
-    return Xxh3.hash32(data);
   }
 }

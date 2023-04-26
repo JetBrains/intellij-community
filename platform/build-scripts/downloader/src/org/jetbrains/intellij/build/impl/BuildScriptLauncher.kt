@@ -3,6 +3,9 @@ package org.jetbrains.intellij.build.impl
 
 import jetbrains.buildServer.messages.serviceMessages.Message
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_PORBLEM
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_STOP
+import org.jetbrains.intellij.build.BuildCancellationException
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -29,16 +32,24 @@ object BuildScriptLauncher {
       exitProcess(0)
     }
     catch (t: Throwable) {
-      val sw = StringWriter()
-      PrintWriter(sw).use { printWriter -> t.printStackTrace(printWriter) }
+      val message = StringWriter().apply {
+        PrintWriter(this).use { printWriter ->
+          val cause = (t as? BuildCancellationException)?.cause ?: t
+          cause.printStackTrace(printWriter)
+        }
+      }.toString()
 
-      val message = sw.toString()
       if (TeamCityHelper.isUnderTeamCity) {
         // Under TeamCity non-zero exit code will be displayed as a separate build error
         println(Message(message, "FAILURE", null).asString())
-        // Make sure it fails the build, see
-        // https://www.jetbrains.com/help/teamcity/service-messages.html#Reporting+Build+Problems
-        println(object : ServiceMessage("buildProblem", mapOf("description" to message)) {}.asString())
+        if (t is BuildCancellationException) {
+          println(ServiceMessage.asString(BUILD_STOP, mapOf("comment" to message)))
+        }
+        else {
+          // Make sure it fails the build, see
+          // https://www.jetbrains.com/help/teamcity/service-messages.html#Reporting+Build+Problems
+          println(ServiceMessage.asString(BUILD_PORBLEM, mapOf("description" to message)))
+        }
         exitProcess(0)
       }
       else {

@@ -13,7 +13,7 @@ object Styles {
     private val headerColor: Color = JBColor.BLACK
     private val linkColor = Color(74, 120, 194)
     private val lineSpacing = 0.1f
-    private val fontSize = StartupUiUtil.getLabelFont().size
+    private val fontSize = StartupUiUtil.labelFont.size
     private val h1FontSize = JBUIScale.scale(24)
     private val h2FontSize = JBUIScale.scale(18)
 

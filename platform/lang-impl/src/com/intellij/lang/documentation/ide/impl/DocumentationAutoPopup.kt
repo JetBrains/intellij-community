@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupManagerListener
@@ -16,7 +15,7 @@ internal class DocumentationAutoPopup : ProjectActivity {
 
 private class DocumentationAutoPopupListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
-    if (newLookup is LookupEx && isDocumentationV2Enabled()) {
+    if (newLookup is LookupEx) {
       DocumentationManager.instance(newLookup.project).autoShowDocumentationOnItemChange(newLookup)
     }
   }

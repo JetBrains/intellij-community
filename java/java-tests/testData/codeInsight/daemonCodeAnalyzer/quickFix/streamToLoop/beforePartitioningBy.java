@@ -34,7 +34,7 @@ public class Main {
   public static void testToMapNameConflict(List<String> strings) {
     System.out.println(strings.stream().map(x -> x/*trimming*/.trim()) // and collect
                          .collect(Collectors.partitioningBy(s -> s.length() /*too big!*/ > 2,
-                                                            Collectors.toMap(s -> ((UnaryOperator<String>) /* cast is necessary here */ x -> x).apply(s),
+                                                            Collectors.toMap(s -> ((UnaryOperator<String>) /* cast is necessary here */ x -> x = x).apply(s),
                                                                              String::length))));
   }
 

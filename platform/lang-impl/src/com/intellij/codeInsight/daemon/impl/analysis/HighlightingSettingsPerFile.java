@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.ide.EssentialHighlightingMode;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
@@ -97,11 +98,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
         return setting;
       }
     }
-    return isGlobalEssentialHighlightingModeEnabled() ? FileHighlightingSetting.ESSENTIAL : FileHighlightingSetting.FORCE_HIGHLIGHTING;
-  }
-  
-  private static boolean isGlobalEssentialHighlightingModeEnabled() {
-    return RegistryManager.getInstance().is("ide.highlighting.mode.essential");
+    return EssentialHighlightingMode.INSTANCE.isEnabled() ? FileHighlightingSetting.ESSENTIAL : FileHighlightingSetting.FORCE_HIGHLIGHTING;
   }
 
   private static FileHighlightingSetting @NotNull [] getDefaults(@NotNull PsiFile file) {

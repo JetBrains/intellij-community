@@ -107,11 +107,11 @@ envs {
      return
    }
 
-  createPython("py27_django11_full",
+  createPython("py27",
                python27version,
-               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages", "django-nose",
+               ["tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages",
                 "untangle"] + ( isWindows ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
-               "python2.7\ndjango\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
+               "python2.7\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
 
   createPython("py38_django22_full",
@@ -119,7 +119,7 @@ envs {
                // The version of Jinja2 is fixed due to a bug in recent versions which breaks the debugging.
                // See: https://github.com/pallets/jinja/pull/1178.
                // The version of NumPy is fixed due to https://tinyurl.com/y3dm3h86.
-               ["ipython==7.8", "django==2.2", "behave", "jinja2==2.10.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
+               ["ipython==7.8", "django==2.2", "behave", "jinja2==3.1.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
                 "pytest-xdist", "untangle", "numpy==1.19.3", "pandas"],
                "python3.8\npython3\nipython\nipython780\nskeletons\ndjango\nbehave\nbehave-django\ntox\njinja2\npackaging" +
                "\npytest\nnose\ndjango-nose\nbehave-django\ndjango2\nxdist\nuntangle\npandas",

@@ -113,6 +113,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     };
 
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, myEmptyText.getWrappedFragmentsIterable());
+
     myExpandableItemsHandler = createExpandableItemsHandler();
 
     setFillsViewportHeight(true);
@@ -1049,7 +1051,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
           cmp.setHorizontalAlignment(SwingConstants.LEFT);
           Border border = cmp.getBorder();
-          JBEmptyBorder indent = JBUI.Borders.emptyLeft(8);
+          JBEmptyBorder indent = JBUI.Borders.empty(0, 8);
           border = JBUI.Borders.merge(border, indent, true);
           cmp.setBorder(border);
 
@@ -1409,6 +1411,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
    * are created in all code paths.
    */
   protected class AccessibleJBTable extends AccessibleJTable {
+
+    @Override
+    public Accessible getAccessibleAt(int r, int c) {
+      if (r >= 0 && c < 0) c = 0;
+      if (r < 0 && c >= 0) r = 0;
+      return super.getAccessibleAt(r, c);
+    }
+
     @Override
     public Accessible getAccessibleChild(int i) {
       if (i < 0 || i >= getAccessibleChildrenCount()) {

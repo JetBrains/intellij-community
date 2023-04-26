@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.statistics.impl
 
 import com.intellij.CommonBundle
@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.reference.SoftReference
 import com.intellij.util.ScrambledInputStream
 import com.intellij.util.ScrambledOutputStream
 import com.intellij.util.io.inputStream
@@ -19,10 +18,10 @@ import com.intellij.util.io.outputStream
 import org.jetbrains.annotations.TestOnly
 import java.io.BufferedOutputStream
 import java.io.IOException
+import java.lang.ref.SoftReference
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.ArrayList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
@@ -113,7 +112,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   }
 
   private fun getUnit(unitNumber: Int): StatisticsUnit {
-    var unit = SoftReference.dereference(units[unitNumber])
+    var unit = units[unitNumber]?.get()
     if (unit == null) {
       unit = loadUnit(unitNumber)
       units[unitNumber] = SoftReference(unit)
@@ -122,7 +121,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   }
 
   private fun saveUnit(unitNumber: Int) {
-    val unit = SoftReference.dereference(units[unitNumber]) ?: return
+    val unit = units[unitNumber]?.get() ?: return
     try {
       ScrambledOutputStream(BufferedOutputStream(getPathToUnit(unitNumber).outputStream())).use {
         out -> unit.write(out)

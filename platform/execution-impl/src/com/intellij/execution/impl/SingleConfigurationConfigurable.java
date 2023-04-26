@@ -139,7 +139,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   boolean isSpecificallyModified() {
     return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isModified() ||
-           myRunOnTargetPanel.isModified();
+           myRunOnTargetPanel.isModified() ||
+           getEditor().isSpecificallyModified();
   }
 
   @Override
@@ -205,6 +206,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myValidationAlarm.cancelAllRequests();
     myValidationAlarm.addRequest(() -> {
       if (myComponent != null) {
+        if (!getEditor().isReadyForApply()) {
+          addValidationRequest();
+          return;
+        }
         try {
           RunnerAndConfigurationSettings snapshot = createSnapshot(false);
           snapshot.setName(getNameText());
@@ -239,6 +244,16 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
       if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
         return TargetEnvironmentConfigurations.getEffectiveTargetName(myRunOnTargetPanel.getDefaultTargetName(), myProject);
+      }
+      if (RunConfigurationSelector.KEY.is(dataId)) {
+        return new RunConfigurationSelector() {
+          @Override
+          public void select(@NotNull RunConfiguration configuration) {
+            RunDialog.editConfiguration(myProject,
+                                        new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), configuration),
+                                        ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
+          }
+        };
       }
       return null;
     });

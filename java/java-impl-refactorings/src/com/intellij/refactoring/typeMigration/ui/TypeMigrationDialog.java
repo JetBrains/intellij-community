@@ -55,9 +55,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   private TypeMigrationRules myRules;
   private final ScopeChooserCombo myScopeChooserCombo;
 
-  public TypeMigrationDialog(@NotNull Project project,
-                             PsiElement @NotNull [] roots,
-                             @Nullable TypeMigrationRules rules) {
+  public TypeMigrationDialog(@NotNull Project project, PsiElement @NotNull [] roots, @Nullable TypeMigrationRules rules) {
     super(project, false);
     myRoots = roots;
     myRules = rules;
@@ -91,7 +89,6 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   protected abstract Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction();
 
   protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints cs) {
-
   }
 
   @Override
@@ -184,8 +181,10 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
           JavaBundle.message("type.migration.dialog.message.invalid.type", StringUtil.escapeXmlEntities(myTypeCodeFragment.getText())));
       }
       if (isIllegalVoidMigration()) {
-        throw new ConfigurationException(
-          JavaBundle.message("type.migration.dialog.message.void.not.applicable"));
+        throw new ConfigurationException(JavaBundle.message("type.migration.dialog.message.void.not.applicable"));
+      }
+      if (getMigrationType().equals(getRootType())) {
+        throw new ConfigurationException(null);
       }
     }
 

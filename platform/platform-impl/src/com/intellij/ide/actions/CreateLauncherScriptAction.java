@@ -79,7 +79,13 @@ final class CreateLauncherScriptAction extends DumbAwareAction {
       if (!(app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode())) {
         ProcessIOExecutorService.INSTANCE.execute(() -> {
           try {
-            var scriptName = ApplicationNamesInfo.getInstance().getDefaultLauncherName();
+            var launcherName = ApplicationNamesInfo.getInstance().getScriptName();
+            var scriptName = switch (launcherName) {
+              case "phpstorm" -> "pstorm";
+              case "pycharm" -> "charm";
+              case "rubymine" -> "mine";
+              default -> launcherName;
+            };
             var scriptFile = PathEnvironmentVariableUtil.findInPath(scriptName);
             if (scriptFile != null) {
               var content = Files.readString(scriptFile.toPath());

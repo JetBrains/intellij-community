@@ -127,7 +127,8 @@ class NastradamusClientTest {
     Assert.assertEquals(BuildInfo(buildId = tcClient.buildId,
                                   aggregatorBuildId = "239754106",
                                   branchName = "nikita.kudrin/nastradamus",
-                                  os = "Linux"),
+                                  os = "Linux",
+                                  buildType = tcClient.buildTypeId),
                         buildInfo)
   }
 
@@ -139,7 +140,8 @@ class NastradamusClientTest {
     Assert.assertEquals(BuildInfo(buildId = tcClient.buildId,
                                   aggregatorBuildId = tcClient.buildId,
                                   branchName = "nikita.kudrin/nastradamus",
-                                  os = "Linux"),
+                                  os = "Linux",
+                                  buildType = tcClient.buildTypeId),
                         buildInfo)
   }
 
@@ -151,19 +153,23 @@ class NastradamusClientTest {
     Assert.assertEquals(BuildInfo(buildId = tcClient.buildId,
                                   aggregatorBuildId = tcClient.buildId,
                                   branchName = "master",
-                                  os = "Linux"),
+                                  os = "Linux",
+                                  buildType = tcClient.buildTypeId),
                         buildInfo)
   }
 
   @Test
   fun sendSortingDataToNostradamus() {
-    val testCases = listOf(TestCaseEntity("org.jetbrains.xx"), TestCaseEntity("com.intellij.bxjs"))
+    val testCases = listOf(TestCaseEntity("org.jetbrains.xx"),
+                           TestCaseEntity("com.intellij.bxjs"),
+                           TestCaseEntity("org.m.d.Clazzz"))
 
     val sortEntity = SortRequestEntity(
       buildInfo = BuildInfo(buildId = tcClient.buildId,
                             aggregatorBuildId = "23232323",
                             branchName = "refs/head/strange_branch",
-                            os = "linux"),
+                            os = "linux",
+                            buildType = "ijplatform_master_WorkspaceModelSmokeSmokeTestsCompositeBuild_66"),
       changes = listOf(ChangeEntity(filePath = "file/path/file.xx",
                                     relativeFile = "relative/path",
                                     beforeRevision = "00230203",
@@ -181,10 +187,13 @@ class NastradamusClientTest {
                                     .setBody(response)
                                     .addHeader("Content-Type", "application/json"))
 
-    val sortedCases = nastradamus.sendSortingRequest(sortRequestEntity = sortEntity, bucketsCount = 2, currentBucketIndex = 0)
+    val sortedCases = nastradamus.sendSortingRequest(sortRequestEntity = sortEntity,
+                                                     bucketsCount = 2,
+                                                     currentBucketIndex = 0,
+                                                     wasNastradamusDataUsed = true)
     val request = nastradamusMockServer.takeRequest()
 
-    Assert.assertEquals("Requested path should be equal", "/sort/?buckets=2", request.path)
+    Assert.assertEquals("Requested path should be equal", "/sort/?buckets=2&was_nastradamus_data_used=true", request.path)
     Assert.assertEquals("POST request should be sent", "POST", request.method)
 
     Assert.assertEquals("Payload is in wrong format", jacksonMapper.writeValueAsString(sortEntity), request.body.readUtf8())
@@ -245,12 +254,12 @@ class NastradamusClientTest {
                                     .addHeader("Content-Type", "application/json"))
 
     val testResultRequestEntity = nastradamus.collectTestRunResults()
-    nastradamus.sendTestRunResults(testResultRequestEntity)
+    nastradamus.sendTestRunResults(testResultRequestEntity, wasNastradamusDataUsed = true)
 
     val request = nastradamusMockServer.takeRequest()
 
-    Assert.assertEquals("Requested path should be equal", "/result/?build_id=100500", request.path)
     Assert.assertEquals("POST request should be sent", "POST", request.method)
+    Assert.assertEquals("Requested path should be equal", "/result/?was_nastradamus_data_used=true", request.path)
 
     Assert.assertTrue("""
       Converted test entities must have 2 muted tests.

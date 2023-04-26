@@ -6,9 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
 import java.awt.BorderLayout
@@ -20,15 +21,14 @@ import javax.swing.JScrollBar
 import javax.swing.JScrollPane
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
-import kotlin.math.max
 
 class TerminalBlocksComponent(private val project: Project,
                               private val session: TerminalSession,
                               private val settings: JBTerminalSystemSettingsProviderBase,
                               commandExecutor: TerminalCommandExecutor,
-                              parentDisposable: Disposable) : JPanel() {
+                              private val parentDisposable: Disposable) : JPanel() {
   private val blocksPanel: JPanel
-  private val scrollPane: JBScrollPane
+  private val scrollPane: JScrollPane
   private val promptPanel: TerminalPromptPanel = TerminalPromptPanel(project, settings, session, commandExecutor)
 
   private var runningPanel: TerminalPanel? = null
@@ -42,7 +42,9 @@ class TerminalBlocksComponent(private val project: Project,
       }
     }
 
-    scrollPane = JBScrollPane(blocksPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
+    scrollPane = ScrollPaneFactory.createScrollPane(blocksPanel, true)
+    scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+    scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     stickScrollBarToBottom(scrollPane.verticalScrollBar)
 
     layout = BorderLayout()
@@ -50,15 +52,26 @@ class TerminalBlocksComponent(private val project: Project,
     add(promptPanel, BorderLayout.SOUTH)
   }
 
-  fun makeCurrentBlockReadOnly() {
-    runningPanel?.makeReadOnly() ?: error("Running panel is null")
+  fun makeCurrentBlockReadOnly(removeIfEmpty: Boolean) {
+    val currentBlock: TerminalPanel = runningPanel ?: error("Running panel is null")
+    currentBlock.makeReadOnly {
+      if (removeIfEmpty && it.document.textLength == 0) {
+        blocksPanel.remove(currentBlock)
+        blocksPanel.revalidate()
+        Disposer.dispose(currentBlock)
+      }
+    }
   }
 
   @RequiresEdt
   fun installRunningPanel() {
-    val eventsHandler = TerminalEventsHandler(session.terminalStarter, session.model, settings)
+    if (runningPanel != null) {
+      error("Running panel is not-null")
+    }
+    val eventsHandler = TerminalEventsHandler(session, settings)
     val panel = TerminalPanel(project, settings, session.model, eventsHandler)
     runningPanel = panel
+    Disposer.register(parentDisposable, panel)
 
     promptPanel.isVisible = false
     blocksPanel.add(panel, VerticalLayout.BOTTOM)
@@ -99,21 +112,11 @@ class TerminalBlocksComponent(private val project: Project,
   }
 
   // return preferred size of the terminal calculated from the component size
-  fun getTerminalSize(): TermSize {
-    val promptWidth = promptPanel.getContentSize().width
-    val componentSize = Dimension(promptWidth, this.height)
-    val baseSize = calculateTerminalSize(componentSize, promptPanel.charSize)
-    return ensureTermMinimumSize(baseSize)
-  }
-
-  private fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension): TermSize {
-    val width = componentSize.width / charSize.width
-    val height = componentSize.height / charSize.height
-    return TermSize(width, height)
-  }
-
-  private fun ensureTermMinimumSize(size: TermSize): TermSize {
-    return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
+  fun getTerminalSize(): TermSize? {
+    val bounds = bounds
+    if (bounds.isEmpty) return null
+    val contentSize = Dimension(bounds.width - JBUI.scale(TerminalPanel.LEFT_INSET), bounds.height)
+    return TerminalUiUtils.calculateTerminalSize(contentSize, promptPanel.charSize)
   }
 
   fun isFocused(): Boolean {

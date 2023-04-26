@@ -1,26 +1,28 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-use std::{mem, thread};
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+use std::{env, mem, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
+
+use anyhow::{bail, Context, Result};
 use jni::errors::Error;
 use jni::objects::{JObject, JValue};
 use log::{debug, error, info};
-use anyhow::{bail, Context, Result};
 
-#[cfg(target_os = "linux")] use {
+#[cfg(target_os = "linux")]
+use {
     std::thread::sleep,
     std::time::Duration
 };
 
-#[cfg(target_os = "macos")] use {
+#[cfg(target_os = "macos")]
+use {
     core_foundation::base::{CFRelease, kCFAllocatorDefault, TCFTypeRef},
-    core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate, CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished},
+    core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate,
+                               CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished}
 };
 
-#[cfg(target_os = "windows")] use {
-    utils::{canonical_non_unc, PathExt},
-    std::env
-};
+#[cfg(target_os = "windows")]
+use utils::{canonical_non_unc, PathExt};
 
 #[derive(Clone)]
 pub struct JvmLaunchParameters {
@@ -77,8 +79,8 @@ unsafe fn prepare_jni_env(
 ) -> Result<jni::JNIEnv<'static>> {
     // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
     // in load_libjvm().
-    let work_dir = std::env::current_dir().context("Failed to get current directory")?;
-    std::env::set_var("IDEA_INITIAL_DIRECTORY", &work_dir);
+    let work_dir = env::current_dir().context("Failed to get current directory")?;
+    env::set_var("IDEA_INITIAL_DIRECTORY", &work_dir);
 
     debug!("Resolving libjvm");
     let libjvm_path = get_libjvm(&java_home)?;
@@ -133,7 +135,7 @@ unsafe fn prepare_jni_env(
     Ok(jni_env)
 }
 
-pub fn call_intellij_main(jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result<()> {
+pub fn call_intellij_main(mut jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result<()> {
     let main_args = jni_env.new_object_array(
         args.len() as jni_sys::jsize,
         "java/lang/String",
@@ -142,15 +144,12 @@ pub fn call_intellij_main(jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result
 
     for (i, arg) in args.iter().enumerate() {
         let j_string = jni_env.new_string(arg)?;
-        jni_env.set_object_array_element(main_args, i as jni_sys::jsize, j_string)?;
+        jni_env.set_object_array_element(&main_args, i as jni_sys::jsize, j_string)?;
     }
 
-    let method_call_args = unsafe {
-        vec![JValue::from(JObject::from_raw(main_args))]
-    };
+    let method_call_args = vec![JValue::from(&main_args)];
 
-    let args_string = args.join(", ");
-    debug!("Calling IntelliJ main, args: {args_string}");
+    debug!("Calling IntelliJ main, args: {:?}", args);
     match jni_env.call_static_method("com/intellij/idea/Main", "main", "([Ljava/lang/String;)V", &method_call_args) {
         Ok(_) => {}
         Err(e) => {
@@ -172,7 +171,6 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
     // TODO: pass the bin
     let jbr_bin = libjvm_path.parent_or_err()?.parent_or_err()?;
 
-
     // using UNC as the current directory leads to crash when starting JVM
     let non_unc_bin = canonical_non_unc(&jbr_bin)?;
     // SetCurrentDirectoryA
@@ -189,9 +187,12 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
     }
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[cfg(target_family = "unix")]
 unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
-    unsafe { libloading::Library::new(libjvm_path.as_os_str()) }.context("Failed to load libjvm")
+    let path_ref = Some(libjvm_path.as_os_str());
+    let flags = libloading::os::unix::RTLD_LAZY;
+    unsafe { libloading::os::unix::Library::open(path_ref, flags).map(From::from) }
+        .context("Failed to load libjvm")
 }
 
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<jni_sys::JavaVMInitArgs> {

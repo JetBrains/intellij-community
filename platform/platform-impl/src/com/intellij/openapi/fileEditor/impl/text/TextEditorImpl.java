@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -62,14 +64,14 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     }
 
     Disposer.register(this, myComponent);
-    myAsyncLoader = new AsyncEditorLoader(this, myComponent, provider);
-    myAsyncLoader.start();
+    myAsyncLoader = myProject.getService(AsyncEditorLoaderService.class).start(this, myComponent, provider);
   }
 
   /**
    * @return a continuation to be called in EDT
    */
   protected @NotNull Runnable loadEditorInBackground() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, myProject);
     EditorEx editor = getActiveEditor();
@@ -101,7 +103,8 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @Override
-  public void dispose(){
+  public void dispose() {
+    myAsyncLoader.dispose$intellij_platform_ide_impl();
     if (Boolean.TRUE.equals(myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
       myFile.putUserData(TRANSIENT_EDITOR_STATE_KEY, TransientEditorState.forEditor(getEditor()));
     }
@@ -123,7 +126,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @Override
-  public @NotNull Editor getEditor(){
+  public @NotNull EditorEx getEditor() {
     return getActiveEditor();
   }
 
@@ -236,7 +239,8 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   private static EditorImpl createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = ProjectLocator.computeWithPreferredProject(file, project, () ->
+      FileDocumentManager.getInstance().getDocument(file));
     LOG.assertTrue(document != null);
     EditorFactoryImpl factory = ((EditorFactoryImpl)EditorFactory.getInstance());
     return factory.createMainEditor(document, project, file);
