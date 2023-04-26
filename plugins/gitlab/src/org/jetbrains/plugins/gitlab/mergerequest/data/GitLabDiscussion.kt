@@ -90,9 +90,9 @@ class LoadedGitLabDiscussion(
     loadedNotes
       .mapCaching(
         GitLabNoteDTO::id,
-        { cs, note -> LoadedGitLabNote(cs, api, project, { noteEvents.emit(it) }, note) },
-        LoadedGitLabNote::destroy,
-        LoadedGitLabNote::update
+        { cs, note -> MutableGitLabNote(cs, api, project, { noteEvents.emit(it) }, note) },
+        MutableGitLabNote::destroy,
+        MutableGitLabNote::update
       )
       .modelFlow(cs, LOG)
 

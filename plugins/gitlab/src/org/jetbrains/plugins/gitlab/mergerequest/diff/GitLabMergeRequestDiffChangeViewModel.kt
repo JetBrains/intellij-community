@@ -46,7 +46,7 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
 
   private val cs = parentCs.childScope()
 
-  override val discussions: DiscussionsFlow = mergeRequest.userDiscussions
+  override val discussions: DiscussionsFlow = mergeRequest.discussions
     .mapToDiff()
     .mapCaching(
       { it.value.id },

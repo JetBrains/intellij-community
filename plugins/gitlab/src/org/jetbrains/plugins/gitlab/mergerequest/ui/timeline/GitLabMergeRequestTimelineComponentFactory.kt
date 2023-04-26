@@ -167,13 +167,13 @@ object GitLabMergeRequestTimelineComponentFactory {
 
   private fun createContent(item: GitLabMergeRequestTimelineItem.Immutable): JComponent =
     when (item) {
-      is GitLabMergeRequestTimelineItem.SystemDiscussion -> createSystemDiscussionContent(item)
+      is GitLabMergeRequestTimelineItem.SystemNote -> createSystemDiscussionContent(item)
       is GitLabMergeRequestTimelineItem.LabelEvent -> createLabeledEventContent(item)
       is GitLabMergeRequestTimelineItem.MilestoneEvent -> createMilestonedEventContent(item)
       is GitLabMergeRequestTimelineItem.StateEvent -> createStateChangeContent(item)
     }
 
-  private fun createSystemDiscussionContent(item: GitLabMergeRequestTimelineItem.SystemDiscussion): JComponent {
+  private fun createSystemDiscussionContent(item: GitLabMergeRequestTimelineItem.SystemNote): JComponent {
     val content = item.content
     if (content.contains("Compare with previous version")) {
       try {

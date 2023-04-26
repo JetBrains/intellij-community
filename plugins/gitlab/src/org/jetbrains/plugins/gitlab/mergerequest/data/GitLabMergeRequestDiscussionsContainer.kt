@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
@@ -20,8 +21,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.addNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiscussions
 
 interface GitLabMergeRequestDiscussionsContainer {
-  val userDiscussions: Flow<Collection<GitLabDiscussion>>
-  val systemDiscussions: Flow<Collection<GitLabDiscussionDTO>>
+  val discussions: Flow<Collection<GitLabDiscussion>>
+  val systemNotes: Flow<Collection<GitLabNote>>
 
   val canAddNotes: Boolean
 
@@ -66,7 +67,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       send(discussions)
     }.modelFlow(cs, LOG)
 
-  override val userDiscussions: Flow<List<GitLabDiscussion>> =
+  override val discussions: Flow<List<GitLabDiscussion>> =
     nonEmptyDiscussionsData
       .mapFiltered { !it.notes.first().system }
       .mapCaching(
@@ -76,9 +77,15 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       )
       .modelFlow(cs, LOG)
 
-  override val systemDiscussions: Flow<List<GitLabDiscussionDTO>> =
+  override val systemNotes: Flow<List<GitLabNote>> =
     nonEmptyDiscussionsData
       .mapFiltered { it.notes.first().system }
+      .map { discussions -> discussions.map { it.notes.first() } }
+      .mapCaching(
+        GitLabNoteDTO::id,
+        { _, note -> ImmutableGitLabNote(note) },
+        {}
+      )
       .modelFlow(cs, LOG)
 
   private suspend fun loadNonEmptyDiscussions(): List<GitLabDiscussionDTO> =

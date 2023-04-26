@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -35,7 +34,7 @@ interface GitLabNote {
 
 private val LOG = logger<GitLabDiscussion>()
 
-class LoadedGitLabNote(
+class MutableGitLabNote(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val project: GitLabProjectCoordinates,
@@ -93,3 +92,26 @@ class LoadedGitLabNote(
   override fun toString(): String =
     "LoadedGitLabNote(id='$id', author=$author, createdAt=$createdAt, body=${body.value})"
 }
+
+class ImmutableGitLabNote(noteData: GitLabNoteDTO) : GitLabNote {
+
+  override val id: String = noteData.id
+  override val author: GitLabUserDTO = noteData.author
+  override val createdAt: Date = noteData.createdAt
+  override val canAdmin: Boolean = noteData.userPermissions.adminNote
+
+  private val _body = MutableStateFlow(noteData.body)
+  override val body: StateFlow<String> = _body.asStateFlow()
+
+  override suspend fun setBody(newText: String) = Unit
+
+  override suspend fun delete() = Unit
+
+  override suspend fun update(item: GitLabNoteDTO) {
+    _body.value = item.body
+  }
+
+  override fun toString(): String =
+    "ImmutableGitLabNote(id='$id', author=$author, createdAt=$createdAt, canAdmin=$canAdmin, body=${_body.value})"
+}
+

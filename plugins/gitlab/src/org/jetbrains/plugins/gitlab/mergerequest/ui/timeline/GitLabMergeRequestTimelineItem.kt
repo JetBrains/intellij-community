@@ -1,8 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
-import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import java.util.*
 
 sealed interface GitLabMergeRequestTimelineItem {
@@ -38,16 +42,14 @@ sealed interface GitLabMergeRequestTimelineItem {
     override val date: Date = event.createdAt
   }
 
-  class SystemDiscussion(
-    discussion: GitLabDiscussionDTO
+  class SystemNote(
+    note: GitLabNote
   ) : Immutable {
-    private val firstNote = discussion.notes.first()
+    override val id: String = note.id
+    override val actor: GitLabUserDTO = note.author
+    override val date: Date = note.createdAt
 
-    override val id: String = discussion.id
-    override val actor: GitLabUserDTO = firstNote.author
-    override val date: Date = discussion.createdAt
-
-    val content: String = firstNote.body
+    val content: String = note.body.value
   }
 
   class UserDiscussion(

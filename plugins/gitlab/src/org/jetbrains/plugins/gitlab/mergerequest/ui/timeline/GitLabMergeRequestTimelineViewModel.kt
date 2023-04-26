@@ -112,8 +112,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     val simpleEventsRequest = async(Dispatchers.IO) {
       val vms = ConcurrentLinkedQueue<GitLabMergeRequestTimelineItem>()
       launch {
-        mr.systemDiscussions.first()
-          .map { GitLabMergeRequestTimelineItem.SystemDiscussion(it) }
+        mr.systemNotes.first()
+          .map { GitLabMergeRequestTimelineItem.SystemNote(it) }
           .also { vms.addAll(it) }
       }
 
@@ -137,7 +137,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       vms
     }
 
-    return mr.userDiscussions.map { discussions ->
+    return mr.discussions.map { discussions ->
       (simpleEventsRequest.await() + discussions.map(GitLabMergeRequestTimelineItem::UserDiscussion)).sortedBy { it.date }
     }
   }
