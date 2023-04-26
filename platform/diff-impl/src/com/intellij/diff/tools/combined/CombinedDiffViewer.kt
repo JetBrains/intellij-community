@@ -69,7 +69,9 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   }
 
   internal val diffBlocks = linkedMapOf<CombinedBlockId, CombinedDiffBlock<*>>()
-  internal val diffViewers = hashMapOf<CombinedBlockId, DiffViewer>()
+
+  private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
+
   internal val diffBlocksPositions = BidirectionalMap<CombinedBlockId, Int>()
 
   internal val scrollSupport = CombinedDiffScrollSupport(project, this)
@@ -352,8 +354,6 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   fun getBlock(id: CombinedBlockId) = diffBlocks[id]
   fun getBlock(viewer: DiffViewer) = diffViewers.entries.find { it.value == viewer }?.key?.let { blockId -> diffBlocks[blockId] }
 
-  fun getViewer(id: CombinedBlockId) = diffViewers[id]
-
   fun getCurrentBlockId(): CombinedBlockId? {
     return getBlockId(scrollSupport.blockIterable.index)
   }
@@ -364,11 +364,13 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
   private fun getBlocksIterable(): PrevNextDifferenceIterable = scrollSupport.blockIterable
 
-  internal fun getCurrentDiffViewer(): DiffViewer? = getDiffViewer(scrollSupport.blockIterable.index)
+  internal fun getCurrentDiffViewer(): DiffViewer? = getDiffViewerForIndex(scrollSupport.blockIterable.index)
 
-  internal fun getDiffViewer(index: Int): DiffViewer? {
-    return getBlockId(index)?.let { blockId -> diffViewers[blockId] }
+  internal fun getDiffViewerForIndex(index: Int): DiffViewer? {
+    return getBlockId(index)?.let { blockId -> getDiffViewerForId(blockId) }
   }
+
+  internal fun getDiffViewerForId(id: CombinedBlockId): DiffViewer? = diffViewers[id]
 
   fun selectDiffBlock(blockId: CombinedBlockId, scrollPolicy: ScrollPolicy, focusBlock: Boolean, onSelected: () -> Unit = {}) {
     val index = diffBlocksPositions[blockId]
@@ -402,7 +404,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
                               scrollPolicy: ScrollPolicy,
                               focusBlock: Boolean,
                               onSelected: () -> Unit) {
-    val viewer = diffViewers[block.id] ?: return
+    val viewer = getDiffViewerForId(block.id) ?: return
 
     val doSelect = {
       onSelected()

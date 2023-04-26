@@ -24,7 +24,7 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
   private val combinedEditorsScrollingModel = ScrollingModelImpl(CombinedEditorsScrollingModelHelper(project, viewer))
 
   fun scroll(index: Int, block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy){
-    val isEditorBased = viewer.diffViewers[block.id]?.isEditorBased ?: false
+    val isEditorBased = viewer.getDiffViewerForId(block.id)?.isEditorBased ?: false
     if (scrollPolicy == ScrollPolicy.DIFF_BLOCK || !isEditorBased) {
       scrollToDiffBlock(index)
     }
@@ -94,7 +94,7 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
       Disposer.register(disposable, this)
     }
 
-    override fun getEditor(): Editor = viewer.getDiffViewer(blockIterable.index)?.editor ?: dummyEditor
+    override fun getEditor(): Editor = viewer.getDiffViewerForIndex(blockIterable.index)?.editor ?: dummyEditor
 
     override fun getScrollPane(): JScrollPane = viewer.scrollPane
 

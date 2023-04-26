@@ -108,7 +108,8 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     @RequiresEdt
     override fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>) {
       for ((blockId, request) in requests) {
-        buildLoadingBlockContent(blockId, combinedViewer.diffViewers[blockId]?.component?.size).let { newContent ->
+        val size = combinedViewer.getDiffViewerForId(blockId)?.component?.size
+        buildLoadingBlockContent(blockId, size).let { newContent ->
           combinedViewer.diffBlocks[blockId]?.let { block ->
             combinedViewer.updateBlockContent(block, newContent)
             request.onAssigned(false)
