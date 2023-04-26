@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
@@ -26,6 +27,10 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -35,13 +40,16 @@ import kotlin.system.measureTimeMillis
 
 val jpsMetrics: JpsMetrics by lazy { JpsMetrics.getInstance() }
 
-open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
+open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModel, Disposable {
   @Volatile
   var loadedFromCache = false
     protected set
 
   final override val entityStorage: VersionedEntityStorageImpl
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
+
+  private val mutableChangesEventFlow = MutableSharedFlow<EntityChange<*>>(replay = 0, onBufferOverflow = BufferOverflow.SUSPEND)
+  override val changesEventFlow: Flow<EntityChange<*>> = mutableChangesEventFlow.asSharedFlow()
 
   override val currentSnapshot: EntityStorageSnapshot
     get() = entityStorage.current
@@ -164,6 +172,10 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       }
       log.debug { "Bridge initialization: $initializingTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms" }
     }
+  }
+
+  override suspend fun updateProjectModelAsync(description: String, updater: (MutableEntityStorage) -> Unit) {
+    writeAction { updateProjectModel(description, updater) }
   }
 
   /**
@@ -304,6 +316,10 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     logErrorOnEventHandling {
       (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change,
                                                                                                                 EntityStorageKind.MAIN)
+    }
+
+    cs.launch {
+      change.getAllChanges().forEach { entityChange -> mutableChangesEventFlow.emit(entityChange) }
     }
 
     logErrorOnEventHandling {
