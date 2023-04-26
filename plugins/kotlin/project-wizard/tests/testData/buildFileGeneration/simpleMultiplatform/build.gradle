@@ -22,7 +22,7 @@ kotlin {
             }
         }
     }
-    js('a', IR) {
+    js('a') {
         binaries.executable()
         browser {
             commonWebpackConfig {
