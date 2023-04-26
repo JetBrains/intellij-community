@@ -3,6 +3,7 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.AddTypeAnnotationFix;
 import com.intellij.codeInspection.*;
@@ -169,11 +170,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
         if (type instanceof PsiClassType) {
           PsiElement context = ((PsiClassType)type).getPsiContext();
-          // outer type
-          if (context instanceof PsiJavaCodeReferenceElement) {
+          // outer type/package
+          if (context instanceof PsiJavaCodeReferenceElement outerCtx) {
             PsiElement parent = context.getParent();
             if (parent instanceof PsiJavaCodeReferenceElement) {
-              reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.outer.type");
+              if (outerCtx.resolve() instanceof PsiPackage) {
+                reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.applied.to.package",
+                                        new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation));
+              }
+              else {
+                reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.outer.type",
+                                        new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation));
+              }
             }
             if (parent instanceof PsiReferenceList) {
               PsiElement firstChild = parent.getFirstChild();
