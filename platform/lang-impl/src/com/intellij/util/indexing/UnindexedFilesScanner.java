@@ -558,8 +558,10 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     Ref<StatusMark> markRef = new Ref<>();
+    Runnable dumbModeTracker = null;
     try {
-      scanningHistory.startDumbModeBeginningTracking();
+      dumbModeTracker =
+        ProjectScanningHistoryImpl.Companion.startDumbModeBeginningTracking(myProject, scanningHistory, projectIndexingHistory);
       ((GistManagerImpl)GistManager.getInstance()).
         runWithMergingDependentCacheInvalidations(() -> scanAndUpdateUnindexedFiles(projectIndexingHistory, scanningHistory,
                                                                                     indicator, markRef));
@@ -579,7 +581,12 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       if(ApplicationManagerEx.isInIntegrationTest()) {
         LOG.info("Began finalization of scanning in finally");
       }
-      scanningHistory.finishDumbModeBeginningTracking();
+      if (dumbModeTracker != null) {
+        ProjectScanningHistoryImpl.Companion.finishDumbModeBeginningTracking(myProject, dumbModeTracker);
+      }
+      else if (ApplicationManagerEx.isInIntegrationTest()) {
+        LOG.info("Tracker was not initialized");
+      }
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.finishTotalUpdatingTime();
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {

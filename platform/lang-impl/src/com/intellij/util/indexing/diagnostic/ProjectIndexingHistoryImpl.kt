@@ -17,6 +17,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.concurrent.atomic.AtomicLong
+import java.util.function.Consumer
 import kotlin.reflect.KMutableProperty1
 
 @ApiStatus.Internal
@@ -157,6 +158,10 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     timesImpl.scanFilesDuration = duration
   }
 
+  fun createScanningDumbModeCallback(): Consumer<in ZonedDateTime> = Consumer { now ->
+    startStage(Stage.DumbMode, now.toInstant())
+  }
+
   /**
    * Some StageEvent may appear between begin and end of suspension, because it actually takes place only on ProgressIndicator's check.
    * These normalizations move moment of suspension start from declared to after all other events between it and suspension end:
@@ -264,6 +269,10 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
     PushProperties {
       override fun getProperty() = IndexingTimesImpl::pushPropertiesDuration
+    },
+
+    DumbMode {
+      override fun getProperty() = IndexingTimesImpl::dumbModeDuration
     };
 
 
@@ -311,7 +320,9 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     override var suspendedDuration: Duration = Duration.ZERO,
     override var appliedAllValuesSeparately: Boolean = true,
     override var separateValueApplicationVisibleTime: TimeNano = 0,
-    override var wasInterrupted: Boolean = false
+    override var wasInterrupted: Boolean = false,
+
+    var dumbModeDuration: Duration = Duration.ZERO //just to have the same effect on pause time in old and new diagnostics
   ) : IndexingTimes
 
   data class SnapshotInputMappingStatsImpl(override var requests: Long, override var misses: Long) : SnapshotInputMappingStats {
@@ -323,9 +334,62 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 data class ProjectScanningHistoryImpl(override val project: Project,
                                       override val scanningReason: String?,
                                       private val scanningType: ScanningType) : ProjectScanningHistory {
-  private companion object {
-    val scanningSessionIdSequencer = AtomicLong()
-    val log = thisLogger()
+  companion object {
+    private val scanningSessionIdSequencer = AtomicLong()
+    private val log = thisLogger()
+
+    fun startDumbModeBeginningTracking(project: Project,
+                                       scanningHistory: ProjectScanningHistoryImpl,
+                                       oldHistory: ProjectIndexingHistoryImpl): Runnable {
+      logInTests("startDumbModeBeginningTracking")
+      val now = ZonedDateTime.now(ZoneOffset.UTC)
+      val callback = Runnable {
+        scanningHistory.createScanningDumbModeCallBack().andThen(oldHistory.createScanningDumbModeCallback()).accept(now)
+      }
+      doInReadActionWithLogging {
+        if (!project.isDisposed) {
+          project.getService(DumbModeFromScanningTrackerService::class.java).setScanningDumbModeStartCallback(callback)
+        }
+        else {
+          logInTests("startDumbModeBeginningTracking didn't work: project disposed")
+        }
+      }
+      return callback
+    }
+
+    fun finishDumbModeBeginningTracking(project: Project,
+                                        callback: Runnable) {
+      logInTests("finishDumbModeBeginningTracking")
+      doInReadActionWithLogging {
+        if (!project.isDisposed) {
+          project.getService(DumbModeFromScanningTrackerService::class.java).cleanScanningDumbModeStartCallback(callback)
+        }
+        else {
+          logInTests("finishDumbModeBeginningTracking didn't work: project disposed")
+        }
+      }
+    }
+
+    private fun doInReadActionWithLogging(action: ThrowableRunnable<RuntimeException>) {
+      if (ApplicationManagerEx.isInIntegrationTest()) {
+        try {
+          ReadAction.run(action)
+        }
+        catch (e: Throwable) {
+          thisLogger().info("RunAction returned exception $e")
+          throw e
+        }
+      }
+      else {
+        ReadAction.run(action)
+      }
+    }
+
+    private fun logInTests(message: String) {
+      if (ApplicationManagerEx.isInIntegrationTest()) {
+        thisLogger().info(message)
+      }
+    }
   }
 
   override val scanningSessionId = scanningSessionIdSequencer.getAndIncrement()
@@ -341,12 +405,6 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   @Volatile
   private var currentDumbModeStart: ZonedDateTime? = null
-
-  private val scanningDumbModeCallBack: Runnable = Runnable {
-    val now = ZonedDateTime.now(ZoneOffset.UTC)
-    currentDumbModeStart = now
-    startStage(ScanningStage.DumbMode, now.toInstant())
-  }
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
@@ -402,49 +460,9 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     timesImpl.wasInterrupted = true
   }
 
-  fun startDumbModeBeginningTracking() {
-    logInTests("startDumbModeBeginningTracking")
-    doInReadActionWithLogging {
-      if (!project.isDisposed) {
-        project.getService(DumbModeFromScanningTrackerService::class.java).setScanningDumbModeStartCallback(scanningDumbModeCallBack)
-      }
-      else {
-        logInTests("startDumbModeBeginningTracking didn't work: project disposed")
-      }
-    }
-  }
-
-  fun finishDumbModeBeginningTracking() {
-    logInTests("finishDumbModeBeginningTracking")
-    doInReadActionWithLogging {
-      if (!project.isDisposed) {
-        project.getService(DumbModeFromScanningTrackerService::class.java).cleanScanningDumbModeStartCallback(scanningDumbModeCallBack)
-      }
-      else {
-        logInTests("finishDumbModeBeginningTracking didn't work: project disposed")
-      }
-    }
-  }
-
-  private fun doInReadActionWithLogging(action: ThrowableRunnable<RuntimeException>) {
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      try {
-        ReadAction.run(action)
-      }
-      catch (e: Throwable) {
-        thisLogger().info("RunAction returned exception $e")
-        throw e
-      }
-    }
-    else {
-      ReadAction.run(action)
-    }
-  }
-
-  private fun logInTests(message: String) {
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      thisLogger().info(message)
-    }
+  private fun createScanningDumbModeCallBack(): Consumer<ZonedDateTime> = Consumer { now ->
+    currentDumbModeStart = now
+    startStage(ScanningStage.DumbMode, now.toInstant())
   }
 
   /**
