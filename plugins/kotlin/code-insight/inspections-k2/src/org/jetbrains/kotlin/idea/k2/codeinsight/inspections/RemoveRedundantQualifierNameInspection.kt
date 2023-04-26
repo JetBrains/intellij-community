@@ -30,12 +30,11 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
 
     private fun collectPossibleShortenings(file: KtFile): List<KtElement> {
         val shortenings = analyze(file) {
-            // a workaround until KT-57966 is fixed
-            file.declarations.map { declaration -> collectShortenings(declaration) }
+            collectShortenings(file)
         }
 
-        val qualifiersToShorten = shortenings.asSequence().flatMap { it.getQualifiersToShorten() }
-        val typesToShorten = shortenings.asSequence().flatMap { it.getTypesToShorten() }
+        val qualifiersToShorten = shortenings.getQualifiersToShorten()
+        val typesToShorten = shortenings.getTypesToShorten()
 
         return (qualifiersToShorten + typesToShorten).mapNotNull { it.element }.toList()
     }
@@ -45,7 +44,7 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
      * special treatment for enums.
      */
     context(KtAnalysisSession)
-    private fun collectShortenings(declaration: KtDeclaration): ShortenCommand =
+    private fun collectShortenings(declaration: KtElement): ShortenCommand =
         collectPossibleReferenceShorteningsInElement(
             declaration,
             classShortenOption = { classSymbol ->
