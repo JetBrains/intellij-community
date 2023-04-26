@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.coroutines.resume
@@ -132,9 +133,9 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
     return constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) { textEditor.loadEditorInBackground() }
   }
 
-  @RequiresEdt
+  @RequiresReadLock
   fun getEditorState(level: FileEditorStateLevel): TextEditorState {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     return provider.getStateImpl(project, editor, level)
   }
 

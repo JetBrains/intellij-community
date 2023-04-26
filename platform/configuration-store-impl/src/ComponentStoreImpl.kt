@@ -9,7 +9,7 @@ import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -25,8 +25,6 @@ import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -334,7 +332,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       else {
         if (!stateRequested) {
           stateRequested = true
-          state = withContext(Dispatchers.EDT) {
+          state = readAction {
             (component as PersistentStateComponent<*>).state
           }
         }
