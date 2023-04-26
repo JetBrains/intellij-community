@@ -89,20 +89,14 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
     // Process entities from the target storage
     val targetEntitiesToReplace = targetStorage.entitiesBySource(entityFilter)
-    val targetEntities = targetEntitiesToReplace.values.flatMap { it.values }.flatten().toMutableList()
-    if (shuffleEntities != -1L && targetEntities.size > 1) {
-      targetEntities.shuffle(Random(shuffleEntities))
-    }
+    val targetEntities = targetEntitiesToReplace.values.flatMap { it.values }.flatten().maybeShuffled()
     for (targetEntityToReplace in targetEntities) {
       TargetProcessor().processEntity(targetEntityToReplace)
     }
 
     // Process entities from the replaceWith storage
     val replaceWithEntitiesToReplace = replaceWithStorage.entitiesBySource(entityFilter)
-    val replaceWithEntities = replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten().toMutableList()
-    if (shuffleEntities != -1L && replaceWithEntities.size > 1) {
-      replaceWithEntities.shuffle(Random(shuffleEntities))
-    }
+    val replaceWithEntities = replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten().maybeShuffled()
     for (replaceWithEntityToReplace in replaceWithEntities) {
       ReplaceWithProcessor().processEntity(replaceWithEntityToReplace)
     }
@@ -687,7 +681,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             Triple(targetParent, replaceWithChildrenOptions, mutableListOfEqualEntities)
           }
 
-        val mostCommonReplaceWithChildId = replaceWithParentsCounter.maxByOrNull { it.value }?.key
+        val mostCommonReplaceWithChildId = replaceWithParentsCounter.withMaxValue()?.maybeShuffled()?.firstOrNull()?.key
         if (mostCommonReplaceWithChildId != null) {
           parentAssociationsWithChildren.forEach { (targetParent, replaceWithChildren, replaceWithSimilarEntityData) ->
             if (mostCommonReplaceWithChildId in replaceWithChildren) {
@@ -876,6 +870,22 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
   }
+
+  /**
+   * Shuffle collection if the field [shuffleEntities] is not -1 (set in tests)
+   */
+  private fun <E> List<E>.maybeShuffled(): List<E> {
+    if (shuffleEntities != -1L && this.size > 1) {
+      return this.shuffled(Random(shuffleEntities))
+    }
+    return this
+  }
+
+  private fun <E> MutableList<E>.maybeShuffle() {
+    if (shuffleEntities != -1L && this.size > 1) {
+      this.shuffle(Random(shuffleEntities))
+    }
+  }
 }
 
 internal data class RelabelElement(val targetEntityId: EntityId, val replaceWithEntityId: EntityId, val parents: Set<ParentsRef>?) {
@@ -948,4 +958,9 @@ private class TrackToParents(
       }
       return cachedParents!!
     }
+}
+
+private fun <K, R : Comparable<R>> Map<out K, R>.withMaxValue(): List<Map.Entry<K, R>>? {
+  val maxValue = values.maxOrNull() ?: return null
+  return entries.filter { it.value == maxValue }
 }
