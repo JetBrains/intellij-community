@@ -717,6 +717,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testPureMethodReadsMutableArray() { doTest(); }
   public void testBoxingInConstructorArguments() { doTest(); }
   public void testBoxingInArrayDeclaration() { doTest(); }
+  public void testBoxedBooleanNullableTrue() { doTestWith((__, insp) -> insp.REPORT_CONSTANT_REFERENCE_VALUES = true); }
   public void testNestedVersusSuper() { doTest(); }
   public void testChangeFieldUsedInPureMethod() { doTest(); }
   public void testSuppression() { doTest(); }
