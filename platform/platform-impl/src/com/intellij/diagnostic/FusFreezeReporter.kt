@@ -1,35 +1,34 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diagnostic;
+package com.intellij.diagnostic
 
-import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
-import com.intellij.internal.DebugAttachDetector;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.internal.DebugAttachDetector
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
+private val isDebugEnabled = DebugAttachDetector.isDebugEnabled()
+private const val TOLERABLE_UI_LATENCY = 100
+private const val UI_RESPONSE_LOGGING_INTERVAL_MS = 100000
 
-final class FusFreezeReporter implements IdePerformanceListener {
-  static final boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
-  private volatile long myPreviousLoggedUIResponse = 0;
-  private static final int TOLERABLE_UI_LATENCY = 100;
+private class FusFreezeReporter : IdePerformanceListener {
+  @Volatile
+  private var previousLoggedUiResponse: Long = 0
 
-  @Override
-  public void uiFreezeFinished(long durationMs, @Nullable Path reportDir) {
+  override fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {
     if (!isDebugEnabled) {
-      LifecycleUsageTriggerCollector.onFreeze(durationMs);
+      LifecycleUsageTriggerCollector.onFreeze(durationMs)
     }
   }
 
-  @Override
-  public void uiResponded(long latencyMs) {
-    final long currentTime = System.nanoTime();
-    final long elapsedMs = TimeUnit.NANOSECONDS.toMillis(currentTime - myPreviousLoggedUIResponse);
-    if (elapsedMs >= IdeHeartbeatEventReporter.UI_RESPONSE_LOGGING_INTERVAL_MS) {
-      myPreviousLoggedUIResponse = currentTime;
-      UILatencyLogger.LATENCY.log(latencyMs);
+  override fun uiResponded(latencyMs: Long) {
+    val currentTime = System.nanoTime()
+    val elapsedMs = TimeUnit.NANOSECONDS.toMillis(currentTime - previousLoggedUiResponse)
+    if (elapsedMs >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
+      previousLoggedUiResponse = currentTime
+      UILatencyLogger.LATENCY.log(latencyMs)
     }
     if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
-      UILatencyLogger.LAGGING.log(latencyMs);
+      UILatencyLogger.LAGGING.log(latencyMs)
     }
   }
 }

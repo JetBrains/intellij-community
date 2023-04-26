@@ -79,59 +79,63 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   }
 
   private static void reportUnfinishedFreezes() {
-    if (!DEBUG && PluginManagerCore.isRunningFromSources()) return;
+    if (!DEBUG && PluginManagerCore.isRunningFromSources()) {
+      return;
+    }
 
     Application app = ApplicationManager.getApplication();
     PerformanceWatcher.getInstance().processUnfinishedFreeze((dir, duration) -> {
       try {
         // report deadly freeze
         File[] files = dir.toFile().listFiles();
-        if (files != null) {
-          if (duration > FREEZE_THRESHOLD) {
-            LifecycleUsageTriggerCollector.onDeadlockDetected();
-            if (isEnabled(app)) {
-              List<Attachment> attachments = new ArrayList<>();
-              String message = null;
-              String appInfo = null;
-              Throwable throwable = null;
-              List<String> dumps = new ArrayList<>();
-              for (File file : files) {
-                String text = FileUtil.loadFile(file);
-                String name = file.getName();
-                if (MESSAGE_FILE_NAME.equals(name)) {
-                  message = text;
+        if (files == null) {
+          return;
+        }
+
+        if (duration > FREEZE_THRESHOLD) {
+          LifecycleUsageTriggerCollector.onDeadlockDetected();
+          if (isEnabled(app)) {
+            List<Attachment> attachments = new ArrayList<>();
+            String message = null;
+            String appInfo = null;
+            Throwable throwable = null;
+            List<String> dumps = new ArrayList<>();
+            for (File file : files) {
+              String text = FileUtil.loadFile(file);
+              String name = file.getName();
+              if (MESSAGE_FILE_NAME.equals(name)) {
+                message = text;
+              }
+              else if (THROWABLE_FILE_NAME.equals(name)) {
+                try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
+                  throwable = (Throwable)ois.readObject();
                 }
-                else if (THROWABLE_FILE_NAME.equals(name)) {
-                  try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
-                    throwable = (Throwable)ois.readObject();
-                  }
-                  catch (Exception ignored) {
-                  }
-                }
-                else if (APPINFO_FILE_NAME.equals(name)) {
-                  appInfo = text;
-                }
-                else if (name.startsWith(REPORT_PREFIX)) {
-                  attachments.add(createReportAttachment(duration, text));
-                }
-                else if (name.startsWith(PerformanceWatcher.DUMP_PREFIX)) {
-                  dumps.add(text);
+                catch (Exception ignored) {
                 }
               }
-
-              addDumpsAttachments(dumps, Function.identity(), attachments);
-
-              EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(dir)));
-
-              if (message != null && throwable != null && !attachments.isEmpty()) {
-                IdeaLoggingEvent event = LogMessage.eventOf(throwable, message, attachments);
-                setAppInfo(event, appInfo);
-                report(event);
+              else if (APPINFO_FILE_NAME.equals(name)) {
+                appInfo = text;
+              }
+              else if (name.startsWith(REPORT_PREFIX)) {
+                attachments.add(createReportAttachment(duration, text));
+              }
+              else if (name.startsWith(PerformanceWatcher.DUMP_PREFIX)) {
+                dumps.add(text);
               }
             }
+
+            addDumpsAttachments(dumps, Function.identity(), attachments);
+
+            EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(dir)));
+
+            if (message != null && throwable != null && !attachments.isEmpty()) {
+              IdeaLoggingEvent event = LogMessage.eventOf(throwable, message, attachments);
+              setAppInfo(event, appInfo);
+              report(event);
+            }
           }
-          cleanup(dir);
         }
+        cleanup(dir);
       }
       catch (IOException ignored) {
       }
@@ -149,8 +153,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     }
   }
 
-  private static @NotNull Attachment createReportAttachment(long durationInSeconds,
-                                                            @NotNull String text) {
+  private static @NotNull Attachment createReportAttachment(long durationInSeconds, @NotNull String text) {
     Attachment res = new Attachment(REPORT_PREFIX + "-" + durationInSeconds + "s.txt", text);
     res.setIncluded(true);
     return res;

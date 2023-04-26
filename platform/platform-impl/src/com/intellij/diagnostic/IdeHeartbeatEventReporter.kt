@@ -23,10 +23,6 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
 internal class IdeHeartbeatEventReporter : ProjectActivity {
-  companion object {
-    const val UI_RESPONSE_LOGGING_INTERVAL_MS = 100000
-  }
-
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

@@ -48,7 +48,7 @@ public interface IdePerformanceListener {
 
   /**
    * Invoked on each UI response sampled every <code>performance.watcher.sampling.interval.ms</code> set in the Registry.
-   *
+   * Executed not in EDT.
    * @param latencyMs time between scheduling a UI event and executing it, in milliseconds
    */
   default void uiResponded(long latencyMs) {
