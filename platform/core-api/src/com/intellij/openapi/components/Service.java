@@ -18,7 +18,7 @@ public @interface Service {
   /**
    * @return The level(s) on which this service is registered. Default: {@link Level#APP application-level}.
    */
-  Level[] value() default {};
+  Level[] value() default Level.APP;
 
   enum Level {
     /**
