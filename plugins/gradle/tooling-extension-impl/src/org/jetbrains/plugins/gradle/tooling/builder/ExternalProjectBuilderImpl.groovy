@@ -18,6 +18,7 @@ import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
@@ -34,16 +35,17 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
-import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import java.lang.reflect.Method
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.*
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 /**
@@ -325,7 +327,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
           (isCustomJarTask(task, sourceSets) && containsAllSourceSetOutput(task, sourceSet))
         ) {
           externalSourceSet.artifacts.add(is67OrBetter ?
-                                          ReflectionUtil.reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile() :
+                                          reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile() :
                                           task.archivePath)
         }
       }
@@ -740,6 +742,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
     def outputFiles = new HashSet<>(sourceSet.output.files)
+    def project = archiveTask.project
+
     try {
       final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec");
       mainSpecGetter.setAccessible(true);
@@ -751,8 +755,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
         if (sourcePaths != null) {
           for (Object path : sourcePaths) {
-            def files = archiveTask.project.files(path).files
-            outputFiles.removeAll(files)
+            if (isSafeToResolve(path)) {
+              def files = archiveTask.project.files(path).files
+              outputFiles.removeAll(files)
+            }
           }
         }
       }
@@ -762,6 +768,27 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     }
 
     return outputFiles.isEmpty()
+  }
+
+  /**
+   * Checks that object can be safely resolved using {@link Project#files(java.lang.Object...)} API.
+   * <br/>
+   * Some FileCollections implementations may have file definitions that can not
+   * be resolved during sync, causing {@link org.gradle.api.InvalidUserCodeException}
+   * and {@link org.gradle.api.InvalidUserDataException}.
+   * @param object
+   * @return true if object is safe to resolve using {@link Project#files(java.lang.Object...)}
+   */
+  private static boolean isSafeToResolve(Object param) {
+    Object object = unpackPresentProvider(param)
+    boolean isDirectoryOrRegularFile = dynamicCheckInstanceOf(object,
+                                                              "org.gradle.api.file.Directory",
+                                                              "org.gradle.api.file.RegularFile")
+
+    return object instanceof CharSequence
+      || object instanceof File || object instanceof Path
+      || isDirectoryOrRegularFile
+      || object instanceof SourceSetOutput
   }
 
   private static boolean isCustomJarTask(@NotNull AbstractArchiveTask archiveTask,
