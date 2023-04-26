@@ -516,7 +516,7 @@ open class IdeStatusBarImpl internal constructor(
   private fun dispatchMouseEvent(e: MouseEvent): Boolean {
     val rightPanel = rightPanel.takeIf { it.isVisible } ?: return false
     val component = e.component ?: return false
-    if (ComponentUtil.getWindow(frameHelper.frame) !== ComponentUtil.getWindow(component)) {
+    if (ComponentUtil.getWindow(this) !== ComponentUtil.getWindow(component)) {
       applyWidgetEffect(null, null)
       return false
     }
