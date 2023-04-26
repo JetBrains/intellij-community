@@ -27,9 +27,9 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
   private val asyncSettingsSavingComponents = SynchronizedClearableLazy {
     val result = mutableListOf<SettingsSavingComponent>()
-    serviceContainer.processComponentsAndServices(createIfNeeded = false) {
-      if (it is SettingsSavingComponent) {
-        result.add(it)
+    for (instance in serviceContainer.instances()) {
+      if (instance is SettingsSavingComponent) {
+        result.add(instance)
       }
     }
     result

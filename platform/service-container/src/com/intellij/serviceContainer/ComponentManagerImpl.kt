@@ -97,7 +97,7 @@ abstract class ComponentManagerImpl(
       "jetbrains.buildServer.customBuild.lang.gutterActions.CustomBuildParametersGutterActionsHighlightingPassRegistrar",
     )
 
-    // not as file level function to avoid scope cluttering
+    // not as a file level function to avoid scope cluttering
     @ApiStatus.Internal
     fun createAllServices(componentManager: ComponentManagerImpl, requireEdt: Set<String>, requireReadAction: Set<String>) {
       for (o in componentManager.componentKeyToAdapter.values) {
@@ -150,7 +150,6 @@ abstract class ComponentManagerImpl(
 
   private fun debugString(short: Boolean = false): String = "${if (short) javaClass.simpleName else javaClass.name}@${System.identityHashCode(this)}"
 
-  @Suppress("LeakingThis")
   internal val serviceParentDisposable = Disposer.newDisposable("services of ${debugString()}")
 
   protected open val isLightServiceSupported = parent?.parent == null
@@ -577,13 +576,13 @@ abstract class ComponentManagerImpl(
       }
 
       // Allow to re-define service implementations in plugins.
-      // Empty serviceImplementation means we want to unregister service.
+      // Empty serviceImplementation means we want unregistering service.
       val key = descriptor.getInterface()
       if (descriptor.overrides && componentKeyToAdapter.remove(key) == null) {
         throw PluginException("Service $key doesn't override anything", pluginDescriptor.pluginId)
       }
 
-      // empty serviceImplementation means we want to unregister service
+      // empty serviceImplementation means we want unregistering service
       val implementation = when {
         descriptor.testServiceImplementation != null && app.isUnitTestMode -> descriptor.testServiceImplementation
         descriptor.headlessImplementation != null && app.isHeadlessEnvironment -> descriptor.headlessImplementation
@@ -818,6 +817,7 @@ abstract class ComponentManagerImpl(
       return messageBus
     }
 
+    @Suppress("RetrievingService")
     messageBus = getApplication()!!.getService(MessageBusFactory::class.java).createMessageBus(this, parent?.messageBus) as MessageBusImpl
     if (StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       messageBus.setMessageDeliveryListener { topic, messageName, handler, duration ->
@@ -1313,18 +1313,22 @@ abstract class ComponentManagerImpl(
 
   final override fun getDisposed(): Condition<*> = Condition<Any?> { isDisposed }
 
-  fun processComponentsAndServices(createIfNeeded: Boolean, filter: ((implClass: Class<*>) -> Boolean)? = null, processor: (Any) -> Unit) {
-    for (adapter in componentKeyToAdapter.values) {
-      if (adapter is BaseComponentAdapter) {
-        if (filter == null || filter(getImplClassSafe(adapter) ?: continue)) {
-          processor(adapter.getInstance(this, null, createIfNeeded = createIfNeeded) ?: continue)
+  fun instances(createIfNeeded: Boolean = false, filter: ((implClass: Class<*>) -> Boolean)? = null): Sequence<Any> {
+    return componentKeyToAdapter.values.asSequence().mapNotNull { adapter ->
+      when (adapter) {
+        is BaseComponentAdapter -> {
+          if (filter == null || (filter(getImplClassSafe(adapter) ?: return@mapNotNull null))) {
+            adapter.getInstance<Any>(this, null, createIfNeeded = createIfNeeded)
+          }
+          else {
+            null
+          }
         }
-      }
-      else if (adapter is LightServiceComponentAdapter) {
-        val instance = adapter.componentInstance
-        if (filter == null || filter(instance::class.java)) {
-          processor(instance)
+        is LightServiceComponentAdapter -> {
+          val instance = adapter.componentInstance
+          if (filter == null || filter(instance::class.java)) instance else null
         }
+        else -> null
       }
     }
   }
@@ -1352,8 +1356,8 @@ abstract class ComponentManagerImpl(
   }
 
   private fun getImplClassSafe(adapter: BaseComponentAdapter): Class<*>? {
-    return try {
-      adapter.getImplementationClass()
+    try {
+      return adapter.getImplementationClass()
     }
     catch (e: PluginException) {
       // well, the component is registered, but the required jar is not added to the classpath (community edition or junior IDE)
@@ -1363,14 +1367,14 @@ abstract class ComponentManagerImpl(
       else {
         LOG.warn(e)
       }
-      null
+      return null
     }
     catch (e: CancellationException) {
       throw e
     }
     catch (e: Throwable) {
       LOG.warn(e)
-      null
+      return null
     }
   }
 
@@ -1525,7 +1529,7 @@ abstract class ComponentManagerImpl(
       }
       witness.get(pluginScope)?.let {
         // another thread published the scope for given plugin
-        // => use the value from another thread, and cancel the unpublished scope
+        // => uses the value from another thread, and cancels the unpublished scope
         intersectionScope.cancel()
         return it
       }
