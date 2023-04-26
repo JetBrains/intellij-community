@@ -293,7 +293,7 @@ public final class ProgressRunner<R> {
     }
 
     boolean forceDirectExec = isSync && ApplicationManager.getApplication().isDispatchThread()
-                            && (ApplicationManager.getApplication().isWriteAccessAllowed() || !isModal);
+                              && (ApplicationManager.getApplication().isWriteAccessAllowed() || !isModal);
     if (forceDirectExec) {
       String reason = ApplicationManager.getApplication().isWriteAccessAllowed() ? "inside Write Action" : "not modal execution";
       @NonNls String failedConstraints = "";
@@ -447,8 +447,10 @@ public final class ProgressRunner<R> {
     return exception instanceof CompletionException || exception instanceof ExecutionException ? exception.getCause() : exception;
   }
 
-  @NotNull
-  private CompletableFuture<R> launchTask(@NotNull Supplier<R> callable, @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
+  private @NotNull CompletableFuture<R> launchTask(
+    @NotNull Supplier<R> callable,
+    @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
+  ) {
     CompletableFuture<R> resultFuture;
     switch (myThreadToUse) {
       case POOLED:
