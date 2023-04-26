@@ -114,14 +114,15 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
   }
 
-  internal fun addChildBlock(content: CombinedDiffBlockContent, needBorder: Boolean) {
+  internal fun addBlock(content: CombinedDiffBlockContent, needBorder: Boolean) {
+    val blockId = content.blockId
     val diffBlock = createDiffBlock(content, needBorder)
     val viewer = content.viewer
 
     contentPanel.add(diffBlock.component)
-    diffBlocks[diffBlock.id] = diffBlock
-    diffViewers[diffBlock.id] = viewer
-    diffBlocksPositions[diffBlock.id] = getDiffBlocksCount() - 1
+    diffBlocks[blockId] = diffBlock
+    diffViewers[blockId] = viewer
+    diffBlocksPositions[blockId] = getDiffBlocksCount() - 1
     viewer.init()
   }
 

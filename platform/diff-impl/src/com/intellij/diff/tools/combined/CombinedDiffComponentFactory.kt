@@ -150,7 +150,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
               allRequests.forEachIndexed { index, childRequest ->
                 invokeAndWaitIfNeeded {
-                  combinedViewer.addChildBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
+                  combinedViewer.addBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
                 }
               }
             }
