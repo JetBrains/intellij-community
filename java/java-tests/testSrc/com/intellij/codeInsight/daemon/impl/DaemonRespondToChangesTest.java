@@ -55,6 +55,7 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -1199,6 +1200,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         LOG.error(e);
       }
     }, "Cc", this);
+    EditorTestUtil.setEditorVisibleSizeInPixels(getEditor(), 1000, 1000);
     List<HighlightInfo> errs = highlightErrors();
     assertEmpty(errs);
     CommandProcessor.getInstance().executeCommand(getProject(), () -> {

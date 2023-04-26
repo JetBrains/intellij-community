@@ -356,15 +356,16 @@ public class EditorImplTest extends AbstractEditorTest {
 
   public void testScrollingInEditorOfSmallHeight() {
     initText("abc\n<caret>");
-    int heightInPixels = (int)(getEditor().getLineHeight() * 1.5);
+    int lineHeight = getEditor().getLineHeight();
+    int heightInPixels = (int)(lineHeight * 1.5);
     EditorTestUtil.setEditorVisibleSizeInPixels(getEditor(),
                                                 1000 * EditorUtil.getSpaceWidth(Font.PLAIN, getEditor()),
                                                 heightInPixels);
     getEditor().getSettings().setAnimatedScrolling(false);
     type('a');
-    assertEquals(heightInPixels - getEditor().getLineHeight(), getEditor().getScrollingModel().getVerticalScrollOffset());
+    assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, getEditor().getScrollingModel().getVerticalScrollOffset());
     type('b');
-    assertEquals(heightInPixels - getEditor().getLineHeight(), getEditor().getScrollingModel().getVerticalScrollOffset());
+    assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, getEditor().getScrollingModel().getVerticalScrollOffset());
   }
 
   public void testEditorWithSoftWrapsBecomesVisibleAfterDocumentTextRemoval() {
