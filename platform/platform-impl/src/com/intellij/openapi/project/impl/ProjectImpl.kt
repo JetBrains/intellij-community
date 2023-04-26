@@ -17,7 +17,7 @@ import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicReference
 open class ProjectImpl(filePath: Path, projectName: String?)
   : ClientAwareComponentManager(ApplicationManager.getApplication() as ComponentManagerImpl), ProjectEx, ProjectStoreOwner {
   companion object {
-    protected val LOG = Logger.getInstance(ProjectImpl::class.java)
+    private val LOG = logger<ProjectImpl>()
 
     @Internal
     val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
@@ -107,7 +107,7 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
   private var cachedName: String?
 
-  private var componentStoreValue = SynchronizedClearableLazy {
+  private val componentStoreValue = SynchronizedClearableLazy {
     ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
   }
 

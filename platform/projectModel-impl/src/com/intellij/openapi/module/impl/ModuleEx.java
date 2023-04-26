@@ -17,7 +17,7 @@ public interface ModuleEx extends Module {
     }
   }
 
-  default void moduleAdded(List<? super ModuleComponent> oldComponents) {
+  default void moduleAdded(List<ModuleComponent> oldComponents) {
   }
 
   default void projectClosed() {

@@ -70,7 +70,7 @@ internal class ModuleBridgeImpl(
   virtualFileUrl: VirtualFileUrl?,
   override var entityStorage: VersionedEntityStorage,
   override var diff: MutableEntityStorage?
-) : ModuleImpl(name, project, virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
+) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
   init {
     // default project doesn't have modules
     if (!project.isDefault && !project.isDisposed) {
