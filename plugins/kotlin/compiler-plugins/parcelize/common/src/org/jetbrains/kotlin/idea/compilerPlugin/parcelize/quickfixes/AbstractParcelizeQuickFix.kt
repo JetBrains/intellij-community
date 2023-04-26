@@ -15,13 +15,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
-abstract class AbstractParcelizeQuickFix<T : KtElement>(element: T) : KotlinQuickFixAction<T>(element) {
-    protected companion object {
-        fun KtElement.shortenReferences() {
-            ShortenReferencesFacility.getInstance().shorten(this)
-        }
-    }
-
+abstract class AbstractParcelizePsiOnlyQuickFix<T : KtElement>(element: T) : KotlinPsiOnlyQuickFixAction<T>(element) {
     override fun getFamilyName() = text
 
     abstract fun invoke(ktPsiFactory: KtPsiFactory, element: T)
@@ -33,22 +27,8 @@ abstract class AbstractParcelizeQuickFix<T : KtElement>(element: T) : KotlinQuic
     }
 }
 
-abstract class AbstractParcelizePsiOnlyQuickFix<T : KtElement>(element: T) : KotlinPsiOnlyQuickFixAction<T>(element) {
-    protected companion object {
-        fun KtElement.shortenReferences() {
-            ShortenReferencesFacility.getInstance().shorten(this)
-        }
-    }
-
-    override fun getFamilyName() = text
-
-    abstract fun invoke(ktPsiFactory: KtPsiFactory, element: T)
-
-    final override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val clazz = element ?: return
-        val ktPsiFactory = KtPsiFactory(project, markGenerated = true)
-        invoke(ktPsiFactory, clazz)
-    }
+fun KtElement.shortenReferences() {
+    ShortenReferencesFacility.getInstance().shorten(this)
 }
 
 inline fun <reified T : KtElement> factory(crossinline constructor: (T) -> QuickFixActionBase<*>?) = quickFixesPsiBasedFactory<PsiElement> {

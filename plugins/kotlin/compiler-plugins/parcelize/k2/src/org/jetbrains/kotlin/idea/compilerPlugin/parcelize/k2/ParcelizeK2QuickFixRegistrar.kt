@@ -44,9 +44,17 @@ class ParcelizeK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerQuickFixForDiagnosticFactory(
             KtErrorsParcelize.OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED,
+            K2ParcelMigrateToParcelizeQuickFix.FACTORY_FOR_WRITE
+        )
+        registerQuickFixForDiagnosticFactory(
+            KtErrorsParcelize.OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED,
             ParcelRemoveCustomWriteToParcel.FACTORY
         )
 
+        registerQuickFixForDiagnosticFactory(
+            KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED,
+            K2ParcelMigrateToParcelizeQuickFix.FACTORY_FOR_CREATOR
+        )
         registerQuickFixForDiagnosticFactory(
             KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED,
             ParcelRemoveCustomCreatorProperty.FACTORY
