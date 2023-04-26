@@ -95,11 +95,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
       combinedViewer.contentChanged()
 
-      if (blockIdToSelect != null) {
-        combinedViewer.getBlockForId(blockIdToSelect)?.let { block ->
-          combinedViewer.selectDiffBlock(block, ScrollPolicy.DIFF_BLOCK, false)
-        }
-      }
+      combinedViewer.selectDiffBlock(blockIdToSelect, false)
     }
 
     @RequiresEdt
@@ -153,9 +149,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
             finally {
               runInEdt {
                 mainUi.stopProgress()
-                if (blockToSelect != null) {
-                  combinedViewer.selectDiffBlock(blockToSelect, ScrollPolicy.DIFF_BLOCK, true)
-                }
+                combinedViewer.selectDiffBlock(blockToSelect, true)
               }
             }
 
