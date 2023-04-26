@@ -3082,6 +3082,38 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  public final X[] EMPTY_ARRAY = {};" +
                  "}",
                  replace(in2, "'_FieldType 'Field = '_Init?;", "$FieldType$ $Field$ = $Init$;", true));
+
+    String in3 = """
+      class X {
+        void x(int... ss) {}
+
+        void y() {
+          x(new int[] {1, 2});\s
+        }
+      }
+      """;
+    assertEquals("Should keep commas",
+                 """
+                   class X {
+                     void x(int... ss) {}
+                                      
+                     void y() {
+                       x(1, 2);\s
+                     }
+                   }
+                   """,
+                 replace(in3, "new int[] {'_a*}", "$a$", true));
+    assertEquals("Should keep commas 2",
+                 """
+                   class X {
+                     void x(int... ss) {}
+                                      
+                     void y() {
+                       x(new long[] {1, 2});\s
+                     }
+                   }
+                   """,
+                 replace(in3, "new int[] {'_a*}", "new long[] {$a$}"));
   }
 
   public void testMethodCall() {

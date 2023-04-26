@@ -736,7 +736,10 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
               addSeparatorTextMatchedInAnyOrder(currentElement,
                                                 parent instanceof PsiClass ? PsiMember.class : PsiJavaCodeReferenceElement.class, buf);
             }
-            else if (info.isStatementContext() || info.isArgumentContext() || parent instanceof PsiPolyadicExpression) {
+            else if (info.isStatementContext() ||
+                     info.isArgumentContext() ||
+                     parent instanceof PsiPolyadicExpression ||
+                     parent instanceof PsiArrayInitializerExpression) {
               addSeparatorText(previous, currentElement, buf);
             }
             else {
