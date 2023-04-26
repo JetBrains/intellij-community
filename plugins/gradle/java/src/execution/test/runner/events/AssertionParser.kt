@@ -2,31 +2,58 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
 import com.intellij.util.text.nullize
-import org.intellij.lang.annotations.Language
 
 object AssertionParser {
 
+  // JUnit 5: assertEquals | assertSame: org.junit.jupiter.api.Assertions
+  private val JUNIT5_ASSERT_EQUALS_EXTRACTOR =
+    "((?<message>.+) ==> )?expected: <(?<expected>.*)> but was: <(?<actual>.*)>"
+      .toRegex(RegexOption.DOT_MATCHES_ALL)
+  private val JUNIT5_ASSERT_EQUALS_WITH_CLASS_EXTRACTOR =
+    "((?<message>.+) ==> )?expected: (?<expected>[^<]+<(.*)>) but was: (?<actual>[^<]+<(.*)>)"
+      .toRegex(RegexOption.DOT_MATCHES_ALL)
+
+  // JUnit 4: assertEquals: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
+  private val JUNIT4_ASSERT_EQUALS_EXTRACTOR =
+    "((?<message>.+) )?expected:<(?<expected>.*)> but was:<(?<actual>.*)>"
+      .toRegex(RegexOption.DOT_MATCHES_ALL)
+  private val JUNIT4_ASSERT_EQUALS_WITH_CLASS_EXTRACTOR =
+    "((?<message>.+) )?expected: (?<expected>[^<]+<.*>) but was: (?<actual>[^<]+<.*>)"
+      .toRegex(RegexOption.DOT_MATCHES_ALL)
+
+  // JUnit 4: assertSame: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
+  private val JUNIT4_ASSERT_SAME_EXTRACTOR =
+    "((?<message>.+) )?expected same:<(?<expected>.*)> was not:<(?<actual>.*)>"
+      .toRegex(RegexOption.DOT_MATCHES_ALL)
+
+  // AssertJ: assertEquals: org.assertj.core.api.Assertions
+  private val ASSERTJ_ASSERT_EQUALS_EXTRACTOR =
+    "(?<message>)\nexpected: (?<expected>.*)\n but was: (?<actual>.*)"
+      .toRegex(RegexOption.DOT_MATCHES_ALL)
+
+  // AssertJ: assertSame: org.assertj.core.api.Assertions
+  private val ASSERTJ_ASSERT_SAME_EXTRACTOR =
+    "(?<message>)\nExpecting actual:\n {2}(?<actual>.*)\nand:\n {2}(?<expected>.*)\nto refer to the same object"
+      .toRegex(RegexOption.DOT_MATCHES_ALL)
+
+  // Test NG: assertEquals | assertSame: org.testng.Assert
+  private val TESTNG_ASSERT_EQUALS_EXTRACTOR =
+    "((?<message>.+) )?expected \\[(?<expected>.*)] but found \\[(?<actual>.*)]"
+      .toRegex(RegexOption.DOT_MATCHES_ALL)
+
   @JvmStatic
   fun parse(assertionMessage: String): Result? {
-    return null
-           // JUnit 5: assertEquals | assertSame: org.junit.jupiter.api.Assertions
-           ?: parse(assertionMessage, "((?<message>.+) ==> )?expected: <(?<expected>.*)> but was: <(?<actual>.*)>")
-           ?: parse(assertionMessage, "((?<message>.+) ==> )?expected: (?<expected>[^<]+<(.*)>) but was: (?<actual>[^<]+<(.*)>)")
-           // JUnit 4: assertEquals: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
-           ?: parse(assertionMessage, "((?<message>.+) )?expected:<(?<expected>.*)> but was:<(?<actual>.*)>")
-           ?: parse(assertionMessage, "((?<message>.+) )?expected: (?<expected>[^<]+<.*>) but was: (?<actual>[^<]+<.*>)")
-           // JUnit 4: assertSame: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
-           ?: parse(assertionMessage, "((?<message>.+) )?expected same:<(?<expected>.*)> was not:<(?<actual>.*)>")
-           // AssertJ: assertEquals: org.assertj.core.api.Assertions
-           ?: parse(assertionMessage, "(?<message>)\nexpected: (?<expected>.*)\n but was: (?<actual>.*)")
-           // AssertJ: assertSame: org.assertj.core.api.Assertions
-           ?: parse(assertionMessage, "(?<message>)\nExpecting actual:\n {2}(?<actual>.*)\nand:\n {2}(?<expected>.*)\nto refer to the same object")
-           // Test NG: assertEquals | assertSame: org.testng.Assert
-           ?: parse(assertionMessage, "((?<message>.+) )?expected \\[(?<expected>.*)] but found \\[(?<actual>.*)]")
+    return parse(assertionMessage, JUNIT5_ASSERT_EQUALS_EXTRACTOR)
+           ?: parse(assertionMessage, JUNIT5_ASSERT_EQUALS_WITH_CLASS_EXTRACTOR)
+           ?: parse(assertionMessage, JUNIT4_ASSERT_EQUALS_EXTRACTOR)
+           ?: parse(assertionMessage, JUNIT4_ASSERT_EQUALS_WITH_CLASS_EXTRACTOR)
+           ?: parse(assertionMessage, JUNIT4_ASSERT_SAME_EXTRACTOR)
+           ?: parse(assertionMessage, ASSERTJ_ASSERT_EQUALS_EXTRACTOR)
+           ?: parse(assertionMessage, ASSERTJ_ASSERT_SAME_EXTRACTOR)
+           ?: parse(assertionMessage, TESTNG_ASSERT_EQUALS_EXTRACTOR)
   }
 
-  private fun parse(assertionMessage: String, @Language("Regexp") rawRegex: String): Result? {
-    val regex = rawRegex.toRegex(RegexOption.DOT_MATCHES_ALL)
+  private fun parse(assertionMessage: String, regex: Regex): Result? {
     val matchesResult = regex.matchEntire(assertionMessage) ?: return null
     val expected = matchesResult.groups["expected"] ?: return null
     val actual = matchesResult.groups["actual"] ?: return null
