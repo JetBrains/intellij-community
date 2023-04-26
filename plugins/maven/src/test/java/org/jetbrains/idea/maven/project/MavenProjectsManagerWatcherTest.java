@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
@@ -12,7 +13,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 

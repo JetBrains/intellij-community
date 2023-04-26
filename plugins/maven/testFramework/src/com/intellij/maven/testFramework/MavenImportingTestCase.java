@@ -70,6 +70,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForFuture;
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
+import static java.util.Collections.emptySet;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
@@ -83,17 +84,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenSourcesGeneratedContext mySourcesGeneratedContext;
   protected MavenPluginResolvedContext myPluginResolvedContext;
 
-  private static final Set<String> FAILED_IN_MASTER =
-    Set.of("MavenProjectsManagerTest.testUpdatingProjectsWhenMovingModuleFile",
-           "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
-           "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
-           "MavenProjectsManagerWatcherTest.testChangeConfigInOurProjectShouldCallUpdatePomFile",
-           "MavenProjectsManagerWatcherTest.testIncrementalAutoReload");
-
-  @Override
+    @Override
   protected void setUp() throws Exception {
-    Assume.assumeFalse(FAILED_IN_MASTER.contains(getClass().getSimpleName() + "." + getName()));
-
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath());
 
     super.setUp();

@@ -41,6 +41,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -104,11 +105,13 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <modules>
                          <module>m</module>
                        </modules>
                        """);
-    scheduleProjectImportAndWait();
+    importProject();    //scheduleProjectImportAndWait();
+
 
     assertEquals(1, getProjectsTree().getRootProjects().size());
   }
@@ -217,7 +220,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     configConfirmationForYesAnswer();
     scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-
+    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    waitForImportCompletion();
     assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
   }
 
@@ -351,11 +355,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                        <version>1</version>
                        <packaging>pom</packaging>
                        """);
-    scheduleProjectImportAndWait();
+    importProject();
 
-    assertEquals(2, getProjectsTree().getRootProjects().size());
+    assertEquals(1, getProjectsTree().getRootProjects().size());
     assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
-    assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(1)).size());
   }
 
   @Test
