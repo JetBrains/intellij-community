@@ -228,28 +228,25 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       private void checkOppositeAnnotationConflict(PsiAnnotation annotation, Nullability nullability) {
         PsiAnnotationOwner owner = annotation.getOwner();
         if (owner == null) return;
-        PsiAnnotation oppositeAnno;
-        if (owner instanceof PsiModifierList && ((PsiModifierList)owner).getParent() instanceof PsiModifierListOwner) {
-          oppositeAnno = manager.findExplicitNullabilityAnnotation((PsiModifierListOwner)((PsiModifierList)owner).getParent(),
-                                                                   ContainerUtil.filter(Nullability.values(), n -> n != nullability));
-        }
-        else {
-          Condition<PsiAnnotation> filter = anno ->
-            anno != annotation && manager.getAnnotationNullability(anno.getQualifiedName()).filter(n -> n != nullability).isPresent();
-          oppositeAnno = ContainerUtil.find(owner.getAnnotations(), filter);
+        PsiModifierListOwner listOwner = owner instanceof PsiModifierList modifierList
+                                         ? tryCast(modifierList.getParent(), PsiModifierListOwner.class)
+                                         : null;
+        Condition<PsiAnnotation> filter = anno ->
+          anno != annotation && manager.getAnnotationNullability(anno.getQualifiedName()).filter(n -> n != nullability).isPresent();
+        PsiAnnotation oppositeAnno = ContainerUtil.find(owner.getAnnotations(), filter);
+        if (oppositeAnno == null && listOwner != null) {
+          oppositeAnno = manager.findExplicitNullabilityAnnotation(
+            listOwner, ContainerUtil.filter(Nullability.values(), n -> n != nullability));
         }
         if (oppositeAnno != null &&
             Objects.equals(AnnotationUtil.getRelatedType(annotation), AnnotationUtil.getRelatedType(oppositeAnno))) {
-          PsiModifierListOwner listOwner = owner instanceof PsiModifierList
-                                           ? tryCast(((PsiModifierList)owner).getParent(), PsiModifierListOwner.class)
-                                           : null;
           reportProblem(holder, annotation, new RemoveAnnotationQuickFix(annotation, listOwner),
                         "inspection.nullable.problems.Nullable.NotNull.conflict",
                         getPresentableAnnoName(annotation), getPresentableAnnoName(oppositeAnno));
         }
       }
 
-      private boolean hasStringConstructor(PsiClass aClass) {
+      private static boolean hasStringConstructor(PsiClass aClass) {
         for (PsiMethod method : aClass.getConstructors()) {
           PsiParameterList list = method.getParameterList();
           if (list.getParametersCount() == 1 &&
