@@ -457,20 +457,6 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   }
 
   @Override
-  public Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    try {
-      ArchetypeDataSource source = getComponent(ArchetypeDataSource.class, "internal-catalog");
-      ArchetypeCatalog archetypeCatalog = source.getArchetypeCatalog(new Properties());
-      return getArchetypes(archetypeCatalog);
-    }
-    catch (Exception e) {
-      MavenServerGlobals.getLogger().warn(e);
-    }
-    return Collections.emptyList();
-  }
-
-  @Override
   public Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {

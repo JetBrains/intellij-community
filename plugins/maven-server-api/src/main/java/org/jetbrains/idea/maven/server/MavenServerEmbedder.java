@@ -88,8 +88,6 @@ public interface MavenServerEmbedder extends Remote {
   Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories, MavenToken token)
     throws RemoteException;
 
-  Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException;
-
   Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException;
 
   Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException;

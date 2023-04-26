@@ -83,10 +83,6 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return mutableSetOf()
   }
 
-  override fun getArchetypes(token: MavenToken?): MutableCollection<MavenArchetype> {
-    return mutableSetOf()
-  }
-
   override fun getLocalArchetypes(token: MavenToken?, path: String): MutableCollection<MavenArchetype> {
     return mutableSetOf()
   }

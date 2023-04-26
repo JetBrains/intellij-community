@@ -258,10 +258,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return perform(() -> getOrCreateWrappee().resolveRepositories(repositories, ourToken));
   }
 
-  public Collection<MavenArchetype> getArchetypes() {
-    return perform(() -> getOrCreateWrappee().getArchetypes(ourToken));
-  }
-
   public Collection<MavenArchetype> getInnerArchetypes(@NotNull Path catalogPath) {
     return perform(() -> getOrCreateWrappee().getLocalArchetypes(ourToken, catalogPath.toString()));
   }

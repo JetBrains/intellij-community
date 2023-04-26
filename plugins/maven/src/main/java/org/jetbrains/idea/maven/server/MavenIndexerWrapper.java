@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.indices.MavenIndices;
-import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenIndexId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -129,15 +128,6 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     throws MavenServerIndexerException {
     return perform(() -> getOrCreateWrappee().search(mavenIndexId, pattern, maxResult, ourToken));
   }
-
-  /**
-   * @deprecated use {@link MavenEmbedderWrapper#getArchetypes()}
-   */
-  @Deprecated(forRemoval = true)
-  public Collection<MavenArchetype> getArchetypes() {
-    return perform(() -> getOrCreateWrappee().getInternalArchetypes(ourToken));
-  }
-  
 
   @ApiStatus.Internal
   public MavenIndices getOrCreateIndices() {
