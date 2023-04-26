@@ -42,20 +42,19 @@ public interface MavenServerEmbedder extends Remote {
                                                         @NotNull Collection<File> files,
                                                         @NotNull Collection<String> activeProfiles,
                                                         @NotNull Collection<String> inactiveProfiles, MavenToken token)
-    throws
-    RemoteException,
-    MavenServerProcessCanceledException;
+    throws RemoteException, MavenServerProcessCanceledException;
 
   @Nullable
   String evaluateEffectivePom(@NotNull File file,
                               @NotNull List<String> activeProfiles,
-                              @NotNull List<String> inactiveProfiles, MavenToken token) throws RemoteException,
-                                                                                               MavenServerProcessCanceledException;
+                              @NotNull List<String> inactiveProfiles, MavenToken token)
+    throws RemoteException, MavenServerProcessCanceledException;
 
   @NotNull
   List<MavenArtifact> resolve(@NotNull String longRunningTaskId,
                               @NotNull Collection<MavenArtifactResolutionRequest> requests,
-                              MavenToken token) throws RemoteException, MavenServerProcessCanceledException;
+                              MavenToken token)
+    throws RemoteException, MavenServerProcessCanceledException;
 
   /**
    * @deprecated use {@link Maven3XServerEmbedder#resolveArtifactTransitively()}
@@ -63,9 +62,8 @@ public interface MavenServerEmbedder extends Remote {
   @Deprecated
   @NotNull
   List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
-                                          @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token) throws
-                                                                                                                     RemoteException,
-                                                                                                                     MavenServerProcessCanceledException;
+                                          @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
+    throws RemoteException, MavenServerProcessCanceledException;
 
   List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
                                                 MavenToken token)
