@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class SslUtil {
+  public static final String SSL_TRUST_STORE_PATHS = "sslTrustStorePaths";
   public static final String SSL_CA_CERT_PATH = "sslCaCertPath";
   public static final String SSL_CLIENT_CERT_PATH = "sslClientCertPath";
   public static final String SSL_CLIENT_KEY_PATH = "sslClientKeyPath";
