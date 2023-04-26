@@ -82,7 +82,9 @@ internal object CompiledClasses {
       }
       PortableCompilationCache.IS_ENABLED -> {
         span.addEvent("JPS remote cache will be used for compilation")
-        PortableCompilationCache(context).downloadCacheAndCompileProject()
+        val jpsCache = PortableCompilationCache(context)
+        jpsCache.downloadCacheAndCompileProject()
+        jpsCache.upload()
       }
       context.options.pathToCompiledClassesArchive != null -> {
         span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"),
@@ -126,14 +128,21 @@ internal object CompiledClasses {
   private fun compileLocally(context: CompilationContext,
                              moduleNames: Collection<String>? = null,
                              includingTestsInModules: List<String>? = null) {
-    require(JavaVersion.current().isAtLeast(17)) {
+    check(JavaVersion.current().isAtLeast(17)) {
       "Build script must be executed under Java 17 to compile intellij project but it's executed under Java ${JavaVersion.current()}"
     }
     context.messages.progress("Compiling project")
     context.compilationData.statisticsReported = false
     val runner = JpsCompilationRunner(context)
+    val isIncrementalCompilationDataAvailable = context.options.incrementalCompilation &&
+                                                context.compilationData.isIncrementalCompilationDataAvailable()
     try {
       runner.compile(context, moduleNames, includingTestsInModules)
+      if (isIncrementalCompilationDataAvailable) {
+        context.messages.buildStatus("Compiled using local cache")
+      } else {
+        context.messages.buildStatus("Clean build")
+      }
     }
     catch (e: Exception) {
       if (!context.options.incrementalCompilation) {
@@ -148,9 +157,8 @@ internal object CompiledClasses {
       context.options.incrementalCompilation = false
       context.compilationData.reset()
       runner.compile(context, moduleNames, includingTestsInModules)
-      val successMessage = "Compilation successful after clean build retry"
-      context.messages.info(successMessage)
-      println("##teamcity[buildStatus status='SUCCESS' text='$successMessage']")
+      context.messages.info("Compilation successful after clean build retry")
+      println("##teamcity[buildStatus status='SUCCESS' text='Clean build retry']")
       context.messages.reportStatisticValue("Incremental compilation failures", "1")
     }
   }

@@ -11,13 +11,13 @@ import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.workspaceModel.ide.impl.DisposableCachedValue
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.DisposableCachedValue
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -42,7 +42,7 @@ class ModuleRootComponentBridge(
         rootModel = this,
         updater = null
       )
-    }, "Root Model Bridge (${currentModule.name})").also { Disposer.register(this, it) }
+    }, "Root Model Bridge (${currentModule.name})", currentModule.project).also { Disposer.register(this, it) }
 
   internal val moduleLibraryTable: ModuleLibraryTableBridgeImpl = ModuleLibraryTableBridgeImpl(moduleBridge)
 
@@ -116,6 +116,11 @@ class ModuleRootComponentBridge(
     moduleBridge,
     accessor,
     cacheStorageResult)
+
+  @ApiStatus.Internal
+  fun getModifiableModelWithoutCaching(): ModifiableRootModel {
+    return getModifiableModel(MutableEntityStorage.from(moduleBridge.entityStorage.current), RootConfigurationAccessor.DEFAULT_INSTANCE)
+  }
 
   fun getModifiableModel(diff: MutableEntityStorage, accessor: RootConfigurationAccessor): ModifiableRootModel {
     return ModifiableRootModelBridgeImpl(diff, moduleBridge, accessor, false)

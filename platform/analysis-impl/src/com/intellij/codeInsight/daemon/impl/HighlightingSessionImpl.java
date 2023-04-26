@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.TransferToEDTQueue;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -43,9 +43,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   @NotNull
   private final CanISilentlyChange.Result myCanChangeFileSilently;
   private volatile boolean myIsEssentialHighlightingOnly;
-  private final Long2ObjectMap<RangeMarker> myRanges2markersCache = new Long2ObjectOpenHashMap<>();
+  private final Long2ObjectMap<RangeMarker> myRange2markerCache = new Long2ObjectOpenHashMap<>();
   private final TransferToEDTQueue<Runnable> myEDTQueue;
   private volatile boolean myInContent;
+  private volatile ThreeState extensionsAllowToChangeFileSilently;
 
   private HighlightingSessionImpl(@NotNull PsiFile psiFile,
                                   @NotNull DaemonProgressIndicator progressIndicator,
@@ -62,10 +63,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     myEDTQueue = new TransferToEDTQueue<>("Apply highlighting results", runnable -> {
       runnable.run();
       return true;
-    }, __ -> myProject.isDisposed() || getProgressIndicator().isCanceled()) {
+    }, __ -> myProject.isDisposed() || getProgressIndicator().isCanceled(), 50) {
       @Override
       protected void schedule(@NotNull Runnable updateRunnable) {
-        ApplicationManager.getApplication().invokeLater(updateRunnable, ModalityState.any());
+        ApplicationManager.getApplication().invokeLater(updateRunnable);
       }
     };
   }
@@ -77,7 +78,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   boolean canChangeFileSilently() {
-    return myCanChangeFileSilently.canIReally(myInContent);
+    return myCanChangeFileSilently.canIReally(myInContent, extensionsAllowToChangeFileSilently);
   }
 
   @NotNull
@@ -142,8 +143,14 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                   @NotNull ProperTextRange visibleRange,
                                                   boolean canChangeFileSilently,
                                                   @NotNull Runnable runnable) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently ? CanISilentlyChange.Result.UH_HUH : CanISilentlyChange.Result.UH_UH);
+    HighlightingSessionImpl session =
+      (HighlightingSessionImpl)createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently
+                                                                                                                 ? CanISilentlyChange.Result.UH_HUH
+                                                                                                                 : CanISilentlyChange.Result.UH_UH);
+    session.additionalSetupFromBackground(file);
     runnable.run();
   }
 
@@ -187,7 +194,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                           int groupId) {
     applyInEDT(() ->
       UpdateHighlightersUtil.addHighlighterToEditorIncrementally(getPsiFile(), getDocument(), restrictedRange,
-                                                                 info, getColorsScheme(), groupId, myRanges2markersCache));
+                                                                 info, getColorsScheme(), groupId, myRange2markerCache));
   }
 
   void queueDisposeHighlighter(@NotNull HighlightInfo info) {
@@ -230,5 +237,6 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     myIsEssentialHighlightingOnly = HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile);
     VirtualFile virtualFile = psiFile.getVirtualFile();
     myInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(psiFile.getProject(), virtualFile, false);
+    extensionsAllowToChangeFileSilently = virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(getProject(), virtualFile);
   }
 }

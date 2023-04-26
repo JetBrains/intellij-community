@@ -4,24 +4,18 @@ package org.jetbrains.plugins.terminal.cloud;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
 import com.intellij.remoteServer.impl.runtime.log.TerminalHandlerBase;
-import com.intellij.terminal.JBTerminalPanel;
-import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 
 import javax.swing.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;
 
 public class TerminalHandlerImpl extends TerminalHandlerBase {
 
-  private final JBTerminalWidget myTerminalWidget;
-  private final JBTerminalPanel myTerminalPanel;
-  private final KeyAdapter myCopyActionKeyListener;
+  private final TerminalWidget myTerminalWidget;
 
   public TerminalHandlerImpl(@NotNull String presentableName,
                              @NotNull Project project,
@@ -36,11 +30,8 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
     CloudTerminalRunner terminalRunner =
       new CloudTerminalRunner(project, presentableName, process, handlerBoundLater, deferTerminalSessionUntilFirstShown);
 
-    TerminalWidget widget = terminalRunner.startShellTerminalWidget(project, new ShellStartupOptions.Builder().build(),
-                                                                    deferTerminalSessionUntilFirstShown);
-    myTerminalWidget = Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
-    myTerminalPanel = myTerminalWidget.getTerminalPanel();
-    myCopyActionKeyListener = new MyCopyActionKeyListener();
+    myTerminalWidget = terminalRunner.startShellTerminalWidget(this, new ShellStartupOptions.Builder().build(),
+                                                               deferTerminalSessionUntilFirstShown);
   }
 
   @Override
@@ -54,30 +45,9 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
-    myTerminalPanel.removeCustomKeyListener(myCopyActionKeyListener);
-  }
-
-  @Override
   public void close() {
-    myTerminalWidget.getTerminalDisplay().setCursorVisible(false);
-    myTerminalWidget.stop();
-    // workaround for unexpected removing key listener from terminal panel, even if panel not disposed
-    myTerminalPanel.addCustomKeyListener(myCopyActionKeyListener);
+    myTerminalWidget.setCursorVisible(false);
+    Objects.requireNonNull(myTerminalWidget.getTtyConnector()).close();
     super.close();
-  }
-
-  private class MyCopyActionKeyListener extends KeyAdapter {
-    @Override
-    public void keyPressed(KeyEvent e) {
-      var copyActionName = myTerminalWidget.getSettingsProvider().getCopyActionPresentation().getName();
-
-      myTerminalPanel.getActions().stream().filter(a -> a.getName().equals(copyActionName)).findFirst().ifPresent(a -> {
-        if (a.matches(e) && a.isEnabled(e)) {
-          a.actionPerformed(e);
-        }
-      });
-    }
   }
 }

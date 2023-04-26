@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -37,10 +38,6 @@ public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
   public abstract @NotNull TextRange @NotNull [] getRanges(@NotNull VirtualFile file);
 
   protected static void collectPsiElementsAtRange(@NotNull PsiFile psiFile, @NotNull List<? super @NotNull PsiElement> elements, int start, int end) {
-    final PsiElement startElement = psiFile.findElementAt(start);
-    if (startElement == null) {
-      return;
-    }
     int modifiedEnd = end;
     int length = psiFile.getTextLength();
     if (end > length) {
@@ -51,10 +48,25 @@ public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
       modifiedEnd--;
     }
 
-    final PsiElement endElement = psiFile.findElementAt(modifiedEnd);
-    if (endElement == null) {
+    PsiElement startElement = psiFile.findElementAt(start);
+    PsiElement endElement = psiFile.findElementAt(modifiedEnd);
+
+    if (startElement == null || endElement == null) {
       return;
     }
+
+    // PsiFileImpl.findElementAt may return element from another language, for example, JS element when called for an HTML file.
+    // Such an element would belong to a sister psi file.
+    // If startElement and endElement belong to different files, then findCommonParent doesn't work correctly, so we have to use
+    // AbstractFileViewProvider.findElementAt which always returns psi elements from an original file.
+    if (startElement.getContainingFile() != endElement.getContainingFile()) {
+      startElement = AbstractFileViewProvider.findElementAt(psiFile, start);
+      endElement = AbstractFileViewProvider.findElementAt(psiFile, modifiedEnd);
+      if (startElement == null || endElement == null) {
+        return;
+      }
+    }
+
     final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
     if (parent == null) {
       return;

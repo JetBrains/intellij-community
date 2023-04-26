@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.lang.OuterModelsModificationTrackerManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.JavaElementVisitor
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.search.FileTypeIndex
@@ -14,13 +14,11 @@ import com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrar
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.isGetEntriesMethod
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.projectScope
 
 internal class EnumValuesSoftDeprecateInJavaInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -60,6 +58,6 @@ internal fun hasKotlinFiles(module: Module): Boolean {
     return CachedValuesManager.getManager(module.project).getCachedValue(module, CachedValueProvider {
         val hasKotlinFiles = FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE,
                                                               moduleWithDependenciesAndLibrariesScope(module))
-        Result.create(hasKotlinFiles, PsiModificationTracker.MODIFICATION_COUNT)
+        Result.create(hasKotlinFiles, OuterModelsModificationTrackerManager.getInstance(module.project).tracker)
     })
 }

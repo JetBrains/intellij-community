@@ -192,7 +192,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> MavenServerManager.getInstance().shutdown(true),
       () -> tearDownEmbedders(),
       () -> checkAllMavenConnectorsDisposed(),
-      () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
       () -> myProject = null,
       () -> {
         Project defaultProject = ProjectManager.getInstance().getDefaultProject();

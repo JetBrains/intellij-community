@@ -57,7 +57,7 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.ENTRY_POINT_ANNOTATIONS));
+    return pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.IMPLICIT_WRITE_ANNOTATIONS));
   }
 
   @Override

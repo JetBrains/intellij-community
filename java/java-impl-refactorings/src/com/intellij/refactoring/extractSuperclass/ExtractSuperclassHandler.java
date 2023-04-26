@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.history.LocalHistory;
@@ -30,6 +16,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
@@ -43,7 +30,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ExtractSuperclassHandler implements ElementsHandler, ExtractSuperclassDialog.Callback, ContextAwareActionHandler {
 
@@ -58,28 +48,27 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-    while (true) {
-      if (element == null || element instanceof PsiFile) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
-        return;
-      }
-      if (element instanceof PsiClass) {
-        invoke(project, new PsiElement[]{element}, dataContext);
-        return;
-      }
-      element = element.getParent();
+    List<PsiElement> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, e -> e instanceof PsiMember);
+    if (elements.isEmpty()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
+      return;
     }
+    invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
-    if (elements.length != 1) return;
-
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     myProject = project;
-    mySubclass = (PsiClass)elements[0];
+    PsiElement parent = PsiTreeUtil.findCommonParent(elements);
+    mySubclass = parent instanceof PsiClass aClass
+              ? aClass
+              : PsiTreeUtil.getParentOfType(parent, PsiClass.class, false);
+    if (mySubclass == null) {
+      String message = RefactoringBundle.message("error.select.class.to.be.refactored");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
+      return;
+    }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, mySubclass)) return;
 
@@ -109,6 +98,13 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
         return true;
       }
     }, false);
+    final Set<PsiElement> selectedMembers = new HashSet<>();
+    Collections.addAll(selectedMembers, elements);
+    for (MemberInfo info : memberInfos) {
+      if (selectedMembers.contains(info.getMember())) {
+        info.setChecked(true);
+      }
+    }
 
     if (mySubclass instanceof PsiAnonymousClass) {
       memberInfos = ContainerUtil.filter(memberInfos, memberInfo -> !(memberInfo.getMember() instanceof PsiClass &&
@@ -167,8 +163,7 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
 
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && elements[0] instanceof PsiClass && !((PsiClass) elements[0]).isInterface()
-      &&!((PsiClass)elements[0]).isEnum();
+    return ContainerUtil.exists(elements, element -> element instanceof PsiMember);
   }
 
   public static @NlsContexts.DialogTitle String getRefactoringName() {

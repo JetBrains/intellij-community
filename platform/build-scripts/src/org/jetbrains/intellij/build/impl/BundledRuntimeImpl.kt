@@ -33,7 +33,7 @@ class BundledRuntimeImpl(
   }
 
   private val build by lazy {
-    options.bundledRuntimeBuild ?: dependenciesProperties.property("runtimeBuild")
+    dependenciesProperties.property("runtimeBuild")
   }
 
   override suspend fun getHomeForCurrentOsAndArch(): Path {

@@ -262,4 +262,9 @@ public class PerformanceAddImportTestGenerated extends AbstractPerformanceAddImp
     public void testStdlibImportsLast() throws Exception {
         runTest("../idea/tests/testData/addImport/StdlibImportsLast.kt");
     }
+
+    @TestMetadata("WithoutFormatter.kt")
+    public void testWithoutFormatter() throws Exception {
+        runTest("../idea/tests/testData/addImport/WithoutFormatter.kt");
+    }
 }

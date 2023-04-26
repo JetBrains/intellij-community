@@ -5,9 +5,12 @@ import com.intellij.maven.testFramework.MavenImportingTestCase;
 import com.intellij.maven.testFramework.MavenWrapperTestFixture;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.After;
 import org.junit.Assume;
@@ -20,6 +23,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.DEPENDENCY;
+import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.STRUCTURE;
+
 
 @RunWith(Parameterized.class)
 public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCase {
@@ -28,6 +34,8 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   @Parameterized.Parameters(name = "with Maven-{0}")
   public static List<String[]> getMavenVersions() {
     return Arrays.asList(
+     // new String[]{"4.0.0-alpha-4"},
+      new String[]{"3.9.1"},
       new String[]{"3.9.0"},
       new String[]{"3.8.6"},
       new String[]{"3.8.5"},
@@ -72,6 +80,11 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
     Assume.assumeTrue("Version should be more than " + version, VersionComparatorUtil.compare(myMavenVersion, version) > 0);
   }
 
+  protected void assumeVersionAtLeast(String version) {
+    Assume.assumeTrue("Version should be at least " + version, VersionComparatorUtil.compare(myMavenVersion, version) >= 0);
+  }
+
+
   protected void assumeVersionLessOrEqualsThan(String version) {
     Assume.assumeTrue("Version should be less than " + version, VersionComparatorUtil.compare(myMavenVersion, version) >= 0);
   }
@@ -96,6 +109,43 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
     myWrapperTestFixture.tearDown();
   }
 
+
+  @Test
+  public void testExceptionsFromMavenExtensionsAreReportedAsProblems() throws Exception {
+    assumeVersionAtLeast("3.1.0");
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
+    setRepositoryPath(helper.getTestDataPath("plugins"));
+    getMavenGeneralSettings().setWorkOffline(true);
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <description>throw!</description>
+                       <build>
+                         <extensions>
+                           <extension>
+                             <groupId>intellij.test</groupId>
+                             <artifactId>maven-extension</artifactId>
+                             <version>1.0</version>
+                           </extension>
+                         </extensions>
+                       </build>
+                       """);
+    importProjectWithErrors();
+
+    List<MavenProject> projects = getProjectsTree().getProjects();
+    assertEquals(1, projects.size());
+    MavenProject mavenProject = projects.get(0);
+    List<MavenProjectProblem> extensionProblems =
+      ContainerUtil.filter(mavenProject.getProblems(), p -> "throw!".equals(p.getDescription()));
+    assertEquals(extensionProblems.toString(), 1, extensionProblems.size());
+    MavenProjectProblem problem = extensionProblems.get(0);
+    assertEquals(problem.toString(), STRUCTURE, problem.getType());
+    List<MavenProjectProblem> otherProblems = ContainerUtil.filter(mavenProject.getProblems(), p -> p != problem);
+    assertTrue(otherProblems.toString(),
+               ContainerUtil.and(otherProblems, p -> p.getType() == DEPENDENCY && p.getDescription().startsWith("Unresolved plugin")));
+  }
 
   @Test
   public void testSmokeImport() {

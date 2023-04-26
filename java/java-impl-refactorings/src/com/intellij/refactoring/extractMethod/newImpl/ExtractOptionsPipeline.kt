@@ -10,22 +10,20 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiElementProcessor
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ParametersFolder
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.areSame
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExplicitModifier
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findRequiredTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.normalizedAnchor
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
@@ -44,12 +42,7 @@ object ExtractMethodPipeline {
       options = withForcedStatic(analyzer, options) ?: options
     }
     options = withMappedParametersInput(options, extractDialog.chosenParameters.toList())
-    val targetClass = extractOptions.anchor.containingClass!!
-    options = if (targetClass.isInterface) {
-      adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
-    } else {
-      options.copy(visibility = extractDialog.visibility)
-    }
+    options = options.copy(visibility = extractDialog.visibility)
 
     if (extractDialog.isChainedConstructor) {
       options = asConstructor(analyzer, options) ?: options
@@ -60,30 +53,40 @@ object ExtractMethodPipeline {
   }
 
   fun withTargetClass(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions, targetClass: PsiClass): ExtractOptions? {
-    val anchor = extractOptions.anchor
-    if (anchor.parent == targetClass) return extractOptions
+    if (targetClass.isInterface && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) return null
+    if (extractOptions.targetClass == targetClass) return extractOptions
+    val sourceMember = PsiTreeUtil.getContextOfType(extractOptions.elements.first(), PsiMember::class.java)
+    val targetMember = PsiTreeUtil.getChildOfType(targetClass, PsiMember::class.java)
+    if (sourceMember == null || targetMember == null) return null
 
-    val newAnchor = targetClass.children.find { child -> anchor.textRange in child.textRange } as? PsiMember
-    if (newAnchor == null) return null
+    val typeParameters = findRequiredTypeParameters(targetClass, extractOptions.elements)
 
-    val typeParameters = findAllTypeLists(anchor, targetClass).flatMap { findUsedTypeParameters(it, extractOptions.elements) }
-
-    val additionalReferences = analyzer.findOuterLocals(anchor, newAnchor) ?: return null
+    val additionalReferences = analyzer.findOuterLocals(sourceMember, targetMember) ?: return null
     val additionalParameters = additionalReferences.map { inputParameterOf(it) }
     val options = extractOptions.copy(
-      anchor = normalizedAnchor(newAnchor),
+      targetClass = targetClass,
       inputParameters = extractOptions.inputParameters + additionalParameters,
       typeParameters = typeParameters
     )
     return withDefaultStatic(options)
   }
 
-  private fun findAllTypeLists(element: PsiElement, stopper: PsiElement): List<PsiTypeParameterList> {
-    return generateSequence (element) { it.parent }
-      .takeWhile { it != stopper && it !is PsiFile }
-      .filterIsInstance<PsiTypeParameterListOwner>()
-      .mapNotNull { it.typeParameterList }
-      .toList()
+  fun addMethodInBestPlace(targetClass: PsiClass, place: PsiElement, method: PsiMethod): PsiMethod {
+    val anchorElement = findPlaceToPutMethod(targetClass, place)
+    val element = anchorElement?.addSiblingAfter(method) ?: targetClass.add(method)
+    return element as PsiMethod
+  }
+
+  private fun findPlaceToPutMethod(targetClass: PsiClass, place: PsiElement): PsiMember? {
+    fun getMemberContext(element: PsiElement) = PsiTreeUtil.getContextOfType(element, PsiMember::class.java)
+    val anchorElement = generateSequence (getMemberContext(place), ::getMemberContext)
+      .takeWhile { context -> context != targetClass }
+      .lastOrNull()
+    if (anchorElement is PsiField) {
+      val lastFieldInGroup = MultipleFieldDeclarationHelper.findLastFieldInGroup(anchorElement.node).psi
+      return lastFieldInGroup as? PsiField ?: anchorElement
+    }
+    return anchorElement
   }
 
   private fun findCommonCastParameter(inputParameter: InputParameter): InputParameter? {
@@ -114,16 +117,6 @@ object ExtractMethodPipeline {
     )
   }
 
-  fun adjustModifiersForInterface(options: ExtractOptions): ExtractOptions {
-    val targetClass = options.anchor.containingClass!!
-    if (! targetClass.isInterface) return options
-    val isJava8 = PsiUtil.getLanguageLevel(targetClass) == LanguageLevel.JDK_1_8
-    val visibility = if (options.visibility == PsiModifier.PRIVATE && isJava8) null else options.visibility
-    val holder = findClassMember(options.elements.first())
-    val isStatic = holder is PsiField || options.isStatic
-    return options.copy(visibility = visibility, isStatic = isStatic)
-  }
-
   private fun withMappedName(extractOptions: ExtractOptions, methodName: String) = if (extractOptions.isConstructor) extractOptions else extractOptions.copy(methodName = methodName)
 
   fun withDefaultStatic(extractOptions: ExtractOptions): ExtractOptions {
@@ -132,7 +125,7 @@ object ExtractMethodPipeline {
     if (statement != null && JavaHighlightUtil.isSuperOrThisCall(statement, true, true)) {
       return extractOptions.copy(isStatic = true)
     }
-    val shouldBeStatic = extractOptions.anchor.hasExplicitModifier(PsiModifier.STATIC)
+    val shouldBeStatic = PsiUtil.getEnclosingStaticElement(extractOptions.elements.first(), extractOptions.targetClass) != null
     return extractOptions.copy(isStatic = shouldBeStatic)
   }
 
@@ -143,7 +136,7 @@ object ExtractMethodPipeline {
   fun findAllOptionsToExtract(elements: List<PsiElement>): List<ExtractOptions> {
     val extractOptions = findExtractOptions(elements)
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
-    return generateSequence (extractOptions.anchor as PsiElement) { it.parent }
+    return generateSequence (extractOptions.targetClass as PsiElement) { it.parent }
       .takeWhile { it !is PsiFile }
       .filterIsInstance<PsiClass>()
       .mapNotNull { targetClass -> withTargetClass(analyzer, extractOptions, targetClass) }
@@ -155,11 +148,7 @@ object ExtractMethodPipeline {
     if (options.size == 1) {
       return CompletableFuture.completedFuture(options.first())
     }
-
-    fun bindClassWithOption(option: ExtractOptions): Pair<PsiClass, ExtractOptions>? {
-      return option.anchor.containingClass?.let { psiClass -> Pair(psiClass, option) }
-    }
-    val classToOptionMap: Map<PsiClass, ExtractOptions> = options.mapNotNull(::bindClassWithOption).toMap()
+    val classToOptionMap: Map<PsiClass, ExtractOptions> = options.associateBy { option -> option.targetClass }
     val selectedOption: CompletableFuture<ExtractOptions> = CompletableFuture()
     val processor = PsiElementProcessor<PsiClass> { selected ->
       selectedOption.complete(classToOptionMap[selected])
@@ -175,41 +164,34 @@ object ExtractMethodPipeline {
     return selectedOption
   }
 
-  private fun findReferencedVariable(expression: PsiExpression?): PsiVariable? {
-    val normalizedExpression = PsiUtil.skipParenthesizedExprDown(expression)
-    val referenceExpression = normalizedExpression as? PsiReferenceExpression
-    return referenceExpression?.resolve() as? PsiVariable
-  }
-
   private fun getSimpleArrayAccess(arrayReference: PsiElement): PsiExpression? {
     val arrayAccess = PsiTreeUtil.getParentOfType(arrayReference, PsiArrayAccessExpression::class.java)
     return arrayAccess?.takeIf { !RefactoringUtil.isAssignmentLHS(arrayAccess)
                                  && arrayAccess.arrayExpression == arrayReference && arrayAccess.indexExpression is PsiReference }
   }
 
-  private fun findFoldableGroup(variable: PsiVariable, scope: LocalSearchScope): List<PsiExpression>? {
-    val references: List<PsiElement> = ReferencesSearch.search(variable, scope).map { it.element }.toList()
-    val arrayAccesses = references.mapNotNull { reference -> getSimpleArrayAccess(reference) }
-    return arrayAccesses.takeIf { arrayAccesses.size == references.size }
+  private fun findAllArrayAccesses(inputParameter: InputParameter): List<PsiExpression>? {
+    return inputParameter.references.map { reference -> getSimpleArrayAccess(reference) ?: return null }
   }
 
-  private fun isNestedExpressionGroup(parentGroup: List<PsiElement>, nestedGroup: List<PsiElement>): Boolean {
-    return nestedGroup.all { nested -> parentGroup.any { parent -> PsiTreeUtil.isAncestor(parent, nested, false) } }
+  private fun isInsideParentGroup(parents: List<PsiElement>, children: List<PsiElement>): Boolean {
+    return children.all { child -> parents.any { parent -> PsiTreeUtil.isAncestor(parent, child, false) } }
   }
 
   fun foldParameters(parameters: List<InputParameter>, scope: LocalSearchScope): List<InputParameter> {
-    val variables = parameters.mapNotNull { parameter -> findReferencedVariable(parameter.references.firstOrNull()) }
-    val foldableVariables = variables.filter { variable -> variable.type is PsiArrayType }
-    val foldableGroups = foldableVariables
-      .mapNotNull { variable -> findFoldableGroup(variable, scope) }
-      .filter { group -> areSame(group) }
-      .filter { group -> group.all { expression -> ParametersFolder.isSafeToFoldArrayAccess(scope, expression) } }
-    val foldableGroupsWithCoveredParameters = foldableGroups
-      .associateWith { foldableGroup -> parameters.filter { parameter -> isNestedExpressionGroup(foldableGroup, parameter.references) } }
+    val foldableArrayGroups: List<List<PsiExpression>> = parameters
+      .mapNotNull { parameter -> findAllArrayAccesses(parameter) }
+      .filter { arrayAccesses -> isSafeToFoldArrayAccesses(arrayAccesses, scope) }
+    val groupParameters: Map<List<PsiExpression>, List<InputParameter>> = foldableArrayGroups
+      .associateWith { arrayGroup -> parameters.filter { parameter -> isInsideParentGroup(arrayGroup, parameter.references) } }
       .filter { (_, coveredParameters) -> coveredParameters.size >= 2 }
-    val coveredParameters = foldableGroupsWithCoveredParameters.values.flatten()
-    val newParameters = foldableGroupsWithCoveredParameters.keys.map { foldableGroup -> inputParameterOf(foldableGroup) }
+    val coveredParameters = groupParameters.values.flatten().toSet()
+    val newParameters = groupParameters.keys.map { foldableGroup -> inputParameterOf(foldableGroup) }
     return parameters - coveredParameters + newParameters
+  }
+
+  private fun isSafeToFoldArrayAccesses(arrayAccesses: List<PsiExpression>, scope: LocalSearchScope): Boolean {
+    return areSame(arrayAccesses) && arrayAccesses.all { expression -> ParametersFolder.isSafeToFoldArrayAccess(scope, expression) }
   }
 
   fun asConstructor(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
@@ -222,7 +204,7 @@ object ExtractMethodPipeline {
   }
 
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
-    val targetClass = PsiTreeUtil.getParentOfType(extractOptions.anchor, PsiClass::class.java)!!
+    val targetClass = extractOptions.targetClass
     val isInnerClass = PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)
     if (isInnerClass && !HighlightingFeature.INNER_STATICS.isAvailable(targetClass)) return null
     val memberUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
@@ -231,7 +213,11 @@ object ExtractMethodPipeline {
       .map { (member: PsiMember, usages: List<MemberUsage>) ->
         createInputParameter(member, usages.map(MemberUsage::reference)) ?: return null
       }
-    return extractOptions.copy(inputParameters = extractOptions.inputParameters + addedParameters, isStatic = true)
+    return extractOptions.copy(
+      inputParameters = extractOptions.inputParameters + addedParameters,
+      isStatic = true,
+      typeParameters = findRequiredTypeParameters(null, extractOptions.elements)
+    )
   }
 
   private fun isNotExtractableUsage(usage: MemberUsage): Boolean {
@@ -242,7 +228,7 @@ object ExtractMethodPipeline {
     val name = member.name ?: return null
     val type = when (member) {
       is PsiField -> member.type
-      is PsiClass -> PsiTypesUtil.getClassType(member)
+      is PsiClass -> usages.firstOrNull()?.type ?: PsiTypesUtil.getClassType(member)
       else -> return null
     }
     return InputParameter(usages, StringUtil.decapitalize(name), type)
@@ -301,9 +287,9 @@ object ExtractMethodPipeline {
 
   fun withFilteredAnnotations(extractOptions: ExtractOptions): ExtractOptions {
     return extractOptions.copy(
-      inputParameters = extractOptions.inputParameters.map { withFilteredAnnotations(it, extractOptions.anchor.context) },
-      disabledParameters = extractOptions.disabledParameters.map { withFilteredAnnotations(it, extractOptions.anchor.context) },
-      dataOutput = withFilteredAnnotation(extractOptions.dataOutput, extractOptions.anchor.context)
+      inputParameters = extractOptions.inputParameters.map { withFilteredAnnotations(it, extractOptions.targetClass) },
+      disabledParameters = extractOptions.disabledParameters.map { withFilteredAnnotations(it, extractOptions.targetClass) },
+      dataOutput = withFilteredAnnotation(extractOptions.dataOutput, extractOptions.targetClass)
     )
   }
 }

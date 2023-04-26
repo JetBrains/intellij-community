@@ -140,6 +140,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
       }
       if (noConversionToDoWhile) return null;
       PsiIfStatement last = tryCast(statements[statements.length - 1], PsiIfStatement.class);
+      if (last != null && last.getElseBranch() != null) return null;
       PsiExpression lastBreakCondition = extractBreakCondition(last, loopStatement, isBreakInThen);
       if (lastBreakCondition == null || !isBreakInThen.get()) return null;
       if (!isEndlessLoop &&

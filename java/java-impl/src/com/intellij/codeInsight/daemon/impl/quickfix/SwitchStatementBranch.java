@@ -94,7 +94,7 @@ class SwitchStatementBranch {
             myAlwaysExecuted = defaultAlwaysExecuted;
             break;
           }
-          else if (ExpressionUtils.isNullLiteral(labelElement)) {
+          else if (labelElement instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr)) {
             nullCase = labelElement;
           }
         }

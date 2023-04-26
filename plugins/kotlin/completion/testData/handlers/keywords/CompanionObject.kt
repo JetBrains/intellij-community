@@ -3,3 +3,4 @@
 class C {
     compa<caret>
 }
+// AUTOCOMPLETE_SETTING: true

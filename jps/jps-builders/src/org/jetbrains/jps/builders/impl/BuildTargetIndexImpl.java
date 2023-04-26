@@ -20,14 +20,14 @@ public final class BuildTargetIndexImpl implements BuildTargetIndex {
   private final Map<BuildTarget<?>, Collection<BuildTarget<?>>> myDependencies;
   private List<BuildTargetChunk> myTargetChunks;
 
-  public BuildTargetIndexImpl(BuildTargetRegistry targetRegistry, BuildRootIndexImpl buildRootIndex) {
+  public BuildTargetIndexImpl(@NotNull BuildTargetRegistry targetRegistry, @NotNull BuildRootIndexImpl buildRootIndex) {
     myRegistry = targetRegistry;
     myBuildRootIndex = buildRootIndex;
     myDependencies = new HashMap<>();
   }
 
   @Override
-  public List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context) {
+  public @NotNull List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context) {
     initializeChunks(context);
     return myTargetChunks;
   }

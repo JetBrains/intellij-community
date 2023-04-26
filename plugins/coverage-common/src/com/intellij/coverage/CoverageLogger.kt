@@ -14,10 +14,14 @@ enum class RunnerType {
 
 class CoverageLogger : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("coverage", 6)
+    private val GROUP = EventLogGroup("coverage", 7)
 
-    private val RUNNER_NAME = EventFields.String("runner", CoverageRunner.EP_NAME.extensionList.map { it.id })
-
+    private val runners = listOf("idea", "jacoco", "Emma", "PhpCoverage", "utPlSqlCoverageRunner", "JestJavaScriptTestRunnerCoverage",
+                                 "rcov", "DartCoverageRunner", "WipCoverageRunner", "VitestJavaScriptTestRunnerCoverage",
+                                 "jacoco_xml_report", "MochaJavaScriptTestRunnerCoverage", "GoCoverage",
+                                 "KarmaJavaScriptTestRunnerCoverage", "coverage.py")
+    private val RUNNER_NAME = EventFields.String("runner", runners)
+    private val RUNNERS = EventFields.StringList("runners", runners)
     private val START = GROUP.registerEvent("started", EventFields.Enum("runner", RunnerType::class.java),
                                             EventFields.Int("includes"), EventFields.Int("excludes"))
     private val REPORT_LOADING = GROUP.registerEvent("report.loaded", RUNNER_NAME, EventFields.DurationMs,
@@ -31,7 +35,7 @@ class CoverageLogger : CounterUsagesCollector() {
     private val CAN_HIDE_FULLY_COVERED = Boolean("can_hide_fully_covered")
     private val FILTER_OPTIONS = GROUP.registerVarargEvent("view.opened", SHOW_ONLY_MODIFIED, CAN_SHOW_ONLY_MODIFIED,
                                                            HIDE_FULLY_COVERED, CAN_HIDE_FULLY_COVERED)
-    private val IMPORT = GROUP.registerEvent("report.imported", RUNNER_NAME)
+    private val IMPORT = GROUP.registerEvent("report.imported", RUNNERS)
 
     @JvmStatic
     fun logStarted(coverageRunner: CoverageRunner,
@@ -75,9 +79,7 @@ class CoverageLogger : CounterUsagesCollector() {
     @JvmStatic
     fun logSuiteImport(project: Project?, suitesBundle: CoverageSuitesBundle?) {
       if (suitesBundle == null) return
-      suitesBundle.suites.map { it.runner.id }.distinct().forEach { runnerId ->
-        IMPORT.log(project, runnerId)
-      }
+      IMPORT.log(project, suitesBundle.suites.map { it.runner.id }.distinct().sorted())
     }
 
     private fun roundClasses(classes: Int) = StatisticsUtil.roundToPowerOfTwo(classes)

@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.vcs.commit.AmendCommitAware;
 import com.intellij.vcs.commit.EditedCommitDetails;
@@ -67,6 +66,7 @@ import javax.swing.*;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
@@ -475,13 +475,13 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
   private static @Nullable <T> T computeAfterLSTManagerUpdate(@NotNull Project project, final @NotNull Computable<T> computation) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    FutureResult<T> ref = new FutureResult<>();
+    CompletableFuture<T> ref = new CompletableFuture<>();
     LineStatusTrackerManager.getInstance(project).invokeAfterUpdate(() -> {
       try {
-        ref.set(computation.compute());
+        ref.complete(computation.compute());
       }
       catch (Throwable e) {
-        ref.setException(e);
+        ref.completeExceptionally(e);
       }
     });
     try {

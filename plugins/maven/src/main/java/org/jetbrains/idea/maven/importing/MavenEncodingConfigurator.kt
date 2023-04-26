@@ -70,8 +70,8 @@ class MavenEncodingConfigurator : MavenImporter("", ""), MavenWorkspaceConfigura
 
   private class EncodingMapper(project: Project) {
     private val newPointerMappings = LinkedHashMap<VirtualFilePointer, Charset>()
-    private val oldPointerMappings = LinkedHashMap<VirtualFilePointer, Charset>()
     private val encodingManager = (EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl)
+    private val oldPointerMappings = encodingManager.allPointersMappings
 
     fun processDir(directory: String, charset: Charset) {
       val dirVfile = LocalFileSystem.getInstance().findFileByIoFile(File(directory))
@@ -84,13 +84,8 @@ class MavenEncodingConfigurator : MavenImporter("", ""), MavenWorkspaceConfigura
       newPointerMappings[pointer] = charset
       encodingManager.allPointersMappings.forEach {
         val filePointer = it.key
-        if (FileUtil.isAncestor(directory, urlToPath(filePointer.url), false)
-            || newPointerMappings.containsKey(filePointer)) {
+        if (FileUtil.isAncestor(directory, urlToPath(filePointer.url), false)) {
           newPointerMappings[filePointer] = charset
-          oldPointerMappings.remove(filePointer)
-        }
-        else {
-          oldPointerMappings[filePointer] = it.value
         }
       }
     }
@@ -100,7 +95,7 @@ class MavenEncodingConfigurator : MavenImporter("", ""), MavenWorkspaceConfigura
         return
       }
 
-      val pointerMapping = newPointerMappings + oldPointerMappings
+      val pointerMapping = oldPointerMappings + newPointerMappings
       encodingManager.setPointerMapping(pointerMapping)
     }
   }

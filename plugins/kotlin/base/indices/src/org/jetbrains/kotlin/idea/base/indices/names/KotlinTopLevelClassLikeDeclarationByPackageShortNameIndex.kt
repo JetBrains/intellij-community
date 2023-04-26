@@ -22,6 +22,8 @@ class KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex : NameByPackageS
 
     override fun getName(): ID<FqName, List<Name>> = NAME
 
+    override fun getVersion(): Int = 2
+
     override fun getDeclarationNamesByKtFile(ktFile: KtFile): List<Name> = buildList {
         for (declaration in ktFile.declarations) {
             if (declaration is KtClassLikeDeclaration) {
@@ -51,7 +53,7 @@ class KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex : NameByPackageS
     }
 
     override fun getPackageAndNamesFromBuiltIns(fileContent: FileContent): Map<FqName, List<Name>> {
-        val builtins = BuiltInDefinitionFile.read(fileContent.content, fileContent.file.parent) as? BuiltInDefinitionFile 
+        val builtins = readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile
             ?: return emptyMap()
        
         val names = buildList {

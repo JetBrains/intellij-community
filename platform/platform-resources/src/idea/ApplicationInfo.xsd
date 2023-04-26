@@ -8,6 +8,7 @@
         <xs:element type="companyType" name="company"/>
         <xs:element type="buildType" name="build"/>
         <xs:element type="logoType" name="logo"/>
+        <xs:element type="logoType" name="logo-eap" minOccurs="0"/>
         <xs:element type="aboutType" name="about"/>
         <xs:element type="iconType" name="icon"/>
         <xs:element type="iconEapType" name="icon-eap" minOccurs="0"/>
@@ -85,15 +86,9 @@
     <xs:attribute type="xs:string" name="script">
       <xs:annotation>
         <xs:documentation>
-          Base name of the script files (*.exe, *.bat, *.sh) from the product 'bin' directory without extension.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:string" name="default-launcher-name">
-      <xs:annotation>
-        <xs:documentation>
-          Default name of the command-line launcher to be suggested in 'Create Launcher Script' dialog.
-          May be omitted if same as the @script attribute.
+          The base name (i.e. a name without the extension and architecture suffix)
+          of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx),
+          usually a short product name in lower case (e.g. "idea").
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -170,96 +165,10 @@
         Describes the splash screen which is shown when the product is starting.
       </xs:documentation>
     </xs:annotation>
-
-    <xs:sequence>
-      <xs:element name="progressSlide" minOccurs="0" maxOccurs="unbounded">
-        <xs:complexType>
-          <xs:attribute type="xs:string" name="url">
-            <xs:annotation>
-              <xs:documentation>
-                url to the slide to be presented
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute type="xs:int" name="progressPercent">
-            <xs:annotation>
-              <xs:documentation>
-                percentage ratio when the indicated slide should be shown. Must be from 0 to 100.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-        </xs:complexType>
-      </xs:element>
-    </xs:sequence>
-
     <xs:attribute type="xs:string" name="url" use="required">
       <xs:annotation>
         <xs:documentation>
           Path inside a JAR file (in PRODUCT_HOME/lib directory) to a file with the splash screen image.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:hexBinary" name="textcolor">
-      <xs:annotation>
-        <xs:documentation>
-          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint text on the splash screen. Currently it is used to
-          show information about licensee only.
-          <strong>Deprecated: not used anymore because licensee is not displayed on the splash screen since 2019.3.</strong>
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:hexBinary" name="progressColor">
-      <xs:annotation>
-        <xs:documentation>
-          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint progress bar on the splash screen.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <!--deprecated-->
-    <xs:attribute type="xs:int" name="progressX">
-      <xs:annotation>
-        <xs:documentation>
-          Deprecated attribute.
-          The X coordinate of the top left corner of the progress bar on the splash screen. The progress bar will end at the right side of
-          the splash screen.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:int" name="progressY">
-      <xs:annotation>
-        <xs:documentation>
-          The Y coordinate of the top left corner of the progress bar on the splash screen.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:int" name="progressHeight">
-      <xs:annotation>
-        <xs:documentation>
-          Height of the progress bar on the splash screen.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:string" name="progressTailIcon">
-      <xs:annotation>
-        <xs:documentation>
-          Path inside a JAR file (in PRODUCT_HOME/lib directory) to a file containing a small image with 'flame effect'. The image will be
-          painted on the progress bar, its center will be located at the current right end of the progress bar.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:int" name="licenseOffsetX">
-      <xs:annotation>
-        <xs:documentation>
-          The X coordinate of a position on the splash screen where information about licensee will be shown.
-          <strong>Deprecated: not used anymore because licensee is not displayed on the splash screen since 2019.3.</strong>
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:int" name="licenseOffsetY">
-      <xs:annotation>
-        <xs:documentation>
-          The Y coordinate of a position on the splash screen where information about licensee will be shown.
-          <strong>Deprecated: not used anymore because licensee is not displayed on the splash screen since 2019.3.</strong>
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -455,11 +364,6 @@
     <xs:attribute type="xs:anyURI" name="url" use="required">
       <xs:annotation>
         <xs:documentation>An URL for the "Help | What's New" action. See also 'show-on-update' attribute.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute type="xs:anyURI" name="eap_url" use="optional">
-      <xs:annotation>
-        <xs:documentation>An URL for the "EAP What's New" action.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:boolean" name="show-on-update">

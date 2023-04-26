@@ -23,6 +23,7 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
@@ -110,7 +111,7 @@ internal suspend fun suggestCondaPath(targetCommandExecutor: TargetCommandExecut
     )
   }
   // If conda is local then store path
-  if (targetCommandExecutor.isLocalMachineExecutor()) {
+  if (targetCommandExecutor.isLocalMachineExecutor) {
     loadLocalPythonCondaPath()?.let {
       possiblePaths = arrayOf(it.pathString) + possiblePaths
     }
@@ -118,8 +119,8 @@ internal suspend fun suggestCondaPath(targetCommandExecutor: TargetCommandExecut
   return possiblePaths.firstNotNullOfOrNull { targetCommandExecutor.getExpandedPathIfExecutable(it) }
 }
 
-private fun TargetCommandExecutor.isLocalMachineExecutor(): Boolean =
-  this is TargetEnvironmentRequestCommandExecutor && request is LocalTargetEnvironmentRequest
+private val TargetCommandExecutor.isLocalMachineExecutor: Boolean
+  get() = this is TargetEnvironmentRequestCommandExecutor && request is LocalTargetEnvironmentRequest
 
 private fun TargetCommandExecutor.executeShellCommand(command: String): CompletableFuture<ProcessOutput> =
   targetPlatform
@@ -136,7 +137,7 @@ private fun String.asCommandInShell(targetPlatform: TargetPlatform): List<String
 private suspend fun TargetCommandExecutor.getExpandedPathIfExecutable(file: FullPathOnTarget): FullPathOnTarget? = withContext(
   Dispatchers.IO) {
   val expandedPath = executeShellCommand("echo $file").thenApply(ProcessOutput::getStdout).thenApply(String::trim).await()
-  if (this@getExpandedPathIfExecutable is LocalTargetEnvironmentRequest) {
+  if (isLocalMachineExecutor) {
     return@withContext if (Path.of(expandedPath).isExecutable()) expandedPath else null
   }
   else {
@@ -152,11 +153,13 @@ private suspend fun TargetCommandExecutor.getExpandedPathIfExecutable(file: Full
   }
 }
 
+@ApiStatus.Internal
 interface TargetCommandExecutor {
   val targetPlatform: CompletableFuture<TargetPlatform>
   fun execute(command: List<String>): CompletableFuture<ProcessOutput>
 }
 
+@ApiStatus.Internal
 class TargetEnvironmentRequestCommandExecutor(internal val request: TargetEnvironmentRequest) : TargetCommandExecutor {
   override val targetPlatform: CompletableFuture<TargetPlatform> = CompletableFuture.completedFuture(request.targetPlatform)
 

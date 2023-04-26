@@ -6,11 +6,11 @@ import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FocusModeModel;
-import com.intellij.openapi.editor.impl.FocusRegion;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 final class FocusModePassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-  private static final Key<Set<FocusRegion>> FOCUS_REGIONS_FROM_PASS = Key.create("editor.focus.mode.segmentsFromPass");
+  private static final Key<Set<RangeMarker>> FOCUS_REGIONS_FROM_PASS = Key.create("editor.focus.mode.segmentsFromPass");
   private static final LanguageExtension<FocusModeProvider> EP_NAME = new LanguageExtension<>("com.intellij.focusModeProvider");
   private static final long MAX_ALLOWED_TIME = 100;
   private static final Logger LOG = Logger.getInstance(FocusModePassFactory.class);
@@ -67,7 +67,7 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
   }
 
   /**
-   * Computes focus zones for the {@code psiFile} using {@code focusModeProvider}. Additionally warns, if zones building took too long
+   * Computes focus zones for the {@code psiFile} using {@code focusModeProvider}. Additionally, warns if zones building took too long
    * (longer than {@link #MAX_ALLOWED_TIME} ms.
    */
   @NotNull
@@ -91,12 +91,12 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
     if (!(editor instanceof EditorImpl)) return;
     FocusModeModel focusModeModel = ((EditorImpl)editor).getFocusModeModel();
 
-    Set<FocusRegion> focusRegions = ((EditorImpl)editor).putUserDataIfAbsent(FOCUS_REGIONS_FROM_PASS, new HashSet<>());
-    Set<FocusRegion> invalidFocusRegions = new HashSet<>(focusRegions);
+    Set<RangeMarker> focusRegions = ((EditorImpl)editor).putUserDataIfAbsent(FOCUS_REGIONS_FROM_PASS, new HashSet<>());
+    Set<RangeMarker> invalidFocusRegions = new HashSet<>(focusRegions);
     for (Segment zone : zones) {
-      FocusRegion foundRegion = focusModeModel.findFocusRegion(zone.getStartOffset(), zone.getEndOffset());
+      RangeMarker foundRegion = focusModeModel.findFocusRegion(zone.getStartOffset(), zone.getEndOffset());
       if (foundRegion == null) {
-        FocusRegion newRegion = focusModeModel.createFocusRegion(zone.getStartOffset(), zone.getEndOffset());
+        RangeMarker newRegion = focusModeModel.createFocusRegion(zone.getStartOffset(), zone.getEndOffset());
         focusRegions.add(newRegion);
       }
       else {
@@ -109,7 +109,7 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
         }
       }
     }
-    for (FocusRegion invalidFocusRegion : invalidFocusRegions) {
+    for (RangeMarker invalidFocusRegion : invalidFocusRegions) {
       // Dispose and delete invalid and removed focus markers
       focusModeModel.removeFocusRegion(invalidFocusRegion);
       focusRegions.remove(invalidFocusRegion);

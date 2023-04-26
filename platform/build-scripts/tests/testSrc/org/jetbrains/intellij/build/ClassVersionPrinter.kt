@@ -11,12 +11,12 @@ class ClassVersionPrinter {
     @JvmStatic
     fun main(args: Array<String>) {
       val versionToClasses = TreeMap<Byte, MutableList<String>>()
-      readZipFile(Path.of(args[0])) { name, entry ->
+      readZipFile(Path.of(args[0])) { name, dataSupplier ->
         if (!name.endsWith(".class")) {
           return@readZipFile
         }
 
-        val buffer = entry.getByteBuffer()
+        val buffer = dataSupplier()
         check(buffer.getInt() == 0xCAFEBABE.toInt()) {
           "$name: invalid .class file header"
         }

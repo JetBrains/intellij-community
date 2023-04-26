@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
@@ -240,7 +241,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
           if (javaModule == null) {
             javaModule = JavaModuleGraphUtil.findDescriptorByModule(refModule.getModule(), true);
           }
-          importedPackages = javaModule != null ? ContainerUtil.newConcurrentSet() : DONT_COLLECT_PACKAGES;
+          importedPackages = javaModule != null ? ConcurrentCollectionFactory.createConcurrentSet() : DONT_COLLECT_PACKAGES;
           refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
         }
         return importedPackages;

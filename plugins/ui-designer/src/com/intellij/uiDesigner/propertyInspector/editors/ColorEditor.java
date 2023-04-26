@@ -2,7 +2,7 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
@@ -29,7 +29,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
       @Override
       public void actionPerformed(ActionEvent e) {
         String title = UIDesignerBundle.message("color.chooser.title", myPropertyName);
-        Color color = ColorChooser.chooseColor(myTextField, title , myValue.getColor());
+        Color color = ColorChooserService.getInstance().showDialog(myTextField, title , myValue.getColor());
         if (color != null) {
           myValue = new ColorDescriptor(color);
           updateTextField();

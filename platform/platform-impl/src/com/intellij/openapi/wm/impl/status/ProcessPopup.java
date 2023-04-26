@@ -81,7 +81,7 @@ class ProcessPopup {
   }
 
   private @NotNull Rectangle calculateBounds() {
-    JFrame frame = (JFrame)UIUtil.findUltimateParent(myProgressPanel);
+    JFrame frame = (JFrame)UIUtil.findUltimateParent(myProgressPanel.getComponent());
 
     Rectangle savedBounds = WindowStateService.getInstance().getBoundsFor(frame, DIMENSION_SERVICE_KEY);
     if (savedBounds != null) {
@@ -137,7 +137,7 @@ class ProcessPopup {
     myPopupBounds = calculateBounds();
     myContentPanel.setPreferredSize(myPopupBounds.getSize());
     myPopupVisible = true;
-    myPopup.showInScreenCoordinates(myProgressPanel.getRootPane(), myPopupBounds.getLocation());
+    myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), myPopupBounds.getLocation());
   }
 
   public boolean isShowing() {
@@ -195,7 +195,7 @@ class ProcessPopup {
         newBounds.height -= ((AbstractPopup)myPopup).getHeaderPreferredSize().height;
       }
       if (!myPopupBounds.equals(newBounds)) {
-        WindowStateService.getInstance().putBoundsFor(UIUtil.findUltimateParent(myProgressPanel), DIMENSION_SERVICE_KEY, newBounds);
+        WindowStateService.getInstance().putBoundsFor(UIUtil.findUltimateParent(myProgressPanel.getComponent()), DIMENSION_SERVICE_KEY, newBounds);
       }
       myPopupBounds = null;
 

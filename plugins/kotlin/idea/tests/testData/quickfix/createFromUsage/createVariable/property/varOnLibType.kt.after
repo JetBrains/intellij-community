@@ -5,7 +5,7 @@ private var Int.foo: A<String>
     get() {
         TODO("Not yet implemented")
     }
-    set() {}
+    set(value) {}
 
 class A<T>(val n: T)
 

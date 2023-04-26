@@ -149,7 +149,6 @@
     <orderEntry type="module" module-name="kotlin.project-configuration" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" exported="" />
-    <orderEntry type="module" module-name="kotlin.scripting-support" exported="" />
     <orderEntry type="module" module-name="kotlin.inspections-fe10" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
@@ -192,5 +191,7 @@
     <orderEntry type="module" module-name="kotlin.searching.base" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" exported="" />
+    <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
   </component>
 </module>

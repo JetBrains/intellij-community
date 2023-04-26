@@ -921,6 +921,13 @@ public final class ExpectedTypesProvider {
         if (op == JavaTokenType.EQEQ || op == JavaTokenType.NE) {
           ContainerUtil.addIfNotNull(myResult, getEqualsType(anotherExpr));
         }
+        if (op == JavaTokenType.LT || op == JavaTokenType.LE ||
+            op == JavaTokenType.GT || op == JavaTokenType.GE) {
+          PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
+          if (anotherType != null) {
+            myResult.add(createInfoImpl(PsiTypes.doubleType(), anotherType));
+          }
+        }
         final MyParentVisitor visitor = new MyParentVisitor(expr, true, myClassProvider, myVoidable, myUsedAfter, myMaxCandidates);
         myExpr = (PsiExpression)myExpr.getParent();
         expr.getParent().accept(visitor);

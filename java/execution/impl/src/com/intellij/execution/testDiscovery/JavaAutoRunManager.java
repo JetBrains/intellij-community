@@ -54,7 +54,7 @@ public class JavaAutoRunManager extends AbstractAutoTestManager implements Dispo
           public void automakeCompilationFinished(int errors, int warnings, @NotNull CompileContext compileContext) {
             if (!myFoundFilesToMake) return;
             if (errors == 0) {
-              restartAllAutoTests(0);
+              restartAllAutoTests(() -> isUpToDate());
             }
             myHasErrors = errors == 0;
             myFoundFilesToMake = false;
@@ -78,7 +78,7 @@ public class JavaAutoRunManager extends AbstractAutoTestManager implements Dispo
                   result.getContext().getDirtyOutputPaths().isEmpty()) return;
               myHasErrors = result.hasErrors() || result.isAborted();
               if (!result.hasErrors() && !result.isAborted()) {
-                restartAllAutoTests(0);
+                restartAllAutoTests(() -> isUpToDate());
               }
             }
           }
@@ -94,8 +94,7 @@ public class JavaAutoRunManager extends AbstractAutoTestManager implements Dispo
         }
       }
 
-      @Override
-      public boolean isUpToDate(int modificationStamp) {
+      private boolean isUpToDate() {
         return !myHasErrors;
       }
     };

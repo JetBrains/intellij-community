@@ -1,0 +1,32 @@
+{
+  "$schema": "../../web-types-gen/resources/web-types.json",
+  "name": "basic",
+  "version": "1.0",
+  "description-markup": "markdown",
+  "contributions": {
+    "html": {
+      "elements": [
+        {
+          "name": "not-deprecated",
+          "deprecated": false
+        },
+        {
+          "name": "deprecated",
+          "deprecated": true
+        },
+        {
+          "name": "deprecatedWithMessage",
+          "deprecated": "**don't** use this"
+        },
+        {
+          "name": "experimental",
+          "experimental": true
+        },
+        {
+          "name": "experimentalWithMessage",
+          "experimental": "**let's** see if this works"
+        }
+      ]
+    }
+  }
+}

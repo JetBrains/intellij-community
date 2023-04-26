@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -16,7 +15,7 @@ class CurrentJobTest : CancellationTest() {
   fun context() {
     val job = Job()
     assertNull(Cancellation.currentJob())
-    withCurrentJob(job) {
+    blockingContext(job) {
       assertSame(job, Cancellation.currentJob())
     }
     assertNull(Cancellation.currentJob())
@@ -28,7 +27,7 @@ class CurrentJobTest : CancellationTest() {
     val t = object : Throwable() {}
     val ce = assertThrows<CurrentJobCancellationException> {
       val job = Job()
-      withCurrentJob<Unit>(job) {
+      blockingContext(job) {
         testNoExceptions()
         job.cancel("", t)
         testExceptionsAndNonCancellableSection()
@@ -39,20 +38,10 @@ class CurrentJobTest : CancellationTest() {
     assertSame(t, ce.cause.cause.cause)
   }
 
-  @Disabled("an orphan job is created")
-  @Test
-  fun `ensureCurrentJob without current job or current indicator`() {
-    assertThrows<IllegalStateException> {
-      ensureCurrentJob {
-        fail()
-      }
-    }
-  }
-
   @Test
   fun `checkCancelledEvenWithPCEDisabled checks job`() {
     val job = Job()
-    withCurrentJob(job) {
+    blockingContext(job) {
       assertDoesNotThrow {
         ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
       }

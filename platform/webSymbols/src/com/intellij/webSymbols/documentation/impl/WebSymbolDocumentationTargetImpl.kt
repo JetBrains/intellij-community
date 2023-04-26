@@ -4,8 +4,10 @@ package com.intellij.webSymbols.documentation.impl
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.documentation.DocumentationResult
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
@@ -20,18 +22,21 @@ import java.awt.Image
 import java.awt.image.BufferedImage
 import javax.swing.Icon
 
-internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol) : WebSymbolDocumentationTarget {
+internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
+                                                override val location: PsiElement?)
+  : WebSymbolDocumentationTarget {
 
   override fun createPointer(): Pointer<out DocumentationTarget> {
     val pointer = symbol.createPointer()
+    val locationPtr = location?.createSmartPointer()
     return Pointer<DocumentationTarget> {
-      pointer.dereference()?.let { WebSymbolDocumentationTargetImpl(it) }
+      pointer.dereference()?.let { WebSymbolDocumentationTargetImpl(it, locationPtr?.dereference()) }
     }
   }
 
   companion object {
 
-    fun buildDocumentation(origin: WebSymbolOrigin, doc: WebSymbolDocumentation): DocumentationResult? {
+    fun buildDocumentation(origin: WebSymbolOrigin, doc: WebSymbolDocumentation): DocumentationResult {
       val url2ImageMap = mutableMapOf<String, Image>()
 
       @Suppress("HardCodedStringLiteral")
@@ -100,8 +105,14 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol) 
     private fun buildSections(doc: WebSymbolDocumentation): Map<String, String> =
       LinkedHashMap(doc.descriptionSections).also { sections ->
         if (doc.required) sections[WebSymbolsBundle.message("mdn.documentation.section.isRequired")] = ""
-        if (doc.deprecated) sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] = ""
-        if (doc.experimental) sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] = ""
+        doc.apiStatus?.let {
+          when (it) {
+            is WebSymbol.Deprecated -> sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] =
+              it.message ?: ""
+            is WebSymbol.Experimental -> sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] =
+              it.message ?: ""
+          }
+        }
         doc.defaultValue?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.defaultValue")] = "<p><code>$it</code>" }
         doc.library?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.library")] = "<p>$it" }
       }

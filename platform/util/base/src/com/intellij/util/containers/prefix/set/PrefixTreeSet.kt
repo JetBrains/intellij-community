@@ -15,8 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface PrefixTreeSet<Key> : Set<Key> {
 
-  fun asSequence(): Sequence<Key>
-
   /**
    * Returns descendant elements for [element].
    *
@@ -24,8 +22,6 @@ interface PrefixTreeSet<Key> : Set<Key> {
    * Then ancestor elements for [element]`=[a,b]` are `[a,b,c]`, `[a,b,c,d]` and `[a,b,c,e]`.
    */
   fun getDescendants(element: Key): Set<Key>
-
-  fun getDescendantSequence(element: Key): Sequence<Key>
 
   /**
    * Returns ancestor elements for [element].
@@ -35,8 +31,6 @@ interface PrefixTreeSet<Key> : Set<Key> {
    */
   fun getAncestors(element: Key): Set<Key>
 
-  fun getAncestorSequence(element: Key): Sequence<Key>
-
   /**
    * Returns root elements in this set.
    *
@@ -44,6 +38,4 @@ interface PrefixTreeSet<Key> : Set<Key> {
    * Then root elements are `[a,b,c]` and `[a,f,g]`.
    */
   fun getRoots(): Set<Key>
-
-  fun getRootSequence(): Sequence<Key>
 }

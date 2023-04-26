@@ -8,5 +8,6 @@ fragment glCommit on Commit {
   author {
     ...user
   }
+  authorName
   authoredDate
 }

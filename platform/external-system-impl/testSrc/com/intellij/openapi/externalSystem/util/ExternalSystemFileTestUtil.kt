@@ -5,31 +5,19 @@ package com.intellij.openapi.externalSystem.util
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.util.ThrowableRunnable
-
 
 fun <R> runReadAction(action: () -> R): R {
-  return ApplicationManager.getApplication()
-    .runReadAction(ThrowableComputable { action() })
-}
-
-fun <R> runWriteAction(action: () -> R): R {
-  return ApplicationManager.getApplication()
-    .runWriteAction(ThrowableComputable { action() })
+  return ApplicationManager.getApplication().runReadAction(ThrowableComputable(action))
 }
 
 fun <R> runWriteActionAndGet(action: () -> R): R {
   return invokeAndWaitIfNeeded {
-    runWriteAction {
-      action()
-    }
+    ApplicationManager.getApplication().runWriteAction(ThrowableComputable(action))
   }
 }
 
-fun runWriteActionAndWait(action: ThrowableRunnable<*>) {
-  invokeAndWaitIfNeeded {
-    runWriteAction {
-      action.run()
-    }
+fun runWriteActionAndWait(action: () -> Unit) {
+  ApplicationManager.getApplication().invokeAndWait {
+    ApplicationManager.getApplication().runWriteAction(action)
   }
 }

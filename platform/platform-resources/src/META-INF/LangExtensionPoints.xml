@@ -168,6 +168,9 @@
     </extensionPoint>
 
     <extensionPoint name="highlightUsagesHandlerFactory" interface="com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactory" dynamic="true"/>
+    <extensionPoint name="lang.backgroundElementHighlighter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.BackgroundElementHighlighter"/>
+    </extensionPoint>
 
     <extensionPoint name="heavyBracesHighlighter" interface="com.intellij.codeInsight.highlighting.HeavyBraceHighlighter"/>
 
@@ -633,20 +636,21 @@
     <extensionPoint name="highlightInfoPostFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoPostFilter" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="internalHighlightingLayerSupplier" interface="com.intellij.codeInsight.daemon.impl.InternalLayerSupplier" dynamic="true"/>
     <extensionPoint name="commandLineInspectionProjectConfigurator" interface="com.intellij.ide.CommandLineInspectionProjectConfigurator" dynamic="true"/>
+    <extensionPoint name="environmentKeyProvider" interface="com.intellij.ide.environment.EnvironmentKeyProvider" dynamic="true"/>
 
     <extensionPoint name="fileTypeStatisticProvider" interface="com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider" dynamic="true"/>
     <extensionPoint name="lang.directNavigationProvider" dynamic="true" interface="com.intellij.navigation.DirectNavigationProvider"/>
     <extensionPoint name="lang.symbolTypeProvider" dynamic="true" interface="com.intellij.codeInsight.navigation.SymbolTypeProvider"/>
     <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
-    <extensionPoint qualifiedName="com.intellij.platform.documentation.targetProvider" dynamic="true"
-                    interface="com.intellij.platform.documentation.DocumentationTargetProvider"/>
-    <extensionPoint qualifiedName="com.intellij.platform.documentation.symbolTargetProvider" dynamic="true"
-                    interface="com.intellij.platform.documentation.SymbolDocumentationTargetProvider"/>
-    <extensionPoint qualifiedName="com.intellij.platform.documentation.psiTargetProvider" dynamic="true"
-                    interface="com.intellij.platform.documentation.PsiDocumentationTargetProvider"/>
-    <extensionPoint qualifiedName="com.intellij.platform.documentation.linkHandler" dynamic="true"
-                    interface="com.intellij.platform.documentation.DocumentationLinkHandler"/>
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.targetProvider" dynamic="true"
+                    interface="com.intellij.platform.backend.documentation.DocumentationTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.symbolTargetProvider" dynamic="true"
+                    interface="com.intellij.platform.backend.documentation.SymbolDocumentationTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.psiTargetProvider" dynamic="true"
+                    interface="com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.linkHandler" dynamic="true"
+                    interface="com.intellij.platform.backend.documentation.DocumentationLinkHandler"/>
     <extensionPoint qualifiedName="com.intellij.properties.files.provider"
                     interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
     <extensionPoint name="safeDeleteTargetProvider" interface="com.intellij.refactoring.safeDelete.api.SafeDeleteTargetProvider" dynamic="true"/>

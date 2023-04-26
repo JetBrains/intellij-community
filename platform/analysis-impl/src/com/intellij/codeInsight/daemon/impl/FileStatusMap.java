@@ -117,8 +117,8 @@ public final class FileStatusMap implements Disposable {
 
     @NotNull
     private static RangeMarker combineScopes(@Nullable RangeMarker old, @NotNull TextRange scope, int textLength, @NotNull Document document) {
+      if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_DIRTY_MARKER;
       if (old == null) {
-        if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_DIRTY_MARKER;
         return document.createRangeMarker(scope);
       }
       if (old == WHOLE_FILE_DIRTY_MARKER) return old;

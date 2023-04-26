@@ -2,6 +2,7 @@
 package com.intellij.ide.navbar.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.vm.NavBarItemVm
 import com.intellij.ide.navigationToolbar.ui.AbstractNavBarUI
@@ -169,7 +170,7 @@ internal class NavBarItemComponent(
     JBInsets.addTo(offsets, navBarItemPadding(isFloating))
     val newUI = ExperimentalUI.isNewUI()
     if (newUI) {
-      offsets.width += if (vm.isFirst) 0 else CHEVRON_ICON.iconWidth + Breadcrumbs.CHEVRON_INSET.get()
+      offsets.width += if (vm.isFirst) 0 else AllIcons.General.ChevronRight.iconWidth + Breadcrumbs.CHEVRON_INSET.get()
     }
     else {
       offsets.width += getDecorationOffset() + if (vm.isFirst) getFirstElementLeftOffset() else 0
@@ -207,7 +208,7 @@ internal class NavBarItemComponent(
 
   private fun effectiveIcon(presentation: NavBarItemPresentation): Icon? {
     return when {
-      ExperimentalUI.isNewUI() && vm.isModuleContentRoot -> MODULE_ICON
+      ExperimentalUI.isNewUI() && vm.isModuleContentRoot -> ExpUiIcons.Nodes.Module8x8
       Registry.`is`("navBar.show.icons") || vm.isLast || presentation.hasContainingFile -> presentation.icon
       else -> null
     }
@@ -227,8 +228,8 @@ internal class NavBarItemComponent(
       JBInsets.removeFrom(rect, paddings)
       var offset = rect.x
       if (!isFirst) {
-        CHEVRON_ICON.paintIcon(this, g, offset, rect.y + (rect.height - CHEVRON_ICON.iconHeight) / 2)
-        val delta = CHEVRON_ICON.iconWidth + Breadcrumbs.CHEVRON_INSET.get()
+        AllIcons.General.ChevronRight.paintIcon(this, g, offset, rect.y + (rect.height - AllIcons.General.ChevronRight.iconHeight) / 2)
+        val delta = AllIcons.General.ChevronRight.iconWidth + Breadcrumbs.CHEVRON_INSET.get()
         offset += delta
         rect.width -= delta
       }
@@ -243,7 +244,9 @@ internal class NavBarItemComponent(
       }
       else {
         offset += ipad.left
-        icon.paintIcon(this, g, offset, rect.y + (rect.height - icon.iconHeight) / 2 + if (icon == MODULE_ICON) JBUI.scale(1) else 0)
+        icon.paintIcon(this, g, offset, rect.y + (rect.height - icon.iconHeight) / 2 + if (icon == ExpUiIcons.Nodes.Module8x8) JBUI.scale(
+          1)
+        else 0)
         offset += icon.iconWidth
         offset += iconTextGap
       }
@@ -316,11 +319,6 @@ internal class NavBarItemComponent(
   }
 
   companion object {
-
-    private val CHEVRON_ICON = AllIcons.General.ChevronRight
-
-    private val MODULE_ICON = IconManager.getInstance().getIcon("expui/nodes/module8x8.svg", AllIcons::class.java)
-
     internal fun isItemComponentFocusable(): Boolean = ScreenReader.isActive()
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
+import com.intellij.ui.icons.overrideIconScale
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
@@ -32,7 +33,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     }
 
     fun freezeIconUserSize(icon: Icon): Icon {
-      return IconUtil.overrideScale(IconUtil.deepCopy(icon, null), ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
+      return overrideIconScale(IconUtil.deepCopy(icon, null), ScaleType.USR_SCALE.of(UISettings.defFontScale))
     }
   }
 

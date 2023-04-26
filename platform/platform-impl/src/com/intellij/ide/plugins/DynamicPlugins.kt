@@ -89,8 +89,6 @@ import java.util.*
 import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.ToolTipManager
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
@@ -1033,7 +1031,7 @@ private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: Id
 }
 
 /**
- * Load all sub plugins that depend on specified [dependencyPlugin].
+ * @return a Set of modules that depend on [dependencyPlugin]
  */
 private fun optionalDependenciesOnPlugin(
   dependencyPlugin: IdeaPluginDescriptorImpl,
@@ -1041,27 +1039,28 @@ private fun optionalDependenciesOnPlugin(
   pluginSet: PluginSet,
 ): Set<IdeaPluginDescriptorImpl> {
   // 1. collect optional descriptors
-  val modulesToMain = LinkedHashMap<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>()
+  val dependentPluginsAndItsModule = ArrayList<Pair<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>()
 
   processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
-    modulesToMain[module] = main
+    dependentPluginsAndItsModule.add(main to module)
     true
   }
 
-  if (modulesToMain.isEmpty()) {
+  if (dependentPluginsAndItsModule.isEmpty()) {
     return emptySet()
   }
 
   // 2. sort topologically
-  val topologicalComparator = PluginSetBuilder(modulesToMain.values)
+  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first })
     .moduleGraph
     .topologicalComparator
+  dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
-  return modulesToMain.toSortedMap(topologicalComparator)
-    .filter { (moduleDescriptor, mainDescriptor) ->
+  return dependentPluginsAndItsModule.distinct()
+    .filter { (mainDescriptor, moduleDescriptor) ->
       // 3. setup classloaders
       classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
-    }.keys
+    }.map { it.second }.toSet()
 }
 
 private fun loadModules(

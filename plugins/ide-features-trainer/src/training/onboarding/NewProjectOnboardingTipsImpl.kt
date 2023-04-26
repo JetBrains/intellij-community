@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Key
@@ -90,8 +91,8 @@ private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   }
 }
 
-private class InstallOnboardingTooltip : StartupActivity {
-  override fun runActivity(project: Project) {
+private class InstallOnboardingTooltip : ProjectActivity {
+  override suspend fun execute(project: Project) {
     val pathToRunningFile = project.onboardingTipsDebugPath
     if (pathToRunningFile != null) {
       installDebugListener(project, pathToRunningFile)

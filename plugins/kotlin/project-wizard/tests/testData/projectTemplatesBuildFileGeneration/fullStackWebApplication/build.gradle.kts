@@ -8,7 +8,6 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenLocal()
-    jcenter()
     mavenCentral()
     maven("KOTLIN_BOOTSTRAP_REPO")
     maven("KOTLIN_REPO")
@@ -19,8 +18,10 @@ kotlin {
     jvm {
         jvmToolchain(11)
         withJava()
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
+        testRuns.named("test") {
+            executionTask.configure {
+                useJUnitPlatform()
+            }
         }
     }
     js(IR) {

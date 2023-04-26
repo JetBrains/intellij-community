@@ -5,8 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -69,7 +71,7 @@ public final class GraphTableModel extends AbstractTableModel {
     }
 
     try {
-      return column.getValue(this, rowIndex);
+      return ObjectUtils.chooseNotNull(column.getValue(this, rowIndex), column.getStubValue(this));
     }
     catch (ProcessCanceledException ignore) {
       return column.getStubValue(this);
@@ -123,7 +125,7 @@ public final class GraphTableModel extends AbstractTableModel {
     return myDataPack.getVisibleGraph().getRowInfo(row).getCommit();
   }
 
-  public @NotNull VirtualFile getRootAtRow(int row) {
+  public @Nullable VirtualFile getRootAtRow(int row) {
     return myDataPack.getRoot(row);
   }
 
@@ -150,7 +152,9 @@ public final class GraphTableModel extends AbstractTableModel {
   }
 
   public @Nullable CommitId getCommitId(int row) {
-    return myLogData.getCommitId(getIdAtRow(row));
+    VcsCommitMetadata metadata = getCommitMetadata(row);
+    if (metadata instanceof LoadingDetails) return null;
+    return new CommitId(metadata.getId(), metadata.getRoot());
   }
 
   public @NotNull VcsLogCommitSelection createSelection(int[] rows) {

@@ -321,13 +321,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
         base,
         onClickAction = { navigateInternal(resolve) },
         toStringProvider = {
-          val element = resolve() ?: return@referenceInternal ""
-          val virtualFile = element.containingFile.virtualFile
-          val path = (virtualFile.fileSystem as? JarFileSystem)?.let {
-            val root = VfsUtilCore.getRootFile(virtualFile)
-            "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
-          } ?: virtualFile.toString()
-          return@referenceInternal "$path:${element.startOffset}"
+          resolve()?.let(toStringProvider) ?: ""
         })
     } else {
       reference(base) { navigateInternal(resolve) }
@@ -458,5 +452,22 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     if (target is Navigatable) {
       CommandProcessor.getInstance().executeCommand(target.project, { target.navigate(true) }, null, null)
     }
+  }
+
+
+  companion object {
+    var customToStringProvider: ((PsiElement) -> String)? = null
+
+    private val defaultStringProvider: (PsiElement) -> String = { element ->
+      val virtualFile = element.containingFile.virtualFile
+      val path = (virtualFile.fileSystem as? JarFileSystem)?.let {
+        val root = VfsUtilCore.getRootFile(virtualFile)
+        "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
+      } ?: virtualFile.toString()
+      "$path:${element.startOffset}"
+    }
+
+    private val toStringProvider: (PsiElement) -> String
+      get() = customToStringProvider ?: defaultStringProvider
   }
 }

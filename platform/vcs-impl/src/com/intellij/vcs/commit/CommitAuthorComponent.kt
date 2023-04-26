@@ -134,7 +134,7 @@ private class VcsUserViewer(val clickListener: (VcsUser?) -> Unit) : NonOpaquePa
     if (oldValue == newValue) return@observable
 
     link.text = newValue?.let { VcsUserUtil.getShortPresentation(it) }
-    link.toolTipText = newValue?.let { escapeXmlEntities(it.toString()) }
+    link.toolTipText = newValue?.let { escapeXmlEntities(it.toString()) } //NON-NLS
   }
 
   init {

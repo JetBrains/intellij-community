@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.core.CoreBundle;
@@ -36,6 +36,7 @@ public abstract class Configuration implements JDOMExternalizable {
   @NonNls private static final String DESCRIPTION_ATTRIBUTE_NAME = "description";
   @NonNls private static final String SUPPRESS_ID_ATTRIBUTE_NAME = "suppressId";
   @NonNls private static final String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
+  @NonNls private static final String CLEANUP_ATTRIBUTE_NAME = "cleanup";
   @NonNls private static final String ORDER_ATTRIBUTE_NAME = "order";
 
   private @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name;
@@ -46,6 +47,7 @@ public abstract class Configuration implements JDOMExternalizable {
   private String description;
   private String suppressId;
   private String problemDescriptor;
+  private boolean cleanup;
   private int order;
 
   /**
@@ -76,6 +78,7 @@ public abstract class Configuration implements JDOMExternalizable {
     description = configuration.description;
     suppressId = configuration.suppressId;
     problemDescriptor = configuration.problemDescriptor;
+    cleanup = configuration.cleanup;
     order = configuration.order;
     refName = null; // copy never has a refName
   }
@@ -159,6 +162,14 @@ public abstract class Configuration implements JDOMExternalizable {
     this.problemDescriptor = problemDescriptor;
   }
 
+  public boolean isCleanup() {
+    return cleanup;
+  }
+
+  public void setCleanup(boolean cleanup) {
+    this.cleanup = cleanup;
+  }
+
   public int getOrder() {
     return order;
   }
@@ -198,6 +209,15 @@ public abstract class Configuration implements JDOMExternalizable {
     if (problemDescriptorAttribute != null) {
       problemDescriptor = problemDescriptorAttribute.getValue();
     }
+    Attribute attribute = element.getAttribute(CLEANUP_ATTRIBUTE_NAME);
+    if (attribute != null) {
+      try {
+        cleanup = attribute.getBooleanValue();
+      }
+      catch (DataConversionException e) {
+        cleanup = false;
+      }
+    }
     final Attribute mainAttribute = element.getAttribute(ORDER_ATTRIBUTE_NAME);
     if (mainAttribute != null) {
       try {
@@ -224,6 +244,9 @@ public abstract class Configuration implements JDOMExternalizable {
     }
     if (!StringUtil.isEmpty(problemDescriptor)) {
       element.setAttribute(PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME, problemDescriptor);
+    }
+    if (cleanup) {
+      element.setAttribute(CLEANUP_ATTRIBUTE_NAME, String.valueOf(cleanup));
     }
     if (order != 0) {
       element.setAttribute(ORDER_ATTRIBUTE_NAME, String.valueOf(order));

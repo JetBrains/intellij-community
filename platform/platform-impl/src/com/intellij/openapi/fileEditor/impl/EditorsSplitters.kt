@@ -8,14 +8,11 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
@@ -25,10 +22,8 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
@@ -216,7 +211,7 @@ open class EditorsSplitters internal constructor(
       val gg = IdeBackgroundUtil.withFrameBackground(g, this)
       super.paintComponent(gg)
       @Suppress("UseJBColor")
-      g.color = if (StartupUiUtil.isUnderDarcula()) JBColor.border() else Color(0, 0, 0, 50)
+      g.color = if (StartupUiUtil.isUnderDarcula) JBColor.border() else Color(0, 0, 0, 50)
       g.drawLine(0, 0, width, 0)
     }
   }
@@ -286,50 +281,30 @@ open class EditorsSplitters internal constructor(
     return fileElement
   }
 
-  suspend fun restoreEditors(onStartup: Boolean) {
-    restoreEditors(state = state.getAndSet(null) ?: return, onStartup = onStartup)
-  }
-
   @Internal
-  suspend fun restoreEditors(state: EditorSplitterState, onStartup: Boolean) {
-    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    val component = UiBuilder(this).process(
-      state = state,
-      context = if (!onStartup && componentCount > 0) getComponent(0) as JPanel else null,
-    )
+  suspend fun restoreEditors(state: EditorSplitterState) {
+    val component = UiBuilder(this).process(state = state, context = if (componentCount > 0) getComponent(0) as JPanel else null)
     withContext(Dispatchers.EDT) {
-      runActivity("editor reopening post-processing") {
-        component.isFocusable = false
-        if (!onStartup) {
-          removeAll()
-        }
-        add(component, BorderLayout.CENTER)
-        validate()
-        val windows = windows.toList()
-        for (window in windows) {
-          // clear empty splitters
-          if (window.tabCount == 0) {
-            window.removeFromSplitter()
-          }
-          else {
-            (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
-          }
-        }
+      removeAll()
+      add(component, BorderLayout.CENTER)
+      validate()
 
-        if (onStartup) {
-          val composite = currentWindow?.selectedComposite ?: return@withContext
-          val selectedEditor = composite.selectedEditor
-          if (selectedEditor is TextEditor) {
-            AsyncEditorLoader.performWhenLoaded(selectedEditor.editor) {
-              composite.preferredFocusedComponent?.requestFocusInWindow()
-            }
-          }
-          else {
-            composite.preferredFocusedComponent?.requestFocusInWindow()
-          }
+      for (window in windows) {
+        // clear empty splitters
+        if (window.tabCount == 0) {
+          window.removeFromSplitter()
+        }
+        else {
+          (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
         }
       }
     }
+  }
+
+  @Internal
+  suspend fun createEditors(state: EditorSplitterState): JComponent {
+    manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    return UiBuilder(this).process(state = state, context = null)
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<FileEditor>) {
@@ -385,7 +360,7 @@ open class EditorsSplitters internal constructor(
 
   fun openFilesAsync(): Job {
     return coroutineScope.launch {
-      restoreEditors(onStartup = false)
+      restoreEditors(state = state.getAndSet(null) ?: return@launch)
     }
   }
 
@@ -482,6 +457,7 @@ open class EditorsSplitters internal constructor(
   internal suspend fun updateFileName(updatedFile: VirtualFile?) {
     for (window in windows) {
       val composites = withContext(Dispatchers.EDT) {
+        // update names for other files with the same name, as it might affect UniqueNameEditorTabTitleProvider
         window.getComposites().filter { updatedFile == null || it.file.nameSequence.contentEquals(updatedFile.nameSequence) }.toList()
       }
       for (composite in composites) {
@@ -535,7 +511,7 @@ open class EditorsSplitters internal constructor(
     get() = insideChange > 0
 
   internal fun updateFileBackgroundColorAsync(file: VirtualFile) {
-    coroutineScope.launch {
+    coroutineScope.launch(ModalityState.any().asContextElement()) {
       updateFileBackgroundColor(file)
     }
   }
@@ -679,8 +655,8 @@ open class EditorsSplitters internal constructor(
   }
 
   /**
-   * sets the window passed as a current ('focused') window among all splitters. All file openings will be done inside this
-   * current window
+   * Sets the window passed as a current ('focused') window among all splitters.
+   * All file openings will be done inside this current window.
    * @param window a window to be set as current
    * @param requestFocus whether to request focus to the editor, currently selected in this window
    */
@@ -688,7 +664,7 @@ open class EditorsSplitters internal constructor(
     require(window == null || windows.contains(window)) { "$window is not a member of this container" }
     setCurrentWindowAndComposite(window)
     if (window != null && requestFocus) {
-      window.requestFocus(true)
+      window.requestFocus(forced = true)
     }
   }
 
@@ -728,7 +704,7 @@ open class EditorsSplitters internal constructor(
   }
 
   @RequiresEdt
-  fun getAllComposites(file: VirtualFile): List<EditorComposite> = windows.mapNotNull { it.getComposite(file) }
+  fun getAllComposites(file: VirtualFile): List<EditorComposite> = getWindowSequence().mapNotNull { it.getComposite(file) }.toList()
 
   private fun findWindows(file: VirtualFile): List<EditorWindow> = windows.filter { it.getComposite(file) != null }
 
@@ -811,7 +787,7 @@ open class EditorsSplitters internal constructor(
       val component = parent.secondComponent
       if (component !== window.panel) {
         // reuse
-        findWindowWith(component)?.let { rightSplitWindow ->
+        windows.find { SwingUtilities.isDescendingFrom(component, it.panel) }?.let { rightSplitWindow ->
           manager.openFile(file = file, window = rightSplitWindow, options = FileEditorOpenOptions(requestFocus = requestFocus))
           return rightSplitWindow
         }
@@ -933,6 +909,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         var editorWindow = context?.let(splitters::findWindowWith)
         if (editorWindow == null) {
           editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
+          editorWindow.panel.isFocusable = false
         }
         else if (splitters.currentWindow == null) {
           splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
@@ -962,13 +939,11 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         try {
           file.putUserData(OPENED_IN_BULK, true)
 
-          val newProviders = async {
-            runActivity("editor provider computing") {
-              FileEditorProviderManager.getInstance().getProvidersAsync(fileEditorManager.project, file)
-            }
+          val newProviders = async(CoroutineName("editor provider computing")) {
+            FileEditorProviderManager.getInstance().getProvidersAsync(fileEditorManager.project, file)
           }
 
-          val document = readAction {
+          val document = readActionBlocking {
             fileDocumentManager.getDocument(file)
           }
 
@@ -1031,6 +1006,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       val secondComponent = process(state = state.secondSplitter!!, context = null)
       return withContext(Dispatchers.EDT) {
         val panel = JPanel(BorderLayout())
+        panel.isFocusable = false
         panel.isOpaque = false
         val splitter = createSplitter(orientation = state.isVertical,
                                       proportion = state.proportion,

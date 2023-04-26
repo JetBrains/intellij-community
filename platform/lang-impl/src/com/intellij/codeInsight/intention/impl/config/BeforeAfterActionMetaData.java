@@ -72,7 +72,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
           String extension = extensionFileNameMatcher.getExtension();
           for (int i = 0; ; i++) {
             String resourcePath = getResourceLocation(prefix + "." + extension + (i == 0 ? "" : Integer.toString(i))
-                                  + suffix);
+                                                      + suffix);
             URL resource = myLoader.getResource(resourcePath);
             if (resource == null) break;
             urls.add(new ResourceTextDescriptor(myLoader, resourcePath));

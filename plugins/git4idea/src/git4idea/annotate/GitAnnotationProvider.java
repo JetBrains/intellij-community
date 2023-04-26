@@ -62,7 +62,7 @@ import java.util.*;
 
 import static git4idea.annotate.GitAnnotationProviderKt.getAnnotationFromCache;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitAnnotationProvider implements AnnotationProviderEx, CacheableAnnotationProvider {
   @NonNls private static final String SUBJECT_KEY = "summary";
   @NonNls private static final String FILENAME_KEY = "filename";

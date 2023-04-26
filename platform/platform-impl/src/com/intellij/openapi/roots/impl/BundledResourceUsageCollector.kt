@@ -51,7 +51,7 @@ internal class BundledResourceUsageCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project, indicator: ProgressIndicator?): CancellablePromise<Set<MetricEvent>> {
-    var action = ReadAction.nonBlocking<Set<VirtualFile>> { collectLibraryFiles(project) }
+    var action = ReadAction.nonBlocking<Set<VirtualFile>> { if (project.isDisposed()) emptySet() else collectLibraryFiles(project) }
     if (indicator != null) {
       action = action.wrapProgress(indicator)
     }

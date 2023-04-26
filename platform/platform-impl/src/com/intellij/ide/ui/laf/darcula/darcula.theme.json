@@ -488,6 +488,11 @@
       }
     },
 
+    "GotItTooltip": {
+      "codeBackground": "#4C5052",
+      "codeBorderColor": "#5E6060"
+    },
+
     "ToolWindow": {
       "Header.background": "#3B4754",
       "Header.inactiveBackground": "#3C3F41",
@@ -600,9 +605,11 @@
     },
     "RunWidget" : {
       "foreground": "#ffffff",
+      "runModeIconColor": "#5fad65",
       "disabledForeground": "#FFFFFF66",
       "background": "#3369d6",
       "runningBackground": "#599e5e",
+      "stopBackground": "#c94f4f",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"

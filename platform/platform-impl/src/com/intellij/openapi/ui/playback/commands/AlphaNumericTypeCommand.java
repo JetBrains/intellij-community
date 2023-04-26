@@ -74,12 +74,12 @@ public class AlphaNumericTypeCommand extends TypeCommand {
     return result;
   }
 
-  @Nullable
-  public static TypingTarget findTarget(PlaybackContext context) {
-    if (!context.isUseTypingTargets()) return null;
+  public static @Nullable TypingTarget findTarget(PlaybackContext context) {
+    if (!context.isUseTypingTargets()) {
+      return null;
+    }
 
     Component each = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-
     while (each != null) {
       if (each instanceof TypingTarget) {
         return (TypingTarget)each;
@@ -90,6 +90,4 @@ public class AlphaNumericTypeCommand extends TypeCommand {
 
     return null;
   }
-
-
 }

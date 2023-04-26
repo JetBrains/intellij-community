@@ -19,20 +19,20 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
 
   private final @NotNull Collection<MavenProject> myProjects;
   private final @Nullable Collection<MavenArtifact> myArtifacts;
-  private final @NotNull MavenProjectResolver myResolver;
   private final boolean myDownloadSources;
   private final boolean myDownloadDocs;
   private final @Nullable AsyncPromise<? super MavenArtifactDownloader.DownloadResult> myCallbackResult;
+  private final @NotNull MavenProjectsTree myTree;
 
   public MavenProjectsProcessorArtifactsDownloadingTask(@NotNull Collection<MavenProject> projects,
+                                                        @NotNull MavenProjectsTree tree,
                                                         @Nullable Collection<MavenArtifact> artifacts,
-                                                        @NotNull MavenProjectResolver resolver,
                                                         boolean downloadSources,
                                                         boolean downloadDocs,
                                                         @Nullable AsyncPromise<? super MavenArtifactDownloader.DownloadResult> callbackResult) {
     myProjects = projects;
+    myTree = tree;
     myArtifacts = artifacts;
-    myResolver = resolver;
     myDownloadSources = downloadSources;
     myDownloadDocs = downloadDocs;
     myCallbackResult = callbackResult;
@@ -50,14 +50,8 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
     try {
       downloadConsole.startDownload(progressListener, myDownloadSources, myDownloadDocs);
       downloadConsole.startDownloadTask();
-      result = myResolver.downloadSourcesAndJavadocs(project,
-                                                     myProjects,
-                                                     myArtifacts,
-                                                     myDownloadSources,
-                                                     myDownloadDocs,
-                                                     embeddersManager,
-                                                     console,
-                                                     indicator);
+      var downloader = new MavenArtifactDownloader(project, myTree, myArtifacts, indicator);
+      result = downloader.downloadSourcesAndJavadocs(myProjects, myDownloadSources, myDownloadDocs, embeddersManager, console);
       downloadConsole.finishDownloadTask();
     }
     catch (Exception e) {
@@ -71,7 +65,7 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      VirtualFileManager.getInstance().asyncRefresh(null);
+      VirtualFileManager.getInstance().asyncRefresh();
     }, project.getDisposed());
   }
 }

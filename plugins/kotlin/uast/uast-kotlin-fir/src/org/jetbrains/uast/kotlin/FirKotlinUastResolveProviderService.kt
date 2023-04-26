@@ -582,23 +582,40 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun hasInheritedGenericType(psiElement: PsiElement): Boolean {
+        return when (psiElement) {
+            is KtTypeReference ->
+                analyzeForUast(psiElement) {
+                    isInheritedGenericType(psiElement.getKtType())
+                }
+            is KtCallableDeclaration ->
+                analyzeForUast(psiElement) {
+                    isInheritedGenericType(getKtType(psiElement))
+                }
+            is KtDestructuringDeclaration ->
+                analyzeForUast(psiElement) {
+                    isInheritedGenericType(psiElement.getReturnKtType())
+                }
+            else -> false
+        }
+    }
+
     override fun nullability(psiElement: PsiElement): KtTypeNullability? {
-        if (psiElement is KtTypeReference) {
-            analyzeForUast(psiElement) {
-                nullability(psiElement.getKtType())?.let { return it }
-            }
+        return when (psiElement) {
+            is KtTypeReference ->
+                analyzeForUast(psiElement) {
+                    nullability(psiElement.getKtType())
+                }
+            is KtCallableDeclaration ->
+                analyzeForUast(psiElement) {
+                    nullability(getKtType(psiElement))
+                }
+            is KtDestructuringDeclaration ->
+                analyzeForUast(psiElement) {
+                    nullability(psiElement.getReturnKtType())
+                }
+            else -> null
         }
-        if (psiElement is KtCallableDeclaration) {
-            analyzeForUast(psiElement) {
-                nullability(psiElement)?.let { return it }
-            }
-        }
-        if (psiElement is KtDestructuringDeclaration) {
-            analyzeForUast(psiElement) {
-                nullability(psiElement)?.let { return it }
-            }
-        }
-        return null
     }
 
     override fun evaluate(uExpression: UExpression): Any? {

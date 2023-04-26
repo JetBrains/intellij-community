@@ -94,12 +94,9 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     return content.panel;
   }
 
-  boolean isSpecificallyModified() {
-    if (myRCStorageUi != null) {
-      return myRCStorageUi.isModified();
-    }
-
-    return false;
+  @Override
+  public boolean isSpecificallyModified() {
+    return myRCStorageUi != null && myRCStorageUi.isModified() || myEditor.isSpecificallyModified();
   }
 
   @Override

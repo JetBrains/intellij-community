@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 
+/**
+ * List of all configurable spacings for building Kotlin UI DSL panels. All returned values are unscaled
+ */
 interface SpacingConfiguration {
 
   /**
@@ -64,7 +66,7 @@ interface SpacingConfiguration {
   /**
    * Gaps between dialog content and its content
    */
-  val dialogGap: Gaps
+  val dialogGap: UnscaledGaps
 }
 
 open class EmptySpacingConfiguration : SpacingConfiguration {
@@ -79,20 +81,20 @@ open class EmptySpacingConfiguration : SpacingConfiguration {
   override val buttonGroupHeaderBottomGap = 0
   override val segmentedButtonVerticalGap = 0
   override val segmentedButtonHorizontalGap = 0
-  override val dialogGap = Gaps.EMPTY
+  override val dialogGap = UnscaledGaps.EMPTY
 }
 
 open class IntelliJSpacingConfiguration : SpacingConfiguration {
-  override val horizontalSmallGap = JBUI.scale(6)
-  override val horizontalDefaultGap = JBUI.scale(16)
-  override val horizontalColumnsGap = JBUI.scale(60)
-  override val horizontalIndent = JBUI.scale(20)
-  override val horizontalToggleButtonIndent = JBUI.scale(20)
-  override val verticalComponentGap = JBUI.scale(6)
-  override val verticalSmallGap = JBUI.scale(8)
-  override val verticalMediumGap = JBUI.scale(20)
-  override val buttonGroupHeaderBottomGap = JBUI.scale(2)
-  override val segmentedButtonVerticalGap = JBUI.scale(3)
-  override val segmentedButtonHorizontalGap = JBUI.scale(12)
-  override val dialogGap = Gaps(10, 12, 10, 12)
+  override val horizontalSmallGap = 6
+  override val horizontalDefaultGap = 16
+  override val horizontalColumnsGap = 60
+  override val horizontalIndent = 20
+  override val horizontalToggleButtonIndent = 20
+  override val verticalComponentGap = 6
+  override val verticalSmallGap = 8
+  override val verticalMediumGap = 20
+  override val buttonGroupHeaderBottomGap = 2
+  override val segmentedButtonVerticalGap = 3
+  override val segmentedButtonHorizontalGap = 12
+  override val dialogGap = UnscaledGaps(10, 12, 10, 12)
 }

@@ -94,7 +94,7 @@ public final class BackgroundHighlightingUtil {
   }
 
   @NotNull
-  static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
+  private static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
     PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
     if (injectedElement != null) {
       PsiFile injected = injectedElement.getContainingFile();

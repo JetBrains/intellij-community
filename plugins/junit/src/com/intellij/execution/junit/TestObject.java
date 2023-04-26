@@ -682,7 +682,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected String getRunner() {
     synchronized (LOCK) {
       if (myRunner == null) {
-        myRunner = ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously();
+        myRunner = ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(() -> ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously(),
+                                               JUnitBundle.message("dialog.title.preparing.test"),
+                                               true, myConfiguration.getProject());
       }
       return myRunner;
     }

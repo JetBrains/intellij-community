@@ -43,7 +43,7 @@ public class NamePatternDefault
     @JsonPropertyDescription("A reference to an element in Web-Types model.")
     private Reference delegate;
     @JsonProperty("deprecated")
-    private Boolean deprecated = false;
+    private Deprecated deprecated = null;
     @JsonProperty("priority")
     private com.intellij.webSymbols.webTypes.json.BaseContribution.Priority priority;
     @JsonProperty("proximity")
@@ -125,12 +125,12 @@ public class NamePatternDefault
     }
 
     @JsonProperty("deprecated")
-    public Boolean getDeprecated() {
+    public Deprecated getDeprecated() {
         return deprecated;
     }
 
     @JsonProperty("deprecated")
-    public void setDeprecated(Boolean deprecated) {
+    public void setDeprecated(Deprecated deprecated) {
         this.deprecated = deprecated;
     }
 

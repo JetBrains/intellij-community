@@ -159,8 +159,7 @@ public class MarkerType {
   }
 
   private static void navigateToOverridingMethod(MouseEvent e, @NotNull PsiMethod method, boolean acceptSelf) {
-    Supplier<List<PsiMethod>> supplier = () -> Arrays.asList(composeSuperMethods(method, acceptSelf));
-    navigate(e, method, supplier);
+    navigate(e, method, () -> Arrays.asList(composeSuperMethods(method, acceptSelf)));
   }
 
   private static void navigateToSiblingOverridingMethod(MouseEvent e, @NotNull PsiMethod method) {
@@ -169,7 +168,7 @@ public class MarkerType {
     navigate(e, method, () -> Collections.singletonList(method));
   }
 
-  private static void navigate(MouseEvent e, @NotNull PsiMethod method, Supplier<List<PsiMethod>> supplier) {
+  private static void navigate(MouseEvent e, @NotNull PsiMethod method, Supplier<Collection<PsiMethod>> supplier) {
     new PsiTargetNavigator<>(supplier)
       .tabTitle(DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()))
       .elementsConsumer((methods, navigator) -> {

@@ -62,12 +62,14 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   fun findExternalReferences(): List<ExternalReference> {
     return ControlFlowUtil.getInputVariables(flow, flowRange.first, flowRange.last)
       .filterNot { variable -> variable in this }
-      .sortedWith( Comparator { v1: PsiVariable, v2: PsiVariable -> when {
-          v1.type is PsiEllipsisType -> 1
-          v2.type is PsiEllipsisType -> -1
-          else -> v1.textOffset - v2.textOffset
-      }})
       .map { variable -> ExternalReference(variable, findVariableReferences(variable)) }
+      .sortedBy { externalReference ->
+        if (externalReference.variable is PsiParameter) {
+          externalReference.variable.textRange.startOffset
+        } else {
+          externalReference.references.minOf { reference -> reference.textRange.startOffset }
+        }
+      }
   }
 
   fun findUsedVariablesAfter(): List<PsiVariable> {
@@ -246,8 +248,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     fun inferNullability(place: PsiElement, probeExpression: String?): Nullability {
       if (probeExpression == null) return Nullability.UNKNOWN
       val factory = PsiElementFactory.getInstance(place.project)
-      val sourceClass = findClassMember(place)?.containingClass ?: return Nullability.UNKNOWN
-      val copyFile = sourceClass.containingFile.copy() as PsiFile
+      val context = PsiTreeUtil.getContextOfType(place, PsiClass::class.java) ?: return Nullability.UNKNOWN
+      val copyFile = context.containingFile.copy() as PsiFile
       val copyPlace = PsiTreeUtil.findSameElementInCopy(place, copyFile)
       val probeStatement = factory.createStatementFromText("return $probeExpression;", null)
 

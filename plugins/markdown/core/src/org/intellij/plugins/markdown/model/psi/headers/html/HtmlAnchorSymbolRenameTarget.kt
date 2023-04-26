@@ -1,7 +1,7 @@
 package org.intellij.plugins.markdown.model.psi.headers.html
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.refactoring.rename.api.RenameTarget
 
 internal class HtmlAnchorSymbolRenameTarget(val symbol: HtmlAnchorSymbol): RenameTarget {

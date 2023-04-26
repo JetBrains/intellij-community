@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.options.ex.Weighted;
@@ -769,7 +770,12 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       result.add(new PropertyBean("Configurable class", UiInspectorUtil.getClassPresentation(configurable), true));
 
       if (wrapper instanceof SearchableConfigurable searchableConfigurable) {
-        result.add(new PropertyBean("Configurable ID", searchableConfigurable.getId(), true));
+        String configurableId = searchableConfigurable.getId();
+        result.add(new PropertyBean("Configurable ID", configurableId, true));
+        if (configurableId.startsWith(ConfigurableExtensionPointUtil.CONFIGURABLE_ID_PREFIX)) {
+          String realConfigurableId = configurableId.substring(ConfigurableExtensionPointUtil.CONFIGURABLE_ID_PREFIX.length());
+          result.add(new PropertyBean("Configurable ID (groupId)", realConfigurableId, true));
+        }
       }
       if (wrapper.getHelpTopic() != null) {
         result.add(new PropertyBean("Configurable HelpTopic", wrapper.getHelpTopic(), true));

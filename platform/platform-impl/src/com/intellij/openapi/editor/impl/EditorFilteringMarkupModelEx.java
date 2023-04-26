@@ -65,14 +65,6 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
     return new FilteringMarkupIterator<>(myDelegate.overlappingIterator(startOffset, endOffset), this::isAvailable);
   }
 
-  @NotNull
-  @Override
-  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                                int endOffset,
-                                                                boolean onlyRenderedInGutter) {
-    return new FilteringMarkupIterator<>(myDelegate.overlappingIterator(startOffset, endOffset, onlyRenderedInGutter), this::isAvailable);
-  }
-
   @Override
   public RangeHighlighter @NotNull [] getAllHighlighters() {
     List<RangeHighlighter> list = ContainerUtil.filter(myDelegate.getAllHighlighters(), IS_AVAILABLE);
@@ -99,22 +91,6 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
-                                    boolean renderersChanged, boolean fontStyleOrColorChanged) {
-    myDelegate.fireAttributesChanged(segmentHighlighter, renderersChanged, fontStyleOrColorChanged);
-  }
-
-  @Override
-  public void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter) {
-    myDelegate.fireAfterAdded(segmentHighlighter);
-  }
-
-  @Override
-  public void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
-    myDelegate.fireBeforeRemoved(segmentHighlighter);
-  }
-
-  @Override
   @Nullable
   public RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer) {
     return myDelegate.addPersistentLineHighlighter(textAttributesKey, lineNumber, layer);
@@ -123,16 +99,6 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @Override
   public @Nullable RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
     return myDelegate.addPersistentLineHighlighter(lineNumber, layer, textAttributes);
-  }
-
-  @Override
-  public void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
-                                  int start,
-                                  int end,
-                                  boolean greedyToLeft,
-                                  boolean greedyToRight,
-                                  int layer) {
-    myDelegate.addRangeHighlighter(marker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   @Override

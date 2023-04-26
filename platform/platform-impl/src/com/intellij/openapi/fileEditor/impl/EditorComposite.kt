@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
@@ -176,7 +175,10 @@ open class EditorComposite internal constructor(
     get() = allProviders.toTypedArray()
 
   override val allProviders: List<FileEditorProvider>
-    get() = allEditorsWithProviders.map { it.provider }
+    get() = providerSequence.toList()
+
+  internal val providerSequence: Sequence<FileEditorProvider>
+    get() = editorsWithProviders.asSequence().map { it.provider }
 
   private fun createTabbedPaneWrapper(component: EditorCompositePanel?): TabbedPaneWrapper {
     val descriptor = PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB)
@@ -278,7 +280,7 @@ open class EditorComposite internal constructor(
     get() = allEditors.toTypedArray()
 
   override val allEditors: List<FileEditor>
-    get() = allEditorsWithProviders.map { it.fileEditor }
+    get() = editorsWithProviders.map { it.fileEditor }
 
   val allEditorsWithProviders: List<FileEditorWithProvider>
     get() = java.util.List.copyOf(editorsWithProviders)
@@ -499,7 +501,7 @@ private class EditorCompositePanel(realComponent: JComponent,
   }
 }
 
-private class TopBottomPanel : JBPanelWithEmptyText() {
+private class TopBottomPanel : JPanel() {
   init {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
   }

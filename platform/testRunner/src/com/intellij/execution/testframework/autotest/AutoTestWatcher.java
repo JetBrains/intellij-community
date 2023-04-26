@@ -15,9 +15,12 @@
  */
 package com.intellij.execution.testframework.autotest;
 
-public interface AutoTestWatcher {
-  void activate();
-  void deactivate();
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 
-  boolean isUpToDate(int modificationStamp);
+public interface AutoTestWatcher {
+  @RequiresEdt(generateAssertion = false)
+  void activate();
+
+  @RequiresEdt(generateAssertion = false)
+  void deactivate();
 }

@@ -2,9 +2,9 @@
   "name": "Dark",
   "dark": true,
   "author": "JetBrains",
-  "editorScheme": "/themes/expUI/expUI_darkScheme_RC.xml",
+  "editorScheme": "/themes/expUI/expUI_darkScheme.xml",
   "additionalEditorSchemes": [
-    "/themes/expUI/expUI_darkScheme.xml"
+    "/themes/expUI/expUI_darculaContrastScheme.xml"
   ],
 
   "colors": {
@@ -250,9 +250,11 @@
     "EditorTabs": {
       "underlineArc": "4",
       "unselectedBlend": "0.7",
+      "background": "Grey1",
       "hoverBackground": "#1E1F2200",
       "inactiveHoverBackground": "#1E1F2200",
       "inactiveColoredFileBackground": "#1E1F2280",
+      "underlinedTabBackground": "Grey1",
       "underTabsBorderColor":"Grey3"
     },
 
@@ -355,10 +357,7 @@
         "foreground": "Grey8",
         "background": "Grey3",
         "borderColor": "Grey3",
-        "fontSizeOffset": {
-          "os.default": -1,
-          "os.windows": 0
-        }
+        "fontSizeOffset": -1
       },
       "Header": {
         "activeBackground": "Grey2",
@@ -480,6 +479,9 @@
       "Header.foreground": "Grey14",
       "shortcutForeground": "Grey14",
       "shortcutBackground": "Grey5",
+      "codeForeground": "Grey14",
+      "codeBackground": "Grey3",
+      "codeBorderColor": "Grey7",
       "linkForeground": "Blue9",
       "Button": {
         "foreground": "Grey14",
@@ -535,7 +537,7 @@
         "maxWidth": 350
       },
       "background": "Grey2",
-      "separatorColor": "Grey1"
+      "separatorColor": "Grey4"
     },
 
     "Tree": {
@@ -593,7 +595,8 @@
       "spanBackground": "Blue4",
       "spanForeground": "Grey14",
       "foreground": "Grey14",
-      "stepNumberForeground": "Blue11"
+      "stepNumberForeground": "Blue11",
+      "codeBorderColor": "#FFFFFFBF"
     },
 
     "UnattendedHostStatus": {
@@ -690,7 +693,9 @@
       "hoverBackground": "#1A1A1B",
       "separatorColor": "Grey2",
       "borderColor": "Grey1"
-    }
+    },
+
+    "MainWindow.FullScreeControl.Background": "#575A5C"
   },
 
   "icons": {

@@ -6,9 +6,9 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.ui.IconReplacer
-import com.intellij.ui.IconWrapperWithToolTip
 import com.intellij.ui.JBColor
+import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.IconWrapperWithToolTip
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.RegionPainter
 import java.awt.Component

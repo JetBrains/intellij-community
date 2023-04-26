@@ -13,21 +13,24 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
 import com.intellij.refactoring.extractMethod.newImpl.*
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replacePsiRange
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replaceWithMethod
 import com.intellij.refactoring.extractMethod.newImpl.JavaDuplicatesFinder.Companion.textRangeOf
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
+import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl
 import com.intellij.ui.ReplacePromptDialog
 import com.siyeh.ig.psiutils.SideEffectChecker.mayHaveSideEffects
 
-class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: PsiMember, val elements: List<PsiElement>) {
+class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetClass: PsiClass, val elements: List<PsiElement>) {
 
   companion object {
     private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode
@@ -39,28 +42,29 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
       JavaDuplicatesFinder.linkCopiedClassMembersWithOrigin(file)
       val copiedFile = file.copy() as PsiFile
       val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
-      val copiedElements = elements.map { PsiTreeUtil.findSameElementInCopy(it, copiedFile) }
+      val expression = elements.singleOrNull() as? PsiExpression
+      val virtualExpressionRange = expression?.getUserData(ElementToWorkOn.TEXT_RANGE)?.textRange
+      val range = virtualExpressionRange ?: TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
+      val copiedElements = ExtractSelector().suggestElementsToExtract(copiedFile, range)
       val extractOptions = findExtractOptions(copiedClass, copiedElements, methodName, makeStatic)
-      val anchor = PsiTreeUtil.findSameElementInCopy(extractOptions.anchor, file)
-      return DuplicatesMethodExtractor(extractOptions, anchor, elements)
+      return DuplicatesMethodExtractor(extractOptions, targetClass, elements)
     }
   }
 
   private var callsToReplace: List<SmartPsiElementPointer<PsiElement>>? = null
 
   fun extract(): ExtractedElements {
-    val file = anchor.containingFile
+    val file = targetClass.containingFile
     val document = file.viewProvider.document
 
-    val elementsToReplace = MethodExtractor().prepareRefactoringElements(extractOptions)
-    val (calls, method) = runWriteAction {
-      val callElements = replacePsiRange(elements, elementsToReplace.callElements)
-      val addedMethod = anchor.addSiblingAfter(elementsToReplace.method) as PsiMethod
-      Pair(callElements, addedMethod)
+    val preparedElements = MethodExtractor().prepareRefactoringElements(extractOptions)
+    val (callsPointer, methodPointer) = runWriteAction {
+      val (calls, method) = replaceWithMethod(targetClass, elements, preparedElements)
+      val methodPointer = SmartPointerManager.createPointer(method)
+      val callsPointer = calls.map(SmartPointerManager::createPointer)
+      Pair(callsPointer, methodPointer)
     }
 
-    val methodPointer = SmartPointerManager.createPointer(method)
-    val callsPointer = calls.map(SmartPointerManager::createPointer)
     val manager = PsiDocumentManager.getInstance(file.project)
     manager.doPostponedOperationsAndUnblockDocument(document)
     manager.commitDocument(document)
@@ -102,9 +106,10 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
     val exactDuplicates = duplicates.filter { duplicate ->
       duplicate.changedExpressions.all { changedExpression -> changedExpression.pattern in initialParameters }
     }
-    val oldMethodCall = findMethodCallInside(calls.firstOrNull()) ?: throw IllegalStateException()
-    val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull()) ?: throw IllegalStateException()
+    val oldMethodCall = findMethodCallInside(calls.firstOrNull())
+    val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull())
     fun confirmChangeSignature(): Boolean {
+      if (oldMethodCall == null || newMethodCall == null) return false
       val manager = CodeStyleManager.getInstance(project)
       val initialMethod = manager.reformat(method.copy()) as PsiMethod
       val parametrizedMethod = manager.reformat(parametrizedExtraction.method) as PsiMethod
@@ -160,7 +165,17 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
     val sizeAfter = callAfter.sumOf(::calculateCodeLeafs)
     val sizeBefore = callBefore.sumOf(::calculateCodeLeafs)
     val addedParameters = updatedParameters.size - initialParameters.size
-    return 1.75 * sizeAfter < sizeBefore && addedParameters <= 3 && updatedParameters.size <= 5
+    if (addedParameters <= 0) {
+      // do not require reduce in call size if we just replace parameter
+      return sizeAfter <= sizeBefore
+    }
+    else if (addedParameters <= 3) {
+      // require significant reduce in call if we introduce new parameters
+      return 1.75 * sizeAfter < sizeBefore && updatedParameters.size <= 5
+    }
+    else {
+      return false
+    }
   }
 
   private fun calculateCodeLeafs(element: PsiElement): Int {
@@ -187,8 +202,11 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
   }
 
   private fun findNewParameters(parameters: List<InputParameter>, duplicates: List<Duplicate>): List<InputParameter> {
-    return duplicates
-      .fold(parameters) { updatedParameters, duplicate -> updateParameters(updatedParameters, duplicate.changedExpressions) }
+    if (duplicates.isEmpty()) return parameters
+    val updatedParameters = duplicates.fold(parameters) { updatedParameters, duplicate ->
+      updateParameters(updatedParameters, duplicate.changedExpressions)
+    }
+    return ExtractMethodPipeline.foldParameters(updatedParameters, LocalSearchScope(duplicates.first().pattern.toTypedArray()))
   }
 
   private fun confirmDuplicates(project: Project, editor: Editor, duplicates: List<Duplicate>): List<Duplicate> {
@@ -275,7 +293,11 @@ fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodNam
   dialog.selectStaticFlag(makeStatic)
   if (!dialog.showAndGet()) return
   val dialogOptions = ExtractMethodPipeline.withDialogParameters(extractor.extractOptions, dialog)
-  val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, extractor.anchor, extractor.elements)
+  val passFieldsAsParameters = extractor.extractOptions.inputParameters.size != dialogOptions.inputParameters.size
+  if (!passFieldsAsParameters) {
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = dialogOptions.isStatic
+  }
+  val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, targetClass, extractor.elements)
   MethodExtractor().executeRefactoringCommand(targetClass.project) {
     MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
     val (_, method) = mappedExtractor.extract()

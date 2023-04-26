@@ -16,7 +16,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
@@ -314,13 +313,15 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   public void fireCodeStyleSettingsChanged(@NotNull VirtualFile file) {
-    ObjectUtils.consumeIfNotNull(getProject(), project ->
-      fireCodeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(project, file)));
+    if (getProject() != null) {
+      fireCodeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), file));
+    }
   }
 
   public void fireCodeStyleSettingsChanged() {
-    ObjectUtils.consumeIfNotNull(getProject(), project ->
-      fireCodeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(project, null)));
+    if (getProject() != null) {
+      fireCodeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), null));
+    }
   }
 
   private void fireCodeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {

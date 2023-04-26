@@ -2,11 +2,11 @@
 package org.jetbrains.uast.java.expressions
 
 import com.intellij.psi.*
-import com.intellij.util.asSafely
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UMultiResolvable
 import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.java.JavaAbstractUExpression
+import org.jetbrains.uast.java.asSafely
 
 internal class JavaUModuleReferenceExpression(
   override val sourcePsi: PsiJavaModuleReferenceElement,

@@ -20,7 +20,7 @@ public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
 
   public IntIntPersistentMultiMaplet(final File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
     myMap = new PersistentHashMap<>(file, keyExternalizer, new IntSetExternalizer());
-    myCache = new SLRUCache<Integer, IntSet>(CACHE_SIZE, CACHE_SIZE) {
+    myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override
       public IntSet createValue(Integer key) {

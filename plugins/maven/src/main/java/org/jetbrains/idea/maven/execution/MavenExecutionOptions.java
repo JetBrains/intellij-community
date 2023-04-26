@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.execution;
 
 import org.jetbrains.idea.maven.server.MavenServerConsole;
-import org.jetbrains.idea.maven.server.MavenServerSettings;
 
 public class MavenExecutionOptions {
   public enum LoggingLevel {
@@ -86,31 +85,4 @@ public class MavenExecutionOptions {
     }
   }
 
-  public enum PluginUpdatePolicy {
-    UPDATE("maven.plugin.update", "--check-plugin-updates", MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE),
-    DO_NOT_UPDATE("maven.plugin.noupdate", "--no-plugin-updates", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE),
-    DEFAULT("maven.plugin.default", "", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
-
-    private final String myMessageKey;
-    private final String myCommandLineOption;
-    private final MavenServerSettings.UpdatePolicy myServerPolicy;
-
-    PluginUpdatePolicy(String messageKey, String commandLineOption, MavenServerSettings.UpdatePolicy policy) {
-      myMessageKey = messageKey;
-      myCommandLineOption = commandLineOption;
-      myServerPolicy = policy;
-    }
-
-    public String getDisplayString() {
-      return RunnerBundle.message(myMessageKey);
-    }
-
-    public String getCommandLineOption() {
-      return myCommandLineOption;
-    }
-
-    public MavenServerSettings.UpdatePolicy getServerPolicy() {
-      return myServerPolicy;
-    }
-  }
 }

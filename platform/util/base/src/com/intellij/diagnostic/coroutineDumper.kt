@@ -4,7 +4,6 @@
 
 package com.intellij.diagnostic
 
-import com.intellij.diagnostic.StackframeShrinkVerdict.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.CoroutineInfo
 import kotlinx.coroutines.debug.DebugProbes
@@ -12,13 +11,23 @@ import kotlinx.coroutines.debug.internal.DebugCoroutineInfo
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import kotlinx.coroutines.debug.internal.SUSPENDED
 import kotlinx.coroutines.internal.ScopeCoroutine
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+@Internal
+const val COROUTINE_DUMP_HEADER: @NonNls String = "---------- Coroutine dump ----------"
+internal const val COROUTINE_DUMP_HEADER_STRIPPED: @NonNls String = "---------- Coroutine dump (stripped) ----------"
+
+@Internal
+fun isCoroutineDumpHeader(line: String): Boolean {
+  return line == COROUTINE_DUMP_HEADER || line == COROUTINE_DUMP_HEADER_STRIPPED
+}
 
 fun enableCoroutineDump() {
   runCatching {
@@ -186,84 +195,7 @@ private suspend fun SequenceScope<JobTreeNode>.jobTree(
 private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<StackTraceElement> {
   val trace = info.lastObservedStackTrace
   if (stripTrace && info.state == SUSPENDED) {
-    return stripTrace(trace)
+    return stripCoroutineTrace(trace)
   }
   return DebugProbesImpl.enhanceStackTraceWithThreadDump(info, trace)
 }
-
-@VisibleForTesting
-fun stripTrace(trace: List<StackTraceElement>): List<StackTraceElement> {
-  if (trace.isEmpty()) {
-    return emptyList()
-  }
-
-  var startIndex = 0
-  while (startIndex < trace.size && shouldShrinkStackframe(trace[startIndex]) == OMIT) {
-    startIndex++
-  }
-  while (startIndex + 1 < trace.size &&
-         shouldShrinkStackframe(trace[startIndex]) == SHRINK &&
-         shouldShrinkStackframe(trace[startIndex + 1]) == SHRINK) {
-    startIndex++
-  }
-
-  val lastNonLibFrameIndex = trace.indexOfLast { !it.className.startsWith("kotlinx.coroutines.") }
-  if (lastNonLibFrameIndex != -1) {
-    // drop every library frame that comes after last non-library frame
-    return trace.subList(startIndex, lastNonLibFrameIndex.coerceAtLeast(startIndex) + 1)
-  }
-
-  // trace consists only of kotlinx.coroutines.* frames
-  var afterLastIndex = trace.size
-  while (startIndex < afterLastIndex - 1 &&
-         shouldShrinkStackframe(trace[afterLastIndex - 1]) == OMIT) {
-    afterLastIndex--
-  }
-  // TODO: strip SHRINK in the end?
-
-  return trace.subList(startIndex, afterLastIndex)
-}
-
-private enum class StackframeShrinkVerdict {
-  // stackframe must not be omitted
-  KEEP,
-
-  // leave at least one stackframe from a continuous group of SHRINK stackframes
-  SHRINK,
-
-  // stackframe can be omitted
-  OMIT
-}
-
-private fun shouldShrinkStackframe(stackframe: StackTraceElement): StackframeShrinkVerdict =
-  when (stackframe.className + "." + stackframe.methodName) {
-    // kotlinx.coroutines.channels
-    "kotlinx.coroutines.channels.AbstractChannel.receiveCatching-JP2dKIU" -> OMIT
-    "kotlinx.coroutines.channels.ProduceKt.awaitClose" -> OMIT
-
-    // kotlinx.coroutines.flow
-    "kotlinx.coroutines.flow.SharedFlowImpl.collect\$suspendImpl" -> OMIT
-    "kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl\$FlowKt__ChannelsKt" -> OMIT
-    "kotlinx.coroutines.flow.FlowKt__DelayKt\$debounceInternal\$1.invokeSuspend" -> OMIT
-    "kotlinx.coroutines.flow.FlowKt__DelayKt\$debounceInternal\$1\$values\$1.invokeSuspend" -> OMIT
-    "kotlinx.coroutines.flow.FlowKt__ReduceKt.first" -> OMIT
-    "kotlinx.coroutines.flow.CallbackFlowBuilder.collectTo" -> OMIT
-    "kotlinx.coroutines.flow.StateFlowImpl.collect" -> SHRINK
-
-    // kotlinx.coroutines.flow.internal
-    "kotlinx.coroutines.flow.internal.FlowCoroutineKt\$scopedFlow\$1\$1.invokeSuspend" -> OMIT
-    "kotlinx.coroutines.flow.internal.ChannelFlow\$collect\$2.invokeSuspend" -> OMIT
-    "kotlinx.coroutines.flow.internal.ChannelFlow\$collectToFun\$1.invokeSuspend" -> OMIT
-    "kotlinx.coroutines.flow.internal.CombineKt\$combineInternal\$2.invokeSuspend" -> SHRINK
-    "kotlinx.coroutines.flow.internal.CombineKt\$combineInternal\$2\$1.invokeSuspend" -> SHRINK
-    "kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest\$flowCollect\$" -> KEEP
-
-    // other in kotlinx.coroutines
-    "kotlinx.coroutines.DelayKt.awaitCancellation" -> OMIT
-
-    // com.intellij
-    "com.intellij.util.CoroutineScopeKt\$namedChildScope\$2\$1.invokeSuspend" -> OMIT
-    "com.intellij.util.CoroutineScopeKt\$namedChildScope\$2.invokeSuspend" -> KEEP
-
-    else -> KEEP
-  }

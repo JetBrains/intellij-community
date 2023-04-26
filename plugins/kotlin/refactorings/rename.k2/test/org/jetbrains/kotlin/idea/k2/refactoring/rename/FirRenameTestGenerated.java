@@ -888,6 +888,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFunctionParameterWithByNameUsages/renameKotlinFunctionParameterWithByNameUsages.test");
     }
 
+    @TestMetadata("renameKotlinFunctionSameNameAsFilename/renameKotlinFunctionSameNameAsFilename.test")
+    public void testRenameKotlinFunctionSameNameAsFilename_RenameKotlinFunctionSameNameAsFilename() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFunctionSameNameAsFilename/renameKotlinFunctionSameNameAsFilename.test");
+    }
+
     @TestMetadata("renameKotlinMethodWithEscapedName/renameKotlinMethodWithEscapedName.test")
     public void testRenameKotlinMethodWithEscapedName_RenameKotlinMethodWithEscapedName() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinMethodWithEscapedName/renameKotlinMethodWithEscapedName.test");

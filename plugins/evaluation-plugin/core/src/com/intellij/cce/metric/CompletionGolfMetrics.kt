@@ -6,6 +6,7 @@ import com.intellij.cce.metric.util.Sample
 
 internal fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
+    MatchedRatio(),
     MovesCount(),
     TypingsCount(),
     NavigationsCount(),
@@ -14,7 +15,8 @@ internal fun createCompletionGolfMetrics(): List<Metric> =
     PerfectLine(),
     Precision(),
     RecallAt(1),
-    RecallAt(5)
+    RecallAt(5),
+    Recall()
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {
@@ -135,6 +137,34 @@ internal class MovesCountNormalised : Metric {
   }
 }
 
+internal class MatchedRatio : Metric {
+  private var totalMatched: Int = 0
+  private var totalExpected: Int = 0
+
+  override val name = "Matched Ratio"
+  override val valueType = MetricValueType.DOUBLE
+  override val showByDefault: Boolean = false
+  override val value: Double
+    get() = totalMatched.toDouble() / totalExpected
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+    var matched = 0
+    var expected = 0
+    for (session in sessions) {
+      for (lookup in session.lookups) {
+        val expectedText = session.expectedText.substring(lookup.offset)
+        expected += expectedText.length
+        lookup.selectedWithoutPrefix()?.let {
+          matched += it.length
+        }
+      }
+    }
+    totalMatched += matched
+    totalExpected += expected
+    return matched.toDouble() / expected
+  }
+}
+
 internal class PerfectLine : CompletionGolfMetric<Int>() {
   override val name = NAME
   override val valueType = MetricValueType.INT
@@ -175,9 +205,9 @@ internal class Precision : Metric {
   }
 }
 
-internal class RecallAt(private val n: Int) : Metric {
+internal open class RecallAt(private val n: Int) : Metric {
   private val sample = Sample()
-  override val name = NAME_PREFIX + n
+  override val name = "RecallAt$n"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.mean()
@@ -197,10 +227,11 @@ internal class RecallAt(private val n: Int) : Metric {
     }
     return fileSample.mean()
   }
+}
 
-  companion object {
-    const val NAME_PREFIX = "RecallAt"
-  }
+internal class Recall : RecallAt(Int.MAX_VALUE) {
+  override val name = "Recall"
+  override val showByDefault: Boolean = false
 }
 
 private fun Session.expectedLength(): Int = expectedText.length - (lookups.firstOrNull()?.offset ?: 0)

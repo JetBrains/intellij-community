@@ -70,7 +70,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
-        class <warning descr="Class 'B' annotated with '@Nested' should be non-static">B</warning> { }
+        class <warning descr="Tests in nested class will not be executed">B</warning> { }
       }
     """.trimIndent())
   }
@@ -85,6 +85,67 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
             @org.junit.jupiter.api.Nested
             inner class B { }
         }
+    """.trimIndent(), "Fix 'B' class signature")
+  }
+  fun `test highlighting non executable JUnit 4 nested class`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class A { 
+        class <warning descr="Tests in nested class will not be executed">B</warning> { 
+          @org.junit.Test
+          fun testFoo() { }
+        }
+      }  
+    """.trimIndent())
+  }
+  fun `test quickfix no nested annotation in JUnit 4`() {
+    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """ 
+      class A {
+          class <caret>B { 
+              @org.junit.Test
+              fun testFoo() { }
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.experimental.runners.Enclosed
+      import org.junit.runner.RunWith
+      
+      @RunWith(Enclosed::class)
+      class A {
+          class B { 
+              @org.junit.Test
+              fun testFoo() { }
+          }
+      }
+    """.trimIndent(), "Fix class signatures")
+  }
+  fun `test highlighting no nested annotation in JUnit 5`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class A {
+          class <warning descr="Tests in nested class will not be executed">B</warning> { 
+              @org.junit.jupiter.api.Test
+              fun testFoo() { }
+          }
+      }  
+    """.trimIndent())
+  }
+  fun `test quickfix no nested annotation in JUnit 5`() {
+    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
+      class A {
+          inner class B<caret> { 
+              @org.junit.jupiter.api.Test
+              fun testFoo() { }
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.jupiter.api.Nested
+      
+      class A {
+          @Nested
+          inner class B { 
+              @org.junit.jupiter.api.Test
+              fun testFoo() { }
+          }
+      }
     """.trimIndent(), "Fix 'B' class signature")
   }
 
@@ -1130,7 +1191,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         @org.junit.Test public fun <warning descr="Method 'testFour' annotated with '@Test' should not declare parameter 'i'">testFour</warning>(i: Int) { }
         @org.junit.Test public fun testFive() { }
         @org.junit.Test public fun testMock(@mockit.Mocked s: String) { }
-        companion <warning descr="Test class 'object' is not constructable because it should have exactly one 'public' no-arg constructor">object</warning> {
+        companion <warning descr="Test class 'object' is not constructable because it should have exactly one 'public' no-arg constructor"><warning descr="Tests in nested class will not be executed">object</warning></warning> {
           @JvmStatic
           @org.junit.Test public fun <warning descr="Method 'testThree' annotated with '@Test' should be non-static">testThree</warning>() { }
         }

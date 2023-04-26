@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.CancellablePromise;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -185,14 +186,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private @NotNull Function<? super String, ? extends Component> mySeparatorCreator = (name) -> new MySeparator(name);
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
-    this(place, actionGroup, horizontal, false);
+    this(place, actionGroup, horizontal, false, true);
   }
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
-                           boolean decorateButtons) {
-    this(place, actionGroup, horizontal, decorateButtons, null, null);
+                           boolean decorateButtons,
+                           boolean customizable) {
+    this(place, actionGroup, horizontal, decorateButtons, customizable, null, null);
   }
 
 
@@ -200,6 +202,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
                            boolean decorateButtons,
+                           boolean customizable,
                            @Nullable ActionGroup popupActionGroup,
                            @Nullable String popupActionId) {
     super(null);
@@ -251,11 +254,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
 
-    if (popupActionGroup == null) {
-      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
+    if (customizable) {
+      if (popupActionGroup == null) {
+        myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
+      }
+      else {
+        myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), place);
+      }
     }
     else {
-      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), place);
+      myPopupHandler = popupActionGroup != null
+                       ? PopupHandler.installPopupMenu(this.getComponent(), popupActionGroup, place)
+                       : null;
     }
   }
 
@@ -1139,6 +1149,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     private MySeparator(String text) {
       myText = text;
       setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
+      UISettings.setupComponentAntialiasing(this);
     }
 
     @Override
@@ -1152,7 +1163,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         if (myText != null) {
           FontMetrics fontMetrics = getFontMetrics(getFont());
 
-          int textWidth = getTextWidth(fontMetrics, myText, getGraphics());
+          int textWidth = SwingUtilities2.stringWidth(this, fontMetrics, myText);
           return new JBDimension(width + gap * 2 + textWidth,
                                  Math.max(fontMetrics.getHeight(), height), true);
         }
@@ -1188,29 +1199,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         if (myText != null) {
           FontMetrics fontMetrics = getFontMetrics(getFont());
           int top = (getHeight() - fontMetrics.getHeight()) / 2;
-          UISettings.setupAntialiasing(g);
           g.setColor(JBColor.foreground());
-          g.drawString(myText, gap * 2 + center + gap, top + fontMetrics.getAscent());
+          SwingUtilities2.drawString(this, g, myText, gap * 2 + center + gap, top + fontMetrics.getAscent());
         }
       }
       else {
         LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
-      }
-    }
-
-    private static int getTextWidth(@NotNull FontMetrics fontMetrics, @NotNull String text, @Nullable Graphics graphics) {
-      if (graphics == null) {
-        return fontMetrics.stringWidth(text);
-      }
-      else {
-        Graphics g = graphics.create();
-        try {
-          UISettings.setupAntialiasing(g);
-          return fontMetrics.getStringBounds(text, g).getBounds().width;
-        }
-        finally {
-          g.dispose();
-        }
       }
     }
   }
@@ -1583,7 +1577,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(popupToolbar, null);
     builder.setResizable(false)
       .setMovable(true) // fit the screen automatically
-      .setRequestFocus(true)
+      .setFocusable(false) // do not steal focus on showing, and don't close on IDE frame gaining focus (see AbstractPopup.isCancelNeeded)
       .setMayBeParent(true)
       .setTitle(null)
       .setCancelOnClickOutside(true)
@@ -1676,7 +1670,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                  @NotNull ActionGroup actionGroup,
                  final boolean horizontal,
                  @NotNull ActionToolbarImpl parent) {
-      super(place, actionGroup, horizontal, false);
+      super(place, actionGroup, horizontal, false, true);
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
       setBorder(myParent.getBorder());

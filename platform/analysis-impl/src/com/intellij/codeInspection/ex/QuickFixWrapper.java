@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -11,6 +12,10 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandActionWrapper;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public final class QuickFixWrapper implements IntentionAction, PriorityAction {
+import java.util.List;
+
+public final class QuickFixWrapper implements IntentionAction, PriorityAction, CustomizableIntentionAction {
   private static final Logger LOG = Logger.getInstance(QuickFixWrapper.class);
 
   private final ProblemDescriptor myDescriptor;
@@ -36,7 +43,41 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
     final QuickFix<?> fix = fixes[fixNumber];
+    if (fix instanceof ModCommandQuickFix modCommandFix) {
+      return new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
+    }
     return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
+  }
+
+  /**
+   * @param action action previously wrapped with {@link #wrap(ProblemDescriptor, int)}
+   * @return a {@link LocalQuickFix} wrapped inside that action; null if the action was not created via {@link QuickFixWrapper}
+   */
+  public static @Nullable LocalQuickFix unwrap(@NotNull IntentionAction action) {
+    if (action instanceof QuickFixWrapper wrapper) {
+      return wrapper.myFix;
+    }
+    if (action instanceof ModCommandActionWrapper wrapper &&
+        wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+      return qfAction.myFix;
+    }
+    return null;
+  }
+
+  /**
+   * @param action action to extract the file from
+   * @return PsiFile the action relates to
+   */
+  public static @Nullable PsiFile unwrapFile(@NotNull IntentionAction action) {
+    if (action instanceof QuickFixWrapper wrapper) {
+      return wrapper.getFile();
+    }
+    if (action instanceof ModCommandActionWrapper wrapper &&
+        wrapper.action() instanceof ModCommandQuickFixAction qfAction) {
+      PsiElement element = qfAction.myDescriptor.getPsiElement();
+      return element == null ? null : element.getContainingFile();
+    }
+    return null;
   }
 
   private QuickFixWrapper(@NotNull ProblemDescriptor descriptor, @NotNull LocalQuickFix fix) {
@@ -53,7 +94,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return getFix().getName();
+    return myFix.getName();
   }
 
   @Override
@@ -72,8 +113,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
 
     final PsiElement element = myDescriptor.getPsiElement();
     final PsiFile fileForUndo = element == null ? null : element.getContainingFile();
-    LocalQuickFix fix = getFix();
-    fix.applyFix(project, myDescriptor);
+    myFix.applyFix(project, myDescriptor);
     DaemonCodeAnalyzer.getInstance(project).restart();
     if (fileForUndo != null && !fileForUndo.equals(file)) {
       UndoUtil.markPsiFileForUndo(fileForUndo);
@@ -82,15 +122,21 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
 
   @Override
   public boolean startInWriteAction() {
-    return getFix().startInWriteAction();
+    return myFix.startInWriteAction();
   }
 
   @Nullable
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return getFix().getElementToMakeWritable(file);
+    return myFix.getElementToMakeWritable(file);
   }
 
+  /**
+   * @return fix wrapped by this {@link QuickFixWrapper}
+   * @deprecated use {@link QuickFixWrapper#unwrap(IntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
+   * as the implementation may be different in the future
+   */
+  @Deprecated
   @NotNull
   public LocalQuickFix getFix() {
     return myFix;
@@ -138,5 +184,49 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
                                  e);
     }
     return myFix.generatePreview(project, descriptorForPreview);
+  }
+
+  @Override
+  public @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
+    return myFix.getRangesToHighlight(editor.getProject(), myDescriptor);
+  }
+
+  private static class ModCommandQuickFixAction implements ModCommandAction {
+    private final @NotNull ProblemDescriptor myDescriptor;
+    private final @NotNull ModCommandQuickFix myFix;
+
+    private ModCommandQuickFixAction(@NotNull ProblemDescriptor descriptor, @NotNull ModCommandQuickFix fix) {
+      myDescriptor = descriptor;
+      myFix = fix;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return myFix.getName();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull ActionContext context) {
+      PsiElement psiElement = myDescriptor.getPsiElement();
+      if (psiElement == null || !psiElement.isValid()) return false;
+      PsiFile containingFile = psiElement.getContainingFile();
+      return containingFile == context.file() || containingFile == null ||
+             containingFile.getViewProvider().getVirtualFile().equals(context.file().getViewProvider().getVirtualFile());
+    }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      return myFix.perform(context.project(), myDescriptor);
+    }
+
+    @Override
+    public @NotNull Priority getPriority() {
+      return myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
+      return myFix.generatePreview(context.project(), myDescriptor.getDescriptorForPreview(context.file()));
+    }
   }
 }

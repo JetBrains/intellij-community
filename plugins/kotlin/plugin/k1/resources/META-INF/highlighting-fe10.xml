@@ -20,10 +20,9 @@
             serviceInterface="org.jetbrains.kotlin.idea.base.analysis.KotlinSafeAnalysisWrapper"
             serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.Fe10KotlinSafeAnalysisWrapper"/>
 
-    <syntaxHighlighter factoryClass="org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinSyntaxHighlighterProviderForDecompiledBuiltIns"/>
-
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinRainbowVisitor"/>
+    <lang.backgroundElementHighlighter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinBackgroundElementHighlighter"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspendNotificationProvider"/>
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.statistic.eventLog
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -21,16 +22,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 private val GROUP = EventLogGroup("settings", 9)
 private const val CHANGES_GROUP = "settings.changes"
 private const val ID_FIELD = "id"
 
-private val recordedComponents: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
-private val recordedOptionNames: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
+private val recordedComponents: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
+private val recordedOptionNames: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
 internal fun isComponentNameWhitelisted(name: String): Boolean {
   return recordedComponents.contains(name)

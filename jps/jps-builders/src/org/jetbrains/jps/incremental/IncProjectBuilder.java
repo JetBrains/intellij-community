@@ -113,7 +113,8 @@ public final class IncProjectBuilder {
   private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = new ConcurrentHashMap<>();
   private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = new ConcurrentHashMap<>();
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs, final boolean isTestMode) {
+  public IncProjectBuilder(@NotNull ProjectDescriptor pd, @NotNull BuilderRegistry builderRegistry,
+                           @NotNull Map<String, String> builderParams, @NotNull CanceledStatus cs, final boolean isTestMode) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
@@ -126,7 +127,7 @@ public final class IncProjectBuilder {
     myMessageHandlers.add(handler);
   }
 
-  public void checkUpToDate(CompileScope scope) {
+  public void checkUpToDate(@NotNull CompileScope scope) {
     CompileContextImpl context = null;
     try {
       context = createContext(scope);
@@ -304,7 +305,7 @@ public final class IncProjectBuilder {
     }
   }
 
-  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, Predicate<BuildTarget<?>> isAffected) {
+  public static long calculateEstimatedBuildTime(@NotNull ProjectDescriptor projectDescriptor, @NotNull Predicate<BuildTarget<?>> isAffected) {
     final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
     // compute estimated times for dirty targets
     long estimatedBuildTime = 0L;
@@ -541,7 +542,7 @@ public final class IncProjectBuilder {
     return null;
   }
 
-  private CompileContextImpl createContext(CompileScope scope) {
+  private CompileContextImpl createContext(@NotNull CompileScope scope) {
     return new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
   }
 
@@ -1243,7 +1244,7 @@ public final class IncProjectBuilder {
       pd.fsState.processFilesToRecompile(context, target, new FileProcessor<>() {
         private SourceToOutputMapping srcToOut;
         @Override
-        public boolean apply(T target, File file, R root) throws IOException {
+        public boolean apply(@NotNull T target, @NotNull File file, @NotNull R root) throws IOException {
           final String src = FileUtil.toSystemIndependentName(file.getPath());
           if (affectedSources.add(src)) {
             if (srcToOut == null) { // lazy init

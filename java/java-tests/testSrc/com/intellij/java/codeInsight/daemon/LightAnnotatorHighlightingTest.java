@@ -461,7 +461,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
       List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
       HighlightInfo info = assertOneElement(infos);
-      assertEquals(HighlightSeverity.ERROR, info.getSeverity());
+      MyErrorAnnotator.assertMy(info);
     });
   }
   
@@ -471,7 +471,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
       List<HighlightInfo> infos = doHighlighting(HighlightSeverity.INFORMATION);
       HighlightInfo info = assertOneElement(infos);
-      assertEquals(HighlightSeverity.ERROR, info.getSeverity());
+      MyErrorAnnotator.assertMy(info);
     });
   }
 
@@ -492,6 +492,10 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         holder.newAnnotation(HighlightSeverity.ERROR, "error2").range(((PsiClass)psiElement).getNameIdentifier()).create();
         iDidIt();
       }
+    }
+    static void assertMy(HighlightInfo info) {
+      assertEquals(HighlightSeverity.ERROR, info.getSeverity());
+      assertEquals("error2", info.getDescription());
     }
   }
   public static class MyWarningAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {

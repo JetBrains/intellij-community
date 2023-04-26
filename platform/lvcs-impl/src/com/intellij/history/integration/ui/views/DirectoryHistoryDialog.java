@@ -16,8 +16,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -39,7 +39,7 @@ import java.util.Set;
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
-  private ChangesTreeImpl<Change> myChangesTree;
+  private AsyncChangesTreeImpl<Change> myChangesTree;
   private JScrollPane myChangesTreeScrollPane;
   private ActionToolbar myToolBar;
 
@@ -96,7 +96,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       protected void textChanged(@NotNull DocumentEvent e) {
         scheduleRevisionsUpdate(m -> {
           m.setFilter(field.getText());
-          ApplicationManager.getApplication().invokeLater(()-> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             if (!isDisposed()) {
               field.addCurrentTextToHistory();
             }
@@ -111,7 +111,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private void initChangesTree(JComponent root) {
-    myChangesTree = new ChangesTreeImpl.Changes(myProject, false, false);
+    myChangesTree = new AsyncChangesTreeImpl.Changes(myProject, false, false);
     myChangesTree.setDoubleClickAndEnterKeyHandler(() -> new ShowDifferenceAction().performIfEnabled());
 
     new ShowDifferenceAction().registerCustomShortcutSet(root, null);
@@ -145,8 +145,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return "reference.dialogs.localHistory.show.folder";
   }
 
-  private List<DirectoryChange> getChanges() {
-    return (List)myChangesTree.getChanges();
+  private List<DirectoryChange> getDisplayedChanges() {
+    return (List)myChangesTree.getDisplayedChanges();
   }
 
   private List<DirectoryChange> getSelectedChanges() {
@@ -174,12 +174,12 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     private List<DirectoryChange> iterFileChanges() {
-      return ContainerUtil.filter(getChanges(), each -> each.canShowFileDifference());
+      return ContainerUtil.filter(getDisplayedChanges(), each -> each.canShowFileDifference());
     }
 
     @Override
     protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> changes) {
-      return ContainerUtil.exists(getChanges(), each -> each.canShowFileDifference());
+      return ContainerUtil.exists(getDisplayedChanges(), each -> each.canShowFileDifference());
     }
   }
 

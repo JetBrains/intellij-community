@@ -15,14 +15,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * An allocator optimized to reuse buffers with exactly the same size.
  * In VFS/Index/PersistentMap storages typically we use 8kb, 1mb and 10mb pages.
  */
 @ApiStatus.Internal
-@SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
 public final class DirectByteBufferAllocator {
   // Fixes IDEA-222358 Linux native memory leak. Please do not replace to BoundedTaskExecutor
   private static final ExecutorService ourAllocator =
@@ -43,7 +42,7 @@ public final class DirectByteBufferAllocator {
         return ourAllocator.submit(computable::compute).get();
       }
       catch (InterruptedException e) {
-        Logger.getInstance(DirectByteBufferAllocator.class).error(e);
+        Logger.getInstance(DirectByteBufferAllocator.class).error("ByteBuffer allocation in dedicated thread was interrupted", e);
         return computable.compute();
       }
       catch (ExecutionException e) {
@@ -67,20 +66,25 @@ public final class DirectByteBufferAllocator {
 
 
   private final ConcurrentSkipListMap<Integer, ArrayBlockingQueue<ByteBuffer>> myPool = new ConcurrentSkipListMap<>();
-  private final AtomicInteger mySize = new AtomicInteger();
+
+  /** Total size (bytes) of buffers that are now cached (i.e. now in cache, not in use) by the allocator */
+  private final AtomicLong totalSizeOfBuffersInCache = new AtomicLong();
   private final int mySizeLimitInBytes;
+
+  /** Total size (bytes) of buffers allocated (and not released) via the allocator */
+  private final AtomicLong totalSizeOfBuffersAllocated = new AtomicLong();
 
   //====== Statistics:
 
   //RC: stats fields are updated non-atomically: it is intentional, we're ready to miss a few updates
 
-  /** Buffers requests served from already pooled buffer (myPool) */
+  /** Count of buffers requests served from already pooled buffer (myPool) */
   private volatile int hits;
-  /** Buffers requests served by allocating new buffer */
+  /** Count of buffers requests served by allocating new buffer */
   private volatile int misses;
-  /** Buffers released by returning them to the pool */
+  /** Count of buffers released by returning them to the pool */
   private volatile int reclaimed;
-  /** Buffers released by releasing them to JVM (because too many such buffers are already pooled) */
+  /** Count of buffers released by releasing them to JVM (because too many such buffers are already pooled) */
   private volatile int disposed;
 
   public static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator(PageCacheUtils.ALLOCATOR_SIZE);
@@ -100,14 +104,17 @@ public final class DirectByteBufferAllocator {
         if (cachedBuffer != null) {
           cachedBuffer.rewind();
           cachedBuffer.limit(size);
-          mySize.addAndGet(-capacity);
+          totalSizeOfBuffersInCache.addAndGet(-capacity);
+          //noinspection NonAtomicOperationOnVolatileField
           hits++;
           return cachedBuffer;
         }
         buffers = myPool.higherEntry(capacity);
       }
     }
+    //noinspection NonAtomicOperationOnVolatileField
     misses++;
+    totalSizeOfBuffersAllocated.addAndGet(size);
     return allocateNewBuffer(size);
   }
 
@@ -116,23 +123,30 @@ public final class DirectByteBufferAllocator {
   }
 
   public void release(@NotNull ByteBuffer buffer) {
+    int capacity = buffer.capacity();
     if (USE_POOLED_ALLOCATOR) {
       // mySize can be slightly more than limit due to race
-      if (mySize.get() < mySizeLimitInBytes) {
-        int capacity = buffer.capacity();
+      if (totalSizeOfBuffersInCache.get() < mySizeLimitInBytes) {
         if (myPool.computeIfAbsent(capacity, __ -> new ArrayBlockingQueue<>(POOL_CAPACITY_PER_BUFFER_SIZE)).offer(buffer)) {
-          mySize.addAndGet(capacity);
+          totalSizeOfBuffersInCache.addAndGet(capacity);
+          //noinspection NonAtomicOperationOnVolatileField
           reclaimed++;
           return;
         }
       }
     }
+    totalSizeOfBuffersAllocated.addAndGet(-capacity);
     ByteBufferUtil.cleanBuffer(buffer);
+    //noinspection NonAtomicOperationOnVolatileField
     disposed++;
   }
 
   public Statistics getStatistics() {
-    return new Statistics(hits, misses, reclaimed, disposed, mySize.get());
+    return new Statistics(
+      hits, misses, reclaimed, disposed,
+      totalSizeOfBuffersInCache.get(),
+      totalSizeOfBuffersAllocated.get()
+    );
   }
 
   public static class Statistics {
@@ -144,19 +158,23 @@ public final class DirectByteBufferAllocator {
     public final int reclaimed;
     /** Buffers released by releasing them to JVM (because too many such buffers are already pooled) */
     public final int disposed;
-    /** Total size of all buffers cached at the moment (bytes) */
-    public final int totalSizeOfBuffersCachedInBytes;
+    /** Total size of all buffers in the Allocator cache at the moment (bytes) */
+    public final long totalSizeOfBuffersCachedInBytes;
+    /** Total size of all buffers allocated (and not yet released) via the Allocator */
+    public final long totalSizeOfBuffersAllocatedInBytes;
 
     private Statistics(final int hits,
                        final int misses,
                        final int reclaimed,
                        final int disposed,
-                       final int totalSizeOfBuffersCachedInBytes) {
+                       final long totalSizeOfBuffersCachedInBytes,
+                       final long totalSizeOfBuffersAllocatedInBytes) {
       this.hits = hits;
       this.misses = misses;
       this.reclaimed = reclaimed;
       this.disposed = disposed;
       this.totalSizeOfBuffersCachedInBytes = totalSizeOfBuffersCachedInBytes;
+      this.totalSizeOfBuffersAllocatedInBytes = totalSizeOfBuffersAllocatedInBytes;
     }
   }
 }

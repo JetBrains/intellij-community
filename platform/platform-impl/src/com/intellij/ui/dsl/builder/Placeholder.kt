@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -30,7 +31,10 @@ interface Placeholder : CellBase<Placeholder> {
 
   override fun gap(rightGap: RightGap): Placeholder
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): Placeholder
+
+  override fun customize(customGaps: UnscaledGaps): Placeholder
 
   /**
    * Component placed in the cell. If the component is [DialogPanel] then all functionality related to

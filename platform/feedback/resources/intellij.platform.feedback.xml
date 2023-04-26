@@ -7,6 +7,8 @@
                        key="notification.group.feedback"/>
 
     <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
+    <typedHandler implementation="com.intellij.feedback.aqua.AquaEditorTypingChecker"/>
+    <backgroundPostStartupActivity implementation="com.intellij.feedback.aqua.AquaFirstUsageLogger"/>
     <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
     <editorFactoryMouseMotionListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
 
@@ -22,11 +24,18 @@
   <applicationListeners>
     <listener class="com.intellij.feedback.localization.service.LocalizationFeedbackStartupListener"
               topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.feedback.pycharmUi.state.NewUserFirstRunDateTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
+      <action id="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction"
+              class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction" internal="true"/>
+      <action id="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
+              class="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
+              internal="true"/>
       <action id="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction"
               class="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction" internal="true"/>
       <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"

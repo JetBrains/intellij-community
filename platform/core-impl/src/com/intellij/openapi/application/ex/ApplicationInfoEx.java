@@ -84,8 +84,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getWhatsNewUrl();
 
-  public abstract String getWhatsNewEapUrl();
-
   public abstract boolean isShowWhatsNewOnUpdate();
 
   public abstract String getWinKeymapUrl();
@@ -131,17 +129,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     return "JetBrains".equals(getShortCompanyName());
   }
 
-  public abstract @NotNull List<ProgressSlide> getProgressSlides();
-
-  public abstract int getProgressHeight();
-
-  public abstract int getProgressY();
-
-  public abstract long getProgressColor();
-
   public abstract long getCopyrightForeground();
-
-  public abstract @Nullable String getProgressTailIcon();
 
   public abstract @NotNull BuildNumber getApiVersionAsNumber();
 

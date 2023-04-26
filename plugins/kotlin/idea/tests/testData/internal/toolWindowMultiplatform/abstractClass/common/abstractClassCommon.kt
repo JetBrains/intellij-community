@@ -1,0 +1,3 @@
+package abstractclass
+
+expect abstract class MyAbstractClass

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -120,6 +120,7 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
   public void testSnippet() { doTest(); }
   public void testSnippetMethod() { doTest(); }
   public void testSnippetInstructions() { doTest(); }
+  public void testSnippetMarkup() { doTest(); }
   public void testEmptySnippet() { doTest(); }
   public void testOnlyEmptyLinesInSnippet() { doTest(); }
   public void testSnippetInstructionsWithUnhandledThrowable() { doTest(); }

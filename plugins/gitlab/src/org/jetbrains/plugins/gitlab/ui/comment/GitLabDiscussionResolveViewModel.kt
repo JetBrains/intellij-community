@@ -9,6 +9,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 interface GitLabDiscussionResolveViewModel {
+  val canResolve: Boolean
   val resolved: Flow<Boolean>
   val busy: Flow<Boolean>
 
@@ -18,6 +19,7 @@ interface GitLabDiscussionResolveViewModel {
 class GitLabDiscussionResolveViewModelImpl(parentCs: CoroutineScope, private val discussion: GitLabDiscussion)
   : GitLabDiscussionResolveViewModel {
 
+  override val canResolve: Boolean = discussion.canResolve
   override val resolved: Flow<Boolean> = discussion.resolved
 
   private val taskLauncher = SingleCoroutineLauncher(parentCs.childScope())

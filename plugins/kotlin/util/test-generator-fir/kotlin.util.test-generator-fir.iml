@@ -45,7 +45,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.k2.fe10-bindings" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />

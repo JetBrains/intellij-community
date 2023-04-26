@@ -55,7 +55,7 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
     textField.selectAll()
 
     val label = JBLabel(labelText)
-    label.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD)
+    label.font = StartupUiUtil.labelFont.deriveFont(Font.BOLD)
 
     val panel = SwingHelper.newLeftAlignedVerticalPanel(label, Box.createVerticalStrut(JBUI.scale(2)), textField)
     panel.addFocusListener(object : FocusAdapter() {

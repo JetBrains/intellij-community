@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiElement;
@@ -34,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static com.intellij.openapi.util.NlsContexts.*;
+
 public final class RefactoringUiServiceImpl extends RefactoringUiService {
   @Override
   public RenameRefactoringDialog createRenameRefactoringDialog(Project project,
@@ -44,14 +45,14 @@ public final class RefactoringUiServiceImpl extends RefactoringUiService {
   }
 
   @Override
-  public int showReplacePromptDialog(boolean isMultipleFiles, @NlsContexts.DialogTitle String title, Project project) {
+  public int showReplacePromptDialog(boolean isMultipleFiles, @DialogTitle String title, Project project) {
     ReplacePromptDialog promptDialog = new ReplacePromptDialog(isMultipleFiles, title, project);
     promptDialog.show();
     return promptDialog.getExitCode();
   }
 
   @Override
-  public void setStatusBarInfo(@NotNull Project project, @NotNull @NlsContexts.StatusBarText String message) {
+  public void setStatusBarInfo(@NotNull Project project, @NotNull @StatusBarText String message) {
     StatusBarUtil.setStatusBarInfo(project, message);
   }
 
@@ -62,7 +63,7 @@ public final class RefactoringUiServiceImpl extends RefactoringUiService {
 
   @Override
   public ConflictsDialogBase createConflictsDialog(@NotNull Project project,
-                                                   @NotNull MultiMap<PsiElement, String> conflicts,
+                                                   @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                    @Nullable Runnable doRefactoringRunnable,
                                                    boolean alwaysShowOkButton, boolean canShowConflictsInView) {
     return new BaseRefactoringProcessorUi().createConflictsDialog(project, conflicts, doRefactoringRunnable, alwaysShowOkButton, canShowConflictsInView);
@@ -104,7 +105,7 @@ public final class RefactoringUiServiceImpl extends RefactoringUiService {
   }
 
   @Override
-  public boolean showRefactoringMessageDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DialogMessage String message,
+  public boolean showRefactoringMessageDialog(@DialogTitle String title, @DialogMessage String message,
                                               @NonNls String helpTopic, @NonNls String iconId, boolean showCancelButton, Project project) {
     final RefactoringMessageDialog dialog =
       new RefactoringMessageDialog(title, message, helpTopic, iconId, showCancelButton, project);

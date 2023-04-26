@@ -21,18 +21,22 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
 
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val expectedHighlighting = dataFile().getExpectedHighlightingFile()
-        checkHighlighting(files.first(), expectedHighlighting)
+        checkHighlighting(files.first(), expectedHighlighting, globalDirectives)
     }
 
-    private fun checkHighlighting(file: PsiFile, expectedHighlightingFile: File) {
+    private fun checkHighlighting(file: PsiFile, expectedHighlightingFile: File, globalDirectives: Directives) {
         val highlightingRenderConfiguration = HighlightingConfiguration(
             descriptionRenderingOption = DescriptionRenderingOption.IF_NOT_NULL,
             renderSeverityOption = SeverityRenderingOption.ONLY_NON_INFO,
+            renderHighlightingAttributesKey = HIGHLIGHTER_ATTRIBUTES_KEY in globalDirectives
         )
 
         val codeMetaInfoTestCase = CodeMetaInfoTestCase(
             codeMetaInfoTypes = listOf(highlightingRenderConfiguration),
-            filterMetaInfo = createMetaInfoFilter()
+            filterMetaInfo = createMetaInfoFilter(
+                allowErrorHighlighting = ALLOW_ERRORS in globalDirectives,
+                highlightWarnings = HIGHLIGHT_WARNINGS in globalDirectives,
+            ),
         )
 
         codeMetaInfoTestCase.checkFile(file.virtualFile, expectedHighlightingFile, project)
@@ -45,7 +49,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
      * - Filter exact highlightings duplicates. It is a workaround about a bug in old FE10 highlighting, which sometimes highlights
      * something twice
      */
-    private fun createMetaInfoFilter(): (CodeMetaInfo) -> Boolean {
+    private fun createMetaInfoFilter(allowErrorHighlighting: Boolean, highlightWarnings: Boolean): (CodeMetaInfo) -> Boolean {
         val forbiddenSeverities = setOf(HighlightSeverity.ERROR)
 
         val ignoredSeverities = setOf(HighlightSeverity.WARNING, HighlightSeverity.WEAK_WARNING)
@@ -73,18 +77,20 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
             }
         })
 
-        return { metaInfo ->
+        return filter@{ metaInfo ->
             require(metaInfo is HighlightingCodeMetaInfo)
             val highlightingInfo = metaInfo.highlightingInfo
 
-            require(highlightingInfo.severity !in forbiddenSeverities) {
+            require(highlightingInfo.severity !in forbiddenSeverities || allowErrorHighlighting) {
                 """
                     |Severity ${highlightingInfo.severity} should never appear in highlighting tests. Please, correct the testData.
                     |HighlightingInfo=$highlightingInfo
                 """.trimMargin()
             }
 
-            highlightingInfo.severity !in ignoredSeverities && seenMetaInfos.add(metaInfo)
+            if (highlightingInfo.severity in ignoredSeverities && !highlightWarnings) return@filter false
+
+            seenMetaInfos.add(metaInfo)
         }
     }
 
@@ -93,4 +99,10 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
     }
 
     protected open fun highlightingFileNameSuffix(ktFilePath: File): String = HIGHLIGHTING_EXTENSION
+
+    companion object {
+        private const val ALLOW_ERRORS = "ALLOW_ERRORS"
+        private const val HIGHLIGHT_WARNINGS = "HIGHLIGHT_WARNINGS"
+        private const val HIGHLIGHTER_ATTRIBUTES_KEY = "HIGHLIGHTER_ATTRIBUTES_KEY"
+    }
 }

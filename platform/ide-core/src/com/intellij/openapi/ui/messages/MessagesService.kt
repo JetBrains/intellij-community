@@ -12,9 +12,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Function
-import com.intellij.util.PairFunction
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.util.function.BiFunction
 import javax.swing.Icon
 import javax.swing.JCheckBox
 import javax.swing.JTextField
@@ -62,7 +62,7 @@ interface MessagesService {
                                     defaultOptionIndex: Int,
                                     focusedOptionIndex: Int,
                                     icon: Icon?,
-                                    exitFunc: PairFunction<in Int?, in JCheckBox?, Int?>?): Int
+                                    exitFunc: BiFunction<in Int?, in JCheckBox?, Int?>?): Int
 
   @NlsSafe
   fun showPasswordDialog(project: Project?,

@@ -1,0 +1,7 @@
+// "Reorder parameters" "true"
+// WITH_STDLIB
+fun foo(
+    c1: String,
+    b: String,
+    a: List<List<String>> = listOf(listOf(b)),
+) {}

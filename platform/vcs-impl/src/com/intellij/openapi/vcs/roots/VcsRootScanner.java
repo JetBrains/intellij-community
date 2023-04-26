@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRootChecker;
@@ -38,7 +37,7 @@ import java.util.regex.PatternSyntaxException;
 import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class VcsRootScanner implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsRootScanner.class);
 
@@ -195,7 +194,7 @@ public final class VcsRootScanner implements Disposable {
   static final class TrustListener implements TrustedProjectsListener {
     @Override
     public void onProjectTrusted(@NotNull Project project) {
-      StartupManager.getInstance(project).runAfterOpened(() -> getInstance(project).scheduleScan());
+      ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> getInstance(project).scheduleScan());
     }
   }
 }

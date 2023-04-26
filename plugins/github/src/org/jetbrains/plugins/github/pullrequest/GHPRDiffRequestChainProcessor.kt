@@ -7,25 +7,20 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 
-internal class GHPRDiffRequestChainProcessor(
-  project: Project,
-  private val diffRequestModel: GHPRDiffRequestModel
-) : MutableDiffRequestChainProcessor(project, null) {
-  private val diffChainUpdateQueue =
-    MergingUpdateQueue("GHPRDiffRequestChainProcessor", 100, true, null, this).apply {
+fun GHPRDiffRequestModel.process(processor: MutableDiffRequestChainProcessor) {
+  val updateQueue =
+    MergingUpdateQueue("GHPRDiffRequestChainProcessor", 100, true, null, processor).apply {
       setRestartTimerOnAdd(true)
     }
 
-  init {
-    diffRequestModel.addAndInvokeRequestChainListener(diffChainUpdateQueue) {
-      val newChain = diffRequestModel.requestChain
-      diffChainUpdateQueue.run(Update.create(diffRequestModel) {
-        chain = newChain
-      })
-    }
+  addAndInvokeRequestChainListener(updateQueue) {
+    val newChain = requestChain
+    updateQueue.run(Update.create(this) {
+      processor.chain = newChain
+    })
   }
 
-  override fun selectFilePath(filePath: FilePath) {
-    diffRequestModel.selectedFilePath = filePath
+  processor.selectionEventDispatcher.addListener {
+    selectedFilePath = it.filePath
   }
 }

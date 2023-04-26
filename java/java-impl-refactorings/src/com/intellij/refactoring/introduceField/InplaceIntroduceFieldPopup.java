@@ -84,7 +84,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
       if (myExprText != null) {
         updateInitializer(elementFactory, field1);
       }
-      myFieldRangeStart = myEditor.getDocument().createRangeMarker(field1.getTextRange());
+      updateVariable(field1);
       return field1;
     });
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
@@ -200,21 +200,6 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                                   forcedType,
                                                   myIntroduceFieldPanel.isDeleteVariable(),
                                                   getParentClass(), false, false);
-      WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
-        if (getLocalVariable() != null) {
-          final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myOccurrences);
-          fieldRunnable.run();
-        }
-        else {
-          final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
-            new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
-                                                                    myOccurrences,
-                                                                    getAnchorElementIfAll(),
-                                                                    getAnchorElement(), myEditor,
-                                                                    getParentClass());
-          convertToFieldRunnable.run();
-        }
-      });
+      performIntroduce(settings);
     }
 }

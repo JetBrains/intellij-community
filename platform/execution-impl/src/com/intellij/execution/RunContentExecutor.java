@@ -145,13 +145,10 @@ public class RunContentExecutor implements Disposable {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
     panel.add(view.getComponent(), BorderLayout.CENTER);
-    panel.add(createToolbar(actions), BorderLayout.WEST);
-    return panel;
-  }
-
-  private static JComponent createToolbar(ActionGroup actions) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("RunContentExecutor", actions, false);
-    return actionToolbar.getComponent();
+    actionToolbar.setTargetComponent(panel);
+    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+    return panel;
   }
 
   @Override

@@ -40,7 +40,6 @@ import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +90,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   @NotNull
-  public String getTypedVarString(final @NotNull PsiElement element) {
+  public String getTypedVarString(@NotNull PsiElement element) {
     String text;
 
     if (element instanceof PsiReceiverParameter) {
@@ -602,7 +601,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
     }
 
-    private void checkModifier(final String name) {
+    private static void checkModifier(String name) {
       if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
           !PsiModifier.PACKAGE_LOCAL.equals(name) &&
           ArrayUtil.find(JavaMatchingVisitor.MODIFIERS, name) < 0
@@ -730,7 +729,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
           if (previous != null) {
             final PsiElement parent = currentElement.getParent();
-            if (parent instanceof PsiVariable) {
+            if (parent instanceof PsiVariable || parent instanceof PsiTypeElement || parent instanceof PsiTypeParameter) {
               addSeparatorText(previous.getParent(), parent, buf);
             }
             else if (parent instanceof PsiClass || parent instanceof PsiReferenceList) {
@@ -741,7 +740,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
               addSeparatorText(previous, currentElement, buf);
             }
             else {
-              buf.append(" "); // doesn't happen
+              buf.append(" "); // fallback, but shouldn't happen
             }
           }
 

@@ -25,7 +25,7 @@ import org.gradle.cli.CommandLineArgumentException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleCommandLine;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider.HELP_COMMAND;
@@ -113,8 +113,8 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     GradleCommandLine commandLine = GradleCommandLine.parse(fullCommandLine);
     ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
     settings.setExternalProjectPath(projectPath);
-    settings.setTaskNames(commandLine.getTasksAndArguments().toList());
-    settings.setScriptParameters(commandLine.getScriptParameters().toString());
+    settings.setTaskNames(commandLine.getTasks().getTokens());
+    settings.setScriptParameters(commandLine.getOptions().getText());
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
     return new ExternalTaskExecutionInfo(settings, executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId());
   }

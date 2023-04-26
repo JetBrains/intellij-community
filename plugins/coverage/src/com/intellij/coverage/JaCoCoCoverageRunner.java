@@ -11,6 +11,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -67,6 +68,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
       return data;
     }
     catch (Exception e) {
+      if (e instanceof ControlFlowException) throw e;
       LOG.error(e);
       return data;
     }
@@ -120,12 +122,9 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
           if (methodLineStatus == ICounter.EMPTY) continue;
           final LineData lineData = new LineData(i , desc);
           switch (methodLineStatus) {
-            case ICounter.FULLY_COVERED:
-              lineData.setStatus(LineCoverage.FULL);
-            case ICounter.PARTLY_COVERED:
-              lineData.setStatus(LineCoverage.PARTIAL);
-            default:
-              lineData.setStatus(LineCoverage.NONE);
+            case ICounter.FULLY_COVERED -> lineData.setStatus(LineCoverage.FULL);
+            case ICounter.PARTLY_COVERED -> lineData.setStatus(LineCoverage.PARTIAL);
+            default -> lineData.setStatus(LineCoverage.NONE);
           }
 
           lineData.setHits(methodLineStatus == ICounter.FULLY_COVERED || methodLineStatus == ICounter.PARTLY_COVERED ? 1 : 0);
@@ -174,7 +173,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
               String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
               vmClassName = StringUtil.trimEnd(vmClassName, ".class");
               if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
-                  !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
+                  (!suite.isClassFiltered(vmClassName) &&
+                   !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName)))) {
                 return FileVisitResult.CONTINUE;
               }
               File file = path.toFile();

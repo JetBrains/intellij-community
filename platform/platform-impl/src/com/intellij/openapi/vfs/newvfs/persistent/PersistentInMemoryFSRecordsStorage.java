@@ -126,6 +126,9 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
   @Override
   public void setAttributeRecordId(final int recordId,
                                    final int recordRef) throws IOException {
+    if (recordRef < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + recordRef + ") must be >=0");
+    }
     setIntField(recordId, ATTR_REF_OFFSET, recordRef);
   }
 

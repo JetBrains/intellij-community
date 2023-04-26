@@ -242,7 +242,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         EditorColorsManager.getInstance().globalScheme.editorFontName
       }
       else {
-        StartupUiUtil.getLabelFont().family
+        StartupUiUtil.labelFont.family
       }
       if (metrics != null && !metrics.isActual(editor, size, fontType, familyName)) {
         metrics = null

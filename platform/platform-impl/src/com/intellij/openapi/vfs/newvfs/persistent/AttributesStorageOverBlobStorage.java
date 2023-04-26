@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -80,6 +80,9 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
         return null;
       }
+      else if (attributeRecordId < NON_EXISTENT_ATTR_RECORD_ID) {
+        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
+      }
       final int encodedAttributeId = connection.getAttributeId(attribute.getId());
 
       final byte[] attributeValueBytes = readAttributeValue(
@@ -110,6 +113,9 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       final int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
       if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
         return null;
+      }
+      if (attributeRecordId < 0) {
+        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
       }
       final int encodedAttributeId = connection.getAttributeId(attribute.getId());
 
@@ -257,7 +263,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   public static boolean deleteStorageFiles(final Path file) throws IOException {
-    return Files.deleteIfExists(file);
+    return FileUtil.delete(file.toFile());
   }
 
   /**

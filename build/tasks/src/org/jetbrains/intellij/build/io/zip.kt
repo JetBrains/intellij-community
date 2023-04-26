@@ -173,10 +173,10 @@ inline fun copyZipRaw(sourceFile: Path,
                       packageIndexBuilder: PackageIndexBuilder,
                       zipCreator: ZipFileWriter,
                       crossinline filter: (entryName: String) -> Boolean = { true }) {
-  readZipFile(sourceFile) { name, entry ->
+  readZipFile(sourceFile) { name, data ->
     if (filter(name)) {
       packageIndexBuilder.addFile(name)
-      zipCreator.uncompressedData(name, entry.getByteBuffer())
+      zipCreator.uncompressedData(name, data())
     }
   }
 }

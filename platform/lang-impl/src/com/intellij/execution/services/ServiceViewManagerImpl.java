@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.ServiceEventListener.ServiceEvent;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -628,7 +629,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     else if (!contributors.isEmpty()) {
       String servicesToolWindowId = ToolWindowId.SERVICES;
       Collection<ServiceViewContributor<?>> servicesContributors =
-        myGroups.computeIfAbsent(servicesToolWindowId, __ -> ContainerUtil.newConcurrentSet());
+        myGroups.computeIfAbsent(servicesToolWindowId, __ -> ConcurrentCollectionFactory.createConcurrentSet());
       servicesContributors.addAll(contributors);
     }
   }

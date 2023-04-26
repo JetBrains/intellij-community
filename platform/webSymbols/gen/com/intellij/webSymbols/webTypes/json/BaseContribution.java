@@ -80,9 +80,9 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonPropertyDescription("Allows to specify the source of the entity. For Vue.js component this may be for instance a class.")
     private SourceBase source;
     @JsonProperty("deprecated")
-    private Boolean deprecated = false;
+    private Deprecated deprecated = null;
     @JsonProperty("experimental")
-    private Boolean experimental = false;
+    private Experimental experimental = null;
     @JsonProperty("priority")
     private BaseContribution.Priority priority;
     @JsonProperty("proximity")
@@ -125,11 +125,11 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonPropertyDescription("Contains contributions to HTML namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - HTML elements and HTML attributes. There are also 2 deprecated kinds: tags (which is equivalent to 'elements') and 'events' (which was moved to JS namespace)")
     private Html html;
     /**
-     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.
+     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
      * 
      */
     @JsonProperty("css")
-    @JsonPropertyDescription("Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.")
+    @JsonPropertyDescription("Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.")
     private Css css;
     /**
      * Contains contributions to JS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - properties and events.
@@ -248,22 +248,22 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     @JsonProperty("deprecated")
-    public Boolean getDeprecated() {
+    public Deprecated getDeprecated() {
         return deprecated;
     }
 
     @JsonProperty("deprecated")
-    public void setDeprecated(Boolean deprecated) {
+    public void setDeprecated(Deprecated deprecated) {
         this.deprecated = deprecated;
     }
 
     @JsonProperty("experimental")
-    public Boolean getExperimental() {
+    public Experimental getExperimental() {
         return experimental;
     }
 
     @JsonProperty("experimental")
-    public void setExperimental(Boolean experimental) {
+    public void setExperimental(Experimental experimental) {
         this.experimental = experimental;
     }
 
@@ -388,7 +388,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.
+     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
      * 
      */
     @JsonProperty("css")
@@ -397,7 +397,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.
+     * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
      * 
      */
     @JsonProperty("css")

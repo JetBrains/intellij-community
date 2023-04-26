@@ -9,12 +9,9 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.SpacingConfiguration
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.PropertyBinding
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JComponent
@@ -301,7 +298,12 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     this.init()
   }
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): PanelImpl {
+    return customize(customGaps.toUnscaled())
+  }
+
+  override fun customize(customGaps: UnscaledGaps): PanelImpl {
     super.customize(customGaps)
     return this
   }

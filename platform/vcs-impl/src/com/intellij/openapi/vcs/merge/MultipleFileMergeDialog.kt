@@ -39,10 +39,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.UIBundle
-import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.AlignY
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
@@ -183,8 +180,8 @@ open class MultipleFileMergeDialog(
       if (project != null) {
         row {
           checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"))
+            .selected(groupByDirectory)
             .applyToComponent {
-              isSelected = groupByDirectory
               addChangeListener { toggleGroupByDirectory(isSelected) }
             }
         }

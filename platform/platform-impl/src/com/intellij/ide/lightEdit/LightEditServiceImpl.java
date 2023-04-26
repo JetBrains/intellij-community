@@ -34,7 +34,7 @@ import com.intellij.openapi.wm.impl.FrameInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -222,14 +222,13 @@ public final class LightEditServiceImpl implements LightEditService,
   private void logStartupTime() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       if (myFrameWrapper != null) {
-        ObjectUtils.consumeIfNotNull(
-          getEditPanel().getTabs().getSelectedInfo(),
-          tabInfo ->
-            UiNotifyConnector
-              .doWhenFirstShown(tabInfo.getComponent(), () -> ApplicationManager.getApplication().invokeLater(() -> {
-                LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
-              }))
-        );
+        TabInfo info = getEditPanel().getTabs().getSelectedInfo();
+        if (info != null) {
+          UiNotifyConnector
+            .doWhenFirstShown(info.getComponent(), () -> ApplicationManager.getApplication().invokeLater(() -> {
+              LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
+            }));
+        }
       }
     }
   }

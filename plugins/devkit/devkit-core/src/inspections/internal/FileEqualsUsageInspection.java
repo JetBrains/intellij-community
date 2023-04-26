@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UIdentifier;
@@ -39,9 +40,7 @@ public class FileEqualsUsageInspection extends DevKitUastInspectionBase {
     if (containingClass == null) return;
     if (!CommonClassNames.JAVA_IO_FILE.equals(containingClass.getQualifiedName())) return;
 
-    if (JavaPsiFacade.getInstance(holder.getProject()).findClass(FileUtil.class.getName(), holder.getFile().getResolveScope()) == null) {
-      return;
-    }
+    if (!DevKitInspectionUtil.isClassAvailable(holder, FileUtil.class.getName())) return;
 
     final UIdentifier identifier = node.getMethodIdentifier();
     if (identifier == null) return;

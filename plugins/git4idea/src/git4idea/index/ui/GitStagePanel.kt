@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -309,11 +309,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
 
     fun editedCommitChanged() {
-      rebuildTree()
-
-      commitPanel.editedCommit?.let {
-        val node = TreeUtil.findNodeWithObject(root, it)
-        node?.let { expandPath(TreeUtil.getPathFromRoot(node)) }
+      requestRefresh {
+        commitPanel.editedCommit?.let {
+          val node = TreeUtil.findNodeWithObject(root, it)
+          node?.let { expandPath(TreeUtil.getPathFromRoot(node)) }
+        }
       }
     }
 

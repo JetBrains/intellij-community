@@ -32,9 +32,20 @@ public interface MavenServerManager extends Disposable {
 
   File getMavenEventListener();
 
+  /**
+   * @deprecated use {@link MavenServerManager#createEmbedder(Project, boolean, String)}
+   */
+  @Deprecated
+  @NotNull
+  default MavenEmbedderWrapper createEmbedder(Project project,
+                                              boolean alwaysOnline,
+                                              @Nullable String ignoredWorkingDirectory,
+                                              @NotNull String multiModuleProjectDirectory) {
+    return createEmbedder(project, alwaysOnline, multiModuleProjectDirectory);
+  }
+
   @NotNull MavenEmbedderWrapper createEmbedder(Project project,
                                                boolean alwaysOnline,
-                                               @Nullable String workingDirectory,
                                                @NotNull String multiModuleProjectDirectory);
 
   MavenIndexerWrapper createIndexer(@NotNull Project project);

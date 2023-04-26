@@ -19,13 +19,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
@@ -52,24 +50,28 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
   @Override
   protected @NotNull Runnable loadEditorInBackground() {
     Runnable baseResult = super.loadEditorInBackground();
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
-    Document document = FileDocumentManager.getInstance().getDocument(myFile);
-    boolean shouldBuildInitialFoldings =
-      document != null && !myProject.isDefault() && PsiDocumentManager.getInstance(myProject).isCommitted(document);
-    CodeFoldingState foldingState = catchingExceptions(() -> shouldBuildInitialFoldings
-                                                             ? CodeFoldingManager.getInstance(myProject).buildInitialFoldings(document)
-                                                             : null);
 
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
+    EditorEx editor = getEditor();
+    Document document = editor.getDocument();
+    // loadEditorInBackground is executed in read action with `withDocumentsCommitted` constraint,
+    // no need to check that document is committed
+    CodeFoldingState foldingState = myProject.isDefault()
+                                    ? null
+                                    : catchingExceptions(() -> CodeFoldingManager.getInstance(myProject).buildInitialFoldings(document));
 
     List<? extends Segment> focusZones = catchingExceptions(() -> FocusModePassFactory.calcFocusZones(psiFile));
 
-    Editor editor = getEditor();
-    DocRenderPassFactory.Items items = document != null && psiFile != null && DocRenderManager.isDocRenderingEnabled(getEditor())
+    DocRenderPassFactory.Items items = psiFile != null && DocRenderManager.isDocRenderingEnabled(getEditor())
                                        ? catchingExceptions(() -> DocRenderPassFactory.calculateItemsToRender(editor, psiFile))
                                        : null;
 
-    HintsBuffer buffer = psiFile != null ? catchingExceptions(() -> InlayHintsPassFactory.Companion.collectPlaceholders(psiFile, editor)) : null;
-    var placeholders = catchingExceptions(() -> CodeVisionInitializer.Companion.getInstance(myProject).getCodeVisionHost().collectPlaceholders(editor, psiFile));
+    HintsBuffer buffer = psiFile == null
+                         ? null
+                         : catchingExceptions(() -> InlayHintsPassFactory.Companion.collectPlaceholders(psiFile, editor));
+    var placeholders = catchingExceptions(() -> {
+      return CodeVisionInitializer.Companion.getInstance(myProject).getCodeVisionHost().collectPlaceholders(editor, psiFile);
+    });
 
     return () -> {
       baseResult.run();

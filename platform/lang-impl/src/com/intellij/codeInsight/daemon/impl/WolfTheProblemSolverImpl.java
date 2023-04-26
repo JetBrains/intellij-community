@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,7 +74,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   private static class ProblemFileInfo {
-    private final Collection<Problem> problems = ContainerUtil.newConcurrentSet();
+    private final Collection<Problem> problems = ConcurrentCollectionFactory.createConcurrentSet();
     private volatile boolean hasSyntaxErrors;
 
     @Override
@@ -357,7 +358,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (!isToBeHighlighted(file)) return;
 
-    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> ContainerUtil.newConcurrentSet());
+    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> ConcurrentCollectionFactory.createConcurrentSet());
     boolean isNewFileForExternalSource = problems.isEmpty();
     problems.add(source);
 

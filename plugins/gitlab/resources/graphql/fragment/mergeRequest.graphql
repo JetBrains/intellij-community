@@ -9,6 +9,16 @@ fragment mergeRequest on MergeRequest {
   targetBranch
   sourceBranch
 
+  labels(first: 100) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      title
+    }
+  }
+
   diffRefs {
     baseSha
     startSha
@@ -73,6 +83,6 @@ fragment mergeRequest on MergeRequest {
     }
   }
   userPermissions {
-    createNote
+    ...mergeRequestPermissions
   }
 }

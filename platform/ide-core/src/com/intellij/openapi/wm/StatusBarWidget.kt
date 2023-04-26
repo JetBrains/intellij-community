@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
-
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -17,6 +15,14 @@ import javax.swing.Icon
 import javax.swing.border.Border
 
 /**
+ * A status bar widget.
+ *
+ * *Implementation note:* status bar widgets can be instantiated on a BGT,
+ * so implementations should take care not to instantiate any Swing components in constructors
+ * and/or field/property initializers. All initialization should happen when the components are actually needed.
+ * The simplest way to achieve this is to use Kotlin's lazy initialization for the component
+ * property.
+ *
  * @see com.intellij.openapi.wm.StatusBarWidgetFactory
  */
 interface StatusBarWidget : Disposable {

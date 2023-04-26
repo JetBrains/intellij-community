@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinFacetUtils")
+
 package org.jetbrains.kotlin.idea.facet
 
 import com.intellij.openapi.application.runReadAction
@@ -16,7 +17,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
+import org.jetbrains.kotlin.compilerRunner.toArgumentStrings
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.platforms.IdePlatformKindProjectStructure
 import org.jetbrains.kotlin.idea.compiler.configuration.*
@@ -52,15 +53,22 @@ fun KotlinFacetSettings.initializeIfNeeded(
     if (compilerArguments == null) {
         val targetPlatform = platform ?: getDefaultTargetPlatform(module, rootModel)
 
-        compilerArguments = targetPlatform.createArguments {
-            val argumentsForPlatform = IdePlatformKindProjectStructure.getInstance(project)
-                .getCompilerArguments(targetPlatform.idePlatformKind)
+        val argumentsForPlatform = IdePlatformKindProjectStructure.getInstance(project)
+            .getCompilerArguments(targetPlatform.idePlatformKind)
 
+        compilerArguments = targetPlatform.createArguments {
             if (argumentsForPlatform != null) {
-                mergeBeans(argumentsForPlatform, this)
+                when {
+                    argumentsForPlatform is K2JVMCompilerArguments &&
+                            this is K2JVMCompilerArguments -> copyK2JVMCompilerArguments(argumentsForPlatform, this)
+                    argumentsForPlatform is K2JSCompilerArguments &&
+                            this is K2JSCompilerArguments -> copyK2JSCompilerArguments(argumentsForPlatform, this)
+
+                    else -> error("Unsupported copy arguments combination: ${argumentsForPlatform.javaClass.name} and ${javaClass.name}")
+                }
             }
 
-            mergeBeans(commonArguments, this)
+            copyCommonCompilerArguments(commonArguments, this)
         }
 
         this.targetPlatform = targetPlatform
@@ -121,34 +129,24 @@ private fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): Lang
 
 fun parseCompilerArgumentsToFacet(
     arguments: List<String>,
-    defaultArguments: List<String>,
     kotlinFacet: KotlinFacet,
     modelsProvider: IdeModifiableModelsProvider?
 ) {
     val compilerArgumentsClass = kotlinFacet.configuration.settings.compilerArguments?.javaClass ?: return
     val currentArgumentsBean = compilerArgumentsClass.newInstance()
-    val defaultArgumentsBean = compilerArgumentsClass.newInstance()
-    val defaultArgumentWithDefaults = substituteDefaults(defaultArguments, defaultArgumentsBean)
     val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
-    parseCommandLineArguments(defaultArgumentWithDefaults, defaultArgumentsBean)
     parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
-    applyCompilerArgumentsToFacet(currentArgumentsBean, defaultArgumentsBean, kotlinFacet, modelsProvider)
+    applyCompilerArgumentsToFacet(currentArgumentsBean, kotlinFacet, modelsProvider)
 }
 
 fun applyCompilerArgumentsToFacet(
     arguments: CommonCompilerArguments,
-    defaultArguments: CommonCompilerArguments?,
     kotlinFacet: KotlinFacet,
     modelsProvider: IdeModifiableModelsProvider?
 ) {
     with(kotlinFacet.configuration.settings) {
         val compilerArguments = this.compilerArguments ?: return
-
-        val defaultCompilerArguments = defaultArguments?.let { copyBean(it) } ?: compilerArguments::class.java.newInstance()
-        defaultCompilerArguments.convertPathsToSystemIndependent()
-
         val oldPluginOptions = compilerArguments.pluginOptions
-
         val emptyArgs = compilerArguments::class.java.newInstance()
 
         // Ad-hoc work-around for android compilations: middle source sets could be actualized up to
@@ -167,24 +165,60 @@ fun applyCompilerArgumentsToFacet(
         if (modelsProvider != null)
             kotlinFacet.module.configureSdkIfPossible(compilerArguments, modelsProvider)
 
-        val primaryFields = compilerArguments.primaryFields
-        val ignoredFields = compilerArguments.ignoredFields
+        val allFacetFields = compilerArguments.kotlinFacetFields.allFields
+
+        val ignoredFields = hashSetOf(
+            K2JVMCompilerArguments::noJdk.name,
+            K2JVMCompilerArguments::jdkHome.name,
+        )
+
+        val ignoredAsAdditionalArguments = ignoredFields + hashSetOf(
+            K2JVMCompilerArguments::moduleName.name,
+            K2JVMCompilerArguments::noReflect.name,
+            K2JVMCompilerArguments::noStdlib.name,
+            K2JVMCompilerArguments::allowNoSourceFiles.name,
+            K2JVMCompilerArguments::jvmDefault.name,
+            K2JVMCompilerArguments::useIR.name,
+            K2JVMCompilerArguments::reportPerf.name,
+            K2JVMCompilerArguments::noKotlinNothingValueException.name,
+            K2JVMCompilerArguments::noOptimizedCallableReferences,
+
+            K2NativeCompilerArguments::enableAssertions.name,
+            K2NativeCompilerArguments::debug.name,
+            K2NativeCompilerArguments::outputName.name,
+            K2NativeCompilerArguments::linkerArguments.name,
+            K2NativeCompilerArguments::singleLinkerArguments.name,
+            K2NativeCompilerArguments::produce.name,
+            K2NativeCompilerArguments::target.name,
+            K2NativeCompilerArguments::shortModuleName.name,
+            K2NativeCompilerArguments::noendorsedlibs.name,
+
+            K2JSCompilerArguments::metaInfo.name,
+            K2JSCompilerArguments::outputFile.name,
+        )
 
         fun exposeAsAdditionalArgument(property: KProperty1<CommonCompilerArguments, Any?>) =
-            property.name !in primaryFields && property.get(compilerArguments) != property.get(defaultCompilerArguments)
+            /* Handled by facet directly */
+            property.name !in allFacetFields &&
+                    /* Explicitly  not shown to users as 'additional arguments' */
+                    property.name !in ignoredAsAdditionalArguments &&
+                    /* Default value from compiler arguments is used */
+                    property.get(compilerArguments) != property.get(emptyArgs)
 
-        val additionalArgumentsString = with(compilerArguments::class.java.newInstance()) {
-            copyFieldsSatisfying(compilerArguments, this) { exposeAsAdditionalArgument(it) && it.name !in ignoredFields }
-            ArgumentUtils.convertArgumentsToStringListNoDefaults(this).joinToString(separator = " ") {
+
+        val additionalArgumentsString = with(compilerArguments::class.java.getDeclaredConstructor().newInstance()) {
+            copyFieldsSatisfying(compilerArguments, this) { exposeAsAdditionalArgument(it) }
+            toArgumentStrings().joinToString(separator = " ") {
                 if (StringUtil.containsWhitespaces(it) || it.startsWith('"')) {
                     StringUtil.wrapWithDoubleQuote(StringUtil.escapeQuotes(it))
                 } else it
             }
         }
-        compilerSettings?.additionalArguments =
-            if (additionalArgumentsString.isNotEmpty()) additionalArgumentsString else CompilerSettings.DEFAULT_ADDITIONAL_ARGUMENTS
 
-        with(compilerArguments::class.java.newInstance()) {
+        compilerSettings?.additionalArguments = additionalArgumentsString.ifEmpty { CompilerSettings.DEFAULT_ADDITIONAL_ARGUMENTS }
+
+        /* 'Reset' ignored fields and arguments that will be exposed as 'additional arguments' to the user */
+        with(compilerArguments::class.java.getDeclaredConstructor().newInstance()) {
             copyFieldsSatisfying(this, compilerArguments) { exposeAsAdditionalArgument(it) || it.name in ignoredFields }
         }
 

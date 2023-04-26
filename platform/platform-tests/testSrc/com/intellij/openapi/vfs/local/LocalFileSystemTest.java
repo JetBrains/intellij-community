@@ -14,6 +14,8 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -30,6 +32,7 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -64,7 +67,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           VirtualFile file = event.getFile();
-          if (file != null) {
+          if (file != null && !(file.getFileSystem() instanceof TempFileSystemMarker)) {
             boolean shouldBeValid = !(event instanceof VFileCreateEvent);
             assertEquals(event.toString(), shouldBeValid, file.isValid());
           }
@@ -75,7 +78,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           VirtualFile file = event.getFile();
-          if (file != null) {
+          if (file != null && !(file.getFileSystem() instanceof TempFileSystemMarker)) {
             boolean shouldBeValid = !(event instanceof VFileDeleteEvent);
             assertEquals(event.toString(), shouldBeValid, file.isValid());
           }
@@ -936,6 +939,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertFalse(FileSystemUtil.isCaseToggleable(file.getName()));
 
     VirtualDirectoryImpl dir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
+    assertNotNull(dir);
     assertEquals(CaseSensitivity.UNKNOWN, dir.getChildrenCaseSensitivity());
 
     VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(dir, file.getName());

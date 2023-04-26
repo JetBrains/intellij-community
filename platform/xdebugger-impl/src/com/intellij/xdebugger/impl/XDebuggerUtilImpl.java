@@ -52,10 +52,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
@@ -436,6 +433,14 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
     List<XSourcePosition> res = new SmartList<>();
+
+    Integer line = XLineBreakpointManager.BREAKPOINT_LINE_KEY.getData(context);
+    if (line != null) {
+      XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
+      res.add(position);
+      return res;
+    }
+
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       XSourcePositionImpl position = XSourcePositionImpl.createByOffset(file, caret.getOffset());
       if (position != null) {

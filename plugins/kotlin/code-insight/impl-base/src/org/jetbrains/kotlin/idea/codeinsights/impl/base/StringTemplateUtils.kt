@@ -210,16 +210,6 @@ private fun convertContent(element: KtStringTemplateExpression): String {
     return StringUtilRt.convertLineSeparators(text, "\n")
 }
 
-private fun hasTrailingSpaces(text: String): Boolean {
-    var afterSpace = false
-    for (c in text) {
-        if ((c == '\n' || c == '\r') && afterSpace) return true
-        afterSpace = c == ' ' || c == '\t'
-    }
-
-    return false
-}
-
 private fun KtStringTemplateEntry.value() = if (this is KtEscapeStringTemplateEntry) this.unescapedValue else text
 
 fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
@@ -238,7 +228,7 @@ fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
     }
 
     val converted = convertContent(this)
-    return !converted.contains("\"\"\"") && !hasTrailingSpaces(converted)
+    return !converted.contains("\"\"\"")
 }
 
 fun KtStringTemplateExpression.convertToStringLiteral(): KtExpression {

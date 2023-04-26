@@ -473,7 +473,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
               .notify(getProject());
           }
         }
-        if (((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts().size() > 1) {
+        if (myDebugProcess.getSuspendManager().getPausedContexts().size() > 1) {
           return;
         }
         else {
@@ -759,6 +759,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   public static boolean enableBreakpointsDuringEvaluation() {
     return Registry.is("debugger.enable.breakpoints.during.evaluation");
+  }
+
+  public static boolean filterBreakpointsDuringSteppingUsingDebuggerEngine() {
+    return Registry.is("debugger.filter.breakpoints.during.stepping.using.debugger.engine");
   }
 
   public void sessionResumed() {

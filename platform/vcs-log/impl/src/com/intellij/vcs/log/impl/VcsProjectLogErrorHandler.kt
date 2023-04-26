@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.google.common.collect.EnumMultiset
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
@@ -49,9 +48,9 @@ internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog) 
     private const val DISABLE_INDEX_COUNT = 2 * INVALIDATE_CACHES_COUNT
 
     fun VcsLogManager.storageIds(): List<StorageId> {
-      return listOfNotNull((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
-                           (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
-                           (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId)
+      return linkedSetOf((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
+                         (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
+                         (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId).filterNotNull()
     }
 
     private fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean): Future<*>? {
@@ -62,10 +61,9 @@ internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog) 
         if (invalidateCaches) {
           for (storageId in storageIds) {
             try {
-              val storageDir = storageId.projectStorageDir
-              val deleted = FileUtil.deleteWithRenaming(storageDir)
-              if (deleted) thisLogger().info("Deleted $storageDir")
-              else thisLogger().error("Could not delete $storageDir")
+              val deleted = storageId.cleanupAllStorageFiles()
+              if (deleted) thisLogger().info("Deleted ${storageId.storagePath}")
+              else thisLogger().error("Could not delete ${storageId.storagePath}")
             }
             catch (t: Throwable) {
               thisLogger().error(t)

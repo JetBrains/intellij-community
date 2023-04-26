@@ -90,7 +90,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
     if (e.isTemporary() || !component.isShowing()) {
       return;
     }
-    if (component instanceof JTextComponent) {
+    if (component instanceof JTextComponent && ((JTextComponent)component).isEditable()) {
       SwingUndoUtil.addUndoRedoActions((JTextComponent)component);
     }
     setFocusedComponentImpl(component, e);

@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBUI
@@ -62,7 +62,7 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
       row(IdeBundle.message("label.icon.path")) {
         cell(browseComboBox)
           .align(AlignX.FILL)
-          .customize(Gaps.EMPTY)
+          .customize(UnscaledGaps.EMPTY)
           .enabledIf(object : ComponentPredicate() {
             override fun invoke(): Boolean = selectedTreePaths.size < 2
 
@@ -76,7 +76,7 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
           .applyToComponent {
             font = JBUI.Fonts.smallFont()
             foreground = UIUtil.getLabelInfoForeground()
-          }.customize(Gaps.EMPTY)
+          }.customize(UnscaledGaps.EMPTY)
       }
     }
     panel.preferredFocusedComponent = filterComponent.textEditor

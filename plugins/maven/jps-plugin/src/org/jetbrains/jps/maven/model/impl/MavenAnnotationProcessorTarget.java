@@ -56,7 +56,7 @@ public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<B
    * {@link JpsMavenModuleExtension}
    */
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     JpsMavenModuleExtension moduleExtension = JpsMavenExtensionService.getInstance().getExtension(myModule);
     if (moduleExtension == null) return Collections.emptyList();
 
@@ -70,16 +70,16 @@ public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<B
 
   @NotNull
   @Override
-  public List<BuildRootDescriptor> computeRootDescriptors(JpsModel model,
-                                                          ModuleExcludeIndex index,
-                                                          IgnoredFileIndex ignoredFileIndex,
-                                                          BuildDataPaths dataPaths) {
+  public List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                          @NotNull ModuleExcludeIndex index,
+                                                          @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                          @NotNull BuildDataPaths dataPaths) {
     return Collections.emptyList();
   }
 
   @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     return Collections.emptyList();
   }
 }

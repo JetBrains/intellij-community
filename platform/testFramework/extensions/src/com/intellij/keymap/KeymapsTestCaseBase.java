@@ -160,7 +160,7 @@ public abstract class KeymapsTestCaseBase {
       }
     }
 
-    return DynamicTests.asDynamicTests(failures, "action keymaps are correct", "too many unknown shortcuts");
+    return DynamicTests.asDynamicTests(failures, "problems in action keymaps");
   }
 
 
@@ -212,7 +212,7 @@ public abstract class KeymapsTestCaseBase {
       }
     }
 
-    return DynamicTests.asDynamicTests(failures, "shortcuts are correct", "too many duplicate shortcuts");
+    return DynamicTests.asDynamicTests(failures, "duplicate shortcuts");
   }
 
   private Map<String, Map<Shortcut, List<String>>> collectExpectedDuplicatedShortcuts() {
@@ -392,7 +392,7 @@ public abstract class KeymapsTestCaseBase {
         checkLinuxKeymap(keymap, failures);
       }
     }
-    return DynamicTests.asDynamicTests(failures, "linux shortcuts are correct", "too many problems in linux shortcuts");
+    return DynamicTests.asDynamicTests(failures, "incorrect linux shortcuts");
   }
 
   private static void checkLinuxKeymap(Keymap keymap, List<? super NamedFailure> failures) {
@@ -442,6 +442,6 @@ public abstract class KeymapsTestCaseBase {
       }
     }
 
-    return DynamicTests.asDynamicTests(failures, "bound actions are correct", "too many problems in bound actions");
+    return DynamicTests.asDynamicTests(failures, "problems with bound actions");
   }
 }

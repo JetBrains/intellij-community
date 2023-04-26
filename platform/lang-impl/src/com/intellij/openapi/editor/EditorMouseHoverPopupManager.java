@@ -11,8 +11,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,7 +28,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -39,8 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -52,7 +47,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -66,7 +60,6 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
-import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 import static com.intellij.lang.documentation.ide.impl.DocumentationTargetHoverInfoKt.calcTargetDocumentationInfo;
 
 public class EditorMouseHoverPopupManager implements Disposable {
@@ -165,7 +158,9 @@ public class EditorMouseHoverPopupManager implements Disposable {
                                   boolean requestFocus) {
     ProgressIndicatorBase progress = new ProgressIndicatorBase();
     progress.setModalityProgress(null);
-    myCurrentProgress = progress;
+    if (!forceShowing) { // myCurrentProgress is cancelled on every mouse moved - do not use it for forceShowing mode
+      myCurrentProgress = progress;
+    }
     myAlarm.addRequest(() -> {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         // errors are stored in the top level editor markup model, not the injected one
@@ -173,7 +168,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
         EditorHoverInfo info = context.calcInfo(topLevelEditor);
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (progress != myCurrentProgress) {
+          if (!forceShowing && progress != myCurrentProgress) {
             return;
           }
 
@@ -544,83 +539,13 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
     private @Nullable DocumentationHoverInfo documentationHoverInfo(@NotNull Editor editor) {
       try {
-        return isDocumentationV2Enabled()
-               ? showDocumentation() && EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()
-                 ? calcTargetDocumentationInfo(Objects.requireNonNull(editor.getProject()), editor, targetOffset)
-                 : null
-               : documentationPsiHoverInfo(editor);
+        return showDocumentation() && EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()
+          ? calcTargetDocumentationInfo(Objects.requireNonNull(editor.getProject()), editor, targetOffset)
+          : null;
       }
       catch (IndexNotReadyException ignored) {
         return null;
       }
-    }
-
-    /**
-     * @deprecated Unused in v2 implementation.
-     */
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
-    private @Nullable DocumentationPsiHoverInfo documentationPsiHoverInfo(@NotNull Editor editor) {
-      @Nls String quickDocMessage = null;
-      DocumentationProvider provider = null;
-      PsiElement targetElement = null;
-      PsiElement element = getElementForQuickDoc();
-      if (element != null) {
-        try {
-          Project project = Objects.requireNonNull(editor.getProject());
-          DocumentationManager documentationManager =
-            ReadAction.compute(() -> project.isDisposed() ? null : DocumentationManager.getInstance(project));
-          if (documentationManager != null) {
-            targetElement = findTargetElement(editor, element, documentationManager);
-            if (targetElement != null) {
-              Pair<@NlsSafe String, DocumentationProvider> docWithProvider = documentationManager.getDocumentationAndProvider(targetElement, element, true);
-              quickDocMessage = docWithProvider.first;
-              provider = docWithProvider.second;
-              if (quickDocMessage != null && quickDocMessage.length() > MAX_QUICK_DOC_CHARACTERS) {
-                quickDocMessage = quickDocMessage.substring(0, MAX_QUICK_DOC_CHARACTERS);
-              }
-              if (quickDocMessage != null) {
-                PsiElement finalTargetElement = targetElement;
-                String finalQuickDocMessage = quickDocMessage;
-                DocumentationProvider finalProvider = provider;
-                quickDocMessage = ReadAction.compute(
-                  () -> documentationManager.decorate(finalTargetElement, finalQuickDocMessage, null, finalProvider)
-                );
-              }
-            }
-          }
-        }
-        catch (IndexNotReadyException | ProcessCanceledException ignored) {
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-      }
-      if (quickDocMessage != null) {
-        return new DocumentationPsiHoverInfo(quickDocMessage, targetElement, provider);
-      }
-      else {
-        return null;
-      }
-    }
-
-    /**
-     * @deprecated Unused in v2 implementation.
-     */
-    @Deprecated
-    @Nullable
-    protected PsiElement findTargetElement(@NotNull Editor editor, PsiElement element, DocumentationManager documentationManager) {
-      return ReadAction.nonBlocking(() -> {
-        if (element.isValid()) {
-          PsiFile containingFile = element.getContainingFile();
-          Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, null, containingFile);
-          int offset = injectedEditor instanceof EditorWindow
-            ? ((EditorWindow) injectedEditor).getDocument().hostToInjected(targetOffset)
-            : targetOffset;
-          return documentationManager.findTargetElementAtOffset(injectedEditor, offset, containingFile, element);
-        }
-        return null;
-      }).executeSynchronously();
     }
 
     private enum Relation {

@@ -10,7 +10,8 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
   enum class SwitchSource {
     ENABLE_NEW_UI_ACTION,
     DISABLE_NEW_UI_ACTION,
-    WELCOME_PROMO
+    WELCOME_PROMO,
+    WHATS_NEW_PAGE
   }
 
   enum class MeetNewUiAction {
@@ -22,7 +23,7 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("experimental.ui.interactions", 3)
+    private val GROUP = EventLogGroup("experimental.ui.interactions", 4)
 
     private val switchSourceField = EventFields.Enum<SwitchSource>("switch_source")
     private val expUiField = EventFields.Boolean("exp_ui")

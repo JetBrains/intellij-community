@@ -12,10 +12,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
@@ -67,10 +64,17 @@ class TerminalPanel(private val project: Project,
 
   private val eventDispatcher: TerminalEventDispatcher = TerminalEventDispatcher()
 
+  val charSize: Dimension
+    get() = Dimension(editor.charHeight, editor.lineHeight)
+
   init {
     document = DocumentImpl("", true)
     editor = TerminalUiUtils.createEditor(document, project, settings)
-    Disposer.register(this, editor.disposable)
+    Disposer.register(this) {
+      EditorFactory.getInstance().releaseEditor(editor)
+    }
+    Disposer.register(this, runningDisposable)
+    Disposer.register(this, keyEventsForwardingDisposable)
 
     setupContentListener()
     setupEventDispatcher()
@@ -84,7 +88,7 @@ class TerminalPanel(private val project: Project,
     updateEditorContent()
   }
 
-  fun makeReadOnly() {
+  fun makeReadOnly(done: (Editor) -> Unit) {
     // remove listening for content changes and forwarding events to terminal process
     Disposer.dispose(runningDisposable)
 
@@ -97,6 +101,7 @@ class TerminalPanel(private val project: Project,
 
       editor.setCaretEnabled(false)
       editor.isViewer = true
+      done(editor)
     }
   }
 
@@ -126,7 +131,9 @@ class TerminalPanel(private val project: Project,
     // Can not use invokeAndWait here because deadlock may happen. TerminalTextBuffer is locked at this place,
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
-      updateEditor(content)
+      if (!editor.isDisposed) {
+        updateEditor(content)
+      }
     }
   }
 
@@ -315,12 +322,15 @@ class TerminalPanel(private val project: Project,
     return Dimension(baseSize.width, lineCount * editor.lineHeight + insets.top + insets.bottom)
   }
 
+  fun getContentSize(): Dimension {
+    return Dimension(width - JBUI.scale(LEFT_INSET), height)
+  }
+
   override fun getComponent(): JComponent = this
 
   override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
 
   override fun dispose() {
-    eventDispatcher.unregister()
   }
 
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
@@ -385,6 +395,8 @@ class TerminalPanel(private val project: Project,
   }
 
   companion object {
+    const val LEFT_INSET: Int = 7
+
     @NonNls
     private val ACTIONS_TO_SKIP = listOf(
       "ActivateTerminalToolWindow",

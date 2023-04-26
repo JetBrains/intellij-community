@@ -43,7 +43,8 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       Object tooltipObject = marker.getErrorStripeTooltip();
       if (tooltipObject == null) continue;
       if (tooltipObject instanceof HighlightInfo info) {
-        if (info.getToolTip() != null && tooltips.add(info.getToolTip())) {
+        String toolTip = info.getToolTip();
+        if (toolTip != null && tooltips.add(toolTip)) {
           infos.add(info);
         }
       }

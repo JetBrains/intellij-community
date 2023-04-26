@@ -7,6 +7,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import kotlin.test.assertEquals
 
@@ -58,7 +59,8 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractJ2kCopyPast
                 if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
             )
 
-            KotlinTestUtils.assertEqualsToFile(File(path.replace(".java", ".expected.kt")), myFixture.file.text)
+            val actualText = (myFixture.file as KtFile).dumpTextWithErrors()
+            KotlinTestUtils.assertEqualsToFile(File(path.replace(".java", ".expected.kt")), actualText)
         }
     }
 }

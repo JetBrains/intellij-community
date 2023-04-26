@@ -68,12 +68,14 @@ class HiredisParser(BaseParser):
 
 DefaultParser: type[BaseParser]  # Hiredis or PythonParser
 
+_Encodable: TypeAlias = str | bytes | memoryview | bool | float
+
 class Encoder:
     encoding: str
     encoding_errors: str
     decode_responses: bool
     def __init__(self, encoding: str, encoding_errors: str, decode_responses: bool) -> None: ...
-    def encode(self, value: str | bytes | memoryview | bool | float) -> bytes: ...
+    def encode(self, value: _Encodable) -> bytes: ...
     def decode(self, value: str | bytes | memoryview, force: bool = ...) -> str: ...
 
 class Connection:

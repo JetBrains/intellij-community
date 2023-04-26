@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -164,7 +165,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     if (doc == null || info.project == null) {
       try {
         return FileContentImpl.createByFile(info.file, info.project);
-      } catch (FileNotFoundException ignored) {
+      } catch (FileNotFoundException | NoSuchFileException ignored) {
         return null;
       }
     }

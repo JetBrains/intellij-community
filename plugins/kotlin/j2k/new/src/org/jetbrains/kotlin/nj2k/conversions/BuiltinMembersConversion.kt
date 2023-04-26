@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.STRING
+import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.isArrayType
 import org.jetbrains.kotlin.nj2k.types.isNull
 import org.jetbrains.kotlin.nj2k.types.isStringType
@@ -240,19 +241,23 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private val conversions: Map<String, List<Conversion>> =
         listOf(
-            Method("java.lang.Byte.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Boolean.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Short.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Byte.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Integer.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Short.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Long.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Integer.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Float.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Long.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.lang.Double.valueOf") convertTo numericValueOfReplacement()
+            Method("java.lang.Float.valueOf") convertTo valueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Double.valueOf") convertTo valueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
+            Method("java.lang.Boolean.parseBoolean") convertTo ExtensionMethod("kotlin.text.toBoolean")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.lang.Byte.parseByte") convertTo ExtensionMethod("kotlin.text.toByte")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.lang.Short.parseShort") convertTo ExtensionMethod("kotlin.text.toShort")
@@ -345,6 +350,19 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
             Method("java.lang.Object.getClass") convertTo Field("kotlin.jvm.javaClass"),
+
+            Method("java.lang.Object.notify")
+                    convertTo castReceiverToJavaLangObject()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::filterReceiverCastToJavaLangObject,
+            Method("java.lang.Object.notifyAll")
+                    convertTo castReceiverToJavaLangObject()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::filterReceiverCastToJavaLangObject,
+            Method("java.lang.Object.wait")
+                    convertTo castReceiverToJavaLangObject()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::filterReceiverCastToJavaLangObject,
 
             Method("java.util.Map.entrySet") convertTo Field("kotlin.collections.Map.entries"),
             Method("java.util.Map.keySet") convertTo Field("kotlin.collections.Map.keys"),
@@ -648,10 +666,51 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 }
             },
 
+            Method("java.util.Arrays.copyOf")
+                    convertTo ExtensionMethod("kotlin.collections.copyOf")
+                    withByArgumentsFilter { it.size == 2 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.copyOfRange")
+                    convertTo ExtensionMethod("kotlin.collections.copyOfRange")
+                    withByArgumentsFilter { it.size == 3 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.equals")
+                    convertTo ExtensionMethod("kotlin.collections.contentEquals")
+                    withByArgumentsFilter { it.size == 2 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.deepEquals")
+                    convertTo ExtensionMethod("kotlin.collections.contentDeepEquals")
+                    withByArgumentsFilter { it.size == 2 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.hashCode")
+                    convertTo ExtensionMethod("kotlin.collections.contentHashCode")
+                    withByArgumentsFilter { it.size == 1 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.deepHashCode")
+                    convertTo ExtensionMethod("kotlin.collections.contentDeepHashCode")
+                    withByArgumentsFilter { it.size == 1 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.toString")
+                    convertTo ExtensionMethod("kotlin.collections.contentToString")
+                    withByArgumentsFilter { it.size == 1 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
+            Method("java.util.Arrays.deepToString")
+                    convertTo ExtensionMethod("kotlin.collections.contentDeepToString")
+                    withByArgumentsFilter { it.size == 1 }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
             Method("java.util.Arrays.asList")
                     convertTo Method("kotlin.collections.mutableListOf")
                     withByArgumentsFilter { containsOnlyLiterals(it) && (it.size > 1 || !containsNull(it.cast())) }
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+
             Method("java.util.Set.of")
                     convertTo Method("kotlin.collections.setOf")
                     withByArgumentsFilter { containsOnlyLiterals(it) && containsOnlyUnique(it.cast()) && !containsNull(it.cast()) }
@@ -685,7 +744,32 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     withFilter ::isSystemOutCall
         ).groupBy { it.from.fqName }
 
-    private fun numericValueOfReplacement() = CustomExpression { expression ->
+    private fun castReceiverToJavaLangObject() = CustomExpression { expr ->
+        val parent = expr.parent ?: return@CustomExpression expr
+        val (receiver, selector) = if (parent is JKQualifiedExpression) {
+            parent.receiver.detach(parent)
+            parent.selector.detach(parent)
+            parent.receiver to parent.selector
+        } else {
+            JKThisExpression(JKLabelEmpty()) to expr.copyTreeAndDetach()
+        }
+
+        val cast = JKTypeCastExpression(
+            receiver,
+            JKTypeElement(JKClassType(symbolProvider.provideClassSymbol("java.lang.Object")))
+        ).parenthesize()
+
+        JKQualifiedExpression(cast, selector)
+    }
+
+    private fun filterReceiverCastToJavaLangObject(expr: JKExpression): Boolean {
+        val parent = expr.parent as? JKQualifiedExpression ?: return true
+        val receiver = parent.receiver as? JKParenthesizedExpression ?: return true
+        val cast = receiver.expression as? JKTypeCastExpression ?: return true
+        return (cast.type.type as? JKClassType)?.classReference?.fqName != "java.lang.Object"
+    }
+
+    private fun valueOfReplacement() = CustomExpression { expression ->
         val arguments = (expression as JKCallExpression).arguments
         if (arguments.arguments.isEmpty()) return@CustomExpression expression
         val detachedArguments = arguments::arguments.detached()

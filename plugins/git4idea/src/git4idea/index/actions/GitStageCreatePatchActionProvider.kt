@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -28,7 +28,8 @@ open class GitStageCreatePatchActionProvider private constructor(private val sil
     e.presentation.isEnabled = e.project != null &&
                                nodes.filter {
                                  it.kind == NodeKind.STAGED ||
-                                 it.kind == NodeKind.UNSTAGED
+                                 it.kind == NodeKind.UNSTAGED ||
+                                 it.kind == NodeKind.UNTRACKED
                                }.isNotEmpty
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
@@ -37,8 +38,10 @@ open class GitStageCreatePatchActionProvider private constructor(private val sil
     val project = e.project!!
     val nodes = e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
 
-    val stagedNodesMap = nodes.filter { it.kind == NodeKind.STAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }
-    val unstagedNodesMap = nodes.filter { it.kind == NodeKind.UNSTAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }
+    val stagedNodesMap = nodes.filter { it.kind == NodeKind.STAGED }
+      .mapTo(mutableSetOf()) { Pair(it.root, it.status) }
+    val unstagedNodesMap = nodes.filter { it.kind == NodeKind.UNSTAGED || it.kind == NodeKind.UNTRACKED }
+      .mapTo(mutableSetOf()) { Pair(it.root, it.status) }
 
     val changes = mutableListOf<Change>()
     for (pair in (stagedNodesMap + unstagedNodesMap)) {

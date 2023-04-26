@@ -20,6 +20,10 @@ object ProblemsViewToolWindowUtils {
 
   fun getTabById(project: Project, id: String): ProblemsViewTab? = getContentById(project, id)?.component as? ProblemsViewTab
 
+  fun getSelectedTab(project: Project): ProblemsViewTab? {
+    return getToolWindow(project)?.contentManager?.selectedContent?.component as? ProblemsViewTab
+  }
+
   fun addTab(project: Project, provider: ProblemsViewPanelProvider) = ProblemsView.addPanel(project, provider)
 
   fun removeTab(project: Project, id: String) = ProblemsView.removePanel(project, id)

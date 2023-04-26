@@ -4,7 +4,6 @@ package com.intellij.featureStatistics.fusCollectors;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.DebugAttachDetector;
-import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
 import com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -27,7 +26,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 66);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 67);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -50,7 +49,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId1<Long> IDE_FREEZE =
     LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"));
 
-  private static final EventField<String> errorField = EventFields.StringValidatedByCustomRule("error", ClassNameRuleValidator.class);
+  private static final ClassEventField errorField = EventFields.Class("error");
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField =
     EventFields.Enum("memory_error_kind", VMOptions.MemoryKind.class, (kind) -> StringUtil.toLowerCase(kind.name()));
   private static final EventField<Integer> errorHashField = EventFields.Int("error_hash");
@@ -130,13 +129,13 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onError(@Nullable PluginId pluginId,
-                             @Nullable Throwable throwable,
+                             @NotNull Throwable throwable,
                              @Nullable VMOptions.MemoryKind memoryErrorKind) {
     try {
       final ThrowableDescription description = new ThrowableDescription(throwable);
       List<EventPair<?>> data = new ArrayList<>();
       data.add(EventFields.PluginInfo.with(pluginId == null ? getPlatformPlugin() : getPluginInfoById(pluginId)));
-      data.add(errorField.with(description.getClassName()));
+      data.add(errorField.with(description.getClazz()));
 
       if (memoryErrorKind != null) {
         data.add(memoryErrorKindField.with(memoryErrorKind));

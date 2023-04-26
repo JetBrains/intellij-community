@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
@@ -29,14 +30,20 @@ internal class ElementAnnotator(
     fun registerDiagnosticsAnnotations(
         holder: HighlightInfoHolder,
         diagnostics: Collection<Diagnostic>,
-        diagnosticHighlighted: MutableSet<Diagnostic>
+        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>?,
+        calculatingInProgress: Boolean
     ) = diagnostics.groupBy { it.factory }
         .forEach {
             val sameTypeDiagnostics = it.value
             val presentationInfo = presentationInfo(sameTypeDiagnostics)
             if (presentationInfo != null) {
-                val fixesMap = createFixesMap(sameTypeDiagnostics)
-                presentationInfo.processDiagnostics(holder, sameTypeDiagnostics, diagnosticHighlighted, fixesMap)
+                val fixesMap =
+                    if (calculatingInProgress) {
+                        Fe10QuickFixProvider.getInstance(element.project).createPostponedUnresolvedReferencesQuickFixes(sameTypeDiagnostics)
+                    } else {
+                        createFixesMap(sameTypeDiagnostics)
+                    }
+                presentationInfo.processDiagnostics(holder, sameTypeDiagnostics, highlightInfoByDiagnostic, fixesMap, calculatingInProgress)
             }
         }
 

@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.checkCircularDependency
 
 // ------------------------- Updating references ------------------------
 
@@ -20,6 +21,8 @@ fun EntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
     }
     existingChildren.forEach { removeEntityByEntityId(it) }
   }
+
+  childrenIds.forEach { checkCircularDependency(connectionId, it.id.arrayId, parentId.arrayId, this) }
   refs.updateOneToManyChildrenOfParent(connectionId, parentId.arrayId, childrenIds)
 }
 
@@ -31,6 +34,7 @@ fun EntityStorage.updateOneToAbstractManyChildrenOfParent(connectionId: Connecti
   this as MutableEntityStorageImpl
   val parentId = (parentEntity as WorkspaceEntityBase).id.asParent()
   val childrenIds = childrenEntity.map { (it as WorkspaceEntityBase).id.asChild() }
+  childrenIds.forEach { checkCircularDependency(it.id, parentId.id, this) }
   refs.updateOneToAbstractManyChildrenOfParent(connectionId, parentId, childrenIds)
 }
 
@@ -61,6 +65,7 @@ fun EntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionId, parent
     removeEntityByEntityId(existingChildId)
   }
   if (childId != null) {
+    checkCircularDependency(connectionId, childId.id.arrayId, parentId.arrayId, this)
     refs.updateOneToOneChildOfParent(connectionId, parentId.arrayId, childId)
   }
   else {
@@ -76,6 +81,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToManyParentOfChild(connec
   val childId = (childEntity as WorkspaceEntityBase).id.asChild()
   val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
   if (parentId != null) {
+    checkCircularDependency(connectionId, childId.id.arrayId, parentId.id.arrayId, this)
     refs.updateOneToManyParentOfChild(connectionId, childId.id.arrayId, parentId)
   }
   else {
@@ -90,6 +96,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractManyParentOfChil
   val childId = (child as WorkspaceEntityBase).id.asChild()
   val parentId = (parent as? WorkspaceEntityBase)?.id?.asParent()
   if (parentId != null) {
+    checkCircularDependency(childId.id, parentId.id, this)
     refs.updateOneToAbstractManyParentOfChild(connectionId, childId, parentId)
   }
   else {
@@ -112,6 +119,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToOneParentOfChild(connect
     }
   }
   if (parentId != null) {
+    checkCircularDependency(connectionId, childId.arrayId, parentId.id.arrayId, this)
     refs.updateOneToOneParentOfChild(connectionId, childId.arrayId, parentId.id)
   }
   else {

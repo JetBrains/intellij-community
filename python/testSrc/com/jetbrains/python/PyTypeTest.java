@@ -2700,7 +2700,7 @@ public class PyTypeTest extends PyTestCase {
   public void testNotMatchedOverloadsAndImplementationInImportedModule() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> doMultiFileTest("Union[str, int]",
+      () -> doMultiFileTest("Union[int, str]",
                             "from b import foo\n" +
                             "expr = foo(object())")
     );
@@ -4048,7 +4048,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-40838
   public void testUnionOfManyTypesInclLiterals() {
-    doTest("Union[Literal[\"1\", 2], bool, None]",
+    doTest("Literal[\"1\"]",
            """
              from typing import overload, Literal
 
@@ -4097,7 +4097,7 @@ public class PyTypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> {
-        doTest("Union[str, int]",
+        doTest("str",
                prefix +
                "a: Literal[\"a\"]\n" +
                "expr = foo(a)");
@@ -4107,7 +4107,7 @@ public class PyTypeTest extends PyTestCase {
                "a = \"a\"\n" +
                "expr = foo(a)");
 
-        doTest("Union[str, int]",
+        doTest("str",
                prefix +
                "expr = foo(\"a\")");
       }

@@ -103,12 +103,13 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
 
     addDocumentListener()
 
-    val appMessageBus = ApplicationManager.getApplication().messageBus.connect(editor.disposable)
-
-    appMessageBus.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+    val connection = ApplicationManager.getApplication().messageBus.connect(editor.disposable)
+    connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      updateAll()
       refreshHighlightersLookAndFeel()
     })
-    appMessageBus.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      updateAll()
       refreshHighlightersLookAndFeel()
     })
 
@@ -212,11 +213,10 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     }
     addHighlighters(intervalsToAddHighlightersFor.values)
 
-    val allMatchingInlays: MutableList<Pair<Int, NotebookCellInlayController>> =
-      getMatchingInlaysForLines(fullInterestingRange)
-        .mapTo(mutableListOf()) {
-          editor.document.getLineNumber(it.inlay.offset) to it
-        }
+    val allMatchingInlays: MutableList<Pair<Int, NotebookCellInlayController>> = getMatchingInlaysForLines(fullInterestingRange)
+      .mapTo(mutableListOf()) {
+        editor.document.getLineNumber(it.inlay.offset) to it
+      }
     val allFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
 
     for (interval in matchingIntervals) {
@@ -407,7 +407,7 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
                                pointers: Collection<NotebookIntervalPointer>? = null,
                                private var updateAll: Boolean = false) : Update(Any()) {
-  private val pointersSet = pointers?.let { SmartHashSet(pointers) } ?: SmartHashSet()
+  private val pointerSet = pointers?.let { SmartHashSet(pointers) } ?: SmartHashSet()
 
   override fun run() {
     if (updateAll) {
@@ -415,7 +415,7 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
       return
     }
 
-    val linesList = pointersSet.mapNotNullTo(mutableListOf()) { it.get()?.lines }
+    val linesList = pointerSet.mapNotNullTo(mutableListOf()) { it.get()?.lines }
     linesList.sortBy { it.first }
     linesList.mergeAndJoinIntersections(listOf())
 
@@ -428,9 +428,11 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
     update as UpdateInlaysTask
 
     updateAll = updateAll || update.updateAll
-    if (updateAll) return true
+    if (updateAll) {
+      return true
+    }
 
-    pointersSet.addAll(update.pointersSet)
+    pointerSet.addAll(update.pointerSet)
     return true
   }
 }

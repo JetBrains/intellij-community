@@ -41,5 +41,8 @@
     <orderEntry type="module" module-name="kotlin.searching.test.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
   </component>
 </module>

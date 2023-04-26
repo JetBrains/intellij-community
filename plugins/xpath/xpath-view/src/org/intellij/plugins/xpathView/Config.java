@@ -25,8 +25,6 @@ import java.awt.*;
  * The configuration itself can be acquired with {@code getConfig()} in {@link XPathAppComponent}.
  */
 public class Config {
-  public boolean SHOW_IN_TOOLBAR = true;
-  public boolean SHOW_IN_MAIN_MENU = true;
   public boolean OPEN_NEW_TAB = false;
   public boolean HIGHLIGHT_RESULTS = true;
   public boolean SHOW_USAGE_VIEW = false;
@@ -89,8 +87,6 @@ public class Config {
 
     if (HIGHLIGHT_RESULTS != config.HIGHLIGHT_RESULTS) return false;
     if (OPEN_NEW_TAB != config.OPEN_NEW_TAB) return false;
-    if (SHOW_IN_MAIN_MENU != config.SHOW_IN_MAIN_MENU) return false;
-    if (SHOW_IN_TOOLBAR != config.SHOW_IN_TOOLBAR) return false;
     if (SHOW_USAGE_VIEW != config.SHOW_USAGE_VIEW) return false;
     if (bAddErrorStripe != config.bAddErrorStripe) return false;
     if (bHighlightStartTagOnly != config.bHighlightStartTagOnly) return false;
@@ -101,9 +97,7 @@ public class Config {
   }
 
   public int hashCode() {
-    int result = (SHOW_IN_TOOLBAR ? 1 : 0);
-    result = 29 * result + (SHOW_IN_MAIN_MENU ? 1 : 0);
-    result = 29 * result + (OPEN_NEW_TAB ? 1 : 0);
+    int result = (OPEN_NEW_TAB ? 1 : 0);
     result = 29 * result + (HIGHLIGHT_RESULTS ? 1 : 0);
     result = 29 * result + (SHOW_USAGE_VIEW ? 1 : 0);
     result = 29 * result + attributes.hashCode();

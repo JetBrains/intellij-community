@@ -3,7 +3,7 @@
   name: ".alt",
   priority: NORMAL,
   proximity: 2,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.alt",
@@ -39,7 +39,7 @@
   name: ".alt",
   priority: NORMAL,
   proximity: 2,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.alt",
@@ -74,7 +74,7 @@
  {
   name: ".capture",
   priority: NORMAL,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.capture",
@@ -107,7 +107,7 @@
  {
   name: ".capture",
   priority: NORMAL,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.capture",
@@ -141,7 +141,7 @@
   name: ".ctrl",
   priority: NORMAL,
   proximity: 2,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.ctrl",
@@ -177,7 +177,7 @@
   name: ".ctrl",
   priority: NORMAL,
   proximity: 2,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.ctrl",
@@ -213,7 +213,7 @@
   name: ".exact",
   priority: NORMAL,
   proximity: 2,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.exact",
@@ -247,7 +247,7 @@
   name: ".exact",
   priority: NORMAL,
   proximity: 2,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.exact",
@@ -281,7 +281,7 @@
   name: ".left",
   priority: NORMAL,
   proximity: 1,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.left",
@@ -315,7 +315,7 @@
   name: ".left",
   priority: NORMAL,
   proximity: 1,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.left",
@@ -349,7 +349,7 @@
   name: ".meta",
   priority: NORMAL,
   proximity: 2,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.meta",
@@ -385,7 +385,7 @@
   name: ".meta",
   priority: NORMAL,
   proximity: 2,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.meta",
@@ -421,7 +421,7 @@
   name: ".middle",
   priority: NORMAL,
   proximity: 1,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.middle",
@@ -455,7 +455,7 @@
   name: ".middle",
   priority: NORMAL,
   proximity: 1,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.middle",
@@ -488,7 +488,7 @@
  {
   name: ".once",
   priority: NORMAL,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.once",
@@ -521,7 +521,7 @@
  {
   name: ".once",
   priority: NORMAL,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.once",
@@ -554,7 +554,7 @@
  {
   name: ".passive",
   priority: NORMAL,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.passive",
@@ -587,7 +587,7 @@
  {
   name: ".passive",
   priority: NORMAL,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.passive",
@@ -620,7 +620,7 @@
  {
   name: ".prevent",
   priority: NORMAL,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.prevent",
@@ -653,7 +653,7 @@
  {
   name: ".prevent",
   priority: NORMAL,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.prevent",
@@ -687,7 +687,7 @@
   name: ".right",
   priority: NORMAL,
   proximity: 1,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.right",
@@ -721,7 +721,7 @@
   name: ".right",
   priority: NORMAL,
   proximity: 1,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.right",
@@ -754,7 +754,7 @@
  {
   name: ".self",
   priority: NORMAL,
-  offset: 15,
+  offset: 10,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.self",
@@ -787,7 +787,7 @@
  {
   name: ".self",
   priority: NORMAL,
-  offset: 23,
+  offset: 15,
   completeAfterChars: [.],
   source: {
    matchedName: "html/modifiers/.self",
@@ -809,6 +809,42 @@
       segments: [
        {
         name-part: "self",
+        symbol: <self>,
+       },
+      ],
+     },
+    },
+   ],
+  },
+ },
+ {
+  name: ".shift",
+  priority: NORMAL,
+  proximity: 2,
+  offset: 10,
+  completeAfterChars: [.],
+  source: {
+   matchedName: "html/modifiers/.shift",
+   origin: "vue@3.0.0 (vue)",
+   complete: true,
+   priority: NORMAL,
+   segments: [
+    {
+     name-part: ".",
+    },
+    {
+     name-part: "shift",
+     symbol: {
+      matchedName: "html/modifiers/<pattern>",
+      name: "System modifier key",
+      origin: "vue@3.0.0 (vue)",
+      complete: true,
+      description: "<p>Triggers mouse or keyboard event listeners…",
+      priority: NORMAL,
+      has-pattern: true,
+      segments: [
+       {
+        name-part: "",
         symbol: <self>,
        },
       ],
@@ -854,13 +890,12 @@
   },
  },
  {
-  name: ".shift",
+  name: ".stop",
   priority: NORMAL,
-  proximity: 2,
-  offset: 23,
+  offset: 10,
   completeAfterChars: [.],
   source: {
-   matchedName: "html/modifiers/.shift",
+   matchedName: "html/modifiers/.stop",
    origin: "vue@3.0.0 (vue)",
    complete: true,
    priority: NORMAL,
@@ -869,18 +904,16 @@
      name-part: ".",
     },
     {
-     name-part: "shift",
+     name-part: "stop",
      symbol: {
-      matchedName: "html/modifiers/<pattern>",
-      name: "System modifier key",
+      matchedName: "html/modifiers/stop",
       origin: "vue@3.0.0 (vue)",
       complete: true,
-      description: "<p>Triggers mouse or keyboard event listeners…",
+      description: "<p>Call <code>event.stopPropagation()</code>.…",
       priority: NORMAL,
-      has-pattern: true,
       segments: [
        {
-        name-part: "",
+        name-part: "stop",
         symbol: <self>,
        },
       ],

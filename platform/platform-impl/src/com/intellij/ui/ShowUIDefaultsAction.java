@@ -118,7 +118,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
               final Ref<Boolean> changed = Ref.create(false);
 
               if (value instanceof Color) {
-                ColorPicker.showColorPickerPopup(null, (Color)value, new ColorListener() {
+                ColorChooserService.getInstance().showPopup(null, (Color)value, new ColorListener() {
                   @Override
                   public void colorChanged(Color color, Object source) {
                     if (color != null) {

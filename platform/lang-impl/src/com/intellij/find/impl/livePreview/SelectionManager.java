@@ -6,6 +6,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class SelectionManager {
       editor.getCaretModel().removeSecondaryCarets();
     }
     FindModel findModel = mySearchResults.getFindModel();
-    final FindResult cursor = mySearchResults.getCursor();
+    FindResult cursor = mySearchResults.getCursor();
     if (cursor == null) {
       if (removePreviousSelection && !myHadSelectionInitially && findModel.isGlobal()) {
         editor.getSelectionModel().removeSelection();
@@ -37,25 +38,26 @@ public class SelectionManager {
     if (findModel.isGlobal()) {
       if (removePreviousSelection || removeAllPreviousSelections) {
         FoldingModel foldingModel = editor.getFoldingModel();
-        final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+        FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
 
         foldingModel.runBatchFoldingOperation(() -> {
           for (FoldRegion region : myRegionsToRestore) {
-            if (region.isValid()) region.setExpanded(false);
+            if (region.isValid()) {
+              region.setExpanded(false);
+            }
           }
           myRegionsToRestore.clear();
           for (FoldRegion region : allRegions) {
-            if (!region.isValid()) continue;
-            if (cursor.intersects(region)) {
-              if (!region.isExpanded()) {
-                region.setExpanded(true);
-                myRegionsToRestore.add(region);
-              }
+            if (region.isValid() && cursor.intersects(region) && !region.isExpanded()) {
+              region.setExpanded(true);
+              myRegionsToRestore.add(region);
             }
           }
         });
         editor.getCaretModel().moveToOffset(cursor.getEndOffset());
-        editor.getSelectionModel().setSelection(cursor.getStartOffset(), cursor.getEndOffset());
+        TextRange withinBounds = cursor.intersection(TextRange.from(0, editor.getDocument().getTextLength()));
+        if (withinBounds == null) withinBounds = TextRange.EMPTY_RANGE;
+        editor.getSelectionModel().setSelection(withinBounds.getStartOffset(), withinBounds.getEndOffset());
         EditorSearchSession.logSelectionUpdate();
       }
       else {
@@ -72,7 +74,7 @@ public class SelectionManager {
     }
   }
 
-  public boolean removeCurrentSelection() {
+  boolean removeCurrentSelection() {
     Editor editor = mySearchResults.getEditor();
     CaretModel caretModel = editor.getCaretModel();
     Caret primaryCaret = caretModel.getPrimaryCaret();

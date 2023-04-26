@@ -4,11 +4,12 @@
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.ThreadNameManager
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
 private const val pooledPrefix = "ApplicationImpl pooled thread "
-private val regex = Regex(" *@[a-z ]+#\\d+$")
+private val regex = Regex(" *@[A-Za-z0-9@ ]+#\\d+$")
 
 internal class IdeThreadNameManager : ThreadNameManager {
   // ConcurrencyUtil.runUnderThreadName is used in our code (to make thread dumps more clear) and changes thread name,
@@ -32,7 +33,7 @@ internal class IdeThreadNameManager : ThreadNameManager {
     result = when {
       name.startsWith("JobScheduler FJ pool ") -> name.replace("JobScheduler FJ pool ", "fj ")
       name.startsWith("DefaultDispatcher-worker-") -> name.replace("DefaultDispatcher-worker-", "d ")
-      name.startsWith("AWT-EventQueue-") -> "edt"
+      ThreadDumper.isEDT(name) -> "edt"
       name.startsWith("Idea Main Thread") -> "idea main"
       name.startsWith(pooledPrefix) -> name.replace(pooledPrefix, "pooled ")
       name.startsWith("StatisticsFileEventLogger: ") -> "StatFileEventLogger"

@@ -36,7 +36,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,9 +109,17 @@ public class IdentifierHighlighterPass {
    * Collects code block markers ranges to highlight. E.g. if/elsif/else. Collected ranges will be highlighted the same way as braces
    */
   private void collectCodeBlockMarkerRanges() {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFile.getProject());
+
     PsiElement contextElement = myFile.findElementAt(
       TargetElementUtil.adjustOffset(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset()));
-    myCodeBlockMarkerRanges.addAll(CodeBlockSupportHandler.findMarkersRanges(contextElement));
+    if (contextElement == null) {
+      return;
+    }
+
+    for (TextRange range : CodeBlockSupportHandler.findMarkersRanges(contextElement)) {
+      myCodeBlockMarkerRanges.add(manager.injectedToHost(contextElement, range));
+    }
   }
 
   /**
@@ -284,14 +291,13 @@ public class IdentifierHighlighterPass {
 
     List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size() + myCodeBlockMarkerRanges.size());
     for (TextRange range: myReadAccessRanges) {
-      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
+      result.add(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
     }
     for (TextRange range: myWriteAccessRanges) {
-      ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
+      result.add(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
     }
     if (CodeInsightSettings.getInstance().HIGHLIGHT_BRACES) {
-      myCodeBlockMarkerRanges.forEach(
-        it -> ContainerUtil.addIfNotNull(result, createHighlightInfo(it, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
+      myCodeBlockMarkerRanges.forEach(range -> result.add(createHighlightInfo(range, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
     }
 
     return result;

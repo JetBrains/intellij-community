@@ -67,17 +67,17 @@ CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:47)
     DummyMessageValueNode = 'g' was optimised out
     DummyMessageValueNode = 'i' was optimised out
 optimisedVariablesWithWhen.kt:55
-CoroutinePreflightFrame invokeSuspend (optimisedVariablesWithWhen.kt:55)
-    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
+CoroutinePreflightFrame foo$foo (optimisedVariablesWithWhen.kt:55)
+    JavaValue[local] result = null
     JavaValue[local] x: java.lang.String = x (optimisedVariablesWithWhen.kt:53)
 optimisedVariablesWithWhen.kt:58
-CoroutinePreflightFrame invokeSuspend (optimisedVariablesWithWhen.kt:58)
-    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
+CoroutinePreflightFrame foo$foo (optimisedVariablesWithWhen.kt:58)
+    JavaValue[local] result = null
     JavaValue[local] y: java.lang.String = y (optimisedVariablesWithWhen.kt:56)
     DummyMessageValueNode = 'x' was optimised out
 optimisedVariablesWithWhen.kt:60
-CoroutinePreflightFrame invokeSuspend (optimisedVariablesWithWhen.kt:60)
-    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
+CoroutinePreflightFrame foo$foo (optimisedVariablesWithWhen.kt:60)
+    JavaValue[local] result = null
     DummyMessageValueNode = 'x' was optimised out
     DummyMessageValueNode = 'y' was optimised out
 optimisedVariablesWithWhen.kt:66

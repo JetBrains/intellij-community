@@ -3,7 +3,10 @@ package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
+import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;
+import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -31,6 +34,40 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     assertEquals("/myout", newArt.getOutputPath());
     assertEquals("added:xxx;", listener.clearMessages());
     assertTrue(getModificationCount() > count);
+  }
+
+  public void testAccessArtifactElementsThatAreUnderModification() {
+    assertEmpty(getArtifacts());
+
+    var artifact = addArtifact("MyArtifact", new ArtifactRootElementImpl());
+
+    ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+    ModifiableArtifact modifiableArtifact = model.getOrCreateModifiableArtifact(artifact);
+    modifiableArtifact.getRootElement().getChildren();  // This is important to access prev root element
+    modifiableArtifact.setRootElement(new ArtifactRootElementImpl());
+
+    var found = model.getArtifactsByType(PlainArtifactType.getInstance()).stream().findFirst().get();
+    CompositePackagingElement<?> root = found.getRootElement();
+
+    root.getChildren();
+  }
+
+  public void testAccessArtifactElementsThatAreUnderModification2() {
+    assertEmpty(getArtifacts());
+
+    ArtifactRootElementImpl myRoot = new ArtifactRootElementImpl();
+    myRoot.addFirstChild(new DirectoryPackagingElement("dir"));
+    var artifact = addArtifact("MyArtifact", myRoot);
+
+    ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+    ModifiableArtifact modifiableArtifact = model.getOrCreateModifiableArtifact(artifact);
+    ((CompositePackagingElement<?>)modifiableArtifact.getRootElement().getChildren().get(0)).getChildren();  // This is important to access prev root element
+    modifiableArtifact.setRootElement(new ArtifactRootElementImpl());
+
+    var found = model.getArtifactsByType(PlainArtifactType.getInstance()).stream().findFirst().get();
+    CompositePackagingElement<?> root = found.getRootElement();
+
+    ((CompositePackagingElement<?>)root.getChildren().get(0)).getChildren();
   }
 
   private long getModificationCount() {

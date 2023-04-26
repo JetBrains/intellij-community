@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.wm.impl
 
@@ -108,7 +108,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
 
   init {
-    if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+    if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula || UIUtil.isUnderIntelliJLaF())) {
       try {
         windowDecorationStyle = FRAME
       }
@@ -137,7 +137,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
             MacToolbarFrameHeader(frame = frame, root = this)
           }
           else {
-            ToolbarFrameHeader(frame = frame, ideMenu = IdeMenuBar.createMenuBar())
+            ToolbarFrameHeader(frame = frame)
           }
         }
         else {
@@ -148,7 +148,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
           customFrameTitlePane = customFrameTitlePane,
           selectedEditorFilePath = selectedEditorFilePath,
         )
-        layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 2) as Any)
+        layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
       else {
         helper = UndecoratedHelper
@@ -160,11 +160,11 @@ open class IdeRootPane internal constructor(frame: JFrame,
       }
     }
 
-    val glassPane = IdeGlassPaneImpl(rootPane = this, loadingState = loadingState, parentDisposable = parentDisposable)
+    val glassPane = IdeGlassPaneImpl(rootPane = this, loadingState = loadingState)
     setGlassPane(glassPane)
     glassPaneInitialized = true
     if (frame is IdeFrameImpl) {
-      putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, java.lang.Boolean.TRUE)
+      putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
     }
 
     UIUtil.decorateWindowHeader(this)
@@ -363,7 +363,8 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   protected open fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-    return IdeStatusBarImpl(frameHelper = frameHelper,
+    return IdeStatusBarImpl(disposable = frameHelper,
+                            frameHelper = frameHelper,
                             addToolWindowWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders)
   }
 

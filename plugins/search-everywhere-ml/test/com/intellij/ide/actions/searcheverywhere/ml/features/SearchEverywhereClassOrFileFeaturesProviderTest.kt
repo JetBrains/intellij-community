@@ -183,7 +183,7 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val psiFile = foundFile!!.toPsi()
-    checkThatFeature(IS_SAME_MODULE_DATA_KEY.name)
+    checkThatFeature(IS_SAME_MODULE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(false)
   }
@@ -202,7 +202,7 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val psiFile = foundFile!!.toPsi()
-    checkThatFeature(IS_SAME_MODULE_DATA_KEY.name)
+    checkThatFeature(IS_SAME_MODULE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(true)
   }
@@ -221,7 +221,7 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val psiFile = foundDirectory!!.toPsi()
-    checkThatFeature(IS_SAME_MODULE_DATA_KEY.name)
+    checkThatFeature(IS_SAME_MODULE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(true)
 
@@ -567,7 +567,7 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
   fun `test recent index of never opened file is -1`() {
     prepareForRecentIndexTest()
 
-    checkThatFeature(RECENT_INDEX_DATA_KEY.name)
+    checkThatFeature(RECENT_INDEX_DATA_KEY)
       .ofElement(testFile)
       .isEqualTo(-1)
   }
@@ -575,7 +575,7 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
   fun `test most recent file index is 1`() {
     val openedFiles = prepareForRecentIndexTest()
 
-    checkThatFeature(RECENT_INDEX_DATA_KEY.name)
+    checkThatFeature(RECENT_INDEX_DATA_KEY)
       .ofElement(openedFiles.last()) // Last opened file (i.e. the most recent)
       .isEqualTo(1)
   }
@@ -584,13 +584,13 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
     val openedFiles = prepareForRecentIndexTest()
     val expectedIndex = openedFiles.size
 
-    checkThatFeature(RECENT_INDEX_DATA_KEY.name)
+    checkThatFeature(RECENT_INDEX_DATA_KEY)
       .ofElement(openedFiles.first()) // First opened file (i.e. the oldest)
       .isEqualTo(expectedIndex)
   }
 
   fun `test is opened`() {
-    checkThatFeature(IS_OPENED_DATA_KEY.name)
+    checkThatFeature(IS_OPENED_DATA_KEY)
       .ofElement(testFile)
       .changes(false, true)
       .after { FileEditorManager.getInstance(project).openFile(it.virtualFile, false) }
@@ -598,7 +598,7 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
 
   fun `test all initial letters match is true on PascalCase`() {
     val file = MockPsiFile(MockVirtualFile("PascalCaseFile.kt"), psiManager)
-    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.name)
+    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY)
       .ofElement(file)
       .withQuery("PCF")
       .isEqualTo(true)
@@ -606,7 +606,7 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
 
   fun `test all initial letters match is true on camelCase`() {
     val file = MockPsiFile(MockVirtualFile("camelCaseFile.kt"), psiManager)
-    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.name)
+    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY)
       .ofElement(file)
       .withQuery("CCF")
       .isEqualTo(true)
@@ -614,7 +614,7 @@ internal class SearchEverywhereClassOrFileFeaturesProviderTest
 
   fun `test all initial letters match is true on snake_case`() {
     val file = MockPsiFile(MockVirtualFile("snake_case_file.py"), psiManager)
-    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.name)
+    checkThatFeature(ALL_INITIAL_LETTERS_MATCH_DATA_KEY)
       .ofElement(file)
       .withQuery("SCF")
       .isEqualTo(true)

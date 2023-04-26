@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 public class LocalInspectionToolSession extends UserDataHolderBase {
   private final PsiFile myFile;
   private final TextRange myPriorityRange;
+  private final TextRange myRestrictRange;
 
-  LocalInspectionToolSession(@NotNull PsiFile file, @NotNull TextRange priorityRange) {
+  LocalInspectionToolSession(@NotNull PsiFile file, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange) {
     myFile = file;
     myPriorityRange = priorityRange;
+    myRestrictRange = restrictRange;
   }
 
   @NotNull
@@ -42,5 +44,13 @@ public class LocalInspectionToolSession extends UserDataHolderBase {
   @NotNull
   public TextRange getPriorityRange() {
     return myPriorityRange;
+  }
+
+  /**
+   * @return range (inside the {@link #getFile()}) which the current session will restrict itself to.
+   */
+  @NotNull
+  public TextRange getRestrictRange() {
+    return myRestrictRange;
   }
 }

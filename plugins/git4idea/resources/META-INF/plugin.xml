@@ -344,7 +344,7 @@
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
     <action id="Git.Stage.Add.All" class="git4idea.index.actions.GitStageAllAction"/>
-    <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction"/>
+    <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction" icon="AllIcons.General.Add"/>
     <action id="Git.Stage.Show.Staged" class="git4idea.index.actions.GitShowStagedVersionAction"/>
     <action id="Git.Stage.Show.Local" class="git4idea.index.actions.GitShowLocalVersionAction"/>
     <action id="Git.Stage.Compare.Local.Staged" class="git4idea.index.actions.GitStageCompareLocalWithStagedAction"/>
@@ -366,6 +366,7 @@
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
       <reference id="ChangesView.Refresh"/>
+      <reference id="Git.Stage.Add.Tracked"/>
       <reference id="Git.Stash.Silently"/>
       <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.GroupBy" popup="true">
         <reference id="ChangesView.GroupBy"/>
@@ -545,6 +546,8 @@
                  description="Do not record stage operations in the undo stack of the document"/>
     <registryKey key="git.stage.navigate.to.index.file" defaultValue="false"
                  description="Navigate to the staging area content from diff instead of the local file" />
+    <registryKey key="git.stage.enable.commit.all" defaultValue="true"
+                 description="When no changes are staged, stage and commit all changes in the project"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
@@ -730,10 +733,9 @@
     <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Companion$Factory"/>
     <projectOriginInfoProvider implementation="git4idea.repo.GitProjectOriginInfoProvider"/>
 
-    <backgroundPostStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
+    <postStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
 
-    <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitDelayedCommitTemplateMessageProvider" order="first"/>
-    <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>
+    <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
   </extensions>
 

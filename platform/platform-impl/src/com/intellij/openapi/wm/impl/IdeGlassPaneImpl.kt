@@ -5,13 +5,13 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeTooltipManager
-import com.intellij.ide.RemoteDesktopService
 import com.intellij.ide.dnd.DnDAware
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Divider
@@ -25,7 +25,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
 import java.awt.*
@@ -51,6 +50,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   private var lastCursorComponent: Component? = null
   private var lastOriginalCursor: Cursor? = null
   private var prevPressEvent: MouseEvent? = null
+
   @Suppress("MemberVisibilityCanBePrivate")
   internal var windowShadowPainter: AbstractPainter? = null
   private var paintersInstalled = false
@@ -69,7 +69,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     }
   }
 
-  internal constructor(rootPane: JRootPane, loadingState: FrameLoadingState?, parentDisposable: Disposable) {
+  internal constructor(rootPane: JRootPane, loadingState: FrameLoadingState?) {
     pane = rootPane
     isOpaque = false
 
@@ -77,13 +77,13 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     isEnabled = false
     if (AppMode.isHeadless() ||
         loadingState == null ||
-        loadingState.loading.isCompleted ||
+        loadingState.loadingScope.coroutineContext.job.isCompleted ||
         ApplicationManager.getApplication().isHeadlessEnvironment) {
       isVisible = false
       installPainters()
     }
     else {
-      loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState, parentDisposable = parentDisposable) {
+      loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState) {
         loadingIndicator = null
         applyActivationState()
       }
@@ -574,67 +574,79 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
 private class IdePaneLoadingLayer(
   private val pane: JComponent,
   private val loadingState: FrameLoadingState,
-  parentDisposable: Disposable,
   private val onFinish: () -> Unit,
 ) {
   companion object {
     private const val ALPHA = 0.5f
-    private const val totalFrames = 12
-    private const val opacityPerFrame: Float = ALPHA / totalFrames
   }
 
   private var currentAlpha = ALPHA
 
+  @Volatile
   var icon: JComponent? = null
 
   private var selfie: Image? = loadingState.selfie
 
   init {
     val scheduledTime = System.currentTimeMillis()
-    @Suppress("DEPRECATION")
-    val job = ApplicationManager.getApplication().coroutineScope.launch {
+    loadingState.loadingScope.launch {
       delay((300 - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
 
-      try {
-        if (loadingState.loading.isCompleted) {
-          return@launch
-        }
-
-        val icon = withContext(Dispatchers.EDT) {
-          val icon: AsyncProcessIcon = object : AsyncProcessIcon.Big("Loading") {
-            init {
-              isOpaque = false
-            }
+      withContext(Dispatchers.EDT) {
+        val icon = object : AsyncProcessIcon.Big("Loading") {
+          init {
+            isOpaque = false
           }
-          this@IdePaneLoadingLayer.icon = icon
-          pane.add(icon)
-
-          icon
         }
+        this@IdePaneLoadingLayer.icon = icon
+        pane.add(icon)
+      }
+    }
 
-        loadingState.loading.join()
-        // a gutter icon leads to editor shift, so, we cannot paint selfie with opacity
-        selfie = null
+    loadingState.loadingScope.coroutineContext.job.invokeOnCompletion { cause ->
+      val finishCoroutineScope = try {
+        if (cause == null) loadingState.finishScopeProvider() else null
+      }
+      catch (ignore: CancellationException) {
+        null
+      }
+      catch (e: Throwable) {
+        thisLogger().error(e)
+        null
+      }
 
-        object : SimpleAnimator() {
-          override fun paintCycleStart() {
+      if (finishCoroutineScope == null) {
+        @Suppress("DEPRECATION")
+        ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
+          try {
+            selfie = null
             removeIcon()
           }
-
-          override fun paintNow(frame: Int, totalFrames: Int) {
-            currentAlpha = ALPHA - (frame * opacityPerFrame)
-            icon.paintImmediately(icon.bounds)
+          finally {
+            onFinish()
           }
-        }.run(totalFrames = totalFrames, cycleDuration = if (RemoteDesktopService.isRemoteSession()) 2_520 else 504)
+        }
       }
-      finally {
-        withContext(Dispatchers.EDT) {
-          removeIcon()
-          onFinish()
+      else {
+        finishCoroutineScope.launch(Dispatchers.EDT) {
+          try {
+            // a gutter icon leads to editor shift, so, we cannot paint selfie with opacity
+            selfie = null
+            val icon = icon
+            removeIcon()
+            if (icon != null) {
+              fadeOut(initialAlpha = ALPHA) { alpha ->
+                currentAlpha = alpha
+                icon.paintImmediately(icon.bounds)
+              }
+            }
+          }
+          finally {
+            onFinish()
+          }
         }
       }
     }
-    job.cancelOnDispose(parentDisposable)
   }
 
   private fun removeIcon() {
@@ -672,7 +684,8 @@ private class IdePaneLoadingLayer(
   }
 
   fun handleInputEvent(event: InputEvent): Boolean {
-    if (loadingState.loading.isCompleted) {
+    val loadingJob = loadingState.loadingScope.coroutineContext.job
+    if (loadingJob.isCompleted) {
       return false
     }
 
@@ -685,7 +698,7 @@ private class IdePaneLoadingLayer(
       is KeyEvent -> {
         @Suppress("DEPRECATION")
         if (event.getID() == KeyEvent.KEY_PRESSED && event.keyCode == KeyEvent.VK_ESCAPE && event.modifiers == 0) {
-          loadingState.loading.cancel()
+          loadingJob.cancel(FrameLoadingState.PROJECT_LOADING_CANCELLED_BY_USER)
         }
 
         event.consume()
@@ -697,6 +710,19 @@ private class IdePaneLoadingLayer(
 }
 
 interface FrameLoadingState {
-  val loading: Job
+  companion object {
+    const val PROJECT_LOADING_CANCELLED_BY_USER: String = "PROJECT_LOADING_CANCELLED_BY_USER"
+  }
+
+  /**
+   * Loading animation plays in this scope.
+   */
+  val loadingScope: CoroutineScope
+
+  /**
+   * Finish animation plays in this scope.
+   */
+  val finishScopeProvider: () -> CoroutineScope?
+
   val selfie: Image?
 }

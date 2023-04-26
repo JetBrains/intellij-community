@@ -20,6 +20,7 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Grid
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
@@ -125,7 +126,7 @@ interface Row {
                  maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
-  @Deprecated("Use cell(component: T) and scrollCell(component: T) instead")
+  @Deprecated("Use cell(component: T) and scrollCell(component: T) instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
 
@@ -228,7 +229,7 @@ interface Row {
                     @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
                     icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
 
-  @Deprecated("Use overloaded method")
+  @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar>
 
@@ -384,12 +385,19 @@ interface Row {
    */
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
-  @Deprecated("Use overloaded comboBox(...) with Collection")
+  @Deprecated("Use overloaded comboBox(...) with Collection", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
    */
+  @Deprecated("Use overloaded customize(...) with UnscaledGapsY")
+  @ApiStatus.ScheduledForRemoval
   fun customize(customRowGaps: VerticalGaps): Row
+
+  /**
+   * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
+   */
+  fun customize(customRowGaps: UnscaledGapsY): Row
 }

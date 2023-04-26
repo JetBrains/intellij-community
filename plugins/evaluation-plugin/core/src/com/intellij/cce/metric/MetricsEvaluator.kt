@@ -36,6 +36,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     registerMetric(MaxLatencyMetric())
     registerMetric(TotalLatencyMetric())
     registerMetric(SessionsCountMetric())
+    registerMetric(SuggestionsCountMetric())
   }
 
   private fun registerMetric(metric: Metric) = metrics.add(metric)

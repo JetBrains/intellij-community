@@ -12,6 +12,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -36,7 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.file.PsiPackageBase
 import com.intellij.psi.impl.light.LightElement
-import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil
@@ -45,7 +45,6 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.ui.ConflictsDialog
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
-import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.VisibilityUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
@@ -710,7 +709,7 @@ internal abstract class CompositeRefactoringRunner(
 
                 override fun refactoringDone(refactoringId: String, afterData: RefactoringEventData?) {
                     if (refactoringId == this@CompositeRefactoringRunner.refactoringId) {
-                        onRefactoringDone()
+                        WriteAction.run<Throwable> { onRefactoringDone() }
                     }
                 }
             }
@@ -772,6 +771,8 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
     this is KtNamedFunction -> !hasBody()
     else -> false
 }
+
+fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD) || this.isAbstract() || this.isInterfaceClass() || this.isSealed()
 
 fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     changeInfo: KotlinChangeInfo,

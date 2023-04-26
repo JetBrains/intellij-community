@@ -9,13 +9,18 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPolyVariantReferenceBase;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -31,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferenceExpression> {
+  private static final Logger LOG = Logger.getInstance(PydevConsoleReference.class);
 
   private final ConsoleCommunication myCommunication;
   private final String myPrefix;
@@ -62,7 +68,6 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
     }
 
     return RatedResolveResult.EMPTY_ARRAY;
-
   }
 
   public PyElement getDocumentationElement() {
@@ -77,13 +82,16 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
     }
     String description;
     try {
-
       description = myCommunication.getDescription(qualifiedName);
       if (Strings.isNullOrEmpty(description)) {
         return null;
       }
     }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
     catch (Exception e) {
+      LOG.warn(e);
       return null;
     }
 

@@ -27,10 +27,10 @@ import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
-import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.BalloonLayoutImpl
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
@@ -62,7 +62,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
     glassPane.isVisible = false
     contentPane = screen.welcomePanel
     title = ApplicationNamesInfo.getInstance().fullProductName
-    AppUIUtil.updateWindowIcon(this)
+    updateAppWindowIcon(this)
     ApplicationManager.getApplication().messageBus.connect(listenerDisposable).subscribe(ProjectManager.TOPIC,
                                                                                          object : ProjectManagerListener {
                                                                                            @Suppress("removal", "OVERRIDE_DEPRECATION")
@@ -180,7 +180,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
 
     private fun registerKeyboardShortcuts(rootPane: JRootPane) {
       val helpAction = ActionListener {
-        getUiEventLogger().logClickOnHelpDialog(WelcomeFrame::class.java.name, WelcomeFrame::class.java)
+        getUiEventLogger().logClickOnHelpDialog(WelcomeFrame::class.java)
         HelpManager.getInstance().invokeHelp("welcome")
       }
       ActionUtil.registerForEveryKeyboardShortcut(rootPane, helpAction, CommonShortcuts.getContextHelp())

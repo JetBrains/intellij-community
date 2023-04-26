@@ -2,22 +2,12 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Predicates;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.ui.EditorTextField;
-import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +37,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     fragments.add(commonParameterFragments.programArguments());
     fragments.add(new TargetPathFragment<>());
     fragments.add(commonParameterFragments.createRedirectFragment());
-    SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment = createMainClass(moduleClasspath.component());
+    SettingsEditorFragment<ApplicationConfiguration, ClassEditorField> mainClassFragment = createMainClass(moduleClasspath.component());
     fragments.add(mainClassFragment);
     DefaultJreSelector jreSelector = DefaultJreSelector.fromSourceRootsDependencies(moduleClasspath.component(), mainClassFragment.component());
     SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
@@ -56,9 +46,9 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
   }
 
   @NotNull
-  private SettingsEditorFragment<ApplicationConfiguration, EditorTextField> createMainClass(ModuleClasspathCombo classpathCombo) {
+  private SettingsEditorFragment<ApplicationConfiguration, ClassEditorField> createMainClass(ModuleClasspathCombo classpathCombo) {
     ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), classpathCombo);
-    EditorTextField mainClass = ClassEditorField.createClassField(getProject(), () -> classpathCombo.getSelectedModule(),
+    ClassEditorField mainClass = ClassEditorField.createClassField(getProject(), () -> classpathCombo.getSelectedModule(),
                                                                   ApplicationConfigurable.getVisibilityChecker(moduleSelector), null);
     mainClass.setBackground(UIUtil.getTextFieldBackground());
     mainClass.setShowPlaceholderWhenFocused(true);
@@ -67,16 +57,16 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     mainClass.setPlaceholder(placeholder);
     mainClass.getAccessibleContext().setAccessibleName(placeholder);
     setMinimumWidth(mainClass, 300);
-    SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
+    SettingsEditorFragment<ApplicationConfiguration, ClassEditorField> mainClassFragment =
       new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
-                                   (configuration, component) -> component.setText(getQName(configuration.getMainClassName())),
-                                   (configuration, component) -> {
-                                     String className = component.getText();
-                                     if (!className.equals(configuration.getMainClassName())) {
-                                       configuration.setMainClassName(getJvmName(className));
-                                     }
-                                   },
-                                   Predicates.alwaysTrue());
+                                   (configuration, component) -> component.setClassName(configuration.getMainClassName()),
+                                   (configuration, component) -> configuration.setMainClassName(component.getClassName()),
+                                   Predicates.alwaysTrue()) {
+        @Override
+        public boolean isReadyForApply() {
+          return myComponent.isReadyForApply();
+        }
+      };
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
     mainClassFragment.setRemovable(false);
     mainClassFragment.setEditorGetter(field -> {
@@ -86,22 +76,5 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     mainClassFragment.setValidation((configuration) ->
       Collections.singletonList(RuntimeConfigurationException.validate(mainClass, () -> configuration.checkClass())));
     return mainClassFragment;
-  }
-
-  @Nullable
-  private String getQName(@Nullable String className) {
-    if (className == null || className.indexOf('$') < 0) return className;
-    PsiClass psiClass = FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, () -> ClassUtil
-      .findPsiClass(PsiManager.getInstance(getProject()), className));
-    return psiClass == null ? className : psiClass.getQualifiedName();
-  }
-
-  @Nullable
-  private String getJvmName(@Nullable String className) {
-    if (className == null) return null;
-    return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
-      PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()));
-      return aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className;
-    });
   }
 }

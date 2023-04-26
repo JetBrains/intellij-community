@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -103,6 +102,16 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     }
   }
 
+  /**
+   * Used to calculate or adjust the options (like startup command, env variables and so on)
+   * that will be used to configure the process and display the terminal.
+   *
+   * @return options that will be supplied to {@link #createProcess(ShellStartupOptions)}
+   */
+  public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
+    return baseOptions;
+  }
+
   public @NotNull T createProcess(@NotNull ShellStartupOptions startupOptions) throws ExecutionException {
     //noinspection removal
     return createProcess(new TerminalProcessOptions(startupOptions.getWorkingDirectory(), startupOptions.getInitialTermSize()), null);
@@ -175,9 +184,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
-    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
-      return new TerminalWidgetImpl(myProject, mySettingsProvider, parent);
-    }
     return new ShellTerminalWidget(myProject, mySettingsProvider, parent).asNewWidget();
   }
 
@@ -334,12 +340,17 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (myProject.isDisposed()) return;
       try {
-        T process = createProcess(startupOptions.builder().initialTermSize(termSize).widget(terminalWidget).build());
+        ShellStartupOptions baseOptions = startupOptions.builder().initialTermSize(termSize).widget(terminalWidget).build();
+        ShellStartupOptions configuredOptions = configureStartupOptions(baseOptions);
+        T process = createProcess(configuredOptions);
         TtyConnector connector = createTtyConnector(process);
 
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
             terminalWidget.connectToTty(connector);
+            if (terminalWidget instanceof TerminalWidgetImpl terminalWidgetImpl) {
+              terminalWidgetImpl.setStartupOptions(configuredOptions);
+            }
           }
           catch (Exception e) {
             printError(terminalWidget, "Cannot create terminal session for " + terminalWidget.getTerminalTitle().buildTitle(), e);

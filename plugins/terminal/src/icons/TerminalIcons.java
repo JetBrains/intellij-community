@@ -14,5 +14,5 @@ public final class TerminalIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, TerminalIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 13x13 */ public static final @NotNull Icon OpenTerminal_13x13 = load("icons/OpenTerminal_13x13.svg", 280418934, 2);
+  /** 13x13 */ public static final @NotNull Icon OpenTerminal_13x13 = load("icons/OpenTerminal_13x13.svg", 447424563, 2);
 }

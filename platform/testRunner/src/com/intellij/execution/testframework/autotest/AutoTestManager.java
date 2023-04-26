@@ -26,7 +26,7 @@ public final class AutoTestManager extends AbstractAutoTestManager {
 
   @Override
   protected @NotNull AutoTestWatcher createWatcher(@NotNull Project project) {
-    return new DelayedDocumentWatcher(project, myDelayMillis, this::restartAllAutoTests, (Predicate<? super VirtualFile>)file -> {
+    return new DelayedDocumentWatcher(project, getDelay(), this, (Predicate<? super VirtualFile>)file -> {
       if (ScratchUtil.isScratch(file)) {
         return false;
       }

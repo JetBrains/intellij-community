@@ -5,8 +5,14 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDocument
+import com.intellij.openapi.vfs.writeText
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.utils.editor.commitToPsi
+import com.intellij.testFramework.utils.editor.reloadFromDisk
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.plugins.groovy.util.ExpressionTest
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -41,9 +47,9 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
   @Suppress("MemberVisibilityCanBePrivate")
   fun testIntention(fileName: String, before: String, after: String, intentionPrefix: String) {
     checkCaret(before)
-    val file = findOrCreateFile(fileName, before)
+    writeTextAndCommit(fileName, before)
     runInEdtAndWait {
-      codeInsightFixture.configureFromExistingVirtualFile(file)
+      codeInsightFixture.configureFromExistingVirtualFile(getFile(fileName))
       val intention = codeInsightFixture.filterAvailableIntentions(intentionPrefix).single()
       codeInsightFixture.launchAction(intention)
       codeInsightFixture.checkResult(after)
@@ -53,17 +59,17 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
 
   fun testHighlighting(expression: String) = testHighlighting("build.gradle", expression)
   fun testHighlighting(relativePath: String, expression: String) {
-    val file = findOrCreateFile(relativePath, expression)
+    writeTextAndCommit(relativePath, expression)
     runInEdtAndWait {
-      codeInsightFixture.testHighlighting(true, false, true, file)
+      codeInsightFixture.testHighlighting(true, false, true, getFile(relativePath))
     }
   }
 
   fun testCompletion(fileName: String, expression: String, checker: (Array<LookupElement>) -> Unit) {
     checkCaret(expression)
-    val file = findOrCreateFile(fileName, expression)
+    writeTextAndCommit(fileName, expression)
     runInEdtAndWait {
-      codeInsightFixture.configureFromExistingVirtualFile(file)
+      codeInsightFixture.configureFromExistingVirtualFile(getFile(fileName))
       checker(codeInsightFixture.completeBasic())
     }
   }
@@ -81,9 +87,9 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
 
   fun testGotoDefinition(expression: String, checker: (PsiElement) -> Unit) {
     checkCaret(expression)
-    val file = findOrCreateFile("build.gradle", expression)
+    writeTextAndCommit("build.gradle", expression)
     runInEdtAndWait {
-      codeInsightFixture.configureFromExistingVirtualFile(file)
+      codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle"))
       val elementAtCaret = codeInsightFixture.elementAtCaret
       assertNotNull(elementAtCaret)
       val elem = GotoDeclarationAction.findTargetElement(project, codeInsightFixture.editor, codeInsightFixture.caretOffset)
@@ -92,9 +98,9 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
   }
 
   fun updateProjectFile(content: String) {
-    val file = findOrCreateFile("build.gradle", content)
+    writeTextAndCommit("build.gradle", content)
     runWriteActionAndWait {
-      codeInsightFixture.configureFromExistingVirtualFile(file)
+      codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle"))
     }
   }
 
@@ -125,6 +131,20 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
       isGradleAtLeast("5.0") -> "org.gradle.api.publish.internal.DefaultPublishingExtension"
       else -> "org.gradle.api.publish.internal.DeferredConfigurablePublishingExtension"
     }
+  }
+
+  fun writeTextAndCommit(relativePath: String, text: String) {
+    val file = findOrCreateFile(relativePath)
+    runWriteActionAndWait {
+      file.writeTextAndCommit(text)
+    }
+  }
+
+  @RequiresWriteLock
+  private fun VirtualFile.writeTextAndCommit(text: String) {
+    findDocument()?.reloadFromDisk()
+    writeText(text)
+    findDocument()?.commitToPsi(project)
   }
 
   companion object {

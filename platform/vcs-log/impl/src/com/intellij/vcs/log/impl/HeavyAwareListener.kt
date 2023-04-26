@@ -30,7 +30,8 @@ abstract class HeavyAwareListener(private val project: Project,
     private set
 
   fun start() {
-    val job = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    @OptIn(DelicateCoroutinesApi::class)
+    val job = GlobalScope
       .launch(CoroutineName("Vcs Log Heavy Process and Power Save Mode Tracker")) {
         val heavyFlow = combine(project.powerSaveModeFlow(), heavyProcessFlow(delayMs.toLong())) { values ->
           values.fold(false, Boolean::or)

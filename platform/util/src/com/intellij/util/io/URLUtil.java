@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.UrlUtilRt;
@@ -233,7 +234,7 @@ public final class URLUtil {
       host = host.substring(at + 1);
     }
     else {
-      int firstColon = host.indexOf(':');
+      int firstColon = host.indexOf("://");
       if (firstColon > 0) {
         host = host.substring(firstColon + 3);
       }

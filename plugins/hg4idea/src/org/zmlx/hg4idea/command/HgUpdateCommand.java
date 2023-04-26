@@ -104,7 +104,7 @@ public class HgUpdateCommand {
   public static int showDiscardChangesConfirmation(@NotNull final Project project,
                                                    @NotNull @NlsContexts.DialogTitle String confirmationMessage) {
     final AtomicInteger exitCode = new AtomicInteger();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, HgBundle.message("hg4idea.update.uncommitted.problem"),
                                                HgBundle.message("changes.discard"), CommonBundle.message("button.cancel.c"),
                                                Messages.getWarningIcon()));

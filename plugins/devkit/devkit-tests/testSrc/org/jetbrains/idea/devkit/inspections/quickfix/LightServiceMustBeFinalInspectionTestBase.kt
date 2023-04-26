@@ -3,12 +3,14 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalInspection
 
-abstract class LightServiceMustBeFinalInspectionTestBase : DevKitInspectionFixTestBase() {
+abstract class LightServiceMustBeFinalInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(LightServiceMustBeFinalInspection())
-    myFixture.addClass("""
+    myFixture.addClass(
+      //language=java
+      """
       package com.intellij.openapi.components;
 
       public @interface Service {}

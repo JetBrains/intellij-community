@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * Deprecated. Use {@link java.util.function.Supplier} with {@code @Nullable} annotation on the type parameter instead.
  */
 @FunctionalInterface
-public interface NullableComputable<T> extends Computable<T> {
+public interface NullableComputable<T> extends Computable<@Nullable T> {
   @Override
   @Nullable
   T compute();

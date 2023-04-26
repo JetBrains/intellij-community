@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.io.encodeUrlQueryParameter
 import com.intellij.util.text.nullize
 import java.awt.Component
@@ -43,7 +44,7 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
     }
     row("") {
       rememberCheckBox = checkBox(UIBundle.message("auth.remember.cb"))
-        .applyToComponent { isSelected = remember }
+        .selected(remember)
         .component
       link(DiagnosticBundle.message("error.report.auth.restore")) {
         val userName = userField.text.trim().encodeUrlQueryParameter()

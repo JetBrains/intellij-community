@@ -5,11 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
-import com.intellij.reference.SoftReference
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.markdown.parser.MarkdownParser
+import java.lang.ref.SoftReference
 import java.util.concurrent.atomic.AtomicReference
 
 @Service

@@ -6,13 +6,12 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.assertInstanceOf
 import groovy.transform.CompileStatic
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DOMAIN_OBJECT_COLLECTION
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.GROOVY_PROJECT
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -24,7 +23,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test Project#allprojects call`(gradleVersion: GradleVersion, decorator: String) {
-    test(gradleVersion, GROOVY_PROJECT) {
+    testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>allprojects {}") {
         val call = elementUnderCaret(GrMethodCall::class.java)
         val element = assertOneElement(call.multiResolve(false)).element
@@ -38,7 +37,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test DomainObjectCollection#all call`(gradleVersion: GradleVersion, decorator: String) {
-    test(gradleVersion, GROOVY_PROJECT) {
+    testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>configurations.all {}") {
         val call = elementUnderCaret(GrMethodCall::class.java)
         val element = assertOneElement(call.multiResolve(false)).element
@@ -52,7 +51,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test DomainObjectCollection#withType call`(gradleVersion: GradleVersion, decorator: String) {
-    test(gradleVersion, GROOVY_PROJECT) {
+    testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>plugins.withType(JavaPlugin) {}") {
         val call = elementUnderCaret(GrMethodCall::class.java)
         val element = assertOneElement(call.multiResolve(false)).element
@@ -66,7 +65,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test DGM#collect`(gradleVersion: GradleVersion) {
-    test(gradleVersion, GROOVY_PROJECT) {
+    testGroovyProject(gradleVersion) {
       codeInsightFixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
       testHighlighting("['a', 'b'].collect { it.toUpperCase() }")
     }

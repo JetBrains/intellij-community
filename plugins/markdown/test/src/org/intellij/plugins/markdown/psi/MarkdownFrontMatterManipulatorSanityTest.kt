@@ -4,18 +4,12 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class MarkdownFrontMatterManipulatorSanityTest: LightPlatformCodeInsightTestCase() {
-  @Rule
-  @JvmField
-  val rule = RegistryKeyRule("markdown.experimental.frontmatter.support.enable", true)
-
   @Test
   fun `test replace`() {
     // language=Markdown

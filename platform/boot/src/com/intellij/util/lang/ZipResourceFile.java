@@ -61,7 +61,8 @@ final class ZipResourceFile implements ResourceFile {
   @Override
   public @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() {
     // name hash is not added - doesn't make sense as fast lookup by name is supported by ImmutableZipFile
-    if (zipFile instanceof ImmutableZipFile file) {
+    if (zipFile instanceof ImmutableZipFile) {
+      ImmutableZipFile file = (ImmutableZipFile)zipFile;
       return new ClasspathCache.IndexRegistrar() {
         @Override
         public int classPackageCount() {

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.query
 
+import com.intellij.util.applyIf
 import com.intellij.webSymbols.DebugOutputPrinter
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
@@ -21,6 +22,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       is WebSymbol -> builder.printSymbol(level, value)
       is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
       is WebSymbolNameSegment -> builder.printSegment(level, value)
+      is WebSymbol.ApiStatus -> builder.printApiStatus(value)
       else -> super.printValueImpl(builder, level, value)
     }
 
@@ -67,8 +69,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "descriptionSections", source.descriptionSections.takeIf { it.isNotEmpty() })
       printProperty(level, "abstract", source.abstract.takeIf { it })
       printProperty(level, "virtual", source.virtual.takeIf { it })
-      printProperty(level, "deprecated", source.deprecated.takeIf { it })
-      printProperty(level, "experimental", source.experimental.takeIf { it })
+      printProperty(level, "apiStatus", source.apiStatus)
       printProperty(level, "priority", source.priority ?: WebSymbol.Priority.NORMAL)
       printProperty(level, "proximity", source.proximity?.takeIf { it > 0 })
       printProperty(level, "has-pattern", if (source.pattern != null) true else null)
@@ -86,7 +87,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
     printObject(topLevel) { level ->
       printProperty(level, "name-part", parents.peek().let { if (it.pattern == null) segment.getName(parents.peek()) else "" })
       printProperty(level, "display-name", segment.displayName)
-      printProperty(level, "deprecated", segment.deprecated.takeIf { it })
+      printProperty(level, "apiStatus", segment.apiStatus)
       printProperty(level, "priority", segment.priority?.takeIf { it != WebSymbol.Priority.NORMAL })
       printProperty(level, "matchScore", segment.matchScore.takeIf { it != segment.end - segment.start })
       printProperty(level, "problem", segment.problem)
@@ -106,6 +107,14 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
         .printProperty(level, "langType", value.langType)
         .printProperty(level, "required", value.required)
         .printProperty(level, "default", value.default)
+    }
+
+  private fun StringBuilder.printApiStatus(apiStatus: WebSymbol.ApiStatus): StringBuilder =
+    when (apiStatus) {
+      is WebSymbol.Deprecated -> append("deprecated")
+        .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
+      is WebSymbol.Experimental -> append("experimental")
+        .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
     }
 
 }

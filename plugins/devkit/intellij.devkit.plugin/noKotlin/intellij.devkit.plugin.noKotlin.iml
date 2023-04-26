@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="intellij.java.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
   </component>
 </module>

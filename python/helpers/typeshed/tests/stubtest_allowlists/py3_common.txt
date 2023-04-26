@@ -84,7 +84,6 @@ ctypes.Array._length_
 ctypes.CDLL._FuncPtr  # None at class level but initialized in __init__ to this value
 ctypes.memmove  # CFunctionType
 ctypes.memset  # CFunctionType
-ctypes.pointer  # imported C function
 ctypes.string_at  # docstring argument name is wrong
 ctypes.wstring_at  # docstring argument name is wrong
 distutils.command.bdist_packager  # It exists in docs as package name but not in code except as a mention in a comment.
@@ -170,7 +169,9 @@ socketserver.BaseServer.get_request  # implemented in derived classes
 socketserver.BaseServer.server_bind  # implemented in derived classes
 ssl.Purpose.__new__  # You cannot override __new__ in NamedTuple and runtime uses namedtuple.
 ssl._ASN1Object.__new__  # You cannot override __new__ in NamedTuple and runtime uses namedtuple.
+(sys.get_int_max_str_digits)?  # Added in a patch release, backported to all security branches, but has yet to find its way to all GitHub Actions images
 sys.implementation  # Actually SimpleNamespace but then you wouldn't have convenient attributes
+(sys.set_int_max_str_digits)?  # Added in a patch release, backported to all security branches, but has yet to find its way to all GitHub Actions images
 sys.thread_info
 tarfile.TarFile.errors  # errors is initialized for some reason as None even though it really only accepts str
 threading.Condition.acquire  # Condition functions are exported in __init__
@@ -339,6 +340,26 @@ turtle.ScrolledCanvas.adjustScrolls
 turtle.ScrolledCanvas.onResize
 wave.Wave_read.initfp
 wave.Wave_write.initfp
+
+_ctypes.Array
+_ctypes.CFuncPtr
+_ctypes.POINTER
+_ctypes.PyObj_FromPtr
+_ctypes.Py_DECREF
+_ctypes.Py_INCREF
+_ctypes.Structure
+_ctypes.Union
+_ctypes.addressof
+_ctypes.alignment
+_ctypes.buffer_info
+_ctypes.byref
+_ctypes.call_cdeclfunction
+_ctypes.call_function
+_ctypes.get_errno
+_ctypes.pointer
+_ctypes.resize
+_ctypes.set_errno
+_ctypes.sizeof
 
 # ==========
 # Allowlist entries that cannot or should not be fixed
@@ -646,44 +667,20 @@ distutils.command.build_ext.USER_BASE
 distutils.command.build_scripts.ST_MODE
 distutils.command.install.*
 distutils.command.install_scripts.ST_MODE
-distutils.core.Command.dump_options
-distutils.core.Command.ensure_finalized
 distutils.core.DEBUG
 distutils.core.USAGE
-distutils.core.Distribution.announce
-distutils.core.Distribution.common_usage
-distutils.core.Distribution.display_option_names
-distutils.core.Distribution.display_options
-distutils.core.Distribution.dump_option_dicts
 distutils.core.Distribution.finalize_options
-distutils.core.Distribution.find_config_files
 distutils.core.Distribution.get_command_class
 distutils.core.Distribution.get_command_list
-distutils.core.Distribution.get_command_packages
-distutils.core.Distribution.global_options
 distutils.core.Distribution.handle_display_options
-distutils.core.Distribution.has_c_libraries
-distutils.core.Distribution.has_data_files
-distutils.core.Distribution.has_ext_modules
-distutils.core.Distribution.has_headers
-distutils.core.Distribution.has_modules
-distutils.core.Distribution.has_pure_modules
-distutils.core.Distribution.has_scripts
-distutils.core.Distribution.is_pure
-distutils.core.Distribution.negative_opt
-distutils.core.Distribution.parse_command_line
-distutils.core.Distribution.print_command_list
 distutils.core.Distribution.print_commands
-distutils.core.Distribution.reinitialize_command
 distutils.core.Distribution.run_command
-distutils.core.Distribution.run_commands
 distutils.core.extension_keywords
 distutils.core.gen_usage
 distutils.core.setup_keywords
 distutils.cygwinccompiler.CONFIG_H_NOTOK
 distutils.cygwinccompiler.CONFIG_H_OK
 distutils.cygwinccompiler.CONFIG_H_UNCERTAIN
-distutils.cygwinccompiler.PIPE
 distutils.cygwinccompiler.CygwinCCompiler.compiler_type
 distutils.cygwinccompiler.CygwinCCompiler.exe_extension
 distutils.cygwinccompiler.CygwinCCompiler.obj_extension
@@ -695,36 +692,14 @@ distutils.cygwinccompiler.Mingw32CCompiler.compiler_type
 distutils.cygwinccompiler.check_config_h
 distutils.cygwinccompiler.get_msvcr
 distutils.cygwinccompiler.get_versions
-distutils.cygwinccompiler.is_cygwingcc
 distutils.dir_util.ensure_relative
 distutils.dist.DEBUG
-distutils.dist.Distribution.announce
-distutils.dist.Distribution.common_usage
-distutils.dist.Distribution.display_option_names
-distutils.dist.Distribution.display_options
-distutils.dist.Distribution.dump_option_dicts
 distutils.dist.Distribution.finalize_options
-distutils.dist.Distribution.find_config_files
 distutils.dist.Distribution.get_command_class
 distutils.dist.Distribution.get_command_list
-distutils.dist.Distribution.get_command_packages
-distutils.dist.Distribution.global_options
 distutils.dist.Distribution.handle_display_options
-distutils.dist.Distribution.has_c_libraries
-distutils.dist.Distribution.has_data_files
-distutils.dist.Distribution.has_ext_modules
-distutils.dist.Distribution.has_headers
-distutils.dist.Distribution.has_modules
-distutils.dist.Distribution.has_pure_modules
-distutils.dist.Distribution.has_scripts
-distutils.dist.Distribution.is_pure
-distutils.dist.Distribution.negative_opt
-distutils.dist.Distribution.parse_command_line
-distutils.dist.Distribution.print_command_list
 distutils.dist.Distribution.print_commands
-distutils.dist.Distribution.reinitialize_command
 distutils.dist.Distribution.run_command
-distutils.dist.Distribution.run_commands
 distutils.dist.DistributionMetadata.set_classifiers
 distutils.dist.DistributionMetadata.set_keywords
 distutils.dist.DistributionMetadata.set_platforms

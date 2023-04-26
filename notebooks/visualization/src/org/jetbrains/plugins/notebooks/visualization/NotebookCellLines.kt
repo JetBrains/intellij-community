@@ -24,15 +24,6 @@ interface NotebookCellLines {
     CODE, MARKDOWN, RAW
   }
 
-  data class Marker(
-    val ordinal: Int,
-    val type: CellType,
-    val offset: Int,
-    val length: Int
-  ) : Comparable<Marker> {
-    override fun compareTo(other: Marker): Int = offset - other.offset
-  }
-
   enum class MarkersAtLines(val hasTopLine: Boolean, val hasBottomLine: Boolean) {
     NO(false, false),
     TOP(true, false),
@@ -45,7 +36,7 @@ interface NotebookCellLines {
     val type: CellType,
     val lines: IntRange,
     val markers: MarkersAtLines,
-    val language: Language?,
+    val language: Language,
   ) : Comparable<Interval> {
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
   }

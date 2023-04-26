@@ -41,9 +41,9 @@ object ParameterObjectExtractor {
     }
     val shouldInsertRecord = HighlightingFeature.RECORDS.isAvailable(variables.first())
     val objectBuilder = if (shouldInsertRecord) {
-      RecordParameterObjectBuilder.create(variables)
+      RecordResultObjectBuilder.create(variables)
     } else {
-      ClassParameterObjectBuilder.create(variables)
+      ClassResultObjectBuilder.create(variables)
     }
     val file = scope.first().containingFile
     val project = file.project
@@ -99,7 +99,7 @@ object ParameterObjectExtractor {
     return preview
   }
 
-  private fun introduceObjectForVariables(builder: ParameterObjectBuilder,
+  private fun introduceObjectForVariables(builder: ResultObjectBuilder,
                                           variables: List<PsiVariable>,
                                           affectedReferences: List<PsiReferenceExpression>,
                                           placeForDeclaration: PsiElement): IntroduceObjectResult {

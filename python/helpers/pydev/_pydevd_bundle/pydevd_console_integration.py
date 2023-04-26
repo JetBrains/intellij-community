@@ -18,7 +18,8 @@ from _pydevd_bundle import pydevd_vars, pydevd_save_locals
 from _pydevd_bundle.pydevd_console_pytest import enable_pytest_output
 from _pydevd_bundle.pydevd_constants import IS_ASYNCIO_DEBUGGER_ENV
 from _pydevd_asyncio_util.pydevd_asyncio_utils import asyncio_command_compiler, exec_async_code
-from _pydevd_asyncio_util.pydevd_nest_asyncio import apply
+if IS_ASYNCIO_DEBUGGER_ENV:
+    from _pydevd_asyncio_util.pydevd_nest_asyncio import apply
 
 try:
     import __builtin__

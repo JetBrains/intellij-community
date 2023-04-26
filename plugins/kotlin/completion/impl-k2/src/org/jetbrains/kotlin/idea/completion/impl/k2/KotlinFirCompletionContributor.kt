@@ -70,7 +70,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     ) {
         val factory = FirCompletionContributorFactory(basicContext)
         with(Completions) {
-            complete(factory, positionContext)
+            val weighingContext = createWeighingContext(basicContext, positionContext)
+            complete(factory, positionContext, weighingContext)
         }
     }
 

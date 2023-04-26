@@ -17,7 +17,9 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -41,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -55,6 +58,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
 
@@ -63,6 +67,8 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   protected final @PopupTitle String myPopupTitle;
   private final @PopupContent String myEmptyText;
   protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
+  private Supplier<? extends PsiTargetPresentationRenderer<PsiElement>> myTargetRenderer;
+  private Project myProject;
   private final NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> myPointers;
   private final boolean myComputeTargetsInBackground;
 
@@ -95,6 +101,14 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     myPointers = pointers;
     myComputeTargetsInBackground = computeTargetsInBackground;
     myNavigationHandler = navigationHandler;
+  }
+
+  public void setTargetRenderer(Supplier<? extends PsiTargetPresentationRenderer<PsiElement>> targetRenderer) {
+    myTargetRenderer = targetRenderer;
+  }
+
+  public void setProject(Project project) {
+    myProject = project;
   }
 
   @Override
@@ -210,23 +224,36 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
       }
     }
     else if (event != null) {
-      PsiElement[] elements = PsiUtilCore.toPsiElementArray(getTargetElements());
       //noinspection unchecked
       PsiElementListCellRenderer<PsiElement> renderer = (PsiElementListCellRenderer<PsiElement>)myCellRenderer.compute();
-      JBPopup popup = NavigationUtil.getPsiElementPopup(elements, renderer, myPopupTitle, element -> {
-        if (myNavigationHandler != null) {
-          myNavigationHandler.navigate(event, element);
+      if (myTargetRenderer != null || DefaultPsiElementCellRenderer.class == renderer.getClass()) {
+        PsiTargetNavigator<PsiElement> navigator = new PsiTargetNavigator<>(() -> getTargetElements());
+        if (myTargetRenderer != null) {
+          navigator.presentationProvider(myTargetRenderer.get());
         }
-        else {
-          Navigatable descriptor = EditSourceUtil.getDescriptor(element);
-          if (descriptor != null && descriptor.canNavigate()) {
-            descriptor.navigate(true);
-          }
-        }
-        return true;
-      });
+        navigator.navigate(new RelativePoint(event), myPopupTitle, myProject, element -> getElementProcessor(event).execute(element));
+        return;
+      }
+      PsiElement[] elements = PsiUtilCore.toPsiElementArray(getTargetElements());
+      JBPopup popup = NavigationUtil.getPsiElementPopup(elements, renderer, myPopupTitle, getElementProcessor(event));
       popup.show(new RelativePoint(event));
     }
+  }
+
+  @NotNull
+  private PsiElementProcessor<PsiElement> getElementProcessor(@NotNull MouseEvent event) {
+    return element -> {
+      if (myNavigationHandler != null) {
+        myNavigationHandler.navigate(event, element);
+      }
+      else {
+        Navigatable descriptor = EditSourceUtil.getDescriptor(element);
+        if (descriptor != null && descriptor.canNavigate()) {
+          descriptor.navigate(true);
+        }
+      }
+      return true;
+    };
   }
 
   @Nullable

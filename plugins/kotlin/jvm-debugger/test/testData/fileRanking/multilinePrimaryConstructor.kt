@@ -4,6 +4,7 @@ class A(
     val lastName: String,
     val age: Int
 )
+// PRODUCED_CLASS_NAMES: A
 
 //FILE: b/a.kt
 class B(
@@ -11,3 +12,4 @@ class B(
     val lastName: String,
     val age: Int
 )
+// PRODUCED_CLASS_NAMES: B

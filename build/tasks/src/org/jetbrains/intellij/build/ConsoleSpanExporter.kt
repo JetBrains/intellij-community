@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.diagnostic.telemetry.AsyncSpanExporter
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.trace.data.SpanData
@@ -22,23 +21,23 @@ import java.time.temporal.ChronoField
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
+private fun createPathList(dir: Path): List<String> {
+  val s1 = dir.toString() + File.separatorChar
+  val s2 = dir.toAbsolutePath().normalize().toString() + File.separatorChar
+  return if (s1 == s2) java.util.List.of(s1) else java.util.List.of(s1, s2)
+}
+
 class ConsoleSpanExporter : AsyncSpanExporter {
   companion object {
     fun setPathRoot(dir: Path) {
-      val s1 = dir.toString() + File.separatorChar
-      val s2 = dir.toRealPath().toString() + File.separatorChar
-      rootPathsWithEndSlash = if (s1 == s2) java.util.List.of(s1) else java.util.List.of(s1, s2)
+      rootPathsWithEndSlash = createPathList(dir)
     }
   }
 
   override suspend fun export(spans: Collection<SpanData>) {
     val sb = StringBuilder()
     for (span in spans) {
-      val attributes = span.attributes
-      val reportSpanToConsole = attributes.get(AttributeKey.booleanKey("_CES_")) != true
-      if (reportSpanToConsole) {
-        writeSpan(sb, span, span.endEpochNanos - span.startEpochNanos, span.endEpochNanos)
-      }
+      writeSpan(sb, span, span.endEpochNanos - span.startEpochNanos, span.endEpochNanos)
     }
     if (sb.isNotEmpty()) {
       // System.out.print is synchronized - buffer content to reduce calls
@@ -57,7 +56,7 @@ private val ISO_LOCAL_TIME = DateTimeFormatterBuilder()
   .toFormatter()
 
 private var rootPathsWithEndSlash = emptyList<String>()
-private val buildRootMacro = "\${buildRoot}${File.separatorChar}"
+private var m2PathsWithEndSlash = createPathList(Path.of(System.getProperty("user.home"), ".m2/repository"))
 
 private fun writeSpan(sb: StringBuilder, span: SpanData, duration: Long, endEpochNanos: Long) {
   sb.append(span.name)
@@ -113,10 +112,19 @@ private fun writeTime(epochNanos: Long, sb: StringBuilder) {
   ISO_LOCAL_TIME.formatTo(LocalTime.ofInstant(Instant.ofEpochSecond(epochSeconds, adjustNanos), ZoneId.systemDefault()), sb)
 }
 
+private val m2Macro = "\$MAVEN_REPOSITORY\$" + File.separatorChar
+
 private fun writeValueAsHumanReadable(s: String, sb: StringBuilder) {
   for (prefix in rootPathsWithEndSlash) {
-    val newS = s.replace(prefix, buildRootMacro)
-    if (newS != s) {
+    val newS = s.replace(prefix, "")
+    if (newS !== s) {
+      sb.append(newS)
+      return
+    }
+  }
+  for (prefix in m2PathsWithEndSlash) {
+    val newS = s.replace(prefix, m2Macro)
+    if (newS !== s) {
       sb.append(newS)
       return
     }

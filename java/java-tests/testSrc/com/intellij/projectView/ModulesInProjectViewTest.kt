@@ -3,6 +3,7 @@ package com.intellij.projectView
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.projectView.impl.PackageViewPane
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -13,8 +14,7 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 
-// directory-based project must be used to ensure that .iws/.ipr file won't break the test (they may be created if workspace model is used)
-class ModulesInProjectViewTest : BaseProjectViewTestCase() {
+open class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
   init {
     myPrintInfo = Queryable.PrintInfo()
   }
@@ -24,6 +24,21 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     myStructure.isShowLibraryContents = false
   }
 
+  override fun doCreateRealModule(moduleName: String): Module {
+    return WriteAction.computeAndWait<Module, RuntimeException> {
+      /* iml files are created under .idea directory to ensure that they won't affect expected structure of Project View;
+         this is needed to ensure that tests work the same way under the old project model and under workspace model where all modules
+         are saved when a single module is unloaded */
+      val imlPath = project.stateStore.projectBasePath.resolve(".idea/$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+      ModuleManager.getInstance(myProject).newModule(imlPath, moduleType.id)
+    }
+  }
+
+  override fun getTestPath(): String? = null
+}
+
+// directory-based project must be used to ensure that .iws/.ipr file won't break the test (they may be created if workspace model is used)
+class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
   fun `test unloaded modules`() {
     val root = directoryContent {
       dir("loaded") {
@@ -200,15 +215,88 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
       """.trimMargin())
   }
 
-  override fun doCreateRealModule(moduleName: String): Module {
-    return WriteAction.computeAndWait<Module, RuntimeException> {
-      /* iml files are created under .idea directory to ensure that they won't affect expected structure of Project View;
-         this is needed to ensure that tests work the same way under the old project model and under workspace model where all modules
-         are saved when a single module is unloaded */
-      val imlPath = project.stateStore.projectBasePath.resolve(".idea/$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
-      ModuleManager.getInstance(myProject).newModule(imlPath, moduleType.id)
-    }
+}
+
+class ModulesInPackageViewTest : ModulesInProjectViewTestCase() {
+  
+  init {
+    myPrintInfo = Queryable.PrintInfo(arrayOf("id"), arrayOf("name"))
   }
 
-  override fun getTestPath(): String? = null
+  override fun setUp() {
+    packageViewPaneId = PackageViewPane.ID
+    super.setUp()
+  }
+
+  fun `test nested modules`() {
+    val root = directoryContent {
+      dir("module1") {
+        dir("module11") {
+          dir("main") {
+            dir("src") {}
+          }
+          dir("test") {
+            dir("src") {}
+          }
+        }
+        dir("module12") {
+          dir("main") {
+            dir("src") {}
+          }
+          dir("test") {
+            dir("src") {}
+          }
+        }
+      }
+      dir("module2") {
+        dir("module22") {
+          dir("main") {
+            dir("src") {}
+          }
+          dir("test") {
+            dir("src") {}
+          }
+        }
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("module1"), root.findFileByRelativePath("module1")!!)
+    PsiTestUtil.addContentRoot(createModule("module1.module11"), root.findFileByRelativePath("module1/module11")!!)
+    val module11main = createModule("module1.module11.main")
+    PsiTestUtil.addContentRoot(module11main, root.findFileByRelativePath("module1/module11/main")!!)
+    PsiTestUtil.addSourceContentToRoots(module11main, root.findFileByRelativePath("module1/module11/main/src")!!)
+    val module11test = createModule("module1.module11.test")
+    PsiTestUtil.addContentRoot(module11test, root.findFileByRelativePath("module1/module11/test")!!)
+    PsiTestUtil.addSourceContentToRoots(module11test, root.findFileByRelativePath("module1/module11/test/src")!!)
+    PsiTestUtil.addContentRoot(createModule("module1.module12"), root.findFileByRelativePath("module1/module12")!!)
+    val module12main = createModule("module1.module12.main")
+    PsiTestUtil.addContentRoot(module12main, root.findFileByRelativePath("module1/module12/main")!!)
+    PsiTestUtil.addSourceContentToRoots(module12main, root.findFileByRelativePath("module1/module12/main/src")!!)
+    val module12test = createModule("module1.module12.test")
+    PsiTestUtil.addContentRoot(module12test, root.findFileByRelativePath("module1/module12/test")!!)
+    PsiTestUtil.addSourceContentToRoots(module12test, root.findFileByRelativePath("module1/module12/test/src")!!)
+    PsiTestUtil.addContentRoot(createModule("module2"), root.findFileByRelativePath("module2")!!)
+    PsiTestUtil.addContentRoot(createModule("module2.module22"), root.findFileByRelativePath("module2/module22")!!)
+    val module22main = createModule("module2.module22.main")
+    PsiTestUtil.addContentRoot(module22main, root.findFileByRelativePath("module2/module22/main")!!)
+    PsiTestUtil.addSourceContentToRoots(module22main, root.findFileByRelativePath("module2/module22/main/src")!!)
+    val module22test = createModule("module2.module22.test")
+    PsiTestUtil.addContentRoot(module22test, root.findFileByRelativePath("module2/module22/test")!!)
+    PsiTestUtil.addSourceContentToRoots(module22test, root.findFileByRelativePath("module2/module22/test/src")!!)
+    assertStructureEqual("""
+      |Project
+      | Group: module1
+      |  Module name=module1.module11
+      |   Module name=module1.module11.main
+      |   Module name=module1.module11.test
+      |  Module name=module1.module12
+      |   Module name=module1.module12.main
+      |   Module name=module1.module12.test
+      | Group: module2
+      |  Module name=module2.module22
+      |   Module name=module2.module22.main
+      |   Module name=module2.module22.test
+      |
+      """.trimMargin())
+  }
+
 }

@@ -207,12 +207,25 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    *                              console {@link com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView}
    */
   protected final void attachToProcess(@NotNull ProcessHandler processHandler, boolean attachToProcessOutput) {
+    attachToProcess(processHandler,
+                    new ProcessHandlerTtyConnector(processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset()),
+                    attachToProcessOutput);
+  }
+
+  /**
+   * @param processHandler        ProcessHandler instance wrapping underlying PtyProcess
+   * @param ttyConnector          ProcessHandlerTtyConnector instance
+   * @param attachToProcessOutput true if process output should be printed in the console,
+   *                              false if output printing is managed externally, e.g. by testing
+   *                              console {@link com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView}
+   */
+  public final void attachToProcess(@NotNull ProcessHandler processHandler,
+                                    @NotNull TtyConnector ttyConnector,
+                                    boolean attachToProcessOutput) {
     if (!myAttachedToProcess.compareAndSet(false, true)) {
       return;
     }
-    myTerminalWidget.createTerminalSession(new ProcessHandlerTtyConnector(
-      processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset())
-    );
+    myTerminalWidget.createTerminalSession(ttyConnector);
     myTerminalWidget.start();
 
     processHandler.addProcessListener(new ProcessAdapter() {

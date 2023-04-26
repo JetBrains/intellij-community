@@ -63,17 +63,16 @@ abstract class FilesProcessorWithNotificationImpl(
   private fun showAction() = NotificationAction.createSimple(showActionText) {
     val allFiles = selectValidFiles()
     if (allFiles.isNotEmpty()) {
-      with(SelectFilesDialog.init(project, allFiles, null, null, true, true,
-                                  viewFilesDialogOkActionName, viewFilesDialogCancelActionName)) {
-        title = viewFilesDialogTitle
-        selectedFiles = allFiles
-        if (showAndGet()) {
-          val userSelectedFiles = selectedFiles
-          doActionOnChosenFiles(userSelectedFiles)
-          removeFiles(userSelectedFiles)
-          if (isFilesEmpty()) {
-            expireNotification()
-          }
+      val dialog = SelectFilesDialog.init(project, allFiles, null, null, true, true,
+                                          viewFilesDialogOkActionName, viewFilesDialogCancelActionName)
+      dialog.title = viewFilesDialogTitle
+      dialog.selectedFiles = allFiles
+      if (dialog.showAndGet()) {
+        val userSelectedFiles = dialog.selectedFiles
+        doActionOnChosenFiles(userSelectedFiles)
+        removeFiles(userSelectedFiles)
+        if (isFilesEmpty()) {
+          expireNotification()
         }
       }
     }

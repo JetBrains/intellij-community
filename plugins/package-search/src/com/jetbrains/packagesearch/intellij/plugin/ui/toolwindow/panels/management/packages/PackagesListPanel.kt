@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
@@ -87,11 +88,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.idea.packagesearch.SortMetric
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.event.ItemEvent
 import javax.swing.BorderFactory
 import javax.swing.Box
 import javax.swing.BoxLayout
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JViewport
@@ -101,6 +105,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
+@OptIn(kotlin.time.ExperimentalTime::class)
 internal class PackagesListPanel(
     private val project: Project,
     targetModulesFlow: Flow<TargetModules>,
@@ -145,6 +150,15 @@ internal class PackagesListPanel(
             isSelected = false
         }
 
+    private val sortByComboBoxLabel = JLabel().apply {
+        text = "Sort by:"
+        border = emptyBorder(left = 6, right = 2)
+    }
+
+    private val sortByComboBox = ComboBox<SortMetric>(200).apply {
+        SortMetric.values().map { addItem(it) }
+    }
+
     private val searchFiltersToolbar = ActionManager.getInstance()
         .createActionToolbar("Packages.Manage", createActionGroup(), true)
         .apply {
@@ -159,6 +173,8 @@ internal class PackagesListPanel(
     private fun createActionGroup() = DefaultActionGroup().apply {
         add(ComponentActionWrapper { onlyStableCheckBox })
         add(ComponentActionWrapper { onlyMultiplatformCheckBox })
+        add(ComponentActionWrapper { sortByComboBoxLabel })
+        add(ComponentActionWrapper { sortByComboBox })
     }
 
     private val searchPanel = PackageSearchUI.headerPanel {
@@ -241,6 +257,7 @@ internal class PackagesListPanel(
     internal data class SearchCommandModel(
         val onlyStable: Boolean,
         val onlyMultiplatform: Boolean,
+        val sortMetric: SortMetric,
         val searchQuery: String,
     )
 
@@ -261,15 +278,17 @@ internal class PackagesListPanel(
         val searchResultsFlow = combineLatest(
             project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyStableStateFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyMultiplatformStateFlow,
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.sortMetricStateFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.searchQueryStateFlow.debounce(150.milliseconds),
-            project.loadingContainer
-        ) { onlyStable, onlyMultiplatform, searchQuery ->
+            project.loadingContainer,
+        ) { onlyStable, onlyMultiplatform, sortMetric, searchQuery ->
             SearchResultsModel(
                 searchQuery = searchQuery,
-                apiSearchResults = searchCache.getOrTryPutDefault(SearchCommandModel(onlyStable, onlyMultiplatform, searchQuery)) {
+                apiSearchResults = searchCache.getOrTryPutDefault(SearchCommandModel(onlyStable, onlyMultiplatform, sortMetric, searchQuery)) {
                     dataProvider.doSearch(
                         searchQuery = searchQuery,
-                        filterOptions = FilterOptions(onlyStable, onlyMultiplatform)
+                        filterOptions = FilterOptions(onlyStable, onlyMultiplatform),
+                        sortMetric = sortMetric,
                     )
                 }
             )
@@ -282,11 +301,12 @@ internal class PackagesListPanel(
             targetModulesFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyStableStateFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyMultiplatformStateFlow,
+            project.service<PackageManagementPanel.UIState>().packagesListPanel.sortMetricStateFlow,
             searchResultsFlow,
             project.service<PackageManagementPanel.UIState>().packagesListPanel.searchResultsUiStateOverridesState,
             project.loadingContainer
         ) { installedDependencies, repositoriesDeclarationsByModule,
-            allKnownRepositories, targetModules, onlyStable, onlyMultiplatform,
+            allKnownRepositories, targetModules, onlyStable, onlyMultiplatform, sortMetric,
             (searchQuery, apiSearchResults),
             searchResultsUiStateOverridesState ->
 
@@ -336,6 +356,7 @@ internal class PackagesListPanel(
                 viewModel = PackagesTable.ViewModel(
                     items = tableItems,
                     onlyStable = onlyStable,
+                    sortMetric = sortMetric,
                     targetModules = targetModules,
                     knownRepositoriesInTargetModules = repositoriesDeclarationsByModule,
                     allKnownRepositories = allKnownRepositories
@@ -460,6 +481,17 @@ internal class PackagesListPanel(
                 project.service<PackageManagementPanel.UIState>().packagesListPanel.onlyMultiplatformStateFlow.emit(selected)
             }
             PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.OnlyKotlinMp, selected)
+        }
+
+        sortByComboBox.addItemListener { e ->
+            if (e.stateChange == ItemEvent.SELECTED) {
+                (e.item as? SortMetric)?.let { selected ->
+                    project.lifecycleScope.launch {
+                        project.service<PackageManagementPanel.UIState>().packagesListPanel.sortMetricStateFlow.emit(selected)
+                    }
+                    PackageSearchEventsLogger.logSortMetric(selected)
+                }
+            }
         }
     }
 

@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,7 +31,10 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   override fun gap(rightGap: RightGap): SegmentedButton<T>
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): SegmentedButton<T>
+
+  override fun customize(customGaps: UnscaledGaps): SegmentedButton<T>
 
   fun items(items: Collection<T>): SegmentedButton<T>
 
@@ -51,5 +55,5 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
    */
   fun maxButtonsCount(value: Int): SegmentedButton<T>
 
-  fun validation(init: CellValidation<SegmentedButton<T>>.() -> Unit): SegmentedButton<T>
+  fun validation(init: CellValidation<SegmentedButton<T>>.(SegmentedButton<T>) -> Unit): SegmentedButton<T>
 }

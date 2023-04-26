@@ -721,4 +721,22 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/protectedInFinal")
+    public static class ProtectedInFinal extends AbstractK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("protected.kt")
+        public void testProtected() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/protectedInFinal/protected.kt");
+        }
+
+        @TestMetadata("protected2.kt")
+        public void testProtected2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/protectedInFinal/protected2.kt");
+        }
+    }
 }

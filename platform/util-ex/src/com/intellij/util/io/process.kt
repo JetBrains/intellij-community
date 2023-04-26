@@ -4,30 +4,26 @@ package com.intellij.util.io
 import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.BufferedReader
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.milliseconds
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private val processWaiter: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(parallelism = Int.MAX_VALUE)
-private val stepMs = 10.milliseconds
+import kotlin.time.Duration
 
 /**
  * This should be used instead of [Process.onExit]`().await()`.
  * @return [Process.exitValue]
  */
 suspend fun Process.awaitExit(): Int {
-  // max wait per attempt: 100 * 10ms = 1 second
-  repeat(100) { attempt ->
-    val ok = runInterruptible(Dispatchers.IO) {
-      waitFor((stepMs * attempt).inWholeNanoseconds, TimeUnit.NANOSECONDS)
+  return loopInterruptible { timeout: Duration ->
+    if (timeout.isInfinite()) {
+      Attempt.success(waitFor())
     }
-    if (ok) {
-      return exitValue()
+    else if (waitFor(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)) {
+      Attempt.success(exitValue())
     }
-  }
-  return runInterruptible(processWaiter) {
-    waitFor()
+    else {
+      Attempt.tryAgain()
+    }
   }
 }
 
@@ -47,12 +43,23 @@ suspend fun Process.awaitExit(): Int {
 @IntellijInternalApi
 @Internal
 suspend fun <T> computeDetached(action: suspend CoroutineScope.() -> T): T {
-  val deferred = GlobalScope.async(processWaiter, block = action)
+  val deferred = GlobalScope.async(blockingDispatcher, block = action)
   try {
     return deferred.await()
   }
   catch (ce: CancellationException) {
     deferred.cancel(ce)
     throw ce
+  }
+}
+
+/**
+ * Reads line in suspendable manner.
+ * Might be slow, for high performance consider using separate thread and blocking call
+ */
+@OptIn(DelicateCoroutinesApi::class)
+suspend fun BufferedReader.readLineAsync(): String? = computeDetached {
+  runInterruptible(blockingDispatcher) {
+    readLine()
   }
 }

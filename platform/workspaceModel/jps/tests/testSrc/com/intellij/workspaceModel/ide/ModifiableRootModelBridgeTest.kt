@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
@@ -17,6 +18,8 @@ import com.intellij.workspaceModel.storage.toBuilder
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.fail
+import kotlin.concurrent.thread
 
 class ModifiableRootModelBridgeTest {
   companion object {
@@ -84,5 +87,45 @@ class ModifiableRootModelBridgeTest {
       val model = moduleRootManager.getModifiableModel(builder, RootConfigurationAccessor.DEFAULT_INSTANCE)
       anotherModifiableModel.dispose()
     }
+  }
+
+  /**
+   * Test structure: 3 threads:
+   * - Silent update in the loop without write action
+   * - 2 threads try to get exception
+   */
+  @Test
+  fun `get extensions of the model that is modified`() {
+    val module = runWriteActionAndWait {
+      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).getModifiableModel()
+      val newModule = moduleModifiableModel.newModule(projectModel.projectRootDir.resolve("myModule/myModule.iml"),
+                                                      EmptyModuleType.EMPTY_MODULE) as ModuleBridge
+      moduleModifiableModel.commit()
+      newModule
+    }
+
+    var exception: Throwable? = null
+    val job = thread(name = "Background silent updater") {
+      repeat(100_000) {
+        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
+          // No actual update, just run the update function
+        }
+
+        val ex = runCatching {
+          val moduleRootManager = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
+          moduleRootManager.getModuleExtension(Any::class.java)
+        }
+        if (ex.isFailure) exception = ex.exceptionOrNull()
+      }
+    }
+    val ex = runCatching {
+      repeat(100_000) {
+        val moduleRootManager = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
+        moduleRootManager.getModuleExtension(Any::class.java)
+      }
+    }
+    job.join()
+    if (exception != null) fail(exception)
+    if (ex.isFailure) fail(ex.exceptionOrNull())
   }
 }

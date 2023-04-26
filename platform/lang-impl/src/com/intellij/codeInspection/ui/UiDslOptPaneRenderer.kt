@@ -216,9 +216,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
     return when (component) {
         is OptCheckbox -> {
           checkBox(component.label.label())
-            .applyToComponent {
-              isSelected = context.getOption(component.bindId) as Boolean
-            }
+            .selected(context.getOption(component.bindId) as Boolean)
             .onChanged { context.setOption(component.bindId, it.isSelected) }
         }
 
@@ -234,6 +232,20 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             .onChanged {
               context.setOption(component.bindId, it.text)
             }
+        }
+
+        is OptExpandableString -> {
+          expandableTextField({s -> s.split(component.separator).toMutableList()}, 
+                              {list -> list.joinToString(component.separator)})
+            .resizableColumn()
+            .align(Align.FILL)
+            .applyToComponent {
+              text = context.getOption(component.bindId) as String? ?: ""
+            }
+            .onChanged {
+              context.setOption(component.bindId, it.text)
+            }
+            .comment(component.description?.toString(), 50)
         }
 
         is OptNumber -> {
@@ -414,6 +426,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
   private val OptComponent.splitLabel: LocMessage.PrefixSuffix?
     get() = when (this) {
+      is OptExpandableString -> LocMessage.PrefixSuffix(label.label(), "") // TODO: display label above the control instead?
       is OptString -> splitLabel.splitLabel()
       is OptNumber -> splitLabel.splitLabel()
       is OptDropdown -> splitLabel.splitLabel()

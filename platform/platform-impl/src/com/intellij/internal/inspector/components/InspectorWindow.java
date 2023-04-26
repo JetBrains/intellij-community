@@ -220,7 +220,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     topPanel.add(navBarScroll);
     add(topPanel, BorderLayout.NORTH);
 
-    myHierarchyTree.expandPath();
+    TreeUtil.expandAll(myHierarchyTree);
+    myHierarchyTree.selectPath(component);
 
     addWindowListener(new WindowAdapter() {
       @Override
@@ -484,10 +485,14 @@ public final class InspectorWindow extends JDialog implements Disposable {
       Component c = node.getComponent();
       if (c == null) return;
 
+      Component selected = ContainerUtil.getFirstItem(myComponents);
       isAccessibleEnable = !isAccessibleEnable;
       myNavBarPanel.setAccessibleEnabled(isAccessibleEnable);
       myHierarchyTree.resetModel(c, isAccessibleEnable);
-      myHierarchyTree.expandPath(isAccessibleEnable);
+      TreeUtil.expandAll(myHierarchyTree);
+      if (selected != null) {
+        myHierarchyTree.selectPath(selected, isAccessibleEnable);
+      }
     }
   }
 

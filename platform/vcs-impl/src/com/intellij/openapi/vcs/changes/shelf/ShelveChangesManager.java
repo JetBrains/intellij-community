@@ -384,7 +384,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   @Unmodifiable
   private @NotNull List<ShelvedChangeList> getRecycled(boolean recycled) {
     return List.copyOf(ContainerUtil.filter(mySchemeManager.getAllSchemes(),
-                                                                  list -> recycled == list.isRecycled() && !list.isDeleted()));
+                                            list -> recycled == list.isRecycled() && !list.isDeleted()));
   }
 
   @NotNull
@@ -436,6 +436,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                                    String commitMessage,
                                                    boolean markToBeDeleted,
                                                    boolean honorExcludedFromCommit) throws VcsException, IOException {
+    if (changes.isEmpty()) {
+      LOG.warn("Creating an empty shelved list", new Throwable());
+    }
     LOG.debug("Shelving of " + changes.size() + " changes...");
 
     try {
@@ -456,6 +459,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
           else {
             textChanges.add(change);
           }
+        }
+
+        if (textChanges.isEmpty() && binaryFiles.isEmpty()) {
+          LOG.warn("Created an empty shelved list, ignored changes: " + changes);
         }
 
         Path patchFile = getPatchFileInConfigDir(schemePatchDir);

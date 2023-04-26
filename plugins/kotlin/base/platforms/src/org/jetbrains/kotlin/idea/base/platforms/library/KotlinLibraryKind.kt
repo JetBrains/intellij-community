@@ -45,6 +45,21 @@ object KotlinNativeLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("
     }
 }
 
+/**
+ * This kind is not expected to be assigned to workspace libraries.
+ * Its only purpose it to prevent repeated evaluation of (absent) PersistentLibraryKind for Kotlin JVM libraries.
+ * com.intellij.externalSystem.ImportedLibraryType's persistent kind is expected to be preserved for them when exists.
+ */
+internal object KotlinJvmEffectiveLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.jvm"), KotlinLibraryKind {
+    override val compilerPlatform: TargetPlatform
+        get() = JvmPlatforms.defaultJvmPlatform
+
+    override fun createDefaultProperties(): DummyLibraryProperties {
+        return DummyLibraryProperties.INSTANCE
+    }
+}
+
+
 // TODO: Drop this property. See https://youtrack.jetbrains.com/issue/KT-38233
 //  It returns approximate library platform, as the real platform can be evaluated only for concrete library.
 val PersistentLibraryKind<*>?.platform: TargetPlatform

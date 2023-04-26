@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.tasks.BOOT_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_8_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_RT_JAR
@@ -195,14 +196,17 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // used by intellij.database.jdbcConsole -
   // cannot be in 3rd-party-rt.jar, because this JAR must contain classes for java versions <= 7 only
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
-  // util.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
-  addModule(UTIL_JAR, listOf(
+  // boot.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
+  addModule(BOOT_JAR, listOf(
     "intellij.platform.util.rt.java8",
     "intellij.platform.util.classLoader",
     "intellij.platform.util.zip",
+    "intellij.platform.boot",
+    "intellij.platform.runtime.loader",
+  ), productLayout = productLayout, layout = layout)
+  addModule(UTIL_JAR, listOf(
     // Scala uses GeneralCommandLine in JPS plugin
     "intellij.platform.ide.util.io",
-    "intellij.platform.boot",
     "intellij.platform.extensions",
   ), productLayout = productLayout, layout = layout)
   addModule("externalProcess-rt.jar", listOf(
@@ -216,6 +220,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
     layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
   }
+  addModule("platform-runtime-repository.jar", listOf("intellij.platform.runtime.repository"), productLayout = productLayout, layout = layout)
   addModule("jps-model.jar", listOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.serialization",
@@ -269,6 +274,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // as a separate step, not a part of computing implicitModules, as we should collect libraries from a such implicitly included modules
   layout.collectProjectLibrariesFromIncludedModules(context = context) { lib, module ->
     val name = lib.name
+    //this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125 
     if (module.name == "intellij.platform.buildScripts.downloader" && (name == "zstd-jni" || name == "zstd-jni-windows-aarch64")) {
       return@collectProjectLibrariesFromIncludedModules
     }
@@ -441,7 +447,7 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
   val modules = content.children("module")
   val result = LinkedHashSet<ModuleItem>()
   for (module in modules) {
-    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue, relativeOutputFile = APP_JAR, reason = "productModule"))
+    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue, relativeOutputFile = "modules.jar", reason = "productModule"))
   }
   return result
 }

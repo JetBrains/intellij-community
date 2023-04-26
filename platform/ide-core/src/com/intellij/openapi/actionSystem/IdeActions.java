@@ -108,6 +108,7 @@ public interface IdeActions {
 
   String GROUP_MAIN_MENU = "MainMenu";
   String GROUP_MAIN_TOOLBAR = "MainToolBar";
+  String GROUP_MAIN_TOOLBAR_NEW_UI = "MainToolbarNewUI";
 
   String GROUP_MAIN_TOOLBAR_LEFT = "MainToolbarLeft";
   String GROUP_MAIN_TOOLBAR_CENTER = "MainToolbarCenter";

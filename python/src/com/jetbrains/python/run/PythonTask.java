@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Output;
 import com.intellij.execution.OutputListener;
 import com.intellij.execution.RunContentExecutor;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.*;
@@ -35,7 +34,6 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
@@ -304,10 +302,7 @@ public class PythonTask {
 
   @NotNull
   private static ProcessHandler executeLegacyLocalProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    ProcessHandler handler;
-    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(commandLine);
-    handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
-
+    ProcessHandler handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
     ProcessTerminatedListener.attach(handler);
     return handler;
   }

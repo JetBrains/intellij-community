@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
@@ -312,7 +312,7 @@ public final class FindInProjectUtil {
   }
 
   @NotNull
-  private static @Nls String getTitleForScope(@NotNull FindModel findModel) {
+  public static @Nls String getTitleForScope(@NotNull FindModel findModel) {
     String scopeName;
     if (findModel.isProjectScope()) {
       scopeName = FindBundle.message("find.scope.project.title");
@@ -513,21 +513,6 @@ public final class FindInProjectUtil {
     @Override
     public ItemPresentation getPresentation() {
       return this;
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
     }
 
     @Override

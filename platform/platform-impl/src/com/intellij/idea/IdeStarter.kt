@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
@@ -30,8 +31,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
@@ -130,18 +131,23 @@ open class IdeStarter : ModernApplicationStarter() {
       else -> null
     }
 
-    when {
-      project != null -> {
-        return
-      }
-      willReopenRecentProjectOnStart -> {
-        if (!recentProjectManager.reopenLastProjectsOnStart()) {
-          WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
-        }
-      }
-      else -> {
-        WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
-      }
+    if (project != null) {
+      return
+    }
+
+    val isOpened = willReopenRecentProjectOnStart && try {
+      recentProjectManager.reopenLastProjectsOnStart()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logger<IdeStarter>().error("Cannot reopen recent projects", e)
+      false
+    }
+
+    if (!isOpened) {
+      WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
     }
   }
 
@@ -207,7 +213,7 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
 
 private fun CoroutineScope.postOpenUiTasks() {
   if (PluginManagerCore.isRunningFromSources()) {
-    AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+    updateAppWindowIcon(JOptionPane.getRootFrame())
   }
 
   if (SystemInfoRt.isMac) {

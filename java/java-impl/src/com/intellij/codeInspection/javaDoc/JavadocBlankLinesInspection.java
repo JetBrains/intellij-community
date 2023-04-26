@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
       @Override
       public void visitDocToken(@NotNull PsiDocToken token) {
         super.visitDocToken(token);
+        if (token.getParent() instanceof PsiSnippetDocTagBody) return;
         PsiElement nextWhitespace = token.getNextSibling();
         PsiElement prevWhitespace = token.getPrevSibling();
         if (token.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS &&
@@ -72,10 +74,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
   }
 
   private static boolean isBeforeParagraphOrBlockTag(PsiElement element) {
-    PsiElement nextSibling = element.getNextSibling();
-    if (!(nextSibling instanceof PsiDocToken)) return true;
-    if (((PsiDocToken)nextSibling).getTokenType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return true;
-    nextSibling = nextSibling.getNextSibling();
+    PsiElement nextSibling = skipWhitespacesAndLeadingAsterisksForward(element);
     if (nextSibling == null) return true;
     String text = nextSibling.getText();
     return isNullOrBlockTag(nextSibling) ||
@@ -83,14 +82,20 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
            isNullOrBlockTag(nextSibling.getNextSibling());
   }
 
+  private static PsiElement skipWhitespacesAndLeadingAsterisksForward(PsiElement element) {
+    for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+      if (!(e instanceof PsiWhiteSpace ||
+            e instanceof PsiDocToken docToken && docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
+        return e;
+      }
+    }
+    return null;
+  }
+
   private static boolean startsWithHtmlBlockTag(String text) {
-    text = text.stripLeading();
-    if (text.isEmpty() || text.charAt(0) != '<') return false;
-    int index = text.indexOf('>');
-    if (index < 1) return false;
-    String maybeBlockTag = text.substring(1, index);
-    String trimmed = StringUtil.trim(maybeBlockTag.strip(), ch -> NOT_WHITESPACE_FILTER.accept(ch) && ch != '/');
-    return HtmlUtil.isHtmlBlockTag(trimmed, false) || "br".equalsIgnoreCase(trimmed);
+    String startTag = HtmlUtil.getStartTag(text);
+    if (startTag == null) return false;
+    return HtmlUtil.isHtmlBlockTag(startTag, false) || "br".equalsIgnoreCase(startTag);
   }
 
   private static boolean endsWithHtmlBlockTag(String text) {

@@ -4,16 +4,16 @@ package org.jetbrains.idea.devkit.i18n
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/propertyQuotesValidation/")
+@TestDataPath("/inspections/propertyMessageValidation/")
 class DevKitPropertiesQuotesValidationInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath(): String {
-    return DevkitI18nTestUtil.TESTDATA_PATH + "inspections/propertyQuotesValidation"
+    return DevkitI18nTestUtil.TESTDATA_PATH + "inspections/propertyMessageValidation"
   }
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(DevKitPropertiesQuotesValidationInspection())
+    myFixture.enableInspections(DevKitPropertiesMessageValidationInspection())
   }
 
   fun testSimple() {

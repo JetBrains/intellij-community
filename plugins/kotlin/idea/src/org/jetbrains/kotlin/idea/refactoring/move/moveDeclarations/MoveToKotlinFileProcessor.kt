@@ -14,6 +14,9 @@ import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictUsageInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictsFoundException
+import org.jetbrains.kotlin.idea.refactoring.move.MoveFilesWithDeclarationsViewDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 
 class MoveToKotlinFileProcessor @JvmOverloads constructor(
@@ -48,7 +51,7 @@ class MoveToKotlinFileProcessor @JvmOverloads constructor(
     }
 
     override fun showConflicts(conflicts: MultiMap<PsiElement, String>, usages: Array<out UsageInfo>?): Boolean {
-        if (throwOnConflicts && !conflicts.isEmpty) throw RefactoringConflictsFoundException()
+        if (throwOnConflicts && !conflicts.isEmpty) throw MoveConflictsFoundException()
         return super.showConflicts(conflicts, usages)
     }
 
@@ -75,11 +78,11 @@ class MoveToKotlinFileProcessor @JvmOverloads constructor(
         fun preprocessConflictUsages(refUsages: Ref<Array<UsageInfo>>): ConflictUsages {
             val usages: Array<UsageInfo> = refUsages.get()
 
-            val (conflictUsages, usagesToProcess) = usages.partition { it is ConflictUsageInfo }
+            val (conflictUsages, usagesToProcess) = usages.partition { it is MoveConflictUsageInfo }
 
             val conflicts = MultiMap<PsiElement, String>()
             for (conflictUsage in conflictUsages) {
-                conflicts.putValues(conflictUsage.element, (conflictUsage as ConflictUsageInfo).messages)
+                conflicts.putValues(conflictUsage.element, (conflictUsage as MoveConflictUsageInfo).messages)
             }
 
             refUsages.set(usagesToProcess.toTypedArray())

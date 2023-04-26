@@ -117,14 +117,17 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
     }
 
     private fun showQuickFiltersPopup(parentComponent: JComponent, quickFilters: List<Q>) {
-      val quickFiltersActions =
-        quickFilters.map { QuickFilterAction(it.getQuickFilterTitle(), it.filter) } +
-        Separator() +
-        ClearFiltersAction()
-
+      val quickFiltersActions = buildList {
+        add(Separator(CollaborationToolsBundle.message("review.list.filter.quick.title")))
+        quickFilters.forEach {
+          add(QuickFilterAction(it.getQuickFilterTitle(), it.filter))
+        }
+        add(Separator())
+        add(ClearFiltersAction())
+      }
 
       JBPopupFactory.getInstance()
-        .createActionGroupPopup(CollaborationToolsBundle.message("review.list.filter.quick.title"), DefaultActionGroup(quickFiltersActions),
+        .createActionGroupPopup(null, DefaultActionGroup(quickFiltersActions),
                                 DataManager.getInstance().getDataContext(parentComponent),
                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                 false)
@@ -141,7 +144,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
       override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
       override fun actionPerformed(e: AnActionEvent) {
-        showQuickFiltersPopup(e.inputEvent.component as JComponent, quickFilters)
+        showQuickFiltersPopup(e.inputEvent!!.component as JComponent, quickFilters)
       }
     }
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.util.PlatformUtils
 
 /**
  * @author Konstantin Bulenkov
@@ -28,7 +29,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
 
   private fun getFirstEnabledConfigurable() = EP_NAME.extensions.firstOrNull { it.isEnabled() }
 
-  override fun createPanel(): DialogPanel {
+  final override fun createPanel(): DialogPanel {
     val conf = getFirstEnabledConfigurable()
     if (conf != null) {
       return conf.createPanelInternal()
@@ -46,6 +47,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
             { ExperimentalUI.isNewUI() },
             { ExperimentalUI.setNewUI(it) })
           .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
+          .enabled(PlatformUtils.isAqua().not()) // the new UI is always enabled for Aqua and cannot be disabled
       }.comment(IdeBundle.message("ide.restart.required.comment"))
 
       indent {
@@ -77,18 +79,15 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
   open fun getMainChangesAndKnownIssuesUrl() = "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues"
   open fun getMainChangesAndKnowIssuesLabel() = IdeBundle.message("new.ui.blog.changes.and.issues")
   open fun onSubmitFeedback() = NewUIFeedbackDialog(null, false).show()
+  open fun getRedefinedHelpTopic(): String? = null
+  open fun onApply() {}
 
-
-  override fun getHelpTopic(): String? {
-    val conf = getFirstEnabledConfigurable()
-    if (conf != null) {
-      return conf.helpTopic
-    }
-    return null
+  final override fun getHelpTopic(): String? {
+    return getFirstEnabledConfigurable()?.getRedefinedHelpTopic()
   }
 
-  override fun apply() {
-    getFirstEnabledConfigurable()?.apply()
+  final override fun apply() {
+    getFirstEnabledConfigurable()?.onApply()
     val uiSettingsChanged = isModified
     super.apply()
     if (uiSettingsChanged) {

@@ -1,4 +1,4 @@
-// "JShellLanguage" "true"
+// "TEXT" "true"
 
 /**
  * {@snippet<caret> lang=_NONEXISTING_LANGUAGE_:

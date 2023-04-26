@@ -33,11 +33,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactoringProcessor {
   public static final Logger LOG = Logger.getInstance(InlineSuperClassRefactoringProcessor.class);
@@ -225,7 +226,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, @Nls String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> collectConflicts(conflicts)), 
                                            RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
@@ -236,7 +237,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return showConflicts(conflicts, refUsages.get());
   }
 
-  private void collectConflicts(MultiMap<PsiElement, @Nls String> conflicts) {
+  private void collectConflicts(MultiMap<PsiElement, @DialogMessage String> conflicts) {
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(mySuperClass, myMemberInfos, conflicts);
     for (PsiClass targetClass : myTargetClasses) {
       if (targetClass instanceof PsiAnonymousClass) {

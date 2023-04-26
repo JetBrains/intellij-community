@@ -129,7 +129,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   }
 
   override fun processDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point, dragOutJustStarted: Boolean) {
-    if (getToolWindow() == null) return
+    if (getToolWindow() == null || !checkModifiers(event)) return
     if (isDragJustStarted) {
       startDrag(event, startScreenPoint)
     }
@@ -324,6 +324,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   override fun processDragOutFinish(event: MouseEvent) = processDragFinish(event, false)
 
   override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
+    if (!checkModifiers(event)) {
+      stopDrag()
+      return
+    }
     val toolWindow = getToolWindow() ?: return
     if (willDragOutStart) {
       return

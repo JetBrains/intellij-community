@@ -3,8 +3,7 @@
     "typeshedPath": ".",
     "include": [
         "stdlib",
-        "stubs",
-        "test_cases"
+        "stubs"
     ],
     "exclude": [
         "**/@python2",
@@ -18,6 +17,9 @@
         "stdlib/tkinter/dialog.pyi",
         "stdlib/tkinter/dnd.pyi",
         "stdlib/tkinter/filedialog.pyi",
+        "stdlib/tkinter/messagebox.pyi",
+        "stdlib/tkinter/scrolledtext.pyi",
+        "stdlib/tkinter/tix.pyi",
         "stdlib/tkinter/ttk.pyi",
         "stdlib/xml/dom/NodeFilter.pyi",
         "stdlib/xml/dom/expatbuilder.pyi",
@@ -35,6 +37,7 @@
         "stubs/beautifulsoup4",
         "stubs/braintree",
         "stubs/caldav",
+        "stubs/cffi",
         "stubs/commonmark",
         "stubs/cryptography",
         "stubs/dateparser",
@@ -76,7 +79,6 @@
         "stubs/PyYAML",
         "stubs/redis",
         "stubs/requests",
-        "stubs/selenium",
         "stubs/Send2Trash",
         "stubs/setuptools",
         "stubs/simplejson",
@@ -84,6 +86,7 @@
         "stubs/SQLAlchemy",
         "stubs/stripe",
         "stubs/tqdm",
+        "stubs/tree-sitter",
         "stubs/tzlocal/tzlocal/utils.pyi",
         "stubs/ttkthemes",
         "stubs/urllib3",
@@ -96,6 +99,7 @@
     "strictSetInference": true,
     "reportFunctionMemberAccess": "error",
     "reportMissingModuleSource": "none",
+    "reportMissingParameterType": "error",
     "reportMissingTypeStubs": "error",
     "reportUnusedImport": "error",
     "reportUnusedClass": "error",

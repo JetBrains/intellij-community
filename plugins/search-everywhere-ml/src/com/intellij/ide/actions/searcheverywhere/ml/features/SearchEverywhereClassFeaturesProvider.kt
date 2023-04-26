@@ -5,10 +5,10 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.annotations.ApiStatus
 
@@ -28,18 +28,10 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesPro
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
-    val item = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) ?: return emptyList()
-
-    val data = arrayListOf<EventPair<*>>()
-    ReadAction.run<Nothing> {
-      (item as? PsiNamedElement)?.name?.let { elementName ->
-        data.addAll(getNameMatchingFeatures(elementName, searchQuery))
-      }
-    }
-
     val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
-    data.putIfValueNotNull(IS_DEPRECATED, isDeprecated(presentation))
-    return data
+    val isDeprecated = isDeprecated(presentation) ?: return emptyList()
+
+    return listOf(IS_DEPRECATED.with(isDeprecated))
   }
 
   private fun isDeprecated(presentation: TargetPresentation?): Boolean? {

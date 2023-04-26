@@ -4,20 +4,21 @@
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.diagnostic.telemetry.use
+import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
-import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
-import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.tracer
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.io.INDEX_FILENAME
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
+import org.jetbrains.intellij.build.io.transformZipUsingTempFile
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-private val excludedLibJars = java.util.Set.of("testFramework.jar")
+private val excludedLibJars = java.util.Set.of("testFramework.jar", "junit.jar")
 
 private fun getClassLoadingLog(): InputStream {
   val osName = System.getProperty("os.name")
@@ -42,44 +43,16 @@ private val sourceToNames: Map<String, MutableList<String>> by lazy {
 
 fun reorderJar(relativePath: String, file: Path) {
   val orderedNames = sourceToNames.get(relativePath) ?: return
-  tracer.spanBuilder("reorder jar")
+  spanBuilder("reorder jar")
     .setAttribute("relativePath", relativePath)
     .setAttribute("file", file.toString())
     .use {
-      reorderJar(jarFile = file, orderedNames = orderedNames, resultJarFile = file)
+      reorderJar(jarFile = file, orderedNames = orderedNames)
     }
 }
 
-fun generateClasspath(homeDir: Path, antTargetFile: Path?): PersistentList<String> {
-  val libDir = homeDir.resolve("lib")
-  val appFile = libDir.resolve("app.jar")
-
-  tracer.spanBuilder("generate app.jar")
-    .setAttribute("dir", homeDir.toString())
-    .use {
-      transformFile(appFile) { target ->
-        writeNewZip(target) { zipCreator ->
-          val packageIndexBuilder = PackageIndexBuilder()
-          copyZipRaw(appFile, packageIndexBuilder, zipCreator) { entryName ->
-            entryName != "module-info.class"
-          }
-
-          // packing to product.jar maybe disabled
-          val productJar = libDir.resolve("product.jar")
-          if (Files.exists(productJar)) {
-            copyZipRaw(productJar, packageIndexBuilder, zipCreator) { entryName ->
-              entryName != "module-info.class"
-            }
-            Files.delete(productJar)
-          }
-
-          packageIndexBuilder.writePackageIndex(zipCreator)
-        }
-      }
-    }
-  reorderJar("lib/app.jar", appFile)
-
-  tracer.spanBuilder("generate classpath")
+fun generateClasspath(homeDir: Path, libDir: Path, antTargetFile: Path?): PersistentList<String> {
+  spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
     .use { span ->
       val osName = System.getProperty("os.name")
@@ -111,7 +84,8 @@ private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: 
 
   val result = LinkedHashSet<Path>()
   // add first - should be listed first
-  sequenceOf(UTIL_JAR).map(libDir::resolve).filterTo(result) { existing.contains(it) }
+  sequenceOf(BOOT_JAR).map(libDir::resolve).filterTo(result, existing::contains)
+  sequenceOf(UTIL_JAR).map(libDir::resolve).filterTo(result, existing::contains)
   sourceToNames.keys.filterTo(result) { it.parent == libDir && existing.contains(it) }
   // sorted to ensure stable performance results
   result.addAll(if (isWindows) existing.sortedBy(Path::toString) else existing.sorted())
@@ -134,67 +108,46 @@ internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): M
   return sourceToNames
 }
 
-data class PackageIndexEntry(val path: Path, val classPackageIndex: LongSet, val resourcePackageIndex: LongSet)
-
-
-private class EntryData(@JvmField val name: String, @JvmField val entry: ZipEntry)
-
-fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): PackageIndexEntry {
+fun reorderJar(jarFile: Path, orderedNames: List<String>) {
   val orderedNameToIndex = Object2IntOpenHashMap<String>(orderedNames.size)
   orderedNameToIndex.defaultReturnValue(-1)
   for ((index, orderedName) in orderedNames.withIndex()) {
     orderedNameToIndex.put(orderedName, index)
   }
 
-  val tempJarFile = resultJarFile.resolveSibling("${resultJarFile.fileName}_reorder")
+  return transformZipUsingTempFile(jarFile) { zipCreator ->
+    val packageIndexBuilder = PackageIndexBuilder()
 
-  val packageIndexBuilder = PackageIndexBuilder()
+    HashMapZipFile.load(jarFile).use { sourceZip ->
+      val entries = sourceZip.entries.filterTo(mutableListOf()) { !it.isDirectory && it.name != INDEX_FILENAME }
+      // ignore the existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
+      entries.sortWith(Comparator { o1, o2 ->
+        val o2p = o2.name
+        if ("META-INF/plugin.xml" == o2p) {
+          return@Comparator Int.MAX_VALUE
+        }
 
-  mapFileAndUse(jarFile) { sourceBuffer, fileSize ->
-    val entries = mutableListOf<EntryData>()
-    readZipEntries(sourceBuffer, fileSize) { name, entry ->
-      entries.add(EntryData(name, entry))
-    }
-    // ignore the existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
-    entries.sortWith(Comparator { o1, o2 ->
-      val o2p = o2.name
-      if ("META-INF/plugin.xml" == o2p) {
-        return@Comparator Int.MAX_VALUE
-      }
-
-      val o1p = o1.name
-      if ("META-INF/plugin.xml" == o1p) {
-        -Int.MAX_VALUE
-      }
-      else {
-        val i1 = orderedNameToIndex.getInt(o1p)
-        if (i1 == -1) {
-          if (orderedNameToIndex.containsKey(o2p)) 1 else 0
+        val o1p = o1.name
+        if ("META-INF/plugin.xml" == o1p) {
+          -Int.MAX_VALUE
         }
         else {
-          val i2 = orderedNameToIndex.getInt(o2p)
-          if (i2 == -1) -1 else (i1 - i2)
+          val i1 = orderedNameToIndex.getInt(o1p)
+          if (i1 == -1) {
+            if (orderedNameToIndex.containsKey(o2p)) 1 else 0
+          }
+          else {
+            val i2 = orderedNameToIndex.getInt(o2p)
+            if (i2 == -1) -1 else (i1 - i2)
+          }
         }
-      }
-    })
+      })
 
-    writeNewZip(tempJarFile) { zipCreator ->
-      for (item in entries) {
-        packageIndexBuilder.addFile(item.name)
-        zipCreator.uncompressedData(item.name, item.entry.getByteBuffer())
+      for (entry in entries) {
+        packageIndexBuilder.addFile(entry.name)
+        zipCreator.uncompressedData(entry.name, entry.getByteBuffer(sourceZip))
       }
       packageIndexBuilder.writePackageIndex(zipCreator)
     }
   }
-
-  try {
-    Files.move(tempJarFile, resultJarFile, StandardCopyOption.REPLACE_EXISTING)
-  }
-  catch (e: Exception) {
-    throw e
-  }
-  finally {
-    Files.deleteIfExists(tempJarFile)
-  }
-  return PackageIndexEntry(path = resultJarFile, packageIndexBuilder.classPackageHashSet, packageIndexBuilder.resourcePackageHashSet)
 }

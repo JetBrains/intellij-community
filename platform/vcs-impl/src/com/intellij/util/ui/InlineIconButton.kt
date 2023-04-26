@@ -73,7 +73,7 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
                                                           behaviour.isFocused,
                                                           behaviour.isPressedByMouse,
                                                           behaviour.isPressedByKeyboard)
-        if (c.isEnabled || !StartupUiUtil.isUnderDarcula() || ExperimentalUI.isNewUI()) {
+        if (c.isEnabled || !StartupUiUtil.isUnderDarcula || ExperimentalUI.isNewUI()) {
           look.paintBackground(g2, c, buttonState)
         }
         if (behaviour.isFocused) {

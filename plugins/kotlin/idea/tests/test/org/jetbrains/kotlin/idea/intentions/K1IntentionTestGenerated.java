@@ -6154,9 +6154,29 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/generic4.kt");
             }
 
+            @TestMetadata("generic5.kt")
+            public void testGeneric5() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/generic5.kt");
+            }
+
             @TestMetadata("genericExtension.kt")
             public void testGenericExtension() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/genericExtension.kt");
+            }
+
+            @TestMetadata("genericExtension2.kt")
+            public void testGenericExtension2() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/genericExtension2.kt");
+            }
+
+            @TestMetadata("genericExtension3.kt")
+            public void testGenericExtension3() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/genericExtension3.kt");
+            }
+
+            @TestMetadata("genericExtension4.kt")
+            public void testGenericExtension4() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/genericExtension4.kt");
             }
 
             @TestMetadata("genericExtensionWithTypealias.kt")
@@ -8754,9 +8774,19 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToRawStringTemplate/basic.kt");
         }
 
+        @TestMetadata("consecutiveBreaks.kt")
+        public void testConsecutiveBreaks() throws Exception {
+            runTest("testData/intentions/convertToRawStringTemplate/consecutiveBreaks.kt");
+        }
+
         @TestMetadata("octalEscape.kt")
         public void testOctalEscape() throws Exception {
             runTest("testData/intentions/convertToRawStringTemplate/octalEscape.kt");
+        }
+
+        @TestMetadata("spaceBeforeBreak.kt")
+        public void testSpaceBeforeBreak() throws Exception {
+            runTest("testData/intentions/convertToRawStringTemplate/spaceBeforeBreak.kt");
         }
     }
 
@@ -16789,14 +16819,61 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceUntilWithRangeTo")
-    public static class ReplaceUntilWithRangeTo extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class ReplaceUntilWithRangeTo extends AbstractK1IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/replaceUntilWithRangeTo/rangeUntil")
+        public static class RangeUntil extends AbstractK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("byte.kt")
+            public void testByte() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/rangeUntil/byte.kt");
+            }
+
+            @TestMetadata("char.kt")
+            public void testChar() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/rangeUntil/char.kt");
+            }
+
+            @TestMetadata("int.kt")
+            public void testInt() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/rangeUntil/int.kt");
+            }
+
+            @TestMetadata("long.kt")
+            public void testLong() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/rangeUntil/long.kt");
+            }
+
+            @TestMetadata("short.kt")
+            public void testShort() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/rangeUntil/short.kt");
+            }
+
+            @TestMetadata("uInt.kt")
+            public void testUInt() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/rangeUntil/uInt.kt");
+            }
+
+            @TestMetadata("uLong.kt")
+            public void testULong() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/rangeUntil/uLong.kt");
+            }
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/replaceUntilWithRangeTo/simple.kt");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/replaceUntilWithRangeTo")
+        public static class Uncategorized extends AbstractK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/replaceUntilWithRangeTo/simple.kt");
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -65,11 +65,6 @@ class DateFormatUtilTest {
     val t = LocalDateTime.parse("1970-01-01T09:28:15")
     assertThat(DateFormatUtil.formatTime(t.toMillis())).contains("9").contains("28").doesNotContain("15")
     assertThat(DateFormatUtil.formatTimeWithSeconds(t.toMillis())).contains("9").contains("28").contains("15")
-  }
-
-  @Test fun aboutDialogDate() {
-    assertEquals("January 1, 1999", DateFormatUtil.formatAboutDialogDate(LocalDateTime.parse("1999-01-01T00:00:00").toMillis()))
-    assertEquals("December 12, 2012", DateFormatUtil.formatAboutDialogDate(LocalDateTime.parse("2012-12-12T15:35:12").toMillis()))
   }
 
   @Test fun frequency() {

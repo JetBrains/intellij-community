@@ -20,10 +20,11 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
 public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
 
-
-  /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
-
+  /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
+  
   public static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
+
+  /* ================ RECORD FIELDS LAYOUT  =========================================================== */
 
   private static final int PARENT_REF_OFFSET = 0;
   private static final int PARENT_REF_SIZE = Integer.BYTES;
@@ -44,7 +45,6 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   private static final int LENGTH_SIZE = Long.BYTES;
 
   public static final int RECORD_SIZE_IN_BYTES = LENGTH_OFFSET + LENGTH_SIZE;
-
 
   /* ================ RECORD FIELDS LAYOUT end             ======================================== */
 
@@ -260,6 +260,9 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
     @Override
     public void setAttributeRecordId(final int attributeRecordId) {
+      if (attributeRecordId < NULL_ID) {
+        throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + attributeRecordId + ") must be >=0");
+      }
       pageBuffer.putInt(recordOffsetInPage + ATTR_REF_OFFSET, attributeRecordId);
     }
 
@@ -364,6 +367,9 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   @Override
   public void setAttributeRecordId(final int recordId,
                                    final int recordRef) throws IOException {
+    if (recordRef < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + recordRef + ") must be >=0");
+    }
     setIntField(recordId, ATTR_REF_OFFSET, recordRef);
   }
 

@@ -25,7 +25,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.hover.TreeHoverListener
@@ -216,7 +216,8 @@ internal class RecentProjectFilteringTree(
       val point = mouseEvent.point
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
       if (row != -1) {
-        tree.repaint(getActionsButtonRect(row))
+        // Repaint whole row to avoid flickering of row buttons
+        tree.repaint(tree.getRowBounds(row))
       }
 
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
@@ -375,18 +376,20 @@ internal class RecentProjectFilteringTree(
         add(projectNameLabel)
         add(projectPathLabel)
       }
+      private val updateScaleHelper = UpdateScaleHelper()
 
       init {
         border = JBUI.Borders.empty(RENDERER_BORDER_SIZE)
         RowsGridBuilder(this)
           .cell(projectIconLabel,
-                gaps = if (ExperimentalUI.isNewUI()) JBGaps(6, 6, 0, 8) else JBGaps(top = 8, right = 8),
+                gaps = if (ExperimentalUI.isNewUI()) UnscaledGaps(6, 6, 0, 8) else UnscaledGaps(top = 8, right = 8),
                 verticalAlign = VerticalAlign.TOP)
-          .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = JBGaps(4, 4, 4, 4))
-          .cell(projectActions, gaps = JBGaps(right = ActionsButton.RIGHT_GAP))
+          .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = UnscaledGaps(4, 4, 4, 4))
+          .cell(projectActions, gaps = UnscaledGaps(right = ActionsButton.RIGHT_GAP))
       }
 
       fun customizeComponent(item: RecentProjectItem, rowHovered: Boolean): JComponent {
+        updateScaleHelper.saveScaleAndUpdateUIIfChanged(this)
         val isPathValid = isProjectPathValid(item.projectPath)
         projectNameLabel.apply {
           text = item.displayName
@@ -436,8 +439,8 @@ internal class RecentProjectFilteringTree(
         isOpaque = false
 
         RowsGridBuilder(this)
-          .cell(projectGroupNameLabel, resizableColumn = true, gaps = JBGaps(4, 4, 4, 4))
-          .cell(projectGroupActions, gaps = JBGaps(right = ActionsButton.GROUP_RIGHT_GAP))
+          .cell(projectGroupNameLabel, resizableColumn = true, gaps = UnscaledGaps(4, 4, 4, 4))
+          .cell(projectGroupActions, gaps = UnscaledGaps(right = ActionsButton.GROUP_RIGHT_GAP))
       }
 
       fun customizeComponent(item: ProjectsGroupItem, rowHovered: Boolean): JComponent {
@@ -505,11 +508,11 @@ internal class RecentProjectFilteringTree(
 
         RowsGridBuilder(this)
           .cell(projectIconLabel,
-                gaps = if (ExperimentalUI.isNewUI()) JBGaps(6, 6, 0, 8) else JBGaps(top = 8, right = 8),
+                gaps = if (ExperimentalUI.isNewUI()) UnscaledGaps(6, 6, 0, 8) else UnscaledGaps(top = 8, right = 8),
                 verticalAlign = VerticalAlign.TOP)
-          .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = JBGaps(4, 4, 4, 4))
-          .cell(projectProgressBarPanel, gaps = JBGaps(left = 8, right = 8))
-          .cell(projectActionButton, gaps = JBGaps(right = ActionsButton.RIGHT_GAP))
+          .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = UnscaledGaps(4, 4, 4, 4))
+          .cell(projectProgressBarPanel, gaps = UnscaledGaps(left = 8, right = 8))
+          .cell(projectActionButton, gaps = UnscaledGaps(right = ActionsButton.RIGHT_GAP))
       }
 
       fun customizeComponent(item: CloneableProjectItem, rowHovered: Boolean): JComponent {

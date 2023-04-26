@@ -327,7 +327,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
 
-
     shutdownConnector(myIndexingConnector, wait);
     values.forEach(c -> shutdownConnector(c, wait));
   }
@@ -396,9 +395,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
     String localRepository = settings.getEffectiveLocalRepository().toPath().toAbsolutePath().toString();
 
     result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
-    result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
-    result.setSnapshotUpdatePolicy(
-      settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
     return result;
   }
 
@@ -407,10 +403,9 @@ final class MavenServerManagerImpl implements MavenServerManager {
   @NotNull
   public MavenEmbedderWrapper createEmbedder(final Project project,
                                              final boolean alwaysOnline,
-                                             @Nullable String workingDirectory,
                                              @NotNull String multiModuleProjectDirectory) {
 
-    return new MavenEmbedderWrapper(project, null) {
+    return new MavenEmbedderWrapperEx(project) {
       private MavenServerConnector myConnector;
 
       @NotNull
@@ -428,11 +423,17 @@ final class MavenServerManagerImpl implements MavenServerManager {
           sdkPath = transformer.toRemotePath(sdkPath);
         }
         settings.setProjectJdk(sdkPath);
-        myConnector = MavenServerManagerImpl.this.getConnector(project, multiModuleProjectDirectory);
 
-        return myConnector.createEmbedder(
-          new MavenEmbedderSettings(settings, workingDirectory == null ? null : transformer.toRemotePath(workingDirectory),
-                                    transformer.toRemotePath(multiModuleProjectDirectory)));
+        var forceResolveDependenciesSequentially = Registry.is("maven.server.force.resolve.dependencies.sequentially");
+        var useCustomDependenciesResolver = Registry.is("maven.server.use.custom.dependencies.resolver");
+
+        myConnector = MavenServerManagerImpl.this.getConnector(project, multiModuleProjectDirectory);
+        return myConnector.createEmbedder(new MavenEmbedderSettings(
+          settings,
+          transformer.toRemotePath(multiModuleProjectDirectory),
+          forceResolveDependenciesSequentially,
+          useCustomDependenciesResolver
+        ));
       }
 
       @Override

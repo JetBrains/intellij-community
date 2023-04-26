@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
 
 private val LOG = Logger.getInstance(KotlinJsMetadataVersionIndex::class.java)
 
+private const val JAVASCRIPT_DOT_FILE_EXTENSION = ".${JavaScript.EXTENSION}"
+
 class KotlinJsMetadataVersionIndex internal constructor() : KotlinMetadataVersionIndexBase<JsMetadataVersion>() {
     companion object {
         val NAME: ID<JsMetadataVersion, Void> = ID.create(KotlinJsMetadataVersionIndex::class.java.canonicalName)
@@ -28,7 +30,7 @@ class KotlinJsMetadataVersionIndex internal constructor() : KotlinMetadataVersio
 
     override fun getInputFilter(): FileBasedIndex.InputFilter {
         return when (val fileType = FileTypeManager.getInstance().findFileTypeByName(JavaScript.NAME)) {
-            null -> FileBasedIndex.InputFilter { file -> JavaScript.EXTENSION == file.extension }
+            null -> FileBasedIndex.InputFilter { file -> file.nameSequence.endsWith(JAVASCRIPT_DOT_FILE_EXTENSION) }
             else -> DefaultFileTypeSpecificInputFilter(fileType)
         }
     }

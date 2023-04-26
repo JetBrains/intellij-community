@@ -194,7 +194,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void setWatchMethodReturnValuesEnabled(boolean enabled) {
-    ObjectUtils.consumeIfNotNull(myReturnValueWatcher, v -> v.setEnabled(enabled));
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.setEnabled(enabled);
+    }
   }
 
   public boolean canGetMethodReturnValue() {
@@ -1873,8 +1875,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
-      final ThreadReferenceProxyImpl contextThread = getDebuggerContext().getThreadProxy();
-      myContextThread = contextThread != null ? contextThread : (suspendContext != null ? suspendContext.getThread() : null);
+      final ThreadReferenceProxyImpl thread = suspendContext != null ? suspendContext.getThread() : null;
+      myContextThread = thread != null ? thread : getDebuggerContext().getThreadProxy();
     }
 
     @Override
@@ -2308,7 +2310,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         breakpointManager.applyThreadFilter(DebugProcessImpl.this, null); // clear the filter on resume
-        ObjectUtils.consumeIfNotNull(myReturnValueWatcher, MethodReturnValueWatcher::clear);
+        if (myReturnValueWatcher != null) {
+          myReturnValueWatcher.clear();
+        }
         super.contextAction(suspendContext);
       }
 
@@ -2448,11 +2452,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
-    ObjectUtils.consumeIfNotNull(myReturnValueWatcher, v -> v.enable(thread.getThreadReference()));
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.enable(thread.getThreadReference());
+    }
   }
 
   void stopWatchingMethodReturn() {
-    ObjectUtils.consumeIfNotNull(myReturnValueWatcher, MethodReturnValueWatcher::disable);
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.disable();
+    }
   }
 
   private record VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection,

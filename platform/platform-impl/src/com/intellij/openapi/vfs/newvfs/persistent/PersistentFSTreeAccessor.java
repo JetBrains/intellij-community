@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -157,6 +158,9 @@ class PersistentFSTreeAccessor {
       try (final DataInputStream input = myAttributeAccessor.readAttribute(ROOT_RECORD_ID, CHILDREN_ATTR)) {
         if (input != null) {
           final int count = DataInputOutputUtil.readINT(input);
+          if (count < 0) {
+            throw new IOException("ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
+          }
           names = ArrayUtil.newIntArray(count);
           ids = ArrayUtil.newIntArray(count);
           int prevId = 0;
@@ -199,11 +203,12 @@ class PersistentFSTreeAccessor {
     }
   }
 
-  void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) throws IOException {
+  void loadDirectoryData(int id, @NotNull VirtualFile parent, @NotNull CharSequence childName, @NotNull NewVirtualFileSystem fs)
+    throws IOException {
     if (myFsRootDataLoader != null) {
       myRootsAccessLock.lock();
       try {
-        myFsRootDataLoader.loadDirectoryData(getRootsStoragePath(myFsRootDataLoader), id, path, fs);
+        myFsRootDataLoader.loadDirectoryData(getRootsStoragePath(myFsRootDataLoader), id, parent, childName, fs);
       }
       finally {
         myRootsAccessLock.unlock();

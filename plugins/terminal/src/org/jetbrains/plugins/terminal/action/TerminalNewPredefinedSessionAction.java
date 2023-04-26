@@ -11,15 +11,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -42,8 +41,6 @@ import java.util.function.Supplier;
 
 public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
 
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
-
   public TerminalNewPredefinedSessionAction() {
     super(TerminalBundle.messagePointer("action.NewPredefinedSession.label"));
     getTemplatePresentation().setIcon(AllIcons.Toolbar.Expand);
@@ -52,7 +49,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || myPopupState.isRecentlyHidden()) return;
+    if (project == null) return;
     RelativePoint popupPoint = getPreferredPopupPoint(e);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<OpenShellAction> shells = detectShells();
@@ -66,7 +63,10 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
         else {
           popup.showInFocusCenter();
         }
-        myPopupState.prepareToShow(popup);
+        InputEvent inputEvent = e.getInputEvent();
+        if (inputEvent != null && inputEvent.getComponent() != null) {
+          PopupUtil.setPopupToggleComponent(popup, inputEvent.getComponent());
+        }
       }, project.getDisposed());
     });
   }

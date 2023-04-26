@@ -66,11 +66,13 @@ public final class InjectorUtils {
       return ((LanguageFileType)fileType).getLanguage();
     }
 
-    LightVirtualFile lightVirtualFile = new LightVirtualFile(languageId);
+    LightVirtualFile virtualFileNamedAsLanguageId = new LightVirtualFile(languageId);
+    LightVirtualFile virtualFileWithLanguageIdAsExtension = new LightVirtualFile("textmate." + languageId);
     for (FileType registeredFileType : fileTypeManager.getRegisteredFileTypes()) {
       if (registeredFileType instanceof FileTypeIdentifiableByVirtualFile &&
           registeredFileType instanceof LanguageFileType &&
-          ((FileTypeIdentifiableByVirtualFile)registeredFileType).isMyFileType(lightVirtualFile)) {
+          (((FileTypeIdentifiableByVirtualFile)registeredFileType).isMyFileType(virtualFileNamedAsLanguageId) ||
+           ((FileTypeIdentifiableByVirtualFile)registeredFileType).isMyFileType(virtualFileWithLanguageIdAsExtension))) {
         return ((LanguageFileType)registeredFileType).getLanguage();
       }
     }

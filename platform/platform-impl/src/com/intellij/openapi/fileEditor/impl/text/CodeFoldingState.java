@@ -19,9 +19,11 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implementations of this interface are expected to provide correct {@link #equals(Object)} & {@link #hashCode()} implementations.
+ * Implementations of this interface are expected to provide correct {@link Object#equals(Object)} and {@link Object#hashCode()} implementations.
  */
 @FunctionalInterface
 public interface CodeFoldingState {
   void setToEditor(@NotNull Editor editor);
+  boolean equals(Object obj);
+  int hashCode();
 }

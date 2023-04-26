@@ -632,14 +632,9 @@ public final class DynamicToolWindowWrapper {
     @Override
     @Nullable
     public Object getData(@NotNull @NonNls String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        return getSelectedElement();
-      }
-      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-        final PsiElement element = getSelectedElement();
-
-        if (element == null) return null;
-        return element.getContainingFile();
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        TreePath path = getTree().getSelectionPath();
+        return path == null ? null : (DataProvider)slowId -> getSlowData(slowId, path);
       }
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         return new DeleteProvider() {
@@ -663,10 +658,18 @@ public final class DynamicToolWindowWrapper {
       return null;
     }
 
-    private PsiElement getSelectedElement() {
-      final TreePath path = getTree().getSelectionPath();
+    private @Nullable Object getSlowData(@NotNull String dataId, @NotNull TreePath path) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return getElementFromPath(path);
+      }
+      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+        PsiElement element = getElementFromPath(path);
+        return element == null ? null : element.getContainingFile();
+      }
+      return null;
+    }
 
-      if (path == null) return null;
+    private @Nullable PsiElement getElementFromPath(@NotNull TreePath path) {
       final Object selectedObject = path.getLastPathComponent();
       if (!(selectedObject instanceof DefaultMutableTreeNode selectedNode)) return null;
 

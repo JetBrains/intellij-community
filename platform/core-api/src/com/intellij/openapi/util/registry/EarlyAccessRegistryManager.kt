@@ -10,6 +10,8 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -19,22 +21,24 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Use only after consultation and approval - ask core team.
+ * Provides a configuration of internal settings which might be used before application has been loaded unless [Registry].
+ *
+ * Please avoid to use it, consult with someone from core team first.
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 object EarlyAccessRegistryManager {
+  const val fileName = "early-access-registry.txt"
   private val configFile: Path by lazy {
-    PathManager.getConfigDir().resolve("early-access-registry.txt")
+    PathManager.getConfigDir().resolve(fileName)
   }
 
-  private val lazyMap = lazy {
+  private val lazyMap = SynchronizedClearableLazy {
     val result = ConcurrentHashMap<String, String>()
     val lines = try {
       Files.lines(configFile)
     }
     catch (ignore: NoSuchFileException) {
-      return@lazy result
+      return@SynchronizedClearableLazy result
     }
 
     lines.use { lineStream ->
@@ -65,27 +69,33 @@ object EarlyAccessRegistryManager {
     get() = logger<EarlyAccessRegistryManager>()
 
   fun getBoolean(key: String): Boolean {
+    val stringValue = getString(key)
+    if (stringValue == null) return false
+    return java.lang.Boolean.parseBoolean(stringValue)
+  }
+
+  fun getString(key: String): String? {
     if (key.isEmpty()) {
       LOG.error("Empty key")
-      return false
+      return null
     }
 
     val map = lazyMap.value
     if (!LoadingState.APP_STARTED.isOccurred) {
-      return getOrFromSystemProperty(map, key)
+      return getOrFromSystemProperty(map, key).nullize()
     }
 
     // see com.intellij.ide.plugins.PluginDescriptorLoader.loadForCoreEnv
     val registryManager = ApplicationManager.getApplication().serviceOrNull<RegistryManager>() ?: return getOrFromSystemProperty(map, key)
     // use RegistryManager to make sure that Registry is fully loaded
-    val value = registryManager.`is`(key)
+    val value = registryManager.get(key).asString()
     // ensure that even if for some reason key was not early accessed, it is stored for early access on next start-up
-    map.putIfAbsent(key, value.toString())
-    return value
+    map.putIfAbsent(key, value)
+    return value.nullize()
   }
 
-  private fun getOrFromSystemProperty(map: ConcurrentHashMap<String, String>, key: String): Boolean {
-    return java.lang.Boolean.parseBoolean(map.get(key) ?: System.getProperty(key))
+  private fun getOrFromSystemProperty(map: ConcurrentHashMap<String, String>, key: String): String? {
+    return map.get(key) ?: System.getProperty(key)
   }
 
   fun syncAndFlush() {
@@ -117,6 +127,11 @@ object EarlyAccessRegistryManager {
     catch (e: Throwable) {
       LOG.error("cannot save early access registry", e)
     }
+  }
+
+  fun invalidate() {
+    check(!LoadingState.COMPONENTS_REGISTERED.isOccurred)
+    lazyMap.drop()
   }
 
   @Suppress("unused") // registered in an `*.xml` file

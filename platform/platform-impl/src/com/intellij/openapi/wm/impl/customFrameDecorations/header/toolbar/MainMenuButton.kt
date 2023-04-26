@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
-import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.UISettings.Companion.getInstance
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -18,10 +18,9 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.IconManager
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -31,11 +30,12 @@ import java.awt.event.ActionListener
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
+import javax.swing.JRootPane
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-internal class MainMenuButton {
+internal class MainMenuButton(private val expandableMenu: ExpandableMenu?) {
 
   private val menuAction = ShowMenuAction()
   private var disposable: Disposable? = null
@@ -43,7 +43,7 @@ internal class MainMenuButton {
   private var registeredKeyStrokes = mutableListOf<KeyStroke>()
 
   val button: ActionButton = createMenuButton(menuAction)
-  var rootPane: JComponent? = null
+  var rootPane: JRootPane? = null
     set(value) {
       if (field !== value) {
         uninstall()
@@ -131,29 +131,34 @@ internal class MainMenuButton {
 
   private inner class ShowMenuAction : DumbAwareAction(
     IdeBundle.messagePointer("main.toolbar.menu.button"),
-    IconManager.getInstance().getIcon("expui/general/windowsMenu@20x20.svg", AllIcons::class.java)) {
+    ExpUiIcons.General.WindowsMenu_20x20) {
 
-    override fun actionPerformed(e: AnActionEvent) = showPopup(e.dataContext)
+    override fun actionPerformed(e: AnActionEvent) {
+      if (expandableMenu?.isEnabled() == true) {
+        expandableMenu.switchState()
+      } else {
+        showPopup(e.dataContext)
+      }
+    }
+  }
 
-    fun showPopup(context: DataContext, actionToShow: AnAction? = null) {
-      val mainMenu = getMainMenuGroup()
-      val popup = JBPopupFactory.getInstance()
-        .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
-                                ActionPlaces.MAIN_MENU)
-        .apply { setShowSubmenuOnHover(true) }
-        .apply { setMinimumSize(Dimension(JBUI.CurrentTheme.CustomFrameDecorations.menuPopupMinWidth(), 0)) }
-        as ListPopupImpl
-      PopupImplUtil.setPopupToggleButton(popup, button)
-      popup.showUnderneathOf(button)
+  fun showPopup(context: DataContext, actionToShow: AnAction? = null) {
+    val mainMenu = getMainMenuGroup()
+    val popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
+                              ActionPlaces.MAIN_MENU)
+      .apply { isShowSubmenuOnHover = true }
+      .apply { setMinimumSize(Dimension(JBUI.CurrentTheme.CustomFrameDecorations.menuPopupMinWidth(), 0)) }
+      as ListPopupImpl
+    popup.showUnderneathOf(button)
 
-      if (actionToShow != null) {
-        for (listStep in popup.listStep.values) {
-          listStep as PopupFactoryImpl.ActionItem
-          if (listStep.action.unwrap() === actionToShow.unwrap()) {
-            SwingUtilities.invokeLater {
-              // Wait popup showing
-              popup.selectAndExpandValue(listStep)
-            }
+    if (actionToShow != null) {
+      for (listStep in popup.listStep.values) {
+        listStep as PopupFactoryImpl.ActionItem
+        if (listStep.action.unwrap() === actionToShow.unwrap()) {
+          SwingUtilities.invokeLater {
+            // Wait popup showing
+            popup.selectAndExpandValue(listStep)
           }
         }
       }
@@ -163,17 +168,22 @@ internal class MainMenuButton {
   private inner class ShowSubMenuAction(private val actionToShow: AnAction) : ActionListener {
 
     override fun actionPerformed(e: ActionEvent?) {
-      if (!getInstance().disableMnemonics) {
-        menuAction.showPopup(DataManager.getInstance().getDataContext(button), actionToShow)
+      if (!UISettings.getInstance().disableMnemonics) {
+        if (expandableMenu?.isEnabled() == true) {
+          expandableMenu.switchState(actionToShow)
+        } else {
+          val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
+          showPopup(DataManager.getInstance().getDataContext(component), actionToShow)
+        }
       }
     }
   }
 }
 
 
-private fun createMenuButton(action: AnAction): ActionButton {
+internal fun createMenuButton(action: AnAction): ActionButton {
   val button = object : ActionButton(action, PresentationFactory().getPresentation(action),
-                                     ActionPlaces.MAIN_MENU, {ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
+                                     ActionPlaces.MAIN_MENU, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
     override fun getDataContext(): DataContext {
       return DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) ?: super.getDataContext()
     }
@@ -183,7 +193,7 @@ private fun createMenuButton(action: AnAction): ActionButton {
   return button
 }
 
-private fun getMainMenuGroup(): ActionGroup {
+internal fun getMainMenuGroup(): ActionGroup {
   val mainMenuGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU)
   mainMenuGroup as ActionGroup
   return DefaultActionGroup(
@@ -192,7 +202,8 @@ private fun getMainMenuGroup(): ActionGroup {
         // Wrap action groups to force them to be popup groups,
         // otherwise they end up as separate items in the burger menu (IDEA-294669).
         ActionGroupPopupWrapper(child)
-      } else {
+      }
+      else {
         LOG.error("A top-level child of the main menu is not an action group: $child")
         null
       }

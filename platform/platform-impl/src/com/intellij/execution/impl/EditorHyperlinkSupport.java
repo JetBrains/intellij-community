@@ -5,6 +5,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCoreUtil;
@@ -17,11 +18,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -75,7 +72,9 @@ public class EditorHyperlinkSupport {
 
           Runnable runnable = getLinkNavigationRunnable(e.getLogicalPosition());
           if (runnable != null) {
-            runnable.run();
+            try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+              runnable.run();
+            }
             e.consume();
           }
         }
@@ -251,12 +250,22 @@ public class EditorHyperlinkSupport {
                                          @Nullable TextAttributes followedHyperlinkAttributes,
                                          boolean fireChanged) {
     HyperlinkInfoTextAttributes attributes = new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes);
+    highlighter.putUserData(HYPERLINK, attributes);
     if (fireChanged) {
-      ((RangeHighlighterEx)highlighter).putUserDataAndFireChanged(HYPERLINK, attributes);
+      MarkupEditorFilter filter = highlighter.getEditorFilter();
+      highlighter.setEditorFilter(__ -> true);
+      highlighter.setEditorFilter(filter); // to fireChanged
     }
-    else {
-      highlighter.putUserData(HYPERLINK, attributes);
+  }
+
+  @Nullable
+  public HyperlinkInfo getHyperlinkInfoByPoint(Point p) {
+    LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
+    if (EditorCoreUtil.inVirtualSpace(myEditor, pos)) {
+      return null;
     }
+
+    return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
   }
 
   @Nullable

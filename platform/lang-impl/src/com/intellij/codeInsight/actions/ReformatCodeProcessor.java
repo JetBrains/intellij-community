@@ -193,7 +193,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
             ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
             if (info != null) {
               assertFileIsValid(fileToProcess);
-              CodeStyleManager.getInstance(myProject).reformatTextWithContext(fileToProcess, info);
+              CodeStyleManager.getInstance(myProject).reformatChanges(fileToProcess, info);
             }
           }
           else {

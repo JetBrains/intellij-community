@@ -20,11 +20,7 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   private static final String POPUP_GROUP = "Unversioned.Files.Dialog.Popup";
 
   public UnversionedViewDialog(@NotNull Project project) {
-    this(project, ChangeListManager.getInstance(project).getUnversionedFilesPaths());
-  }
-
-  public UnversionedViewDialog(@NotNull Project project, @NotNull List<? extends FilePath> filePaths) {
-    super(project, VcsBundle.message("dialog.title.unversioned.files"), ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY, filePaths);
+    super(project, VcsBundle.message("dialog.title.unversioned.files"), ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
   }
 
   @Override

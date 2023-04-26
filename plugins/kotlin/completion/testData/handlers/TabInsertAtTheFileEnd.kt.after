@@ -2,3 +2,4 @@
 // FIR_IDENTICAL
 val vvvvv = 112
 val a = vvvvv<caret>
+// AUTOCOMPLETE_SETTING: true

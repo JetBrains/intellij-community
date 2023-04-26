@@ -9,7 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkPanel
@@ -30,7 +31,7 @@ class PythonLanguageRuntimeUI(project: Project,
 
   override fun createPanel(): DialogPanel =
     panel {
-      row { panel.createCenterPanel()() }
+      row { cell(panel.createCenterPanel()).align(AlignX.FILL) }
     }
 
   override fun apply() {

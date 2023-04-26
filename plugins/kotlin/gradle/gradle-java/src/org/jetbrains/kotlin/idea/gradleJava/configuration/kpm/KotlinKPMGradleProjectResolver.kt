@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.configuration.kpm
 
-import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
@@ -9,18 +8,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.kpm.*
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
-import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.configuration.multiplatform.KotlinMultiplatformNativeDebugSuggester
-import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSetInMppBuildIssue
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ContentRootsCreator
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
-import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.tooling.core.Extras
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -54,15 +48,13 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         super.populateModuleExtraModels(gradleModule, ideModule)
     }
 
-    override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
-        return super.createModule(gradleModule, projectDataNode)?.also { mainModuleNode ->
+    override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>) =
+        super.createModule(gradleModule, projectDataNode)?.also { mainModuleNode ->
             val initializerContext = ModuleDataInitializer.Context.EMPTY
             ModuleDataInitializer.EP_NAME.extensions.forEach { moduleDataInitializer ->
                 moduleDataInitializer.initialize(gradleModule, mainModuleNode, projectDataNode, resolverCtx, initializerContext)
             }
-            suggestNativeDebug(gradleModule, resolverCtx)
         }
-    }
 
     override fun populateModuleContentRoots(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
         if (!modelExists(gradleModule)) {
@@ -83,23 +75,8 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
     private fun modelExists(gradleModule: IdeaModule): Boolean = resolverCtx.getIdeaKpmProject(gradleModule) != null
 
     companion object {
-        private val nativeDebugSuggester = object : KotlinMultiplatformNativeDebugSuggester<IdeaKpmProject>() {
-            override fun hasKotlinNativeHome(model: IdeaKpmProject?): Boolean = model?.kotlinNativeHome?.exists() ?: false
-        }
-
         internal fun ProjectResolverContext.getIdeaKpmProject(gradleModule: IdeaModule): IdeaKpmProject? {
             return this.getExtraProject(gradleModule, IdeaKpmProjectContainer::class.java)?.instanceOrNull
-        }
-
-        private fun suggestNativeDebug(gradleModule: IdeaModule, resolverCtx: ProjectResolverContext) {
-            nativeDebugSuggester.suggestNativeDebug(resolverCtx.getIdeaKpmProject(gradleModule), resolverCtx)
-
-            if (!resolverCtx.isResolveModulePerSourceSet && !KotlinPlatformUtils.isAndroidStudio && !PlatformUtils.isMobileIde() &&
-                !PlatformUtils.isAppCode()
-            ) {
-                notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
-                resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())
-            }
         }
 
         //TODO check this

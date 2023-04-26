@@ -6,10 +6,10 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.uast.test.common.PsiClassToString
-import org.jetbrains.uast.test.common.UastMappingsAccountantTest
-import org.jetbrains.uast.test.common.UastMappingsAccountantTestBase
-import org.jetbrains.uast.test.common.sourcesFromDirRecursive
+import com.intellij.platform.uast.testFramework.common.PsiClassToString
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTest
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTestBase
+import com.intellij.platform.uast.testFramework.common.sourcesFromDirRecursive
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
@@ -33,11 +33,11 @@ class KotlinUastMappingsAccountantTest :
 
     private val delegate by lazy(LazyThreadSafetyMode.NONE) {
         UastMappingsAccountantTest(
-            sources = sourcesFromDirRecursive(TEST_KOTLIN_MODEL_DIR, ktFileMatcher, myFixture).asIterable(),
-            storeResultsTo = TEST_KOTLIN_MODEL_DIR.absoluteFile.parentFile.toPath(),
-            resultsNamePrefix = "kotlin-mappings",
-            psiClassPrinter = PsiClassToString.kotlinAsIs,
-            logger = LOG
+          sources = sourcesFromDirRecursive(TEST_KOTLIN_MODEL_DIR, ktFileMatcher, myFixture).asIterable(),
+          storeResultsTo = TEST_KOTLIN_MODEL_DIR.absoluteFile.parentFile.toPath(),
+          resultsNamePrefix = "kotlin-mappings",
+          psiClassPrinter = PsiClassToString.kotlinAsIs,
+          logger = LOG
         )
     }
 

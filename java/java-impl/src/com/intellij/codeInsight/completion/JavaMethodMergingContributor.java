@@ -30,7 +30,7 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
     }
 
     final LookupElement[] items = context.getItems();
-    if (ContainerUtil.exists(items, t -> t instanceof JavaNoVariantsDelegator.TagLookupElementDecorator)) {
+    if (ContainerUtil.exists(items, t -> t.as(MethodTags.TagLookupElementDecorator.class) != null)) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
     if (items.length > 1) {

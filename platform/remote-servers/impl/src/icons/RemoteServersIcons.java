@@ -14,7 +14,7 @@ public final class RemoteServersIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, RemoteServersIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon ResumeScaled = load("icons/resumeScaled.svg", 170742219, 0);
-  /** 13x13 */ public static final @NotNull Icon ServersToolWindow = load("icons/serversToolWindow.svg", -2139532813, 2);
-  /** 16x16 */ public static final @NotNull Icon SuspendScaled = load("icons/suspendScaled.svg", 1465747876, 0);
+  /** 16x16 */ public static final @NotNull Icon ResumeScaled = load("icons/resumeScaled.svg", 1548643781, 0);
+  /** 13x13 */ public static final @NotNull Icon ServersToolWindow = load("icons/serversToolWindow.svg", 1189333963, 2);
+  /** 16x16 */ public static final @NotNull Icon SuspendScaled = load("icons/suspendScaled.svg", -494907257, 0);
 }

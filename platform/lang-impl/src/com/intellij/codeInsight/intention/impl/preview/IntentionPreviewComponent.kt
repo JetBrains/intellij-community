@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.util.ui.ExtendableHTMLViewFactory
-import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Container
@@ -75,6 +72,7 @@ internal class IntentionPreviewComponent(parent: Disposable) :
         .build()
       editor.text = content.toString()
       editor.size = Dimension(targetSize, Integer.MAX_VALUE)
+      editor.background = JBUI.CurrentTheme.Popup.BACKGROUND
       return wrapToPanel(editor)
     }
   }

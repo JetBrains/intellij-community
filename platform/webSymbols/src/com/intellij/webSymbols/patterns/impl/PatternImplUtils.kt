@@ -3,9 +3,9 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
 
 internal fun WebSymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop: Boolean): WebSymbolCodeCompletionItem =
@@ -80,7 +80,7 @@ internal fun getPatternCompletablePrefix(pattern: String?): String {
 internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
                                     prevResult: List<WebSymbolNameSegment>?,
                                     action: () -> T): T =
-  if (prevResult == null) {
+  if (prevResult.isNullOrEmpty()) {
     action()
   }
   else {
@@ -97,13 +97,13 @@ internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
   }
 
 internal fun MatchResult.applyToSegments(vararg contributions: WebSymbol,
-                                         deprecated: Boolean? = null,
+                                         apiStatus: WebSymbol.ApiStatus? = null,
                                          priority: WebSymbol.Priority? = null,
                                          proximity: Int? = null): MatchResult =
-  if (deprecated != null || priority != null || proximity != null || contributions.isNotEmpty())
+  if (apiStatus != null || priority != null || proximity != null || contributions.isNotEmpty())
     MatchResult(
       segments.map {
-        it.copy(deprecated = deprecated, priority = priority, proximity = proximity, symbols = contributions.toList())
+        it.copy(apiStatus = apiStatus, priority = priority, proximity = proximity, symbols = contributions.toList())
       })
   else
     this
@@ -114,7 +114,7 @@ internal fun MatchResult.removeEmptySegments(): MatchResult =
       it.start != it.end
       || it.problem != null
       || it.symbols.isNotEmpty()
-      || it.deprecated
+      || it.apiStatus != null
       || it.proximity != null
     }.ifEmpty { listOf(segments.first()) })
 

@@ -58,7 +58,7 @@ public final class FontComboBox extends AbstractFontCombo {
       }
 
       @Override
-      public void customize(@NotNull SimpleColoredComponent item, Object value, int index) {
+      public void customize(@NotNull SimpleColoredComponent item, Object value, int index, boolean isSelected, boolean hasFocus) {
         if (value instanceof FontInfo info) {
           item.setFont(index == -1 ? JBUI.Fonts.label() : info.getFont());
           item.append(info.toString());

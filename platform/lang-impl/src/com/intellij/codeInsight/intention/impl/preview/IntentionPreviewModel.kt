@@ -12,8 +12,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 
@@ -23,23 +23,22 @@ internal class IntentionPreviewModel {
     fun createEditors(project: Project, result: IntentionPreviewDiffResult?): List<EditorEx> {
       if (result == null) return emptyList()
 
-      val origFile = result.origFile
-
       val diffs = result.createDiffs()
       if (diffs.isNotEmpty()) {
         val last = diffs.last()
         val maxLine = if (result.normalDiff) last.startLine + last.length else -1
         val fileName = result.fileName
-        val editors = diffs.map { it.createEditor(project, origFile.fileType, maxLine) }
-        val fileNameEditor = createFileNamePresentation(fileName, origFile, project)
+        val editors = diffs.map { it.createEditor(project, result.fileType, maxLine) }
+        val fileNameEditor = createFileNamePresentation(fileName, result, project)
         return listOfNotNull(fileNameEditor) + editors
       }
       return emptyList()
     }
 
-    private fun createFileNamePresentation(fileName: String?, origFile: PsiFile, project: Project): EditorEx? {
+    private fun createFileNamePresentation(fileName: String?, result: IntentionPreviewDiffResult, project: Project): EditorEx? {
       fileName ?: return null
-      val commenter = LanguageCommenters.INSTANCE.forLanguage(origFile.language) ?: return null
+      val language = (result.fileType as? LanguageFileType)?.language ?: return null
+      val commenter = LanguageCommenters.INSTANCE.forLanguage(language) ?: return null
       var comment: String? = null
       val linePrefix = commenter.lineCommentPrefix
       if (linePrefix != null) {
@@ -54,12 +53,10 @@ internal class IntentionPreviewModel {
       }
       comment ?: return null
       return IntentionPreviewDiffResult.DiffInfo(comment, 0, comment.length, listOf())
-        .createEditor(project, origFile.fileType, -1)
+        .createEditor(project, result.fileType, -1)
     }
 
-    private fun IntentionPreviewDiffResult.DiffInfo.createEditor(project: Project,
-                                                         fileType: FileType,
-                                                         maxLine: Int): EditorEx {
+    private fun IntentionPreviewDiffResult.DiffInfo.createEditor(project: Project, fileType: FileType, maxLine: Int): EditorEx {
       val editor = createEditor(project, fileType, fileText, startLine, maxLine)
       for (fragment in fragments) {
         val attr = when (fragment.type) {
@@ -92,7 +89,8 @@ internal class IntentionPreviewModel {
       }
 
       editor.backgroundColor = getEditorBackground()
-      editor.colorsScheme.setColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR, editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR))
+      editor.colorsScheme.setColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR,
+                                   editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR))
 
       editor.settings.isUseSoftWraps = true
       editor.scrollingModel.disableAnimation()

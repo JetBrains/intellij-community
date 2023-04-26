@@ -2,6 +2,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.JavaQualifiedNameProvider;
+import com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor.DefaultClassProcessor;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
@@ -44,7 +45,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return "$";
   }
 
-  private static boolean isOpenable(PsiMember member) {
+  public static boolean isOpenable(PsiMember member) {
     final PsiFile file = member.getContainingFile();
     return file != null && file.getVirtualFile() != null;
   }
@@ -120,10 +121,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       if (isOpenable(field) && qualifiedMatcher.test(field)) return processor.process(field);
       return true;
     }, scope, filter) &&
-                      cache.processClassesWithName(name, aClass -> {
-                        if (isOpenable(aClass) && qualifiedMatcher.test(aClass)) return processor.process(aClass);
-                        return true;
-                      }, scope, filter) &&
+                      cache.processClassesWithName(name, new DefaultClassProcessor(processor, parameters, true), scope, filter) &&
                       cache.processMethodsWithName(name, method -> {
                         if (!method.isConstructor() && isOpenable(method) && qualifiedMatcher.test(method)) {
                           collectedMethods.add(method);

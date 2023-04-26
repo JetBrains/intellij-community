@@ -100,7 +100,9 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   private class AssetsStep(private val parent: Step) : AssetsJavaNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+      if (context.isCreatingNewProject) {
+        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+      }
       if (parent.addSampleCode) {
         withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
       }

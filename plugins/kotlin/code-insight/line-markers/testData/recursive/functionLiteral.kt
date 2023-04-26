@@ -4,3 +4,8 @@ fun foo() {
         return text + text
     })
 }
+
+fun foo2(i: Int) {
+    val d = fun(i: Int) { <lineMarker text="Recursive call">foo2</lineMarker>(i) }
+    val d1 = fun(i: Int) { <lineMarker text="Recursive call">foo2</lineMarker>(i) }.invoke(5)
+}

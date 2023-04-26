@@ -4,6 +4,10 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorCoreUtil;
@@ -16,18 +20,23 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public class SettingsImpl implements EditorSettings {
@@ -48,10 +57,7 @@ public class SettingsImpl implements EditorSettings {
   private boolean myAutoCodeFoldingEnabled = true;
 
   // These come from CodeStyleSettings.
-  private Integer myTabSize;
-  private Integer myCachedTabSize;
   private Boolean myUseTabCharacter;
-  private final Object myTabSizeLock = new Object();
 
   // These come from EditorSettingsExternalizable defaults.
   private Boolean myIsVirtualSpace;
@@ -59,7 +65,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsCaretBlinking;
   private Integer myCaretBlinkingPeriod;
   private Boolean myIsRightMarginShown;
-  private Integer myRightMargin;
+
   private Boolean myAreLineNumbersShown;
   private Boolean myGutterIconsShown;
   private Boolean myIsFoldingOutlineShown;
@@ -88,7 +94,51 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myShowIntentionBulb;
   private Boolean myShowingSpecialCharacters;
 
-  private List<Integer> mySoftMargins;
+  private final List<CacheableBackgroundComputable<?>> myComputableSettings = new ArrayList<>();
+
+  private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("EditorSettings", 3);
+
+  private final CacheableBackgroundComputable<List<Integer>> mySoftMargins = new CacheableBackgroundComputable<>(Collections.emptyList()) {
+    @Override
+    protected List<Integer> computeValue(@Nullable Project project) {
+      if(myEditor == null) return Collections.emptyList();
+      return CodeStyle.getSettings(myEditor).getSoftMargins(getLanguage());
+    }
+  };
+
+  private final CacheableBackgroundComputable<Integer> myRightMargin =
+    new CacheableBackgroundComputable<>(CodeStyleSettings.getDefaults().RIGHT_MARGIN) {
+      @Override
+      protected Integer computeValue(@Nullable Project project) {
+        return myEditor != null
+               ? CodeStyle.getSettings(myEditor).getRightMargin(getLanguage())
+               : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(getLanguage());
+      }
+    };
+
+  private final CacheableBackgroundComputable<Integer> myTabSize =
+    new CacheableBackgroundComputable<>(CodeStyleSettings.getDefaults().getIndentOptions().TAB_SIZE) {
+      @Override
+      protected Integer computeValue(@Nullable Project project) {
+        int tabSize;
+        if (project == null) {
+          tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
+        }
+        else {
+          VirtualFile file = getVirtualFile();
+          if (myEditor != null && myEditor.isViewer()) {
+            FileType fileType = file != null ? file.getFileType() : null;
+            tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
+          }
+          else {
+            tabSize = file != null ?
+                      CodeStyle.getIndentOptions(project, file).TAB_SIZE :
+                      CodeStyle.getSettings(project).getTabSize(null);
+          }
+        }
+        return Integer.valueOf(Math.max(1, tabSize));
+      }
+    };
 
   public SettingsImpl() {
     this(null, null);
@@ -109,9 +159,13 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isRightMarginShown() {
-    return myIsRightMarginShown != null
-           ? myIsRightMarginShown.booleanValue()
-           : EditorSettingsExternalizable.getInstance().isRightMarginShown();
+    if (myIsRightMarginShown != null) {
+      return myIsRightMarginShown.booleanValue();
+    }
+    if (myEditor != null && getRightMargin(myEditor.getProject()) == CodeStyleConstraints.MAX_RIGHT_MARGIN) {
+      return false;
+    }
+    return EditorSettingsExternalizable.getInstance().isRightMarginShown();
   }
 
   @Override
@@ -230,10 +284,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public int getRightMargin(Project project) {
-    if (myRightMargin != null) return myRightMargin.intValue();
-    return myEditor != null
-           ? CodeStyle.getSettings(myEditor).getRightMargin(getLanguage())
-           : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(getLanguage());
+    return myRightMargin.getValue(project).intValue();
   }
 
   @Override
@@ -251,27 +302,18 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setRightMargin(int rightMargin) {
-    final Integer newValue = Integer.valueOf(rightMargin);
-    if (newValue.equals(myRightMargin)) return;
-    myRightMargin = newValue;
-    fireEditorRefresh();
+    myRightMargin.setValue(rightMargin);
   }
 
   @NotNull
   @Override
   public List<Integer> getSoftMargins() {
-    if (mySoftMargins != null) return mySoftMargins;
-    return
-      myEditor == null ?
-      CodeStyle.getDefaultSettings().getSoftMargins(getLanguage()) :
-      CodeStyle.getSettings(myEditor).getSoftMargins(getLanguage());
+    return mySoftMargins.getValue(null);
   }
 
   @Override
   public void setSoftMargins(@Nullable List<Integer> softMargins) {
-    if (Objects.equals(mySoftMargins, softMargins)) return;
-    mySoftMargins = softMargins != null ? new ArrayList<>(softMargins) : null;
-    fireEditorRefresh();
+    mySoftMargins.setValue(softMargins != null ? new ArrayList<>(softMargins) : null);
   }
 
   @Override
@@ -361,10 +403,8 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void reinitSettings() {
-    synchronized (myTabSizeLock) {
-      myCachedTabSize = null;
-      reinitDocumentIndentOptions();
-    }
+    myComputableSettings.forEach(CacheableBackgroundComputable::resetCache);
+    reinitDocumentIndentOptions();
   }
 
   private void reinitDocumentIndentOptions() {
@@ -374,50 +414,37 @@ public class SettingsImpl implements EditorSettings {
 
     if (project == null || project.isDisposed()) return;
 
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    VirtualFile file = getVirtualFile();
     if (file == null) return;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("reinitDocumentIndentOptions, file " + file.getName());
     }
 
-    CodeStyle.updateDocumentIndentOptions(project, file, document);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      computeIndentOptions(project, file).associateWithDocument(document);
+    }
+    else {
+      ReadAction.nonBlocking(
+        () -> computeIndentOptions(project, file)
+      ).expireWhen(
+        () -> myEditor.isDisposed() || project.isDisposed()
+      ).finishOnUiThread(
+        ModalityState.any(),
+        result -> result.associateWithDocument(document)
+      ).submit(myExecutor);
+    }
+  }
+
+  private static @NotNull CommonCodeStyleSettings.IndentOptions computeIndentOptions(@NotNull Project project, @NotNull VirtualFile file) {
+    return CodeStyle
+      .getSettings(project, file)
+      .getIndentOptionsByFile(project, file, null, true, null);
   }
 
   @Override
   public int getTabSize(Project project) {
-    synchronized (myTabSizeLock) { // getTabSize can be called from a background thread (e.g. from IndentsPass)
-      if (myTabSize != null) return myTabSize.intValue();
-      if (myCachedTabSize == null) {
-        int tabSize;
-        try {
-          if (project == null || project.isDisposed()) {
-            tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
-          }
-          else {
-            VirtualFile file = getVirtualFile();
-            if (myEditor != null && myEditor.isViewer()) {
-              FileType fileType = file != null ? file.getFileType() : null;
-              tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
-            }
-            else {
-              tabSize = file != null ?
-                        CodeStyle.getIndentOptions(project, file).TAB_SIZE :
-                        CodeStyle.getSettings(project).getTabSize(null);
-            }
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error("Error determining tab size", e);
-          tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
-        }
-        myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
-      }
-      return myCachedTabSize;
-    }
+    return myTabSize.getValue(project);
   }
 
   @Nullable
@@ -435,12 +462,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setTabSize(int tabSize) {
-    final Integer newValue = Integer.valueOf(Math.max(1, tabSize));
-    synchronized (myTabSizeLock) {
-      if (newValue.equals(myTabSize)) return;
-      myTabSize = newValue;
-    }
-    fireEditorRefresh();
+    myTabSize.setValue(tabSize);
   }
 
   @Override
@@ -745,8 +767,12 @@ public class SettingsImpl implements EditorSettings {
   }
 
   private void fireEditorRefresh() {
+    fireEditorRefresh(true);
+  }
+
+  private void fireEditorRefresh(boolean reinitSettings) {
     if (myEditor != null) {
-      myEditor.reinitSettings();
+      myEditor.reinitSettings(true, reinitSettings);
     }
   }
 
@@ -801,5 +827,79 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public boolean isInsertParenthesesAutomatically() {
     return EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically();
+  }
+
+  private abstract class CacheableBackgroundComputable<T> {
+
+    private @Nullable T myOverwrittenValue;
+    private @Nullable T myCachedValue;
+    private @NotNull T myDefaultValue;
+
+
+    private final AtomicReference<NonBlockingReadAction<T>> myCurrentReadActionRef = new AtomicReference<>();
+
+    private final static Object VALUE_LOCK = new Object();
+
+    private CacheableBackgroundComputable(@NotNull T defaultValue) {
+      myComputableSettings.add(this);
+      myDefaultValue = defaultValue;
+    }
+
+    private void setValue(@Nullable T overwrittenValue) {
+      synchronized (VALUE_LOCK) {
+        if (Objects.equals(myOverwrittenValue, overwrittenValue)) return;
+        myOverwrittenValue = overwrittenValue;
+      }
+      fireEditorRefresh();
+    }
+
+    private @NotNull T getValue(@Nullable Project project) {
+      synchronized (VALUE_LOCK) {
+        if (myOverwrittenValue != null) return myOverwrittenValue;
+        if (myCachedValue != null) return myCachedValue;
+        return getDefaultAndCompute(project);
+      }
+    }
+
+    private void resetCache() {
+      synchronized (VALUE_LOCK) {
+        myCachedValue = null;
+      }
+    }
+
+    protected abstract T computeValue(@Nullable Project project);
+
+    private @NotNull T getDefaultAndCompute(@Nullable Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        try {
+          return computeValue(project);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+      else {
+        if (myCurrentReadActionRef.get() == null) {
+          NonBlockingReadAction<T> readAction = ReadAction
+            .nonBlocking(() -> computeValue(project))
+            .finishOnUiThread(
+              ModalityState.any(),
+              result -> {
+                myCurrentReadActionRef.set(null);
+                synchronized (VALUE_LOCK) {
+                  myCachedValue = result;
+                  myDefaultValue = result;
+                }
+                fireEditorRefresh(false);
+              }
+            )
+            .expireWhen(() -> myEditor != null && myEditor.isDisposed() || project != null && project.isDisposed());
+          if (myCurrentReadActionRef.compareAndSet(null, readAction)) {
+            readAction.submit(myExecutor);
+          }
+        }
+      }
+      return myDefaultValue;
+    }
   }
 }

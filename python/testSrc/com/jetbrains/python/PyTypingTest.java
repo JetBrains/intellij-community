@@ -2540,7 +2540,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testDefaultDictFromDict() {
-    doTest("defaultdict[Any, dict] | defaultdict[str, dict]",
+    doTest("defaultdict[Any, dict]",
            "from collections import defaultdict\n" +
            "expr = defaultdict(dict)");
   }
@@ -2732,6 +2732,47 @@ public class PyTypingTest extends PyTestCase {
       }
     }
     return result;
+  }
+
+  // PY-59548
+  public void testGenericBaseClassSpecifiedThroughAlias() {
+    doTest("int",
+           """
+             from typing import Generic, TypeVar
+             
+             T = TypeVar('T')
+             
+             class Super(Generic[T]):
+                 pass
+             
+             Alias = Super
+             
+             class Sub(Alias[T]):
+                 pass
+             
+             def f(x: Super[T]) -> T:
+                 pass
+             
+             arg: Sub[int]
+             expr = f(arg)
+             """);
+  }
+
+  // PY-59548
+  public void testGenericBaseClassSpecifiedThroughAliasInImportedFile() {
+    doMultiFileStubAwareTest("int",
+           """
+             from typing import TypeVar
+             from mod import Sub, Super
+             
+             T = TypeVar('T')
+             
+             def f(x: Super[T]) -> T:
+                 pass
+             
+             arg: Sub[int]
+             expr = f(arg)
+             """);
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

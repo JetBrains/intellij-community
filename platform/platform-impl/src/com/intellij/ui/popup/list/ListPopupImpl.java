@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -34,6 +35,7 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -525,6 +527,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     Point point = myList.indexToLocation(myList.getSelectedIndex());
     SwingUtilities.convertPointToScreen(point, myList);
     myChild = createPopup(this, nextStep, parentValue);
+    if (ScreenReader.isActive()) myChild.setRequestFocus(true);
     if (myChild instanceof ListPopup child) {
       for (ListSelectionListener listener : myList.getListSelectionListeners()) {
         child.addListSelectionListener(listener);
@@ -646,10 +649,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       ListPopupStep<Object> listStep = getListStep();
       Object selectedValue = myListModel.getElementAt(forIndex);
       if (withTimer) {
+        ClientId currentClientId = ClientId.getCurrent();
         myShowSubmenuTimer = new Timer(250, e -> {
-          if (!isDisposed() && myLastSelectedIndex == forIndex) {
-            disposeChildren();
-            showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+          try (AccessToken ignore = ClientId.withClientId(currentClientId)) {
+            if (!isDisposed() && myLastSelectedIndex == forIndex) {
+              disposeChildren();
+              showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+            }
           }
         });
         myShowSubmenuTimer.setRepeats(false);
@@ -774,6 +780,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private final class MyListSelectionModel extends DefaultListSelectionModel {
+    private boolean myInitialSelectionSet = false;
+
     private MyListSelectionModel() {
       setSelectionMode(isMultiSelectionEnabled() ? MULTIPLE_INTERVAL_SELECTION : SINGLE_SELECTION);
     }
@@ -790,7 +798,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       if (getSelectionMode() == SINGLE_SELECTION) {
         int index = findSelectableIndex(index0, getLeadSelectionIndex());
         if (0 <= index) super.setSelectionInterval(index, index);
-        if (index == 0) fireValueChanged(0, 0); // enforce listeners to be notified about initial selection
+        if (index == 0 && !myInitialSelectionSet) {
+          myInitialSelectionSet = true;
+          fireValueChanged(0, 0); // enforce listeners to be notified about initial selection
+        }
       }
       else {
         super.setSelectionInterval(index0, index1); // TODO: support when needed

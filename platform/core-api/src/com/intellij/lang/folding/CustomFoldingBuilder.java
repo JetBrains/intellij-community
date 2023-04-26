@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Builds custom folding regions. If custom folding is supported for a language, its FoldingBuilder must be inherited from this class.
+ * Builds custom folding regions provided by {@link CustomFoldingProvider}.
+ * If custom folding is supported for a language, its {@link FoldingBuilder} must be inherited from this class.
  */
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
   private CustomFoldingProvider myDefaultProvider;
@@ -32,7 +33,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     ourCustomRegionElements.set(new HashSet<>());
     List<FoldingDescriptor> descriptors = new ArrayList<>();
     try {
-      if (CustomFoldingProvider.getAllProviders().size() > 0) {
+      if (!CustomFoldingProvider.getAllProviders().isEmpty()) {
         myDefaultProvider = null;
         ASTNode rootNode = root.getNode();
         if (rootNode != null) {

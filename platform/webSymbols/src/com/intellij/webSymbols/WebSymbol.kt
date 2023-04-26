@@ -4,18 +4,18 @@ package com.intellij.webSymbols
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.navigation.NavigatableSymbol
-import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.documentation.DocumentationSymbol
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.js.WebSymbolJsKind
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.matchedNameOrName
@@ -27,7 +27,7 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableSymbol {
+interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
 
   val origin: WebSymbolOrigin
 
@@ -59,19 +59,11 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
   val required: Boolean?
     get() = null
 
-  @get:JvmName("isDeprecated")
-  val deprecated: Boolean
-    get() = false
-
-  @get:JvmName("isExperimental")
-  val experimental: Boolean
-    get() = false
+  val apiStatus: ApiStatus?
+    get() = null
 
   val attributeValue: WebSymbolHtmlAttributeValue?
     get() = null
-
-  val documentation: WebSymbolDocumentation?
-    get() = WebSymbolDocumentation.create(this)
 
   val pattern: WebSymbolsPattern?
     get() = null
@@ -122,8 +114,11 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
         .presentation()
     }
 
-  override fun getDocumentationTarget(): DocumentationTarget =
-    WebSymbolDocumentationTargetImpl(this)
+  fun getDocumentationTarget(location: PsiElement?): DocumentationTarget =
+    WebSymbolDocumentationTargetImpl(this, location)
+
+  fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+    WebSymbolDocumentation.create(this, location)
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     emptyList()
@@ -137,6 +132,18 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
 
   fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
     queryExecutor.namesProvider.adjustRename(namespace, kind, name, newName, occurence)
+
+  sealed interface ApiStatus
+
+  /**
+   * @param message message with HTML markup
+   */
+  data class Deprecated(@Nls val message: String? = null) : ApiStatus
+
+  /**
+   * @param message message with HTML markup
+   */
+  data class Experimental(@Nls val message: String? = null) : ApiStatus
 
   enum class Priority(val value: Double) {
     LOWEST(0.0),
@@ -161,9 +168,12 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
     const val KIND_CSS_PSEUDO_CLASSES = "pseudo-classes"
     const val KIND_CSS_FUNCTIONS = "functions"
     const val KIND_CSS_CLASSES = "classes"
+    const val KIND_CSS_PARTS = "parts"
 
     const val KIND_JS_EVENTS = "events"
     const val KIND_JS_PROPERTIES = "properties"
+    const val KIND_JS_SYMBOLS = "symbols"
+    const val KIND_JS_STRING_LITERALS = "string-literals"
 
     /** Specify language to inject in an HTML element */
     const val PROP_INJECT_LANGUAGE = "inject-language"
@@ -179,5 +189,15 @@ interface WebSymbol : WebSymbolsScope, Symbol, DocumentationSymbol, NavigatableS
      * to specify whether they require arguments. Defaults to false.
      **/
     const val PROP_ARGUMENTS = "arguments"
+    /**
+     * Name of boolean property used by JS properties to specify whether
+     * the property is read-only. Defaults to false.
+     **/
+    const val PROP_READ_ONLY = "read-only"
+    /**
+     * Name of [WebSymbolJsKind] property used by JS symbols to specify kind of the symbol.
+     * By default, symbol is treated as [WebSymbolJsKind.Variable].
+     **/
+    const val PROP_KIND = "kind"
   }
 }

@@ -174,6 +174,8 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
 
   private fun condaPathIsValid(path: FullPathOnTarget): Boolean = path.matches(condaPathRegex)
 
+  fun isCondaPathValid() = condaPathIsValid(condaPathTextBoxRwProp.get())
+
 
   /**
    * Detects condas in well-known locations so user doesn't have to provide conda path

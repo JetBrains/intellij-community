@@ -4,13 +4,13 @@
 package com.intellij.ui.list
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
 import com.intellij.openapi.util.NlsContexts.PopupTitle
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer

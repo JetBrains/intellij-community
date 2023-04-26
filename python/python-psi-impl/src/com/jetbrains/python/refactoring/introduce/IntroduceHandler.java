@@ -442,7 +442,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return PsiTreeUtil.getParentOfType(element, PyParameterList.class) == null;
   }
 
-  private static boolean isValidIntroduceVariant(PsiElement element) {
+  public static boolean isValidIntroduceVariant(PsiElement element) {
     final PyCallExpression call = as(element.getParent(), PyCallExpression.class);
     if (call != null && call.getCallee() == element) {
       return false;
@@ -453,7 +453,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return true;
   }
 
-  private void performActionOnElement(IntroduceOperation operation) {
+  public void performActionOnElement(IntroduceOperation operation) {
     if (!checkEnabled(operation)) {
       showCanNotIntroduceErrorHint(operation.getProject(), operation.getEditor());
       return;

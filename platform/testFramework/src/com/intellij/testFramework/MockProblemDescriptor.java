@@ -16,8 +16,4 @@ public class MockProblemDescriptor extends ProblemDescriptorImpl {
                                @NotNull LocalQuickFix @NotNull ... fixes) {
     super(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, true);
   }
-
-  @Override
-  protected void assertPhysical(@NotNull PsiElement startElement) {
-  }
 }

@@ -37,7 +37,10 @@ highlight = "all"
 allow = [ ]
 deny = [ ]
 skip = [ ]
-skip-tree = [ ]
+skip-tree = [
+    { name = "redox_users" },
+    { name = "redox_syscall" }
+]
 
 [sources]
 unknown-registry = "deny"

@@ -21,18 +21,27 @@ public final class BitUtil {
     return (flags & mask) == mask;
   }
 
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
   @Contract(pure = true)
   public static byte set(byte value, byte mask, boolean setBit) {
     assertOneBitMask(mask);
     return (byte)(setBit ? value | mask : value & ~mask);
   }
 
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
   @Contract(pure = true)
   public static int set(int value, int mask, boolean setBit) {
     assertOneBitMask(mask);
     return setBit ? value | mask : value & ~mask;
   }
 
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
   @Contract(pure = true)
   public static long set(long value, long mask, boolean setBit) {
     assertOneBitMask(mask);

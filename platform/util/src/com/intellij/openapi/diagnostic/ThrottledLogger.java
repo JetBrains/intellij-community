@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
@@ -32,7 +33,7 @@ public class ThrottledLogger {
   }
 
   @NotNull
-  public Logger logger() {
+  public Logger wrappedLogger() {
     return logger;
   }
 
@@ -46,6 +47,16 @@ public class ThrottledLogger {
     long lastLoggedAt = lastLoggedAtMsHolder.get();
     if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
       logger.debug(message, t);
+
+      forwardLastLogged(nowMs, lastLoggedAt);
+    }
+  }
+
+  public void debug(@NotNull Supplier<String> messageSupplier){
+    final long nowMs = System.currentTimeMillis();
+    long lastLoggedAt = lastLoggedAtMsHolder.get();
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
+      logger.debug(messageSupplier.get());
 
       forwardLastLogged(nowMs, lastLoggedAt);
     }
@@ -67,6 +78,16 @@ public class ThrottledLogger {
     }
   }
 
+  public void info(@NotNull Supplier<String> messageSupplier){
+    final long nowMs = System.currentTimeMillis();
+    long lastLoggedAt = lastLoggedAtMsHolder.get();
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
+      logger.info(messageSupplier.get());
+
+      forwardLastLogged(nowMs, lastLoggedAt);
+    }
+  }
+
   public void warn(final String message) {
     warn(message, null);
   }
@@ -82,6 +103,16 @@ public class ThrottledLogger {
     }
   }
 
+  public void warn(@NotNull Supplier<String> messageSupplier){
+    final long nowMs = System.currentTimeMillis();
+    long lastLoggedAt = lastLoggedAtMsHolder.get();
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
+      logger.warn(messageSupplier.get());
+
+      forwardLastLogged(nowMs, lastLoggedAt);
+    }
+  }
+
   public void error(final String message) {
     error(message, null);
   }
@@ -92,6 +123,16 @@ public class ThrottledLogger {
     long lastLoggedAt = lastLoggedAtMsHolder.get();
     if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
       logger.error(message, t);
+
+      forwardLastLogged(nowMs, lastLoggedAt);
+    }
+  }
+
+  public void error(@NotNull Supplier<String> messageSupplier){
+    final long nowMs = System.currentTimeMillis();
+    long lastLoggedAt = lastLoggedAtMsHolder.get();
+    if (lastLoggedAt + ignoreRepeatedMessagesInMs < nowMs) {
+      logger.error(messageSupplier.get());
 
       forwardLastLogged(nowMs, lastLoggedAt);
     }

@@ -32,7 +32,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
     val data = arrayListOf<EventPair<*>>()
-    addIfTrue(data, IS_HIGH_PRIORITY, isHighPriority(elementPriority))
+    data.addIfTrue(IS_HIGH_PRIORITY, isHighPriority(elementPriority))
 
     // (element is GotoActionModel.MatchedValue) for actions and option provided by 'ActionSearchEverywhereContributor'
     // (element is OptionDescription || element is AnAction) for actions and option provided by 'TopHitSEContributor'

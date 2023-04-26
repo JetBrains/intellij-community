@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -108,7 +108,17 @@ public final class PathManager {
 
       // set before ourHomePath because getBinDirectories() rely on the fact that if `getHomePath(true)`
       // returns something, then `ourBinDirectories` is already computed
-      ourBinDirectories = result == null ?  Collections.emptyList() : getBinDirectories(Paths.get(result));
+      if (result == null) {
+        ourBinDirectories = Collections.emptyList();
+      }
+      else {
+        Path root = Paths.get(result);
+        if (Boolean.getBoolean("idea.use.dev.build.server")) {
+          root = root.resolve("../../..").normalize();
+        }
+        ourBinDirectories = getBinDirectories(root);
+      }
+
       ourHomePath = result;
     }
 
@@ -176,19 +186,20 @@ public final class PathManager {
     String osSuffix = SystemInfoRt.isWindows ? "win" : SystemInfoRt.isMac ? "mac" : "linux";
 
     for (Path dir : candidates) {
-      if (binDirs.contains(dir)) continue;
+      if (binDirs.contains(dir) || !Files.isDirectory(dir)) {
+        continue;
+      }
+
+      binDirs.add(dir);
+      dir = dir.resolve(osSuffix);
       if (Files.isDirectory(dir)) {
         binDirs.add(dir);
-        dir = dir.resolve(osSuffix);
-        if (Files.isDirectory(dir)) {
-          binDirs.add(dir);
-          if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
-            String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
-            if (arch != null) {
-              dir = dir.resolve(arch);
-              if (Files.isDirectory(dir)) {
-                binDirs.add(dir);
-              }
+        if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
+          String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
+          if (arch != null) {
+            dir = dir.resolve(arch);
+            if (Files.isDirectory(dir)) {
+              binDirs.add(dir);
             }
           }
         }
@@ -675,7 +686,7 @@ public final class PathManager {
       // support projects in ULTIMATE_REPO/remote-dev/extras/SUBDIR
       return homePath + "/../../../community";
     }
-    if (Files.isRegularFile(Paths.get(homePath, "../../Product.Root"))) { // .NET products directory
+    if (Files.isRegularFile(Paths.get(homePath, "../../.dotnet-products.root.marker"))) {
       return homePath + "/../ultimate/community";
     }
     return homePath;

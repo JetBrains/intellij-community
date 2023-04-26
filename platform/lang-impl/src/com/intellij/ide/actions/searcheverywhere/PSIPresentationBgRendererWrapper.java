@@ -5,7 +5,6 @@ import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.navigation.PsiElementNavigationItem;
-import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
@@ -14,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -34,8 +34,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
-public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
-                                                         AutoCompletionContributor, PossibleSlowContributor{
+public final class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                               AutoCompletionContributor, PossibleSlowContributor {
   private final AbstractGotoSEContributor myDelegate;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }
@@ -77,7 +77,6 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
 
   @Override
   public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
-
     return new WrapperRenderer((PsiElementListCellRenderer<?>)myDelegate.getElementsRenderer());
   }
 
@@ -95,7 +94,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
     return value instanceof PsiItemWithPresentation ? ((PsiItemWithPresentation)value).getItem() : value;
   }
 
-  public static class PsiItemWithPresentation extends Pair<PsiElement, TargetPresentation> {
+  public static final class PsiItemWithPresentation extends Pair<PsiElement, TargetPresentation> {
     /**
      * @see #create(Object, Object)
      */
@@ -112,8 +111,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
     }
   }
 
-  private static class WrapperRenderer extends JPanel implements ListCellRenderer<Object> {
-
+  private static final class WrapperRenderer extends JPanel implements ListCellRenderer<Object> {
     private final PsiElementListCellRenderer<?> delegateRenderer;
 
     private WrapperRenderer(PsiElementListCellRenderer<?> renderer) {
@@ -123,7 +121,9 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
 
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (!(value instanceof PsiItemWithPresentation itemAndPresentation)) return delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (!(value instanceof PsiItemWithPresentation itemAndPresentation)) {
+        return delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
 
       TargetPresentation presentation = itemAndPresentation.getPresentation();
       PsiElementListCellRenderer.ItemMatchers matchers = getItemMatchers(list, itemAndPresentation);
@@ -155,7 +155,8 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
           SimpleTextAttributes nameAttributes = presentation.getPresentableTextAttributes() != null
                                                 ? SimpleTextAttributes.fromTextAttributes(presentation.getPresentableTextAttributes())
                                                 : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null);
-          SpeedSearchUtil.appendColoredFragmentForMatcher(presentation.getPresentableText(), this, nameAttributes, matchers.nameMatcher, bgColor, selected);
+          SpeedSearchUtil.appendColoredFragmentForMatcher(presentation.getPresentableText(), this, nameAttributes, matchers.nameMatcher,
+                                                          bgColor, selected);
           if (presentation.getContainerText() != null) {
             Insets listInsets = list.getInsets();
             Insets rendererInsets = getInsets();
@@ -169,7 +170,8 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
             SimpleTextAttributes containerAttributes = presentation.getContainerTextAttributes() != null
                                                        ? SimpleTextAttributes.fromTextAttributes(presentation.getContainerTextAttributes())
                                                        : SimpleTextAttributes.GRAYED_ATTRIBUTES;
-            SpeedSearchUtil.appendColoredFragmentForMatcher(" " + containerText, this, containerAttributes, matchers.locationMatcher, bgColor, selected);
+            SpeedSearchUtil.appendColoredFragmentForMatcher(" " + containerText, this, containerAttributes, matchers.locationMatcher,
+                                                            bgColor, selected);
           }
         }
       };
@@ -183,9 +185,8 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
       return delegateRenderer.getItemMatchers(list, value.getItem());
     }
 
-    @Nullable
     @Contract("!null, _, _ -> !null")
-    private static String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
+    private static @Nullable String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
       if (text == null) return null;
 
       if (text.startsWith("(") && text.endsWith(")")) {
@@ -222,16 +223,12 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupName() {
+  public @Nls @NotNull String getGroupName() {
     return myDelegate.getGroupName();
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getFullGroupName() {
+  public @Nls @NotNull String getFullGroupName() {
     return myDelegate.getFullGroupName();
   }
 
@@ -241,9 +238,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   }
 
   @Override
-  @Nls
-  @Nullable
-  public String getAdvertisement() {
+  public @Nls @Nullable String getAdvertisement() {
     return myDelegate.getAdvertisement();
   }
 
@@ -263,8 +258,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   }
 
   @Override
-  @NotNull
-  public String getSearchProviderId() {
+  public @NotNull String getSearchProviderId() {
     return myDelegate.getSearchProviderId();
   }
 
@@ -294,8 +288,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   }
 
   @Override
-  @NotNull
-  public String filterControlSymbols(@NotNull String pattern) {
+  public @NotNull String filterControlSymbols(@NotNull String pattern) {
     return myDelegate.filterControlSymbols(pattern);
   }
 
@@ -312,9 +305,8 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
     return myDelegate.processSelectedItem(getItem(selected), modifiers, searchText);
   }
 
-  @Nullable
   @Override
-  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
+  public @Nullable Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     return myDelegate.getDataForItem(getItem(element), dataId);
   }
 
@@ -334,11 +326,10 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
     return myDelegate.getElementPriority(getItem(element), searchPattern);
   }
 
-  @Nullable
-  public static PsiElement toPsi(Object o) {
+  public static @Nullable PsiElement toPsi(Object o) {
     if (o instanceof PsiElement) return (PsiElement)o;
     if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
-    if (o instanceof PsiElementNavigationItem) return ((PsiElementNavigationItem) o).getTargetElement();
+    if (o instanceof PsiElementNavigationItem) return ((PsiElementNavigationItem)o).getTargetElement();
     return null;
   }
 }

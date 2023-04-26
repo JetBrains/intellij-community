@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Disposer;
@@ -93,10 +92,8 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
 
     var app = ApplicationManager.getApplication();
     if (app.isDisposed()) return;  // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
-
-    var tracker = app.getService(TrackerService.class);
-    Disposer.register(tracker, this);
-    app.getMessageBus().connect(tracker).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    Disposer.register(app, this);
+    app.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         Set<VirtualFile> toRefresh = null;
@@ -170,10 +167,5 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
     var handler = myHandlers.remove(localPath);
     if (handler == null) throw new IllegalArgumentException(localPath + " not in " + myHandlers.keySet());
     handler.clearCaches();
-  }
-
-  @Service
-  static final class TrackerService implements Disposable {
-    @Override public void dispose() { }
   }
 }

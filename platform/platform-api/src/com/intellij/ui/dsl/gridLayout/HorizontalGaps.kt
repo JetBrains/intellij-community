@@ -3,17 +3,10 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 
+@Deprecated("Use UnscaledGapsX instead")
 data class HorizontalGaps(val left: Int = 0, val right: Int = 0) {
-  companion object {
-    @JvmField
-    val EMPTY = HorizontalGaps()
-  }
-
   init {
     checkNonNegative("left", left)
     checkNonNegative("right", right)
   }
-
-  val width: Int
-    get() = left + right
 }

@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPass
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderAdapter
-import com.intellij.lang.IdeLanguageCustomization
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.ComboBox
@@ -19,8 +18,16 @@ import javax.swing.JPanel
 open class CodeVisionGroupDefaultSettingModel(override val name: String,
                                               groupId: String,
                                               override val description: String?,
+                                              override val previewLanguage: Language?,
                                               isEnabled: Boolean,
                                               val providers: List<CodeVisionProvider<*>>) : CodeVisionGroupSettingModel(isEnabled, id = groupId) {
+
+  constructor(name: String,
+              groupId: String,
+              description: String?,
+              isEnabled: Boolean,
+              providers: List<CodeVisionProvider<*>>) : this(name, groupId, description, null, isEnabled, providers)
+
   companion object {
     private val CODE_VISION_PREVIEW_ENABLED = Key<Boolean>("code.vision.preview.data")
 
@@ -28,8 +35,11 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
       return editor.getUserData(CODE_VISION_PREVIEW_ENABLED)
     }
 
-    internal val anchorRenderer: SimpleListCellRenderer<CodeVisionAnchorKind> = SimpleListCellRenderer.create(
-      SimpleListCellRenderer.Customizer { label, value, _ -> label.text = CodeVisionBundle.message(value.key) })
+    internal val anchorRenderer: SimpleListCellRenderer<CodeVisionAnchorKind> by lazy {
+      SimpleListCellRenderer.create(
+        SimpleListCellRenderer.Customizer { label, value, _ -> label.text = CodeVisionBundle.message(value.key) }
+      )
+    }
   }
 
 
@@ -68,17 +78,6 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
 
   override val previewText: String?
     get() = getCasePreview()
-
-  override val previewLanguage: Language?
-    get() {
-      val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
-      return CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.asSequence()
-               .filter { it.modelId == id }
-               .map { Language.findLanguageByID(it.language) }
-               .sortedBy { primaryIdeLanguages.indexOf(it).takeIf { it != -1 } ?: Integer.MAX_VALUE }
-               .firstOrNull()
-             ?: Language.findLanguageByID("JAVA")
-    }
 
   override fun isModified(): Boolean {
     return (isEnabled != (settings.isProviderEnabled(id) && settings.codeVisionEnabled)

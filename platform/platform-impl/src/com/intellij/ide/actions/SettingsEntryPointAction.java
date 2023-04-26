@@ -24,10 +24,11 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.popup.PopupState;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,9 +45,10 @@ import java.util.List;
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
+  private static final Icon NEW_UI_ICON =
+    IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   public SettingsEntryPointAction() {
     super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
@@ -56,11 +58,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    if (myPopupState.isHidden() && !myPopupState.isRecentlyHidden()) {
-      ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
-      myPopupState.prepareToShow(popup);
-      PopupUtil.showForActionButtonEvent(popup, e);
-    }
+    ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
+    PopupUtil.showForActionButtonEvent(popup, e);
   }
 
   @Override
@@ -123,12 +122,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
             public void updateButton(@NotNull AnActionEvent e) {
               getDelegate().update(e);
               e.getPresentation().setText(e.getPresentation().getText() + "…");
-            }
-
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-              super.actionPerformed(new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
-                                                      getDelegate().getTemplatePresentation(), e.getActionManager(), e.getModifiers()));
             }
           };
           button.setShortcut(child.getShortcutSet());
@@ -225,7 +218,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
              : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
     if (ourNewUiIcon) {
-      return GEAR_ICON.getInfoIcon();
+      return NEW_UI_ICON;
     }
 
     return getCustomizedIcon(GEAR_ICON);
@@ -324,7 +317,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static final class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
-    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
     private StatusBar myStatusBar;
 
     @Override
@@ -353,13 +345,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
 
-        if (!myPopupState.isHidden() || myPopupState.isRecentlyHidden()) {
-          return;
-        }
-
         Component component = event.getComponent();
         ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), component);
-        myPopupState.prepareToShow(popup);
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -422,6 +409,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       super.customizeComponent(list, value, isSelected);
 
       myTextLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+      myTextLabel.setIconTextGap(JBUI.scale(6));
       boolean enableNewUi = value instanceof AnActionHolder actionHolder && actionHolder.getAction() instanceof EnableNewUiAction;
       myTextLabel.setIcon(enableNewUi ? AllIcons.General.Beta : null);
     }

@@ -8,6 +8,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.ModelListener;
+import com.intellij.ide.structureView.SearchableTextProvider;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
@@ -830,7 +831,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
         myTreeStructure.rebuildTree();
         myStructureTreeModel.invalidateAsync().thenRun(() -> rebuildAndSelect(true, selection).processed(result));
       }
-    });
+    }).onError(throwable -> result.setError(throwable));
     return result;
   }
 
@@ -885,6 +886,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     String text = String.valueOf(object);
     Object value = StructureViewComponent.unwrapWrapper(object);
     if (text != null) {
+      if (value instanceof SearchableTextProvider searchableTextProvider) {
+        String searchableText = searchableTextProvider.getSearchableText();
+        if (searchableText != null) return searchableText;
+      }
       if (value instanceof PsiTreeElementBase && ((PsiTreeElementBase<?>)value).isSearchInLocationString()) {
            String locationString = ((PsiTreeElementBase<?>)value).getLocationString();
           if (!StringUtil.isEmpty(locationString)) {
@@ -906,7 +911,13 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     // NB!: this point is achievable if the following method returns null
     // see com.intellij.ide.util.treeView.NodeDescriptor.toString
     if (value instanceof TreeElement) {
-      return ReadAction.compute(() -> ((TreeElement)value).getPresentation().getPresentableText());
+      return ReadAction.compute(() -> {
+        if (value instanceof SearchableTextProvider searchableTextProvider) {
+          String searchableText = searchableTextProvider.getSearchableText();
+          if (searchableText != null) return searchableText;
+        }
+        return ((TreeElement)value).getPresentation().getPresentableText();
+      });
     }
 
     return null;

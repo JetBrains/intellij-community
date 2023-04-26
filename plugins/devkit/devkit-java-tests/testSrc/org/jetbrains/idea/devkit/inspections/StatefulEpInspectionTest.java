@@ -1,75 +1,68 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/statefulEp")
-public class StatefulEpInspectionTest extends PluginModuleTestCase {
+public class StatefulEpInspectionTest extends StatefulEpInspectionTestBase {
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/statefulEp";
   }
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.addClass("package com.intellij.openapi.project; public class Project {}");
-    myFixture.addClass("package com.intellij.psi; public class PsiElement {}");
-    myFixture.addClass("package com.intellij.psi; public class PsiReference {}");
-    myFixture.addClass("package com.intellij.codeInspection; public class LocalQuickFix {}");
-    myFixture.addClass("package com.intellij.openapi.components; public interface ProjectComponent {}");
-    myFixture.addClass("package com.intellij.openapi.util; public class Ref<T> {}");
-    myFixture.enableInspections(new StatefulEpInspection());
+  protected String getFileExtension() {
+    return "java";
   }
 
-  public void testLocalQuickFix() {
-    myFixture.testHighlighting("Fix.java");
+  public void testFix() {
+    doTest();
   }
 
   public void testNonFix() {
     setPluginXml("plugin.xml");
-    myFixture.testHighlighting("NonFix.java");
+    doTest();
   }
 
   public void testExt() {
     setPluginXml("plugin.xml");
-    myFixture.testHighlighting("Ext.java");
+    doTest();
   }
   
   public void testProjectComp() {
     setPluginXml("plugin.xml");
-    myFixture.testHighlighting("ProjectComp.java");
+    doTest();
   }
   
   public void testProjectService() {
     setPluginXml("plugin.xml");
-    myFixture.testHighlighting("ProjectService.java");
+    doTest();
   }
 
   public void testProjectConfigurable() {
     setPluginXml("plugin.xml");
-    myFixture.testHighlighting("ProjectConfigurable.java");
+    doTest();
   }
 
   public void testFakeFile() {
     setPluginXml("plugin.xml");
-    myFixture.testHighlighting("FakeFile.java");
+    doTest();
   }
 
   public void testCapturedFromOuterClass() {
-    myFixture.testHighlighting("CapturedFromOuterClass.java");
+    doTest();
   }
 
-  public void testCollection() {
-    myFixture.testHighlighting("Collection.java");
+  public void testCollectionTests() {
+    doTest();
   }
 
-  public void testMap() {
-    myFixture.testHighlighting("Map.java");
+  public void testMapTests() {
+    doTest();
   }
 
-  public void testRef() {
-    myFixture.testHighlighting("Ref.java");
+  public void testRefTests() {
+    doTest();
   }
 }

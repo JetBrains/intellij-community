@@ -7,7 +7,6 @@ import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
 import com.intellij.ide.actionsOnSave.ActionOnSaveInfo;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -20,7 +19,6 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBScrollPane;
 import kotlin.jvm.functions.Function1;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +105,7 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
 
     String fileTypeName = fileTypes.iterator().next();
     FileType fileType = FileTypeRegistry.getInstance().findFileTypeByName(fileTypeName);
-    String presentableFileType = fileType != null ? getFileTypePresentableName(fileType) : fileTypeName;
+    String presentableFileType = fileType != null ? fileType.getDescription() : fileTypeName;
 
     if (fileTypes.size() == 1) {
       return CodeInsightBundle.message("actions.on.save.page.label.one.file.type.selected", presentableFileType);
@@ -119,7 +117,7 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
   private @NotNull JBPopup createFileTypesPopup(@NotNull DropDownLink<String> link) {
     CheckedTreeNode root = new CheckedTreeNode(CodeInsightBundle.message("actions.on.save.page.label.all.file.types"));
 
-    SortedSet<FileType> result = new TreeSet<>(Comparator.comparing(FormatOnSaveActionInfoBase::getFileTypePresentableName));
+    SortedSet<FileType> result = new TreeSet<>(Comparator.comparing(FileType::getDescription, String.CASE_INSENSITIVE_ORDER));
     addApplicableFileTypes(result);
 
     for (FileType fileType : result) {
@@ -149,7 +147,7 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
           final CheckedTreeNode node = (CheckedTreeNode)path.getLastPathComponent();
           final Object userObject = node.getUserObject();
           if (userObject instanceof FileType) {
-            return getFileTypePresentableName((FileType)userObject);
+            return ((FileType)userObject).getDescription();
           }
           return userObject.toString();
         });
@@ -215,18 +213,10 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
         }
         if (userObject instanceof FileType) {
           getTextRenderer().setIcon(((FileType)userObject).getIcon());
-          getTextRenderer().append(getFileTypePresentableName((FileType)userObject));
+          getTextRenderer().append(((FileType)userObject).getDescription());
         }
       }
     };
-  }
-
-  private static @NotNull @Nls String getFileTypePresentableName(@NotNull FileType fileType) {
-    // in fact, the following is always true for file types handled here
-    if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).getLanguage().getDisplayName();
-    }
-    return fileType.getDescription();
   }
 
   @Override

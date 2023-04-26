@@ -198,17 +198,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
           scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
         }
         int numberOfUsagesFound = view == null ? 0 : view.getUsagesCount();
-        if (isCancelled) {
-          UsageViewStatisticsCollector.logSearchCancelled(myProject, targetClass, scope, language, numberOfUsagesFound,
-                                                          durationFirstResults, duration,
-                                                          tooManyUsages.get(), CodeNavigateSource.FindToolWindow, view);
-        }
-        else {
-          UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language, numberOfUsagesFound,
-                                                         durationFirstResults, duration,
-                                                         tooManyUsages.get(), CodeNavigateSource.FindToolWindow, view);
-        }
-
+        UsageViewStatisticsCollector.logSearchFinished(myProject, view, targetClass, scope, language, numberOfUsagesFound,
+                                                       durationFirstResults, duration,
+                                                       tooManyUsages.get(), isCancelled, CodeNavigateSource.FindToolWindow);
         return duration;
       }
     };

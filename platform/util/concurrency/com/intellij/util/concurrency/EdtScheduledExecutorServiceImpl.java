@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.ConcurrencyUtil;
@@ -31,7 +32,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
       boolean executeMeInBackendExecutor() {
         // optimization: can be cancelled already
         if (!isDone()) {
-          ApplicationManager.getApplication().invokeLater(this, modalityState, __ -> {
+          ApplicationManager.getApplication().invokeLater((ContextAwareRunnable) () -> this.run(), modalityState, __ -> {
             return isCancelled();
           });
         }

@@ -45,7 +45,7 @@ class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiReference, Ref
   companion object {
     private val elementClasses: ClearableLazyValue<Set<Class<PsiElement>>> = ExtensionPointUtil.dropLazyValueOnChange(
       ClearableLazyValue.create {
-        WebSymbolPsiSourcedSymbolHostClassEP.EP_NAME.extensionList.mapNotNull { it.instance }.toSet()
+        WebSymbolPsiSourcedSymbolHostClassEP.EP_NAME.extensionList.map { it.instance }.toSet()
       }, WebSymbolPsiSourcedSymbolHostClassEP.EP_NAME, null
     )
   }

@@ -257,6 +257,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     try {
       val handlers = commitHandlers
       val commitChecks = handlers
+        .filter { it.acceptExecutor(commitInfo.executor) }
         .map { it.asCommitCheck(commitInfo) }
         .filter { it.isEnabled() }
         .groupBy { it.getExecutionOrder() }
@@ -358,7 +359,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
       return vcses.flatMap { it.commitExecutors } +
              ChangeListManager.getInstance(project).registeredExecutors +
-             LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
+             CommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
     }
 
     suspend fun runMetaHandlers(@Suppress("DEPRECATION") metaHandlers: List<CheckinMetaHandler>) {
@@ -463,7 +464,7 @@ private class ProxyCommitCheck(val checkinHandler: CheckinHandler,
     return DumbService.isDumbAware(checkinHandler)
   }
 
-  override fun isEnabled(): Boolean = checkinHandler.acceptExecutor(executor)
+  override fun isEnabled(): Boolean = true
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val result = blockingContext {

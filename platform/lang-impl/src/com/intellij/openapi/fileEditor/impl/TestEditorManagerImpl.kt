@@ -39,7 +39,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jdom.Element
 import java.awt.Component
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
@@ -104,21 +103,37 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return openFileInCommand(OpenFileDescriptor(project, file))
   }
 
-  private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
+    val descriptor = OpenFileDescriptor(project, file)
+    val composite = openFileImpl3(descriptor)
+    val editors = composite.allEditors
+    for (i in editors.indices) {
+      val editor = editors[i]
+      if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
+        if (editor.canNavigateTo(descriptor)) {
+          setSelectedEditor(descriptor.file, composite.allProviders.get(i).editorTypeId)
+          editor.navigateTo(descriptor)
+        }
+        break
+      }
+    }
+    return composite
+  }
+
+  private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): FileEditorComposite {
     val file = openFileDescriptor.file
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager
-                          ?: return Pair.createNonNull(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
+      val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
       val result = clientManager.openFile(file, false)
       val fileEditors = result.map { it.fileEditor }.toTypedArray()
       val providers = result.map { it.provider }.toTypedArray()
-      return Pair.createNonNull(fileEditors, providers)
+      return FileEditorComposite.fromPair(kotlin.Pair(fileEditors, providers))
     }
+
     val isNewEditor = !virtualFileToEditor.containsKey(file)
 
     // for non-text editors. uml, etc
     var provider = file.getUserData(FileEditorProvider.KEY)
-    val result: Pair<Array<FileEditor>, Array<FileEditorProvider>>
     val fileEditor: FileEditor
     val editor: Editor?
     if (provider != null && provider.accept(project, file)) {
@@ -132,12 +147,11 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       }
     }
     else {
-      //text editor
+      // text editor
       editor = doOpenTextEditor(openFileDescriptor)
       fileEditor = TextEditorProvider.getInstance().getTextEditor(editor)
       provider = stubProvider
     }
-    result = Pair.create(arrayOf(fileEditor), arrayOf(provider))
     virtualFileToEditor.put(file, editor)
     activeFile = file
     if (editor != null) {
@@ -147,12 +161,12 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       }
     }
     modifyTabWell {
-      testEditorSplitter.openAndFocusTab(file, result.first[0], result.second[0])
+      testEditorSplitter.openAndFocusTab(file, fileEditor, provider)
       if (isNewEditor) {
         eventPublisher().fileOpened(this, file)
       }
     }
-    return result
+    return FileEditorComposite.createFileEditorComposite(allEditors = listOf(fileEditor), allProviders = listOf(provider))
   }
 
   private fun modifyTabWell(tabWellModification: Runnable) {
@@ -267,8 +281,8 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     get() = emptyArray()
 
   override fun getSelectedEditorWithRemotes(): Array<FileEditor> {
-    val result: MutableList<FileEditor> = ArrayList()
-    Collections.addAll(result, *selectedEditors)
+    val result = ArrayList<FileEditor>()
+    result.addAll(selectedEditors)
     for (m in allClientFileEditorManagers) {
       result.addAll(m.getSelectedEditors())
     }
@@ -351,21 +365,19 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       val clientManager = clientFileEditorManager ?: return VirtualFile.EMPTY_ARRAY
       return clientManager.getSelectedFiles().toTypedArray()
     }
-    return if (activeFile == null) VirtualFile.EMPTY_ARRAY else arrayOf(activeFile!!)
+    return arrayOf(activeFile ?: return VirtualFile.EMPTY_ARRAY)
   }
 
   override fun getSelectedEditors(): Array<FileEditor> {
     if (!isCurrentlyUnderLocalId) {
       return (clientFileEditorManager ?: return FileEditor.EMPTY_ARRAY).getSelectedEditors().toTypedArray()
     }
-    return if (activeFile == null) FileEditor.EMPTY_ARRAY else getEditors(activeFile!!)
+    return getEditors(activeFile ?: return FileEditor.EMPTY_ARRAY)
   }
 
   override fun getSelectedTextEditor(): Editor? {
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager ?: return null
-      val selectedEditor = clientManager.getSelectedEditor()
-      return if (selectedEditor is TextEditor) selectedEditor.editor else null
+      return (clientFileEditorManager?.getSelectedEditor() as? TextEditor)?.editor
     }
     return IntentionPreviewUtils.getPreviewEditor() ?: getEditor(activeFile ?: return null)
   }
@@ -409,8 +421,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     get() = project.getServices(ClientFileEditorManager::class.java, ClientKind.REMOTE)
 
   override fun openTextEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Editor? {
-    val pair = openFileInCommand(descriptor)
-    for (editor in pair.allEditors) {
+    for (editor in openFileInCommand(descriptor).allEditors) {
       if (editor is TextEditor) {
         return editor.editor
       }
@@ -421,19 +432,17 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun openFileInCommand(descriptor: FileEditorNavigatable): FileEditorComposite {
     var result: FileEditorComposite? = null
     CommandProcessor.getInstance().executeCommand(project, {
-      val editWithProvider = openFileImpl3(descriptor)
-      val editors = editWithProvider.first
-      for (i in editors.indices) {
-        val editor = editors[i]
+      val composite = openFileImpl3(descriptor)
+      for ((i, editor) in composite.allEditors.withIndex()) {
         if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
           if (editor.canNavigateTo(descriptor)) {
-            setSelectedEditor(descriptor.file, editWithProvider.second[i].editorTypeId)
+            setSelectedEditor(file = descriptor.file, fileEditorProviderId = composite.allProviders.get(i).editorTypeId)
             editor.navigateTo(descriptor)
           }
           break
         }
       }
-      result = FileEditorComposite.fromPair(editWithProvider)
+      result = composite
     }, "", null)
     return result!!
   }
@@ -441,23 +450,22 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun doOpenTextEditor(descriptor: FileEditorNavigatable): Editor {
     val file = descriptor.file
     virtualFileToEditor.get(file)?.let { return it }
-    val document = FileDocumentManager.getInstance().getDocument(file)
-    LOG.assertTrue(document != null, file)
+    val document = FileDocumentManager.getInstance().getDocument(file)!!
     val editorFactory = EditorFactory.getInstance()
-    val editor = editorFactory.createEditor(document!!, project)
+    val editor = editorFactory.createEditor(document, project)
     try {
       val highlighter = HighlighterFactory.createHighlighter(project, file)
       val language = TextEditorImpl.getDocumentLanguage(editor)
       editor.settings.setLanguageSupplier { language }
-      val editorEx = editor as EditorEx?
-      editorEx!!.highlighter = highlighter
+      val editorEx = editor as EditorEx
+      editorEx.highlighter = highlighter
       editorEx.setFile(file)
     }
     catch (e: Throwable) {
       editorFactory.releaseEditor(editor)
       throw e
     }
-    return editor!!
+    return editor
   }
 
   override fun openFileEditor(descriptor: FileEditorNavigatable, focusEditor: Boolean): List<FileEditor> {

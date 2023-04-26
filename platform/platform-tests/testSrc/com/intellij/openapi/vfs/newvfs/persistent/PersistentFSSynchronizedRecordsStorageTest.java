@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,9 +28,5 @@ public class PersistentFSSynchronizedRecordsStorageTest
       PersistentFSSynchronizedRecordsStorage.RECORD_SIZE
     );
     return new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
-  }
-
-  @Test
-  public void name() {
   }
 }

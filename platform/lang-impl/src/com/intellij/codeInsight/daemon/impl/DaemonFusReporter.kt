@@ -3,6 +3,8 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -23,6 +25,8 @@ import kotlin.math.pow
 class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
   private var daemonStartTime: Long = -1L
   private var dirtyRange: TextRange? = null
+  private var initialEntireFileHighlightingActivity: Activity? = null
+  private var initialEntireFileHighlightingCompleted: Boolean = false
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
     daemonStartTime = System.currentTimeMillis()
@@ -32,6 +36,10 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     }
     else {
       FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL)
+    }
+
+    if (!initialEntireFileHighlightingCompleted) {
+      initialEntireFileHighlightingActivity = StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_HIGHLIGHTED)
     }
   }
 
@@ -59,6 +67,14 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     val elapsedTime = System.currentTimeMillis() - daemonStartTime
     val fileType = document?.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
     val wasEntireFileHighlighted = TextRange.from(0, document?.textLength ?: 0) == dirtyRange
+
+    if (wasEntireFileHighlighted && !initialEntireFileHighlightingCompleted) {
+      initialEntireFileHighlightingActivity?.end()
+      StartUpMeasurer.addInstantEvent("editor highlighting completed")
+      initialEntireFileHighlightingCompleted = true
+    }
+    initialEntireFileHighlightingActivity = null
+
 
     DaemonFusCollector.FINISHED.log(
       project,

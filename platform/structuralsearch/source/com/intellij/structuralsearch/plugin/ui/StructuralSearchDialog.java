@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
@@ -13,6 +13,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.lang.Language;
 import com.intellij.notification.NotificationGroupManager;
@@ -59,6 +60,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
@@ -83,6 +85,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
@@ -101,6 +104,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static java.awt.GridBagConstraints.*;
 
 /**
  * This dialog is used in two ways:
@@ -265,7 +270,9 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
 
     final EditorTextField textField = new MyEditorTextField(document, replace);
-    textField.setFont(EditorFontType.getGlobalPlainFont());
+    textField.setFont(EditorFontType.getGlobalPlainFont().deriveFont(
+      UISettingsUtils.getInstance().getScaledEditorFontSize()
+    ));
     textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
     myComponentsWithEditorBackground.add(textField);
@@ -304,7 +311,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
                                         : new ReplaceConfiguration(template);
     if (!myEditConfigOnly) {
       final MatchOptions matchOptions = result.getMatchOptions();
-      matchOptions.setSearchInjectedCode(false);
+      matchOptions.setSearchInjectedCode(myInjected.isSelected());
       matchOptions.setCaseSensitiveMatch(myMatchCase.isSelected());
 
       final ReplaceOptions replaceOptions = result.getReplaceOptions();
@@ -331,8 +338,16 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         final Document document = editor.getDocument();
         final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         if (file != null) {
-          final Language language = file.getLanguage();
+          final PsiElement start = file.findElementAt(selectionModel.getSelectionStart());
+          final PsiElement end = file.findElementAt(selectionModel.getSelectionEnd() - 1);
+          final PsiElement element = (start == null || end == null || start.getContainingFile() != end.getContainingFile())
+                                     ? null
+                                     : PsiTreeUtil.findCommonParent(start, end);
+          final Language language = (element == null) ? file.getLanguage() : element.getLanguage();
           myFileTypeChooser.setSelectedItem(language.getAssociatedFileType(), language, null);
+          if (language != file.getLanguage() && !myInjected.isSelected()) {
+            myInjected.doClick();
+          }
         }
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
@@ -407,15 +422,15 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
 
     final var centerConstraint = new GridBag()
-      .setDefaultFill(GridBagConstraints.BOTH)
+      .setDefaultFill(BOTH)
       .setDefaultWeightX(1.0)
       .setDefaultWeightY(1.0);
     final JPanel centerPanel = new JPanel(new GridBagLayout());
     centerPanel.add(searchPanel, centerConstraint.nextLine());
     centerPanel.add(myReplacePanel, centerConstraint.nextLine());
-    centerPanel.add(myScopePanel, centerConstraint.nextLine().weighty(0.0).insets(8, DEFAULT_HGAP, 8, DEFAULT_HGAP));
+    centerPanel.add(myScopePanel, centerConstraint.nextLine().weighty(0.0));
 
-    myExistingTemplatesComponent = new ExistingTemplatesComponent(myProject);
+    myExistingTemplatesComponent = new ExistingTemplatesComponent(myProject, getContentPanel());
     myExistingTemplatesComponent.onConfigurationSelected(this::loadConfiguration);
     myExistingTemplatesComponent.setConfigurationProducer(() -> getConfiguration());
     myExistingTemplatesComponent.setSearchEditorProducer(() -> mySearchCriteriaEdit);
@@ -475,7 +490,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       initValidation();
     });
     myFileTypeChooser.setUserActionFileTypeInfoConsumer(info -> {
-      myExistingTemplatesComponent.selectFileType(info.getText());
+      myExistingTemplatesComponent.selectFileType(info.getFileType());
     });
 
     // Existing templates action
@@ -561,6 +576,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
+    myOptionsToolbar.setBorder(JBUI.Borders.empty(3));
 
     // Search editor panel, 1st splitter element
     final var searchEditorPanel = new JPanel(new GridBagLayout());
@@ -604,7 +620,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     mySearchWrapper = new JPanel(new BorderLayout()); // needed for border
     mySearchWrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
 
-    final var searchConstraint = new GridBag().setDefaultInsets(10, DEFAULT_HGAP, 10, 0);
+    final var searchConstraint = new GridBag().setDefaultInsets(DEFAULT_VGAP, DEFAULT_HGAP, DEFAULT_VGAP, 0);
     searchEditorPanel.add(mySearchCriteriaEdit, searchConstraint
       .nextLine().fillCell().coverLine()
       .weightx(1.0).weighty(1.0)
@@ -612,17 +628,15 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     searchEditorPanel.add(searchTargetLabel, searchConstraint.nextLine());
     searchEditorPanel.add(myTargetComboBox, searchConstraint);
     searchEditorPanel.add(myInjected, searchConstraint);
-    searchEditorPanel.add(myMatchCase, searchConstraint.anchor(GridBagConstraints.WEST).insetRight(DEFAULT_HGAP));
+    searchEditorPanel.add(myMatchCase, searchConstraint.anchor(WEST).insetRight(DEFAULT_HGAP));
 
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
     myComponentsWithEditorBackground.add(myFilterPanel.getTable());
 
     final JPanel searchPanel = new JPanel(new GridBagLayout());
-    final var northConstraint = new GridBag()
-      .setDefaultWeightX(1.0)
-      .setDefaultInsets(6, 0, 6, 0);
-    searchPanel.add(searchTemplateLabel, northConstraint.nextLine().weightx(0.0).insetLeft(DEFAULT_HGAP));
-    searchPanel.add(myOptionsToolbar.getComponent(), northConstraint.anchor(GridBagConstraints.EAST).insetRight(DEFAULT_HGAP));
+    final var northConstraint = new GridBag().setDefaultWeightX(1.0);
+    searchPanel.add(searchTemplateLabel, northConstraint.nextLine().weightx(0.0).insets(JBInsets.create(0, DEFAULT_HGAP)));
+    searchPanel.add(myOptionsToolbar, northConstraint.anchor(EAST));
     searchPanel.add(mySearchWrapper, northConstraint.nextLine().coverLine().fillCell().emptyInsets().weighty(1.0));
     return searchPanel;
   }
@@ -650,12 +664,12 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.nextLine().emptyInsets().fillCell().coverLine().weightx(1.0).weighty(1.0));
     myReplaceWrapper.add(myShortenFqn, wrapperConstraint.nextLine());
     myReplaceWrapper.add(myStaticImport, wrapperConstraint);
-    myReplaceWrapper.add(myReformat, wrapperConstraint.weightx(1.0).anchor(GridBagConstraints.WEST));
+    myReplaceWrapper.add(myReformat, wrapperConstraint.weightx(1.0).anchor(WEST));
 
     final JPanel replacePanel = new JPanel(new GridBagLayout());
     final var replaceConstraint = new GridBag()
       .setDefaultWeightX(1.0);
-    replacePanel.add(replacementTemplateLabel, replaceConstraint.nextLine().anchor(GridBagConstraints.WEST).insets(16, DEFAULT_HGAP, 14, 0));
+    replacePanel.add(replacementTemplateLabel, replaceConstraint.nextLine().anchor(WEST).insets(16, DEFAULT_HGAP, 14, 0));
     replacePanel.add(myReplaceWrapper, replaceConstraint.nextLine().fillCell().weighty(1.0));
     return replacePanel;
   }
@@ -880,7 +894,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       return Collections.emptyList();
     }
     final List<ValidationInfo> errors = new SmartList<>();
-    final MatchOptions matchOptions = getConfiguration().getMatchOptions();
+    saveConfiguration();
+    final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     try {
       CompiledPattern compiledPattern = null;
       try {

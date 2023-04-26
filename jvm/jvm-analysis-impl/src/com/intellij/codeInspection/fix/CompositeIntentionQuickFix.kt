@@ -18,7 +18,7 @@ import com.intellij.util.asSafely
 /**
  * A quickfix that can call multiple JVM intention actions and bundle them into a single quick fix.
  */
-abstract class CompositeIntentionQuickFix: LocalQuickFix {
+abstract class CompositeIntentionQuickFix : LocalQuickFix {
   override fun startInWriteAction(): Boolean = false
 
   protected fun generatePreviews(project: Project, previewDescriptor: ProblemDescriptor, element: PsiElement): IntentionPreviewInfo {

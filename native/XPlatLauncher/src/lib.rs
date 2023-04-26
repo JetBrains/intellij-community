@@ -1,4 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 #![warn(
 absolute_paths_not_starting_with_crate,
 elided_lifetimes_in_paths,
@@ -30,53 +31,71 @@ unused_results,
 variant_size_differences
 )]
 
+use std::env;
+use std::path::PathBuf;
+
+use anyhow::{Context, Result};
+use log::{debug, error, LevelFilter, warn};
+use serde::{Deserialize, Serialize};
+use utils::{get_current_exe, jvm_property};
+
+#[cfg(target_os = "windows")]
+use {
+    windows::core::{GUID, PWSTR},
+    windows::Win32::Foundation::HANDLE,
+    windows::Win32::UI::Shell
+};
+
+use crate::default::DefaultLaunchConfiguration;
+use crate::remote_dev::RemoteDevLaunchConfiguration;
+
+mod mini_logger;
+mod ui;
 mod java;
 mod remote_dev;
 mod default;
 mod docker;
 
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use std::env;
-use std::fs::File;
-use std::path::PathBuf;
-use log::{debug, error, LevelFilter, warn};
-use native_dialog::{MessageDialog, MessageType};
-use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
-use crate::default::DefaultLaunchConfiguration;
-use anyhow::{bail, Result};
-use utils::get_current_exe;
-use crate::remote_dev::RemoteDevLaunchConfiguration;
+const CANNOT_START_TITLE: &'static str = "Cannot start the IDE";
+const SUPPORT_CONTACT: &'static str = "For support, please refer to https://jb.gg/ide/critical-startup-errors";
 
-#[cfg(target_os = "windows")] use {
-    windows::core::GUID,
-    windows::Win32::Foundation::HANDLE,
-    windows::Win32::UI::Shell::SHGetKnownFolderPath,
-    windows::Win32::UI::Shell::KF_FLAG_CREATE
-};
+#[cfg(target_os = "windows")]
+const CLASS_PATH_SEPARATOR: &'static str = ";";
+#[cfg(target_family = "unix")]
+const CLASS_PATH_SEPARATOR: &'static str = ":";
 
 pub fn main_lib() {
-    let show_error_ui = match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
-        Ok(_) => false,
-        Err(_) => !is_remote_dev(),
-    };
-
-    let main_result = main_impl();
-    unwrap_with_human_readable_error(main_result, show_error_ui);
+    let remote_dev = is_remote_dev();
+    let show_error_ui = env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR).is_err() && !remote_dev;
+    let verbose = env::var(VERBOSE_LOGGING_ENV_VAR).is_ok() || remote_dev;
+    if let Err(e) = main_impl(remote_dev, verbose) {
+        let text = format!("{:?}\n\n{}", e, SUPPORT_CONTACT);
+        if show_error_ui {
+            ui::show_fail_to_start_message(CANNOT_START_TITLE, text.as_str())
+        } else if verbose {
+            error!("{:?}", e);
+        } else {
+            eprintln!("{}\n{}", CANNOT_START_TITLE, text);
+        }
+        std::process::exit(1);
+    }
 }
 
-fn main_impl() -> Result<()> {
-    println!("Initializing logger");
+fn is_remote_dev() -> bool {
+    let exe_path = get_current_exe();
+    if let Some(exe_name_value) = exe_path.file_name() {
+        exe_name_value.to_string_lossy().starts_with("remote-dev-server")
+    } else if let Some(exe_name_value) = env::args_os().next() {
+        exe_name_value.to_string_lossy().starts_with("remote-dev-server")
+    } else {
+        false
+    }
+}
 
-    let term_logger = TermLogger::new(LevelFilter::Debug, Config::default(), TerminalMode::Mixed, ColorChoice::Auto);
-
-    // TODO: do not crash if failed to create a log file?
-    let file_logger = WriteLogger::new(LevelFilter::Debug, Config::default(), File::create("launcher.log")?);
-
-    // TODO: set agreed configuration (probably simple logger instead of pretty colors for terminal) or replace the lib with our own code
-    let loggers: Vec<Box<dyn simplelog::SharedLogger>> = vec![ term_logger, file_logger ];
-
-    CombinedLogger::init(loggers)?;
+fn main_impl(remote_dev: bool, verbose: bool) -> Result<()> {
+    let level = if verbose { LevelFilter::Debug } else { LevelFilter::Error };
+    mini_logger::init(level).expect("Cannot initialize the logger");
+    debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
 
     // lets the panic on JVM thread crash the launcher (or not?)
     let orig_hook = std::panic::take_hook();
@@ -91,21 +110,20 @@ fn main_impl() -> Result<()> {
         std::process::exit(1);
     }));
 
-    debug!("Launching");
+    debug!("** Preparing launch configuration");
+    let configuration = get_configuration(remote_dev).context("Cannot detect a launch configuration")?;
 
-    let configuration = &get_configuration()?;
-
-    debug!("Preparing runtime");
-    let java_home = &configuration.prepare_for_launch()?;
+    debug!("** Locating runtime");
+    let java_home = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {java_home:?}");
 
-    debug!("Resolving vm options");
-    let vm_options = get_full_vm_options(configuration)?;
+    debug!("** Collecting VM options");
+    let vm_options = get_full_vm_options(&configuration).context("Cannot collect JVM options")?;
+    debug!("VM options: {vm_options:?}");
 
-    debug!("Resolving args for vm launch");
+    debug!("** Launching JVM");
     let args = configuration.get_args();
-
-    let result = java::run_jvm_and_event_loop(java_home, vm_options, args.to_vec());
+    let result = java::run_jvm_and_event_loop(&java_home, vm_options, args.to_vec());
 
     log::logger().flush();
 
@@ -113,31 +131,12 @@ fn main_impl() -> Result<()> {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug)]
-pub struct IjStarterCommand {
-    pub ij_command: String,
-    pub is_project_path_required: bool,
-    pub is_arguments_required: bool,
-}
-
-#[allow(non_snake_case)]
-#[derive(Debug)]
-pub struct RemoteDevEnvVar {
-    pub name: String,
-    pub description: String,
-}
-
-#[allow(non_snake_case)]
-#[derive(Debug)]
-pub struct RemoteDevEnvVars(pub Vec<RemoteDevEnvVar>);
-
-#[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfo {
     pub productCode: String,
     pub productVendor: String,
     pub dataDirectoryName: String,
-    pub launch: Vec<ProductInfoLaunchField>,
+    pub launch: Vec<ProductInfoLaunchField>
 }
 
 #[allow(non_snake_case)]
@@ -149,210 +148,59 @@ pub struct ProductInfoLaunchField {
     pub additionalJvmArguments: Vec<String>
 }
 
-impl ProductInfo {
-    pub fn get_current_platform_launch_field(&self) -> Result<&ProductInfoLaunchField> {
-        let current_os = env::consts::OS;
-        let os_specific_launch_field =
-            self.launch.iter().find(|&l| l.os.to_lowercase() == current_os);
-
-        match os_specific_launch_field {
-            None => bail!("Could not find current os {current_os} launch element in product-info.json 'launch' field"),
-            Some(x) => Ok(x),
-        }
-    }
-}
-
-trait LaunchConfiguration {
+pub trait LaunchConfiguration {
     fn get_args(&self) -> &[String];
 
-    fn get_intellij_vm_options(&self) -> Result<Vec<String>>;
-    fn get_properties_file(&self) -> Result<Option<PathBuf>>;
+    fn get_vm_options(&self) -> Result<Vec<String>>;
+    fn get_properties_file(&self) -> Result<PathBuf>;
     fn get_class_path(&self) -> Result<Vec<String>>;
 
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
-pub fn is_remote_dev() -> bool {
-    let current_exe_path = get_current_exe();
-    debug!("Executable path: {:?}", current_exe_path);
-    let current_exe_name = current_exe_path.file_name()
-        .expect("Failed to get current exe filename");
-    debug!("Executable name: {:?}", current_exe_name);
-
-    current_exe_name.to_string_lossy().starts_with("remote-dev-server")
-}
-
-fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
+fn get_configuration(is_remote_dev: bool) -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
-    
-    let is_remote_dev = is_remote_dev();
-    debug!("is_remote_dev={is_remote_dev}");
-
-    let (remote_dev_project_path, ij_args) = match is_remote_dev {
-        true => {
-            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args)?;
-            (remote_dev_args.project_path, remote_dev_args.ij_args)
-        },
-        false => (None, cmd_args)
-    };
+    debug!("args={:?}", &cmd_args);
 
     if is_remote_dev {
-        // required for the most basic launch (e.g. showing help)
-        // as there may be nothing on user system and we'll crash
-        RemoteDevLaunchConfiguration::setup_font_config()?;
-    }
-
-    let default = DefaultLaunchConfiguration::new(ij_args)?;
-
-    match remote_dev_project_path {
-        None => Ok(Box::new(default)),
-        Some(x) => {
-            let config = RemoteDevLaunchConfiguration::new(&x, default)?;
-            Ok(Box::new(config))
-        }
+        RemoteDevLaunchConfiguration::new(cmd_args)
+    } else {
+        let configuration = DefaultLaunchConfiguration::new(cmd_args[1..].to_vec())?;
+        Ok(Box::new(configuration))
     }
 }
 
 pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
-
-fn unwrap_with_human_readable_error<S>(result: Result<S>, show_error_ui: bool) -> S {
-    match result {
-        Ok(x) => { x }
-        Err(e) => {
-            eprintln!("{e:?}");
-            error!("{e:?}");
-
-            if show_error_ui {
-                show_fail_to_start_message("Failed to start", format!("{e:?}").as_str())
-            }
-
-            std::process::exit(1);
-        }
-    }
-}
+pub const VERBOSE_LOGGING_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
 
 fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<Vec<String>> {
-    let mut full_vm_options: Vec<String> = Vec::new();
+    let mut vm_options = configuration.get_vm_options()?;
 
-    debug!("Resolving IDE properties file");
-    // 1. properties file
-    match configuration.get_properties_file()? {
-        Some(p) => {
-            let path_string = p.to_string_lossy();
-            let vm_option = format!("-Didea.properties.file={path_string}");
-            full_vm_options.push(vm_option);
+    debug!("Looking for custom properties environment variable");
+    match configuration.get_properties_file() {
+        Ok(path) => {
+            debug!("Custom properties file: {:?}", path);
+            let path_string = path.to_str().expect(&format!("Inconvertible path: {:?}", path));
+            vm_options.push(jvm_property!("idea.properties.file", path_string));
         }
-        None => {
-            debug!("IDE properties file is not set, skipping setting vm option")
-        }
-    };
-
-    debug!("Resolving classpath");
-    // 2. classpath
-    let class_path_separator = get_class_path_separator();
-    let class_path = configuration.get_class_path()?.join(class_path_separator);
-    let class_path_vm_option = "-Djava.class.path=".to_string() + class_path.as_str();
-    full_vm_options.push(class_path_vm_option);
-
-    debug!("Resolving IDE VM options");
-    // 3. vmoptions
-    let intellij_vm_options = configuration.get_intellij_vm_options()?;
-    full_vm_options.extend_from_slice(&intellij_vm_options);
-
-    Ok(full_vm_options)
-}
-
-impl std::fmt::Display for IjStarterCommand {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let path = if self.is_project_path_required {"/path/to/project"} else { "" };
-        let args = if self.is_arguments_required {"[arguments...]"} else { "" };
-        write!(f, "{} {}", path, args)
+        Err(e) => { debug!("Failed: {}", e.to_string()); }
     }
+
+    debug!("Assembling classpath");
+    let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
+    vm_options.push(jvm_property!("java.class.path", class_path));
+
+    Ok(vm_options)
 }
-
-pub fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
-    std::collections::HashMap::from([
-        ("run", IjStarterCommand {ij_command: "cwmHostNoLobby".to_string(), is_project_path_required: true, is_arguments_required: true}),
-        ("status", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
-        ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
-        ("remoteDevStatus", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
-        ("dumpLaunchParameters", IjStarterCommand {ij_command: "dump-launch-parameters".to_string(), is_project_path_required: false, is_arguments_required: false}),
-        ("warmup", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
-        ("warm-up", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
-        ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: true, is_arguments_required: false}),
-        ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
-        ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: true, is_arguments_required: false}),
-        ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
-        ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
-    ])
-}
-
-impl std::fmt::Display for RemoteDevEnvVars {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let max_len = self
-            .0
-            .iter()
-            .map(|remote_dev_env_var| remote_dev_env_var.name.len())
-            .max()
-            .unwrap_or(0);
-
-        for remote_dev_env_var in &self.0 {
-            write!(f, "\t{:max_len$} {}\n", remote_dev_env_var.name, remote_dev_env_var.description)?;
-        }
-        Ok(())
-    }
-}
-
-pub fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
-    RemoteDevEnvVars(vec![
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded chromium) in IDE".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other linux libraries from plugins/remote-dev-server/selfcontained. Use everything from the system. by default bundled libraries are used".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE".to_string(), description: "set to any value to use as the script name in this output".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_NON_INTERACTIVE".to_string(), description: "set to any value to skip all interactive shell prompts (set automatically if running without TTY)".to_string()},
-    ])
-}
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn get_class_path_separator<'a>() -> &'a str {
-    ":"
-}
-
-#[cfg(target_os = "windows")]
-fn get_class_path_separator<'a>() -> &'a str {
-    ";"
-}
-
-fn show_fail_to_start_message(title: &str, text: &str) {
-    let result = MessageDialog::new()
-        .set_title(title)
-        .set_text(text)
-        .set_type(MessageType::Error)
-        .show_alert();
-
-    match result {
-        Ok(_) => { }
-        Err(e) => {
-            // TODO: proper message
-            error!("Failed to show error message: {e:?}")
-        }
-    }
-}
-
 
 #[cfg(target_os = "windows")]
 pub fn get_config_home() -> Result<PathBuf> {
-    unsafe {
-        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
-    }
+    get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
 }
 
 #[cfg(target_os = "windows")]
 pub fn get_cache_home() -> Result<PathBuf> {
-    unsafe {
-        get_known_folder_path(&windows::Win32::UI::Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")
-    }
+    get_known_folder_path(&Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")
 }
 
 #[cfg(target_os = "windows")]
@@ -361,76 +209,37 @@ pub fn get_logs_home() -> Result<Option<PathBuf>> {
 }
 
 #[cfg(target_os = "windows")]
-pub unsafe fn get_known_folder_path(rfid: &GUID, human_readable: &str) -> Result<PathBuf> {
-    debug!("Calling SHGetKnownFolderPath");
-    let pwstr = unsafe {
-        SHGetKnownFolderPath(
-            rfid,
-            KF_FLAG_CREATE,
-            HANDLE(0)
-        )?
-    };
-
-    debug!("Converting PWSTR to u16 vec");
-    let path_wide_vec = unsafe {
-        pwstr.as_wide()
-    };
-
-    let folder_path = String::from_utf16(path_wide_vec)?;
-    debug!("SHGetKnownFolderPath path for known folder {human_readable}: {folder_path}");
-
-    Ok(PathBuf::from(folder_path))
+fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
+    debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
+    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, HANDLE(0)) }?;
+    let result_str = unsafe { result.to_string() }?;
+    debug!("  result: {}", result_str);
+    Ok(PathBuf::from(result_str))
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_config_home() -> Result<PathBuf> {
-    let result = get_user_home()
-        .join("Library")
-        .join("Application Support");
-
-    Ok(result)
+    Ok(get_user_home()?.join("Library/Application Support"))
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_cache_home() -> Result<PathBuf> {
-    let result = get_user_home()
-        .join("Library")
-        .join("Caches");
-
-    Ok(result)
+    Ok(get_user_home()?.join("Library/Caches"))
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_logs_home() -> Result<Option<PathBuf>> {
-    let result = get_user_home()
-        .join("Logs");
-
-    Ok(Some(result))
+    Ok(Some(get_user_home()?.join("Library/Logs")))
 }
 
-// CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
 #[cfg(target_os = "linux")]
 pub fn get_config_home() -> Result<PathBuf> {
-    let xdg_config_home = get_xdg_dir("XDG_CONFIG_HOME");
-
-    let result = match xdg_config_home {
-        Some(p) => { p }
-        None => { get_user_home().join(".config") }
-    };
-
-    Ok(result)
+    get_xdg_dir("XDG_CONFIG_HOME", ".config")
 }
 
 #[cfg(target_os = "linux")]
 pub fn get_cache_home() -> Result<PathBuf> {
-    let xdg_cache_home = get_xdg_dir("XDG_CACHE_HOME");
-
-    let result = match xdg_cache_home {
-        Some(p) => { p }
-        None => { get_user_home().join(".cache") }
-    };
-
-    Ok(result)
+    get_xdg_dir("XDG_CACHE_HOME", ".cache")
 }
 
 #[cfg(target_os = "linux")]
@@ -439,46 +248,22 @@ pub fn get_logs_home() -> Result<Option<PathBuf>> {
 }
 
 #[cfg(target_os = "linux")]
-fn get_xdg_dir(env_var_name: &str) -> Option<PathBuf> {
-    let xdg_dir = env::var(env_var_name).unwrap_or(String::from(""));
-    debug!("{env_var_name}={xdg_dir}");
-
-    if xdg_dir.is_empty() {
-        return None
-    }
-
-    let path = PathBuf::from(xdg_dir);
-    if !path.is_absolute() {
-        // TODO: consider change
+fn get_xdg_dir(env_var_name: &str, fallback: &str) -> Result<PathBuf> {
+    if let Ok(value) = env::var(env_var_name) {
+        let path = PathBuf::from(value);
+        if path.is_absolute() {
+            return Ok(path)
+        }
         warn!("{env_var_name} is not set to an absolute path ({path:?}), this is likely a misconfiguration");
     }
 
-    Some(path)
+    Ok(get_user_home()?.join(fallback))
 }
 
-// used in ${HOME}/.config
-// TODO: is this the same as env:
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn get_user_home() -> PathBuf {
-    // TODO: dirs::home_dir seems better then just simply using $HOME as it checks `getpwuid_r`
-
-    match env::var("HOME") {
-        Ok(s) => {
-            debug!("User home directory resolved as '{s}'");
-            let path = PathBuf::from(s);
-            if !path.is_absolute() {
-                warn!("User home directory is not absolute, this may be a misconfiguration");
-            }
-
-            path
-        }
-        Err(e) => {
-            // TODO: this seems wrong
-            warn!("Failed to get $HOME env var value: {e}, using / as home dir");
-
-            PathBuf::from("/")
-        }
-    }
+#[cfg(target_family = "unix")]
+#[allow(deprecated)]
+fn get_user_home() -> Result<PathBuf> {
+    env::home_dir().context("Cannot detect a user home directory")
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
@@ -486,23 +271,23 @@ pub fn is_running_in_docker() -> Result<bool> {
     docker::is_running_in_docker()
 }
 
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_docker_env_file_exist(home_path: Option<PathBuf>) -> Result<bool> {
     docker::is_docker_env_file_exist(home_path)
 }
 
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_docker_init_file_exist(home_path: Option<PathBuf>) -> Result<bool> {
     docker::is_docker_init_file_exist(home_path)
 }
 
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_control_group_matches_docker(cgroup_path: Option<PathBuf>) -> bool {
     docker::is_control_group_matches_docker(cgroup_path)
         .expect("Unable to detect Docker environment by cgroup file.")
 }
 
-#[cfg(any(target_os = "windows"))]
+#[cfg(target_os = "windows")]
 pub fn is_service_present(service_name: &str) -> bool {
     docker::is_service_present(service_name)
         .expect("Unable to detect Docker environment by getting windows service 'cexecsvc'.")

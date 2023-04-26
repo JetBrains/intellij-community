@@ -42,7 +42,7 @@ internal fun checkIcons(context: Context = Context()) {
         throw e
       }
       if (context.doSyncDevRepo || context.iconsCommitHashesToSync.isNotEmpty()) {
-        commit(context)
+        generateIconClassesAndCommit(context)
       }
     }
     else -> syncIconsRepo(context)

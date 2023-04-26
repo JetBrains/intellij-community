@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
+import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
@@ -258,7 +259,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
     if (icon != null) {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.INSTANCE.getMenuBarIcon(icon, myUseDarkIcons);
+        icon = IconUtilKt.getMenuBarIcon(icon, myUseDarkIcons);
       }
       else if (ActionMenu.shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);

@@ -89,8 +89,7 @@ public class CompressedAppendableFile {
     }
   }
 
-  @NotNull
-  public synchronized DataInputStream getStream(final long addr) throws IOException {
+  public synchronized @NotNull DataInputStream getStream(final long addr) throws IOException {
     initChunkLengthTable();
     loadAppendBuffer();
     return new DataInputStream(
@@ -98,8 +97,7 @@ public class CompressedAppendableFile {
     );
   }
 
-  @NotNull
-  protected Path getChunkLengthFile() {
+  protected @NotNull Path getChunkLengthFile() {
     return myBaseFile.resolveSibling(myBaseFile.getFileName() + CHUNK_LENGTH_FILE_EXTENSION);
   }
 
@@ -198,8 +196,7 @@ public class CompressedAppendableFile {
     }
   }
 
-  @NotNull
-  private DataInputStream getChunkStream(int pageNumber) throws IOException {
+  private @NotNull DataInputStream getChunkStream(int pageNumber) throws IOException {
     assert myFileLength != 0;
     int limit;
     long pageStartOffset;
@@ -224,13 +221,12 @@ public class CompressedAppendableFile {
       offset += myChunkLengthTable[baseOffset + index] & MAX_PAGE_LENGTH;
     }
     if (DO_DEBUG_SELF_CHECKS) {
-      assert myCompressedChunksFileOffsets.get(pageNumber) == offset;
+      assert myCompressedChunksFileOffsets.getLong(pageNumber) == offset;
     }
     return offset;
   }
 
-  @NotNull
-  protected InputStream getChunkInputStream(long offset, int pageSize) throws IOException {
+  protected @NotNull InputStream getChunkInputStream(long offset, int pageSize) throws IOException {
     InputStream in = Files.newInputStream(getChunksFile());
     long toSkip = offset;
     while (toSkip > 0) {
@@ -375,18 +371,15 @@ public class CompressedAppendableFile {
     }
   }
 
-  @NotNull
-  protected DataOutputStream getChunkLengthAppendStream() throws IOException {
+  protected @NotNull DataOutputStream getChunkLengthAppendStream() throws IOException {
     return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(getChunkLengthFile().toFile(), true)));
   }
 
-  @NotNull
-  protected DataOutputStream getChunkAppendStream() throws IOException {
+  protected @NotNull DataOutputStream getChunkAppendStream() throws IOException {
     return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(getChunksFile().toFile(), true)));
   }
 
-  @NotNull
-  protected Path getChunksFile() {
+  protected @NotNull Path getChunksFile() {
     return myBaseFile.resolveSibling(myBaseFile.getFileName() + ".a");
   }
 
@@ -424,8 +417,7 @@ public class CompressedAppendableFile {
     }
   }
 
-  @NotNull
-  private Path getIncompleteChunkFile() {
+  private @NotNull Path getIncompleteChunkFile() {
     return myBaseFile.resolveSibling(myBaseFile.getFileName() + INCOMPLETE_CHUNK_FILE_EXTENSION);
   }
 

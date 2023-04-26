@@ -353,7 +353,7 @@ public final class HighlightManagerImpl extends HighlightManager {
    */
   @Contract(pure = true)
   @HideFlags
-  public @Nullable Integer getHideFlags(@NotNull RangeHighlighter highlighter) {
+  public static @Nullable Integer getHideFlags(@NotNull RangeHighlighter highlighter) {
     //noinspection MagicConstant
     return highlighter.getUserData(HIGHLIGHT_FLAGS_KEY);
   }

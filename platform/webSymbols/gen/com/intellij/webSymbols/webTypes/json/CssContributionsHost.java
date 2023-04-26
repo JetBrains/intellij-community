@@ -15,7 +15,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "pseudo-elements",
     "pseudo-classes",
     "functions",
-    "classes"
+    "classes",
+    "parts"
 })
 public interface CssContributionsHost
     extends GenericContributionsHost
@@ -91,6 +92,20 @@ public interface CssContributionsHost
      */
     @JsonProperty("classes")
     public void setClasses(List<CssGenericItem> classes);
+
+    /**
+     * CSS parts
+     * 
+     */
+    @JsonProperty("parts")
+    public List<CssGenericItem> getParts();
+
+    /**
+     * CSS parts
+     * 
+     */
+    @JsonProperty("parts")
+    public void setParts(List<CssGenericItem> parts);
 
     @JsonAnyGetter
     public Map<String, GenericCssContributions> getAdditionalProperties();

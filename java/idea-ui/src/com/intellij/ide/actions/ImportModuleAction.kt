@@ -17,8 +17,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -36,6 +36,25 @@ private const val LAST_IMPORTED_LOCATION = "last.imported.location"
 private val LOG = logger<ImportModuleAction>()
 
 open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    doImport(getEventProject(e))
+  }
+
+  override fun update(e: AnActionEvent) {
+    val presentation = e.presentation
+    presentation.isEnabled = getEventProject(e) != null
+    NewProjectAction.updateActionText(this, e)
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun getActionText(isInNewSubmenu: Boolean, isInJavaIde: Boolean): String {
+    return JavaUiBundle.message("import.module.action.text", if (isInNewSubmenu) 1 else 0, if (isInJavaIde) 1 else 0)
+  }
+
+  override fun isDumbAware() = true
+
   companion object {
 
     @JvmStatic
@@ -155,80 +174,79 @@ open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
         return AddModuleWizard(project, dialogParent, path, *availableProviders)
       }
     }
-  }
 
-  override fun actionPerformed(e: AnActionEvent) {
-    doImport(getEventProject(e))
-  }
+    private fun doCreateFromWizard(project: Project?, wizard: AbstractProjectWizard): List<Module> {
+      if (project == null) {
+        val newProject = importProject(wizard)
+        return newProject?.modules?.asList() ?: emptyList()
+      }
+      else {
+        return importModule(project, wizard)
+      }
+    }
 
-  override fun update(e: AnActionEvent) {
-    val presentation = e.presentation
-    presentation.isEnabled = getEventProject(e) != null
-    NewProjectAction.updateActionText(this, e)
-  }
+    private fun importProject(wizard: AbstractProjectWizard): Project? {
+      return when (val builder = wizard.projectBuilder) {
+        is DeprecatedProjectBuilderForImport -> {
+          openProject(builder, wizard)
+        }
+        else -> {
+          NewProjectUtil.createFromWizard(wizard)
+        }
+      }
+    }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  override fun getActionText(isInNewSubmenu: Boolean, isInJavaIde: Boolean): String {
-    return JavaUiBundle.message("import.module.action.text", if (isInNewSubmenu) 1 else 0, if (isInJavaIde) 1 else 0)
-  }
-
-  override fun isDumbAware() = true
-}
-
-private fun doCreateFromWizard(project: Project?, wizard: AbstractProjectWizard): List<Module> {
-  val projectBuilder = wizard.projectBuilder
-  if (project == null) {
-    val newProject = if (projectBuilder is DeprecatedProjectBuilderForImport) {
+    private fun openProject(builder: DeprecatedProjectBuilderForImport, wizard: AbstractProjectWizard): Project? {
       // the path to remove import action
       val projectPath = Path.of(wizard.newProjectFilePath)
       val file = ProjectUtilCore.getFileAndRefresh(projectPath)
       if (file == null) {
         LOG.warn(String.format("Cannot find project file in vfs `%s`", projectPath))
-        null
+        return null
       }
-      else {
-        val openProcessor = (projectBuilder as DeprecatedProjectBuilderForImport).getProjectOpenProcessor()
-        runBlockingUnderModalProgress {
-          // openProjectAsync must be implemented
-          openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)!!
+      val openProcessor = builder.getProjectOpenProcessor()
+      return runBlockingUnderModalProgress {
+        // openProjectAsync must be implemented
+        openProcessor.openProjectAsync(virtualFile = file, projectToClose = null, forceOpenInNewFrame = false)!!
+      }
+    }
+
+    private fun importModule(project: Project, wizard: AbstractProjectWizard): List<Module> {
+      val builder = wizard.projectBuilder
+      try {
+        return when {
+          wizard.stepCount > 0 ->
+            listOfNotNull(NewModuleAction().createModuleFromWizard(project, null, wizard))
+          builder == null ->
+            emptyList()
+          builder.validate(project, project) ->
+            builder.commit(project) ?: emptyList()
+          else ->
+            emptyList()
         }
       }
-    }
-    else {
-      NewProjectUtil.createFromWizard(wizard)
-    }
-    return if (newProject == null) emptyList() else ModuleManager.getInstance(newProject).modules.asList()
-  }
-
-  try {
-    if (wizard.stepCount > 0) {
-      return listOfNotNull(NewModuleAction().createModuleFromWizard(project, null, wizard))
-    }
-    else {
-      return if (projectBuilder!!.validate(project, project)) projectBuilder.commit(project) else emptyList()
-    }
-  }
-  finally {
-    projectBuilder?.cleanup()
-  }
-}
-
-private fun getFileChooserDescription(providers: List<ProjectImportProvider>): @NlsContexts.Label String {
-  val builder = HtmlBuilder().append(JavaUiBundle.message("select")).append(" ")
-  var first = true
-  if (providers.isNotEmpty()) {
-    for (provider in providers) {
-      val sample = provider.fileSample ?: continue
-      if (!first) {
-        builder.append(", ").br()
+      finally {
+        builder?.cleanup()
       }
-      else {
-        first = false
+    }
+
+    private fun getFileChooserDescription(providers: List<ProjectImportProvider>): @NlsContexts.Label String {
+      val builder = HtmlBuilder().append(JavaUiBundle.message("select")).append(" ")
+      var first = true
+      if (providers.isNotEmpty()) {
+        for (provider in providers) {
+          val sample = provider.fileSample ?: continue
+          if (!first) {
+            builder.append(", ").br()
+          }
+          else {
+            first = false
+          }
+          builder.appendRaw(sample)
+        }
       }
-      builder.appendRaw(sample)
+      builder.append(".")
+      return builder.wrapWith("html").toString()
     }
   }
-  builder.append(".")
-  return builder.wrapWith("html").toString()
 }

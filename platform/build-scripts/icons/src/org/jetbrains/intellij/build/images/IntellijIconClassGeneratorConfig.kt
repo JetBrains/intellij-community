@@ -77,6 +77,45 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "Jinja2Icons",
         packageName = "com.jetbrains.jinja2"
       )
+
+      "intellij.bigdatatools.visualisation" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsVisualisationIcons",
+                                                                                      packageName = "com.intellij.bigdatatools.visualization")
+      "intellij.bigdatatools.emr" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsEmrIcons",
+                                                                                      packageName = "com.intellij.bigdatatools.emr")
+      "intellij.bigdatatools.zeppelin" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsZeppelinIcons",
+                                                                                 packageName = "com.intellij.bigdatatools.zeppelin")
+      "intellij.bigdatatools.tencent.cos" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsTencentCosIcons",
+                                                                                    packageName = "com.intellij.bigdatatools.tencent.cos")
+      "intellij.bigdatatools.sparkSubmit" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsSparkSubmitIcons",
+                                                                                    packageName = "com.intellij.bigdatatools.sparkSubmit")
+      "intellij.bigdatatools.sparkMonitoring" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsSparkMonitoringIcons",
+                                                                                        packageName = "com.intellij.bigdatatools.sparkMonitoring")
+      "intellij.bigdatatools.sftp" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsSftpIcons",
+                                                                             packageName = "com.intellij.bigdatatools.sftp")
+      "intellij.bigdatatools.kafka" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsKafkaIcons",
+                                                                              packageName = "com.intellij.bigdatatools.kafka")
+      "intellij.bigdatatools.jupyter" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsJupyterIcons",
+                                                                                packageName = "com.intellij.bigdatatools.notebooks")
+      "intellij.bigdatatools.hiveMetastore" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsHiveMetastoreIcons",
+                                                                                      packageName = "com.intellij.bigdatatools.hiveMetastore")
+      "intellij.bigdatatools.hdfs" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsHdfsIcons",
+                                                                             packageName = "com.intellij.bigdatatools.hdfs")
+      "intellij.bigdatatools.hadoopMonitoring" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsHadoopMonitoringIcons",
+                                                                                         packageName = "com.intellij.bigdatatools.hadoopMonitoring")
+      "intellij.bigdatatools.glue" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsGlueIcons",
+                                                                             packageName = "com.intellij.bigdatatools.glue")
+      "intellij.bigdatatools.flink" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsFlinkIcons",
+                                                                              packageName = "com.intellij.bigdatatools.flink")
+      "intellij.bigdatatools.dataproc" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsDataprocIcons",
+                                                                                 packageName = "com.intellij.bigdatatools.dataproc")
+      "intellij.bigdatatools.databricks" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsDatabricksIcons",
+                                                                                   packageName = "com.intellij.bigdatatools.databricks")
+      "intellij.bigdatatools.common" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsCommonIcons",
+                                                                               packageName = "com.intellij.bigdatatools.common")
+      "intellij.swagger.core" -> IntellijIconClassGeneratorModuleConfig(className = "SwaggerCoreIcons",
+                                                                        packageName = "com.intellij.swagger.core")
+      "intellij.ml.llm" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmIcons", packageName = "com.intellij.ml.llm")
+
       else -> super.getConfigForModule(moduleName)
     }
   }

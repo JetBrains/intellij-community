@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -119,6 +120,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private List<String> myInitialScopesOrder;
   private Disposable myDisposable = Disposer.newDisposable();
+  private ToolOptionsSeparator myOptionsSeparator;
 
   public SingleInspectionProfilePanel(@NotNull ProjectInspectionProfileManager projectProfileManager,
                                       @NotNull InspectionProfileModifiableModel profile) {
@@ -361,7 +363,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       Element newConfig = Descriptor.createConfigElement(state.getTool());
       if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(() -> myTreeTable.repaint(), 300);
+        myAlarm.addRequest(() -> {
+          myTreeTable.repaint();
+          if (myOptionsSeparator != null) myOptionsSeparator.setupResetLinkVisibility();
+        }, 300);
         return true;
       }
       return false;
@@ -748,8 +753,10 @@ public class SingleInspectionProfilePanel extends JPanel {
           final InspectionProfileEntry tool = defaultDescriptor.getToolWrapper().getTool();
           try {
             if (description == null) throw new NullPointerException();
-            String markedDescription = SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(description, tool.getClass().getClassLoader()), myProfileFilter.getFilter());
-            DescriptionEditorPaneKt.readHTML(myDescription, markedDescription);
+            @NlsSafe String markedDescription = SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(description, tool.getClass().getClassLoader()), myProfileFilter.getFilter());
+            DescriptionEditorPaneKt.readHTMLWithCodeHighlighting(myDescription,
+                                                                 markedDescription,
+                                                                 descriptor.getState().getTool().getLanguage());
           }
           catch (Throwable t) {
             LOG.error("Failed to load description for: " +
@@ -989,7 +996,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
       if (showOptionPanel) {
         if (showDefaultConfigurationOptions) {
-          myOptionsPanel.add(new ToolOptionsSeparator(configPanelAnchor, scopesAndScopesAndSeveritiesTable), constraint.nextLine().weighty(0).fillCellHorizontally());
+          myOptionsSeparator = new ToolOptionsSeparator(scopesAndScopesAndSeveritiesTable);
+          myOptionsPanel.add(myOptionsSeparator, constraint.nextLine().weighty(0).fillCellHorizontally());
         }
         myOptionsPanel.add(configPanelAnchor, constraint.nextLine().fillCell());
       }
@@ -1362,7 +1370,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     @Nullable
     private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
 
-    ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
+    ToolOptionsSeparator(@Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;
       setLayout(new GridBagLayout());
       setBorder(JBUI.Borders.emptyTop(IdeBorderFactory.TITLED_BORDER_INDENT));
@@ -1371,9 +1379,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       add(myOptionsLabel, constraint.next().anchor(GridBagConstraints.LINE_START));
       add(new JSeparator(SwingConstants.HORIZONTAL), constraint.next().weightx(1.0).anchor(GridBagConstraints.CENTER).fillCellHorizontally().insets(2, TitledSeparator.SEPARATOR_LEFT_INSET, 0, TitledSeparator.SEPARATOR_RIGHT_INSET));
 
-      UserActivityWatcher userActivityWatcher = new UserActivityWatcher();
-      userActivityWatcher.addUserActivityListener(() -> setupResetLinkVisibility());
-      userActivityWatcher.register(options);
       myResetLink = new ActionLink(IdeBundle.message("reset.action.text"), e -> {
         ScopeToolState state = getSelectedState();
         if (state != null) {

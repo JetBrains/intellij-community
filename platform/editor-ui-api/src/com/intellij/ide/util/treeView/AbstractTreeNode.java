@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -35,7 +35,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   private Object myValue;
   private boolean myNullValueSet;
   private final boolean myNodeWrapper;
-  static final Object TREE_WRAPPER_VALUE = new Object();
+  protected static final Object TREE_WRAPPER_VALUE = new Object();
 
   protected AbstractTreeNode(Project project, @NotNull T value) {
     super(project, null);
@@ -253,20 +253,6 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @Override
   public String getName() {
     return myName;
-  }
-
-  @Override
-  public void navigate(boolean requestFocus) {
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
   }
 
   @Nullable

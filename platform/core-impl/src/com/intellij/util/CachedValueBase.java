@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,13 +9,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.NotNullList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.List;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * @author Dmitry Avdeev
@@ -109,7 +111,7 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   private Data<T> getRawData() {
-    return SoftReference.dereference(myData);
+    return dereference(myData);
   }
 
   protected boolean isUpToDate(@NotNull Data<T> data) {

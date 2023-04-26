@@ -37,8 +37,8 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.BUILD_SRC_NAME;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
+import static org.jetbrains.plugins.gradle.util.GradleConstants.BUILD_SRC_NAME;
 
 /**
  * @author Vladislav.Soroka

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getExternalEventLogSettings
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -15,38 +16,42 @@ import org.jetbrains.annotations.ApiStatus
 @Service(Service.Level.APP)
 class EventLogListenersManager {
   private val subscribers = MultiMap.createConcurrent<String, StatisticsEventLogListener>()
-  private var listenerFromEP: StatisticsEventLogListener? = null
+  private var listenersFromEP = ConcurrentCollectionFactory.createConcurrentMap<String, StatisticsEventLogListener>()
 
   init {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(ExternalEventLogSettings.EP_NAME)) {
-      addListenerFromEP()
+      addListenersFromEP()
 
+      // Support for dynamic plugin
       ExternalEventLogSettings.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ExternalEventLogSettings> {
-        override fun extensionAdded(extension: ExternalEventLogSettings, pluginDescriptor: PluginDescriptor) {
-          addListenerFromEP()
-        }
+        override fun extensionAdded(extension: ExternalEventLogSettings, pluginDescriptor: PluginDescriptor) = addListenersFromEP()
 
         override fun extensionRemoved(extension: ExternalEventLogSettings, pluginDescriptor: PluginDescriptor) {
-          if (listenerFromEP == null) return
+          if (listenersFromEP.isEmpty()) return
           // Do not filter providers by isForceCollectionEnabled flag as it can be dynamic
-          StatisticsEventLogProviderUtil.getEventLogProviders().forEach { provider ->
-            unsubscribe(listenerFromEP!!, provider.recorderId)
+          StatisticsEventLogProviderUtil.getEventLogProviders().map { it.recorderId }.forEach { recorderId ->
+            listenersFromEP[recorderId]?.let { listener ->
+              unsubscribe(listener, recorderId)
+              listenersFromEP.remove(recorderId)
+            }
           }
-          listenerFromEP = null
         }
       })
     }
   }
 
-  private fun addListenerFromEP() {
-    if (listenerFromEP != null) return // Only one EP instance can exist do not bother if listener has been set
+  private fun addListenersFromEP() {
+    StatisticsEventLogProviderUtil.getEventLogProviders().filter { it.isLoggingAlwaysActive() }
+      .map { it.recorderId }.forEach { addListenerFromEP(it) }
+  }
+
+  private fun addListenerFromEP(recorderId: String) {
+    if (listenersFromEP[recorderId] != null) return // Only one EP instance can exist so do not bother if another listener has been registered for this recorderId
     val externalEventLogSettings = getExternalEventLogSettings()
     externalEventLogSettings?.let {
-      externalEventLogSettings.eventLogListener?.let { eventLogListener ->
-        listenerFromEP = eventLogListener
-        StatisticsEventLogProviderUtil.getEventLogProviders().filter { it.isForceCollectionEnabled() }.forEach { provider ->
-          subscribe(eventLogListener, provider.recorderId)
-        }
+      externalEventLogSettings.getEventLogListener(recorderId)?.let { eventLogListener ->
+        listenersFromEP[recorderId] = eventLogListener
+        subscribe(eventLogListener, recorderId)
       }
     }
   }

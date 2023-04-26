@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -12,7 +11,6 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
@@ -21,6 +19,7 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoint.Area
+import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
@@ -35,8 +34,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
-    if (javaPsi.language.id == "Groovy" || javaPsi.classKind != JvmClassKind.CLASS ||
-        PsiUtil.isInnerClass(javaPsi) || PsiUtil.isLocalOrAnonymousClass(javaPsi) || PsiUtil.isAbstractClass(javaPsi) ||
+    if (javaPsi.language.id == "Groovy" || !PsiUtil.isExtensionPointImplementationCandidate(javaPsi) ||
         javaPsi.hasModifierProperty(PsiModifier.PRIVATE) /* ignore private classes */) {
       return null
     }

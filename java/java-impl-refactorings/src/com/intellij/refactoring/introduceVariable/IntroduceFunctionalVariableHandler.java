@@ -15,7 +15,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -44,9 +43,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<>() {
-      @Override
-      public void pass(PsiElement[] elements) {
+    ExtractMethodHandler.selectAndPass(project, editor, file, elements-> {
         if (elements.length == 0) {
           String message = RefactoringBundle
             .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
@@ -108,7 +105,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
                                                }).showInBestPositionFor(editor);
         }
       }
-    });
+    );
   }
 
   @Override

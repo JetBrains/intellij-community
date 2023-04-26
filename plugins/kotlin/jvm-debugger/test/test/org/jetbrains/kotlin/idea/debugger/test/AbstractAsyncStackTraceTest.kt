@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.process.ProcessOutputTypes
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.getSuspendExitMode
@@ -16,6 +17,8 @@ abstract class AbstractAsyncStackTraceTest : KotlinDescriptorTestCaseWithSteppin
     private companion object {
         const val MARGIN = "    "
     }
+
+    override fun useIrBackend(): Boolean = true
 
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
         doOnBreakpoint {
@@ -69,4 +72,10 @@ abstract class AbstractAsyncStackTraceTest : KotlinDescriptorTestCaseWithSteppin
             }
         }
     }
+}
+
+abstract class AbstractK1IdeK2CodeAsyncStackTraceTest : AbstractAsyncStackTraceTest() {
+    override val compileWithK2 = true
+
+    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
 }

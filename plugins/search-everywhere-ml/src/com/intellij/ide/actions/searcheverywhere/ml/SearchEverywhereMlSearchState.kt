@@ -58,9 +58,4 @@ internal class SearchEverywhereMlSearchState(
 internal data class SearchEverywhereMLItemInfo(val id: Int?,
                                                val contributorId: String,
                                                val features: List<EventPair<*>>,
-                                               val contributorFeatures: List<EventPair<*>>) {
-  fun featuresAsMap(): Map<String, Any> = features.mapNotNull {
-    val data = it.data
-    if (data == null) null else it.field.name to data
-  }.toMap()
-}
+                                               val contributorFeatures: List<EventPair<*>>)

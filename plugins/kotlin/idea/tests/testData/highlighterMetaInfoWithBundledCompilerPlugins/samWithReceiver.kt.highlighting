@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR/samWithReceiver_fake_plugin.jar -P plugin:org.jetbrains.kotlin.samWithReceiver:annotation=test.MySamMarker
+// FILE: main.kt
+package test
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>import<!> <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>JavaSamInterface<!>
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>MySamMarker<!>
+
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>() {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>JavaSamInterface<!> {
+        val <!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>receiver<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>String<!> = this
+    }
+}

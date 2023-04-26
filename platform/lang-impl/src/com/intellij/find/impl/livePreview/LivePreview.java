@@ -393,7 +393,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   private RangeHighlighter addHighlighter(int startOffset, int endOffset, @NotNull TextAttributes attributes) {
     Project project = mySearchResults.getProject();
-    if (project == null || project.isDisposed()) return null;
+    if (project.isDisposed()) return null;
     List<RangeHighlighter> sink = new ArrayList<>();
     HighlightManager.getInstance(project).addRangeHighlight(mySearchResults.getEditor(), startOffset, endOffset, attributes, false, sink);
     RangeHighlighter result = ContainerUtil.getFirstItem(sink);
@@ -403,7 +403,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   private void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     Project project = mySearchResults.getProject();
-    if (project == null || project.isDisposed()) return;
+    if (project.isDisposed()) return;
     HighlightManager.getInstance(project).removeSegmentHighlighter(mySearchResults.getEditor(), highlighter);
   }
 

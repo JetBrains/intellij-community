@@ -8,8 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Consumer
-import com.intellij.util.EmptyConsumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.TimedVcsCommit
@@ -118,8 +116,7 @@ fun getIncorrectCommitsFromGit(project: Project, root: VirtualFile): MutableSet<
     GitLogProvider.appendTextFilterParameters(MAGIC_REGEX, true, false, filterParameters)
 
     val result = mutableSetOf<Hash>()
-    GitLogUtil.readTimedCommits(project, root, filterParameters, EmptyConsumer.getInstance(),
-                                EmptyConsumer.getInstance(), Consumer { commit -> result.add(commit.id) })
+    GitLogUtil.readTimedCommits(project, root, filterParameters, {}, {}, { commit -> result.add(commit.id) })
     return@computeWithSpan result
   }
 }

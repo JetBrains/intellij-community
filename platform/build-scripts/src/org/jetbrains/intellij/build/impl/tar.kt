@@ -31,7 +31,7 @@ fun tar(archive: Path, rootDir: String, directories: List<Path>, executableFileM
   }
 }
 
-private class FileSystemIndependentTarGzCompressor(archive: Path, val mode: (String, Int) -> Int) : Compressor.Tar(archive.toFile(),
+private class FileSystemIndependentTarGzCompressor(archive: Path, val mode: (String, Int) -> Int) : Compressor.Tar(archive,
                                                                                                                    Compression.GZIP) {
   override fun writeFileEntry(name: String,
                               source: InputStream,

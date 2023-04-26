@@ -7,14 +7,12 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 
 @State(name = "ReaderModeSettings", storages = [
   Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
   Storage(StoragePathMacros.WORKSPACE_FILE, deprecated = true)
 ])
-class ReaderModeSettingsImpl : PersistentStateComponentWithModificationTracker<ReaderModeSettingsImpl.State>, ReaderModeSettings {
+class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : PersistentStateComponentWithModificationTracker<ReaderModeSettingsImpl.State>, ReaderModeSettings {
   private var myState = State()
 
   class State : BaseState() {
@@ -36,10 +34,7 @@ class ReaderModeSettingsImpl : PersistentStateComponentWithModificationTracker<R
     var mode: ReaderMode = ReaderMode.LIBRARIES_AND_READ_ONLY
   }
 
-  override val coroutineScope = CoroutineScope(SupervisorJob())
-
   override fun dispose() {
-    coroutineScope.cancel()
   }
 
   override var visualFormattingChosenScheme: ReaderModeSettings.Scheme

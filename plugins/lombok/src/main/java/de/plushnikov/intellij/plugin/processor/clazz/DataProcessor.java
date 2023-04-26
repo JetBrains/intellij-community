@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
@@ -54,6 +55,10 @@ public class DataProcessor extends AbstractClassProcessor {
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     Collection<String> result = new ArrayList<>();
 
+    final String staticConstructorName = getStaticConstructorNameValue(psiAnnotation);
+    if(StringUtil.isNotEmpty(staticConstructorName)) {
+      result.add(staticConstructorName);
+    }
     result.addAll(getNoArgsConstructorProcessor().getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation));
     result.addAll(getToStringProcessor().getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation));
     result.addAll(getEqualsAndHashCodeProcessor().getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation));
@@ -61,6 +66,10 @@ public class DataProcessor extends AbstractClassProcessor {
     result.addAll(getSetterProcessor().getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation));
 
     return result;
+  }
+
+  private static String getStaticConstructorNameValue(@NotNull PsiAnnotation psiAnnotation) {
+    return PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
   }
 
   @Override
@@ -74,7 +83,7 @@ public class DataProcessor extends AbstractClassProcessor {
         getEqualsAndHashCodeProcessor().validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
       }
 
-      final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
+      final String staticName = getStaticConstructorNameValue(psiAnnotation);
       if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
         getRequiredArgsConstructorProcessor().validateBaseClassConstructor(psiClass, builder);
       }
@@ -107,7 +116,7 @@ public class DataProcessor extends AbstractClassProcessor {
     }
 
     final boolean hasConstructorWithoutParameters;
-    final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
+    final String staticName = getStaticConstructorNameValue(psiAnnotation);
     if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
       target.addAll(
         getRequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, true));

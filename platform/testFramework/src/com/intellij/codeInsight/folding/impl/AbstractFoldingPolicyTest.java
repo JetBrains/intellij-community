@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +25,7 @@ public abstract class AbstractFoldingPolicyTest extends BasePlatformTestCase {
   protected void doTest(@NotNull String text, @NotNull String ext) {
     myFixture.configureByText("test." + ext, text);
 
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myFixture.getEditor());
+    EditorTestUtil.buildInitialFoldingsInBackground(myFixture.getEditor());
     EditorFoldingInfo info = EditorFoldingInfo.get(myFixture.getEditor());
     FoldRegion[] foldRegions = myFixture.getEditor().getFoldingModel().getAllFoldRegions();
     assertTrue(foldRegions.length > 0);

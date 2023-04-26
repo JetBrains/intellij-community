@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.project.Project
@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
-import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import git4idea.GitVcs
@@ -25,11 +24,11 @@ class GitLogIndexer(private val project: Project,
                     private val repositoryManager: GitRepositoryManager) : VcsLogIndexer {
   @Throws(VcsException::class)
   override fun readAllFullDetails(root: VirtualFile, encoder: VcsLogIndexer.PathsEncoder,
-                                  commitConsumer: Consumer<in VcsLogIndexer.CompressedDetails>) {
+                                  commitConsumer: com.intellij.util.Consumer<in VcsLogIndexer.CompressedDetails>) {
     val repository = getRepository(repositoryManager, root) ?: return
     val requirements = GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenameLimit.Value(RENAME_LIMIT),
                                              DiffInMergeCommits.DIFF_TO_PARENTS)
-    GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer, requirements, true,
+    GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer::consume, requirements, true,
                                                                           *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
   }
 
@@ -37,11 +36,11 @@ class GitLogIndexer(private val project: Project,
   override fun readFullDetails(root: VirtualFile,
                                hashes: List<String>,
                                encoder: VcsLogIndexer.PathsEncoder,
-                               commitConsumer: Consumer<in VcsLogIndexer.CompressedDetails>) {
+                               commitConsumer: com.intellij.util.Consumer<in VcsLogIndexer.CompressedDetails>) {
     val repository = getRepository(repositoryManager, root) ?: return
     val requirements = GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenameLimit.Value(RENAME_LIMIT),
                                              DiffInMergeCommits.DIFF_TO_PARENTS)
-    GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer)
+    GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer::consume)
   }
 
   override fun getSupportedVcs(): VcsKey {
