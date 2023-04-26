@@ -36,7 +36,7 @@ internal class GitLabMergeRequestsPanelFactory {
       }
 
       val groupId = "GitLab.Merge.Request.List.Actions"
-      PopupHandler.installSelectionListPopup(list, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
+      PopupHandler.installPopupMenu(list, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
       EmptyAction.registerWithShortcutSet("GitLab.Merge.Request.Show", shortcuts, list)
     }
