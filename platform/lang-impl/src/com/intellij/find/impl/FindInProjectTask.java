@@ -2,6 +2,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
@@ -238,7 +239,7 @@ final class FindInProjectTask {
     Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
     if (pair == null) return true;
 
-    Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ContainerUtil.newConcurrentSet());
+    Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ConcurrentCollectionFactory.createConcurrentSet());
     PsiFile psiFile = pair.first;
     VirtualFile sourceVirtualFile = pair.second;
 

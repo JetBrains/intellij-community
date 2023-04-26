@@ -104,6 +104,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
       return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
     });
 
+    Objects.requireNonNull(myArchiveFileName, "archiveFileName is not specified");
     var entity = ExtensionsKt.addArchivePackagingElementEntity(diff, myArchiveFileName, children, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;

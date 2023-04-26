@@ -4,10 +4,12 @@ package com.intellij.ide.impl;
 import com.intellij.ide.CompositeSelectInTarget;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.actions.SelectInTargetPreferringEditorContext;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.SelectInProjectViewImpl;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
@@ -34,7 +36,10 @@ import java.util.function.Supplier;
 import static com.intellij.ide.projectView.impl.ProjectViewPane.canBeSelectedInProjectView;
 import static com.intellij.psi.SmartPointerManager.createPointer;
 
-public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper implements CompositeSelectInTarget {
+public abstract class ProjectViewSelectInTarget
+  extends SelectInTargetPsiWrapper
+  implements CompositeSelectInTarget, SelectInTargetPreferringEditorContext
+{
   private String mySubId;
 
   protected ProjectViewSelectInTarget(Project project) {
@@ -79,14 +84,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     ActionCallback result = new ActionCallback();
     Runnable runnable = () -> {
       projectView.changeViewCB(id, subviewId).doWhenProcessed(() -> {
-        Object element = toSelectSupplier.get();
-        AbstractProjectViewPane pane = requestFocus ? null : projectView.getProjectViewPaneById(id);
-        if (pane != null && pane.isVisibleAndSelected(element)) {
-          result.setDone();
-        }
-        else {
-          projectView.selectCB(element, virtualFile, requestFocus).notify(result);
-        }
+        project.getService(SelectInProjectViewImpl.class).ensureSelected(id, virtualFile, toSelectSupplier, requestFocus, result);
       });
     };
 

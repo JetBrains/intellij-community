@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +32,19 @@ public abstract class PluggableFileWatcher {
    * The inputs to this method must be absolute and free of symbolic links.
    *
    * @implNote An implementation <b>must report</b> paths it doesn't recognize via {@link FileWatcherNotificationSink#notifyManualWatchRoots}.
+   * On application shutdown, the corresponding parameter is set to {@code true} and the lists are empty; in this case,
+   * implementations should minimize their operations to speed up shutdown.
    */
-  public abstract void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat);
+  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat, boolean shuttingDown) {
+    setWatchRoots(recursive, flat);
+  }
+
+  /** @deprecated please override {@link #setWatchRoots(List, List, boolean)} */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
+    PluginException.reportDeprecatedDefault(this.getClass(), "setWatchRoots", "Please override PluggableFileWatcher#setWatchRoots(List, List, boolean)");
+  }
 
   public void resetChangedPaths() { }
 

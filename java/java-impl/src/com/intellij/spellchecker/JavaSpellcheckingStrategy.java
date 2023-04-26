@@ -1,29 +1,20 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker;
 
 import com.intellij.codeInspection.SuppressManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.codeInspection.util.ChronoUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.siyeh.ig.callMatcher.CallHandler;
+import com.siyeh.ig.callMatcher.CallMapper;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 /**
  * @author shkate@jetbrains.com
@@ -34,6 +25,33 @@ public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
   private final LiteralExpressionTokenizer myLiteralExpressionTokenizer = new LiteralExpressionTokenizer();
   private final NamedElementTokenizer myNamedElementTokenizer = new NamedElementTokenizer();
 
+
+  private static final CallMapper<ArgumentMatcher> SKIP_ARGUMENT_METHOD_HANDLER = new CallMapper<>(
+    CallHandler.of(ChronoUtil.FORMAT_PATTERN_METHOD_MATCHER, methodCall -> argumentNumber(0, methodCall))
+  );
+
+  private static final Map<String, BiPredicate<PsiNewExpression, PsiElement>> SKIP_ARGUMENT_CONSTRUCTOR_HANDLER =
+    Map.ofEntries(
+      Map.entry("java.text.SimpleDateFormat", (expression, psiElement) -> argumentNumber(0, expression).test(psiElement))
+    );
+
+  interface ArgumentMatcher extends Predicate<PsiElement> {
+  }
+
+  private static ArgumentMatcher argumentNumber(@SuppressWarnings("SameParameterValue") int number, @NotNull PsiCall callExpression) {
+    return psiElement -> {
+      PsiExpressionList argumentList = callExpression.getArgumentList();
+      if (argumentList == null) {
+        return false;
+      }
+      PsiExpression[] expressions = argumentList.getExpressions();
+      if (number < 0 || number >= expressions.length) {
+        return false;
+      }
+      return expressions[number] == psiElement;
+    };
+  }
+
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
@@ -43,8 +61,9 @@ public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
     if (element instanceof PsiDocComment) {
       return myDocCommentTokenizer;
     }
-    if (element instanceof PsiLiteralExpression) {
-      if (SuppressManager.isSuppressedInspectionName((PsiLiteralExpression)element)) {
+    if (element instanceof PsiLiteralExpression literalExpression) {
+      if (SuppressManager.isSuppressedInspectionName(literalExpression) ||
+          skipKnownMethodArgument(literalExpression)) {
         return EMPTY_TOKENIZER;
       }
       return myLiteralExpressionTokenizer;
@@ -54,5 +73,50 @@ public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
     }
 
     return super.getTokenizer(element);
+  }
+
+  private static boolean skipKnownMethodArgument(@NotNull PsiLiteralExpression expression) {
+    PsiType type = expression.getType();
+    if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      return false;
+    }
+    PsiElement element = PsiUtil.skipParenthesizedExprUp(expression);
+    if (element == null) {
+      return false;
+    }
+    return checkCall(element);
+  }
+
+  private static boolean checkCall(@NotNull PsiElement source) {
+    PsiElement element = PsiUtil.skipParenthesizedExprUp(source);
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiExpressionList expressionList)) {
+      return false;
+    }
+
+    if (!(expressionList.getParent() instanceof PsiCall psiCall)) {
+      return false;
+    }
+
+    if (psiCall instanceof PsiMethodCallExpression callExpression) {
+      ArgumentMatcher matcher = SKIP_ARGUMENT_METHOD_HANDLER.mapFirst(callExpression);
+      if (matcher == null) {
+        return false;
+      }
+      return matcher.test(element);
+    }
+    if (psiCall instanceof PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
+      if (reference == null) {
+        return false;
+      }
+      BiPredicate<PsiNewExpression, PsiElement> predicate =
+        SKIP_ARGUMENT_CONSTRUCTOR_HANDLER.get(reference.getQualifiedName());
+      if (predicate == null) {
+        return false;
+      }
+      return predicate.test(newExpression, element);
+    }
+    return false;
   }
 }

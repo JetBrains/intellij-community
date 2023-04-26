@@ -4,8 +4,8 @@ package org.jetbrains.plugins.gradle.dsl
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -24,10 +24,10 @@ class GradlePropertiesFileTest : GradleCodeInsightTestCase() {
   fun `test find usages of property`(gradleVersion: GradleVersion) {
     test(gradleVersion, PROPERTIES_FIXTURE) {
       runInEdtAndWait {
-        val buildscript = findOrCreateFile("build.gradle", "foo")
-        val child = projectRoot.findChild("gradle.properties")
-        assertNotNull(child, "Expected not-null child")
-        val prop = (PsiUtilCore.getPsiFile(codeInsightFixture.project, child!!) as PropertiesFile).findPropertyByKey("foo")
+        writeTextAndCommit("build.gradle", "foo")
+        val buildscript = getFile("build.gradle")
+        val psiPropertiesFile = getFile("gradle.properties").getPsiFile(project) as PropertiesFile
+        val prop = psiPropertiesFile.findPropertyByKey("foo")
         assertNotNull(prop, "Expected not-null prop")
         val buildscriptScope = GlobalSearchScope.fileScope(codeInsightFixture.project, buildscript)
         val usageRefs = ReferencesSearch.search(prop!!.psiElement, buildscriptScope).findAll()
@@ -65,7 +65,8 @@ class GradlePropertiesFileTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    val PROPERTIES_FIXTURE = GradleTestFixtureBuilder.create("GradlePropertiesFileTest") {
+
+    private val PROPERTIES_FIXTURE = GradleTestFixtureBuilder.create("GradlePropertiesFileTest") {
       withSettingsFile {
         setProjectName("GradlePropertiesFileTest")
       }

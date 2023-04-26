@@ -108,7 +108,7 @@ public class XmlTextExtractor extends TextExtractor {
             markupIndices.add(group.size());
           }
         }
-        if (each instanceof OuterLanguageElement) {
+        if (each instanceof OuterLanguageElement || each instanceof XmlEntityRef) {
           flushGroup(true);
           unknownBefore = true;
         }
@@ -223,5 +223,5 @@ public class XmlTextExtractor extends TextExtractor {
     }
   }
 
-  private enum TagKind { Block, Inline, Unknown }
+  protected enum TagKind { Block, Inline, Unknown }
 }

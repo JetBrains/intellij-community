@@ -73,6 +73,16 @@ public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMa
         runTest("testData/configurator/jvm/simpleProjectSnapshot/");
     }
 
+    @TestMetadata("withExistingDefaultCompile")
+    public void testWithExistingDefaultCompile() throws Exception {
+        runTest("testData/configurator/jvm/withExistingDefaultCompile/");
+    }
+
+    @TestMetadata("withExistingTestCompile")
+    public void testWithExistingTestCompile() throws Exception {
+        runTest("testData/configurator/jvm/withExistingTestCompile/");
+    }
+
     @TestMetadata("withJava9ModuleInfo")
     public void testWithJava9ModuleInfo() throws Exception {
         runTest("testData/configurator/jvm/withJava9ModuleInfo/");

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
@@ -14,6 +14,9 @@ import java.util.regex.Pattern;
 
 /**
  * Base class for local inspections.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
+ * @see GlobalInspectionTool
  */
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
@@ -62,7 +65,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   @NotNull
   @Override
-  protected final String getSuppressId() {
+  public final String getSuppressId() {
     return getID();
   }
 

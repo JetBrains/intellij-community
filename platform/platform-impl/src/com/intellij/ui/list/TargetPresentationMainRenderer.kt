@@ -2,7 +2,7 @@
 package com.intellij.ui.list
 
 import com.intellij.navigation.LocationPresentation
-import com.intellij.navigation.TargetPresentation
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.*

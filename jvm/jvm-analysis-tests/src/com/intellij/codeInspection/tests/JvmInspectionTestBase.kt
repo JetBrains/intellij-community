@@ -134,8 +134,10 @@ abstract class JvmInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   ) {
     configureByText("$fileName${lang.ext}", before)
     myFixture.getAllQuickFixes()
-      .filterIsInstance(QuickFixWrapper::class.java)
-      .filter {(hints.isEmpty() || hints.contains(it.fix.familyName)) }
+      .filter { action -> 
+        val fix = QuickFixWrapper.unwrap(action)
+        return@filter fix != null && (hints.isEmpty() || hints.contains(fix.familyName)) 
+      }
       .forEach { myFixture.launchAction(it) }
     checkResult(after)
   }

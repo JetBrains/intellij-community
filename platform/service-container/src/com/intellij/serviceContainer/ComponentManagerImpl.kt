@@ -2,6 +2,7 @@
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 package com.intellij.serviceContainer
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
@@ -31,6 +32,7 @@ import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.namedChildScope
+import com.intellij.util.requireNoJob
 import com.intellij.util.runSuppressing
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -50,6 +52,8 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 internal val LOG = logger<ComponentManagerImpl>()
 private val constructorParameterResolver = ConstructorParameterResolver()
@@ -69,7 +73,8 @@ private fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: Me
 @ApiStatus.Internal
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
-  setExtensionsRootArea: Boolean = parent == null
+  setExtensionsRootArea: Boolean = parent == null,
+  context: CoroutineContext = EmptyCoroutineContext,
 ) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
@@ -121,6 +126,10 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  init {
+    requireNoJob(context)
+  }
+
   private val componentKeyToAdapter = ConcurrentHashMap<Any, ComponentAdapter>()
   private val componentAdapters = LinkedHashSetWrapper<MyComponentAdapter>()
   private val serviceInstanceHotCache = ConcurrentHashMap<Class<*>, Any?>()
@@ -163,10 +172,10 @@ abstract class ComponentManagerImpl(
       else {
         CoroutineScope(mainJob)
       }
-      parentScope.namedChildScope(debugString(short = true))
+      parentScope.namedChildScope(debugString(short = true), context)
     }
     parent.parent == null -> { // project
-      parent.coroutineScope!!.namedChildScope(debugString(short = true))
+      parent.coroutineScope!!.namedChildScope(debugString(short = true), context)
     }
     else -> null
   }
@@ -674,7 +683,7 @@ abstract class ComponentManagerImpl(
   }
 
   final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): Deferred<T> {
-    return getServiceAsyncIfDefined(keyClass) ?: throw RuntimeException("service is not defined for key ${keyClass.name}")
+    return getServiceAsyncIfDefined(keyClass) ?: throw RuntimeException("service is not defined for $keyClass")
   }
 
   suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): Deferred<T>? {
@@ -759,7 +768,6 @@ abstract class ComponentManagerImpl(
   }
 
   private fun <T : Any> getOrCreateLightService(serviceClass: Class<T>): T {
-    checkThatCreatingOfLightServiceIsAllowed(serviceClass)
     synchronized(serviceClass) {
       val adapter = componentKeyToAdapter.get(serviceClass.name) as LightServiceComponentAdapter?
       if (adapter != null) {
@@ -768,6 +776,7 @@ abstract class ComponentManagerImpl(
       }
 
       LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+      checkThatCreatingOfLightServiceIsAllowed(serviceClass)
 
       var result: T? = null
       if (!isUnderIndicatorOrJob()) {
@@ -795,7 +804,7 @@ abstract class ComponentManagerImpl(
     if (classLoader is PluginAwareClassLoader && !isGettingServiceAllowedDuringPluginUnloading(classLoader.pluginDescriptor)) {
       componentContainerIsReadonly?.let {
         val error = AlreadyDisposedException(
-          "Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this"
+          "Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this)"
         )
         throw if (!isUnderIndicatorOrJob()) error else ProcessCanceledException(error)
       }
@@ -987,6 +996,12 @@ abstract class ComponentManagerImpl(
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
 
+    return resetThreadContext().use {
+      doInstantiateClass(aClass, pluginId)
+    }
+  }
+
+  private fun <T : Any> doInstantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     try {
       val lookup = MethodHandles.privateLookupIn(aClass, methodLookup)
       if (parent == null) {
@@ -1038,7 +1053,9 @@ abstract class ComponentManagerImpl(
   protected open fun getActualContainerInstance(): ComponentManager = this
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
-    return instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
+    return resetThreadContext().use {
+      instantiateUsingPicoContainer(aClass, key, pluginId, this, constructorParameterResolver)
+    }
   }
 
   internal open val isGetComponentAdapterOfTypeCheckEnabled: Boolean

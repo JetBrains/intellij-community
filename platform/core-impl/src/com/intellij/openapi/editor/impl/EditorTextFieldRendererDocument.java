@@ -16,8 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * The only mutating method is setText() which is extremely cheap.
  */
 public class EditorTextFieldRendererDocument extends UserDataHolderBase implements DocumentEx {
-  private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this) {
-  };
+  private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<>(this);
   private char[] myChars = ArrayUtilRt.EMPTY_CHAR_ARRAY;
   private String myString = "";
   private LineSet myLineSet = LineSet.createLineSet(myString);

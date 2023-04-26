@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.CommonBundle
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimpleExpiring
 import com.intellij.notification.NotificationGroupManager
@@ -20,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
@@ -29,7 +29,7 @@ class UnlinkedProjectNotificationAware(
   private val project: Project
 ) : PersistentStateComponent<UnlinkedProjectNotificationAware.State> {
 
-  private val disabledNotifications = Collections.newSetFromMap<String>(ConcurrentHashMap())
+  private val disabledNotifications = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
   private val notifiedNotifications = ConcurrentHashMap<ExternalSystemProjectId, Notification>()
 

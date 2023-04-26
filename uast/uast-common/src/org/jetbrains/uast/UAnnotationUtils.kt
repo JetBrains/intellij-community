@@ -86,7 +86,7 @@ fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String
       is UAnnotation -> parent to name
       is UReferenceExpression -> tryConvertToEntry(uElement, parent, name)
       is UCallExpression ->
-        if (parent.kind == UastCallKind.NESTED_ARRAY_INITIALIZER)
+        if (parent.hasKind(UastCallKind.NESTED_ARRAY_INITIALIZER))
           retrievePsiAnnotationEntry(parent, null)
         else
           tryConvertToEntry(uElement, parent, name)

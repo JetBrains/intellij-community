@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
 import com.intellij.diagnostic.telemetry.IJTracer;
@@ -336,7 +336,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @Override
   public void readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
-    GitLogUtil.collectMetadata(myProject, root, hashes, consumer);
+    GitLogUtil.collectMetadata(myProject, root, hashes, consumer::consume);
   }
 
   @NotNull
@@ -522,8 +522,8 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     }
 
     List<TimedVcsCommit> commits = new ArrayList<>();
-    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, EmptyConsumer.getInstance(),
-                                EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
+    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, user -> {},
+                                ref -> {}, new CollectConsumer<>(commits));
     return commits;
   }
 

@@ -529,7 +529,8 @@ public final class SwitchUtils {
     }
     List<PsiEnumConstant> constants = new ArrayList<>();
     for (PsiCaseLabelElement labelElement : list.getElements()) {
-      if (labelElement instanceof PsiDefaultCaseLabelElement || ExpressionUtils.isNullLiteral(labelElement)) {
+      if (labelElement instanceof PsiDefaultCaseLabelElement ||
+          labelElement instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr)) {
         continue;
       }
       if (labelElement instanceof PsiReferenceExpression) {
@@ -585,7 +586,8 @@ public final class SwitchUtils {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     return labelElementList != null &&
            labelElementList.getElementCount() == 1 &&
-           ExpressionUtils.isNullLiteral(labelElementList.getElements()[0]);
+           labelElementList.getElements()[0] instanceof PsiExpression expr &&
+           ExpressionUtils.isNullLiteral(expr);
   }
 
   /**
@@ -599,7 +601,8 @@ public final class SwitchUtils {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     return labelElementList != null &&
            labelElementList.getElementCount() == 2 &&
-           ExpressionUtils.isNullLiteral(labelElementList.getElements()[0]) &&
+           labelElementList.getElements()[0] instanceof PsiExpression expr &&
+           ExpressionUtils.isNullLiteral(expr) &&
            labelElementList.getElements()[1] instanceof PsiDefaultCaseLabelElement;
   }
 

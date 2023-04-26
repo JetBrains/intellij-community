@@ -121,4 +121,8 @@ public class Main {
       /*test5*/
       b = /*test0*/localDateTime.isAfter(localDateTime2);
   }
+
+  public static boolean unresolvedType(LocalTime localTime) {
+    return localTime.compareTo(unresolved) > 0;
+  }
 }

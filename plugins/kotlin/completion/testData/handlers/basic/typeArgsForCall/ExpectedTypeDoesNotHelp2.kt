@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 public inline fun <reified T> Iterable<*>.myFilterIsInstance(): Collection<T> { }
 
 fun foo(list: List<Any>): String {

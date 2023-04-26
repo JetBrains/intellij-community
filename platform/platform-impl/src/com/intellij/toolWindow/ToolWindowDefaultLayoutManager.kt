@@ -166,8 +166,16 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 }
 
 private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> {
-  val provider = service<DefaultToolWindowLayoutProvider>()
-  return if (isNewUi) provider.createV2Layout() else provider.createV1Layout()
+  val builder = DefaultToolWindowLayoutBuilderImpl()
+  for (layoutExtension in DefaultToolWindowLayoutExtension.EP_NAME.extensionList) {
+    if (isNewUi) {
+      layoutExtension.buildV2Layout(builder)
+    }
+    else {
+      layoutExtension.buildV1Layout(builder)
+    }
+  }
+  return builder.build()
 }
 
 private val DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR: Map<String, Float> = ToolWindowAnchor.VALUES.associate { it.toString() to WindowInfoImpl.DEFAULT_WEIGHT }

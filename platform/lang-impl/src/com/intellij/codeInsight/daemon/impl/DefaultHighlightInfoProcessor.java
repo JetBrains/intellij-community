@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
+  private volatile TextEditorHighlightingPass myCachedShowAutoImportPass; // cache to avoid re-creating it multiple times
   @Override
   public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                      @Nullable Editor editor,
@@ -44,6 +46,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     long modificationStamp = document.getModificationStamp();
     TextRange priorityIntersection = priorityRange.intersection(restrictRange);
     List<? extends HighlightInfo> infoCopy = new ArrayList<>(infos);
+    TextEditorHighlightingPass showAutoImportPass = editor == null ? null : getOrCreateShowAutoImportPass(editor, psiFile, session.getProgressIndicator());
     ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (modificationStamp != document.getModificationStamp()) return;
       if (priorityIntersection != null) {
@@ -54,7 +57,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
-          showAutoImportHints(editor, psiFile, session.getProgressIndicator());
+          showAutoImportHints(session.getProgressIndicator(), showAutoImportPass);
         }
 
         repaintErrorStripeAndIcon(editor, project, psiFile);
@@ -62,17 +65,31 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     });
   }
 
-  static void showAutoImportHints(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull ProgressIndicator progressIndicator) {
+  void showAutoImportHints(@NotNull ProgressIndicator progressIndicator, @Nullable TextEditorHighlightingPass showAutoImportPass) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
-      try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
-        TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
-        if (highlightingPass != null) {
-          highlightingPass.doApplyInformationToEditor();
+    if (showAutoImportPass != null) {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> showAutoImportPass.doApplyInformationToEditor(), progressIndicator);
+    }
+  }
+
+  private TextEditorHighlightingPass getOrCreateShowAutoImportPass(@NotNull Editor editor,
+                                                                   @NotNull PsiFile psiFile,
+                                                                   @NotNull ProgressIndicator progressIndicator) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    TextEditorHighlightingPass pass = myCachedShowAutoImportPass;
+    if (pass == null) {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
+        try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor));
+             AccessToken ignored2 = SlowOperations.knownIssue("IDEA-305557, EA-599727")) {
+          TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
+          if (highlightingPass != null) {
+            myCachedShowAutoImportPass = highlightingPass;
+          }
         }
-      }
-    }, progressIndicator);
+      }, progressIndicator);
+    }
+    return myCachedShowAutoImportPass;
   }
 
   static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project, @Nullable PsiFile file) {
@@ -99,7 +116,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
 
       UpdateHighlightersUtil.setHighlightersOutsideRange(document, infos,
-                                                         restrictedRange.getStartOffset(), restrictedRange.getEndOffset(),
+                                                         restrictedRange,
                                                          priorityRange,
                                                          groupId, session);
       if (editor != null) {

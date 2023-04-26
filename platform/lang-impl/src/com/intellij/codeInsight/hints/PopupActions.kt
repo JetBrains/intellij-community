@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -118,7 +117,7 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
     val language = info.language ?: file.language
 
     ParameterNameHintsSettings.getInstance().addIgnorePattern(getLanguageForSettingKey(language), info.toPattern())
-    refreshAllOpenEditors()
+    refreshAllOpenEditors(project)
     showHint(project, language, info)
   }
 
@@ -128,7 +127,7 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
     val listener = NotificationListener { notification, event ->
       when (event.description) {
         "settings" -> showSettings(language)
-        "undo" -> undo(language, info)
+        "undo" -> undo(language, info, project)
       }
       notification.expire()
     }
@@ -146,7 +145,7 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
     ExcludeListDialog(language).show()
   }
 
-  private fun undo(language: Language, info: MethodInfo) {
+  private fun undo(language: Language, info: MethodInfo, project: Project) {
     val settings = ParameterNameHintsSettings.getInstance()
     val languageForSettings = getLanguageForSettingKey(language)
 
@@ -156,7 +155,7 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
     }
 
     settings.setExcludeListDiff(languageForSettings, Diff(updated, diff.removed))
-    refreshAllOpenEditors()
+    refreshAllOpenEditors(project)
   }
 
   override fun startInWriteAction(): Boolean = false
@@ -200,7 +199,7 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val option = getOptionHintAtOffset(editor, file) ?: return
     option.disable()
-    refreshAllOpenEditors()
+    refreshAllOpenEditors(project)
   }
 
   override fun startInWriteAction(): Boolean = false
@@ -249,7 +248,7 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val option = getDisabledOptionInfoAtCaretOffset(editor, file) ?: return
     option.enable()
-    refreshAllOpenEditors()
+    refreshAllOpenEditors(project)
   }
 
   override fun startInWriteAction(): Boolean = false
@@ -284,11 +283,12 @@ class ToggleInlineHintsAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
+    val project = e.project ?: return
     val language = file.language
     val before = isParameterHintsEnabledForLanguage(language)
     setShowParameterHintsForLanguage(!before, language)
 
-    refreshAllOpenEditors()
+    refreshAllOpenEditors(project)
   }
 }
 
@@ -312,16 +312,14 @@ private fun hasHints(element: PsiElement?,
 }
 
 
-private fun refreshAllOpenEditors() {
+private fun refreshAllOpenEditors(project: Project) {
   ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
-  ProjectManager.getInstance().openProjects.forEach { project ->
-    val psiManager = PsiManager.getInstance(project)
-    val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
-    val fileEditorManager = FileEditorManager.getInstance(project)
+  val psiManager = PsiManager.getInstance(project)
+  val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
+  val fileEditorManager = FileEditorManager.getInstance(project)
 
-    fileEditorManager.selectedFiles.forEach { file ->
-      psiManager.findFile(file)?.let { daemonCodeAnalyzer.restart(it) }
-    }
+  fileEditorManager.selectedFiles.forEach { file ->
+    psiManager.findFile(file)?.let { daemonCodeAnalyzer.restart(it) }
   }
 }
 

@@ -16,8 +16,10 @@ kotlin {
     jvm {
         jvmToolchain(11)
         withJava()
-        testRuns["test"].executionTask.configure {
-            useJUnit()
+        testRuns.named("test") {
+            executionTask.configure {
+                useJUnit()
+            }
         }
     }
     js("a", IR) {

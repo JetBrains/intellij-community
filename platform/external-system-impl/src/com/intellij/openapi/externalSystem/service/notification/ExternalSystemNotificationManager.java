@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.build.issue.BuildIssueQuickFix;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.notification.Notification;
@@ -41,7 +42,6 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -81,9 +81,9 @@ public final class ExternalSystemNotificationManager implements Disposable {
 
   public ExternalSystemNotificationManager(final @NotNull Project project) {
     myProject = project;
-    myNotifications = ContainerUtil.newConcurrentSet();
+    myNotifications = ConcurrentCollectionFactory.createConcurrentSet();
     myUniqueNotifications = new ConcurrentHashMap<>();
-    initializedExternalSystem = ContainerUtil.newConcurrentSet();
+    initializedExternalSystem = ConcurrentCollectionFactory.createConcurrentSet();
     myMessageCounter = new MessageCounter();
     myUpdateQueue = new MergingUpdateQueue(getClass() + " updates", 500, true, null, this, null, false);
   }

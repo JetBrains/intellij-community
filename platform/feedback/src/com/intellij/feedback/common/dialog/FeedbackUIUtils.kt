@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -32,6 +32,12 @@ fun JBTextArea.adjustBehaviourForFeedbackForm() {
   })
 }
 
+const val TEXT_AREA_ROW_SIZE = 5
+const val TEXT_AREA_COLUMN_SIZE = 42
+const val TEXT_FIELD_EMAIL_COLUMN_SIZE = 25
+
+val EMAIL_REGEX = Regex(".+@.+\\..+")
+
 fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel: String?, items: List<T>, renderer: (T) -> String,
                                                     size: Int, bindProperty: ObservableMutableProperty<T>,
                                                     @NlsContexts.Label leftBottomLabel: String?, @NlsContexts.Label midBottomLabel: String?,
@@ -40,7 +46,7 @@ fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel
     if (mainLabel != null) {
       row {
         label(mainLabel)
-          .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+          .customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
           .bold()
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
     }
@@ -48,7 +54,7 @@ fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel
       segmentedButton(items, renderer)
         .apply {
           maxButtonsCount(size)
-        }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+        }.customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
         .whenItemSelected { bindProperty.set(it) }
         .align(Align.FILL)
         .validation {

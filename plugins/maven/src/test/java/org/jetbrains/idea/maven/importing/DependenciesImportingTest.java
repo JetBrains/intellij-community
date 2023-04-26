@@ -18,7 +18,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -604,6 +603,66 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertModuleModuleDeps(mn("project", "m1.test"), mn("project", "m1.main"));
     assertModuleModuleDeps(mn("project", "m2.test"), mn("project", "m2.main"), mn("project", "m1.main"));
     assertModuleModuleDeps(mn("project", "m2.main"), mn("project", "m1.main"));
+  }
+
+  @Test
+  public void testTestDependencyOnPerSourceTypeModule() {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    createModulePom("m1",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <properties>
+                        <maven.compiler.source>8</maven.compiler.source>
+                        <maven.compiler.target>8</maven.compiler.target>
+                        <maven.compiler.testSource>11</maven.compiler.testSource>
+                        <maven.compiler.testTarget>11</maven.compiler.testTarget>
+                      </properties>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>""");
+
+    createModulePom("m2",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      <dependencies>
+                        <dependency>
+                          <groupId>test</groupId>
+                          <artifactId>m1</artifactId>
+                          <version>1</version>
+                          <type>test-jar</type>
+                          <scope>test</scope>
+                        </dependency>
+                      </dependencies>""");
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                      <module>m2</module>
+                    </modules>""");
+
+    assertModules("project",
+                  mn("project", "m1"),
+                  mn("project", "m2"),
+                  mn("project", "m1.main"),
+                  mn("project", "m1.test"));
+    assertModuleModuleDeps(mn("project", "m2"), mn("project", "m1.test"));
+    assertModuleModuleDeps(mn("project", "m1.test"), mn("project", "m1.main"));
   }
 
   @Test

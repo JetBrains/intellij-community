@@ -22,7 +22,6 @@ import java.awt.*
 import java.awt.image.BufferedImage
 import javax.swing.*
 
-@OptIn(FlowPreview::class)
 open class LoadingDecorator @JvmOverloads constructor(
   content: JComponent?,
   parent: Disposable,
@@ -37,7 +36,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   var overlayBackground: Color? = null
 
-  private val pane: JLayeredPane = MyLayeredPane(if (useMinimumSize) content else null)
+  private val pane: JLayeredPane = LoadingDecoratorLayeredPane(if (useMinimumSize) content else null)
   private val loadingLayer: LoadingLayer = LoadingLayer(icon)
   private val fadeOutAnimator: Animator
   private var startRequestJob: Job? = null
@@ -94,7 +93,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   protected open fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AsyncProcessIcon): NonOpaquePanel {
     parent.layout = GridBagLayout()
-    text.font = StartupUiUtil.getLabelFont()
+    text.font = StartupUiUtil.labelFont
     text.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
     icon.border = if ((text.text ?: "").endsWith("...")) JBUI.Borders.emptyRight(8) else JBUI.Borders.empty()
     val result = NonOpaquePanel(VerticalLayout(6))
@@ -255,25 +254,16 @@ class LoadingLayerAnimator(
   }
 }
 
-private class MyLayeredPane(private val content: JComponent?) : JBLayeredPane(), LoadingDecorator.CursorAware {
+private class LoadingDecoratorLayeredPane(private val content: JComponent?) : JBLayeredPane(), LoadingDecorator.CursorAware {
+  init {
+    isFullOverlayLayout = true
+  }
+
   override fun getMinimumSize(): Dimension {
     return if (content != null && !isMinimumSizeSet) content.minimumSize else super.getMinimumSize()
   }
 
   override fun getPreferredSize(): Dimension {
     return if (content != null && !isPreferredSizeSet) content.preferredSize else super.getPreferredSize()
-  }
-
-  override fun doLayout() {
-    super.doLayout()
-    for (i in 0 until componentCount) {
-      val each = getComponent(i)
-      if (each is Icon) {
-        each.setBounds(0, 0, each.width, each.height)
-      }
-      else {
-        each.setBounds(0, 0, width, height)
-      }
-    }
   }
 }

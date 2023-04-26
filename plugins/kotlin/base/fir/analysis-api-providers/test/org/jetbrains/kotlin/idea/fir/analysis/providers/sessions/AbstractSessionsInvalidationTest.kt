@@ -4,14 +4,17 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PsiTestUtil
-import junit.framework.Assert
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirModuleSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionProviderStorage
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
+import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureReader
@@ -33,9 +36,11 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
             Paths.get(path),
             toTestStructure = MultiModuleTestProjectStructure.Companion::fromTestProjectStructure
         )
+
         val modulesByNames = testStructure.modules.associate { moduleData ->
             moduleData.name to createEmptyModule(moduleData.name)
         }
+
         testStructure.modules.forEach { moduleData ->
             val module = modulesByNames.getValue(moduleData.name)
             moduleData.dependsOnModules.forEach { dependencyName ->
@@ -43,26 +48,23 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
             }
         }
 
-        val rootModule = modulesByNames[testStructure.rootModule]
-            ?: error("${testStructure.rootModule} is not present in the list of modules")
-        val modulesToMakeOOBM = testStructure.modulesToMakeOOBM.map {
-            modulesByNames[it]
-                ?: error("$it is not present in the list of modules")
+        val rootIdeaModule = modulesByNames.getValue(testStructure.rootModule)
+        val rootModule = rootIdeaModule.getMainKtSourceModule()!!
+
+        val sessionsBeforeOOBM = getAllModuleSessions(rootModule)
+
+        val modulesToMakeOOBM = testStructure.modulesToMakeOOBM.map(modulesByNames::getValue)
+        modulesToMakeOOBM.forEach { it.incModificationTracker() }
+
+        val sessionsAfterOOBM = getAllModuleSessions(rootModule)
+
+        val changedSessions = buildSet {
+            addAll(sessionsBeforeOOBM)
+            addAll(sessionsAfterOOBM)
+            removeAll(sessionsBeforeOOBM.intersect(sessionsAfterOOBM.toSet()))
         }
 
-        val rootModuleSourceInfo = rootModule.getMainKtSourceModule()!!
-
-        val storage = LLFirSessionProviderStorage(project)
-
-        val initialSessions = storage.getFirSessions(rootModuleSourceInfo)
-        modulesToMakeOOBM.forEach { it.incModificationTracker() }
-        val sessionsAfterOOBM = storage.getFirSessions(rootModuleSourceInfo)
-
-        val intersection = com.intellij.util.containers.ContainerUtil.intersection(initialSessions, sessionsAfterOOBM)
-        val changedSessions = HashSet(initialSessions)
-        changedSessions.addAll(sessionsAfterOOBM)
-        changedSessions.removeAll(intersection)
-        val changedSessionsModulesNamesSorted = changedSessions
+        val changedSessionsModuleNames = changedSessions
             .map { session ->
                 val moduleSession = session as LLFirModuleSession
                 val module = moduleSession.ktModule as KtSourceModule
@@ -71,12 +73,16 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
             .distinct()
             .sorted()
 
-        Assert.assertEquals(testStructure.expectedInvalidatedModules, changedSessionsModulesNamesSorted)
+        assertEquals(testStructure.expectedInvalidatedModules, changedSessionsModuleNames)
     }
 
-    private fun LLFirSessionProviderStorage.getFirSessions(module: KtSourceModule): Set<LLFirSession> {
-        val sessionProvider = getSessionProvider(module)
-        return sessionProvider.allSessions.toSet()
+    private fun getAllModuleSessions(mainModule: KtModule): List<LLFirSession> {
+        val projectModules = ModuleManager.getInstance(project).modules
+            .flatMap { it.sourceModuleInfos }
+            .map { it.toKtModule() }
+
+        val resolveSession = LLFirResolveSessionService.getInstance(project).getFirResolveSession(mainModule)
+        return projectModules.map(resolveSession::getSessionFor)
     }
 
     private fun createEmptyModule(name: String): Module {

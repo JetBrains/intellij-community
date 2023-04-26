@@ -239,25 +239,28 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
  * Project created on request, so, could be used as a bare (only application).
  */
 @Suppress("DEPRECATION")
-class ProjectExtension(runPostStartUpActivities: Boolean = false, preloadServices: Boolean = false) : ApplicationExtension() {
-  private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, null)
+class ProjectExtension(val runPostStartUpActivities: Boolean = false, val preloadServices: Boolean = false) : ApplicationExtension() {
+  private var projectObject: ProjectObject? = null
 
   override fun beforeAll(context: ExtensionContext) {
     super.beforeAll(context)
-    projectObject.testClassName = sanitizeFileName(context.testClass.map { it.simpleName }.orElse(context.displayName).substringAfterLast('.'))
-    projectObject.projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
-  }
-
-  override fun afterAll(context: ExtensionContext) {
-    projectObject.catchAndRethrow {
-      super.afterAll(context)
+    projectObject = ProjectObject(runPostStartUpActivities, preloadServices, null).also {
+      it.testClassName = sanitizeFileName(context.testClass.map { it.simpleName }.orElse(context.displayName).substringAfterLast('.'))
+      it.projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
     }
   }
 
+  override fun afterAll(context: ExtensionContext) {
+    checkNotNull(projectObject).catchAndRethrow {
+      super.afterAll(context)
+    }
+    projectObject = null
+  }
+
   val project: ProjectEx
-    get() = projectObject.project
+    get() = checkNotNull(projectObject).project
   val module: Module
-    get() = projectObject.module
+    get() = checkNotNull(projectObject).module
 }
 
 /**

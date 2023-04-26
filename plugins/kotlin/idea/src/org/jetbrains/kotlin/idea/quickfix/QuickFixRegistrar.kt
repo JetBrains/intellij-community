@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateL
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByNamedArgumentActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByRefActionFactory
 import org.jetbrains.kotlin.idea.quickfix.expectactual.AddActualFix
-import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateActualFix
 import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateExpectedFix
+import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateMissedActualsFix
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrateExperimentalToRequiresOptInFix
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrateExternalExtensionFix
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrateTypeParameterListFix
@@ -600,7 +600,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ACTUAL_WITHOUT_EXPECT.registerFactory(RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(ACTUAL_KEYWORD))
         ACTUAL_WITHOUT_EXPECT.registerFactory(CreateExpectedFix)
-        NO_ACTUAL_FOR_EXPECT.registerFactory(CreateActualFix)
+        NO_ACTUAL_FOR_EXPECT.registerFactory(CreateMissedActualsFix)
         NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS.registerFactory(AddActualFix)
 
         ACTUAL_MISSING.registerFactory(AddModifierFixFE10.createFactory(ACTUAL_KEYWORD))

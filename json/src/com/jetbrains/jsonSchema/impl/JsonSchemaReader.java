@@ -44,9 +44,9 @@ public class JsonSchemaReader {
     fillMap();
   }
 
-  @Nullable private final VirtualFile myFile;
+  @NotNull private final VirtualFile myFile;
 
-  public JsonSchemaReader(@Nullable VirtualFile file) {
+  public JsonSchemaReader(@NotNull VirtualFile file) {
     myFile = file;
     myQueue = new ArrayDeque<>();
   }
@@ -97,14 +97,13 @@ public class JsonSchemaReader {
     JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(file, JsonSchemaObject.NULL_OBJ);
     if (walker == null) return null;
     PsiElement root = AstLoadingFilter.forceAllowTreeLoading(file, () -> ContainerUtil.getFirstItem(walker.getRoots(file)));
-    return root == null ? null : read(root, walker);
+    if (root == null) return null;
+    JsonValueAdapter rootAdapter = walker.createValueAdapter(root);
+    return rootAdapter == null ? null : read(rootAdapter);
   }
 
-  @Nullable
-  private JsonSchemaObject read(@NotNull final PsiElement object, @NotNull JsonLikePsiWalker walker) {
+  private @NotNull JsonSchemaObject read(@NotNull JsonValueAdapter rootAdapter) {
     final JsonSchemaObject root = new JsonSchemaObject(myFile, "/");
-    JsonValueAdapter rootAdapter = walker.createValueAdapter(object);
-    if (rootAdapter == null) return null;
     enqueue(myQueue, root, rootAdapter);
     while (!myQueue.isEmpty()) {
       final Pair<JsonSchemaObject, JsonValueAdapter> currentItem = myQueue.removeFirst();
@@ -582,6 +581,6 @@ public class JsonSchemaReader {
     void read(@NotNull JsonValueAdapter source,
               @NotNull JsonSchemaObject target,
               @NotNull Collection<Pair<JsonSchemaObject, JsonValueAdapter>> processingQueue,
-              @Nullable VirtualFile file);
+              @NotNull VirtualFile file);
   }
 }

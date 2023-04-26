@@ -3,7 +3,6 @@ package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -19,8 +18,16 @@ import java.util.stream.Collector;
 
 public class TaintAnalyzer {
 
+  @NotNull
+  private final TaintValueFactory myTaintValueFactory;
+
+  @NotNull
   private final Set<PsiElement> myVisited = new HashSet<>();
+
+  @NotNull
   private final List<NonMarkedElement> myNonMarkedElements = new ArrayList<>();
+
+  public TaintAnalyzer(@NotNull TaintValueFactory factory) { myTaintValueFactory = factory; }
 
   public @NotNull TaintValue analyze(@NotNull UExpression expression) {
     UResolvable uResolvable = ObjectUtils.tryCast(expression, UResolvable.class);
@@ -34,14 +41,14 @@ public class TaintAnalyzer {
 
   public @NotNull TaintValue fromElement(@Nullable PsiElement target, @NotNull PsiElement ref, boolean processRecursively) {
     if (target == null || !myVisited.add(target)) return TaintValue.UNTAINTED;
-    TaintValue taintValue = fromAnnotation(target);
+    TaintValue taintValue = myTaintValueFactory.fromAnnotation(target);
     if (taintValue == null) return TaintValue.UNTAINTED;
     if (taintValue != TaintValue.UNKNOWN) return taintValue;
     taintValue = fromModifierListOwner(target, ref, processRecursively);
     return taintValue == null ? TaintValue.UNTAINTED : taintValue;
   }
 
-  public List<NonMarkedElement> getNonMarkedElements() {
+  public @NotNull List<NonMarkedElement> getNonMarkedElements() {
     return myNonMarkedElements;
   }
 
@@ -75,7 +82,9 @@ public class TaintAnalyzer {
     return codeBlock == null ? TaintValue.UNTAINTED : analyze(taintValue, codeBlock, psiVariable);
   }
 
-  private @NotNull TaintValue analyze(@NotNull TaintValue taintValue, @NotNull UBlockExpression codeBlock, @NotNull PsiVariable psiVariable) {
+  private @NotNull TaintValue analyze(@NotNull TaintValue taintValue,
+                                      @NotNull UBlockExpression codeBlock,
+                                      @NotNull PsiVariable psiVariable) {
     class VarAnalyzer extends AbstractUastVisitor {
       private TaintValue myTaintValue;
 
@@ -264,17 +273,6 @@ public class TaintAnalyzer {
     return property == target;
   }
 
-  public static @Nullable TaintValue fromAnnotation(@Nullable PsiElement target) {
-    PsiType type = target == null ? null : PsiUtil.getTypeByPsiElement(target);
-    if (type == null) return null;
-    if (target instanceof PsiClass) return null;
-    if (target instanceof PsiModifierListOwner owner) {
-      TaintValue taintValue = TaintValueFactory.INSTANCE.fromModifierListOwner(owner);
-      if (taintValue == TaintValue.UNKNOWN) taintValue = TaintValueFactory.of(owner);
-      if (taintValue != TaintValue.UNKNOWN) return taintValue;
-    }
-    return TaintValueFactory.INSTANCE.fromAnnotationOwner(type);
-  }
 
   private static @Nullable UPolyadicExpression getConcatenation(UExpression uExpression) {
     UPolyadicExpression uPolyadic = ObjectUtils.tryCast(uExpression, UPolyadicExpression.class);

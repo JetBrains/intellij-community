@@ -97,15 +97,18 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
 
   open val logger: StatisticsEventLogger
-    get() = if (isCollectionEnabled()) actualLogger else emptyLogger
+    get() = if (isLoggingEnabled()) actualLogger else emptyLogger
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
-  fun isCollectionEnabled(): Boolean = isRecordEnabled() || isForceCollectionEnabled()
   /**
-   * Enables collection of events without actual recording them to the log file.
+   * Determines if logging code should be executed on logging method calls
+   * */
+  final fun isLoggingEnabled(): Boolean = isRecordEnabled() || isLoggingAlwaysActive()
+  /**
+   * Determines if logging of events should happen in code even if recording of events to file is disabled
   * */
-  open fun isForceCollectionEnabled(): Boolean = false
+  open fun isLoggingAlwaysActive(): Boolean = false
 
   fun getActiveLogFile(): EventLogFile? {
     return logger.getActiveLogFile()
@@ -149,11 +152,17 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   }
 }
 
-internal abstract class StatisticsEventLoggerProviderExt(recorderId: String, version: Int, sendFrequencyMs: Long,
+/**
+ * For internal use only.
+ *
+ * Holds default implementation of StatisticsEventLoggerProvider.isLoggingAlwaysActive
+ * to connect logger with com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
+ * */
+abstract class StatisticsEventLoggerProviderExt(recorderId: String, version: Int, sendFrequencyMs: Long,
                                                 maxFileSizeInBytes: Int, sendLogsOnIdeClose: Boolean = false) :
   StatisticsEventLoggerProvider(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, sendLogsOnIdeClose) {
-  override fun isForceCollectionEnabled(): Boolean =
-    StatisticsEventLogProviderUtil.getExternalEventLogSettings()?.forceCollectionWithoutRecord() ?: false
+  override fun isLoggingAlwaysActive(): Boolean =
+    StatisticsEventLogProviderUtil.getExternalEventLogSettings()?.forceLoggingAlwaysEnabled() ?: false
 }
 
 internal class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1, DEFAULT_MAX_FILE_SIZE_BYTES) {

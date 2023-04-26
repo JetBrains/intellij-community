@@ -14,12 +14,12 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -28,10 +28,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,10 +50,10 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final TextRange myVisibleRange;
   private final boolean hasDirtyTextRange;
   private final List<BooleanSupplier> autoImportActions = Collections.synchronizedList(new ArrayList<>());
-  private volatile boolean myInContent;
 
   ShowAutoImportPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull ProperTextRange visibleRange) {
     super(file.getProject(), editor.getDocument(), false);
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     myEditor = editor;
     myVisibleRange = visibleRange;
@@ -67,8 +67,6 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     List<HighlightInfo> infos = new ArrayList<>();
     List<BooleanSupplier> result = new ArrayList<>();
     int exceptCaretOffset = myEditor.getCaretModel().getOffset();
-    VirtualFile virtualFile = myFile.getVirtualFile();
-    myInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
 
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
       if (info.isUnresolvedReference() && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(exceptCaretOffset, true)) {
@@ -93,25 +91,22 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    ApplicationManager.getApplication().invokeLater(this::showImports);
-  }
+    ApplicationManager.getApplication().invokeLater(()-> {
+      if (!UIUtil.hasFocus(myEditor.getContentComponent())) return;
+      if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
+      if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
 
-  private void showImports() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!UIUtil.hasFocus(myEditor.getContentComponent())) return;
-    if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
-    if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
-
-    SlowOperations.allowSlowOperations(() -> {
       int caretOffset = myEditor.getCaretModel().getOffset();
       importUnambiguousImports();
       if (isImportHintEnabled()) {
         List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange, myProject, myEditor, hasDirtyTextRange);
         // sort by distance to the caret
         visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
-        for (HighlightInfo visibleHighlight : visibleHighlights) {
-          if (showAddImportHint(visibleHighlight)) {
-            break;
+        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-301732, IDEA-305605, EA-829346, EA-789713, ...")) {
+          for (HighlightInfo visibleHighlight : visibleHighlights) {
+            if (showAddImportHint(visibleHighlight)) {
+              break;
+            }
           }
         }
       }
@@ -120,15 +115,17 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   private void importUnambiguousImports() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!mayAutoImportNow(myFile, myInContent)) return;
+    if (!mayAutoImportNow(myFile, true, ThreeState.UNSURE)) return;
     for (BooleanSupplier autoImportAction : autoImportActions) {
       autoImportAction.getAsBoolean();
     }
   }
 
-  public static boolean mayAutoImportNow(@NotNull PsiFile psiFile, boolean isInContent) {
+  public static boolean mayAutoImportNow(@NotNull PsiFile psiFile, boolean isInContent,
+                                         @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     return isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
-           (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile, isInContent)) &&
+           (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile, isInContent,
+                                                                                                          extensionsAllowToChangeFileSilently)) &&
            isInModelessContext(psiFile.getProject());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util
 
 import com.intellij.execution.CommandLineUtil
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
+import com.intellij.util.io.SuperUserStatus
 import org.jetbrains.annotations.Nls
 import java.io.*
 import java.nio.charset.Charset
@@ -147,7 +148,7 @@ object ExecUtil {
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
   fun sudoCommand(commandLine: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine {
-    if (SystemInfoRt.isUnix && "root" == System.getenv("USER")) { //NON-NLS
+    if (SuperUserStatus.isSuperUser) {
       return commandLine
     }
 
@@ -250,7 +251,21 @@ object ExecUtil {
         listOf(windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
       }
       SystemInfoRt.isMac -> {
-        listOf(openCommandPath, "-a", "Terminal", command)
+        var script = "\"clear ; exec \" & " + escapeAppleScriptArgument(command)
+        if (title != null)
+          script = "\"echo -n \" & " + escapeAppleScriptArgument("\\0033]0;$title\\007") + " & \" ; \" & " + script
+
+        // At this point, the script variable will contain a shell script line like this:
+        // clear ; exec $command                                  # in case no title is provided
+        // echo -n "\\0033]0;$title\\007" ; clear ; exec $command # in case title was provided
+
+        val escapedScript = """
+          |tell application "Terminal"
+          |  activate
+          |  do script $script
+          |end tell
+          """.trimMargin()
+        listOf(osascriptPath, "-e", escapedScript)
       }
       hasKdeTerminal.get() -> {
         if (title != null) listOf("konsole", "-p", "tabtitle=\"${title.replace('"', '\'')}\"", "-e", command)

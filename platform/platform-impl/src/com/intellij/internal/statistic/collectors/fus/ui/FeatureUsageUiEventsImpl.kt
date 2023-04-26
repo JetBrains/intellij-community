@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.ui
 
-import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
@@ -16,7 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper
 
 class DialogsCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("ui.dialogs", 60)
+    private val GROUP = EventLogGroup("ui.dialogs", 61)
 
     val EXIT_CODE = object: PrimitiveEventField<Int>() {
       override val name: String = "code"
@@ -37,7 +36,7 @@ class DialogsCounterUsagesCollector : CounterUsagesCollector() {
       }
     }
 
-    val DIALOG_CLASS = EventFields.StringValidatedByCustomRule("dialog_class", ClassNameRuleValidator::class.java)
+    val DIALOG_CLASS = EventFields.Class("dialog_class")
 
     val SHOW = GROUP.registerVarargEvent("show", DIALOG_CLASS, EventFields.PluginInfo)
     val CLOSE = GROUP.registerVarargEvent("close", DIALOG_CLASS, EXIT_CODE, EventFields.PluginInfo)
@@ -92,24 +91,24 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
     event.log(wrapper?.project, (wrapper?.configurable ?: configurable)::class.java)
   }
 
-  override fun logShowDialog(name: String, context: Class<*>) {
+  override fun logShowDialog(clazz: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      DialogsCounterUsagesCollector.SHOW.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(name))
+      DialogsCounterUsagesCollector.SHOW.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(clazz))
     }
   }
 
-  override fun logCloseDialog(name: String, exitCode: Int, context: Class<*>) {
+  override fun logCloseDialog(clazz: Class<*>, exitCode: Int) {
     if (FeatureUsageLogger.isEnabled()) {
       DialogsCounterUsagesCollector.CLOSE.log(
-        DialogsCounterUsagesCollector.DIALOG_CLASS.with(name),
+        DialogsCounterUsagesCollector.DIALOG_CLASS.with(clazz),
         DialogsCounterUsagesCollector.EXIT_CODE.with(exitCode)
       )
     }
   }
 
-  override fun logClickOnHelpDialog(name: String, context: Class<*>) {
+  override fun logClickOnHelpDialog(clazz: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      DialogsCounterUsagesCollector.HELP.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(name))
+      DialogsCounterUsagesCollector.HELP.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(clazz))
     }
   }
 }

@@ -16,9 +16,8 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
-import com.intellij.util.asSafely
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.uast.*
 
 @ApiStatus.Internal
@@ -42,7 +41,9 @@ class JavaULambdaExpression(
   }
 
   companion object {
-    internal fun unwrapImplicitBody(uExpression: UExpression): PsiExpression? =
+
+    @Internal
+    fun unwrapImplicitBody(uExpression: UExpression): PsiExpression? =
       uExpression
         .asSafely<JavaImplicitUBlockExpression>()
         ?.expressions

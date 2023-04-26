@@ -40,7 +40,8 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.psi.PsiFile
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ScreenUtil.isMovementTowards
@@ -48,6 +49,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
@@ -71,6 +73,7 @@ internal class InitCtrlMouseHandlerActivity : ProjectActivity {
 @Service
 class CtrlMouseHandler2(
   private val project: Project,
+  private val cs: CoroutineScope,
 ) : EditorMouseMotionListener,
     EditorMouseListener,
     FileEditorManagerListener,
@@ -159,8 +162,6 @@ class CtrlMouseHandler2(
     cancelAndClear()
   }
 
-  private val cs = CoroutineScope(SupervisorJob())
-
   private var myState: CtrlMouseState? = null
     get() {
       EDT.assertIsEdt()
@@ -177,7 +178,6 @@ class CtrlMouseHandler2(
   }
 
   override fun dispose() {
-    cs.cancel("CtrlMouseHandler disposal")
     clearState()
   }
 
@@ -210,7 +210,7 @@ class CtrlMouseHandler2(
     }
   }
 
-  private suspend fun compute(request: CtrlMouseRequest): CtrlMouseResult? = withContext(Dispatchers.IO) {
+  private suspend fun compute(request: CtrlMouseRequest): CtrlMouseResult? = withContext(Dispatchers.Default) {
     try {
       constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
         computeInReadAction(request)
@@ -437,4 +437,9 @@ private fun editorPoint(event: HyperlinkEvent, editor: Editor): Point {
   return Point(inputEvent.locationOnScreen).also {
     SwingUtilities.convertPointFromScreen(it, editor.contentComponent)
   }
+}
+
+@ApiStatus.Internal
+fun getCtrlMouseData(actionId: String, editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {
+  return getCtrlMouseAction(actionId)?.getCtrlMouseData(editor, file, offset)
 }

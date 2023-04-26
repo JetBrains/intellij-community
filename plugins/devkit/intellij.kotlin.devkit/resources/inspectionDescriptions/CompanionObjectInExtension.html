@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports incorrect companion objects' usage in extensions.
+<p>
+  Companion objects in extensions can only contain a logger and constants, other declarations
+  may cause excessive classloading or early initialization of heavy resources (TokenSets, Regexes, etc.)
+  when the extension class is loaded.
+
+  Instead of being stored in companion objects, these declarations must be stored in an object or be top-level.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2023.2</small>
+</body>
+</html>

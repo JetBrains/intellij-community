@@ -1,7 +1,7 @@
 public final class ReifiedReturnTypeKt {
-    public static final fun function1(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : void {
+    public static final fun function1(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : void {
     }
-    public static final fun function2(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    public static final fun function2(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
     public static final fun function2CharSequence(@org.jetbrains.annotations.NotNull t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
@@ -10,30 +10,30 @@ public final class ReifiedReturnTypeKt {
     public static final fun copyWhenGreater(@org.jetbrains.annotations.NotNull list: java.util.List<? extends T>, @org.jetbrains.annotations.NotNull threshold: T, @org.jetbrains.annotations.NotNull threshold2: B) : B {
         return threshold2
     }
-    public static fun function3(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : void {
+    public static fun function3(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : void {
     }
-    public static fun function4(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    public static fun function4(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
-    public static fun function5(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : int {
+    public static fun function5(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : int {
         return 42
     }
-    public static fun function6(@org.jetbrains.annotations.Nullable $this$function6: T, @org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    public static fun function6($this$function6: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
-    public static fun function7(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    public static fun function7(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
-    private static fun function8(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    private static fun function8(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
-    public static fun function9(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    public static fun function9(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
-    public static fun function10(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    public static fun function10(t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
-    public static fun function11(@org.jetbrains.annotations.Nullable $this$function11: T, @org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
+    public static fun function11($this$function11: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {
         return t
     }
     public static fun function11CharSequence(@org.jetbrains.annotations.NotNull $this$function11CharSequence: T, @org.jetbrains.annotations.NotNull t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {

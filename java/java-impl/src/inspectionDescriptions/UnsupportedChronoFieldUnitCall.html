@@ -4,6 +4,7 @@
 Reports <code>java.time</code> method calls (<code>get()</code>, <code>getLong()</code>,
 <code>with()</code>, <code>plus()</code>, <code>minus()</code>) with unsupported <code>java.time.temporal.ChronoField</code> or
 <code>java.time.temporal.ChronoUnit</code> enum constants as arguments.
+Such calls will throw a <code>UnsupportedTemporalTypeException</code> at runtime.
 <p>Example:</p>
 <pre><code>
 LocalTime localTime = LocalTime.now();

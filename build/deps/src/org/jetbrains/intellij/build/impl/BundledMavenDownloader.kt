@@ -84,10 +84,10 @@ object BundledMavenDownloader {
     }
 
     withContext(Dispatchers.IO) {
-      mutex.withLock {
-        for (targetFile in targetToSourceFiles.keys) {
-          val sourceFile = targetToSourceFiles.get(targetFile)!!
-          launch {
+      for (targetFile in targetToSourceFiles.keys) {
+        val sourceFile = targetToSourceFiles.getValue(targetFile)
+        launch {
+          mutex.withLock {
             if (Files.notExists(targetFile)) {
               Files.copy(sourceFile, targetFile)
             }

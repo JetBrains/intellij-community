@@ -34,16 +34,16 @@ import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.deleteSingle
-import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinClassHandler
@@ -116,8 +116,6 @@ class MoveDeclarationsDescriptor @JvmOverloads constructor(
     val searchReferences: Boolean = true
 )
 
-class ConflictUsageInfo(element: PsiElement, val messages: Collection<String>) : UsageInfo(element)
-
 private object ElementHashingStrategy : HashingStrategy<PsiElement> {
     override fun equals(e1: PsiElement?, e2: PsiElement?): Boolean {
         if (e1 === e2) return true
@@ -168,7 +166,7 @@ class MoveKotlinDeclarationsProcessor(
         return MoveMultipleElementsViewDescriptor(elementsToMove.toTypedArray(), targetContainerFqName)
     }
 
-    fun getConflictsAsUsages(): List<UsageInfo> = conflicts.entrySet().map { ConflictUsageInfo(it.key, it.value) }
+    fun getConflictsAsUsages(): List<UsageInfo> = conflicts.entrySet().map { MoveConflictUsageInfo(it.key, it.value) }
 
     public override fun findUsages(): Array<UsageInfo> {
         if (!descriptor.searchReferences || elementsToMove.isEmpty()) return UsageInfo.EMPTY_ARRAY
@@ -315,7 +313,7 @@ class MoveKotlinDeclarationsProcessor(
     }
 
     override fun showConflicts(conflicts: MultiMap<PsiElement, String>, usages: Array<out UsageInfo>?): Boolean {
-        if (throwOnConflicts && !conflicts.isEmpty) throw RefactoringConflictsFoundException()
+        if (throwOnConflicts && !conflicts.isEmpty) throw MoveConflictsFoundException()
         return super.showConflicts(conflicts, usages)
     }
 

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -179,6 +180,9 @@ internal class OverrideKeywordHandler(
     companion object {
         private val renderingOptionsForLookupElementRendering =
             KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+                annotationRenderer = annotationRenderer.with {
+                    annotationFilter = KtRendererAnnotationsFilter.NONE
+                }
                 modifiersRenderer = modifiersRenderer.with {
                     modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS)
                 }

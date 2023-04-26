@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.idea.AppMode;
 import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +38,8 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static com.intellij.openapi.application.PathManager.getPluginsPath;
 
 public final class PluginDownloader {
 
@@ -317,9 +320,14 @@ public final class PluginDownloader {
   }
 
   public void install() throws IOException {
-    PluginInstaller.installAfterRestartAndKeepIfNecessary(myDescriptor, getFilePath(),
-                                                          myOldFile
-    );
+    if (AppMode.isHeadless()) {
+      PluginInstaller.unpackPlugin(getFilePath(), Path.of(getPluginsPath()));
+    }
+    else {
+      PluginInstaller.installAfterRestartAndKeepIfNecessary(myDescriptor, getFilePath(),
+                                                            myOldFile
+      );
+    }
 
     if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
       InstalledPluginsState.getInstance().onPluginInstall(myDescriptor,

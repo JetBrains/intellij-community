@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -431,7 +432,17 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           refSuggestions = completePermitsListReference(parameters, parentRef, matcher);
         }
         else {
-          refSuggestions = completeReference(parameters, parentRef, session, expectedInfos, matcher::prefixMatches);
+          if (parameters.getInvocationCount() >= 2 && Registry.is("java.completion.methods.use.tags")) {
+            MethodTags.TagMatcher tagMatcher = new MethodTags.TagMatcher(matcher);
+            List<LookupElement> proposedElements = completeReference(parameters, parentRef, session, expectedInfos, tagMatcher::prefixMatches);
+            refSuggestions = ContainerUtil.map(proposedElements, element -> {
+              LookupElement withTags = MethodTags.wrapLookupWithTags(element, matcher::prefixMatches);
+              return withTags != null ? withTags : element;
+            });
+          }
+          else {
+            refSuggestions = completeReference(parameters, parentRef, session, expectedInfos, matcher::prefixMatches);
+          }
         }
         List<LookupElement> filtered = filterReferenceSuggestions(parameters, expectedInfos, refSuggestions);
         hasTypeMatchingSuggestions |= ContainerUtil.exists(filtered, item ->

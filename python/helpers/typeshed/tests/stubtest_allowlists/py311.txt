@@ -17,7 +17,6 @@ _operator.itemgetter.__vectorcalloffset__
 argparse._MutuallyExclusiveGroup.add_mutually_exclusive_group
 asynchat.__warningregistry__  # Removal planned for 3.12, can add if someone needs this
 configparser.LegacyInterpolation.__init__
-distutils.util.get_host_platform
 enum.Enum.__init__
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 ftplib.FTP.trust_server_pasv_ipv4_address
@@ -43,7 +42,6 @@ platform.uname_result.processor
 queue.SimpleQueue.__init__
 sys.UnraisableHookArgs  # Not exported from sys
 tkinter._VersionInfoType.__doc__
-typing.ForwardRef._evaluate
 typing.NewType.__call__
 typing.NewType.__mro_entries__
 weakref.WeakValueDictionary.update
@@ -176,3 +174,7 @@ wsgiref.types.WSGIEnvironment
 
 # https://github.com/python/mypy/issues/12821 (stubtest bug with Callable type alias)
 wsgiref.types.WSGIApplication
+
+# stubtest confuses stdlib distutils with setuptools-bundled distutils (#8410),
+# and the whole directory is going to be removed in 3.12 anyway
+distutils\..*

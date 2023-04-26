@@ -43,6 +43,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.NameColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScoreColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
@@ -52,6 +53,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.modifyPackages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.packagesearch.SortMetric
 import java.awt.Color
 import java.awt.Cursor
 import java.awt.KeyboardFocusManager
@@ -85,15 +87,18 @@ internal class PackagesTable(
     var transferFocusUp: () -> Unit = { transferFocusBackward() }
 
     private val columnWeights = listOf(
-        .5f, // Name column
-        .2f, // Scope column
-        .2f, // Version column
-        .1f // Actions column
+        .45f, // Name column
+        .15f, // Scope column
+        .15f, // Version column
+        .15f, // Score column
+        .10f // Actions column
     )
 
     private val nameColumn = NameColumn()
 
     private val scopeColumn = ScopeColumn { packageModel, newScope -> updatePackageScope(packageModel, newScope) }
+
+    private val scoreColumn = ScoreColumn()
 
     private val versionColumn = VersionColumn { packageModel, newVersion ->
         updatePackageVersion(packageModel, newVersion)
@@ -147,6 +152,7 @@ internal class PackagesTable(
             nameColumn = nameColumn,
             scopeColumn = scopeColumn,
             versionColumn = versionColumn,
+            scoreColumn = scoreColumn,
             actionsColumn = actionsColumn
         )
 
@@ -155,6 +161,7 @@ internal class PackagesTable(
         autosizingColumnsIndices = listOf(
             columnInfos.indexOf(scopeColumn),
             columnInfos.indexOf(versionColumn),
+            columnInfos.indexOf(scoreColumn),
             actionsColumnIndex
         )
 
@@ -271,6 +278,7 @@ internal class PackagesTable(
     internal data class ViewModel(
         val items: TableItems,
         val onlyStable: Boolean,
+        val sortMetric: SortMetric,
         val targetModules: TargetModules,
         val knownRepositoriesInTargetModules: Map<PackageSearchModule, List<RepositoryModel>>,
         val allKnownRepositories: List<RepositoryModel>,
@@ -295,6 +303,7 @@ internal class PackagesTable(
         // where the target modules or only stable flags get updated after the items data change, thus
         // causing issues when Swing tries to render things (e.g., targetModules doesn't match packages' usages)
         versionColumn.updateData(viewModel.onlyStable, viewModel.targetModules)
+        scoreColumn.updateData(viewModel.sortMetric)
         actionsColumn.updateData(viewModel)
 
         selectionModel.removeListSelectionListener(listSelectionListener)

@@ -15,7 +15,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -711,7 +710,7 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void testResolveRemoteRepositories() throws IOException, MavenProcessCanceledException {
+  public void testResolveRemoteRepositories() throws IOException {
     updateSettingsXml("""
                         <mirrors>
                           <mirror>
@@ -724,7 +723,15 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                           <profile>
                             <id>repo-test</id>
                             <repositories>
-                              <repository>        <id>repo</id>        <url>https://settings/repo</url>      </repository>      <repository>        <id>repo1</id>        <url>https://settings/repo1</url>      </repository>    </repositories>
+                              <repository>        
+                                <id>repo</id>        
+                                <url>https://settings/repo</url>      
+                              </repository>      
+                              <repository>        
+                                <id>repo1</id>        
+                                <url>https://settings/repo1</url>      
+                              </repository>    
+                            </repositories>
                           </profile>
                         </profiles>
                         <activeProfiles>
@@ -732,19 +739,28 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                         </activeProfiles>""");
 
     VirtualFile projectPom = createProjectPom("""
-                                                <groupId>test</groupId><artifactId>test</artifactId><version>1</version><repositories>
+                                                <groupId>test</groupId>
+                                                <artifactId>test</artifactId>
+                                                <version>1</version>
+                                                <repositories>
                                                   <repository>
-                                                    <id>repo-pom</id>    <url>https://pom/repo</url>  </repository>
+                                                    <id>repo-pom</id>
+                                                    <url>https://pom/repo</url>
+                                                  </repository>
                                                   <repository>
-                                                    <id>repo-pom1</id>    <url>https://pom/repo1</url>  </repository>
+                                                    <id>repo-pom1</id>
+                                                    <url>https://pom/repo1</url>
+                                                  </repository>
                                                   <repository>
-                                                    <id>repo-http</id>    <url>http://pom/http</url>  </repository>
+                                                    <id>repo-http</id>
+                                                    <url>http://pom/http</url>
+                                                  </repository>
                                                 </repositories>""");
     importProject();
 
     Set<MavenRemoteRepository> repositories = myProjectsManager.getRemoteRepositories();
     MavenEmbeddersManager embeddersManager = myProjectsManager.getEmbeddersManager();
-    MavenEmbedderWrapper mavenEmbedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, "", "");
+    MavenEmbedderWrapper mavenEmbedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, "");
 
     Set<String> repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).stream()
       .map(r -> r.getId())

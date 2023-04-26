@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 
 public interface IdePerformanceListener {
   @Topic.AppLevel
@@ -14,7 +15,7 @@ public interface IdePerformanceListener {
   /**
    * Invoked after thread state has been dumped to a file.
    */
-  default void dumpedThreads(@NotNull File toFile, @NotNull ThreadDump dump) {
+  default void dumpedThreads(@NotNull Path toFile, @NotNull ThreadDump dump) {
   }
 
   /**
@@ -23,7 +24,7 @@ public interface IdePerformanceListener {
    * @param reportDir folder where all freeze report data is collected (may be temporary,
    *                  the final folder will be provided in {@link #uiFreezeRecorded(long, File)})
    */
-  default void uiFreezeStarted(@NotNull File reportDir) {
+  default void uiFreezeStarted(@NotNull Path reportDir) {
   }
 
   /**
@@ -33,7 +34,7 @@ public interface IdePerformanceListener {
    * @param reportDir  folder where all freeze report data is collected (may be temporary,
    *                   the final folder will be provided in {@link #uiFreezeRecorded(long, File)})
    */
-  default void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
+  default void uiFreezeFinished(long durationMs, @Nullable Path reportDir) {
   }
 
   /**
@@ -42,7 +43,7 @@ public interface IdePerformanceListener {
    * @param durationMs freeze duration in milliseconds
    * @param reportDir  folder where all freeze report data is collected
    */
-  default void uiFreezeRecorded(long durationMs, @Nullable File reportDir) {
+  default void uiFreezeRecorded(long durationMs, @Nullable Path reportDir) {
   }
 
   /**

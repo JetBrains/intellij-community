@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Arrays;
 
 /**
  * @author gregsh
@@ -17,8 +16,12 @@ public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implemen
   private final StatusText emptyText = new StatusText(this) {
     @Override
     protected boolean isStatusVisible() {
-      //noinspection SSBasedInspection
-      return Arrays.stream(getComponents()).noneMatch(Component::isVisible);
+      for (Component component : getComponents()) {
+        if (component.isVisible()) {
+          return false;
+        }
+      }
+      return true;
     }
   };
 

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -47,7 +48,8 @@ internal class WeighingContext private constructor(
     }
 
     companion object {
-        fun KtAnalysisSession.createWeighingContext(
+        context(KtAnalysisSession)
+        fun createWeighingContext(
             receiver: KtExpression?,
             expectedType: KtType?,
             implicitReceivers: List<KtImplicitReceiver>,
@@ -64,7 +66,8 @@ internal class WeighingContext private constructor(
                 ImportableFqNameClassifier(fakeCompletionFile) { defaultImportPaths.hasImport(it) })
         }
 
-        fun KtAnalysisSession.createEmptyWeighingContext(
+        context(KtAnalysisSession)
+        fun createEmptyWeighingContext(
             fakeCompletionFile: KtFile
         ): WeighingContext = createWeighingContext(null, null, emptyList(), fakeCompletionFile)
 
@@ -80,17 +83,24 @@ internal class WeighingContext private constructor(
 }
 
 internal object Weighers {
-    fun KtAnalysisSession.applyWeighsToLookupElement(
+    context(KtAnalysisSession)
+    fun applyWeighsToLookupElement(
         context: WeighingContext,
         lookupElement: LookupElement,
-        symbol: KtSymbol,
+        symbol: KtSymbol?,
+        scopeKind: KtScopeKind?,
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
     ) {
         with(ExpectedTypeWeigher) { addWeight(context, lookupElement, symbol) }
+
+        if (symbol == null) return
+
         with(DeprecatedWeigher) { addWeight(lookupElement, symbol) }
         with(PreferGetSetMethodsToPropertyWeigher) { addWeight(lookupElement, symbol) }
-        with(NotImportedWeigher) { addWeight(context, lookupElement, symbol) }
+        with(NotImportedWeigher) { addWeight(context, lookupElement, symbol, availableWithoutImport = scopeKind != null) }
         with(KindWeigher) { addWeight(lookupElement, symbol) }
+        with(CallableWeigher) { addWeight(context, lookupElement, symbol, substitutor, scopeKind) }
+        with(ClassifierWeigher) { addWeight(lookupElement, symbol, scopeKind) }
         with(VariableOrFunctionWeigher) { addWeight(lookupElement, symbol) }
         with(K2SoftDeprecationWeigher) { addWeight(lookupElement, symbol, context.languageVersionSettings) }
     }
@@ -106,16 +116,42 @@ internal object Weighers {
                 NotImportedWeigher.Weigher,
                 KindWeigher.Weigher,
                 CallableWeigher.Weigher,
-                K2SoftDeprecationWeigher.Weigher,
+                ClassifierWeigher.Weigher,
             )
-            .weighAfter(PlatformWeighersIds.STATS, VariableOrFunctionWeigher.Weigher)
+            .weighAfter(
+                PlatformWeighersIds.STATS,
+                VariableOrFunctionWeigher.Weigher
+            )
             .weighBefore(ExpectedTypeWeigher.WEIGHER_ID, CompletionContributorGroupWeigher.Weigher)
-            .weighBefore(PlatformWeighersIds.PREFIX, VariableOrParameterNameWithTypeWeigher.Weigher)
+            .weighBefore(
+                PlatformWeighersIds.PREFIX,
+                K2SoftDeprecationWeigher.Weigher,
+                VariableOrParameterNameWithTypeWeigher.Weigher
+            )
             .weighAfter(PlatformWeighersIds.PROXIMITY, ByNameAlphabeticalWeigher.Weigher)
 
     private object PlatformWeighersIds {
         const val PREFIX = "prefix"
         const val STATS = "stats"
         const val PROXIMITY = "proximity"
+    }
+}
+
+internal data class CompoundWeight2<W1 : Comparable<*>, W2 : Comparable<*>>(
+    val weight1: W1,
+    val weight2: W2
+) : Comparable<CompoundWeight2<W1, W2>> {
+    override fun compareTo(other: CompoundWeight2<W1, W2>): Int {
+        return compareValuesBy(this, other, { it.weight1 }, { it.weight2 })
+    }
+}
+
+internal data class CompoundWeight3<W1 : Comparable<*>, W2 : Comparable<*>, W3 : Comparable<*>>(
+    val weight1: W1,
+    val weight2: W2,
+    val weight3: W3
+) : Comparable<CompoundWeight3<W1, W2, W3>> {
+    override fun compareTo(other: CompoundWeight3<W1, W2, W3>): Int {
+        return compareValuesBy(this, other, { it.weight1 }, { it.weight2 }, { it.weight3 })
     }
 }

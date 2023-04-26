@@ -146,7 +146,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
    */
   @Deprecated
   public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toString) {
-    this(tree, false, toString.asFunction());
+    this(tree, false, toString);
   }
 
   /**
@@ -161,7 +161,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
    */
   @Deprecated
   public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString) {
-    this(tree, false, toString.asFunction());
+    this(tree, false, toString);
   }
 
   /**
@@ -176,7 +176,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
    */
   @Deprecated
   public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
-    this(tree, canExpand, toString.asFunction());
+    this(tree, canExpand, toString);
   }
 
   /**
@@ -191,7 +191,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
    */
   @Deprecated
   public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
-    this (tree, canExpand, toString.asFunction());
+    this (tree, canExpand, toString);
   }
 
 

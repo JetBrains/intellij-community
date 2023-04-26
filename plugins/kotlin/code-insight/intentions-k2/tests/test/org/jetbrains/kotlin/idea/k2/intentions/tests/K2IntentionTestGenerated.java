@@ -3359,9 +3359,19 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/basic.kt");
         }
 
+        @TestMetadata("consecutiveBreaks.kt")
+        public void testConsecutiveBreaks() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/consecutiveBreaks.kt");
+        }
+
         @TestMetadata("octalEscape.kt")
         public void testOctalEscape() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/octalEscape.kt");
+        }
+
+        @TestMetadata("spaceBeforeBreak.kt")
+        public void testSpaceBeforeBreak() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/spaceBeforeBreak.kt");
         }
     }
 

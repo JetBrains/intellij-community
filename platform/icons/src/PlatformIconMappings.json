@@ -6,11 +6,15 @@
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
+      "groupByModule.svg": "actions/GroupByModule.svg",
+      "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
       "install.svg": "actions/install.svg",
+      "newFolder.svg": "actions/newFolder.svg",
       "playFirst.svg": "actions/play_first.svg",
       "playBack.svg": "actions/play_back.svg",
       "playForward.svg": "actions/play_forward.svg",
       "playLast.svg": "actions/play_last.svg",
+      "projectDirectory.svg": "actions/projectDirectory.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
@@ -62,11 +66,20 @@
     "build": {
       "build.svg": "actions/compile.svg",
       "dependencyAnalyzer.svg": "actions/dependencyAnalyzer.svg",
-      "gradleLoadChanges.svg": "icons/gradleLoadChanges.svg",
-      "gradleNavigate.svg": "icons/gradleNavigate.svg",
       "task.svg": "icons/task.svg",
       "taskGroup.svg": "nodes/configFolder.svg",
       "toggleOfflineMode.svg": "actions/offlineMode.svg"
+    },
+    "codeWithMe": {
+      "cwmAccess.svg": "codeWithMe/cwmAccess.svg",
+      "cwmDisableCall.svg": "codeWithMe/cwmDisableCall.svg",
+      "cwmEnableCall.svg": "codeWithMe/cwmEnableCall.svg",
+      "cwmIconModificator.svg": "codeWithMe/cwmIconModificator.svg",
+      "cwmInvite.svg": "codeWithMe/cwmInvite.svg",
+      "cwmUsers.svg": "users.svg"
+    },
+    "debugger": {
+      "watch.svg": "debugger/watch.svg"
     },
     "diff": {
       "applyNotConflicts.svg": "diff/applyNotConflicts.svg",
@@ -102,7 +115,7 @@
       "inlayRenameInCommentsActive.svg": "actions/inlayRenameInCommentsActive.svg",
       "inlayRenameInNoCodeFiles.svg": "actions/inlayRenameInNoCodeFiles.svg",
       "inlayRenameInNoCodeFilesActive.svg": "actions/inlayRenameInNoCodeFilesActive.svg",
-      "inlaySettings.svg": "general/gear.svg",
+      "inlaySettings.svg": "general/inlayGear.svg",
       "intentionBulb.svg": "actions/intentionBulb.svg",
       "intentionBulbGrey.svg": "actions/intentionBulbGrey.svg",
       "quickfixBulb.svg": "actions/quickfixBulb.svg",
@@ -121,6 +134,7 @@
     "fileTypes": {
       "actionScript.svg": "fileTypes/as.svg",
       "angularJS.svg": "icons/AngularJS.svg",
+      "anyType.svg": "fileTypes/any_type.svg",
       "archive.svg": [
         "fileTypes/archive.svg",
         "nodes/ppJar.svg"
@@ -128,28 +142,16 @@
       "aspectJ.svg": "fileTypes/aspectj.svg",
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
-      "docker.svg": [
-        "icons/Docker.svg",
-        "icons/DockerFile_1.svg"
-      ],
       "eclipse.svg": "providers/eclipse.svg",
       "editorConfig.svg": "nodes/editorconfig.svg",
       "diagram.svg": "fileTypes/diagram.svg",
       "freemaker.svg": "icons/freemarker-icon.svg",
-      "go.svg": "icons/go.svg",
-      "gradle.svg": [
-        "icons/gradle.svg",
-        "icons/gradleFile.svg"
-      ],
       "html.svg": "fileTypes/html.svg",
       "ideaModule.svg": "nodes/ideaModule.svg",
       "idl.svg": "fileTypes/idl.svg",
       "ignored.svg": "vcs/ignore_file.svg",
       "java.svg": "fileTypes/java.svg",
-      "javascript.svg": [
-        "fileTypes/javaScript.svg",
-        "icons/JavaScript_debug_configuration.svg"
-      ],
+      "javaScript.svg": "fileTypes/javaScript.svg",
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jfr.svg": "fileTypes/jfr.svg",
       "jshint.svg": "icons/fileTypes/jsHint.svg",
@@ -160,18 +162,11 @@
       "lombok.svg": "icons/lombok.svg",
       "lombokConfig.svg": "icons/config.svg",
       "manifest.svg": "fileTypes/manifest.svg",
-      "maven.svg": "icons/repositoryLibraryLogo.svg",
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
-      "php.svg": "icons/php-icon.svg",
       "properties.svg": "fileTypes/properties.svg",
       "protobuf.svg": "protoFile.png",
-      "python.svg": "icons/com/jetbrains/python/pythonFile.svg",
       "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
-      "ruby.svg": [
-        "icons/ruby/ruby.svg",
-        "icons/ruby/ruby_file.svg"
-      ],
       "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
       "scratch.svg": "actions/scratch.svg",
       "scratches.svg": "scope/scratches.svg",
@@ -186,9 +181,8 @@
         "fileTypes/custom.svg",
         "fileTypes/text.svg"
       ],
-      "typescript.svg": "icons/fileTypes/TypeScriptFile.svg",
+      "image.svg": "fileTypes/image.svg",
       "unknown.svg": "fileTypes/unknown.svg",
-      "velocity.svg": "icons/velocity.svg",
       "vueJs.svg": "icons/vue.svg",
       "wsdl.svg": "fileTypes/wsdlFile.svg",
       "xhtml.svg": "fileTypes/xhtml.svg",
@@ -219,7 +213,8 @@
         "general/add.svg",
         "actions/AddMulticaret.svg"
       ],
-      "addAccount.svg": "codeWithMe/cwmAccess.svg",
+      "autoscrollFromSource.svg": "general/autoscrollFromSource.svg",
+      "autoscrollToSource.svg": "general/autoscrollToSource.svg",
       "user.svg": "general/user.svg",
       "chevronDown.svg": [
         "actions/findAndShowNextMatches.svg",
@@ -282,7 +277,11 @@
       "filter.svg": "general/filter.svg",
       "help.svg": "actions/help.svg",
       "hide.svg": "general/hideToolWindow.svg",
-      "history.svg": "vcs/history.svg",
+      "history.svg": [
+        "vcs/history.svg",
+        "vcs/historyInline.svg",
+        "vcs/historyInlineHovered.svg"
+      ],
       "ideUpdate.svg": "ide/notification/ideUpdate.svg",
       "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
@@ -352,15 +351,22 @@
       "colors.svg": "gutter/colors.svg",
       "dataSchema.svg": "gutter/dataSchema.svg",
       "extAnnotation.svg": "gutter/extAnnotation.svg",
+      "implementedMethod.svg": "gutter/implementedMethod.svg",
+      "implementingFunctionalInterface.svg": "gutter/implementingFunctionalInterface.svg",
+      "implementingMethod.svg": "gutter/implementingMethod.svg",
       "javadocEdit.svg": "gutter/javadocEdit.svg",
       "javadocRead.svg": "gutter/javadocRead.svg",
       "mnemonic.svg": "gutter/mnemonic.svg",
+      "overridenMethod.svg": "gutter/overridenMethod.svg",
+      "overridingMethod.svg": "gutter/overridingMethod.svg",
       "readAccess.svg": "gutter/readAccess.svg",
+      "recursiveMethod.svg": "gutter/recursiveMethod.svg",
       "rerun.svg": "runConfigurations/testState/run_run.svg",
       "run.svg": "runConfigurations/testState/run.svg",
       "runError.svg": "runConfigurations/testState/red2.svg",
       "runFailed.svg": "runConfigurations/testState/yellow2.svg",
       "runSuccess.svg": "runConfigurations/testState/green2.svg",
+      "siblingInheritedMethod.svg": "gutter/siblingInheritedMethod.svg",
       "suggestedRefactoring.svg": "gutter/suggestedRefactoringBulb.svg",
       "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
       "writeAccess.svg": "gutter/writeAccess.svg"
@@ -369,10 +375,10 @@
       "feedbackRating.svg": "ide/feedbackRating.svg",
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
-      "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg"
+      "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg",
+      "localScope.svg": "ide/localScope.svg"
     },
     "image": {
-      "colorPicker_dark.svg": "ide/pipette.svg",
       "actualZoom.svg": "graph/actualZoom.svg",
       "colorPicker.svg": "ide/pipette.svg",
       "grid.svg": "graph/grid.svg",
@@ -443,6 +449,14 @@
         "general/inlineVariablesHover.svg"
       ]
     },
+    "javaee": {
+      "home.svg": "javaee/home.svg",
+      "persistenceEntity.svg": "javaee/persistenceEntity.svg",
+      "updateRunningApplication.svg": "javaee/updateRunningApplication.svg",
+      "webModuleGroup.svg": "javaee/webModuleGroup.svg",
+      "webService.svg": "javaee/WebService.svg",
+      "webServiceClient.svg": "javaee/WebServiceClient.svg"
+    },
     "nodes": {
       "abstractException.svg": "nodes/abstractException.svg",
       "alias.svg": "nodes/alias.svg",
@@ -454,8 +468,10 @@
       "classInitializer.svg": "nodes/classInitializer.svg",
       "constant.svg": "nodes/constant.svg",
       "controller.svg": "nodes/controller.svg",
+      "copyOfFolder.svg": "nodes/copyOfFolder.svg",
       "dataColumn.svg": "nodes/dataColumn.svg",
       "dataSchema.svg": "nodes/dataSchema.svg",
+      "desktop.svg": "nodes/desktop.svg",
       "editFolder.svg": "modules/editFolder.svg",
       "enum.svg": "nodes/enum.svg",
       "errorIntroduction.svg": "nodes/errorIntroduction.svg",
@@ -469,6 +485,7 @@
       "generatedSource.svg": "modules/generatedSourceRoot.svg",
       "generatedTestRoot.svg": "modules/generatedTestRoot.svg",
       "gvariable.svg": "nodes/gvariable.svg",
+      "homeFolder.svg": "nodes/homeFolder.svg",
       "interface.svg": "nodes/interface.svg",
       "jdk.svg": "nodes/ppJdk.svg",
       "lambda.svg": "nodes/lambda.svg",
@@ -478,7 +495,10 @@
       "methodAbstract.svg": "nodes/abstractMethod.svg",
       "methodReference.svg": "nodes/methodReference.svg",
       "modelClass.svg": "nodes/modelClass.svg",
-      "module.svg": "nodes/Module.svg",
+      "module.svg": [
+        "nodes/Module.svg",
+        "actions/moduleDirectory.svg"
+      ],
       "moduleGroup.svg": "nodes/moduleGroup.svg",
       "package.svg": "nodes/package.svg",
       "parameter.svg": [
@@ -497,29 +517,30 @@
       ],
       "record.svg": "nodes/record.svg",
       "resourcesRoot.svg": "modules/resourcesRoot.svg",
+      "servlet.svg": "nodes/servlet.svg",
       "sourceRoot.svg": "modules/sourceRoot.svg",
       "star.svg": "nodes/favorite.svg",
       "starEmpty.svg": "nodes/notFavoriteOnHover.svg",
       "static.svg": "nodes/static.svg",
       "test.svg": "nodes/test.svg",
       "testIgnored.svg": "nodes/testIgnored.svg",
-      "testResources.svg": "nodes/testSourceFolder.svg",
       "testResourcesRoot.svg": "modules/testResourcesRoot.svg",
       "testRoot.svg": "modules/testRoot.svg",
       "testSourceFolder.svg": "nodes/testSourceFolder.svg",
       "type.svg": "nodes/type.svg",
       "unloadedModule.svg": "modules/unloadedModule.svg",
+      "upFolder.svg": "nodes/upFolder.svg",
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg"
     },
-    "php": {
-      "phpHttpRequest.svg": "icons/run_http_request.svg",
-      "phpLocal.svg": "icons/php-local.svg",
-      "phpRemote.svg": [
-        "icons/php-remote.svg",
-        "icons/run_remote_debug.svg"
-      ],
-      "phpWeb.svg": "icons/run_web_app.svg"
+    "objectBrowser": {
+      "compactEmptyPackages.svg": "objectBrowser/compactEmptyPackages.svg",
+      "flattenModules.svg": "objectBrowser/flattenModules.svg",
+      "flattenPackages.svg": "objectBrowser/flattenPackages.svg",
+      "sortAlphabetically.svg": "objectBrowser/sorted.svg",
+      "sortByType.svg": "objectBrowser/sortByType.svg",
+      "sortByUsage.svg": "objectBrowser/sortedByUsage.svg",
+      "sortByVisibility.svg": "objectBrowser/visibilitySort.svg"
     },
     "profiler": {
       "collapseNode.svg": "profiler/collapseNode.svg",
@@ -602,9 +623,9 @@
       "applicationRemote.svg": "runConfigurations/remote.svg",
       "compound.svg": "runConfigurations/compound.svg",
       "invalidConfigurationLayer.svg": "runConfigurations/invalidConfigurationLayer.svg",
-      "javaScriptRemote.svg": "icons/JavaScript_remote_debug_configuration.svg",
       "junit.svg": "runConfigurations/junit.svg",
       "junitTestMark.svg": "runConfigurations/testMark.svg",
+      "sortByDuration.svg": "runConfigurations/sortbyDuration.svg",
       "webApp.svg": "runConfigurations/web_app.svg"
     },
     "status": {
@@ -626,22 +647,18 @@
       "unknown.svg": "toolbar/unknown.svg"
     },
     "toolwindow": {
-      "ant.svg": [
-        "toolwindows/toolWindowAnt.svg",
-        "icons/build.svg"
-      ],
+      "ant.svg": "toolwindows/toolWindowAnt.svg",
       "bookmarks.svg": "toolwindows/toolWindowBookmarks.svg",
       "build.svg": "toolwindows/toolWindowBuild.svg",
       "commit.svg": "toolwindows/toolWindowCommit.svg",
+      "coverage.svg": "toolwindows/toolWindowCoverage.svg",
       "debug.svg": "toolwindows/toolWindowDebugger.svg",
       "dependencies.svg": [
         "icons/artifact.svg",
-        "icons/artifactSmall.svg",
-        "icons/com/jetbrains/python/pythonPackages.svg"
+        "icons/artifactSmall.svg"
       ],
       "documentation.svg": "toolwindows/documentation.svg",
       "find.svg": "toolwindows/toolWindowFind.svg",
-      "gradle.svg": "icons/toolWindowGradle.svg",
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
       "messages.svg": "toolwindows/toolWindowMessages.svg",
       "notifications.svg": "toolwindows/notifications.svg",
@@ -656,10 +673,8 @@
       "settingSync.svg": "toolwindows/settingSync.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
       "todo.svg": "toolwindows/toolWindowTodo.svg",
-      "vcs.svg": [
-        "toolwindows/toolWindowChanges.svg",
-        "vcs/branch.svg"
-      ],
+      "toolWindowVariableView.svg": "toolwindows/toolWindowVariableView.svg",
+      "vcs.svg": "toolwindows/toolWindowChanges.svg",
       "web.svg": "toolwindows/webToolWindow.svg"
     },
     "vcs": {

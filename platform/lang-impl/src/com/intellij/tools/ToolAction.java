@@ -17,7 +17,6 @@
 package com.intellij.tools;
 
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -84,7 +83,6 @@ public class ToolAction extends AnAction implements DumbAware {
                       @Nullable AnActionEvent e,
                       long executionId,
                       @Nullable ProcessListener processListener) {
-    MacroManager.getInstance().cacheMacrosPreview(context);
     Tool tool = findTool(actionId);
     if (tool != null) {
       tool.execute(e, getToolDataContext(context), executionId, processListener);

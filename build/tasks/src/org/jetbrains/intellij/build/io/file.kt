@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jetbrains.intellij.build.io
 
 import com.intellij.openapi.util.text.Formats
@@ -25,9 +27,9 @@ fun moveFile(source: Path, target: Path) {
   Files.move(source, target)
 }
 
-fun moveFileToDir(file: Path, targetDir: Path) {
+fun moveFileToDir(file: Path, targetDir: Path): Path {
   Files.createDirectories(targetDir)
-  Files.move(file, targetDir.resolve(file.fileName))
+  return Files.move(file, targetDir.resolve(file.fileName))
 }
 
 fun copyFile(file: Path, target: Path) {
@@ -191,15 +193,13 @@ fun substituteTemplatePlaceholders(inputFile: Path,
 }
 
 inline fun transformFile(file: Path, task: (tempFile: Path) -> Unit) {
-  synchronized(file.toString().intern()) {
-    val tempFile = file.parent.resolve("${file.fileName}.tmp")
-    try {
-      task(tempFile)
-      Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
-    }
-    finally {
-      Files.deleteIfExists(tempFile)
-    }
+  val tempFile = file.parent.resolve("${file.fileName}.tmp")
+  try {
+    task(tempFile)
+    Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+  }
+  finally {
+    Files.deleteIfExists(tempFile)
   }
 }
 

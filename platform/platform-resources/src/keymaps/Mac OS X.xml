@@ -1,12 +1,12 @@
 <keymap name="Mac OS X" parent="$default" version="1" disable-mnemonics="true">
-Ï  <action id="FileChooser.TogglePathBar">
-    <keyboard-shortcut first-keystroke="meta P"/>
+  <action id="FileChooser.GoToParent">
+    <keyboard-shortcut first-keystroke="meta UP"/>
   </action>
-  <action id="FileChooserList.Root">
+  <action id="FileChooser.GoToRoot">
     <keyboard-shortcut first-keystroke="meta SLASH"/>
   </action>
-  <action id="FileChooserList.LevelUp">
-    <keyboard-shortcut first-keystroke="meta UP"/>
+  <action id="FileChooser.TogglePathBar">
+    <keyboard-shortcut first-keystroke="meta P"/>
   </action>
 
   <action id="$Delete">

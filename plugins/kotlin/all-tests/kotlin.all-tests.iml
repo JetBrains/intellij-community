@@ -58,5 +58,7 @@
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
   </component>
 </module>

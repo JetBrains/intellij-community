@@ -12,6 +12,8 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.jar.JarFile
+import java.util.jar.Manifest
 import java.util.zip.Deflater
 import kotlin.io.path.exists
 import kotlin.io.path.extension
@@ -62,6 +64,7 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
     val result = when (other) {
       is DirectorySpec -> DirectorySpec()
       is ZipSpec -> ZipSpec()
+      is JarSpec -> JarSpec()
     }
     result.children.putAll(children)
     for ((name, child) in other.children) {
@@ -81,23 +84,45 @@ class DirectorySpec(originalFile: Path? = null) : DirectorySpecBase(originalFile
   }
 }
 
-class ZipSpec(val level: Int = Deflater.DEFAULT_COMPRESSION) : DirectorySpecBase(null) {
+sealed class ZipSpecBase(private val extension: String) : DirectorySpecBase(null) {
   override fun generate(target: File) {
-    val contentDir = FileUtil.createTempDirectory("zip-content", null, false)
+    val contentDir = FileUtil.createTempDirectory("$extension-content", null, false)
     try {
       generateInDirectory(contentDir)
       FileUtil.createParentDirs(target)
-      Compressor.Zip(target).withLevel(level).use { it.addDirectory(contentDir) }
+      compress(contentDir, target)
     }
     finally {
       FileUtil.delete(contentDir)
     }
   }
 
+  abstract fun compress(contentDir: File, target: File)
+
   override fun generateInTempDir(): Path {
-    val target = FileUtil.createTempFile("zip-by-spec", ".zip", true)
+    val target = FileUtil.createTempFile("$extension-by-spec", ".$extension", true)
     generate(target)
     return target.toPath()
+  }
+}
+
+class ZipSpec(val level: Int = Deflater.DEFAULT_COMPRESSION) : ZipSpecBase("zip") {
+  override fun compress(contentDir: File, target: File) {
+    Compressor.Zip(target).withLevel(level).use { it.addDirectory(contentDir) }
+  }
+}
+
+class JarSpec : ZipSpecBase("jar") {
+  override fun compress(contentDir: File, target: File) {
+    Compressor.Jar(target).use {
+      val manifestFile = File(contentDir, JarFile.MANIFEST_NAME)
+      if (manifestFile.exists()) {
+        val manifest = manifestFile.inputStream().use { Manifest(it) }
+        it.addManifest(manifest)
+        it.filter { path, _ -> path != JarFile.MANIFEST_NAME }
+      }
+      it.addDirectory(contentDir) 
+    }
   }
 }
 
@@ -189,7 +214,7 @@ private fun assertDirectoryContentMatches(file: Path,
     is DirectorySpec -> {
       assertDirectoryMatches(file, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
     }
-    is ZipSpec -> {
+    is ZipSpecBase -> {
       errorReporter.assertTrue(relativePath, "$file is not a file", file.isFile())
       val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false).toPath()
       ZipUtil.extract(file, dirForExtracted, null)
@@ -275,7 +300,10 @@ private fun createSpecByPath(path: Path, originalFile: Path?): DirectoryContentS
   if (path.extension in setOf("zip", "jar")) {
     val dirForExtracted = FileUtil.createTempDirectory("extracted-${path.name}", null, false).toPath()
     ZipUtil.extract(path, dirForExtracted, null)
-    return ZipSpec().also { fillSpecFromDirectory(it, dirForExtracted, null) }
+    val spec = if (path.extension == "jar") JarSpec() else ZipSpec()
+    fillSpecFromDirectory(spec, dirForExtracted, null) 
+    FileUtil.delete(dirForExtracted)
+    return spec
   }
   return FileSpec(Files.readAllBytes(path), originalFile)
 }

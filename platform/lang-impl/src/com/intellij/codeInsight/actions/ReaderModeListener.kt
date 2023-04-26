@@ -6,7 +6,6 @@ import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.app
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
 import com.intellij.openapi.editor.ClientEditorManager
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable

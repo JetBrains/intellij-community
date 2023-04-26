@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Experimental
 
 package com.intellij.openapi.progress
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -80,6 +81,7 @@ suspend fun <T> withModalProgress(
   return taskSupport().withModalProgressInternal(owner, title, cancellation, action)
 }
 
+@RequiresBlockingContext
 @RequiresEdt
 fun <T> runBlockingModal(
   project: Project,
@@ -142,6 +144,7 @@ fun <T> runBlockingModal(
  * @throws CancellationException if the calling coroutine was cancelled,
  * or if the indicator was cancelled by the user in the UI
  */
+@RequiresBlockingContext
 @RequiresEdt
 fun <T> runBlockingModal(
   owner: ModalTaskOwner,
@@ -238,6 +241,7 @@ suspend fun <T> withModalProgressIndicator(
             "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
   replaceWith = ReplaceWith("runBlockingModal(project, title) { withRawProgressReporter(action) }"),
 )
+@RequiresBlockingContext
 @RequiresEdt
 fun <T> runBlockingModalWithRawProgressReporter(
   project: Project,
@@ -253,6 +257,7 @@ fun <T> runBlockingModalWithRawProgressReporter(
             "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
   replaceWith = ReplaceWith("runBlockingModal(owner, title, cancellation) { withRawProgressReporter(action) }"),
 )
+@RequiresBlockingContext
 @RequiresEdt
 fun <T> runBlockingModalWithRawProgressReporter(
   owner: ModalTaskOwner,

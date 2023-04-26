@@ -2,22 +2,25 @@
 
 use anyhow::Result;
 
-#[cfg(target_os = "windows")] use {
+#[cfg(target_os = "windows")]
+use {
     anyhow::bail,
     log::info,
-    windows::core::{HSTRING,PCWSTR},
-    windows::Win32::Foundation::{GetLastError, ERROR_SERVICE_DOES_NOT_EXIST},
-    windows::Win32::System::Services::{OpenSCManagerW, OpenServiceW, CloseServiceHandle, SC_MANAGER_CONNECT}
+    windows::core::{HSTRING, PCWSTR},
+    windows::Win32::Foundation::{ERROR_SERVICE_DOES_NOT_EXIST, GetLastError},
+    windows::Win32::System::Services::{CloseServiceHandle, OpenSCManagerW, OpenServiceW, SC_MANAGER_CONNECT}
 };
 
-#[cfg(target_os = "linux")] use {
-    anyhow::{bail, Context},
+#[cfg(target_os = "linux")]
+use {
+    anyhow::Context,
     log::{debug, info},
+    std::fs::File,
+    std::io::{BufReader, Read},
     std::path::PathBuf,
-    utils::read_file_to_end
 };
 
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_running_in_docker() -> Result<bool> {
     Ok(is_control_group_matches_docker(None).expect("Unable to read cgroup file")
         || is_docker_env_file_exist(None).expect("Unable to read .dockerenv file")
@@ -25,12 +28,12 @@ pub fn is_running_in_docker() -> Result<bool> {
     )
 }
 
-#[cfg(any(target_os = "windows"))]
+#[cfg(target_os = "windows")]
 pub fn is_running_in_docker() -> Result<bool> {
     is_service_present("cexecsvc")
 }
 
-#[cfg(any(target_os = "macos"))]
+#[cfg(target_os = "macos")]
 pub fn is_running_in_docker() -> Result<bool> {
     Ok(false)
 }
@@ -39,7 +42,7 @@ pub fn is_running_in_docker() -> Result<bool> {
  * Docker environment set control groups with a special names that include docker as a suffix.
  * Check Linux control groups and look over file content for Docker or lxc.
  */
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_control_group_matches_docker(cgroup_parent_path: Option<PathBuf>) -> Result<bool> {
     info!("Checking control group file...");
 
@@ -53,8 +56,11 @@ pub fn is_control_group_matches_docker(cgroup_parent_path: Option<PathBuf>) -> R
     }
 
     // Read cgroup file content
-    let cgroup_content = read_file_to_end(&cgroup_path)
-      .context(format!("Unable to read file '{}'", cgroup_path.display()))?;
+    let mut cgroup_content = String::new();
+    let cgroup_file = File::open(&cgroup_path)
+        .context(format!("Unable to open file '{}'", cgroup_path.display()))?;
+    let _n = BufReader::new(cgroup_file).read_to_string(&mut cgroup_content)
+        .context(format!("Unable to read file '{}'", cgroup_path.display()))?;
 
     // Check file contains any groups with 'docker' or 'lxc' suffix that define a container environment.
     let mut contains_docker_anchors = false;
@@ -77,7 +83,7 @@ pub fn is_control_group_matches_docker(cgroup_parent_path: Option<PathBuf>) -> R
  * Docker containers should store Docker environment configuration in /.dockerenv file.
  * Check for this file existence.
  */
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_docker_env_file_exist(root_dir: Option<PathBuf>) -> Result<bool> {
     is_docker_file_exist(".dockerenv", root_dir)
 }
@@ -86,12 +92,12 @@ pub fn is_docker_env_file_exist(root_dir: Option<PathBuf>) -> Result<bool> {
  * Docker containers should store Docker environment configuration in /.dockerinit file.
  * Check for this file existence.
  */
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 pub fn is_docker_init_file_exist(root_dir: Option<PathBuf>) -> Result<bool> {
     is_docker_file_exist(".dockerinit", root_dir)
 }
 
-#[cfg(any(target_os = "linux"))]
+#[cfg(target_os = "linux")]
 fn is_docker_file_exist(file_name: &str, root_dir: Option<PathBuf>) -> Result<bool> {
     let root_dir_to_use = root_dir.unwrap_or(PathBuf::from("/"));
     debug!("Got root directory path: {}", root_dir_to_use.display());
@@ -111,7 +117,7 @@ fn is_docker_file_exist(file_name: &str, root_dir: Option<PathBuf>) -> Result<bo
 /**
  * Check if Windows service present.
  */
-#[cfg(any(target_os = "windows"))]
+#[cfg(target_os = "windows")]
 pub fn is_service_present(service_name: &str) -> Result<bool> {
     info!("Checking if Windows service '{service_name}' present on machine");
 

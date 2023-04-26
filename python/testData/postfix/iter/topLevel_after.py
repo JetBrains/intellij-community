@@ -1,2 +1,2 @@
-for i in []:
+for e in []:
     <caret>

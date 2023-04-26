@@ -85,7 +85,7 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
 
   companion object {
     fun checkLogRecordingEnabled(project: Project?, recorderId: String?): Boolean {
-      if (StatisticsEventLogProviderUtil.getEventLogProvider(recorderId!!).isCollectionEnabled()) {
+      if (StatisticsEventLogProviderUtil.getEventLogProvider(recorderId!!).isLoggingEnabled()) {
         return true
       }
       Notification(STATISTICS_NOTIFICATION_GROUP_ID, StatisticsBundle.message("stats.logging.is.disabled"), NotificationType.WARNING)

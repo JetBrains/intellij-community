@@ -35,7 +35,6 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 import java.util.function.Predicate
@@ -72,7 +71,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
   internal val schemeExtension: String
   private val updateExtension: Boolean
 
-  internal val filesToDelete: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
+  internal val filesToDelete: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
   // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
   internal val schemeToInfo = ConcurrentCollectionFactory.createConcurrentIdentityMap<T, ExternalInfo>()

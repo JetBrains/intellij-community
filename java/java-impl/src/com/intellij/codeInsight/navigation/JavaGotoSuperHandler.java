@@ -30,7 +30,7 @@ public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler
     int offset = editor.getCaretModel().getOffset();
     new PsiTargetNavigator<>(() -> Arrays.asList(findSuperElements(file, offset)))
       .elementsConsumer((elements, navigator) -> {
-        if (!elements.isEmpty() && elements.get(0) instanceof PsiMethod) {
+        if (!elements.isEmpty() && elements.iterator().next() instanceof PsiMethod) {
           boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(elements.toArray(PsiMethod.EMPTY_ARRAY));
           navigator.presentationProvider(element -> GotoTargetHandler.computePresentation(element, showMethodNames));
           navigator.title(CodeInsightBundle.message("goto.super.method.chooser.title"));

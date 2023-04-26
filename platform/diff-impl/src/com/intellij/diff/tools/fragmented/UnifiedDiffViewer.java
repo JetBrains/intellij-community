@@ -1306,8 +1306,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     @NotNull private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("UnifiedDiffViewer.MarkupUpdater", 300, true, myPanel, this);
 
-    @NotNull private ProgressIndicator myUpdateIndicator = new EmptyProgressIndicator();
-    private boolean mySuspended;
+    @NotNull private volatile ProgressIndicator myUpdateIndicator = new EmptyProgressIndicator();
+    private volatile boolean mySuspended;
 
     private MarkupUpdater(@NotNull List<? extends DocumentContent> contents) {
       Disposer.register(UnifiedDiffViewer.this, this);
@@ -1354,16 +1354,14 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       myUpdateQueue.sendFlush();
     }
 
-    @RequiresEdt
-    public void scheduleUpdate() {
+    void scheduleUpdate() {
       if (myProject == null) return;
       if (mySuspended) return;
-      if (!getComponent().isShowing()) return;
       myUpdateIndicator.cancel();
-
       myUpdateQueue.queue(new Update("update") {
         @Override
         public void run() {
+          if (!getComponent().isShowing()) return;
           if (myStateIsOutOfDate || !myModel.isValid()) return;
 
           myUpdateIndicator.cancel();
@@ -1409,7 +1407,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         scheduleUpdate();
       }
 

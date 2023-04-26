@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -68,8 +69,11 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
       if (!PsiTreeUtil.processElements(method, e -> collectAssignedFields(e, parameter, methodsOneLevelDeep, assignedFields))) {
         return;
       }
+      if (aClass.isRecord() && ContainerUtil.exists(methodsOneLevelDeep, m -> JavaPsiRecordUtil.isCanonicalConstructor(m))) {
+        return;
+      }
       for (PsiMethod calledMethod : methodsOneLevelDeep) {
-        if (!PsiTreeUtil.processElements(calledMethod, e -> collectAssignedFields(e, parameter, null, assignedFields))) {
+        if (!PsiTreeUtil.processElements(calledMethod, e -> collectAssignedFields(e, null, null, assignedFields))) {
           return;
         }
       }
@@ -103,10 +107,6 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
             // instance to copy is passed to another constructor
             return false;
           }
-          if (variable instanceof PsiField) {
-            assignedFields.add((PsiField)variable);
-          }
-          ContainerUtil.addIfNotNull(assignedFields, resolveFieldOfGetter(argument, parameter));
         }
         if (methods != null) {
           final PsiMethod constructor = methodCallExpression.resolveMethod();
@@ -156,17 +156,6 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
         return target == requiredQualifier ? requiredQualifier : null;
       }
       return target instanceof PsiVariable ? (PsiVariable)target : null;
-    }
-
-    private static PsiField resolveFieldOfGetter(PsiExpression expression, @NotNull PsiParameter requiredQualifier) {
-      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
-        return null;
-      }
-      final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
-      if (!ExpressionUtils.isReferenceTo(qualifier, requiredQualifier)) {
-        return null;
-      }
-      return PropertyUtil.getFieldOfGetter(methodCallExpression.resolveMethod());
     }
   }
 }

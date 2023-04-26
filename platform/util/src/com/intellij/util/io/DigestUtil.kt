@@ -10,9 +10,8 @@ import java.security.Provider
 import java.security.SecureRandom
 import kotlin.io.path.inputStream
 
+@Suppress("FunctionName")
 object DigestUtil {
-  private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
-
   @JvmStatic
   val random: SecureRandom by lazy { SecureRandom() }
 
@@ -21,19 +20,22 @@ object DigestUtil {
   fun randomToken(): String = BigInteger(130, random).toString(32)
 
   @JvmStatic
-  fun md5(): MessageDigest = md5.cloneDigest()
+  fun md5(): MessageDigest = cloneDigest(md5)
   private val md5 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("MD5") }
 
   @JvmStatic
-  fun sha1(): MessageDigest = sha1.cloneDigest()
+  fun sha1(): MessageDigest = cloneDigest(sha1)
   private val sha1 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-1") }
 
   @JvmStatic
-  fun sha256(): MessageDigest = sha256.cloneDigest()
+  fun sha256(): MessageDigest = cloneDigest(sha256)
   private val sha256 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-256") }
 
+  fun sha3_224(): MessageDigest = cloneDigest(sha3_224)
+  fun sha3_512(): MessageDigest = cloneDigest(sha3_512)
+
   @JvmStatic
-  fun sha512(): MessageDigest = sha512.cloneDigest()
+  fun sha512(): MessageDigest = cloneDigest(sha512)
   private val sha512 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-512") }
 
   @JvmStatic
@@ -62,19 +64,6 @@ object DigestUtil {
 
   @JvmStatic
   fun md5Hex(input: ByteArray): String = bytesToHex(md5().digest(input))
-
-  /**
-   * Digest cloning is faster than requesting a new one from [MessageDigest.getInstance].
-   * This approach is used in Guava as well.
-   */
-  private fun MessageDigest.cloneDigest(): MessageDigest {
-    return try {
-      clone() as MessageDigest
-    }
-    catch (e: CloneNotSupportedException) {
-      throw IllegalArgumentException("Message digest is not cloneable: $this")
-    }
-  }
 
   @JvmStatic
   @JvmOverloads
@@ -105,9 +94,27 @@ object DigestUtil {
       throw RuntimeException("Failed to read stream. ${e.message}", e)
     }
   }
+}
 
-  private fun getMessageDigest(algorithm: String): MessageDigest {
-    return MessageDigest.getInstance(algorithm, sunSecurityProvider)
+private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
+
+private val sha3_224: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-224") }
+private val sha3_512: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-512") }
+
+private fun getMessageDigest(algorithm: String): MessageDigest {
+  return MessageDigest.getInstance(algorithm, sunSecurityProvider)
+}
+
+/**
+ * Digest cloning is faster than requesting a new one from [MessageDigest.getInstance].
+ * This approach is used in Guava as well.
+ */
+private fun cloneDigest(digest: MessageDigest): MessageDigest {
+  try {
+    return digest.clone() as MessageDigest
+  }
+  catch (e: CloneNotSupportedException) {
+    throw IllegalArgumentException("Message digest is not cloneable: $digest")
   }
 }
 

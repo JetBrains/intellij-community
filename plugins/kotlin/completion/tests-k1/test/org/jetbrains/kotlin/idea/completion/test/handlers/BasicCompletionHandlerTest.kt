@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.completion.handlers
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import java.io.File
 
 @Deprecated("All tests from here to be moved to the generated test")
 @TestRoot("completion/testData")
@@ -28,8 +30,12 @@ class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
     }
 
     private fun doTest(time: Int, lookupString: String?, itemText: String?, tailText: String?, completionChar: Char) {
-        fixture.configureByFile(fileName())
+        val fileName = fileName()
+        val fileText = FileUtil.loadFile(File(dataFilePath(fileName)), true)
+
+        fixture.configureByFile(fileName)
         doTestWithTextLoaded(
+            fileText,
             myFixture,
             CompletionType.BASIC,
             time,

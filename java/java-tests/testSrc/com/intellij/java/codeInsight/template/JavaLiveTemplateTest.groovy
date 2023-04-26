@@ -312,6 +312,7 @@ class Outer {
     assert isApplicable("class Foo {{ Runnable r = () -> { <caret>System.out.println(\"foo\"); }; ) }}", template)
     assert isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template)
     assert !isApplicable("class Foo extends <caret>t {}", template)
+    assert !isApplicable("record R(int i, <caret>toar) {}",template)
   }
 
   void testJavaStringContext() {
@@ -345,6 +346,9 @@ class Outer {
     assertTrue(isApplicable("class Foo { /**\nfoo **/ <caret>xxx String[] foo(String[] bar) {} }", template))
 
     assertTrue(isApplicable("<caret>xxx package foo; class Foo {}", template))
+    assertTrue(isApplicable("record R(<caret>xxx int i) {}", template))
+    assertTrue(isApplicable("record R(<caret>xxx) {}", template))
+    assertFalse(isApplicable("record R(int <caret>xxx)", template))
   }
 
   void "test inner class name"() {

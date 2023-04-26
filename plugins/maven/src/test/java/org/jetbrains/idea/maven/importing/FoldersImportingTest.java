@@ -129,9 +129,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     } else {
       assertSources("project", "userSourceFolder");
     }
-    if (supportsKeepingManualChanges()) {
       assertExcludes("project", "target", "userExcludedFolder");
-    }
 
     importProject();
 
@@ -140,11 +138,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     } else {
       assertSources("project", "userSourceFolder");
     }
-    if (supportsKeepingManualChanges()) {
-      assertExcludes("project", "target", "userExcludedFolder");
-    } else {
-      assertExcludes("project", "target");
-    }
+    assertExcludes("project", "target", "userExcludedFolder");
 
     resolveFoldersAndImport();
 
@@ -153,11 +147,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     } else {
       assertSources("project", "userSourceFolder");
     }
-    if (supportsKeepingManualChanges()) {
-      assertExcludes("project", "target", "userExcludedFolder");
-    } else {
-      assertExcludes("project", "target");
-    }
+    assertExcludes("project", "target", "userExcludedFolder");
   }
 
   @Test

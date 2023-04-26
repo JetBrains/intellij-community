@@ -158,22 +158,22 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
                 it.valueArguments.size == 2
             },
             Replacement("java.util.Arrays.copyOfRange", "kotlin.collections.copyOfRange", ToExtensionFunctionWithNonNullableReceiver),
-            Replacement("java.util.Arrays.equals", "kotlin.collections.contentEquals", ToExtensionFunctionWithNonNullableArguments) {
+            Replacement("java.util.Arrays.equals", "kotlin.collections.contentEquals", ToExtensionFunctionWithNullableReceiver) {
                 it.valueArguments.size == 2
             },
-            Replacement("java.util.Arrays.deepEquals", "kotlin.collections.contentDeepEquals", ToExtensionFunctionWithNonNullableArguments),
+            Replacement("java.util.Arrays.deepEquals", "kotlin.collections.contentDeepEquals", ToExtensionFunctionWithNullableReceiver),
             Replacement(
                 "java.util.Arrays.deepHashCode",
                 "kotlin.collections.contentDeepHashCode",
-                ToExtensionFunctionWithNonNullableReceiver
+                ToExtensionFunctionWithNullableReceiver
             ),
-            Replacement("java.util.Arrays.hashCode", "kotlin.collections.contentHashCode", ToExtensionFunctionWithNonNullableReceiver),
+            Replacement("java.util.Arrays.hashCode", "kotlin.collections.contentHashCode", ToExtensionFunctionWithNullableReceiver),
             Replacement(
                 "java.util.Arrays.deepToString",
                 "kotlin.collections.contentDeepToString",
-                ToExtensionFunctionWithNonNullableReceiver
+                ToExtensionFunctionWithNullableReceiver
             ),
-            Replacement("java.util.Arrays.toString", "kotlin.collections.contentToString", ToExtensionFunctionWithNonNullableReceiver),
+            Replacement("java.util.Arrays.toString", "kotlin.collections.contentToString", ToExtensionFunctionWithNullableReceiver),
             Replacement("java.util.Arrays.asList", "kotlin.collections.listOf"),
             Replacement("java.util.Arrays.asList", "kotlin.collections.mutableListOf"),
             Replacement("java.util.Set.of", "kotlin.collections.setOf"),

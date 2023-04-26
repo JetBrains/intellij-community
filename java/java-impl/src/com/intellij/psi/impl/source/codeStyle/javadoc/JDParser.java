@@ -13,6 +13,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,9 +41,7 @@ public class JDParser {
   private final CommonCodeStyleSettings myCommonSettings;
 
   private final static String SNIPPET_START_REGEXP = "\\{s*@snippet[^\\}]*";
-  private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
   private final static String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
-  private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
   private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
   private final static Pattern SNIPPET_START_PATTERN = Pattern.compile(SNIPPET_START_REGEXP);
 
@@ -350,23 +349,8 @@ public class JDParser {
   }
 
   private static boolean containsTagToKeepIndentsAfter(@NotNull String line) {
-    String tag = getStartTag(line);
+    String tag = HtmlUtil.getStartTag(line);
     return tag != null && ArrayUtil.contains(tag, TAGS_TO_KEEP_INDENTS_AFTER);
-  }
-
-  private static String getStartTag(@NotNull String line) {
-    if (startsWithTag(line)) {
-      int tagStart = line.indexOf("<");
-      if (tagStart >= 0) {
-        tagStart ++;
-        for (int i = tagStart; i < line.length(); i ++) {
-          if (!Character.isAlphabetic(line.charAt(i))) {
-            return line.substring(tagStart,i);
-          }
-        }
-      }
-    }
-    return null;
   }
 
   private static boolean isMultilineTodoStart(@NotNull String line) {
@@ -594,14 +578,7 @@ public class JDParser {
   }
 
   private boolean isKeepLineFeedsIn(@NotNull String line) {
-    return mySettings.JD_PRESERVE_LINE_FEEDS || startsWithTag(line);
-  }
-
-  private static boolean startsWithTag(@NotNull String line) {
-    if (line.trim().startsWith("<")) {
-      return HTML_TAG_PATTERN.matcher(line).matches();
-    }
-    return false;
+    return mySettings.JD_PRESERVE_LINE_FEEDS || HtmlUtil.startsWithTag(line);
   }
 
   private static void endParagraph(@NotNull List<? super Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
@@ -857,7 +834,7 @@ public class JDParser {
     for (int i = currLine + 1; i < lines.size(); i ++) {
       String line = lines.get(i);
       if (!line.isEmpty()) {
-        return startsWithTag(line);
+        return HtmlUtil.startsWithTag(line);
       }
     }
     return false;

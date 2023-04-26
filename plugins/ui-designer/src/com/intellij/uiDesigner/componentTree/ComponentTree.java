@@ -245,12 +245,11 @@ public final class ComponentTree extends Tree implements DataProvider {
       return myFormEditor;
     }
 
-    RadComponent selectedComponent = getSelectedComponent();
-    if (selectedComponent == null) {
-      return null;
-    }
-
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      RadComponent selectedComponent = getSelectedComponent();
+      if (selectedComponent == null) {
+        return null;
+      }
       return (DataProvider)slowId -> getSlowData(selectedComponent, slowId);
     }
     return null;

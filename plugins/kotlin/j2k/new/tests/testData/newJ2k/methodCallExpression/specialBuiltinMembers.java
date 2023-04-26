@@ -41,13 +41,17 @@ class A {
         }
     }
 
-    void numberConversions(byte b, short s, int i, long l, float f, double d, String str) {
+    void primitiveConversions(boolean bool, byte b, short s, int i, long l, float f, double d, String str) {
+        Boolean.valueOf(bool);
         Byte.valueOf(b);
         Short.valueOf(s);
         Integer.valueOf(i);
         Long.valueOf(l);
         Float.valueOf(f);
         Double.valueOf(d);
+
+        Boolean.parseBoolean(str);
+        Boolean.valueOf(str);
 
         Byte.parseByte(str);
         Byte.valueOf(str);

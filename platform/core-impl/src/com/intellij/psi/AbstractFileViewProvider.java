@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -44,7 +45,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance(AbstractFileViewProvider.class);
@@ -171,7 +175,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   public Document getDocument() {
     Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document == null) {
-      document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
+      VirtualFile file = getVirtualFile();
+      document = ProjectLocator.computeWithPreferredProject(file, myManager.getProject(), () ->
+        FileDocumentManager.getInstance().getDocument(file));
       myDocument = document == null ? null : new SoftReference<>(document);
     }
     return document;

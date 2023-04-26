@@ -97,7 +97,7 @@ public class MavenModelConverter {
     return new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
   }
 
-  private static List<MavenResource> convertResources(List<Resource> resources) {
+  public static List<MavenResource> convertResources(List<Resource> resources) {
     if (resources == null) return new ArrayList<MavenResource>();
 
     List<MavenResource> result = new ArrayList<MavenResource>(resources.size());

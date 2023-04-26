@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -27,7 +27,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -42,6 +41,7 @@ import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
+import java.lang.ref.SoftReference
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -271,7 +271,7 @@ object UpdateChecker {
   @Throws(IOException::class, JDOMException::class)
   fun loadProductData(indicator: ProgressIndicator?): Product? =
     productDataLock.withLock {
-      val cached = SoftReference.dereference(productDataCache)
+      val cached = productDataCache?.get()
       if (cached != null) return@withLock cached.getOrThrow()
 
       val result = runCatching {

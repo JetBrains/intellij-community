@@ -257,7 +257,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
 
   override fun getState(): SourceFolderManagerState {
     synchronized(mutex) {
-      return SourceFolderManagerState(sourceFolders.getValueSequence()
+      return SourceFolderManagerState(sourceFolders.values
                                         .mapNotNull { model ->
                                           val modelTypeName = dictionary.entries.find { it.value == model.type }?.key
                                                               ?: return@mapNotNull null
@@ -266,8 +266,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
                                                                  modelTypeName,
                                                                  model.packagePrefix,
                                                                  model.generated)
-                                        }
-                                        .toList())
+                                        })
     }
   }
 

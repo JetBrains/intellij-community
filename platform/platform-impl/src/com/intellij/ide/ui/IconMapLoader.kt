@@ -112,7 +112,7 @@ private fun readDataFromJson(parser: JsonParser, result: MutableMap<String, Stri
                 path.append('/')
               }
               path.append(fieldName)
-              result.put(parser.text, path.toString())
+              addWithCheck(result, parser, path)
               path.setLength(0)
             }
             else -> {
@@ -127,7 +127,7 @@ private fun readDataFromJson(parser: JsonParser, result: MutableMap<String, Stri
           path.append('/')
         }
         path.append(parser.currentName())
-        result.put(parser.text, path.toString())
+        addWithCheck(result, parser, path)
         path.setLength(0)
       }
       JsonToken.FIELD_NAME -> {
@@ -139,6 +139,14 @@ private fun readDataFromJson(parser: JsonParser, result: MutableMap<String, Stri
       }
     }
   }
+}
+
+private fun addWithCheck(result: MutableMap<String, String>, parser: JsonParser, path: StringBuilder) {
+  val oldValue = result[parser.text]
+  if (oldValue != null && oldValue != path.toString()) {
+    logger<IconMapLoader>().error("Double icon mapping: ${parser.text} -> $oldValue or $path")
+  }
+  result.put(parser.text, path.toString())
 }
 
 private fun logError(parser: JsonParser) {

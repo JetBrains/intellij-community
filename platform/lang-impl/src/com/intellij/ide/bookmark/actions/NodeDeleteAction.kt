@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
-import com.intellij.CommonBundle.messagePointer
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarksListProviderService
@@ -16,7 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 
-internal class NodeDeleteAction : DumbAwareAction(messagePointer("button.delete")) {
+internal class NodeDeleteAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

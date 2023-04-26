@@ -3,7 +3,6 @@ package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -93,13 +91,13 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static void selectionChanged(boolean selected, @NotNull Content content) {
-    ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
-    if (panel != null) panel.selectionChangedTo(selected);
+    var problemsViewTab = get(ProblemsViewTab.class, content);
+    if (problemsViewTab != null) problemsViewTab.selectionChangedTo(selected);
   }
 
   private static void visibilityChanged(boolean visible, @NotNull Content content) {
-    ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
-    if (panel != null) panel.visibilityChangedTo(visible);
+    var problemsViewTab = get(ProblemsViewTab.class, content);
+    if (problemsViewTab != null) problemsViewTab.visibilityChangedTo(visible);
   }
 
   private static <T> @Nullable T get(@NotNull Class<T> type, @NotNull Content content) {
@@ -139,24 +137,21 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     state.setShowToolbar(ToggleToolbarAction.isToolbarVisible(window, project));
     ContentManager manager = window.getContentManager();
 
-    // initialize javax.swing.ActionMap in EDT to avoid weird NPEs when ProblemsViewPanelProvider.create() will mess with swing in BGT later
-    window.getComponent().getActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
     CompletableFuture<?> result = CompletableFuture.completedFuture(null);
     for (ProblemsViewPanelProvider provider : ProblemsViewPanelProvider.getEP().getExtensions(project)) {
-      CompletableFuture<ProblemsViewTab> future = new CompletableFuture<>();
-      ReadAction.nonBlocking(() -> provider.create())
-        .finishOnUiThread(ModalityState.NON_MODAL, panel -> {
-          if (panel != null && !manager.isDisposed()) {
-            createContent(manager, panel);
-          }
-        })
-        .submit(AppExecutorUtil.getAppExecutorService())
-        .onError(throwable -> future.completeExceptionally(throwable))
-        .onSuccess(o->future.complete(o));
-
-      result = result.thenCompose(__->future);
+      ProblemsViewTab panel = provider.create();
+      if (panel != null) {
+        createContent(manager, panel);
+        if (panel instanceof HighlightingPanel) {
+          CompletableFuture<Void> future = new CompletableFuture<>();
+          ReadAction.nonBlocking(() -> ((HighlightingPanel)panel).initInBGT())
+            .submit(AppExecutorUtil.getAppExecutorService())
+            .onError(throwable -> future.completeExceptionally(throwable))
+            .onSuccess(o->future.complete(o));
+          result = result.thenCompose(__->future);
+        }
+      }
     }
-    // after all problem views are created in BGT, perform initial setup in EDT
     result.thenRun(() -> ApplicationManager.getApplication().invokeLater(() -> {
       if (project.isDisposed() || manager.isDisposed()) return;
       String selectedTabId = state.getSelectedTabId();
@@ -198,8 +193,8 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
         boolean vertical = !window.getAnchor().isHorizontal();
         if (vertical != orientation.getAndSet(vertical)) {
           for (Content content : window.getContentManager().getContents()) {
-            ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
-            if (panel != null) panel.orientationChangedTo(vertical);
+            var problemsViewTab = get(ProblemsViewTab.class, content);
+            if (problemsViewTab != null) problemsViewTab.orientationChangedTo(vertical);
           }
         }
         boolean visible = window.isVisible();

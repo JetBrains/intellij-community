@@ -30,7 +30,7 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.io.path.Path
@@ -38,7 +38,7 @@ import kotlin.io.path.Path
 /**
  * @author Konstantin Bulenkov
  */
-class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
+internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   init {
     isEnabledInModalContext = true  // To allow the action to be run in the Manage Recent Projects modal dialog, see IDEA-302750
   }
@@ -82,8 +82,8 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
         FileUtil.delete(ui.pathToIcon())
         RecentProjectIconHelper.refreshProjectIcon(projectPath)
       }
-      // Actually we can try to drop the needed icon,
-      // but it is a very rare action and this whole cache drop will not have any performance impact
+      // Actually, we can try to drop the needed icon,
+      // but it is a very rare action and this whole cache drop will not have any performance impact.
       // Moreover, VCS changes will drop the cache also.
       IconDeferrer.getInstance().clearCache()
     }
@@ -95,26 +95,26 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   }
 }
 
-  private class ChangeProjectIcon constructor(private val ui: ProjectIconUI) : AnAction() {
-    override fun actionPerformed(e: AnActionEvent) {
-      val files = FileChooserFactory.getInstance()
-        .createFileChooser(FileChooserDescriptor(true, false, false, false, false, false).withFileFilter { file: VirtualFile ->
-          "svg".equals(file.extension, ignoreCase = true)
-        }, null, null).choose(null)
-      if (files.size == 1) {
-        try {
-          val newIcon = createIcon(Paths.get(files[0].path))
-          ui.iconLabel.icon = newIcon
-          ui.pathToIcon = files[0]
-          ui.iconRemoved = false
-        }
-        catch (ignore: Exception) {
-        }
+private class ChangeProjectIcon(private val ui: ProjectIconUI) : AnAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val files = FileChooserFactory.getInstance()
+      .createFileChooser(FileChooserDescriptor(true, false, false, false, false, false).withFileFilter { file: VirtualFile ->
+        "svg".equals(file.extension, ignoreCase = true)
+      }, null, null).choose(null)
+    if (files.size == 1) {
+      try {
+        val newIcon = createIcon(Path.of(files[0].path))
+        ui.iconLabel.icon = newIcon
+        ui.pathToIcon = files[0]
+        ui.iconRemoved = false
+      }
+      catch (ignore: Exception) {
       }
     }
   }
+}
 
-class ProjectIconUI(val projectPath: @SystemIndependent String) {
+private class ProjectIconUI(private val projectPath: @SystemIndependent String) {
   val setIconActionLink = AnActionLink(IdeBundle.message("link.change.project.icon"), ChangeProjectIcon(this))
   val iconLabel = JBLabel((RecentProjectsManager.getInstance() as RecentProjectsManagerBase).getProjectIcon(projectPath, true))
   var pathToIcon: VirtualFile? = null

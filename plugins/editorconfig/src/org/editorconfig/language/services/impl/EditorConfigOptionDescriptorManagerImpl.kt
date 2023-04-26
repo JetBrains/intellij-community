@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.services.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
-import com.intellij.reference.SoftReference
 import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCompletionProviderUtil
 import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
@@ -15,6 +14,7 @@ import org.editorconfig.language.util.EditorConfigDescriptorUtil
 import org.editorconfig.language.util.EditorConfigTemplateUtil
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.Reference
+import java.lang.ref.SoftReference
 
 class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorManager {
   companion object {
@@ -85,7 +85,7 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
 
   override fun getSimpleKeyDescriptors(smart: Boolean): List<EditorConfigDescriptor> {
     val cache = if (smart) cachedSmartSimpleKeys else cachedDumbSimpleKeys
-    val cached = SoftReference.dereference(cache)
+    val cached = cache.get()
     if (cached != null) return cached
     val result = getOptionDescriptors(true)
       .asSequence()
@@ -100,7 +100,7 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
 
   private fun getOptionDescriptors(smart: Boolean): List<EditorConfigOptionDescriptor> {
     if (smart) return fullySupportedDescriptors.allDescriptors
-    val cached = SoftReference.dereference(cachedAllDumbDescriptors)
+    val cached = cachedAllDumbDescriptors.get()
     if (cached != null) return cached
     val result = fullySupportedDescriptors.allDescriptors + partiallySupportedDescriptors.allDescriptors
     cachedAllDumbDescriptors = SoftReference(result)
@@ -127,7 +127,7 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
 
   override fun getQualifiedKeyDescriptors(smart: Boolean): List<EditorConfigQualifiedKeyDescriptor> {
     val cache = if (smart) cachedSmartQualifiedKeys else cachedDumbQualifiedKeys
-    SoftReference.dereference(cache)?.let { return it }
+    cache.get()?.let { return it }
 
     val result = getOptionDescriptors(smart)
       .asSequence()

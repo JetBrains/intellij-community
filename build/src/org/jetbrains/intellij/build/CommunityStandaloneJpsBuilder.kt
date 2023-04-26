@@ -33,6 +33,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
   layout.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
 
+  layout.withModule("intellij.platform.runtime.repository", "platform-runtime-repository.jar")
   layout.withModules(listOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.impl",
@@ -51,11 +52,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.java.rt", "idea_rt.jar")
   layout.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
 
-  layout.withModule("intellij.platform.jps.build.javac.rt.rpc", "rt/jps-javac-rt-rpc.jar")
-  layout.withModuleLibrary(libraryName = "protobuf-java6",
-                           moduleName = "intellij.platform.jps.build.javac.rt.rpc",
-                           relativeOutputPath = "rt/protobuf-java6.jar")
-
   // layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
   layout.withModule("intellij.groovy.jps", "groovy-jps.jar")
   layout.withModule("intellij.groovy.rt", "groovy-rt.jar")
@@ -71,6 +67,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
   layout.withModule("intellij.eclipse.common", "eclipse-common.jar")
   layout.withModule("intellij.devkit.jps", "devkit-jps.jar")
+  layout.withModule("intellij.devkit.runtimeModuleRepository.jps", "devkit-runtimeModuleRepository-jps.jar")
   layout.withModule("intellij.java.langInjection.jps", "java-langInjection-jps.jar")
 
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
@@ -95,7 +92,13 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
     Files.createTempDirectory(targetDir, "jps-standalone-community-")
   }
   try {
-    JarPackager.pack(includedModules = layout.includedModules, outputDir = tempDir, context = context, layout = layout, dryRun = dryRun)
+    JarPackager.pack(includedModules = layout.includedModules,
+                     outputDir = tempDir,
+                     context = context,
+                     layout = layout,
+                     isRootDir = false,
+                     isCodesignEnabled = false,
+                     dryRun = dryRun)
 
     val targetFile = targetDir.resolve("standalone-jps-$buildNumber.zip")
     withContext(Dispatchers.IO) {

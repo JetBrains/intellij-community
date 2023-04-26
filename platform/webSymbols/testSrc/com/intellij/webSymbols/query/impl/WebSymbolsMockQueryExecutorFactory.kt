@@ -30,7 +30,7 @@ class WebSymbolsMockQueryExecutorFactory : WebSymbolsQueryExecutorFactory {
                              } ?: emptyList(),
                              createModificationTracker(
                                scopeList.filterIsInstance<WebTypesMockScopeImpl>().map { it.createPointer() })),
-                                WebSymbolsQueryResultsCustomizerFactory.getScope(location, WebSymbolsContext.create(context)),
+                                WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, WebSymbolsContext.create(context)),
                                 WebSymbolsContext.create(context),
                                 allowResolve)
 

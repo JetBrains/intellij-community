@@ -59,19 +59,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
-import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestEventsProcessor;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestsExecutionConsoleOutputProcessor;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleTaskData;
-
-import java.io.File;
-
-import static org.jetbrains.plugins.gradle.util.GradleConstants.RUN_TASK_AS_TEST;
 
 /**
  * @author Vladislav.Soroka
@@ -264,41 +260,11 @@ public class GradleTestsExecutionConsoleManager
   public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
     if (task instanceof ExternalSystemExecuteTaskTask taskTask) {
       if (StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) {
-        if (hasTestOption(taskTask) || hasTestTasks(taskTask)) {
-          taskTask.putUserData(RUN_TASK_AS_TEST, true);
-          return true;
-        }
+        var isRunAsTest = taskTask.getUserData(GradleRunConfiguration.RUN_AS_TEST_KEY);
+        return ObjectUtils.chooseNotNull(isRunAsTest, false);
       }
     }
     return false;
-  }
-
-  private static boolean hasTestOption(@NotNull ExternalSystemExecuteTaskTask task) {
-    var options = task.getArguments();
-    var tasksAndArguments = task.getTasksToExecute();
-    return options != null && StringUtil.contains(options, GradleConstants.TESTS_ARG_NAME)
-           || tasksAndArguments.contains(GradleConstants.TESTS_ARG_NAME);
-  }
-
-  private static boolean hasTestTasks(@NotNull ExternalSystemExecuteTaskTask task) {
-    var modulePath = getModulePath(task);
-    var tasksAndArguments = task.getTasksToExecute();
-    var tasksIndices = GradleTasksIndices.getInstance(task.getIdeProject());
-    var tasks = tasksIndices.findTasks(modulePath, tasksAndArguments);
-    return ContainerUtil.or(tasks, it -> isTestTask(it));
-  }
-
-  private static boolean isTestTask(@Nullable GradleTaskData task) {
-    return task != null && (task.isTest() || "check".equals(task.getName()) && "verification".equals(task.getGroup()));
-  }
-
-  private static @NotNull String getModulePath(@NotNull ExternalSystemExecuteTaskTask task) {
-    var externalProjectPath = task.getExternalProjectPath();
-    var file = new File(externalProjectPath);
-    if (file.isFile()) {
-      return StringUtil.trimEnd(externalProjectPath, "/" + file.getName());
-    }
-    return externalProjectPath;
   }
 
   @Override

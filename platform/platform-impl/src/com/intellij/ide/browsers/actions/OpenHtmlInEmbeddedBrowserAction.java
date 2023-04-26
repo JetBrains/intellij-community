@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.AppUIUtilKt;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Url;
@@ -32,7 +32,7 @@ import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrows
  */
 final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
   OpenHtmlInEmbeddedBrowserAction() {
-    super(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtil.loadSmallApplicationIconForRelease(ScaleContext.create(), 16));
+    super(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtilKt.loadSmallApplicationIcon(ScaleContext.create(), 16, true));
   }
 
   @Override

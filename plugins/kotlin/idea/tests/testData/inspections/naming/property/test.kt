@@ -26,6 +26,8 @@ class D {
 
     val _Foo: String
 
+    val `bad char` = ""
+
     companion object {
         val Foo: String = ""
 

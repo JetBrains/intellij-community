@@ -54,10 +54,6 @@
       <override-text place="MainMenu"/>
       <add-to-group group-id="FileExportGroup" anchor="last"/>
     </action>
-    <!--suppress PluginXmlCapitalization -->
-    <action id="WelcomeScreen.OpenEclipseProject" class="org.jetbrains.idea.eclipse.detect.OpenEclipseProjectAction">
-      <add-to-group group-id="WelcomeScreen.QuickStart.EmptyState"/>
-    </action>
   </actions>
   <extensionPoints>
     <extensionPoint name="natureImporter" interface="org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter" dynamic="true"/>

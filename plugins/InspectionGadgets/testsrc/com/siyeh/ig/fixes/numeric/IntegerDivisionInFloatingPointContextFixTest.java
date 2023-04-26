@@ -9,8 +9,14 @@ import com.siyeh.ig.numeric.IntegerDivisionInFloatingPointContextInspection;
 public class IntegerDivisionInFloatingPointContextFixTest extends IGQuickFixesTestCase {
 
   public void testSimpleFloat() { doTest(); }
+
   public void testSimpleDouble() { doTest(); }
+
   public void testExpectedParenthesizedExpr() { doTest(); }
+
+  public void testComplexPolyadicExpression() { doTest(); }
+
+  public void testPolyadicExpression() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {

@@ -4,26 +4,34 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.ThreadReference
-import org.jetbrains.kotlin.codegen.OriginCollectingClassBuilderFactory
-import org.jetbrains.kotlin.codegen.getClassFiles
-import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.org.objectweb.asm.tree.ClassNode
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.junit.Assert
+import java.io.File
+
+// We can't determine which .kt file transformed into which .class files,
+// so we have to manually specify it in test files.
+private const val PRODUCED_CLASS_NAMES_DIRECTIVE = "// PRODUCED_CLASS_NAMES:"
+// For anonymous classes, which may not exist if INDY lambdas used
+private const val PRODUCED_CLASS_NAME_OPTIONAL_SUFFIX = "(optional)"
 
 abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
     override fun doTest(
         options: Set<String>,
         mainThread: ThreadReference,
-        factory: OriginCollectingClassBuilderFactory,
-        state: GenerationState
+        sourceFiles: List<KtFile>,
+        bindingContext: BindingContext,
+        jvmSrcDir: File,
+        outputFiles: List<CompiledClassFile>,
     ) {
         val doNotCheckClassFqName = "DO_NOT_CHECK_CLASS_FQNAME" in options
         val strictMode = "DISABLE_STRICT_MODE" !in options
 
-        val classNameToKtFile = factory.collectClassNamesToKtFiles()
+        val classNameToKtFile = collectClassNamesToKtFiles(sourceFiles, outputFiles)
         val files = classNameToKtFile.values.distinct()
         val expectedRanks: Map<Pair<KtFile, Int>, Int> = files.asSequence().flatMap { ktFile ->
             ktFile.text.lines()
@@ -45,15 +53,14 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
         }.toMap()
 
         val calculator = object : FileRankingCalculator(checkClassFqName = !doNotCheckClassFqName) {
-            override fun analyze(element: KtElement) = state.bindingContext
+            override fun analyze(element: KtElement) = bindingContext
         }
 
         val problems = mutableListOf<String>()
 
         val skipClasses = skipLoadingClasses(options)
-        val classFileFactory = state.factory
-        for (outputFile in classFileFactory.getClassFiles()) {
-            val className = outputFile.internalName.replace('/', '.')
+        for (outputFile in outputFiles) {
+            val className = outputFile.qualifiedName
             if (className in skipClasses) {
                 continue
             }
@@ -116,16 +123,37 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
     }
 }
 
-private fun OriginCollectingClassBuilderFactory.collectClassNamesToKtFiles(): Map<String, KtFile> =
+private fun collectClassNamesToKtFiles(
+    sourceFiles: List<KtFile>,
+    outputFiles: List<LowLevelDebuggerTestBase.CompiledClassFile>,
+): Map<String, KtFile> =
     runReadAction {
-        origins.asSequence()
-            .filter { it.key is ClassNode }
-            .map {
-                val ktFile = (it.value.element?.containingFile as? KtFile) ?: return@map null
-                val name = (it.key as ClassNode).name.replace('/', '.')
-
-                name to ktFile
+        buildMap {
+            for (sourceFile in sourceFiles) {
+                val classNames = InTextDirectivesUtils.findListWithPrefixes(sourceFile.text, PRODUCED_CLASS_NAMES_DIRECTIVE)
+                if (classNames.isEmpty()) {
+                    error("Expected at least one $PRODUCED_CLASS_NAMES_DIRECTIVE directive in file ${sourceFile.name}")
+                }
+                for (classNameWithSuffix in classNames) {
+                    val isOptional = classNameWithSuffix.endsWith(PRODUCED_CLASS_NAME_OPTIONAL_SUFFIX)
+                    val className = if (isOptional) {
+                        classNameWithSuffix.substringBefore(PRODUCED_CLASS_NAME_OPTIONAL_SUFFIX)
+                    } else {
+                        classNameWithSuffix
+                    }
+                    assert(isOptional || outputFiles.any { it.qualifiedName == className}) { "Class name $className not found in output files"}
+                    val file = get(className)
+                    if (file != null) {
+                        error("Same class name \"$className\" specified twice: in ${file.name} and ${sourceFile.name}")
+                    }
+                    put(className, sourceFile)
+                }
             }
-            .filterNotNull()
-            .toMap()
+        }
     }
+
+abstract class AbstractK1IdeK2CodeFileRankingTest : AbstractFileRankingTest() {
+    override val compileWithK2 = true
+
+    override val lambdasGenerationScheme = JvmClosureGenerationScheme.INDY
+}

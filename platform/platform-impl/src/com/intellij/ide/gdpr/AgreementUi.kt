@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr
 
 import com.intellij.ide.IdeBundle
@@ -162,6 +162,7 @@ class AgreementUiBuilder internal constructor() {
     declineButton?.let { (text, action) ->
       val declineButton = ui.declineButton ?: return@let
       declineButton.text = text
+      declineButton.actionListeners.forEach { declineButton.removeActionListener(it) }
       declineButton.addActionListener(ActionListener {
         action(ui)
       })
@@ -172,13 +173,12 @@ class AgreementUiBuilder internal constructor() {
     acceptButton?.let { (text, action) ->
       val acceptButton = ui.acceptButton ?: return@let
       acceptButton.text = text
+      acceptButton.actionListeners.forEach { acceptButton.removeActionListener(it) }
       acceptButton.addActionListener(ActionListener {
         action(ui)
       })
 
-      if (!acceptButtonEnabled) {
-        acceptButton.isEnabled = false
-      }
+      acceptButton.isEnabled = acceptButtonEnabled
     }
   }
 }

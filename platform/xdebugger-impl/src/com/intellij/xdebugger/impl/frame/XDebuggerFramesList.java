@@ -21,6 +21,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.ui.*;
 import com.intellij.ui.hover.HoverListener;
+import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.render.RenderingUtil;

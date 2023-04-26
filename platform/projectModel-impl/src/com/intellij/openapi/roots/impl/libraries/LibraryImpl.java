@@ -519,11 +519,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Override
-  public void setKind(@NotNull PersistentLibraryKind<?> kind) {
+  public void setKind(@Nullable PersistentLibraryKind<?> kind) {
     LOG.assertTrue(isWritable());
-    LOG.assertTrue(myKind == null || myKind == kind, "Library kind cannot be changed from " + myKind + " to " + kind);
     myKind = kind;
-    myProperties = kind.createDefaultProperties();
+    myProperties = kind != null ? kind.createDefaultProperties() : null;
   }
 
   @Override

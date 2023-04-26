@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
 public interface ModuleComponent extends BaseComponent {
   /**
    * @deprecated Do not use.
-   * <a href=" https://plugins.jetbrains.com/docs/intellij/plugin-components.html#comintellijpoststartupactivity">Post start-up activity</a>
+   * <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html#comintellijpoststartupactivity">Post start-up activity</a>
    * maybe an alternative.
    */
   @Deprecated(forRemoval = true)

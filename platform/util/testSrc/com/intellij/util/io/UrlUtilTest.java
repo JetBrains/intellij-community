@@ -113,6 +113,12 @@ public class UrlUtilTest {
     for (String sshUrl : SSH_URL_VARIANTS) {
       assertEquals("github.com", URLUtil.parseHostFromSshUrl(sshUrl));
     }
+
+    // sanity checks
+    assertEquals("test", URLUtil.parseHostFromSshUrl("file://test"));
+    assertEquals("test1", URLUtil.parseHostFromSshUrl("test1:test2"));
+    assertEquals("@test", URLUtil.parseHostFromSshUrl("@test"));
+    assertEquals("", URLUtil.parseHostFromSshUrl("test@"));
   }
 
   @Test

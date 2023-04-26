@@ -51,13 +51,13 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
       return file.getLanguage();
     }
 
-    int caretOffset = caret.getOffset();
-    int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionEnd() ? caret.getSelectionStart() : caretOffset;
+    @NotNull TextRange selection = caret.getSelectionRange();
+    int mostProbablyCorrectLanguageOffset = selection.getStartOffset();
     PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
     Language lang = findLanguageFromElement(elt);
 
     if (caret.hasSelection()) {
-      lang = evaluateLanguageInRange(caret.getSelectionStart(), caret.getSelectionEnd(), file);
+      lang = evaluateLanguageInRange(selection, file);
     }
 
     return narrowLanguage(lang, file.getLanguage());
@@ -150,10 +150,9 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   }
 
   @NotNull
-  private static Language evaluateLanguageInRange(final int start, final int end, @NotNull PsiFile file) {
-    PsiElement elt = getElementAtOffset(file, start);
+  private static Language evaluateLanguageInRange(TextRange selectionRange, @NotNull PsiFile file) {
+    PsiElement elt = getElementAtOffset(file, selectionRange.getStartOffset());
 
-    TextRange selectionRange = new TextRange(start, end);
     while (true) {
       if (elt instanceof PsiFile) {
         return elt.getLanguage();

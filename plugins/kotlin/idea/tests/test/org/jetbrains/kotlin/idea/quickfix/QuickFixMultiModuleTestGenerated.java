@@ -118,6 +118,39 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/addDependency")
+    public static class AddDependency extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("class")
+        public void testClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/addDependency/class/");
+        }
+
+        @TestMetadata("topLevelFunction")
+        public void testTopLevelFunction() throws Exception {
+            runTest("testData/multiModuleQuickFix/addDependency/topLevelFunction/");
+        }
+
+        @TestMetadata("topLevelFunction2")
+        public void testTopLevelFunction2() throws Exception {
+            runTest("testData/multiModuleQuickFix/addDependency/topLevelFunction2/");
+        }
+
+        @TestMetadata("topLevelProperty")
+        public void testTopLevelProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/addDependency/topLevelProperty/");
+        }
+
+        @TestMetadata("topLevelProperty2")
+        public void testTopLevelProperty2() throws Exception {
+            runTest("testData/multiModuleQuickFix/addDependency/topLevelProperty2/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/addMissingActualMembers")
     public static class AddMissingActualMembers extends AbstractQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {

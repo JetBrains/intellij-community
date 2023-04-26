@@ -12,11 +12,11 @@ class WebSymbolNameSegment(val start: Int,
                            val displayName: @NlsSafe String? = null,
                            val matchScore: Int = end - start,
                            symbolKinds: Set<WebSymbolQualifiedKind>? = null,
-                           private val explicitDeprecated: Boolean? = null,
+                           private val explicitApiStatus: WebSymbol.ApiStatus? = null,
                            private val explicitPriority: WebSymbol.Priority? = null,
                            private val explicitProximity: Int? = null) {
 
-  constructor(symbol: WebSymbol): this(0, symbol.name.length, listOf(symbol))
+  constructor(symbol: WebSymbol) : this(0, symbol.name.length, listOf(symbol))
 
   constructor(start: Int, end: Int, symbol: WebSymbol) : this(start, end, listOf(symbol))
   constructor(start: Int, end: Int, vararg symbols: WebSymbol) : this(start, end, symbols.toList())
@@ -27,9 +27,8 @@ class WebSymbolNameSegment(val start: Int,
 
   private val forcedSymbolTypes = symbolKinds
 
-  @get:JvmName("isDeprecated")
-  val deprecated: Boolean
-    get() = explicitDeprecated ?: symbols.any { it.deprecated }
+  val apiStatus: WebSymbol.ApiStatus?
+    get() = explicitApiStatus
 
   val priority: WebSymbol.Priority?
     get() = explicitPriority ?: symbols.asSequence().mapNotNull { it.priority }.maxOrNull()
@@ -47,20 +46,20 @@ class WebSymbolNameSegment(val start: Int,
 
   internal fun withOffset(offset: Int): WebSymbolNameSegment =
     WebSymbolNameSegment(start + offset, end + offset, symbols, problem, displayName,
-                         matchScore, symbolKinds, explicitDeprecated, explicitPriority, explicitProximity)
+                         matchScore, symbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
 
-  internal fun copy(deprecated: Boolean? = null,
+  internal fun copy(apiStatus: WebSymbol.ApiStatus? = null,
                     priority: WebSymbol.Priority? = null,
                     proximity: Int? = null,
                     problem: MatchProblem? = null,
                     symbols: List<WebSymbol> = emptyList()): WebSymbolNameSegment =
     WebSymbolNameSegment(start, end, this.symbols + symbols, problem ?: this.problem,
                          displayName, matchScore, symbolKinds,
-                         deprecated ?: this.explicitDeprecated, priority ?: this.explicitPriority,
+                         apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
                          proximity ?: this.explicitProximity)
 
   internal fun canUnwrapSymbols(): Boolean =
-    explicitDeprecated == null
+    explicitApiStatus == null
     && problem == null
     && displayName == null
     && matchScore == end - start
@@ -91,7 +90,7 @@ class WebSymbolNameSegment(val start: Int,
     private val displayName = nameSegment.displayName
     private val matchScore = nameSegment.matchScore
     private val types = nameSegment.symbolKinds
-    private val explicitDeprecated = nameSegment.explicitDeprecated
+    private val explicitApiStatus = nameSegment.explicitApiStatus
     private val explicitPriority = nameSegment.explicitPriority
     private val explicitProximity = nameSegment.explicitProximity
 
@@ -102,7 +101,7 @@ class WebSymbolNameSegment(val start: Int,
         ?.let {
           @Suppress("UNCHECKED_CAST")
           (WebSymbolNameSegment(start, end, it as List<WebSymbol>, problem, displayName, matchScore,
-                                types, explicitDeprecated, explicitPriority, explicitProximity))
+                                types, explicitApiStatus, explicitPriority, explicitProximity))
         }
 
   }

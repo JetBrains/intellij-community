@@ -74,7 +74,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     else {
       logLastEvent()
       lastEvent =
-        if (StatisticsRecorderUtil.isTestModeEnabled(recorderId) || StatisticsRecorderUtil.isForceCollectionEnabled(recorderId))
+        if (StatisticsRecorderUtil.isTestModeEnabled(recorderId))
           FusEvent(event, rawEventId, rawData)
         else FusEvent(event, null, null)
       lastEventTime = event.time

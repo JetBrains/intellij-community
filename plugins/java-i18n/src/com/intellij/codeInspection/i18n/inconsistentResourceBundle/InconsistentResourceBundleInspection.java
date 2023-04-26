@@ -4,6 +4,7 @@ package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -80,7 +81,7 @@ public final class InconsistentResourceBundleInspection extends GlobalSimpleInsp
   public void inspectionStarted(@NotNull InspectionManager manager,
                                 @NotNull GlobalInspectionContext globalContext,
                                 @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.putUserData(VISITED_BUNDLES_KEY, ContainerUtil.newConcurrentSet());
+    globalContext.putUserData(VISITED_BUNDLES_KEY, ConcurrentCollectionFactory.createConcurrentSet());
   }
 
   @Override

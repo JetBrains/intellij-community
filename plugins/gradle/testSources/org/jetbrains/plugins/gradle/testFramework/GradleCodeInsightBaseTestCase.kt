@@ -14,16 +14,8 @@ abstract class GradleCodeInsightBaseTestCase : GradleProjectTestCase(), BaseTest
 
   override fun getFixture(): JavaCodeInsightTestFixture = codeInsightFixture
 
-  override fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
-    super.test(gradleVersion, GradleCodeInsightTestFixtureBuilder(fixtureBuilder), test)
-  }
-
-  protected fun testEmptyProject(gradleVersion: GradleVersion, test: () -> Unit) =
-    test(gradleVersion, GradleTestFixtureBuilder.EMPTY_PROJECT, test)
-
-  protected fun testJavaProject(gradleVersion: GradleVersion, test: () -> Unit) =
-    test(gradleVersion, GradleTestFixtureBuilder.JAVA_PROJECT, test)
-
+  override fun patchFixtureBuilder(fixtureBuilder: GradleTestFixtureBuilder): GradleTestFixtureBuilder =
+    GradleCodeInsightTestFixtureBuilder(fixtureBuilder)
 
   private class GradleCodeInsightTestFixtureBuilder(private val builder: GradleTestFixtureBuilder) : GradleTestFixtureBuilder {
 

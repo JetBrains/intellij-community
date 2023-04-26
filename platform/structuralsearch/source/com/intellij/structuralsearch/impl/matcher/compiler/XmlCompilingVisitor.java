@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.TagValueFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
@@ -28,8 +30,10 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   public void compile(PsiElement @NotNull [] topLevelElements) {
     final CompileContext context = myCompilingVisitor.getContext();
     final CompiledPattern pattern = context.getPattern();
-    final MatchOptions options = context.getOptions();
-    pattern.setStrategy(new XmlMatchingStrategy(options.getDialect()));
+    if (pattern.getStrategy() == null) {
+      final MatchOptions options = context.getOptions();
+      pattern.setStrategy(new XmlMatchingStrategy(options.getDialect()));
+    }
     for (PsiElement element : topLevelElements) {
       element.accept(this);
       optimize(element);
@@ -68,6 +72,10 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
 
   @Override
   public void visitElement(@NotNull PsiElement element) {
+    if (!(element.getLanguage() instanceof XMLLanguage) &&
+        StructuralSearchUtil.compileForeignElement(element, myCompilingVisitor)) {
+      return;
+    }
     myCompilingVisitor.handle(element);
     super.visitElement(element);
   }
@@ -76,6 +84,7 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   public void visitXmlToken(@NotNull XmlToken token) {
     final IElementType tokenType = token.getTokenType();
     if (tokenType != XmlTokenType.XML_NAME &&
+        tokenType != XmlTokenType.XML_TAG_NAME &&
         tokenType != XmlTokenType.XML_COMMENT_CHARACTERS &&
         tokenType != XmlTokenType.XML_DATA_CHARACTERS) {
       return;

@@ -14,7 +14,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
@@ -37,8 +37,8 @@ class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSecti
       keymap.demoShortcuts.take(3).forEach {
         row {
           val dsc = it.defaultShortcut
-          if (dsc is KeyboardShortcut) cell(KeyboardTwoShortcuts(dsc, _isSelected)).customize(Gaps.EMPTY)
-          if (dsc is DummyKeyboardShortcut) cell(KeyboardTwoShortcuts(dsc, _isSelected)).customize(Gaps.EMPTY)
+          if (dsc is KeyboardShortcut) cell(KeyboardTwoShortcuts(dsc, _isSelected)).customize(UnscaledGaps.EMPTY)
+          if (dsc is DummyKeyboardShortcut) cell(KeyboardTwoShortcuts(dsc, _isSelected)).customize(UnscaledGaps.EMPTY)
           mutableLabel(it.humanName)
         }.layout(RowLayout.PARENT_GRID)
       }

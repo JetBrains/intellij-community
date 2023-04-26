@@ -48,7 +48,7 @@ fun testCompletion(
     }
 }
 
-private fun testWithAutoCompleteSetting(fileText: String, doTest: () -> Unit) {
+internal fun testWithAutoCompleteSetting(fileText: String, doTest: () -> Unit) {
     val autoComplete = ExpectedCompletionUtils.getAutocompleteSetting(fileText) ?: false
 
     val settings = CodeInsightSettings.getInstance()

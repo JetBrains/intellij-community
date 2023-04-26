@@ -5,8 +5,8 @@ package org.jetbrains.plugins.groovy.uast
 
 import junit.framework.TestCase
 import org.jetbrains.uast.*
-import org.jetbrains.uast.test.env.findElementByText
-import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import com.intellij.platform.uast.testFramework.env.findElementByText
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import org.junit.Test
 
 class GroovyUastApiTest : AbstractGroovyUastTest() {

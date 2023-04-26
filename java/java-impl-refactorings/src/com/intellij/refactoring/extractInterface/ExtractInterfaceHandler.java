@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.history.LocalHistory;
@@ -21,15 +7,14 @@ import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
@@ -39,15 +24,18 @@ import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance(ExtractInterfaceHandler.class);
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-  private Project myProject;
+public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareActionHandler {
+
   private PsiClass myClass;
   private String myInterfaceName;
   private MemberInfo[] mySelectedMembers;
@@ -61,40 +49,43 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = file.findElementAt(offset);
-    while (true) {
-      if (element == null || element instanceof PsiFile) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
-        return;
-      }
-      if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
-        invoke(project, new PsiElement[]{element}, dataContext);
-        return;
-      }
-      element = element.getParent();
+
+    List<PsiMember> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, e -> {
+      return e instanceof PsiMember member && !(member.getContainingClass() instanceof PsiAnonymousClass);
+    });
+    if (elements.isEmpty()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
+      return;
     }
+    invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
-    if (elements.length != 1) return;
-
-    myProject = project;
-    myClass = (PsiClass)elements[0];
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
+    PsiElement parent = PsiTreeUtil.findCommonParent(elements);
+    myClass = parent instanceof PsiClass aClass
+              ? aClass
+              : PsiTreeUtil.getParentOfType(parent, PsiClass.class, false);
+    if (myClass == null) {
+      String message = RefactoringBundle.message("error.select.class.to.be.refactored");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
+      return;
+    }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
 
-    final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(myProject, myClass);
+    final Set<PsiElement> selectedMembers = new HashSet<>();
+    Collections.addAll(selectedMembers, elements);
+    final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(project, myClass, selectedMembers);
     if (!dialog.showAndGet() || !dialog.isExtractSuperclass()) {
       return;
     }
 
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     ExtractSuperClassUtil.checkSuperAccessible(dialog.getTargetDirectory(), conflicts, myClass);
-    if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
+    if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, project)) return;
 
     PsiClass anInterface = WriteCommandAction
       .writeCommandAction(project)
@@ -119,7 +110,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
                                    PsiClass aClass,
                                    String interfaceName,
                                    MemberInfo[] selectedMembers,
-                                   DocCommentPolicy javaDocPolicy) throws IncorrectOperationException {
+                                   DocCommentPolicy javaDocPolicy) {
     final Project project = aClass.getProject();
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(ExtractSuperClassUtil.REFACTORING_EXTRACT_SUPER_ID, ExtractSuperClassUtil.createBeforeData(aClass, selectedMembers));
@@ -146,7 +137,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
 
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && elements[0] instanceof PsiClass;
+    return ContainerUtil.exists(elements, element -> element instanceof PsiMember);
   }
 
   public static @NlsContexts.DialogTitle String getRefactoringName() {

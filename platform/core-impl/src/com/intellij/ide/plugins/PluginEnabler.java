@@ -13,7 +13,6 @@ import java.util.Set;
 
 @ApiStatus.Experimental
 public interface PluginEnabler {
-
   interface Headless extends PluginEnabler {
 
     boolean isIgnoredDisabledPlugins();

@@ -3,64 +3,76 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.DataOutputStream
-import com.intellij.util.io.UnInterruptibleFileChannel
+import com.intellij.util.io.FileChannelInterruptsRetryer
 import java.io.*
 import java.nio.channels.Channels
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.StandardOpenOption.*
+import java.util.*
 import kotlin.reflect.KProperty
 
+/**
+ * Caches a value for fast reading. There should not be two or more instances on the same path.
+ */
 abstract class PersistentVar<T>(
-  path: Path
+  path: Path,
+  readValue: DataInput.() -> T?,
+  private val writeValue: DataOutput.(value: T) -> Unit
 ) {
   init {
     FileUtil.createIfNotExists(path.toFile())
   }
 
-  protected val fileChannel = UnInterruptibleFileChannel(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-
-  abstract fun DataInput.readValue(): T?
-  abstract fun DataOutput.writeValue(value: T)
+  protected val fileChannelRetryer = FileChannelInterruptsRetryer(path, EnumSet.of(READ, WRITE, CREATE))
+  protected var cachedValue: T? =
+    fileChannelRetryer.retryIfInterrupted {
+      DataInputStream(Channels.newInputStream(it.position(0))).readValue()
+    }
 
   @Throws(IOException::class)
   operator fun getValue(thisRef: Any?, property: KProperty<*>): T? = synchronized(this) {
-    DataInputStream(Channels.newInputStream(fileChannel.position(0))).readValue()
+    return cachedValue
   }
 
   @Throws(IOException::class)
   operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T?): Unit = synchronized(this) {
-    if (value == null) {
-      fileChannel.truncate(0)
+    fileChannelRetryer.retryIfInterrupted {
+      if (value == null) {
+        it.truncate(0)
+      }
+      else {
+        DataOutputStream(Channels.newOutputStream(it.position(0))).writeValue(value)
+      }
+      it.force(false)
+      cachedValue = value
     }
-    else {
-      DataOutputStream(Channels.newOutputStream(fileChannel.position(0))).writeValue(value)
-    }
-    fileChannel.force(false)
   }
 
   companion object {
-    fun integer(path: Path) = object : PersistentVar<Int>(path) {
-      override fun DataInput.readValue(): Int? =
+    fun integer(path: Path) = object : PersistentVar<Int>(
+      path,
+      readValue = {
         try {
           readInt()
         }
         catch (e: EOFException) {
           null
         }
+      },
+      writeValue = { writeInt(it) }
+    ) {}
 
-      override fun DataOutput.writeValue(value: Int) = writeInt(value)
-    }
-
-    fun long(path: Path) = object : PersistentVar<Long>(path) {
-      override fun DataInput.readValue(): Long? =
+    fun long(path: Path) = object : PersistentVar<Long>(
+      path,
+      readValue = {
         try {
           readLong()
         }
         catch (e: EOFException) {
           null
         }
-
-      override fun DataOutput.writeValue(value: Long) = writeLong(value)
-    }
+      },
+      writeValue = { writeLong(it) }
+    ) {}
   }
 }

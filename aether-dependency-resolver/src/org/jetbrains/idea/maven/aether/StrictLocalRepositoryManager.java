@@ -11,10 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.zip.ZipFile;
-
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 class StrictLocalRepositoryManager implements LocalRepositoryManager {
   private static final Logger LOG = LoggerFactory.getLogger(StrictLocalRepositoryManager.class);
@@ -35,12 +32,6 @@ class StrictLocalRepositoryManager implements LocalRepositoryManager {
     return result;
   }
 
-  /**
-   * Checks whether {@code archive} file is valid ZIP. If ZIP is invalid, renames the file adding {@code .corruptedXXXXX} suffix.
-   *
-   * @param archive ZIP archive file
-   * @return true if valid, false if not
-   */
   boolean isValidArchive(File archive) {
     if (!archive.exists()) return false;
     // TODO: to be revised after IDEA-269182 is implemented
@@ -50,25 +41,16 @@ class StrictLocalRepositoryManager implements LocalRepositoryManager {
         entriesCount = zip.size();
       }
       catch (IOException e) {
-        /* Short exception message is enough */
         LOG.warn("Unable to read a number of entries in " + archive + ": " + e.getMessage());
         entriesCount = 0;
       }
       if (entriesCount <= 0) {
-        LOG.warn(archive + " is probably corrupted, marking as corrupted");
+        LOG.warn(archive + " is probably corrupted, deleting");
         try {
-          Path archiveAsPath = archive.toPath();
-          if (Files.exists(archiveAsPath)) {
-            String prefix = archiveAsPath.getFileName() + ".corrupted";
-            String suffix = "";
-            Path corruptedArchivePath = Files.createTempFile(archiveAsPath.getParent(), prefix, suffix);
-            Files.move(archiveAsPath, corruptedArchivePath, REPLACE_EXISTING);
-
-            LOG.warn(archive + " is moved to " + corruptedArchivePath);
-          }
+          Files.deleteIfExists(archive.toPath());
         }
         catch (IOException e) {
-          throw new RuntimeException("Unable to move " + archive, e);
+          throw new RuntimeException("Unable to delete " + archive, e);
         }
         return false;
       }

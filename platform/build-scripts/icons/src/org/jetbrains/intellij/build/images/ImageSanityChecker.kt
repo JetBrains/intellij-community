@@ -52,8 +52,14 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
     }
   }
 
+  private val excludedFromSizeCheck = setOf(
+    "/expui/run/rerun",
+    "/expui/toolbar/unknown@20x20",
+    "/expui/welcome/open",
+  )
+
   private fun checkHaveValidSize(images: List<ImageInfo>, module: JpsModule) {
-    process(images, Severity.WARNING, "icon with suspicious size", module) { image ->
+    process(images.filter { !excludedFromSizeCheck.contains(it.id) }, Severity.WARNING, "icon with suspicious size", module) { image ->
       if (!isIcon(image.basicFile!!)) {
         return@process true
       }

@@ -16,7 +16,7 @@ import java.util.List;
 
 public class SelectFilePathsDialog extends AbstractSelectFilesDialog {
 
-  private final ChangesTreeImpl<FilePath> myFileList;
+  private final AsyncChangesTreeImpl<FilePath> myFileList;
 
   public SelectFilePathsDialog(@NotNull Project project,
                                @NotNull List<? extends FilePath> originalFiles,
@@ -26,7 +26,7 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog {
                                @Nullable @NlsContexts.Button String cancelActionName,
                                boolean showCheckboxes) {
     super(project, false, confirmationOption, prompt);
-    myFileList = new ChangesTreeImpl.FilePaths(project, showCheckboxes, true, originalFiles);
+    myFileList = new AsyncChangesTreeImpl.FilePaths(project, showCheckboxes, true, originalFiles);
     if (okActionName != null) {
       getOKAction().putValue(Action.NAME, okActionName);
     }

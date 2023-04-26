@@ -88,7 +88,10 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
         messages.warning("---\n$error")
       }
       check(errorCount == 0) {
-        throw ClassFileCheckError("Failed with $errorCount problems", errors)
+        throw ClassFileCheckError(
+          "Failed with $errorCount problems. First 5 of them:\n" +
+          errors.take(5).joinToString("\n"),
+          errors)
       }
 
       val unusedRules = rules.filter { !it.wasUsed }

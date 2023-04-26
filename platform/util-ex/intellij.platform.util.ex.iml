@@ -15,11 +15,10 @@
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
-    <orderEntry type="library" name="mvstore" level="project" />
+    <orderEntry type="library" name="lz4-java" level="project" />
   </component>
 </module>

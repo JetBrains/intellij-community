@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
@@ -42,9 +41,11 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       for (editor in EditorFactory.getInstance().allEditors) {
         clearModificationStamp(editor)
       }
-      ProjectManager.getInstance().openProjects.forEach { project ->
-        DaemonCodeAnalyzer.getInstance(project).restart()
-      }
+    }
+
+    fun restartDaemonUpdatingHints(project: Project) {
+      forceHintsUpdateOnNextPass()
+      DaemonCodeAnalyzer.getInstance(project).restart()
     }
 
     @JvmStatic

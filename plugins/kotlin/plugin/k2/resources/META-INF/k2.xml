@@ -80,6 +80,11 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
+    <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
+                 description="Allow only bundled K2 compiler plugins to be used"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
     <completion.contributor language="kotlin"
                             id="KotlinCompletionContributor"
                             order="first"
@@ -101,11 +106,11 @@
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelClassTypeArgumentInfoHandler"/>
     <codeInsight.parameterInfo language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
-    <platform.documentation.psiTargetProvider id="KotlinDocumentationTargetProvider"
-                                              implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
-    <platform.documentation.linkHandler implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationLinkHandler"/>
-    <platform.documentation.targetProvider id="KotlinDocumentationTargetProvider"
-                                           implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
+    <platform.backend.documentation.psiTargetProvider id="KotlinDocumentationTargetProvider"
+                                                      implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
+    <platform.backend.documentation.linkHandler implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationLinkHandler"/>
+    <platform.backend.documentation.targetProvider id="KotlinDocumentationTargetProvider"
+                                                   implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
   </extensions>
 
 

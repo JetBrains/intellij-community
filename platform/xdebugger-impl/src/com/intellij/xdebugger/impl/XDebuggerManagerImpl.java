@@ -426,7 +426,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       lineChangeHandler = new XDebuggerLineChangeHandler(coroutineScope, (gutter, position, types) -> {
         myLastIcon = ObjectUtils.doIfNotNull(ContainerUtil.getFirstItem(types), XBreakpointType::getEnabledIcon);
         if (myLastIcon != null) {
-          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine());
         }
         return Unit.INSTANCE;
@@ -452,10 +451,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
                 myLastPosition = position;
                 lineChangeHandler.lineChanged(editor, position);
               }
-              else if (myLastIcon != null) {
-                // we need to set the cursor on every event, otherwise it is reset inside the editor
-                gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-              }
               return;
             }
           }
@@ -480,6 +475,9 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         gutter.putClientProperty("line.number.hover.icon", icon);
         gutter.putClientProperty("line.number.hover.icon.context.menu", icon == null ? null
                                                                                      : ActionManager.getInstance().getAction("XDebugger.Hover.Breakpoint.Context.Menu"));
+        if (icon != null) {
+          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Editor updates cursor on MouseMoved, set it explicitly
+        }
         requireRepaint = true;
       }
       if (!Objects.equals(gutter.getClientProperty("active.line.number"), line)) {

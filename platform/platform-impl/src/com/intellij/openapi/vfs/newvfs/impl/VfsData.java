@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.TestModeFlags;
@@ -145,8 +146,10 @@ public final class VfsData {
     }
     final int nameId = segment.getNameId(id);
     if (nameId <= 0) {
-      FSRecords.invalidateCaches();
-      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
+      String message = "nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() +
+                             "; db.parent=" + FSRecords.getParent(id);
+      FSRecords.invalidateCaches(message);
+      throw new AssertionError(message);
     }
 
     if (o instanceof DirectoryData) {

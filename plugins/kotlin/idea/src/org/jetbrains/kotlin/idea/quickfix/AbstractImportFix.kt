@@ -140,7 +140,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     @IntentionName
     private fun calculateText(suggestionDescriptors: Collection<DeclarationDescriptor>): String {
         val descriptors  =
-            suggestionDescriptors.mapTo(hashSetOf()) { it.original }
+            suggestionDescriptors.mapTo(hashSetOf()) { it.original }.takeIf { it.isNotEmpty() } ?: return ""
 
         val ktFile = element?.containingKtFile ?: return KotlinBundle.message("fix.import")
         val languageVersionSettings = ktFile.languageVersionSettings

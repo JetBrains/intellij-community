@@ -61,7 +61,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.actions.CommandQueueListener;
-import com.jetbrains.python.console.completion.PythonPandasColumnNameCompletionContributor;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
@@ -123,6 +122,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
    */
   private @Nullable TargetEnvironment myTargetEnvironment;
 
+
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
@@ -141,7 +141,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     setUpdateFoldingsEnabled(false);
     LanguageLevel languageLevel = LanguageLevel.getDefault();
     if (sdk != null) {
-      final PythonSdkFlavor sdkFlavor = PythonSdkFlavor.getFlavor(sdk);
+      final PythonSdkFlavor<?> sdkFlavor = PythonSdkFlavor.getFlavor(sdk);
       if (sdkFlavor != null) {
         languageLevel = sdkFlavor.getLanguageLevel(sdk);
       }
@@ -206,7 +206,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
    * Add folding to Console view
    *
    * @param addOnce If true, folding will be added once when an appropriate area is found.
-   *                Otherwise folding can be expanded by newly added text.
+   *                Otherwise, folding can be expanded by newly added text.
    */
   @Nullable
   private PyConsoleStartFolding createConsoleFolding(boolean addOnce) {
@@ -242,9 +242,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void setExecutionHandler(@NotNull PythonConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
-    if (myExecuteActionHandler.getConsoleCommunication() instanceof PydevConsoleCommunication pydevConsoleCommunication) {
-      pydevConsoleCommunication.addFrameListener(PythonPandasColumnNameCompletionContributor.Companion.getConsoleListener());
-    }
   }
 
   public PythonConsoleExecuteActionHandler getExecuteActionHandler() {
@@ -481,6 +478,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     mySplitView = view;
     Disposer.register(this, view);
     splitWindow();
+    consoleCommunication.notifyViewCreated(view);
   }
 
   /**
@@ -682,12 +680,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Override
   public void dispose() {
     super.dispose();
-    if (PyConsoleUtil.isCommandQueueEnabled(getProject())) {
-      ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
-      if (communication != null) {
-        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
-      }
+
+    ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
+    if (communication != null) {
+      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
     }
+
     var editor = myCommandQueuePanel.getQueueEditor();
     commandQueueDimension = null;
     if (!editor.isDisposed()) {

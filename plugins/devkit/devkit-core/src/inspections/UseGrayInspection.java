@@ -8,7 +8,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +46,7 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
           Integer grayValue = getGrayValue(expression);
           if (grayValue != null) {
             PsiElement sourcePsi = expression.getSourcePsi();
-            if (sourcePsi != null && grayClassAccessible(sourcePsi)) {
+            if (sourcePsi != null && DevKitInspectionUtil.isClassAvailable(holder, GRAY_CLASS_NAME)) {
               holder.registerProblem(sourcePsi,
                                      DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
                                      new ConvertToGrayQuickFix(grayValue));
@@ -85,9 +88,6 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
     return null;
   }
 
-  private static boolean grayClassAccessible(@NotNull PsiElement checkedPlace) {
-    return JavaPsiFacade.getInstance(checkedPlace.getProject()).findClass(GRAY_CLASS_NAME, checkedPlace.getResolveScope()) != null;
-  }
 
   @NotNull
   @Override

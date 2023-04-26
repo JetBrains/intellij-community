@@ -4,10 +4,7 @@ import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.workspace.Config
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.builder.*
 import java.awt.event.ItemEvent
 import javax.swing.*
 
@@ -37,7 +34,7 @@ class FlowConfigurable : EvaluationConfigurable {
         }
         row(EvaluationPluginBundle.message("evaluation.settings.flow.logs.save")) {
           checkBox("")
-            .applyToComponent { isSelected = saveLogs }
+            .selected(saveLogs)
             .configureSaveLogs(statsCollectorEnabled)
         }
         row(EvaluationPluginBundle.message("evaluation.settings.flow.logs.split")) {

@@ -47,7 +47,7 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, final TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, final @NotNull TargetOutputIndex outputIndex) {
     final LinkedHashSet<BuildTarget<?>> dependencies = new LinkedHashSet<>();
     final JpsArtifact artifact = getArtifact();
     JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), element -> {
@@ -77,7 +77,7 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   }
 
   @Override
-  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
     final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
     String outputPath = getArtifact().getOutputPath();
     out.println(StringUtil.isNotEmpty(outputPath) ? relativizer.toRelative(outputPath) : "");
@@ -89,10 +89,10 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
 
   @NotNull
   @Override
-  public List<ArtifactRootDescriptor> computeRootDescriptors(JpsModel model,
-                                                             ModuleExcludeIndex index,
-                                                             IgnoredFileIndex ignoredFileIndex,
-                                                             BuildDataPaths dataPaths) {
+  public List<ArtifactRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                             @NotNull ModuleExcludeIndex index,
+                                                             @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                             @NotNull BuildDataPaths dataPaths) {
     ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, ignoredFileIndex, this, model, dataPaths);
     ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(model, dataPaths);
     final JpsArtifact artifact = getArtifact();
@@ -103,8 +103,8 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   }
 
   @Override
-  public ArtifactRootDescriptor findRootDescriptor(String rootId,
-                                                BuildRootIndex rootIndex) {
+  public ArtifactRootDescriptor findRootDescriptor(@NotNull String rootId,
+                                                   @NotNull BuildRootIndex rootIndex) {
     return rootIndex.getTargetRoots(this, null).get(Integer.parseInt(rootId));
   }
 
@@ -116,7 +116,7 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
 
   @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     String outputFilePath = getArtifact().getOutputFilePath();
     return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.emptyList();
   }

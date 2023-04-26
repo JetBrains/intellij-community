@@ -1,7 +1,9 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -53,12 +55,16 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
     if (suppressErrors) {
       job.suppressErrors()
     }
+    spanRef.set(span.startSpan())
+    scopeRef.set(spanRef.get().makeCurrent())
+    setFilePath(projectPath = projectPath, span = spanRef.get(), file = file)
+
+    // focus window
     withContext(Dispatchers.EDT) {
-      spanRef.set(span.startSpan())
-      scopeRef.set(spanRef.get().makeCurrent())
-      setFilePath(projectPath, spanRef, file)
-      FileEditorManager.getInstance(project).openFile(file, true)
+      ProjectUtil.focusProjectWindow(project)
     }
+
+    FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true)).allEditors
 
     job.onError {
       spanRef.get()?.setAttribute("timeout", "true")
@@ -67,14 +73,12 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
     job.waitForComplete()
   }
 
-  private fun setFilePath(projectPath: @SystemIndependent @NonNls String?,
-                        spanRef: Ref<Span>,
-                        file: VirtualFile) {
+  private fun setFilePath(projectPath: @SystemIndependent @NonNls String?, span: Span, file: VirtualFile) {
     if (projectPath != null) {
-      spanRef.get().setAttribute("filePath", file.path.replaceFirst(projectPath, ""))
+      span.setAttribute("filePath", file.path.replaceFirst(projectPath, ""))
     }
     else {
-      spanRef.get().setAttribute("filePath", file.path)
+      span.setAttribute("filePath", file.path)
     }
   }
 }

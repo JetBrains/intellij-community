@@ -125,10 +125,6 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     }
   }
 
-  override fun getComponentGraphics(graphics: Graphics): Graphics {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
-  }
-
   // JMenuBar calls getBorder on init before our own init (super is called before our constructor).
   fun getState(): State {
     return state
@@ -162,7 +158,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
     }
 
     // fix for a Darcula double border
-    if (state == State.TEMPORARY_EXPANDED && StartupUiUtil.isUnderDarcula()) {
+    if (state == State.TEMPORARY_EXPANDED && StartupUiUtil.isUnderDarcula) {
       return JBUI.Borders.customLine(Gray._75, 0, 0, 1, 0)
     }
 
@@ -462,7 +458,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
         }
       }
     }
-    if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (StartupUiUtil.isUnderDarcula || UIUtil.isUnderIntelliJLaF()) {
       g.color = IdeaMenuUI.getMenuBackgroundColor()
       g.fillRect(0, 0, width, height)
     }

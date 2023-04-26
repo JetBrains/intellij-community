@@ -123,6 +123,16 @@ class KotlinUFunctionCallExpression(
         baseResolveProviderService.callKind(sourcePsi)
     }
 
+    override fun hasKind(expectedKind: UastCallKind): Boolean {
+        if (expectedKind == UastCallKind.NESTED_ARRAY_INITIALIZER
+            && !sourcePsi.isAnnotationArgument) {
+            // do not try to resolve arbitrary calls if we only need array initializer inside annotations
+            return false
+        }
+
+        return super.hasKind(expectedKind)
+    }
+
     override val receiver: UExpression? by lz {
         (uastParent as? UQualifiedReferenceExpression)?.let {
             if (it.selector == this) return@lz it.receiver
@@ -207,12 +217,13 @@ class KotlinUFunctionCallExpression(
     override fun isMethodNameOneOf(names: Collection<String>): Boolean {
         if (methodNameCanBeOneOf(names)) {
             // canMethodNameBeOneOf can return false-positive results, additional resolve is needed
+            val methodName = methodName ?: return false
             return methodName in names
         }
         return false
     }
 
-    override fun methodNameCanBeOneOf(names: Collection<String>): Boolean {
+    fun methodNameCanBeOneOf(names: Collection<String>): Boolean {
         if (isMethodNameOneOfWithoutConsideringImportAliases(names)) return true
         val ktFile = sourcePsi.containingKtFile
         val aliasedNames = collectAliasedNamesForName(ktFile, names)

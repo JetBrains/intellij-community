@@ -58,6 +58,7 @@
 
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.grazie.ide.fus.GrazieFUSCounter"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.grazie.ide.notification.GrazieNotificationIds"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
     <notificationGroup id="Proofreading missing languages information" displayType="STICKY_BALLOON" bundle="messages.GrazieBundle" key="grazie.notification.missing-languages.group"/>

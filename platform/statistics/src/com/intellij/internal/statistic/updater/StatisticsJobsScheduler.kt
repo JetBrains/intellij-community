@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.updater
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.StatisticsNotificationManager
-import com.intellij.internal.statistic.eventLog.StatisticsEventLogMigration
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProviders
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader
@@ -12,7 +11,10 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -39,12 +41,6 @@ internal class StatisticsJobsScheduler : ApplicationInitializedListener {
     asyncScope.launch {
       runValidationRulesUpdate()
     }
-    asyncScope.launch {
-      delay(5.minutes)
-      withContext(Dispatchers.IO) {
-        StatisticsEventLogMigration.performMigration()
-      }
-    }
   }
 }
 
@@ -56,7 +52,7 @@ private suspend fun runValidationRulesUpdate() {
   while (true) {
     val providers = getEventLogProviders()
     for (provider in providers) {
-      if (provider.isCollectionEnabled()) {
+      if (provider.isLoggingEnabled()) {
         IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
       }
     }

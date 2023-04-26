@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 
 internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
@@ -30,12 +31,12 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.dontHideOnEmptyContent()
 
     val cs = toolWindow.contentManager.disposingMainScope()
-    val toolwindowVm = GitLabToolwindowViewModel(project, cs)
+    val contextHolder = project.service<GitLabProjectUIContextHolder>()
 
     val tabsController = GitLabReviewTabsController()
-    val componentFactory = GitLabReviewTabComponentFactory(project, toolwindowVm)
+    val componentFactory = GitLabReviewTabComponentFactory(project, contextHolder)
 
-    manageReviewToolwindowTabs(cs, toolWindow, toolwindowVm, tabsController, componentFactory)
+    manageReviewToolwindowTabs(cs, toolWindow, contextHolder, tabsController, componentFactory)
 
     toolWindow.setAdditionalGearActions(DefaultActionGroup(GitLabSwitchProjectAndAccountAction()))
   }

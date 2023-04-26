@@ -302,7 +302,8 @@
       "borderColor": "grey05",
       "foreground": "foreground",
       "linkForeground": "linkForeground",
-      "shortcutForeground": "foreground"
+      "shortcutForeground": "foreground",
+      "codeBorderColor": "grey08"
     },
 
     "Group.disabledSeparatorColor": "border",
@@ -979,10 +980,12 @@
       "PackageTagSelected.foreground": "white"
     },
     "RunWidget" : {
-      "foreground": "#ffffff",
+      "foreground": "black",
+      "runModeIconColor": "#5fad65",
       "disabledForeground": "#FFFFFF66",
       "background": "#3369d6",
       "runningBackground": "#599e5e",
+      "stopBackground": "#c94f4f",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"

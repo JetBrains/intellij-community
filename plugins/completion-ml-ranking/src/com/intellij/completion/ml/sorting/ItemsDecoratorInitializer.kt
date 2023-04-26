@@ -24,7 +24,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconManager
-import com.intellij.ui.IconReplacer
+import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.IconUtil
 import java.awt.Rectangle

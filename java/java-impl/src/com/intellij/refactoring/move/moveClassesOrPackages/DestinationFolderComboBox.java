@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -49,7 +48,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   private List<VirtualFile> mySourceRoots;
   private Project myProject;
   private boolean myLeaveInTheSameRoot;
-  private Consumer<String> myUpdateErrorMessage;
+  private Consumer<? super @NlsContexts.DialogMessage String> myUpdateErrorMessage;
 
   private final Alarm myAlarm = new Alarm();
   public DestinationFolderComboBox() {
@@ -75,16 +74,12 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   public void setData(final Project project,
                     final PsiDirectory initialTargetDirectory,
                     final EditorComboBox editorComboBox) {
-    setData(project, initialTargetDirectory, new Pass<>() {
-      @Override
-      public void pass(String s) {
-      }
-    }, editorComboBox);
+    setData(project, initialTargetDirectory, __->{}, editorComboBox);
   }
 
   public void setData(final Project project,
                       final PsiDirectory initialTargetDirectory,
-                      final Consumer<@NlsContexts.DialogMessage String> errorMessageUpdater,
+                      final Consumer<? super @NlsContexts.DialogMessage String> errorMessageUpdater,
                       final EditorComboBox editorComboBox) {
     myInitialTargetDirectory = initialTargetDirectory;
     mySourceRoots = getSourceRoots(project, initialTargetDirectory);

@@ -3,15 +3,14 @@ package com.intellij.codeInspection
 
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.ChangeModifierRequest
+import com.intellij.lang.jvm.actions.createAddAnnotationActions
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.asSafely
-import org.jetbrains.uast.UAnchorOwner
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.*
 
 fun ProblemsHolder.registerUProblem(element: UCallExpression, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
   val anchor = element.methodIdentifier?.sourcePsi ?: return
@@ -28,8 +27,18 @@ fun ProblemsHolder.registerUProblem(element: UDeclaration, descriptionTemplate: 
   registerProblem(anchor, descriptionTemplate, *fixes)
 }
 
-fun createModifierQuickfixes(target: UDeclaration, request: ChangeModifierRequest): Array<LocalQuickFix>? {
-  val containingFile = target.sourcePsi?.containingFile ?: return null
+fun ProblemsHolder.registerUProblem(element: UReferenceExpression, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
+  val anchor = element.referenceNameElement?.sourcePsi ?: return
+  registerProblem(anchor, descriptionTemplate, *fixes)
+}
+
+fun createAddAnnotationQuickfixes(target: UDeclaration, request: AnnotationRequest): Array<LocalQuickFix> {
+  val containingFile = target.sourcePsi?.containingFile ?: return emptyArray()
+  return IntentionWrapper.wrapToQuickFixes(createAddAnnotationActions(target, request).toTypedArray(), containingFile)
+}
+
+fun createModifierQuickfixes(target: UDeclaration, request: ChangeModifierRequest): Array<LocalQuickFix> {
+  val containingFile = target.sourcePsi?.containingFile ?: return emptyArray()
   return IntentionWrapper.wrapToQuickFixes(createModifierActions(target, request).toTypedArray(), containingFile)
 }
 

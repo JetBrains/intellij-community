@@ -1,35 +1,33 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.net.URI
 
 plugins {
     id("java")
     id("me.filippov.gradle.jvm.wrapper")
-    kotlin("jvm") version "1.7.10"
 }
 
 group = "com.intellij.idea"
 version = "SNAPSHOT"
 
 repositories {
-    mavenCentral()
+  mavenCentral()
+  maven { url = URI("https://cache-redirector.jetbrains.com/intellij-dependencies") }
 }
 
 dependencies {
   implementation("com.google.code.gson", "gson", "2.9.1")
-  implementation(kotlin("stdlib-jdk8"))
+  implementation("org.jetbrains.intellij.deps", "async-profiler", "2.9-15")
 }
 
 val fatJar = task("fatJar", type = Jar::class) {
-  dependsOn.addAll(listOf("compileJava", "compileKotlin", "processResources")) // We need this for Gradle optimization to work
-  archiveClassifier.set("standalone") // Naming the jar
-  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  dependsOn.addAll(listOf("compileJava", "processResources")) // We need this for Gradle optimization to work
+
   archiveFileName.set("app.jar")
-  manifest {
-    attributes["Main-Class"] = "com.intellij.idea.Main"
-  }
-  val sourcesMain = sourceSets.main.get()
-  val contents = configurations.runtimeClasspath.get()
-    .map { if (it.isDirectory) it else zipTree(it) } +
-    sourcesMain.output
+  archiveClassifier.set("standalone") // Naming the .jar file
+
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  val contents =
+    configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) } +
+    sourceSets.main.get().output
   from(contents)
 }
 
@@ -44,13 +42,4 @@ jvmWrapper {
     macAarch64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-$jbrsdkVersion-osx-aarch64-b$jbrsdkBuildNumber.tar.gz"
     macX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-$jbrsdkVersion-osx-x64-b$jbrsdkBuildNumber.tar.gz"
     windowsX64JvmUrl = "https://download.oracle.com/java/18/archive/jdk-18.0.1.1_windows-x64_bin.zip"
-}
-
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-  jvmTarget = "1.8"
-}
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-  jvmTarget = "1.8"
 }

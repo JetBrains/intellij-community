@@ -7,8 +7,8 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.containers.hash.LongLinkedHashMap;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +93,7 @@ final class FilePageCache {
 
   //stats counters:
 
-  /** how many times a file channel was accessed bypassing cache (see {@link PagedFileStorage#useChannel}) */
+  /** how many times a file channel was accessed bypassing cache (see {@link PagedFileStorage#executeOp}) */
   private volatile int myUncachedFileAccess;
   /** How many times page was found in local PagedFileStorage cache */
   private int myFastCacheHits;

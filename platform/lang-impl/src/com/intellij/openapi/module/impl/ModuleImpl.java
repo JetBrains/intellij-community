@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.configurationStore.RenameableStateStorageManager;
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +34,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
+public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Queryable {
   private static final Logger LOG = Logger.getInstance(ModuleImpl.class);
 
   private final @NotNull Project myProject;
@@ -82,7 +84,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project) {
-    super((ComponentManagerImpl)project, false);
+    super((ComponentManagerImpl)project, false, EmptyCoroutineContext.INSTANCE);
 
     registerServiceInstance(Module.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
     myProject = project;
@@ -324,6 +326,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public String toString() {
     if (myName == null) return "Module (not initialized)";
     return "Module: '" + getName() + "'" + (isDisposed() ? " (disposed)" : "");
+  }
+
+  @Override
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
+    info.put("id", "Module");
+    info.put("name", getName());
   }
 
   @ApiStatus.Internal

@@ -4,6 +4,8 @@ package com.intellij.ui.dsl.builder
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.ui.UINumericRange
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -25,7 +27,7 @@ enum class DslComponentProperty {
   /**
    * Custom visual paddings, which are used instead of [JComponent.getInsets]
    *
-   * Value: [com.intellij.ui.dsl.gridLayout.Gaps]
+   * Value: [UnscaledGaps] or [Gaps]
    */
   VISUAL_PADDINGS,
 

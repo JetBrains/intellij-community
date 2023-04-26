@@ -3,6 +3,7 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbServiceImpl.Companion.IDEA_FORCE_DUMB_QUEUE_TASKS
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
@@ -11,7 +12,6 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @RunWith(JUnit4::class)
@@ -27,14 +27,14 @@ class ProjectRootManagerOnEndOfDumbModeIncrementerTest {
     @BeforeClass
     @JvmStatic
     fun beforeAll() {
-      prevDumbQueueTasks = System.setProperty("idea.force.dumb.queue.tasks", "true")
+      prevDumbQueueTasks = System.setProperty(IDEA_FORCE_DUMB_QUEUE_TASKS, "true")
       prevIgnoreHeadless = System.setProperty("intellij.progress.task.ignoreHeadless", "true")
     }
 
     @AfterClass
     @JvmStatic
     fun afterAll() {
-      SystemProperties.setProperty("idea.force.dumb.queue.tasks", prevDumbQueueTasks)
+      SystemProperties.setProperty(IDEA_FORCE_DUMB_QUEUE_TASKS, prevDumbQueueTasks)
       SystemProperties.setProperty("intellij.progress.task.ignoreHeadless", prevIgnoreHeadless)
     }
   }

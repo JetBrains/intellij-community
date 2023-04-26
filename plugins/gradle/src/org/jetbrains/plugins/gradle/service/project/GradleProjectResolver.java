@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.target.TargetBuildLauncher;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
+import org.jetbrains.plugins.gradle.issue.UnsupportedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -51,10 +52,12 @@ import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -88,6 +91,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Key.create("gradleArtifactsMap");
 
   private static final Key<File> GRADLE_HOME_DIR = Key.create("gradleHomeDir");
+
+  private static final ExternalSystemSyncDiagnostic syncMetrics = ExternalSystemSyncDiagnostic.getInstance();
 
   // This constructor is called by external system API, see AbstractExternalSystemFacadeImpl class constructor.
   @SuppressWarnings("UnusedDeclaration")
@@ -129,9 +134,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final String ideProjectPath = settings == null ? null : settings.getIdeProjectPath();
       final String mainModuleFileDirectoryPath = ideProjectPath == null ? projectPath : ideProjectPath;
 
+      ModuleData moduleData = new ModuleData(projectName, GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(),
+                                             projectName, mainModuleFileDirectoryPath, projectPath);
+      GradleModuleDataKt.setGradleIdentityPath(moduleData, ":");
       projectDataNode
-        .createChild(ProjectKeys.MODULE, new ModuleData(projectName, GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(),
-                                                        projectName, mainModuleFileDirectoryPath, projectPath))
+        .createChild(ProjectKeys.MODULE, moduleData)
         .createChild(ProjectKeys.CONTENT_ROOT, new ContentRootData(GradleConstants.SYSTEM_ID, projectPath));
       return projectDataNode;
     }
@@ -143,7 +150,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final long activityId = resolverContext.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logSyncStarted(null, activityId);
-    ExternalSystemSyncDiagnostic.getOrStartSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName);
+    syncMetrics.getOrStartSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName);
 
     try {
       if (settings != null) {
@@ -213,6 +220,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if (!isCustomSerializationSupported(resolverCtx, gradleVersion, isCompositeBuildsSupported)) {
         useCustomSerialization = false;
       }
+      if (UnsupportedGradleVersionIssue.isUnsupported(gradleVersion)) {
+        throw new IllegalStateException("Unsupported Gradle version");
+      }
     }
     final ProjectImportAction projectImportAction =
       useCustomSerialization
@@ -263,18 +273,15 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
-    File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionClasses);
-    if (initScript != null) {
-      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
-    }
+    File initScript = GradleInitScriptUtil.createMainInitScript(isBuildSrcProject, toolingExtensionClasses);
+    executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
 
     BuildActionRunner buildActionRunner = new BuildActionRunner(resolverCtx, projectImportAction, executionSettings, myHelper);
     resolverCtx.checkCancelled();
 
     final long startTime = System.currentTimeMillis();
 
-    ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.GRADLE_CALL.name(), (builder) ->
-      builder.setParent(ExternalSystemSyncDiagnostic.getSpanContext(ExternalSystemSyncDiagnostic.gradleSyncSpanName)));
+    syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
 
     ProjectImportAction.AllModels allModels;
@@ -306,14 +313,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     catch (Throwable t) {
       buildFinishWaiter.countDown();
       errorsCount += 1;
-      ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.GRADLE_CALL.name()).setAttribute("error.count", errorsCount);
+      syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name()).setAttribute("error.count", errorsCount);
       throw t;
     }
     finally {
       ProgressIndicatorUtils.awaitWithCheckCanceled(buildFinishWaiter);
       final long timeInMs = (System.currentTimeMillis() - startTime);
       performanceTrace.logPerformance("Gradle data obtained", timeInMs);
-      ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.GRADLE_CALL.name()).end();
+      syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name()).end();
       ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.GRADLE_CALL, timeInMs, errorsCount);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
     }
@@ -340,7 +347,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
       LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
 
-      ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.PROJECT_RESOLVERS.name()).end();
+      syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name()).end();
       ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.PROJECT_RESOLVERS, timeConversionInMs,
                                                           resolversErrorsCount);
     }
@@ -357,8 +364,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                             boolean useCustomSerialization) {
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
 
-    ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.PROJECT_RESOLVERS.name(), (builder) ->
-      builder.setParent(ExternalSystemSyncDiagnostic.getSpanContext(ExternalSystemSyncDiagnostic.gradleSyncSpanName)));
+    syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
 
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.PROJECT_RESOLVERS);
     extractExternalProjectModels(allModels, resolverCtx, useCustomSerialization);
@@ -867,7 +873,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
         ExternalSystemSyncActionsCollector.logError(null, activityId, extractCause(e));
         ExternalSystemSyncActionsCollector.logSyncFinished(null, activityId, false);
-        ExternalSystemSyncDiagnostic.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName, (span) -> span.setAttribute("project", ""));
+        syncMetrics.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName, (span) -> span.setAttribute("project", ""));
 
         throw myProjectResolverChain.getUserFriendlyError(
           myResolverContext.getBuildEnvironment(), e, myResolverContext.getProjectPath(), null);

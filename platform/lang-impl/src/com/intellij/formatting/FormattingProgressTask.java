@@ -57,7 +57,7 @@ public final class FormattingProgressTask extends SequentialModalProgressTask im
 
   @Override
   protected void prepare(final @NotNull SequentialTask task) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       Document document = myDocument.get();
       if (document != null) {
         myDocumentModificationStampBefore = document.getModificationStamp();

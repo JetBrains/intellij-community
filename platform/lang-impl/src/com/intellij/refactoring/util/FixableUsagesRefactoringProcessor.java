@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(FixableUsagesRefactoringProcessor.class);
@@ -42,14 +44,12 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
   protected final UsageInfo @NotNull [] findUsages() {
     final List<FixableUsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     findUsages(usages);
-    final int numUsages = usages.size();
-    final FixableUsageInfo[] usageArray = usages.toArray(new FixableUsageInfo[numUsages]);
-    return usageArray;
+    return usages.toArray(new FixableUsageInfo[0]);
   }
 
   protected abstract void findUsages(@NotNull List<? super FixableUsageInfo> usages);
 
-  protected static void checkConflicts(final Ref<UsageInfo[]> refUsages, final MultiMap<PsiElement,String> conflicts) {
+  protected static void checkConflicts(Ref<UsageInfo[]> refUsages, MultiMap<PsiElement, @DialogMessage String> conflicts) {
     for (UsageInfo info : refUsages.get()) {
       final String conflict = ((FixableUsageInfo)info).getConflictMessage();
       if (conflict != null) {

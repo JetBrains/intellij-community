@@ -44,10 +44,10 @@ private object MySpacingConfiguration: IntelliJSpacingConfiguration() {
     get() = 0
 
   override val verticalSmallGap: Int
-    get() = JBUI.scale(8)
+    get() = 8
 
   override val verticalMediumGap: Int
-    get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 16 else 8)
+    get() = if (ExperimentalUI.isNewUI()) 16 else 8
 }
 
 internal class BookmarkTypeChooser(

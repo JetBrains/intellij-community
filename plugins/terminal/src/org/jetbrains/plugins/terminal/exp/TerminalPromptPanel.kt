@@ -36,6 +36,11 @@ class TerminalPromptPanel(private val project: Project,
 
   private val promptLabel: JLabel
 
+  private val completionManager: TerminalCompletionManager
+
+  private val commandHistoryManager: CommandHistoryManager
+  private val commandHistoryPresenter: CommandHistoryPresenter
+
   val charSize: Dimension
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
@@ -45,9 +50,15 @@ class TerminalPromptPanel(private val project: Project,
     promptLabel = createPromptLabel()
     promptLabel.text = computePromptText(TerminalProjectOptionsProvider.getInstance(project).startingDirectory ?: "")
 
-    editor.putUserData(SESSION_KEY, session)
+    completionManager = TerminalCompletionManager(session)
 
-    session.addCommandListener(this, parentDisposable = this)
+    commandHistoryManager = CommandHistoryManager(session)
+    commandHistoryPresenter = CommandHistoryPresenter(project, editor)
+
+    editor.putUserData(TerminalSession.KEY, session)
+    editor.putUserData(TerminalCompletionManager.KEY, completionManager)
+
+    session.addCommandListener(this)
 
     val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
     val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
@@ -69,7 +80,8 @@ class TerminalPromptPanel(private val project: Project,
     textField.border = JBUI.Borders.emptyLeft(JBUI.scale(LEFT_INSET))
     textField.alignmentX = JComponent.LEFT_ALIGNMENT
 
-    val editor = textField.getEditor(true)!!
+    val editor = textField.getEditor(true) as EditorImpl
+    editor.scrollPane.border = JBUI.Borders.empty()
     editor.backgroundColor = UIUtil.getTextFieldBackground()
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
@@ -114,12 +126,19 @@ class TerminalPromptPanel(private val project: Project,
     commandExecutor.startCommandExecution(document.text)
   }
 
-  fun isFocused(): Boolean {
-    return editor.contentComponent.hasFocus()
+  fun showCommandHistory() {
+    val history = commandHistoryManager.history
+    if (history.isNotEmpty()) {
+      commandHistoryPresenter.showCommandHistory(history)
+    }
   }
 
-  fun getContentSize(): Dimension {
-    return Dimension(editor.component.width, editor.contentComponent.height)
+  fun onCommandHistoryClosed() {
+    commandHistoryPresenter.onCommandHistoryClosed()
+  }
+
+  fun isFocused(): Boolean {
+    return editor.contentComponent.hasFocus()
   }
 
   override fun getBackground(): Color {
@@ -136,7 +155,6 @@ class TerminalPromptPanel(private val project: Project,
 
   companion object {
     val KEY: Key<TerminalPromptPanel> = Key.create("TerminalPromptPanel")
-    val SESSION_KEY: Key<TerminalSession> = Key.create("TerminalSession")
 
     private const val LEFT_INSET: Int = 7
   }

@@ -72,7 +72,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   @Override
   public void updateUI() {
     super.updateUI();
-    if (getParent() != null) myEmptyText.resetFontToOwnerFont();
+    if (getParent() != null) myEmptyText.resetFont();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
@@ -427,7 +427,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       final Collection<File> resolvedFiles = getFiles(dep);
 
       Collection<ExternalDependency> dependencies = filesToCompileDependenciesMap.get(resolvedFiles);
-      final boolean hasCompileDependencies = dependencies != null && !dependencies.isEmpty();
+      final boolean hasCompileDependencies = !dependencies.isEmpty();
 
       if (hasCompileDependencies && dep.getDependencies().isEmpty()) {
         runtimeDependencies.remove(dep);
@@ -754,7 +754,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
           result.add(projectDependency);
         } else if (it != null) {
           Collection<ResolvedArtifact> artifactsResult = artifactMap.get(toMyModuleIdentifier(it.getName(), it.getGroup()));
-          if (artifactsResult != null && !artifactsResult.isEmpty()) {
+          if (!artifactsResult.isEmpty()) {
             ResolvedArtifact artifact = artifactsResult.iterator().next();
             String packaging = artifact.getExtension();
             String classifier = artifact.getClassifier();

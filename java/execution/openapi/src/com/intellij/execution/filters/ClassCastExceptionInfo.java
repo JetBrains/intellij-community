@@ -3,6 +3,7 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,15 +35,16 @@ public class ClassCastExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
+  ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement current) {
     if (myTargetClass == null) return null;
+    PsiElement e = PsiTreeUtil.nextVisibleLeaf(current);
     if (e instanceof PsiJavaToken && e.textMatches("(") && e.getParent() instanceof PsiTypeCastExpression) {
       PsiTypeElement typeElement = ((PsiTypeCastExpression)e.getParent()).getCastType();
-      if (typeElement == null) return null;
-      if (castClassMatches(typeElement.getType(), myTargetClass)) {
-        return typeElement;
+      if (typeElement != null && castClassMatches(typeElement.getType(), myTargetClass)) {
+        return onTheSameLineFor(current, typeElement, true);
       }
     }
+    e = PsiTreeUtil.prevVisibleLeaf(current);
     if (e instanceof PsiIdentifier && e.getParent() instanceof PsiReferenceExpression ref) {
       PsiElement target = ref.resolve();
       PsiType type;
@@ -59,7 +61,7 @@ public class ClassCastExceptionInfo extends ExceptionInfo {
       if (!(psiClass instanceof PsiTypeParameter)) return null;
       // Implicit cast added by compiler
       if (castClassMatches(ref.getType(), myTargetClass)) {
-        return e;
+        return onTheSameLineFor(current, e, false);
       }
     }
     return null;

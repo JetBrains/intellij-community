@@ -20,8 +20,10 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -92,11 +94,11 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
   @RequiresEdt
   public void setCompareInfo(@NotNull CommitCompareInfo compareInfo) {
     myCompareInfo = compareInfo;
-    refreshView();
+    refreshView(false);
   }
 
   @NotNull
-  public SimpleChangesBrowser getChangesBrowser() {
+  public ChangesBrowserBase getChangesBrowser() {
     return myChangesBrowser;
   }
 
@@ -104,17 +106,21 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
     boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
     myVcsSettings.setSwapSidesInCompareBranches(!swapSides);
 
-    List<Change> oldSelection = myChangesBrowser.getSelectedChanges();
-    refreshView();
-    myChangesBrowser.getViewer().setSelectedChanges(DvcsBranchUtil.swapRevisions(oldSelection));
+    refreshView(true);
   }
 
-  private void refreshView() {
-    if (myCompareInfo != null) {
-      boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
-      updateLabelText();
-      List<Change> diff = myCompareInfo.getTotalDiff();
-      if (swapSides) diff = DvcsBranchUtil.swapRevisions(diff);
+  private void refreshView(boolean onSwapSides) {
+    if (myCompareInfo == null) return;
+
+    boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
+    updateLabelText();
+    List<Change> diff = myCompareInfo.getTotalDiff();
+    if (swapSides) diff = DvcsBranchUtil.swapRevisions(diff);
+
+    if (onSwapSides) {
+      myChangesBrowser.setChangesToDisplay(diff, new OnSwapSidesTreeStateStrategy());
+    }
+    else {
       myChangesBrowser.setChangesToDisplay(diff);
     }
   }
@@ -164,7 +170,7 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
     return null;
   }
 
-  private static class MyChangesBrowser extends SimpleChangesBrowser {
+  private static class MyChangesBrowser extends SimpleAsyncChangesBrowser {
     MyChangesBrowser(@NotNull Project project, @NotNull List<? extends Change> changes) {
       super(project, false, true);
       setChangesToDisplay(changes);
@@ -249,9 +255,30 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
         public void onFinished() {
           action.finish();
 
-          panel.refreshView();
+          panel.refreshView(false);
         }
       }.queue();
+    }
+  }
+
+  private static class OnSwapSidesTreeStateStrategy implements ChangesTree.TreeStateStrategy<OnSwapSidesTreeStateStrategy.MyState> {
+    @Override
+    public MyState saveState(@NotNull ChangesTree tree) {
+      List<Change> changes = VcsTreeModelData.selected(tree).userObjects(Change.class);
+      return new MyState(changes);
+    }
+
+    @Override
+    public void restoreState(@NotNull ChangesTree tree, MyState state, boolean scrollToSelection) {
+      if (state != null && !state.selectedChanges.isEmpty()) {
+        tree.setSelectedChanges(DvcsBranchUtil.swapRevisions(state.selectedChanges));
+      }
+      else {
+        tree.resetTreeState();
+      }
+    }
+
+    private record MyState(@NotNull List<Change> selectedChanges) {
     }
   }
 }

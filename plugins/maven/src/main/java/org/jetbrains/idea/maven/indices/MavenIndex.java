@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -20,10 +21,7 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenIndexId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.server.IndexedMavenId;
-import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
-import org.jetbrains.idea.maven.server.MavenIndicesProcessor;
-import org.jetbrains.idea.maven.server.MavenServerIndexerException;
+import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -381,6 +379,22 @@ public final class MavenIndex implements MavenSearchIndex {
     }
   }
 
+  private void closeAndClean(PersistentHashMap<String, Set<String>> map) {
+    try {
+      map.closeAndClean();
+    }
+    catch (IOException e) {
+      MavenLog.LOG.error(e);
+    }
+  }
+
+  public void closeAndClean() {
+    closeAndClean(myData.groupToArtifactMap);
+    closeAndClean(myData.groupWithArtifactToVersionMap);
+    closeAndClean(myData.archetypeIdToDescriptionMap);
+    close(false);
+  }
+
   private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
     return map.computeIfAbsent(key, k -> new TreeSet<>());
   }
@@ -415,33 +429,39 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   /**
-   * Trying to add artifact to index.
+   * Trying to add artifacts to index.
    *
-   * @return true if artifact added to index else need retry
+   * @return list of artifact responses; indexed id is not null if artifact added; indexed id is null if retry is needed
    */
-  public boolean tryAddArtifact(final File artifactFile) {
+  @NotNull
+  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<File> artifactFiles) {
+    var failedResponses = ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
     return doIndexAndRecoveryTask(() -> {
       boolean locked = indexUpdateLock.tryLock();
-      if (!locked) return false;
+      if (!locked) return failedResponses;
       try {
         IndexData indexData = myData;
-        if (indexData == null) return false;
-        IndexedMavenId id = indexData.addArtifact(artifactFile);
-        if (id == null) return true;
-
-        String groupWithArtifact = id.groupId + ":" + id.artifactId;
-
-        addToCache(indexData.groupToArtifactMap, id.groupId, id.artifactId);
-        addToCache(indexData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
-        if ("maven-archetype".equals(id.packaging)) {
-          addToCache(indexData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + StringUtil.notNullize(id.description));
+        if (indexData != null) {
+          var addArtifactResponses = indexData.addArtifacts(artifactFiles);
+          for (var addArtifactResponse : addArtifactResponses) {
+            var id = addArtifactResponse.indexedMavenId();
+            if (id != null) {
+              String groupWithArtifact = id.groupId + ":" + id.artifactId;
+              addToCache(indexData.groupToArtifactMap, id.groupId, id.artifactId);
+              addToCache(indexData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
+              if ("maven-archetype".equals(id.packaging)) {
+                addToCache(indexData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + StringUtil.notNullize(id.description));
+              }
+            }
+          }
+          indexData.flush();
+          return addArtifactResponses;
         }
-        indexData.flush();
-        return true;
+        return failedResponses;
       } finally {
         indexUpdateLock.unlock();
       }
-    }, true);
+    }, failedResponses);
   }
 
   private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
@@ -647,8 +667,9 @@ public final class MavenIndex implements MavenSearchIndex {
       archetypeIdToDescriptionMap.force();
     }
 
-    IndexedMavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
-      return myNexusIndexer.addArtifact(mavenIndexId, artifactFile);
+    @NotNull
+    List<AddArtifactResponse> addArtifacts(Collection<File> artifactFiles) {
+      return myNexusIndexer.addArtifacts(mavenIndexId, artifactFiles);
     }
 
     Set<MavenArtifactInfo> search(String pattern, int maxResult) throws MavenServerIndexerException {

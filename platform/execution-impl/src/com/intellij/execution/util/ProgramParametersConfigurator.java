@@ -6,8 +6,13 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.ide.macro.*;
+import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.ide.macro.Macro;
+import com.intellij.ide.macro.MacroManager;
+import com.intellij.ide.macro.MacroWithParams;
+import com.intellij.ide.macro.PromptingMacro;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -114,6 +119,14 @@ public class ProgramParametersConfigurator {
       return path;
     }
 
+    DataContext threadContext = ExecutionUtil.getThreadContext();
+    DataContext context = threadContext == null ? dataContext : new DataContext() {
+      @Override
+      public @Nullable Object getData(@NotNull String dataId) {
+        Object data = dataContext.getData(dataId);
+        return data != null ? data : threadContext.getData(dataId);
+      }
+    };
     for (Macro macro : MacroManager.getInstance().getMacros()) {
       boolean paramsMacro = macro instanceof MacroWithParams;
       String template = "$" + macro.getName() + (paramsMacro ? "(" : "$");
@@ -125,7 +138,7 @@ public class ProgramParametersConfigurator {
         if (paramsMacro) {
           int endIndex = path.indexOf(")$", index + template.length());
           if (endIndex != -1) {
-            value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext, path.substring(index + template.length(), endIndex)));
+            value = StringUtil.notNullize(previewOrExpandMacro(macro, context, path.substring(index + template.length(), endIndex)));
             tailIndex = endIndex + 2;
           }
           else {
@@ -136,7 +149,7 @@ public class ProgramParametersConfigurator {
         }
         else {
           tailIndex = index + template.length();
-          value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext));
+          value = StringUtil.notNullize(previewOrExpandMacro(macro, context));
         }
         if (applyParameterEscaping) {
           value = ParametersListUtil.escape(value);
@@ -156,9 +169,10 @@ public class ProgramParametersConfigurator {
         if (mode != null && mode) {
           throw new IncorrectOperationException();
         }
-        return macro.expand(dataContext, args);
       }
-      return macro.preview();
+      return macro instanceof PromptingMacro ?
+             macro.expand(dataContext, args):
+             ReadAction.compute(() -> macro.expand(dataContext, args));
     }
     catch (Macro.ExecutionCancelledException e) {
       return null;

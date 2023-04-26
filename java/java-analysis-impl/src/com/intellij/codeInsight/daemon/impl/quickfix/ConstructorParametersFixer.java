@@ -23,28 +23,23 @@ public final class ConstructorParametersFixer {
                                         @NotNull TextRange fixRange) {
     JavaResolveResult resolved = ctrRef.advancedResolve(false);
     PsiClass aClass = (PsiClass) resolved.getElement();
+    PsiSubstitutor substitutor = resolved.getSubstitutor();
     if (aClass == null) return;
+    registerFixActions(aClass, substitutor, constructorCall, builder, fixRange);
+  }
+
+  public static void registerFixActions(@NotNull PsiClass aClass,
+                                        @NotNull PsiSubstitutor substitutor,
+                                        @NotNull PsiConstructorCall constructorCall,
+                                        @NotNull HighlightInfo.Builder builder,
+                                        @NotNull TextRange fixRange) {
     PsiMethod[] methods = aClass.getConstructors();
     CandidateInfo[] candidates = new CandidateInfo[methods.length];
     for (int i = 0; i < candidates.length; i++) {
-      candidates[i] = new CandidateInfo(methods[i], resolved.getSubstitutor());
+      candidates[i] = new CandidateInfo(methods[i], substitutor);
     }
     CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, builder, fixRange);
     AddTypeArgumentsFix.REGISTRAR.registerCastActions(candidates, constructorCall, builder, fixRange);
-    WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, constructorCall, builder, fixRange);
-    WrapWithAdapterMethodCallFix.registerCastActions(candidates, constructorCall, builder, fixRange);
-  }
-
-  public static void registerEnumConstantFixActions(@NotNull PsiClass aClass,
-                                                    @NotNull PsiConstructorCall constructorCall,
-                                                    @NotNull HighlightInfo.Builder builder,
-                                                    @NotNull TextRange fixRange) {
-    PsiMethod[] methods = aClass.getConstructors();
-    CandidateInfo[] candidates = new CandidateInfo[methods.length];
-    for (int i = 0; i < candidates.length; i++) {
-      candidates[i] = new CandidateInfo(methods[i], PsiSubstitutor.EMPTY);
-    }
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, builder, fixRange);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, constructorCall, builder, fixRange);
     WrapWithAdapterMethodCallFix.registerCastActions(candidates, constructorCall, builder, fixRange);
   }

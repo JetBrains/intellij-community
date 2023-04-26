@@ -5,13 +5,14 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CommitInfo
 import com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckProvider
@@ -64,11 +65,14 @@ class GitUnresolvedMergeCheckProvider : UnresolvedMergeCheckProvider() {
   }
 
   private class MyExcludedChangesDialog(project: Project, changes: List<Change>) : DialogWrapper(project) {
-    val browser = SimpleChangesBrowser(project, changes)
+    private val browser = SimpleAsyncChangesBrowser(project, false, false)
 
     init {
       title = GitBundle.message("title.changes.excluded.from.commit")
       setOKButtonText(GitBundle.message("button.changes.excluded.from.commit.commit.anyway"))
+
+      browser.setChangesToDisplay(changes)
+      Disposer.register(disposable) { browser.shutdown() }
 
       init()
     }

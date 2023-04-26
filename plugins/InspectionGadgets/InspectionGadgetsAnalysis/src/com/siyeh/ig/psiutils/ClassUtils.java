@@ -149,7 +149,8 @@ public final class ClassUtils {
     }
     final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName != null &&
-        (immutableTypes.contains(qualifiedName) || qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
+        (immutableTypes.contains(qualifiedName) ||
+         (qualifiedName.startsWith("com.google.common.collect.Immutable") && !qualifiedName.endsWith("Builder")))) {
       return true;
     }
     if (JCiPUtil.isImmutable(aClass, checkDocComment)) {

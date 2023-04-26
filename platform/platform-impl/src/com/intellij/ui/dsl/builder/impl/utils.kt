@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
@@ -10,9 +11,7 @@ import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
-import com.intellij.ui.dsl.gridLayout.toGaps
+import com.intellij.ui.dsl.gridLayout.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -34,7 +33,14 @@ internal enum class DslComponentPropertyInternal {
    *
    * Value: IntRange
    */
-  INT_TEXT_RANGE
+  INT_TEXT_RANGE,
+
+  /**
+   * Place where the component was added into Kotlin UI DSL builder (for example [Row.cell]). Used in internal mode only
+   *
+   * Value: Throwable
+   */
+  CREATION_STACKTRACE
 }
 
 /**
@@ -70,25 +76,31 @@ val JComponent.interactiveComponent: JComponent
     return interactiveComponent ?: this
   }
 
-internal fun prepareVisualPaddings(component: JComponent): Gaps {
-  var customVisualPaddings = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as Gaps?
+internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
+  var customVisualPaddings: UnscaledGaps? =
+    when (val value = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS)) {
+      null -> null
+      is Gaps -> value.toUnscaled()
+      is UnscaledGaps -> value
+      else -> throw UiDslException("Invalid VISUAL_PADDINGS")
+    }
 
   if (customVisualPaddings == null && component is JScrollPane) {
-    customVisualPaddings = Gaps.EMPTY
+    customVisualPaddings = UnscaledGaps.EMPTY
   }
 
   if (customVisualPaddings == null) {
-    return component.insets.toGaps()
+    return component.insets.toUnscaledGaps()
   }
   component.putClientProperty(GridLayoutComponentProperty.SUB_GRID_AUTO_VISUAL_PADDINGS, false)
   return customVisualPaddings
 }
 
-internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): Gaps {
+internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): UnscaledGaps {
   val defaultVerticalGap = if (component is JPanel) 0 else spacing.verticalComponentGap
   val policy = component.getClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP) as VerticalComponentGap?
-  return Gaps(top = calculateVerticalGap(defaultVerticalGap, spacing, policy?.top), left = left,
-              bottom = calculateVerticalGap(defaultVerticalGap, spacing, policy?.bottom), right = right)
+  return UnscaledGaps(top = calculateVerticalGap(defaultVerticalGap, spacing, policy?.top), left = left,
+                      bottom = calculateVerticalGap(defaultVerticalGap, spacing, policy?.bottom), right = right)
 }
 
 private fun calculateVerticalGap(defaultVerticalGap: Int, spacing: SpacingConfiguration, policy: Boolean?): Int {
@@ -152,5 +164,11 @@ internal fun warn(message: String) {
   }
   else {
     LOG.warn(message)
+  }
+}
+
+internal fun registerCreationStacktrace(component: JComponent) {
+  if (ApplicationManager.getApplication().isInternal) {
+    component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.copyright
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -35,8 +36,6 @@ import com.maddyhome.idea.copyright.options.Options
 import com.maddyhome.idea.copyright.util.FileTypeUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
@@ -217,7 +216,7 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
 }
 
 private class CopyrightManagerDocumentListener : BulkFileListener {
-  private val newFilePaths = Collections.newSetFromMap<String>(ConcurrentHashMap())
+  private val newFilePaths = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
   private val isDocumentListenerAdded = AtomicBoolean()
 

@@ -4,7 +4,12 @@
       "jetbrains": {
         "python": {
           "expui": {
+            "debug": {
+              "specialVar.svg": "icons/com/jetbrains/python/debug/specialVar.svg",
+              "stepIntoMyCode.svg": "icons/com/jetbrains/python/debug/StepIntoMyCode.svg"
+            },
             "python.svg": "icons/com/jetbrains/python/python.svg",
+            "pythonConsole.svg": "icons/com/jetbrains/python/pythonConsole.svg",
             "pythonConsoleToolWindow.svg": "icons/com/jetbrains/python/pythonConsoleToolWindow.svg",
             "pythonPackages.svg": "icons/com/jetbrains/python/pythonPackages.svg",
             "commandQueue.svg": "icons/com/jetbrains/python/commandQueue.svg",

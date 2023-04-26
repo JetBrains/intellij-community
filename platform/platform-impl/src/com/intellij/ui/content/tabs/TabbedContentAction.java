@@ -216,8 +216,10 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      ObjectUtils.consumeIfNotNull(ActionUtil.getAction(myHorizontal ? "SplitVertically" : "SplitHorizontally"),
-                                   action -> e.getPresentation().setIcon(action.getTemplatePresentation().getIcon()));
+      AnAction action = ActionUtil.getAction(myHorizontal ? "SplitVertically" : "SplitHorizontally");
+      if (action != null) {
+        e.getPresentation().setIcon(action.getTemplatePresentation().getIcon());
+      }
       e.getPresentation().setEnabledAndVisible(myManager.getContents().length > 1);
     }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
  */
 fun forEachClient(kind: ClientKind, action: (ClientAppSession) -> Unit) {
   for (session in ClientSessionsManager.getAppSessions(kind)) {
-    withClientId(session.clientId) {
+    ClientId.withClientId(session.clientId) {
       logger<ClientSessionsManager<*>>().runAndLogException {
         action(session)
       }
@@ -24,7 +24,7 @@ fun forEachClient(kind: ClientKind, action: (ClientAppSession) -> Unit) {
  */
 fun Project.forEachClient(kind: ClientKind, action: (ClientProjectSession) -> Unit) {
   for (session in ClientSessionsManager.getProjectSessions(this, kind)) {
-    withClientId(session.clientId) {
+    ClientId.withClientId(session.clientId) {
       logger<ClientSessionsManager<*>>().runAndLogException {
         action(session)
       }

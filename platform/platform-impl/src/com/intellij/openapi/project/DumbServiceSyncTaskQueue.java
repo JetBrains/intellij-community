@@ -5,10 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
 import com.intellij.openapi.util.Disposer;
@@ -17,10 +14,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class DumbServiceSyncTaskQueue {
+  private final Project myProject;
   private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
   private final DumbServiceMergingTaskQueue myTaskQueue;
 
-  public DumbServiceSyncTaskQueue(@NotNull DumbServiceMergingTaskQueue queue) {
+  public DumbServiceSyncTaskQueue(@NotNull Project project, @NotNull DumbServiceMergingTaskQueue queue) {
+    myProject = project;
     myTaskQueue = queue;
   }
 
@@ -45,32 +44,45 @@ public final class DumbServiceSyncTaskQueue {
 
   private void processQueue() {
     if (!myIsRunning.compareAndSet(false, true)) return;
-    try {
-      while (true) {
-        try (QueuedDumbModeTask nextTask = myTaskQueue.extractNextTask()) {
-          if (nextTask == null) break;
-          doRunTaskSynchronously(nextTask);
-        } catch (ProcessCanceledException ignored) {
-          Logger.getInstance(DumbServiceSyncTaskQueue.class).info("Canceled dumb mode task. Continue to the following task (if any).");
+
+    Runnable runnable = () -> {
+      try {
+        while (true) {
+          try (QueuedDumbModeTask nextTask = myTaskQueue.extractNextTask()) {
+            if (nextTask == null) break;
+            doRunTaskSynchronously(nextTask);
+          }
+          catch (ProcessCanceledException ignored) {
+            Logger.getInstance(DumbServiceSyncTaskQueue.class).info("Canceled dumb mode task. Continue to the following task (if any).");
+          }
         }
       }
-    } finally {
-      myIsRunning.set(false);
+      finally {
+        myIsRunning.set(false);
+      }
+    };
+
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      runnable.run();
+    }
+    else {
+      ProgressManager.getInstance().runProcess(runnable, new EmptyProgressIndicator());
     }
   }
 
   private static void doRunTaskSynchronously(@NotNull QueuedDumbModeTask task) {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    ProgressIndicator finalIndicator = indicator == null ? new EmptyProgressIndicator() : indicator;
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    Logger.getInstance(DumbServiceSyncTaskQueue.class).assertTrue(indicator != null, "There should be global progress indicator");
 
-    finalIndicator.pushState();
+    indicator.pushState();
     ((CoreProgressManager)ProgressManager.getInstance()).suppressPrioritizing();
     try {
-      task.executeTask(finalIndicator);
+      task.executeTask(indicator);
     }
     finally {
       ((CoreProgressManager)ProgressManager.getInstance()).restorePrioritizing();
-      finalIndicator.popState();
+      indicator.popState();
     }
   }
 

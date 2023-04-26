@@ -4,7 +4,7 @@ package git4idea.rebase
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.ui.icons.HiDPIImage
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.StartupUiUtil
 import git4idea.i18n.GitBundle
@@ -60,8 +60,7 @@ class GitRebaseHelpPopupPanel : JPanel() {
   private fun loadImage(path: String): Image? {
     return try {
       val img = ImageIO.read(javaClass.getResourceAsStream(path))
-
-      JBHiDPIScaledImage(img, 274, 140, img.type)
+      HiDPIImage(image = img, width = 274, height = 140, type = img.type)
     }
     catch (e: Exception) {
       LOG.warn("Failed to load image: ${path}", e)
@@ -70,8 +69,8 @@ class GitRebaseHelpPopupPanel : JPanel() {
   }
 
   private fun chooseImage(imagePath: String): String {
-    val themePart = if (StartupUiUtil.isUnderDarcula()) DARK_POSTFIX else ""
-    val retinaPart = if (StartupUiUtil.isJreHiDPI()) HIDPI_POSTFIX else ""
+    val themePart = if (StartupUiUtil.isUnderDarcula) DARK_POSTFIX else ""
+    val retinaPart = if (StartupUiUtil.isJreHiDPI) HIDPI_POSTFIX else ""
 
     return "${imagePath}${themePart}${retinaPart}.png"
   }

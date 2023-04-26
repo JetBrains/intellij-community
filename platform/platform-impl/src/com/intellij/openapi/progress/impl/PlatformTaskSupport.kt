@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
 import com.intellij.openapi.application.EDT
@@ -107,9 +105,9 @@ class PlatformTaskSupport : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
-  ): T = ensureCurrentJobAllowingOrphan {
+  ): T = prepareThreadContext { ctx ->
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    val scope = CoroutineScope(currentThreadContext())
+    val scope = CoroutineScope(ctx)
     runBlockingModalInternal(cs = scope, descriptor, action)
   }
 
@@ -117,8 +115,8 @@ class PlatformTaskSupport : TaskSupport {
     cs: CoroutineScope,
     descriptor: ModalIndicatorDescriptor,
     action: suspend CoroutineScope.() -> T,
-  ): T = resetThreadContext().use {
-    inModalContext(JobProviderWithOwnerContext(cs.coroutineContext.job, descriptor.owner)) { newModalityState ->
+  ): T {
+    return inModalContext(JobProviderWithOwnerContext(cs.coroutineContext.job, descriptor.owner)) { newModalityState ->
       val deferredDialog = CompletableDeferred<DialogWrapper>()
       val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
         TextDetailsProgressReporter(this@async).use { reporter ->

@@ -45,7 +45,7 @@ abstract class KotlinVersionProviderService : WizardService {
             when (versionKind) {
                 KotlinVersionKind.STABLE, KotlinVersionKind.EAP, KotlinVersionKind.M -> { buildSystem ->
                     when (buildSystem) {
-                        BuildSystemType.GradleKotlinDsl, BuildSystemType.GradleGroovyDsl -> listOf(DefaultRepository.GRADLE_PLUGIN_PORTAL)
+                        BuildSystemType.GradleKotlinDsl, BuildSystemType.GradleGroovyDsl -> listOf(DefaultRepository.MAVEN_CENTRAL, DefaultRepository.GRADLE_PLUGIN_PORTAL)
                         BuildSystemType.Maven -> listOf(DefaultRepository.MAVEN_CENTRAL)
                         BuildSystemType.Jps -> emptyList()
                     }

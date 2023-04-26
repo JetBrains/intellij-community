@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.io.delete
 import com.intellij.util.io.readBytes
 import com.intellij.util.io.safeOutputStream
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.composer.Composer
 import org.yaml.snakeyaml.nodes.*
 import org.yaml.snakeyaml.parser.ParserImpl
@@ -150,13 +151,14 @@ class MasterKeyFileStorage(val passwordFile: Path) {
 }
 
 private fun createMasterKeyReader(data: ByteArray): List<NodeTuple> {
-  val composer = Composer(ParserImpl(StreamReader(data.inputStream().reader())), object : Resolver() {
+  val loaderOptions = LoaderOptions()
+  val composer = Composer(ParserImpl(StreamReader(data.inputStream().reader()), loaderOptions), object : Resolver() {
     override fun resolve(kind: NodeId, value: String?, implicit: Boolean): Tag {
       return when (kind) {
         NodeId.scalar -> Tag.STR
         else -> super.resolve(kind, value, implicit)
       }
     }
-  })
+  }, loaderOptions)
   return (composer.singleNode as? MappingNode)?.value ?: emptyList()
 }

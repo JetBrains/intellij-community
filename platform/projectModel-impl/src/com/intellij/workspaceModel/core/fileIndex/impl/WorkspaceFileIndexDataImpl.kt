@@ -6,12 +6,14 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
+import com.intellij.util.SlowOperations
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -67,6 +69,9 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                            includeExternalSets: Boolean,
                            includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo {
     if (!file.isValid) return WorkspaceFileInternalInfo.NonWorkspace.INVALID
+    if (file.fileSystem is NonPhysicalFileSystem && file.parent == null) {
+      return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
+    }
     ensureIsUpToDate()
 
     val originalAcceptedKindMask = 
@@ -121,6 +126,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   }
 
   private fun ensureIsUpToDate() {
+    SlowOperations.assertSlowOperationsAreAllowed()
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
@@ -321,24 +327,40 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                                  kind: WorkspaceFileKind,
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
+      registerFileSet(root, kind, entity, customData, recursive = true)
+    }
+
+    private fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?,
+                                recursive: Boolean) {
       val rootFile = rootFileSupplier.findFile(root)
       if (rootFile != null) {
-        registerFileSet(rootFile, kind, entity, customData)
+        registerFileSet(rootFile, kind, entity, customData, recursive)
       }
       else {
-        nonExistingFilesRegistry.registerUrl(root, entity, storageKind, if (kind.isContent) NonExistingFileSetKind.INCLUDED_CONTENT else NonExistingFileSetKind.INCLUDED_OTHER)
+        nonExistingFilesRegistry.registerUrl(root, entity, storageKind,
+                                             if (kind.isContent) NonExistingFileSetKind.INCLUDED_CONTENT else NonExistingFileSetKind.INCLUDED_OTHER)
       }
     }
 
-    override fun registerFileSet(root: VirtualFile,
-                                 kind: WorkspaceFileKind,
-                                 entity: WorkspaceEntity,
-                                 customData: WorkspaceFileSetData?) {
-      val fileSet = WorkspaceFileSetImpl(root, kind, entity.createReference(), storageKind, customData ?: DummyWorkspaceFileSetData)
+    override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
+      registerFileSet(root, kind, entity, customData, recursive = true)
+    }
+
+    private fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?,
+                                recursive: Boolean) {
+      val fileSet = WorkspaceFileSetImpl(root, kind, entity.createReference(), storageKind, customData ?: DummyWorkspaceFileSetData,
+                                         recursive)
       fileSets.putValue(root, fileSet)
       if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
       }
+    }
+
+    override fun registerNonRecursiveFileSet(file: VirtualFileUrl,
+                                             kind: WorkspaceFileKind,
+                                             entity: WorkspaceEntity,
+                                             customData: WorkspaceFileSetData?) {
+      registerFileSet(file, kind, entity, customData, recursive = false)
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
@@ -422,6 +444,13 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
       if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.removeByPrefixAndReference(customData.packagePrefix, entity.createReference())
       }
+    }
+
+    override fun registerNonRecursiveFileSet(file: VirtualFileUrl,
+                                             kind: WorkspaceFileKind,
+                                             entity: WorkspaceEntity,
+                                             customData: WorkspaceFileSetData?) {
+      registerFileSet(file, kind, entity, customData)
     }
 
     private fun isOriginatedFrom(fileSet: StoredFileSet, entity: WorkspaceEntity): Boolean {

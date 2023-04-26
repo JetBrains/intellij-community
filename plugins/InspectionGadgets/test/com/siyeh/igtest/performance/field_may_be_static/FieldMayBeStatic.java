@@ -59,10 +59,16 @@ class Outer {
   void f(final boolean param) {
     new Runnable() {
       private final boolean value = param;
+      private final boolean value2 = Boolean.getBoolean("foo");
       public void run() {
 
       }
     }.run();
   }
 
+}
+class ThisExpression {
+  private final boolean test = this instanceof Sub;
+
+  static class Sub extends ThisExpression {}
 }

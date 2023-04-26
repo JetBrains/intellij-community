@@ -1,19 +1,22 @@
+// FIR_COMPARISON
 package test
 
-import some.foo2Imported
+import some.foo3FromSimpleImport
+import pack.*
 
-val foo5Var = 12
-fun foo4CurentFile() = 12
+val foo6Var = 12
+fun foo5CurentFile() = 12
 
 val some = foo<caret>
 
 // "foo" is before other elements because of exact prefix match
 
 // ORDER: foo
-// ORDER: foo5Var
-// ORDER: foo4CurentFile
-// ORDER: foo3FromSamePackage
-// ORDER: foo2Imported
+// ORDER: foo6Var
+// ORDER: foo5CurentFile
+// ORDER: foo4FromSamePackage
+// ORDER: foo3FromSimpleImport
+// ORDER: foo2FromStarImport
 // ORDER: foo1NotImported
 // INVOCATION_COUNT: 2
 // SELECTED: 0

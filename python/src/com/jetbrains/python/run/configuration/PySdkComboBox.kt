@@ -27,7 +27,7 @@ class PySdkComboBox(private val addDefault: Boolean,
     updateRemoteInterpreterMode()
   }
 
-  private fun initList() {
+  fun initList() {
     val pythonSdks: MutableList<Sdk?> = PythonSdkUtil.getAllSdks().toMutableList()
     if (addDefault) {
       pythonSdks.add(0, null)

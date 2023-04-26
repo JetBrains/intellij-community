@@ -10,7 +10,6 @@ import com.intellij.ide.IdePopupManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
@@ -23,8 +22,8 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
+import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
-import com.intellij.ui.UiInterceptors.UiInterceptor
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 
@@ -337,20 +336,14 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testMakeStaticInsideInner(){
-    UiInterceptors.register(DefaultChooserInterceptor)
+    shouldSelectTargetClass("Anonymous in r in X")
     doTest()
   }
 
   fun testMakeStaticInsideInnerFail(){
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_15) {
-      UiInterceptors.register(DefaultChooserInterceptor)
+      shouldSelectTargetClass("Anonymous in r in X")
       doTest()
-    }
-  }
-
-  object DefaultChooserInterceptor: UiInterceptor<JBPopup>(JBPopup::class.java){
-    override fun doIntercept(component: JBPopup) {
-      component.closeOk(null)
     }
   }
 
@@ -441,6 +434,101 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testExtractDefaultToInterfaceJava8(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+      doTest()
+    }
+  }
+
+  fun testExtractStaticToInterfaceJava8(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = true
+    shouldSelectTargetClass("Test")
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
+      doTest()
+    }
+  }
+
+  fun testExtractPrivateToInterface(){
+    shouldSelectTargetClass("Test")
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_11) {
+      doTest()
+    }
+  }
+
+  fun testExtractToInterfaceNotSuggested(){
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_7) {
+        doTest()
+    }
+  }
+
+  fun testPassTypeParametersInStaticMethods(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
+  }
+
+  fun testExtractVirtualExpressionFromPolyadic(){
+    doTest()
+  }
+
+  fun testExtractVirtualExpressionFromSubstring(){
+    doTest()
+  }
+
+  fun testExtractExpressionFromClassContext(){
+    doTest{
+      nextTemplateVariable()
+    }
+  }
+
+  fun testExtractMethodFromClassContext(){
+    doTest{
+      nextTemplateVariable()
+    }
+  }
+
+  fun testFoldParametersInDuplicates(){
+    doTest()
+  }
+
+  fun testTypeParametersInNonStaticTarget(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = true
+    shouldSelectTargetClass("Inner in Test")
+    doTest()
+  }
+
+  fun testNonStaticExtractFromStaticInner(){
+    shouldSelectTargetClass("Inner in Test")
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
+    doTest()
+  }
+
+  fun testPassThisAsParameter(){
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
+  }
+
+  fun testCheckNameExtractedFromLambda(){
+    doTest {
+      nextTemplateVariable()
+    }
+  }
+
+  fun testChangeSignatureIsIgnored(){
+    DuplicatesMethodExtractor.changeSignatureDefault = true
+    doTest()
+  }
+
+  fun testKeepVarKeyword(){
+    doTest()
+  }
+
+  fun testDeclareVarType(){
+    JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = true
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
@@ -487,11 +575,13 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     val settings = JavaRefactoringSettings.getInstance()
     val defaultStatic = settings.EXTRACT_STATIC_METHOD
     val defaultPassFields = settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS
+    val defaultDeclareVar = settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE
     val defaultChangeSignature = DuplicatesMethodExtractor.changeSignatureDefault
     val defaultReplaceDuplicates = DuplicatesMethodExtractor.replaceDuplicatesDefault
     Disposer.register(testRootDisposable) {
       settings.EXTRACT_STATIC_METHOD = defaultStatic
       settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = defaultPassFields
+      settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE = defaultDeclareVar
       DuplicatesMethodExtractor.changeSignatureDefault = defaultChangeSignature
       DuplicatesMethodExtractor.replaceDuplicatesDefault = defaultReplaceDuplicates
     }
@@ -534,5 +624,9 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     finally {
       super.tearDown()
     }
+  }
+
+  private fun shouldSelectTargetClass(targetClassName: String) {
+    UiInterceptors.register(ChooserInterceptor(null, targetClassName))
   }
 }

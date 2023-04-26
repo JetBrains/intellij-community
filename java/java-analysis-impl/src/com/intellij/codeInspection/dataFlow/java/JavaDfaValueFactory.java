@@ -120,7 +120,7 @@ public final class JavaDfaValueFactory {
   private static DfaValue createReferenceValue(DfaValueFactory factory, @NotNull PsiReferenceExpression refExpr) {
     PsiElement target = refExpr.resolve();
     if (target instanceof PsiVariable variable) {
-      if (!PsiUtil.isAccessedForWriting(refExpr)) {
+      if (!PsiUtil.isAccessedForWriting(refExpr) && !PlainDescriptor.hasInitializationHacks(variable)) {
         DfaValue constValue = getConstantFromVariable(factory, variable);
         if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, variable)) return constValue;
       }

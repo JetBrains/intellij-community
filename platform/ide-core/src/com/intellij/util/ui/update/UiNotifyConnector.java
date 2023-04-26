@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.update;
 
+import com.intellij.concurrency.ContextAwareRunnable;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -100,7 +102,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
       return;
     }
 
-    Runnable runnable = () -> {
+    ContextAwareRunnable runnable = () -> {
       Component c = myComponent.get();
       if (isDisposed() || c == null) {
         return;

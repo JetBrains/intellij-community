@@ -10,9 +10,9 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
-import com.intellij.platform.documentation.DocumentationTarget
-import com.intellij.platform.documentation.impl.DocumentationRequest
-import com.intellij.platform.documentation.impl.InternalLinkResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.InternalLinkResult
 import com.intellij.platform.ide.documentation.DocumentationBrowserFacade
 import com.intellij.util.lateinitVal
 import kotlinx.coroutines.*

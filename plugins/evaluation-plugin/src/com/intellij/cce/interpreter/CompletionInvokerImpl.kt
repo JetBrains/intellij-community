@@ -1,10 +1,12 @@
 package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.CompletionGolfEmulation
+import com.intellij.cce.actions.TextRange
 import com.intellij.cce.actions.UserEmulator
 import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.*
 import com.intellij.cce.evaluation.CodeCompletionHandlerFactory
+import com.intellij.cce.evaluation.SuggestionsProvider
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.completion.CompletionType
@@ -27,18 +29,20 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.CachedImageIcon
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.ui.icons.CachedImageIcon
 import java.io.File
+import kotlin.random.Random
 
 class CompletionInvokerImpl(private val project: Project,
                             private val language: Language,
                             completionType: com.intellij.cce.actions.CompletionType,
                             userEmulationSettings: UserEmulator.Settings?,
                             private val completionGolfSettings: CompletionGolfEmulation.Settings?) : CompletionInvoker {
+  private var benchmarkRandom = resetRandom()
+
   private companion object {
     val LOG = Logger.getInstance(CompletionInvokerImpl::class.java)
     const val LOG_MAX_LENGTH = 50
@@ -107,7 +111,8 @@ class CompletionInvokerImpl(private val project: Project,
       val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
       if (lookup != null) {
         lookup.replacePrefix(lookup.additionalPrefix, lookup.additionalPrefix + text)
-      } else {
+      }
+      else {
         runnable.run()
       }
     }
@@ -125,6 +130,7 @@ class CompletionInvokerImpl(private val project: Project,
 
   override fun openFile(file: String): String {
     LOG.info("Open file: $file")
+    benchmarkRandom = resetRandom()
     val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(file))
     val descriptor = OpenFileDescriptor(project, virtualFile!!)
     spaceStrippingEnabled = TrailingSpacesStripper.isEnabled(virtualFile)
@@ -185,43 +191,71 @@ class CompletionInvokerImpl(private val project: Project,
     return session
   }
 
-  override fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<com.intellij.cce.actions.TextRange>, offset: Int): Session {
-    val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
-    val invokeOnEachChar = completionGolfSettings?.invokeOnEachChar ?: false
+  override fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<TextRange>, offset: Int): Session {
+    val settings = completionGolfSettings ?: throw IllegalStateException("No completion golf settings in completion golf mode")
     val session = Session(offset, expectedLine, completableRanges.sumOf { it.end - it.start }, null, TokenProperties.UNKNOWN)
-    var currentString = ""
+    if (settings.isBenchmark) {
+      session.benchmark(expectedLine, completableRanges, offset, settings)
+    }
+    else {
+      session.emulateCG(expectedLine, completableRanges, offset, settings)
+    }
+    return session
+  }
 
+  private fun Session.benchmark(expectedLine: String,
+                                completableRanges: List<TextRange>,
+                                offset: Int,
+                                settings: CompletionGolfEmulation.Settings) {
+    val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
+    for (range in completableRanges) {
+      val prefixLength = benchmarkRandom.nextInt(range.end - range.start)
+      moveCaret(range.start + prefixLength)
+      val lookup = getSuggestions(expectedLine, settings)
+      emulator.pickBestSuggestion(expectedLine.substring(0, range.start - offset + prefixLength), lookup, this).also {
+        LookupManager.hideActiveLookup(project)
+        addLookup(it)
+      }
+    }
+  }
+
+  private fun Session.emulateCG(expectedLine: String, completableRanges: List<TextRange>, offset: Int, settings: CompletionGolfEmulation.Settings) {
+    val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
+    var currentString = ""
     while (currentString != expectedLine) {
       val nextChar = expectedLine[currentString.length].toString()
       if (!completableRanges.any { offset + currentString.length >= it.start && offset + currentString.length < it.end }) {
-        printText(nextChar)
         currentString += nextChar
         continue
       }
 
-      val lookup = callCompletion(expectedLine, null)
+      moveCaret(offset + currentString.length)
+      val lookup = getSuggestions(expectedLine, settings)
 
-      emulator.pickBestSuggestion(currentString, lookup, session).also {
-        if (invokeOnEachChar) {
+      emulator.pickBestSuggestion(currentString, lookup, this).also {
+        if (settings.invokeOnEachChar) {
           LookupManager.hideActiveLookup(project)
         }
-        val selected = it.selectedWithoutPrefix()
-        if (selected != null) {
-          printText(selected)
-          currentString += selected
-        } else {
-          printText(nextChar)
-          currentString += nextChar
-        }
-        if (currentString.isNotEmpty() && !invokeOnEachChar) {
+        currentString += it.selectedWithoutPrefix() ?: nextChar
+        if (currentString.isNotEmpty() && !settings.invokeOnEachChar) {
           if (it.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
             LookupManager.hideActiveLookup(project)
           }
         }
-        session.addLookup(it)
+        addLookup(it)
       }
     }
-    return session
+  }
+
+  private fun getSuggestions(expectedLine: String, settings: CompletionGolfEmulation.Settings): com.intellij.cce.core.Lookup {
+    if (settings.isDefaultProvider()) {
+      return callCompletion(expectedLine, null)
+    }
+    val lang = com.intellij.lang.Language.findLanguageByID(language.ideaLanguageId)
+               ?: throw IllegalStateException("Can't find language \"${language.ideaLanguageId}\"")
+    val provider = SuggestionsProvider.find(project, settings.suggestionsProvider)
+                   ?: throw IllegalStateException("Can't find suggestions provider \"${settings.suggestionsProvider}\"")
+    return provider.getSuggestions(expectedLine, editor!!, lang)
   }
 
   private fun positionToString(offset: Int): String {
@@ -284,7 +318,7 @@ class CompletionInvokerImpl(private val project: Project,
     return Suggestion(insertedText,
                       presentationText,
                       sourceFromPresentation(presentation),
-                      scoreFromFeatures(lookup, this)
+                      detailsFromFeatures(lookup, this)
     )
   }
 
@@ -300,9 +334,13 @@ class CompletionInvokerImpl(private val project: Project,
     }
   }
 
-  private fun scoreFromFeatures(lookup: LookupImpl, element: LookupElement): Double? {
+  private fun detailsFromFeatures(lookup: LookupImpl, element: LookupElement): Map<String, Any?> {
     val features = MLCompletionFeaturesUtil.getElementFeatures(lookup, element).features
-    return features["ml_full_line_score"]?.toDoubleOrNull()
+    return mapOf(
+      Suggestion.SCORE_KEY to features["ml_full_line_score"]?.toDoubleOrNull(),
+      Suggestion.TOKENS_COUNT_KEY to features["ml_full_line_tokens_count"]?.toDoubleOrNull()
+    )
   }
-}
 
+  private fun resetRandom(): Random = Random(completionGolfSettings?.randomSeed ?: 0)
+}

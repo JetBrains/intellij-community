@@ -25,24 +25,28 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   override fun acceptsElement(element: PsiElement): Boolean =
     element is PsiClass && element !is PsiTypeParameter || element is PsiMethod
 
-  override fun getHint(element: PsiElement, file: PsiFile): String? {
+  override fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionInfo? {
     if (element is PsiClass && element !is PsiTypeParameter) {
       val inheritors = computeClassInheritors(element, file.project)
       if (inheritors > 0) {
         val isInterface: Boolean = element.isInterface
-        return if (isInterface) JavaBundle.message("code.vision.implementations.hint", inheritors)
-        else JavaBundle.message("code.vision.inheritors.hint", inheritors)
+        return CodeVisionInfo(if (isInterface) JavaBundle.message("code.vision.implementations.hint", inheritors)
+        else JavaBundle.message("code.vision.inheritors.hint", inheritors), inheritors)
       }
     }
     else if (element is PsiMethod) {
       val overrides = computeMethodInheritors(element, file.project)
       if (overrides > 0) {
         val isAbstractMethod = isAbstractMethod(element)
-        return if (isAbstractMethod) JavaBundle.message("code.vision.implementations.hint", overrides)
-        else JavaBundle.message("code.vision.overrides.hint", overrides)
+        return CodeVisionInfo(if (isAbstractMethod) JavaBundle.message("code.vision.implementations.hint", overrides)
+        else JavaBundle.message("code.vision.overrides.hint", overrides), overrides)
       }
     }
     return null
+  }
+
+  override fun getHint(element: PsiElement, file: PsiFile): String? {
+    return getVisionInfo(element, file)?.text
   }
 
   private fun computeMethodInheritors(element: PsiMethod, project: Project) : Int {
@@ -65,6 +69,8 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   }
 
   override fun handleClick(editor: Editor, element: PsiElement, event: MouseEvent?) {
+    val containingFile = element.containingFile ?: return
+    if (PsiDocumentManager.getInstance(containingFile.project).getDocument(containingFile) == null) return
     val markerType = if (element is PsiClass) MarkerType.SUBCLASSED_CLASS else MarkerType.OVERRIDDEN_METHOD
     val navigationHandler = markerType.navigationHandler
     if (element is PsiNameIdentifierOwner) {

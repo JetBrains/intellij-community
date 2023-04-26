@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -19,13 +21,24 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsOver
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
+@RunWith(Parameterized.class)
 public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   extends PersistentFSRecordsStorageTestBase<PersistentFSRecordsOverLockFreePagedStorage> {
+
+  @Parameterized.Parameters(name = "{index}: {0}")
+  public static UpdateAPIMethod[] METHODS_TO_TEST() {
+    return new UpdateAPIMethod[]{
+      DEFAULT_API_UPDATE_METHOD,
+      MODERN_API_UPDATE_METHOD
+    };
+  }
 
   public static final int MAX_RECORDS_TO_INSERT = 1 << 22;
   private PagedFileStorageLockFree pagedStorage;
 
-  public PersistentFSRecordsStorageOverLockFreePagedStorageTest() { super(MAX_RECORDS_TO_INSERT); }
+
+
+  public PersistentFSRecordsStorageOverLockFreePagedStorageTest(final UpdateAPIMethod updateMethodToTest) { super(MAX_RECORDS_TO_INSERT, updateMethodToTest); }
 
   private StorageLockContext storageContext;
 

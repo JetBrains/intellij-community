@@ -31,7 +31,7 @@ final class TreeUIHelperImpl extends TreeUIHelper {
 
   @Override
   public void installTreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> convertor, boolean canExpand) {
-    TreeSpeedSearch.installOn(tree, canExpand, convertor.asFunction());
+    TreeSpeedSearch.installOn(tree, canExpand, convertor);
   }
 
   @Override

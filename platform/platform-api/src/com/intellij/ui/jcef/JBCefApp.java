@@ -65,7 +65,7 @@ public final class JBCefApp {
 
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 104;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
-  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 9;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 10;
 
   @NotNull private final CefApp myCefApp;
 
@@ -240,6 +240,10 @@ public final class JBCefApp {
         LOG.debug("add extra CEF args: [" + Arrays.toString(extraArgs) + "]");
         args = ArrayUtil.mergeArrays(args, extraArgs);
       }
+    }
+
+    if (settings.remote_debugging_port > 0) {
+      args = ArrayUtil.mergeArrays(args, "--remote-allow-origins=*");
     }
 
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));

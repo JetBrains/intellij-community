@@ -54,23 +54,35 @@ data class GitLabMergeRequestsFiltersValue(
   }
 
   @Serializable
-  sealed class MergeRequestsMemberFilterValue(val username: @NlsSafe String, val fullname: @NlsSafe String) : FilterValue {
+  sealed class MergeRequestsMemberFilterValue : FilterValue {
+    abstract val username: @NlsSafe String
+    abstract val fullname: @NlsSafe String
+
     override fun queryValue(): String = username
-  }
 
-  internal class MergeRequestsAuthorFilterValue(username: String, fullname: String)
-    : MergeRequestsMemberFilterValue(username, fullname) {
-    override fun queryField(): String = "author_username"
-  }
+    @Serializable
+    internal class MergeRequestsAuthorFilterValue(
+      override val username: @NlsSafe String,
+      override val fullname: @NlsSafe String
+    ) : MergeRequestsMemberFilterValue() {
+      override fun queryField(): String = "author_username"
+    }
 
-  internal class MergeRequestsAssigneeFilterValue(username: String, fullname: String)
-    : MergeRequestsMemberFilterValue(username, fullname) {
-    override fun queryField(): String = "assignee_username"
-  }
+    @Serializable
+    internal class MergeRequestsAssigneeFilterValue(
+      override val username: @NlsSafe String,
+      override val fullname: @NlsSafe String
+    ) : MergeRequestsMemberFilterValue() {
+      override fun queryField(): String = "assignee_username"
+    }
 
-  internal class MergeRequestsReviewerFilterValue(username: String, fullname: String)
-    : MergeRequestsMemberFilterValue(username, fullname) {
-    override fun queryField(): String = "reviewer_username"
+    @Serializable
+    internal class MergeRequestsReviewerFilterValue(
+      override val username: @NlsSafe String,
+      override val fullname: @NlsSafe String
+    ) : MergeRequestsMemberFilterValue() {
+      override fun queryField(): String = "reviewer_username"
+    }
   }
 
   @Serializable

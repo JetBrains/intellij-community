@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public abstract class RenamePsiElementProcessorBase {
   private static final Logger LOG = Logger.getInstance(RenamePsiElementProcessorBase.class);
@@ -111,7 +113,7 @@ public abstract class RenamePsiElementProcessorBase {
 
   public void findExistingNameConflicts(@NotNull PsiElement element,
                                         @NotNull String newName,
-                                        @NotNull MultiMap<PsiElement, String> conflicts) {
+                                        @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
   }
 
   /**
@@ -124,7 +126,7 @@ public abstract class RenamePsiElementProcessorBase {
    */
   public void findExistingNameConflicts(@NotNull PsiElement element,
                                         @NotNull String newName,
-                                        @NotNull MultiMap<PsiElement, String> conflicts,
+                                        @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                         @NotNull Map<PsiElement, String> allRenames) {
     findExistingNameConflicts(element, newName, conflicts);
   }
@@ -206,7 +208,7 @@ public abstract class RenamePsiElementProcessorBase {
     final PsiElement psiElement = substituteElementToRename(element, editor);
     if (psiElement == null) return;
     if (!PsiElementRenameHandler.canRename(psiElement.getProject(), editor, psiElement)) return;
-    renameCallback.pass(psiElement);
+    renameCallback.accept(psiElement);
   }
 
   public void findCollisions(@NotNull PsiElement element,

@@ -186,10 +186,10 @@ internal class LightEditFrameWrapper(
     }
 
     override val mainMenuActionGroup: ActionGroup
-      get() = LightEditMainMenuHelper().mainMenuActionGroup
+      get() = LightEditMainMenuHelper.getMainMenuActionGroup()
 
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false) {
+      return object : IdeStatusBarImpl(disposable = frameHelper, frameHelper = frameHelper, addToolWindowWidget = false) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }

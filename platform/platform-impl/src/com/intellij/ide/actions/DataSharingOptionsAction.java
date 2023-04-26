@@ -11,7 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class DataSharingOptionsAction extends DumbAwareAction {
+public final class DataSharingOptionsAction extends DumbAwareAction {
   public DataSharingOptionsAction() {
     super(IdeBundle.messagePointer("action.DataSharingOptionsAction.text"),
           IdeBundle.messagePointer("action.DataSharingOptionsAction.description"), null);

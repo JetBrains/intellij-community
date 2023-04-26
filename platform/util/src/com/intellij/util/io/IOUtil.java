@@ -385,6 +385,7 @@ public final class IOUtil {
     }
   }
 
+  /** @return string with buffer content, as-if it is byte[], formatted by Arrays.toString(byte[]) */
   public static String toString(final @NotNull ByteBuffer buffer) {
     final byte[] bytes = new byte[buffer.capacity()];
     final ByteBuffer slice = buffer.duplicate();

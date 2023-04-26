@@ -3,7 +3,6 @@
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
-    <module name="intellij.platform.workspaceModel.codegen"/>
   </dependencies>
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
   <actions>

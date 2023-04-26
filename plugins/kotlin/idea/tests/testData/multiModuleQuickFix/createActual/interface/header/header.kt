@@ -1,4 +1,4 @@
-// "Create actual interface for module testModule_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
 
 expect interface <caret>Interface {
     fun foo(param: String): Int

@@ -8,9 +8,9 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.J2KFusCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector"/>
     <statistics.counterUsagesCollector
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector"/>
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>

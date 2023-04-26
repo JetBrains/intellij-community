@@ -30,7 +30,7 @@ public class TextMateSyntaxTable {
   private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new HashMap<>();
   private Object2IntMap<String> ruleIds;
 
-  public void compact() {
+  public synchronized void compact() {
     ruleIds = null;
   }
 
@@ -41,7 +41,7 @@ public class TextMateSyntaxTable {
    * @return language scope root name
    */
   @NotNull
-  public CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
+  public synchronized CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
     return loadRealNode(plist, null, interner).getScopeName();
   }
 
@@ -54,7 +54,7 @@ public class TextMateSyntaxTable {
    * method returns {@link SyntaxNodeDescriptor#EMPTY_NODE}.
    */
   @NotNull
-  public SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
+  public synchronized SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
     SyntaxNodeDescriptor syntaxNodeDescriptor = rulesMap.get(scopeName);
     if (syntaxNodeDescriptor == null) {
       LOG.info("Can't find syntax node for scope: '" + scopeName + "'");
@@ -63,7 +63,7 @@ public class TextMateSyntaxTable {
     return syntaxNodeDescriptor;
   }
 
-  public void clear() {
+  public synchronized void clear() {
     rulesMap.clear();
   }
 

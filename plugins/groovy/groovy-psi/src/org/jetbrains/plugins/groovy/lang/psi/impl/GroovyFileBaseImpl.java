@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -17,7 +17,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +44,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.caches.FileCacheBuilderProcesso
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
@@ -195,7 +197,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   public GroovyControlFlow getGroovyControlFlow() {
     assert isValid();
-    GroovyControlFlow result = SoftReference.dereference(myControlFlow);
+    GroovyControlFlow result = dereference(myControlFlow);
     if (result == null) {
       result = ControlFlowBuilder.buildControlFlow(this);
       myControlFlow = new SoftReference<>(result);

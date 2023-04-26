@@ -609,7 +609,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
-      return ContainerUtil.exists(elements, ExpressionUtils::isNullLiteral);
+      return ContainerUtil.exists(elements, el -> el instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
 
     boolean isDefault() {
@@ -972,7 +972,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements, element -> element instanceof PsiPattern ||
                                                         element instanceof PsiPatternGuard ||
-                                                        ExpressionUtils.isNullLiteral(element));
+                                                        element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
 
     @Override

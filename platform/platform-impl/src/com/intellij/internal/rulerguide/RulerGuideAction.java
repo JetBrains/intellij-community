@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.rulerguide;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -44,7 +44,7 @@ final class RulerGuideAction extends ToggleAction implements DumbAware {
 
   private void fireRepaintEvent() {
     if (state) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)this::findMousePositionAndRepaint);
+      UIUtil.invokeAndWaitIfNeeded(this::findMousePositionAndRepaint);
       timer.setUp(this::fireRepaintEvent, QUERY_DELAY);
     }
     else {

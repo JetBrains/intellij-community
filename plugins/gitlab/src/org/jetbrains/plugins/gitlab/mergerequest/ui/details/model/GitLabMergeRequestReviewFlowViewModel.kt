@@ -3,9 +3,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
-import com.intellij.collaboration.ui.codereview.details.RequestState
-import com.intellij.collaboration.ui.codereview.details.ReviewRole
-import com.intellij.collaboration.ui.codereview.details.ReviewState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
+import com.intellij.collaboration.ui.codereview.details.data.ReviewState
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewFlowViewModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -16,15 +17,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
-import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
-internal interface GitLabMergeRequestReviewFlowViewModel {
+internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabUserDTO> {
   val isBusy: StateFlow<Boolean>
 
   val currentUser: GitLabUserDTO
@@ -33,12 +32,13 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: StateFlow<List<GitLabUserDTO>>
   val role: Flow<ReviewRole>
-  val requestState: Flow<RequestState>
+  val reviewRequestState: Flow<ReviewRequestState>
   val isApproved: StateFlow<Boolean>
   val reviewState: Flow<ReviewState>
-  val reviewerAndReviewState: Flow<Map<GitLabUserDTO, ReviewState>>
-  val pipeline: Flow<GitLabPipelineDTO?>
-  val targetProject: StateFlow<GitLabProjectDTO>
+
+  val userCanApproveReviewer: Flow<Boolean>
+  val userCanManageReview: Flow<Boolean>
+  val userCanMergeReviewer: Flow<Boolean>
 
   fun merge()
 
@@ -87,7 +87,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     }
   }
 
-  override val requestState: Flow<RequestState> = mergeRequest.requestState
+  override val reviewRequestState: Flow<ReviewRequestState> = mergeRequest.reviewRequestState
 
   override val isApproved: StateFlow<Boolean> = approvedBy
     .map { it.isNotEmpty() }
@@ -98,7 +98,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     if (isApproved) ReviewState.ACCEPTED else ReviewState.NEED_REVIEW
   }
 
-  override val reviewerAndReviewState: Flow<Map<GitLabUserDTO, ReviewState>> = combine(reviewers, approvedBy) { reviewers, approvedBy ->
+  override val reviewerReviews: Flow<Map<GitLabUserDTO, ReviewState>> = combine(reviewers, approvedBy) { reviewers, approvedBy ->
     mutableMapOf<GitLabUserDTO, ReviewState>().apply {
       reviewers.forEach { reviewer -> put(reviewer, ReviewState.NEED_REVIEW) }
       approvedBy.forEach { reviewer -> put(reviewer, ReviewState.ACCEPTED) }
@@ -106,9 +106,9 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     }
   }
 
-  override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequest.pipeline
-
-  override val targetProject: StateFlow<GitLabProjectDTO> = mergeRequest.targetProject
+  override val userCanApproveReviewer: Flow<Boolean> = mergeRequest.userPermissions.map { it.canApprove }
+  override val userCanManageReview: Flow<Boolean> = mergeRequest.userPermissions.map { it.updateMergeRequest }
+  override val userCanMergeReviewer: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
 
   override fun merge() = runAction {
     val title = mergeRequest.title.stateIn(scope).value
@@ -200,7 +200,6 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
         action()
       }
       catch (e: Exception) {
-        println(e.localizedMessage)
         if (e is CancellationException) throw e
         //TODO: handle???
       }

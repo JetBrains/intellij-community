@@ -2,6 +2,7 @@
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.execution.ApplicationRunLineMarkerHider;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
@@ -23,7 +24,9 @@ import java.util.stream.Collectors;
 public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   @Override
   public final @Nullable Info getInfo(@NotNull final PsiElement element) {
-    if (Registry.is("ide.jvm.run.marker") || !isIdentifier(element)) {
+    if (Registry.is("ide.jvm.run.marker") ||
+        !isIdentifier(element) ||
+        ApplicationRunLineMarkerHider.shouldHideRunLineMarker(element)) {
       return null;
     }
 

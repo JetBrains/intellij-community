@@ -7,9 +7,9 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
+import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitBranchComparisonResultImpl
 import git4idea.changes.GitCommitShaWithPatches
-import git4idea.changes.GitParsedChangesBundle
-import git4idea.changes.GitParsedChangesBundleImpl
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitHandlerInputProcessorUtil
@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets
 interface GitLabMergeRequestChanges {
   val commits: List<GitLabCommitDTO>
 
-  suspend fun getParsedChanges(): GitParsedChangesBundle
+  suspend fun getParsedChanges(): GitBranchComparisonResult
 
   suspend fun ensureAllRevisionsFetched()
 }
@@ -53,9 +53,9 @@ class GitLabMergeRequestChangesImpl(
     loadChanges(commits)
   }
 
-  override suspend fun getParsedChanges(): GitParsedChangesBundle = parsedChanges.await()
+  override suspend fun getParsedChanges(): GitBranchComparisonResult = parsedChanges.await()
 
-  private suspend fun loadChanges(commits: List<GitLabCommitDTO>): GitParsedChangesBundle {
+  private suspend fun loadChanges(commits: List<GitLabCommitDTO>): GitBranchComparisonResult {
     val repository = projectMapping.remote.repository
     val baseSha = mergeRequestDetails.diffRefs.startSha
     val mergeBaseSha = mergeRequestDetails.diffRefs.baseSha ?: error("Missing merge base revision")
@@ -74,7 +74,7 @@ class GitLabMergeRequestChangesImpl(
     val headPatches = withContext(Dispatchers.IO) {
       api.loadMergeRequestDiffs(glProject, mergeRequestDetails).body()!!.map(GitLabDiffDTO::toPatch)
     }
-    return GitParsedChangesBundleImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
+    return GitBranchComparisonResultImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
   }
 
   override suspend fun ensureAllRevisionsFetched() {

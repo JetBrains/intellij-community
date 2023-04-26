@@ -13,6 +13,7 @@ import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.*
@@ -28,10 +29,11 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
     /**
      * @return list of conda environments
      */
+    @ApiStatus.Internal
     suspend fun getEnvs(command: TargetCommandExecutor,
                         fullCondaPathOnTarget: FullPathOnTarget): Result<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
       val json = command.execute(listOf(fullCondaPathOnTarget, "info", "--envs", "--json")).thenApply { it.stdout }.await()
-     return@withContext kotlin.runCatching { // External command may return junk
+      return@withContext kotlin.runCatching { // External command may return junk
         val info = Gson().fromJson(json, CondaInfoJson::class.java)
         val fileSeparator = command.targetPlatform.await().platform.fileSeparator
         info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }.map { envPath ->

@@ -34,19 +34,18 @@ internal object ExplanatoryTextUiUtil {
       .toFragment()
   }
 
-  private fun HtmlChunk.limitWidth(maxLineLength: Int,
-                                   fontMetrics: FontMetrics?): HtmlChunk {
-    if (maxLineLength <= 0) return this
+  private fun HtmlChunk.limitWidth(maxLineLength: Int, fontMetrics: FontMetrics?): HtmlChunk {
+    if (maxLineLength <= 0) {
+      return this
+    }
     val maxWidth = stringWidth(toString(), maxLineLength, fontMetrics)
     return wrapWith(HtmlChunk.div().attr("width", maxWidth))
   }
 
-  private fun stringWidth(someText: String,
-                          maxLineLength: Int,
-                          fontMetrics: FontMetrics?): Int {
+  private fun stringWidth(someText: String, maxLineLength: Int, fontMetrics: FontMetrics?): Int {
     val text = someText.ifEmpty { "some text to estimate string width with given metric" }
     val substring = text.repeat((maxLineLength + 1) / (text.length + 1) + 1).substring(0, maxLineLength)
-    return fontMetrics?.stringWidth(substring) ?: GraphicsUtil.stringWidth(substring, StartupUiUtil.getLabelFont())
+    return fontMetrics?.stringWidth(substring) ?: GraphicsUtil.stringWidth(substring, StartupUiUtil.labelFont)
   }
 }
 

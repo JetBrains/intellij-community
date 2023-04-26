@@ -462,10 +462,11 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
       removeAll();
-      if (myMostCommonUsagePatternsComponent == null) {
-        myMostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
-        Disposer.register(this, myMostCommonUsagePatternsComponent);
+      if (myMostCommonUsagePatternsComponent != null) {
+        Disposer.dispose(myMostCommonUsagePatternsComponent);
       }
+      myMostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
+      Disposer.register(this, myMostCommonUsagePatternsComponent);
       add(myMostCommonUsagePatternsComponent);
       myMostCommonUsagePatternsComponent.loadSnippets();
     }

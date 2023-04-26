@@ -1,2 +1,1 @@
 deprecated: showViewer.png; to be removed (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/)
-deprecated: showHiddens.png; use {@link #ToggleVisibility}

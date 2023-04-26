@@ -21,7 +21,6 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.util.*
 import java.util.function.Function
 import java.util.logging.Logger
-import java.util.stream.Collectors
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.io.path.listDirectoryEntries
@@ -347,13 +346,8 @@ object BuildDependenciesUtil {
     return result
   }
 
-  fun listDirectory(directory: Path?): List<Path> {
-    try {
-      Files.list(directory).use { stream -> return stream.collect(Collectors.toList()) }
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
+  fun listDirectory(directory: Path): List<Path> {
+    return Files.newDirectoryStream(directory).use { it.toList() }
   }
 
   fun directoryContentToString(directory: Path, humanReadableName: String?): String {

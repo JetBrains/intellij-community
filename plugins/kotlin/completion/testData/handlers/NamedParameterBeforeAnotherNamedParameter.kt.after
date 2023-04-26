@@ -7,3 +7,5 @@ fun foo(paramTest: Int = 12, end: Int = 999) {
 fun test() {
     foo(paramTest = <caret>, end = 100)
 }
+
+// AUTOCOMPLETE_SETTING: true

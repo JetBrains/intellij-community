@@ -49,6 +49,10 @@ public final class ApplicationActivationStateManager {
       }
     }
     else if (windowEvent.getID() == WindowEvent.WINDOW_DEACTIVATED && windowEvent.getOppositeWindow() == null) {
+      if (IdeEventQueueKt.getSkipWindowDeactivationEvents()) {
+        LOG.warn("Skipped " + windowEvent);
+        return false;
+      }
       requestToDeactivateTime.getAndSet(System.currentTimeMillis());
 
       // for stuff that cannot wait windowEvent notify about deactivation immediately

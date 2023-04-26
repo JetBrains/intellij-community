@@ -41,6 +41,20 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         super.visitList(list)
       }
 
+      override fun visitLinkDestination(linkDestination: MarkdownLinkDestination) {
+        val node = linkDestination.node
+        val descriptor = FoldingDescriptor(
+          node,
+          node.textRange,
+          null,
+          "...",
+          node.textLength > 10,
+          emptySet()
+        )
+        descriptors.add(descriptor)
+        super.visitLinkDestination(linkDestination)
+      }
+
       override fun visitParagraph(paragraph: MarkdownParagraph) {
         val parent = paragraph.parent
         if (parent is MarkdownBlockQuote && parent.childrenOfType<MarkdownParagraph>().size <= 1) {
@@ -82,7 +96,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   }
 
   override fun isRegionCollapsedByDefault(node: ASTNode): Boolean {
-    return false
+    return node.hasType(MarkdownElementTypes.LINK_DESTINATION)
   }
 
   private class HeaderRegionsBuildingVisitor(private val regionConsumer: (PsiElement, TextRange) -> Unit): MarkdownRecursiveElementVisitor() {
@@ -150,7 +164,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       MarkdownElementTypes.BLOCK_QUOTE to MarkdownBundle.message("markdown.folding.block.quote.name"),
       MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name"),
       MarkdownElementTypes.CODE_FENCE to MarkdownBundle.message("markdown.folding.code.fence.name"),
-      MarkdownElementTypes.FRONT_MATTER_HEADER to "front matter"
+      MarkdownElementTypes.FRONT_MATTER_HEADER to MarkdownBundle.message("markdown.folding.front.matter.name")
     )
 
     private fun addDescriptors(element: PsiElement, range: TextRange, descriptors: MutableList<in FoldingDescriptor>, document: Document) {

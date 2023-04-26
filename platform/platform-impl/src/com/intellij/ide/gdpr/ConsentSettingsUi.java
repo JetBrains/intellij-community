@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -27,10 +29,8 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import java.util.*;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -103,6 +103,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   private JComponent createConsentElement(Consent consent, boolean addCheckBox) {
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
+    final boolean dataSharingDisabledExternally = ConsentOptions.getInstance().isUsageStatsConsent(consent)
+                                                  && StatisticsUploadAssistant.isCollectionForceDisabled();
     if (addCheckBox) {
       String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
       if (ConsentOptions.getInstance().isEAP()) {
@@ -111,6 +113,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         }
       }
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
+      cb.setEnabled(!dataSharingDisabledExternally);
       //noinspection HardCodedStringLiteral
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
@@ -149,7 +152,13 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       consentMapping.add(Pair.create(null, consent));
     }
     pane.setOpaque(false);
-    return pane;
+    return !dataSharingDisabledExternally ? pane : wrapPanelWithWarning(pane);
+  }
+
+  private static JPanel wrapPanelWithWarning(JPanel panel) {
+    final String warningText = Objects.requireNonNullElse(
+      StatisticsUploadAssistant.getConsentWarning(), IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning"));
+    return UI.PanelFactory.panel(panel).withCommentIcon(AllIcons.General.Warning).withComment(warningText).createPanel();
   }
 
   @Contract(pure = true)

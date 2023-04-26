@@ -17,6 +17,8 @@ fractions.Fraction.__new__  # overload is too complicated for stubtest to resolv
 gettext.install
 gettext.translation
 hmac.new  # Stub is a white lie; see comments in the stub
+importlib.metadata._meta.SimplePath.__div__  # See comments
+importlib.metadata._meta.SimplePath.__truediv__  # See comments
 ipaddress.IPv4Interface.hostmask
 ipaddress.IPv6Interface.hostmask
 ipaddress._BaseNetwork.broadcast_address
@@ -34,7 +36,6 @@ types.GenericAlias.__getattr__
 types.GenericAlias.__mro_entries__
 types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
 typing._SpecialForm.__mro_entries__
-typing.ForwardRef._evaluate
 typing._TypedDict.__delitem__
 typing._TypedDict.__ior__
 typing._TypedDict.__or__
@@ -169,9 +170,6 @@ ast.ImportFrom.level  # None on the class, but never None on instances
 # White lies around defaults
 dataclasses.KW_ONLY
 
-# Runtime signature is incorrect (https://github.com/python/cpython/issues/93021)
-builtins.classmethod.__get__
-builtins.property.__get__
-builtins.staticmethod.__get__
-types.FunctionType.__get__
-types.LambdaType.__get__
+# stubtest confuses stdlib distutils with setuptools-bundled distutils (#8410),
+# and the whole directory is going to be removed in 3.12 anyway
+distutils\..*

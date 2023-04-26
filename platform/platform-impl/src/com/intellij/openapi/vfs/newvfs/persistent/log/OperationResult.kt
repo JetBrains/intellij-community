@@ -84,6 +84,7 @@ internal inline fun <R : Any> catchResult(processor: (result: OperationResult<R>
   }
   return try {
     body().also {
+      // TODO check contract
       processor(OperationResult.fromValue(it))
     }
   }

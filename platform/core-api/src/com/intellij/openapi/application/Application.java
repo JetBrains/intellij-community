@@ -53,10 +53,23 @@ import java.util.concurrent.Future;
  * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
-  @ApiStatus.Obsolete
-  void invokeLaterOnWriteThread(@NotNull Runnable action);
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This method is obsolete because there will be no such thing as <i>write thread</i>,
+   * and any thread will be able to hold the write lock.
+   * For more info follow <a href="https://youtrack.jetbrains.com/issue/IJPL-53">IJPL-53</a>.
+   * </p>
+   */
+  @ApiStatus.Obsolete
+  default void invokeLaterOnWriteThread(@NotNull Runnable action) {
+    invokeLater(action, getDefaultModalityState());
+  }
+
+  /**
+   * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open).
    *
@@ -64,9 +77,13 @@ public interface Application extends ComponentManager {
    * @param modal  the state in which action will be executed
    */
   @ApiStatus.Obsolete
-  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
+  default void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
+    invokeLater(action, modal, getDisposed());
+  }
 
   /**
+   * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open)
    * - unless the expiration condition is fulfilled.
@@ -76,7 +93,9 @@ public interface Application extends ComponentManager {
    * @param expired condition to check before execution.
    */
   @ApiStatus.Obsolete
-  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired);
+  default void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
+    invokeLater(action, modal, expired);
+  }
 
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
@@ -179,34 +198,34 @@ public interface Application extends ComponentManager {
   }
 
   /**
-   * Asserts whether read access is allowed.
+   * Asserts that read access is allowed.
    */
   void assertReadAccessAllowed();
 
   /**
-   * Asserts whether write access is allowed.
+   * Asserts that write access is allowed.
    */
   void assertWriteAccessAllowed();
 
   /**
-   * Asserts whether read access is not allowed.
+   * Asserts that read access is not allowed.
    */
   @ApiStatus.Experimental
   void assertReadAccessNotAllowed();
 
   /**
-   * Asserts whether the method is being called from the event dispatch thread.
+   * Asserts that the method is being called from the event dispatch thread.
    */
   void assertIsDispatchThread();
 
   /**
-   * Asserts whether the method is being called from any thread outside EDT.
+   * Asserts that the method is being called from any thread outside EDT.
    */
   @ApiStatus.Experimental
   void assertIsNonDispatchThread();
 
   /**
-   * Asserts whether the method is being called from under the write-intent lock.
+   * Asserts that the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
   void assertWriteIntentLockAcquired();
@@ -264,8 +283,8 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the current thread is the event dispatch thread and has IW lock acquired.
    *
-   * @see #isWriteIntentLockAcquired()
    * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
+   * @see #isWriteIntentLockAcquired()
    */
   @Contract(pure = true)
   boolean isDispatchThread();
@@ -334,6 +353,14 @@ public interface Application extends ComponentManager {
    * @param expired  condition to check before execution.
    */
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired);
+
+  /**
+   * @see com.intellij.util.concurrency.ContextPropagatingExecutor#executeRaw
+   */
+  @ApiStatus.Internal
+  default void invokeLaterRaw(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
+    invokeLater(runnable, state, expired);
+  }
 
   /**
    * <p>Causes {@code runnable.run()} to be executed synchronously on the
@@ -509,6 +536,7 @@ public interface Application extends ComponentManager {
   }
 
   //<editor-fold desc="Deprecated stuff">
+
   /**
    * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
    * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.

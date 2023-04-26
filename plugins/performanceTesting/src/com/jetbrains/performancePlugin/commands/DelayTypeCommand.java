@@ -46,7 +46,7 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
     Ref<Span> spanRef = new Ref<>();
     Ref<Scope> scopeRef = new Ref<>();
     var connection = context.getProject().getMessageBus().simpleConnect();
-    final DaemonCodeAnalyzerResult[] job = new DaemonCodeAnalyzerResult[1];
+    Ref<DaemonCodeAnalyzerResult> job = new Ref<>();
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap(() -> {
       TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
         span.addEvent("Finding typing target");
@@ -66,7 +66,7 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
             () -> {
               if (currentChar == END_CHAR) {
                 if (calculateAnalyzesTime) {
-                  job[0] = DaemonCodeAnalyzerListener.INSTANCE.listen(connection, spanRef, scopeRef, 0);
+                  job.set(DaemonCodeAnalyzerListener.INSTANCE.listen(connection, spanRef, scopeRef, 0));
                   var spanBuilder = PerformanceTestSpan.TRACER.spanBuilder(CODE_ANALYSIS_SPAN_NAME).setParent(Context.current().with(span));
                   spanRef.set(spanBuilder.startSpan());
                   scopeRef.set(spanRef.get().makeCurrent());
@@ -94,7 +94,7 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
       });
 
       if (calculateAnalyzesTime) {
-        job[0].waitForComplete();
+        job.get().blockingWaitForComplete();
       }
       result.setResult(null);
     }));

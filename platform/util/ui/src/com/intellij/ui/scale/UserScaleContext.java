@@ -25,10 +25,10 @@ import static com.intellij.ui.scale.ScaleType.*;
 public class UserScaleContext {
   protected Scale usrScale = USR_SCALE.of(JBUIScale.scale(1f));
   protected Scale objScale = OBJ_SCALE.of(1d);
-  protected double pixScale = usrScale.value;
+  protected double pixScale = usrScale.getValue();
 
   private List<UpdateListener> listeners;
-  private EnumSet<ScaleType> overriddenScales;
+  protected @Nullable EnumSet<ScaleType> overriddenScales;
 
   private static final Scale @NotNull [] EMPTY_SCALE_ARRAY = new Scale[]{};
 
@@ -38,41 +38,39 @@ public class UserScaleContext {
   /**
    * Creates a context with all scale factors set to 1.
    */
-  @NotNull
-  public static UserScaleContext createIdentity() {
+  public static @NotNull UserScaleContext createIdentity() {
     return create(USR_SCALE.of(1));
   }
 
   /**
-   * Creates a context with the provided scale factors (system scale is ignored)
+   * Creates a context with the provided scale factors (a system scale is ignored)
    */
-  @NotNull
-  public static UserScaleContext create(Scale @NotNull ... scales) {
+  public static @NotNull UserScaleContext create(Scale @NotNull ... scales) {
     UserScaleContext ctx = create();
-    for (Scale s : scales) ctx.setScale(s);
+    for (Scale s : scales) {
+      ctx.setScale(s);
+    }
     return ctx;
   }
 
   /**
    * Creates a default context with the current user scale
    */
-  @NotNull
-  public static UserScaleContext create() {
+  public static @NotNull UserScaleContext create() {
     return new UserScaleContext();
   }
 
   /**
    * Creates a context from the provided {@code ctx}.
    */
-  @NotNull
-  public static UserScaleContext create(@Nullable UserScaleContext ctx) {
+  public static @NotNull UserScaleContext create(@Nullable UserScaleContext ctx) {
     UserScaleContext c = createIdentity();
     c.update(ctx);
     return c;
   }
 
   protected double derivePixScale() {
-    return usrScale.value * objScale.value;
+    return usrScale.getValue() * objScale.getValue();
   }
 
   /**
@@ -89,27 +87,28 @@ public class UserScaleContext {
    */
   public boolean overrideScale(@NotNull Scale scale) {
     if (overriddenScales != null) {
-      overriddenScales.remove(scale.type); // previous override should not prevent this override
+      overriddenScales.remove(scale.getType()); // previous override should not prevent this override
     }
     boolean updated = setScale(scale);
 
     if (overriddenScales == null) {
-      overriddenScales = EnumSet.of(scale.type);
+      overriddenScales = EnumSet.of(scale.getType());
     }
     else {
-      overriddenScales.add(scale.type);
+      overriddenScales.add(scale.getType());
     }
     return updated;
   }
 
   protected boolean isScaleOverridden(@NotNull Scale scale) {
-    return overriddenScales != null && overriddenScales.contains(scale.type);
+    return overriddenScales != null && overriddenScales.contains(scale.getType());
   }
 
   protected Scale @NotNull [] getOverriddenScales() {
     if (overriddenScales == null) {
       return EMPTY_SCALE_ARRAY;
     }
+
     Scale[] scales = new Scale[overriddenScales.size()];
     int i = 0;
     for (ScaleType type : overriddenScales) {
@@ -119,8 +118,10 @@ public class UserScaleContext {
   }
 
   /**
-   * Sets the new scale (system scale is ignored). Use {@link ScaleType#of(double)} to provide the new scale.
-   * Note, the new scale value can be change on subsequent {@link #update()}. Use {@link #overrideScale(Scale)}
+   * Sets the new scale (a system scale is ignored).
+   * Use {@link ScaleType#of(double)} to provide the new scale.
+   * Note, the new scale value can be changed on subsequent {@link #update()}.
+   * Use {@link #overrideScale(Scale)}
    * to set a scale permanently.
    *
    * @param scale the new scale to set
@@ -128,10 +129,12 @@ public class UserScaleContext {
    * @see ScaleType#of(double)
    */
   public boolean setScale(@NotNull Scale scale) {
-    if (isScaleOverridden(scale)) return false;
+    if (isScaleOverridden(scale)) {
+      return false;
+    }
 
     boolean updated = false;
-    switch (scale.type) {
+    switch (scale.getType()) {
       case USR_SCALE -> {
         updated = !usrScale.equals(scale);
         usrScale = scale;
@@ -148,18 +151,17 @@ public class UserScaleContext {
   }
 
   /**
-   * @return the context scale factor of the provided type (1d for system scale)
+   * @return the context scale factor of the provided type (1d for a system scale)
    */
   public double getScale(@NotNull ScaleType type) {
     return switch (type) {
-      case USR_SCALE -> usrScale.value;
+      case USR_SCALE -> usrScale.getValue();
       case SYS_SCALE -> 1d;
-      case OBJ_SCALE -> objScale.value;
+      case OBJ_SCALE -> objScale.getValue();
     };
   }
 
-  @NotNull
-  protected Scale getScaleObject(@NotNull ScaleType type) {
+  protected @NotNull Scale getScaleObject(@NotNull ScaleType type) {
     return switch (type) {
       case USR_SCALE -> usrScale;
       case SYS_SCALE -> SYS_SCALE.of(1d);
@@ -231,13 +233,13 @@ public class UserScaleContext {
     if (obj == this) return true;
     if (!(obj instanceof UserScaleContext that)) return false;
 
-    return that.usrScale.value == usrScale.value &&
-           that.objScale.value == objScale.value;
+    return that.usrScale.getValue() == usrScale.getValue() &&
+           that.objScale.getValue() == objScale.getValue();
   }
 
   @Override
   public int hashCode() {
-    return Double.hashCode(usrScale.value) * 31 + Double.hashCode(objScale.value);
+    return Double.hashCode(usrScale.getValue()) * 31 + Double.hashCode(objScale.getValue());
   }
 
   /**
@@ -274,8 +276,7 @@ public class UserScaleContext {
     }
   }
 
-  @NotNull
-  public <T extends UserScaleContext> T copy() {
+  public @NotNull <T extends UserScaleContext> T copy() {
     UserScaleContext ctx = createIdentity();
     ctx.updateAll(this);
     //noinspection unchecked
@@ -308,8 +309,7 @@ public class UserScaleContext {
      * Returns the data object from the cache if it matches the {@code ctx},
      * otherwise provides the new data via the provider and caches it.
      */
-    @Nullable
-    public D getOrProvide(@NotNull S ctx) {
+    public @Nullable D getOrProvide(@NotNull S ctx) {
       Pair<Double, D> data = myData.get();
       double scale = ctx.getScale(DerivedScaleType.PIX_SCALE);
       if (data == null || Double.compare(scale, data.first) != 0) {

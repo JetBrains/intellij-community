@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
@@ -213,7 +214,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   suspend fun convertToHTML(contentType: String?, description: String): String {
     return withContext(Dispatchers.IO) {
       when (contentType) {
-        "text/markdown" -> markdownToHtml(description, currentSdk!!.homeDirectory!!, project)
+        "text/markdown" -> markdownToHtml(description, ProjectRootManager.getInstance(project).contentRoots.first(), project)
         "text/x-rst", "" -> rstToHtml(description, currentSdk!!)
         else -> description
       }

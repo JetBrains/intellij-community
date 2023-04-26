@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.DocumentWindow;
@@ -164,7 +165,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     // the most expensive process is running injectors for these hosts, comparing to highlighting the resulting injected fragments,
     // so instead of showing "highlighted 1% of injected fragments", show "ran injectors for 1% of hosts"
     setProgressLimit(hosts.size());
-    Set<PsiElement> visitedInjected = ContainerUtil.newConcurrentSet(); // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
+    Set<PsiElement> visitedInjected = ConcurrentCollectionFactory.createConcurrentSet(); // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
 
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, element -> {
         ApplicationManager.getApplication().assertReadAccessAllowed();

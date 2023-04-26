@@ -6,110 +6,27 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import kotlin.io.path.*
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/applicationServiceAsStaticFinalField")
-
-class ApplicationServiceAsStaticFinalFieldInspectionTest : PluginModuleTestCase() {
+class ApplicationServiceAsStaticFinalFieldInspectionTest : ApplicationServiceAsStaticFinalFieldInspectionTestBase() {
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalField"
 
-  override fun setUp() {
-    super.setUp()
-    addPlatformClasses()
-    myFixture.enableInspections(ApplicationServiceAsStaticFinalFieldInspection::class.java)
-  }
-
-  private fun addPlatformClasses() {
-    myFixture.addClass(
-      //language=JAVA
-      """
-      package com.intellij.openapi.components;
-      
-      public @interface Service {
-        Level[] value() default { };
-      
-        enum Level {
-          APP, PROJECT
-        }
-      }
-      """.trimIndent()
-    )
-
-    myFixture.addClass(
-      //language=JAVA
-      """
-      package org.jetbrains.annotations;
-      
-      public @interface NotNull { }
-      """.trimIndent()
-    )
-
-    myFixture.addClass(
-      //language=JAVA
-      """
-      package com.intellij.openapi.components;
-      
-      public interface ComponentManager {
-        <T> T getService(@NotNull Class<T> serviceClass);
-      }
-      """.trimIndent()
-    )
-
-    myFixture.addClass(
-      //language=JAVA
-      """
-      package com.intellij.openapi.project;
-      
-      import com.intellij.openapi.components.ComponentManager;
-      
-      public interface Project extends ComponentManager { }
-      """.trimIndent()
-    )
-
-    myFixture.addClass(
-      //language=JAVA
-      """
-      package com.intellij.openapi.application;
-      
-      public class ApplicationManager {
-        protected static Application ourApplication;
-      
-        public static Application getApplication() {
-          return ourApplication;
-        }      
-      }
-      """.trimIndent()
-    )
-
-    myFixture.addClass(
-      //language=JAVA
-      """
-      package com.intellij.openapi.application;
-      
-      import com.intellij.openapi.components.ComponentManager;
-      
-      public interface Application extends ComponentManager { }
-      """.trimIndent()
-    )
-  }
-
-  private fun getServiceDeclarationPaths(namePrefix: String = ""): Array<String> {
-    return Path(testDataPath, "serviceDeclarations")
-      .listDirectoryEntries()
-      .filter { it.name.startsWith(namePrefix) }
-      .map { it.relativeTo(Path(testDataPath)).toString() }
-      .toTypedArray()
-  }
+  override val fileType: String
+    get() = "java"
 
   fun testNonServicesInFields() {
-    myFixture.testHighlighting("NonServicesInFields.java", *getServiceDeclarationPaths("NonService"))
+    doTest()
   }
 
   fun testRegisteredServicesInFields() {
-    setPluginXml("plugin.xml")
-    myFixture.testHighlighting("RegisteredServicesInFields.java", *getServiceDeclarationPaths("Registered"))
+    doTest()
+ }
+
+  fun testExplicitConstructorCallInFields() {
+    doTest()
   }
 
   fun testLightServicesInFields() {
-    myFixture.testHighlighting("LightServicesInFields.java", *getServiceDeclarationPaths("LightService"))
+    doTest()
   }
 
 }

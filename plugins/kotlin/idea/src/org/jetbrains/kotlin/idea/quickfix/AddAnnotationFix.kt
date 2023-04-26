@@ -46,7 +46,7 @@ open class AddAnnotationFix(
                 ?: annotationEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), annotationEntry.lastChild)
             ShortenReferences.DEFAULT.process(annotationEntry)
         } else {
-            declaration.addAnnotation(annotationFqName, annotationInnerText)
+            declaration.addAnnotation(annotationFqName, annotationInnerText, searchForExistingEntry = false)
         }
     }
 

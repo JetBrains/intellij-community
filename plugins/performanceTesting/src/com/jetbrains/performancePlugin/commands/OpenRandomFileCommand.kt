@@ -1,7 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -21,7 +21,7 @@ class OpenRandomFileCommand(text: String, line: Int) : PlaybackCommandCoroutineA
 
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "openRandomFile"
-    private val cache: Cache<String, Set<VirtualFile>> = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build()
+    private val cache: Cache<String, Set<VirtualFile>> = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build()
   }
 
   override suspend fun doExecute(context: PlaybackContext) {

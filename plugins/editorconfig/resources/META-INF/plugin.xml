@@ -37,7 +37,7 @@ For more information, check the documentation for <a href="https://editorconfig.
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
-    <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" order="first"/>
+    <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" id="editorConfigTrailingSpacesOptionsProvider"/>
     <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="org.editorconfig.configmanagement.editor.EditorConfigPreviewMarkerProvider"/>
     <projectService serviceImplementation="org.editorconfig.configmanagement.editor.EditorConfigPreviewManager"/>
@@ -95,7 +95,6 @@ For more information, check the documentation for <a href="https://editorconfig.
         language="EditorConfig"
         implementationClass="org.editorconfig.language.psi.reference.EditorConfigTargetElementEvaluator"/>
 
-    <editorFactoryListener implementation="org.editorconfig.configmanagement.EditorSettingsManager"/>
     <fileEncodingProvider implementation="org.editorconfig.configmanagement.ConfigEncodingManager"/>
     <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.LineEndingsManager"/>
 

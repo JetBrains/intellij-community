@@ -35,7 +35,9 @@ import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.tree.TreeNode
 
@@ -52,6 +54,7 @@ private class EvaluationTestData(
 abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWithStepping(), FramePrinterDelegate {
     private companion object {
         private val ID_PART_REGEX = "id=[0-9]*".toRegex()
+        private const val IGNORE_OLD_BACKEND_DIRECTIVE = "// IGNORE_OLD_BACKEND"
     }
 
     override val debuggerContext: DebuggerContextImpl
@@ -74,6 +77,21 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         isMultipleBreakpointsTest = false
         doTest(path)
     }
+
+    override fun doTest(unused: String) =
+        if (useIrBackend()) {
+            super.doTest(unused)
+        } else {
+            // Consider ignoring old backend tests when testing the
+            // debugger interaction with new language features
+            IgnoreTests.runTestIfNotDisabledByFileDirective(
+                Paths.get(unused),
+                IGNORE_OLD_BACKEND_DIRECTIVE,
+                directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
+            ) {
+                super.doTest(unused)
+            }
+        }
 
     fun doMultipleBreakpointsTest(path: String) {
         isMultipleBreakpointsTest = true

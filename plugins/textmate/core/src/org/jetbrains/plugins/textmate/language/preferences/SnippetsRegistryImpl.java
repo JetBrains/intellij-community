@@ -6,9 +6,10 @@ import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SnippetsRegistryImpl implements SnippetsRegistry {
-  @NotNull private final Map<String, Collection<TextMateSnippet>> mySnippets = new HashMap<>();
+  @NotNull private final Map<String, Collection<TextMateSnippet>> mySnippets = new ConcurrentHashMap<>();
 
   public void register(@NotNull TextMateSnippet snippet) {
     mySnippets.computeIfAbsent(snippet.getKey(), (key) ->  new ArrayList<>()).add(snippet);

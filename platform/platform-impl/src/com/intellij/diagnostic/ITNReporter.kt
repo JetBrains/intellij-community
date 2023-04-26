@@ -12,17 +12,22 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Component
 
 private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions to form a chain, ms
@@ -53,23 +58,17 @@ open class ITNReporter : ErrorReportSubmitter() {
                       parentComponent: Component,
                       consumer: Consumer<in SubmittedReportInfo>): Boolean {
     val event = events[0]
-
     val plugin = IdeErrorsDialog.getPlugin(event)
-
     val lastActionId = IdeaLogger.ourLastActionId
-
     var previousReportId = -1
     val previousException = previousReport
     val eventData = event.data
     if (previousException != null && eventData is AbstractMessage && eventData.date.time - previousException.first in 0..INTERVAL) {
       previousReportId = previousException.second
     }
-
     val errorBean = ErrorBean(event, additionalInfo, plugin?.pluginId?.idString, plugin?.name, plugin?.version, lastActionId, previousReportId)
-
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
-
-    return submit(project, errorBean, parentComponent, consumer)
+    return submit(project, errorBean, parentComponent, consumer::consume)
   }
 
   /**
@@ -78,7 +77,7 @@ open class ITNReporter : ErrorReportSubmitter() {
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 }
 
-private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, callback: Consumer<in SubmittedReportInfo>): Boolean {
+private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, callback: (SubmittedReportInfo) -> Unit): Boolean {
   var credentials = ErrorReportConfigurable.getCredentials()
   if (credentials.hasOnlyUserName()) {
     credentials = askJBAccountCredentials(parentComponent, project)
@@ -92,19 +91,32 @@ private fun submit(project: Project?,
                    credentials: Credentials?,
                    errorBean: ErrorBean,
                    parentComponent: Component,
-                   callback: Consumer<in SubmittedReportInfo>) {
-  ITNProxy.sendError(project, credentials?.userName, credentials?.getPasswordAsString(), errorBean,
-                     { threadId -> onSuccess(project, threadId, errorBean.event.data, callback) },
-                     { e -> onError(project, e, errorBean, parentComponent, callback) })
+                   callback: (SubmittedReportInfo) -> Unit) {
+  ITNProxy.cs.launch {
+    try {
+      val threadId = if (project != null) {
+        withBackgroundProgress(project, DiagnosticBundle.message("title.submitting.error.report")) {
+          ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean)
+        }
+      }
+      else {
+        ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean)
+      }
+      onSuccess(project, threadId, errorBean.event.data, callback)
+    }
+    catch (e: Exception) {
+      onError(project, e, errorBean, parentComponent, callback)
+    }
+  }
 }
 
-private fun onSuccess(project: Project?, threadId: Int, eventData: Any?, callback: Consumer<in SubmittedReportInfo>) {
+private suspend fun onSuccess(project: Project?, threadId: Int, eventData: Any?, callback: (SubmittedReportInfo) -> Unit) {
   previousReport = if (eventData is AbstractMessage) eventData.date.time to threadId else null
 
   val linkText = threadId.toString()
   val reportInfo = SubmittedReportInfo(ITNProxy.getBrowseUrl(threadId), linkText, SubmittedReportInfo.SubmissionStatus.NEW_ISSUE)
-  callback.consume(reportInfo)
-  ApplicationManager.getApplication().invokeLater {
+  callback(reportInfo)
+  withContext(Dispatchers.EDT) {
     val text = StringBuilder()
     IdeErrorsDialog.appendSubmissionInformation(reportInfo, text)
     text.append('.').append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"))
@@ -118,20 +130,20 @@ private fun onSuccess(project: Project?, threadId: Int, eventData: Any?, callbac
   }
 }
 
-private fun onError(project: Project?,
-                    e: Exception,
-                    errorBean: ErrorBean,
-                    parentComponent: Component,
-                    callback: Consumer<in SubmittedReportInfo>) {
+private suspend fun onError(project: Project?,
+                            e: Exception,
+                            errorBean: ErrorBean,
+                            parentComponent: Component,
+                            callback: (SubmittedReportInfo) -> Unit) {
   Logger.getInstance(ITNReporter::class.java).info("reporting failed: $e")
-  ApplicationManager.getApplication().invokeLater {
+  withContext(Dispatchers.EDT) {
     if (e is UpdateAvailableException) {
       val message = DiagnosticBundle.message("error.report.new.build.message", e.message)
       val title = DiagnosticBundle.message("error.report.new.build.title")
       val icon = Messages.getWarningIcon()
       if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
-                                else Messages.showMessageDialog(project, message, title, icon)
-      callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+      else Messages.showMessageDialog(project, message, title, icon)
+      callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
     }
     else if (e is NoSuchEAPUserException) {
       val credentials = askJBAccountCredentials(parentComponent, project, true)
@@ -139,15 +151,18 @@ private fun onError(project: Project?,
         submit(project, credentials, errorBean, parentComponent, callback)
       }
       else {
-        callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+        callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
+    }
+    else if (e is CancellationException) {
+      callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
     }
     else {
       val message = DiagnosticBundle.message("error.report.failed.message", e.message)
       val title = DiagnosticBundle.message("error.report.failed.title")
       val result = MessageDialogBuilder.yesNo(title, message).ask(project)
       if (!result || !submit(project, errorBean, parentComponent, callback)) {
-        callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+        callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
     }
   }

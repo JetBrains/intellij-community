@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -34,9 +35,11 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Point
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 

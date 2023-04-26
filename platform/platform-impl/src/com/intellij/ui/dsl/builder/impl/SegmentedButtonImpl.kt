@@ -17,6 +17,8 @@ import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelectedFromUi
 import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.toUnscaled
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.dsl.validation.impl.CompoundCellValidation
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -95,7 +97,12 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): SegmentedButton<T> {
+    return customize(customGaps.toUnscaled())
+  }
+
+  override fun customize(customGaps: UnscaledGaps): SegmentedButton<T> {
     super.customize(customGaps)
     return this
   }
@@ -132,8 +139,8 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun validation(init: CellValidation<SegmentedButton<T>>.() -> Unit): SegmentedButton<T> {
-    cellValidation.init()
+  override fun validation(init: CellValidation<SegmentedButton<T>>.(SegmentedButton<T>) -> Unit): SegmentedButton<T> {
+    cellValidation.init(this)
     return this
   }
 

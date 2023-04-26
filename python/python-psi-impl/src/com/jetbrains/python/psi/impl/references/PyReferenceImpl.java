@@ -247,18 +247,20 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         // TODO: Use the results from the processor as a cache for resolving to latest defs
         final ResolveResultList latestDefs = resolveToLatestDefs(instructions, realContext, referencedName, typeEvalContext);
         if (!latestDefs.isEmpty()) {
-          if (ContainerUtil.exists(latestDefs, result -> result.getElement() instanceof PyCallable)) {
-            return StreamEx
-              .of(resolvedElements)
-              .nonNull()
-              .filter(element -> PyUtil.inSameFile(element, realContext))
-              .filter(element -> PyiUtil.isOverload(element, typeEvalContext))
-              .map(element -> new RatedResolveResult(getRate(element, typeEvalContext), element))
-              .prepend(latestDefs)
-              .toList();
-          }
-
-          return latestDefs;
+          return StreamEx.of(latestDefs)
+            .flatMap(r -> {
+              if (r.getClass() != RatedResolveResult.class || !(r.getElement() instanceof PyFunction pyFunction)) {
+                return StreamEx.of(r);
+              }
+              int adjustedRate = r.getRate() == RatedResolveResult.RATE_PY_FILE_OVERLOAD ?
+                                 RatedResolveResult.RATE_LIFTED_PY_FILE_OVERLOAD : r.getRate();
+              return StreamEx.of(PyiUtil.getOverloads(pyFunction, typeEvalContext))
+                .map(overload -> new RatedResolveResult(getRate(overload, typeEvalContext), overload))
+                .prepend(StreamEx.ofNullable(
+                  PyiUtil.isInsideStub(myElement) ? null : new RatedResolveResult(adjustedRate, pyFunction)
+                ));
+            })
+            .toImmutableList();
         }
         else if (resolvedOwner instanceof PyClass) {
           resolveInParentScope = () -> PyResolveUtil.parentScopeForUnresolvedClassLevelName((PyClass)resolvedOwner, referencedName);
@@ -429,9 +431,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
     else if (elt instanceof PyImportedNameDefiner ||
-             elt instanceof PyReferenceExpression ||
-             elt != null && !PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
+             elt instanceof PyReferenceExpression) {
       rate = RatedResolveResult.RATE_LOW;
+    }
+    else if (elt != null && !PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
+      rate = RatedResolveResult.RATE_PY_FILE_OVERLOAD;
     }
     else {
       rate = RatedResolveResult.RATE_NORMAL;

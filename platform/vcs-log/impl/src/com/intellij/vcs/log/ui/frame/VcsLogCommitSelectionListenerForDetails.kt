@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
 import com.intellij.openapi.Disposable
@@ -107,7 +107,7 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
   override fun onLoadingStopped() = detailsPanel.stopLoadingDetails()
 
   override fun onError(error: Throwable) {
-    setEmpty(VcsLogBundle.message("vcs.log.error.loading.status"))
+    setEmpty(VcsLogBundle.message("vcs.log.error.loading.details.status"))
   }
 
   private fun setEmpty(text: @Nls String) {

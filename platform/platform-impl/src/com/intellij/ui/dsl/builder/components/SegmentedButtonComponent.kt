@@ -21,10 +21,11 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.VerticalComponentGap
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -37,6 +38,7 @@ import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JPanel
+import kotlin.math.roundToInt
 
 private const val PLACE = "SegmentedButton"
 
@@ -77,7 +79,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
   init {
     isFocusable = true
     border = SegmentedButtonBorder()
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(size = DarculaUIUtil.BW.unscaled.roundToInt()))
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
 
     this.items = items
@@ -294,8 +296,8 @@ private class SegmentedButton<T>(
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
-    return Dimension(preferredSize.width + spacing.segmentedButtonHorizontalGap * 2,
-                     preferredSize.height + spacing.segmentedButtonVerticalGap * 2)
+    return Dimension(preferredSize.width + JBUIScale.scale(spacing.segmentedButtonHorizontalGap) * 2,
+                     preferredSize.height + JBUIScale.scale(spacing.segmentedButtonVerticalGap) * 2)
   }
 
   override fun actionPerformed(event: AnActionEvent) {

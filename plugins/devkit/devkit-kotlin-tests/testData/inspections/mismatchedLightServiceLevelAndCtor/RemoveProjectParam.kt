@@ -1,5 +1,5 @@
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 
-@Service(Service.Level.APP)
-class <warning descr="Application level service requires no-arg constructor or constructor taking Coroutine"><warning descr="If constructor takes Project, Service.Level.PROJECT is required">MyService<caret></warning></warning>(val project: Project)
+<warning descr="Light service with a constructor that takes a single parameter of type 'Project' must specify '@Service(Service.Level.PROJECT)'">@Service(Service.Level.APP)</warning>
+class <warning descr="Application-level service requires a no-arg or single parameter constructor with 'kotlinx.coroutines.CoroutineScope' type">MyService<caret></warning>(val project: Project)

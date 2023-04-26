@@ -4,11 +4,13 @@
 package com.intellij.ide
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
+import java.awt.Rectangle
 
 class RecentProjectMetaInfo : BaseState() {
   @get:Attribute
@@ -42,6 +44,9 @@ class RecentProjectMetaInfo : BaseState() {
 
   @get:Property(surroundWithTag = false)
   internal var frame: FrameInfo? by property()
+  @IntellijInternalApi
+  val windowBounds: Rectangle?
+    get() = frame?.bounds
 }
 
 class RecentProjectManagerState : BaseState() {

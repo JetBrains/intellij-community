@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 
 /**
  * @author Max Medvedev
@@ -29,7 +31,10 @@ B <warning>b</warning> = {print 2}
   }
 
   void testAmbiguous() {
-    doTestHighlighting('''\
+    def registryValue = Registry.is(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE)
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true)
+    try {
+      doTestHighlighting('''\
 interface SAM1 { def foo(String s)}
 interface SAM2 { def bar(Integer i)}
 
@@ -40,6 +45,9 @@ method <warning>(1)</warning>   {it}  // fails because SAM1 and SAM2 are seen as
 method <warning>("1")</warning> {it}  // fails because SAM1 and SAM2 are seen as equal
 
 ''')
+    } finally {
+      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(registryValue)
+    }
   }
 
   void testGenerics() {

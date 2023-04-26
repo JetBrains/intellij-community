@@ -10,6 +10,9 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
@@ -51,6 +54,12 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
     private val pluginsCache: PluginsCache?
         get() = pluginsCacheCachedValue.value
 
+    private val onlyBundledPluginsEnabledRegistryValue: RegistryValue =
+        Registry.get("kotlin.k2.only.bundled.compiler.plugins.enabled")
+
+    private val onlyBundledPluginsEnabled: Boolean
+        get() = onlyBundledPluginsEnabledRegistryValue.asBoolean()
+
     init {
         val messageBusConnection = project.messageBus.connect(this)
         messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED,
@@ -72,6 +81,15 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
                 }
             }
         )
+
+        onlyBundledPluginsEnabledRegistryValue.addListener(
+            object : RegistryValueListener {
+                override fun afterValueChanged(value: RegistryValue) {
+                    pluginsCacheCachedValue.drop()
+                }
+            },
+            this
+        )
     }
 
     private val EntityChange<FacetEntity>.facetTypes: List<String>
@@ -86,7 +104,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         val pluginsClassLoader: UrlClassLoader = UrlClassLoader.build().apply {
             parent(KtSourceModule::class.java.classLoader)
             val pluginsClasspath = ModuleManager.getInstance(project).modules
-                .flatMap { it.getCompilerArguments().getPluginClassPaths() }
+                .flatMap { it.getCompilerArguments().getSubstitutedPluginClassPaths() }
                 .distinct()
             files(pluginsClasspath)
         }.get()
@@ -115,7 +133,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
     private fun computeExtensionStorage(module: KtSourceModule): CompilerPluginRegistrar.ExtensionStorage? {
         val classLoader = pluginsCache?.pluginsClassLoader ?: return null
         val compilerArguments = module.ideaModule.getCompilerArguments()
-        val classPaths = compilerArguments.getPluginClassPaths().map { it.toFile() }.takeIf { it.isNotEmpty() } ?: return null
+        val classPaths = compilerArguments.getSubstitutedPluginClassPaths().map { it.toFile() }.takeIf { it.isNotEmpty() } ?: return null
 
         val logger = logger<KtCompilerPluginsProviderIdeImpl>()
 
@@ -162,13 +180,31 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         return storage
     }
 
-    private fun CommonCompilerArguments.getPluginClassPaths(): List<Path> {
+    private fun CommonCompilerArguments.getOriginalPluginClassPaths(): List<Path> {
         return this
             .pluginClasspaths
             ?.map { Path.of(it).toAbsolutePath() }
             ?.toList()
             .orEmpty()
     }
+
+    private fun CommonCompilerArguments.getSubstitutedPluginClassPaths(): List<Path> {
+        val userDefinedPlugins = getOriginalPluginClassPaths()
+        return userDefinedPlugins.mapNotNull(::substitutePluginJar)
+    }
+
+    /**
+     * We have the following logic for plugins' substitution:
+     * 1. Always replace our own plugins (like "allopen", "noarg", etc.) with bundled ones to avoid binary incompatibility.
+     * 2. Allow to use other compiler plugins only if [onlyBundledPluginsEnabled] is set to false; otherwise, filter them.
+     */
+    private fun substitutePluginJar(userSuppliedPluginJar: Path): Path? {
+        val bundledPlugin = KotlinK2BundledCompilerPlugins.findCorrespondingBundledPlugin(userSuppliedPluginJar)
+        if (bundledPlugin != null) return bundledPlugin.bundledJarLocation
+
+        return userSuppliedPluginJar.takeUnless { onlyBundledPluginsEnabled }
+    }
+
 
     private fun Module.getCompilerArguments(): CommonCompilerArguments {
         return KotlinFacet.get(this)?.configuration?.settings?.mergedCompilerArguments

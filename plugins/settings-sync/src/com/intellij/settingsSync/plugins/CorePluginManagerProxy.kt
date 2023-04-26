@@ -1,23 +1,21 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.ide.plugins.DisabledPluginsState
-import com.intellij.ide.plugins.PluginEnabler
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 
-class CorePluginManagerProxy : PluginManagerProxy {
+class CorePluginManagerProxy : AbstractPluginManagerProxy() {
+
+  override val pluginEnabler: PluginEnabler
+    get() = PluginEnabler.getInstance()
+
+  override fun isDescriptorEssential(pluginId: PluginId): Boolean =
+    (ApplicationInfo.getInstance() as ApplicationInfoEx).isEssentialPlugin(pluginId)
 
   override fun getPlugins() = PluginManagerCore.getPlugins()
-
-  override fun enablePlugins(plugins: Set<PluginId>) {
-    PluginEnabler.getInstance().enableById(plugins)
-  }
-
-  override fun disablePlugins(plugins: Set<PluginId>) {
-    PluginEnabler.getInstance().disableById(plugins)
-  }
 
   override fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable) {
     DisabledPluginsState.addDisablePluginListener(disabledListener)

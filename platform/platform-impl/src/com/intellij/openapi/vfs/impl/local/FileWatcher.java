@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.notification.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -29,7 +31,7 @@ import java.util.function.Supplier;
 /**
  * Unless stated otherwise, all paths are {@link SystemDependent @SystemDependent}.
  */
-public final class FileWatcher {
+public final class FileWatcher implements AppLifecycleListener {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
 
   final static class DirtyPaths {
@@ -60,6 +62,7 @@ public final class FileWatcher {
   private final ExecutorService myFileWatcherExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1);
   private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
 
+  private volatile boolean myShuttingDown = false;
   private volatile CanonicalPathMap myPathMap = CanonicalPathMap.empty();
   private volatile Map<Object, Set<String>> myManualWatchRoots = Collections.emptyMap();
 
@@ -67,12 +70,19 @@ public final class FileWatcher {
     myManagingFS = managingFS;
     myNotificationSink = new MyFileWatcherNotificationSink();
 
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, this);
+
     myFileWatcherExecutor.execute(() -> {
       PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.initialize(myManagingFS, myNotificationSink));
       if (isOperational()) {
         postInitCallback.run();
       }
     });
+  }
+
+  @Override
+  public void appWillBeClosed(boolean isRestart) {
+    myShuttingDown = true;
   }
 
   public void dispose() {
@@ -134,7 +144,7 @@ public final class FileWatcher {
   void setWatchRoots(@NotNull Supplier<CanonicalPathMap> pathMapSupplier) {
     Future<?> prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
       try {
-        CanonicalPathMap pathMap = pathMapSupplier.get();
+        var pathMap = myShuttingDown ? CanonicalPathMap.empty() : pathMapSupplier.get();
         if (pathMap == null) return;
         myPathMap = pathMap;
         myManualWatchRoots = new ConcurrentHashMap<>();
@@ -142,7 +152,7 @@ public final class FileWatcher {
         Pair<List<String>, List<String>> roots = pathMap.getCanonicalWatchRoots();
         PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> {
           if (watcher.isOperational()) {
-            watcher.setWatchRoots(roots.first, roots.second);
+            watcher.setWatchRoots(roots.first, roots.second, myShuttingDown);
           }
         });
       }

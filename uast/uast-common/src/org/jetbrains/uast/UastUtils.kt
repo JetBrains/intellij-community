@@ -122,10 +122,11 @@ fun <T : UElement> PsiElement?.findAnyContaining(depthLimit: Int, vararg types: 
   return null
 }
 
-fun isPsiAncestor(ancestor: UElement, child: UElement): Boolean {
+@JvmOverloads
+fun isPsiAncestor(ancestor: UElement, child: UElement, strict: Boolean = false): Boolean {
   val ancestorPsi = ancestor.sourcePsi ?: return false
   val childPsi = child.sourcePsi ?: return false
-  return PsiTreeUtil.isAncestor(ancestorPsi, childPsi, false)
+  return PsiTreeUtil.isAncestor(ancestorPsi, childPsi, strict)
 }
 
 fun UElement.isUastChildOf(probablyParent: UElement?, strict: Boolean = false): Boolean {
