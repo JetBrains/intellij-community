@@ -27,6 +27,9 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.sanitizeFileName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.File
@@ -54,7 +57,7 @@ private const val DURATION_FILE_NAME = ".duration"
 private const val PID_FILE_NAME = ".pid"
 private val ideStartTime = ZonedDateTime.now()
 
-internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher() {
+internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : PerformanceWatcher() {
   private val logDir = PathManager.getLogDir()
 
   @Volatile
@@ -75,12 +78,11 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
   init {
     val application = ApplicationManager.getApplication() ?: throw ExtensionNotApplicableException.create()
     val registryManager = RegistryManager.getInstance()
-    unresponsiveInterval = registryManager["performance.watcher.unresponsive.interval.ms"]
+    unresponsiveInterval = registryManager.get("performance.watcher.unresponsive.interval.ms")
     if (!application.isHeadlessEnvironment) {
-      val cancelingListener: RegistryValueListener = object : RegistryValueListener {
+      val cancelingListener = object : RegistryValueListener {
         override fun afterValueChanged(value: RegistryValue) {
-          LOG.info("on UI freezes more than " + unresponsiveInterval + " ms will " +
-                   "dump threads each " + dumpInterval + " ms for " + maxDumpDuration + " ms max")
+          LOG.info("on UI freezes more than $unresponsiveInterval ms will dump threads each $dumpInterval ms for $maxDumpDuration ms max")
           val samplingIntervalMs = samplingInterval
           cancelThread()
           thread = if (samplingIntervalMs <= 0) {
@@ -96,20 +98,25 @@ internal class PerformanceWatcherImpl private constructor() : PerformanceWatcher
       }
       unresponsiveInterval.addListener(cancelingListener, this)
       if (ApplicationInfoImpl.getShadowInstance().isEAP) {
-        val ourReasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size")
-        val service = AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService
-        val allAvailableProcessors = Runtime.getRuntime().availableProcessors()
-        service.setNewThreadListener { _, _ ->
-          val executorSize = service.backendPoolExecutorSize
-          if (executorSize > ourReasonableThreadPoolSize.asInteger() + allAvailableProcessors) {
-            val message = "Too many threads: $executorSize created in the global Application pool. ($ourReasonableThreadPoolSize, available processors: $allAvailableProcessors)"
-            val file = doDumpThreads("newPooledThread/", true, message, true)
-            LOG.info(message + if (file == null) "" else "; thread dump is saved to '$file'")
+        coroutineScope.launch {
+          val reasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size")
+          val service = AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService
+          val allAvailableProcessors = Runtime.getRuntime().availableProcessors()
+          service.setNewThreadListener { _, _ ->
+            val executorSize = service.backendPoolExecutorSize
+            if (executorSize > reasonableThreadPoolSize.asInteger() + allAvailableProcessors) {
+              val message = "Too many threads: $executorSize created in the global Application pool. " +
+                            "($reasonableThreadPoolSize, available processors: $allAvailableProcessors)"
+              val file = doDumpThreads("newPooledThread/", true, message, true)
+              LOG.info(message + if (file == null) "" else "; thread dump is saved to '$file'")
+            }
           }
         }
       }
       reportCrashesIfAny()
-      cleanOldFiles(logDir, 0)
+      coroutineScope.launch(Dispatchers.IO) {
+        cleanOldFiles(logDir, 0)
+      }
       cancelingListener.afterValueChanged(unresponsiveInterval)
     }
   }
