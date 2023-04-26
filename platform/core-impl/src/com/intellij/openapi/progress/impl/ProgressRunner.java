@@ -223,27 +223,26 @@ public final class ProgressRunner<R> {
       return progress;
     });
 
-    Semaphore modalityEntered = new Semaphore(forceSyncExec ? 0 : 1);
-    Function<@NotNull ProgressIndicator, R> onThreadCallable = (progressIndicator) -> {
-      if (isModal) {
-        modalityEntered.waitFor();
-      }
-      // runProcess handles starting/stopping progress and setting thread's current progress
-      return ProgressManager.getInstance().runProcess(() -> myComputation.apply(progressIndicator), progressIndicator);
-    };
-
     CompletableFuture<R> resultFuture;
     if (forceSyncExec) {
       resultFuture = new CompletableFuture<>();
       try {
         ProgressIndicator progressIndicator = progressFuture.join();
-        resultFuture.complete(onThreadCallable.apply(progressIndicator));
+        resultFuture.complete(ProgressManager.getInstance().runProcess(() -> myComputation.apply(progressIndicator), progressIndicator));
       }
       catch (Throwable t) {
         resultFuture.completeExceptionally(t);
       }
     }
     else {
+      Semaphore modalityEntered = new Semaphore(1);
+      Function<@NotNull ProgressIndicator, R> onThreadCallable = (progressIndicator) -> {
+        if (isModal) {
+          modalityEntered.waitFor();
+        }
+        // runProcess handles starting/stopping progress and setting thread's current progress
+        return ProgressManager.getInstance().runProcess(() -> myComputation.apply(progressIndicator), progressIndicator);
+      };
       if (ApplicationManager.getApplication().isDispatchThread()) {
         resultFuture = execFromEDT(progressFuture, modalityEntered, onThreadCallable);
       }
