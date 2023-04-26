@@ -13,9 +13,11 @@ import com.intellij.internal.statistic.local.LanguageUsageStatistics
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiNamedElement
+import com.intellij.util.PathUtil
 import com.intellij.util.Time.DAY
 import com.intellij.util.Time.WEEK
 
@@ -92,7 +94,7 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
 
   private fun getNameFeatures(element: Any, searchQuery: String): Collection<EventPair<*>> {
     val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
-    if (psiElement is PsiFileSystemItem) return emptyList() // The name features for files are provided by SearchEverywhereFileFeaturesProvider
+    if (psiElement is PsiFileSystemItem) return getFileNameMatchingFeatures(psiElement, searchQuery)
 
     return getElementName(element)?.let {
       getNameMatchingFeatures(it, searchQuery)
@@ -103,6 +105,17 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
     is PsiItemWithPresentation -> element.presentation.presentableText
     is PsiNamedElement -> ReadAction.compute<String, Nothing> { element.name }
     else -> null
+  }
+
+  /**
+   * File name-matching features are different from other PsiElement name features,
+   * as they remove filename extensions from both the file found and the query.
+   */
+  private fun getFileNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Collection<EventPair<*>> {
+    val nameOfItem = item.virtualFile.nameWithoutExtension
+    // Remove the directory and the extension if they are present
+    val fileNameFromQuery = FileUtil.getNameWithoutExtension(PathUtil.getFileName(searchQuery))
+    return getNameMatchingFeatures(nameOfItem, fileNameFromQuery)
   }
 }
 
