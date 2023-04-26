@@ -1226,24 +1226,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/addJvmDefault")
-    public static class AddJvmDefault extends AbstractK1QuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("functionOverride.kt")
-        public void testFunctionOverride() throws Exception {
-            runTest("testData/quickfix/addJvmDefault/functionOverride.kt");
-        }
-
-        @TestMetadata("propertyOverride.kt")
-        public void testPropertyOverride() throws Exception {
-            runTest("testData/quickfix/addJvmDefault/propertyOverride.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addJvmInline")
     public static class AddJvmInline extends AbstractK1QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -2350,31 +2350,31 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/nested")
-    public static class Nested extends AbstractLoadJavaClsStubTest {
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/nestedClasses")
+    public static class NestedClasses extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
 
         @Override
         protected void setUp() {
-            compilerTestData("compiler/testData/loadJava/compiledKotlin/nested");
+            compilerTestData("compiler/testData/loadJava/compiledKotlin/nestedClasses");
             super.setUp();
         }
 
         @TestMetadata("deepInnerGeneric.kt")
         public void testDeepInnerGeneric() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nested/deepInnerGeneric.kt"));
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nestedClasses/deepInnerGeneric.kt"));
         }
 
         @TestMetadata("innerClassReferencesOuterTP.kt")
         public void testInnerClassReferencesOuterTP() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nested/innerClassReferencesOuterTP.kt"));
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nestedClasses/innerClassReferencesOuterTP.kt"));
         }
 
         @TestMetadata("membersReferenceOuterTP.kt")
         public void testMembersReferenceOuterTP() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nested/membersReferenceOuterTP.kt"));
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nestedClasses/membersReferenceOuterTP.kt"));
         }
     }
 

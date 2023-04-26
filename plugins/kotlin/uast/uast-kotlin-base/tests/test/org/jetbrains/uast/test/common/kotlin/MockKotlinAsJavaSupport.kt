@@ -33,6 +33,9 @@ open class MockKotlinAsJavaSupport(private val baseKotlinAsJavaSupport: KotlinAs
     override fun findFilesForPackage(packageFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> =
         baseKotlinAsJavaSupport.findFilesForPackage(packageFqName, searchScope)
 
+    override fun findFilesForScript(scriptFqName: FqName, searchScope: GlobalSearchScope): Collection<KtScript> =
+        baseKotlinAsJavaSupport.findFilesForScript(scriptFqName, searchScope)
+
     override fun getLightFacade(file: KtFile): KtLightClassForFacade? = baseKotlinAsJavaSupport.getLightFacade(file)
 
     override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtLightClassForFacade> =

@@ -36,6 +36,10 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkThrowsList(myFixture)
     }
 
+    fun testFinalModifierOnEnumMembers() {
+        checkFinalModifierOnEnumMembers(myFixture)
+    }
+
     fun testComparatorInheritor() {
         checkComparatorInheritor(myFixture)
     }

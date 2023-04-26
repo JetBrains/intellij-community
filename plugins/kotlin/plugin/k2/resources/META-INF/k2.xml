@@ -28,6 +28,7 @@
   <xi:include href="highlighting-k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="scripting-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="facets-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <xi:include href="extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
@@ -62,6 +63,9 @@
                     serviceImplementation="org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSessionProvider"/>
     <projectService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
                         serviceImplementation="org.jetbrains.kotlin.idea.references.KotlinFirReferenceContributor"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
+            serviceImplementation="org.jetbrains.kotlin.idea.fir.FirLibrarySourceScopeService"/>
     <statusBarWidgetFactory id="kotlin.fir.ide" implementation="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetFactory"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService"/>
 

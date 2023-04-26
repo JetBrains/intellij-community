@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// IGNORE_FIR
 package my.simple.name
 
 class Outer {

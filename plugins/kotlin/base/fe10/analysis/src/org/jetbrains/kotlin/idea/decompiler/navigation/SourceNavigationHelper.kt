@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
@@ -10,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -18,12 +18,12 @@ import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.*
-import org.jetbrains.kotlin.idea.navigation.SourceNavigationService
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -35,7 +35,8 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.SmartList
 
-class Fe10SourceNavigationService: SourceNavigationService {
+@ApiStatus.Internal
+class Fe10LibrarySourceScopeService: LibrarySourceScopeService {
     override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> =
         SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, project)
 
