@@ -231,7 +231,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def ideaTestSourceDirs = null
     def ideaTestResourceDirs = null
     def downloadJavadoc = false
-    def downloadSources = true
+    def downloadSources = Boolean.parseBoolean(System.getProperty("idea.disable.download.sources", "true"))
 
     def testSourceSets = []
 
