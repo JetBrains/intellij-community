@@ -19,16 +19,16 @@ object IteratorUtils {
    *
    * @param logIterator must not reside inside VFileEvent-related operations range
    */
-  class VFileEventBasedIterator(private val logIterator: OperationLogStorage.Iterator) : BiDiIterator<VFileEventBasedIterator.ReadResult> {
+  class VFileEventBasedIterator(private val logIterator: OperationLogStorage.Iterator) : BiDiIterator<ReadResult> {
     sealed interface ReadResult {
       /**
        * @param startTag tag of the corresponding [VfsOperation.VFileEventOperation.EventStart]
        * @param begin is positioned before the [VfsOperation.VFileEventOperation.EventStart] operation
        * @param end is positioned after the [VfsOperation.VFileEventOperation.EventEnd] operation
        */
-      data class VFileEvent(val startTag: VfsOperationTag,
-                            val begin: OperationLogStorage.Iterator,
-                            val end: OperationLogStorage.Iterator) : ReadResult
+      data class VFileEventRange(val startTag: VfsOperationTag,
+                                 val begin: OperationLogStorage.Iterator,
+                                 val end: OperationLogStorage.Iterator) : ReadResult
 
       /**
        * Designates an operation that is not tied to any VFileEvent.
@@ -72,7 +72,7 @@ object IteratorUtils {
             assert(prev is OperationReadResult.Incomplete)
             // couldn't validate
           }
-          return ReadResult.VFileEvent(rec.tag, logIterator.copy(), initIter)
+          return ReadResult.VFileEventRange(rec.tag, logIterator.copy(), initIter)
         }
         else if (rec.getTag() == VfsOperationTag.VFILE_EVENT_END) {
           // another end tag was encountered before the first one was matched with a starting tag
@@ -117,7 +117,7 @@ object IteratorUtils {
             assert(rec is OperationReadResult.Incomplete)
             // couldn't validate
           }
-          return ReadResult.VFileEvent(tag, initIter, logIterator.copy())
+          return ReadResult.VFileEventRange(tag, initIter, logIterator.copy())
         }
         else if (rec.getTag().isVFileEventStartOperation) {
           // another start tag was encountered before the first one was matched with an ending tag
@@ -132,23 +132,23 @@ object IteratorUtils {
       return ReadResult.Invalid(PartialVFileEventException(initIter, OperationLogStorage.TraverseDirection.ADVANCE))
     }
 
-    fun ReadResult.VFileEvent.forEach(body: (OperationReadResult) -> Unit) {
-      val start = begin.copy()
-      val end = end.copy()
-      start.skipNext()
-      end.skipPrevious()
-      while (start < end) {
-        body(start.next().onInvalid {
-          throw IllegalStateException("invalid record inside already processed VFileEvent content range")
-        })
-      }
-    }
-
     /**
      * `iter.move(direction)` will produce [VfsOperation.VFileEventOperation]
      */
     data class PartialVFileEventException(val iter: OperationLogStorage.Iterator,
                                           val direction: OperationLogStorage.TraverseDirection) : Exception()
+  }
+
+  fun ReadResult.VFileEventRange.forEach(body: (OperationReadResult) -> Unit) {
+    val start = begin.copy()
+    val end = end.copy()
+    start.skipNext()
+    end.skipPrevious()
+    while (start < end) {
+      body(start.next().onInvalid {
+        throw IllegalStateException("invalid record inside already processed VFileEvent content range")
+      })
+    }
   }
 
   /**

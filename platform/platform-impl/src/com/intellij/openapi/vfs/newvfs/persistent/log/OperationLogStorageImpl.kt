@@ -108,7 +108,7 @@ class OperationLogStorageImpl(
       if (toReadMask.contains(tag)) return readWholeDescriptor(actualPos, tag)
       // validate left tag
       val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
-      storageIO.read(position, buf)
+      storageIO.read(position - bytesForOperationDescriptor(tag), buf)
       if (tag.ordinal.toByte() != buf[0]) {
         return OperationReadResult.Invalid(IllegalStateException("bounding tags do not match: ${buf[0]} ${tag.ordinal}"))
       }

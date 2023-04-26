@@ -3,6 +3,9 @@
 
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 
+import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils
+import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
+import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEach
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
@@ -140,10 +143,41 @@ private fun single(log: VfsLog) {
   println("avg descriptor read speed: ${(stats.avgDescPS / 1000.0).format("%.1f")} KDesc/s")
 }
 
+private fun vFileEventIterCheck(log: VfsLog) {
+  var singleOp = 0
+  var vfileEvents = 0
+  var vfileEventContentOps = 0
+
+  log.query {
+    val iter = IteratorUtils.VFileEventBasedIterator(operationLogStorage.begin())
+    while (iter.hasNext()) {
+      val rec = iter.next()
+      when (rec) {
+        is ReadResult.Invalid -> throw rec.cause
+        is ReadResult.SingleOperation -> {
+          singleOp++
+          rec.iter.copy().next() // read it
+        }
+        is ReadResult.VFileEventRange -> {
+          vfileEvents++
+          rec.forEach {
+            vfileEventContentOps++
+          }
+        }
+      }
+    }
+  }
+
+  println("singleOp: $singleOp")
+  println("vfileEvents: $vfileEvents")
+  println("vfileEventContentOps: $vfileEventContentOps")
+}
+
 fun main(args: Array<String>) {
   assert(args.size == 1) { "Usage: <LogStats> <path to vfslog folder>" }
 
   val log = VfsLog(Path.of(args[0]), true)
   //single(log)
-  benchmark(log, 100)
+  //benchmark(log, 100)
+  vFileEventIterCheck(log)
 }
