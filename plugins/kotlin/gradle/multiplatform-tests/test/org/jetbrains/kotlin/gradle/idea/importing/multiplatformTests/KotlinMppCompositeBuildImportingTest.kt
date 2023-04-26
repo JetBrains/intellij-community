@@ -1,0 +1,54 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
+
+import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
+import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
+import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.Ignore
+import org.junit.Test
+
+@TestMetadata("multiplatform/core/features/compositeBuild")
+class KotlinMppCompositeBuildImportingTest : AbstractKotlinMppGradleImportingTest() {
+
+    override fun TestConfigurationDslScope.defaultTestConfiguration() {
+        hideResourceRoots = true
+        hideStdlib = true
+        hideKotlinTest = true
+        hideKotlinNativeDistribution = true
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.8.20-dev-3309+")
+    fun testJvmAndNative() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+            linkProject("consumerBuild")
+
+            // only interested in dependencies from consumerBuild to producerBuild
+            onlyDependencies(from = ".*consumerBuild.*", to = ".*producerBuild.*")
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.8.20-dev-3309+")
+    fun testJvmAndAndroid() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+            linkProject("consumerBuild")
+
+            // only interested in dependencies from consumerBuild to producerBuild
+            onlyDependencies(from = ".*consumerBuild.*", to = ".*producerBuild.*")
+        }
+    }
+
+    @Test
+    @Ignore // fails with DuplicateTaskException: Cannot add task 'commonizeNativeDistribution'
+    fun testDependenciesInMppCompositeBuild() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+            onlyModules(""".*includedBuild.consumer.*""")
+        }
+    }
+}
