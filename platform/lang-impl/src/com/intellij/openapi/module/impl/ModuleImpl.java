@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,27 +48,27 @@ import java.util.Objects;
 public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Queryable {
   private static final Logger LOG = Logger.getInstance(ModuleImpl.class);
 
-  private final @NotNull Project myProject;
-  protected @Nullable VirtualFilePointer myImlFilePointer;
+  private final @NotNull Project project;
+  protected @Nullable VirtualFilePointer imlFilePointer;
   private volatile boolean isModuleAdded;
 
-  private String myName;
+  private String name;
 
-  private final ModuleScopeProvider myModuleScopeProvider;
+  private final ModuleScopeProvider moduleScopeProvider;
 
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project, @NotNull String filePath) {
     this(name, project);
-    myImlFilePointer = VirtualFilePointerManager.getInstance().create(
+    imlFilePointer = VirtualFilePointerManager.getInstance().create(
       VfsUtilCore.pathToUrl(filePath), this,
       new VirtualFilePointerListener() {
         @Override
         public void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
-          if (myImlFilePointer == null) return;
-          VirtualFile virtualFile = myImlFilePointer.getFile();
+          if (imlFilePointer == null) return;
+          VirtualFile virtualFile = imlFilePointer.getFile();
           if (virtualFile != null) {
             ((ModuleStore)getStore()).setPath(virtualFile.toNioPath(), virtualFile, false);
-            ModuleManager.getInstance(myProject).incModificationCount();
+            ModuleManager.getInstance(ModuleImpl.this.project).incModificationCount();
           }
         }
       });
@@ -79,7 +78,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Querya
   public ModuleImpl(@NotNull String name, @NotNull Project project, @Nullable VirtualFilePointer virtualFilePointer) {
     this(name, project);
 
-    myImlFilePointer = virtualFilePointer;
+    imlFilePointer = virtualFilePointer;
   }
 
   @ApiStatus.Internal
@@ -87,9 +86,9 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Querya
     super((ComponentManagerImpl)project, false, EmptyCoroutineContext.INSTANCE);
 
     registerServiceInstance(Module.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
-    myProject = project;
-    myModuleScopeProvider = new ModuleScopeProviderImpl(this);
-    myName = name;
+    this.project = project;
+    moduleScopeProvider = new ModuleScopeProviderImpl(this);
+    this.name = name;
   }
 
   @Override
@@ -110,14 +109,14 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Querya
   }
 
   private boolean isPersistent() {
-    return myImlFilePointer != null;
+    return imlFilePointer != null;
   }
 
   @Override
   public final boolean isDisposed() {
     // in case of light project in tests when it's temporarily disposed, the module should be treated as disposed too.
     //noinspection TestOnlyProblems
-    return super.isDisposed() || ((ProjectEx)myProject).isLight() && myProject.isDisposed();
+    return super.isDisposed() || ((ProjectEx)project).isLight() && project.isDisposed();
   }
 
   @Override
@@ -151,15 +150,15 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Querya
 
   @Override
   public @Nullable VirtualFile getModuleFile() {
-    if (myImlFilePointer == null) {
+    if (imlFilePointer == null) {
       return null;
     }
-    return myImlFilePointer.getFile();
+    return imlFilePointer.getFile();
   }
 
   @Override
   public void rename(@NotNull String newName, boolean notifyStorage) {
-    myName = newName;
+    name = newName;
     if (notifyStorage) {
       ((RenameableStateStorageManager)getStore().getStorageManager()).rename(newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     }
@@ -177,7 +176,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Querya
   @Override
   public @NotNull Path getModuleNioFile() {
     if (!isPersistent()) {
-      return Paths.get("");
+      return Path.of("");
     }
     return getStore().getStorageManager().expandMacro(StoragePathMacros.MODULE_FILE);
   }
@@ -211,12 +210,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Querya
 
   @Override
   public @NotNull Project getProject() {
-    return myProject;
+    return project;
   }
 
   @Override
   public @NotNull String getName() {
-    return myName;
+    return name;
   }
 
   @Override
@@ -259,72 +258,74 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx, Querya
 
   @Override
   public @NotNull GlobalSearchScope getModuleScope() {
-    return myModuleScopeProvider.getModuleScope();
+    return moduleScopeProvider.getModuleScope();
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleScope(boolean includeTests) {
-    return myModuleScopeProvider.getModuleScope(includeTests);
+    return moduleScopeProvider.getModuleScope(includeTests);
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleWithLibrariesScope() {
-    return myModuleScopeProvider.getModuleWithLibrariesScope();
+    return moduleScopeProvider.getModuleWithLibrariesScope();
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleWithDependenciesScope() {
-    return myModuleScopeProvider.getModuleWithDependenciesScope();
+    return moduleScopeProvider.getModuleWithDependenciesScope();
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleContentScope() {
-    return myModuleScopeProvider.getModuleContentScope();
+    return moduleScopeProvider.getModuleContentScope();
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleContentWithDependenciesScope() {
-    return myModuleScopeProvider.getModuleContentWithDependenciesScope();
+    return moduleScopeProvider.getModuleContentWithDependenciesScope();
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
-    return myModuleScopeProvider.getModuleWithDependenciesAndLibrariesScope(includeTests);
+    return moduleScopeProvider.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleWithDependentsScope() {
-    return myModuleScopeProvider.getModuleWithDependentsScope();
+    return moduleScopeProvider.getModuleWithDependentsScope();
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleTestsWithDependentsScope() {
-    return myModuleScopeProvider.getModuleTestsWithDependentsScope();
+    return moduleScopeProvider.getModuleTestsWithDependentsScope();
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
-    return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
+    return moduleScopeProvider.getModuleRuntimeScope(includeTests);
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleProductionSourceScope() {
-    return myModuleScopeProvider.getModuleProductionSourceScope();
+    return moduleScopeProvider.getModuleProductionSourceScope();
   }
 
   @Override
   public @NotNull GlobalSearchScope getModuleTestSourceScope() {
-    return myModuleScopeProvider.getModuleTestSourceScope();
+    return moduleScopeProvider.getModuleTestSourceScope();
   }
 
   @Override
   public void clearScopesCache() {
-    myModuleScopeProvider.clearCache();
+    moduleScopeProvider.clearCache();
   }
 
   @Override
   public String toString() {
-    if (myName == null) return "Module (not initialized)";
+    if (name == null) {
+      return "Module (not initialized)";
+    }
     return "Module: '" + getName() + "'" + (isDisposed() ? " (disposed)" : "");
   }
 

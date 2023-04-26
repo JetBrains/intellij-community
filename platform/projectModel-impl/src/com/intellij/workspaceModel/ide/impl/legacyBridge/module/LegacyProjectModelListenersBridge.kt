@@ -89,7 +89,7 @@ internal class LegacyProjectModelListenersBridge(
                                   event: VersionedStorageChange) {
     when (change) {
       is EntityChange.Removed -> {
-        // It's possible case then idToModule doesn't contain element e.g. if unloaded module was removed
+        // it's a possible case then idToModule doesn't contain an element e.g. if unloaded module was removed
         val module = change.entity.findModule(event.storageBefore)
         if (module != null) {
           fireEventAndDisposeModule(module)

@@ -44,7 +44,7 @@ private val moduleBridgeBeforeChangedTimeMs: AtomicLong = AtomicLong()
 private val facetsInitializationTimeMs: AtomicLong = AtomicLong()
 private val updateOptionTimeMs: AtomicLong = AtomicLong()
 
-private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+private fun setupOpenTelemetryReporting(meter: Meter) {
   val moduleBridgeBeforeChangedTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.before.changed.ms")
     .ofLongs().setDescription("Total time spent in method").buildObserver()
   val facetsInitializationTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.facet.initialization.ms")
@@ -98,7 +98,7 @@ internal class ModuleBridgeImpl(
       })
     }
 
-    // This is temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
+    // This is a temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
                                ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
@@ -113,7 +113,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
-    myImlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
+    imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     rename(newName, notifyStorage)
   }
 
@@ -123,7 +123,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun onImlFileMoved(newModuleFileUrl: VirtualFileUrl) {
-    myImlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
+    imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     val imlPath = newModuleFileUrl.toPath()
     (store.storageManager as RenameableStateStorageManager).pathRenamed(imlPath, null)
     store.setPath(imlPath)
