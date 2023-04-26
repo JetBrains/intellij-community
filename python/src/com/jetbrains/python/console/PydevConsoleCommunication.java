@@ -32,6 +32,7 @@ import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
@@ -341,7 +342,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  public String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException {
+  public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       return executeBackgroundTask(
         () -> {
