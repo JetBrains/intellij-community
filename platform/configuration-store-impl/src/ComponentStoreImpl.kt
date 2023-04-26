@@ -335,14 +335,19 @@ abstract class ComponentStoreImpl : IComponentStore {
       else {
         if (!stateRequested) {
           stateRequested = true
-          if (stateSpec.getStateRequiresEdt) {
-            state = withContext(Dispatchers.EDT) {
-              (component as PersistentStateComponent<*>).state
+          state = when {
+            component is SerializablePersistentStateComponent<*> -> {
+              component.state
             }
-          }
-          else {
-            state = readAction {
-              (component as PersistentStateComponent<*>).state
+            stateSpec.getStateRequiresEdt -> {
+              withContext(Dispatchers.EDT) {
+                (component as PersistentStateComponent<*>).state
+              }
+            }
+            else -> {
+              readAction {
+                (component as PersistentStateComponent<*>).state
+              }
             }
           }
         }
