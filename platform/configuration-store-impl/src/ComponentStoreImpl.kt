@@ -23,7 +23,6 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.toArray
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.Dispatchers
@@ -227,9 +226,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        withContext(Dispatchers.EDT) {
-          commitComponent(session = session, info = info, componentName = name, modificationCountChanged = modificationCountChanged)
-        }
+        commitComponent(session = session, info = info, componentName = name, modificationCountChanged = modificationCountChanged)
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
@@ -259,16 +256,17 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }
     val saveManager = createSaveSessionProducerManager()
-    commitComponent(session = saveManager,
-                    info = ComponentInfoImpl(component, stateSpec),
-                    componentName = null,
-                    modificationCountChanged = false)
     val absolutePath = storageManager.expandMacro(
       findNonDeprecated(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)).path).toString()
     Disposer.newDisposable().use {
       VfsRootAccess.allowRootAccess(it, absolutePath)
       @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt {
+        commitComponent(session = saveManager,
+                        info = ComponentInfoImpl(component, stateSpec),
+                        componentName = null,
+                        modificationCountChanged = false)
+
         val saveResult = saveManager.save()
         saveResult.throwIfErrored()
 
@@ -281,10 +279,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   open fun createSaveSessionProducerManager() = SaveSessionProducerManager()
 
-  private fun commitComponent(session: SaveSessionProducerManager,
-                              info: ComponentInfo,
-                              componentName: String?,
-                              modificationCountChanged: Boolean) {
+  private suspend fun commitComponent(session: SaveSessionProducerManager,
+                                      info: ComponentInfo,
+                                      componentName: String?,
+                                      modificationCountChanged: Boolean) {
     val component = info.component
     @Suppress("DEPRECATION")
     if (component is com.intellij.openapi.util.JDOMExternalizable) {
@@ -336,7 +334,9 @@ abstract class ComponentStoreImpl : IComponentStore {
       else {
         if (!stateRequested) {
           stateRequested = true
-          state = (info.component as PersistentStateComponent<*>).state
+          state = withContext(Dispatchers.EDT) {
+            (component as PersistentStateComponent<*>).state
+          }
         }
 
         if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec, storageSpec)) {
@@ -359,7 +359,7 @@ abstract class ComponentStoreImpl : IComponentStore {
                                                    info: ComponentInfo,
                                                    effectiveComponentName: String,
                                                    sessionProducer: SaveSessionProducer) {
-    sessionProducer.setState(info.component, effectiveComponentName, state)
+    sessionProducer.setState(component = info.component, componentName = effectiveComponentName, state = state)
   }
 
   private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo {
@@ -534,7 +534,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>,
                                          stateSpec: State,
                                          operation: StateStorageOperation): List<Storage> {
-    val storages = stateSpec.storages.modifyPerOsStorages()
+    val storages = getWithPerOsStorages(stateSpec.storages)
     if (storages.size == 1 || component is StateStorageChooserEx) {
       return storages.toList()
     }
@@ -546,12 +546,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
       throw AssertionError("No storage specified")
     }
-    return storages.sortByDeprecated()
+    return sortStoragesByDeprecated(storages)
   }
 
-  private fun Array<out Storage>.modifyPerOsStorages(): Array<Storage> {
+  private fun getWithPerOsStorages(storages: Array<Storage>): List<Storage> {
     val result = mutableListOf<Storage>()
-    for (storage in this) {
+    for (storage in storages) {
       if (storage.roamingType == RoamingType.PER_OS) {
         result.add(StorageImpl.copyWithNewValue(storage, getOsDependentStorage(storage.value)))
         result.add(StorageImpl.deprecatedCopy(storage))
@@ -560,7 +560,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         result.add(storage)
       }
     }
-    return result.toArray(arrayOf())
+    return result
   }
 
   final override fun isReloadPossible(componentNames: Set<String>): Boolean = !componentNames.any { isNotReloadable(it) }
@@ -668,19 +668,19 @@ enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }
 
-internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
-  if (size < 2) {
-    return toList()
+internal fun sortStoragesByDeprecated(storages: List<Storage>): List<Storage> {
+  if (storages.size < 2) {
+    return storages.toList()
   }
 
-  if (!first().deprecated) {
-    val othersAreDeprecated = (1 until size).any { get(it).deprecated }
+  if (!storages.first().deprecated) {
+    val othersAreDeprecated = (1 until storages.size).any { storages.get(it).deprecated }
     if (othersAreDeprecated) {
-      return toList()
+      return storages.toList()
     }
   }
 
-  return sortedWith(deprecatedComparator)
+  return storages.sortedWith(deprecatedComparator)
 }
 
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {
