@@ -214,7 +214,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return parent != null && isParentOfStorageFiles(parent)
     }
 
-    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    val connection = project.messageBus.connect(this)
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
@@ -263,8 +264,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
       }
     }
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, listener)
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, listener)
+    connection.subscribe(WorkspaceModelTopics.CHANGED, listener)
+    connection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, listener)
   }
 
   suspend fun loadProjectToEmptyStorage(project: Project): LoadedProjectEntities? {
