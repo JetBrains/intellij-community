@@ -88,7 +88,7 @@ object IconLoader {
       try {
         val foundIcon = findIcon(URL(modified))
         if (foundIcon is com.intellij.openapi.util.CachedImageIcon && foundIcon.getIconWidth() == scale(width) && foundIcon.getIconHeight() == scale(height)) {
-          return foundIcon
+          return foundIcon.withAnotherIconModifications(icon)
         }
       }
       catch (ignore: MalformedURLException) {
