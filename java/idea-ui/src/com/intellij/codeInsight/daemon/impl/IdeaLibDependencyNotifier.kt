@@ -109,6 +109,14 @@ private fun detectMavenArtifactByJars(ideaJars: List<Path>): JpsMavenRepositoryL
 
 
 private fun notifyLibrary(library: LibraryEntity, details: String, project: Project, fix: NotificationAction? = null) {
+
+  if (fix == null) {
+    // Do not notify libraries we don't know to fix automatically.
+    // It can be confusing for user. TODO: investigate more cases when auto fix is available
+    // TODO: Or at least narrow search to exclude non-jar libraries.
+    return
+  }
+
   val notification = Notification(
     "Legacy Library",
     JavaUiBundle.message("library.depends.on.ide.title"),
