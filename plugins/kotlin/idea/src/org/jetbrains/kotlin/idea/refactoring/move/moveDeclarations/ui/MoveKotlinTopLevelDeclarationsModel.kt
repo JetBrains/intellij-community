@@ -323,6 +323,6 @@ internal class MoveKotlinTopLevelDeclarationsModel(
             analyzeConflicts = true,
             searchReferences = isSearchReferences
         )
-        return MoveKotlinDeclarationsProcessor(options, Mover.Default, throwOnConflicts)
+        return MoveKotlinDeclarationsProcessor(options, KotlinMover.Default, throwOnConflicts)
     }
 }

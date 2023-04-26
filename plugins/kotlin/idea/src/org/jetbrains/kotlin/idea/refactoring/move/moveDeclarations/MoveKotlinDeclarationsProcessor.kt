@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveCallback
@@ -36,55 +35,25 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
-import org.jetbrains.kotlin.idea.core.deleteSingle
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinClassHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.keysToMap
 import kotlin.math.max
 import kotlin.math.min
-
-interface Mover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
-    object Default : Mover {
-        override fun invoke(originalElement: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration {
-            return when (targetContainer) {
-                is KtFile -> {
-                    val declarationContainer: KtElement =
-                        if (targetContainer.isScript()) targetContainer.script!!.blockExpression else targetContainer
-                    declarationContainer.add(originalElement) as KtNamedDeclaration
-                }
-                is KtClassOrObject -> targetContainer.addDeclaration(originalElement)
-                else -> error("Unexpected element: ${targetContainer.getElementTextWithContext()}")
-            }.apply {
-                val container = originalElement.containingClassOrObject
-                if (container is KtObjectDeclaration &&
-                    container.isCompanion() &&
-                    container.declarations.singleOrNull() == originalElement &&
-                    KotlinFindUsagesHandlerFactory(container.project).createFindUsagesHandler(container, false)
-                        .findReferencesToHighlight(container, LocalSearchScope(container.containingFile)).isEmpty()
-                ) {
-                    container.deleteSingle()
-                } else {
-                    originalElement.deleteSingle()
-                }
-            }
-        }
-    }
-}
 
 class MoveDeclarationsDescriptor @JvmOverloads constructor(
     val project: Project,
@@ -122,7 +91,7 @@ private object ElementHashingStrategy : HashingStrategy<PsiElement> {
 
 class MoveKotlinDeclarationsProcessor(
     val descriptor: MoveDeclarationsDescriptor,
-    val mover: Mover = Mover.Default,
+    val mover: KotlinMover = KotlinMover.Default,
     private val throwOnConflicts: Boolean = false
 ) : BaseRefactoringProcessor(descriptor.project) {
     companion object {

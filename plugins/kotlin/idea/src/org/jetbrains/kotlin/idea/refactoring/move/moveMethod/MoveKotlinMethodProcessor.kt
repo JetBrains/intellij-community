@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
@@ -268,7 +267,7 @@ class MoveKotlinMethodProcessor(
             changeMethodSignature()
             markInternalUsages(oldInternalUsages)
 
-            val movedMethod = Mover.Default(method, targetClassOrObject)
+            val movedMethod = KotlinMover.Default(method, targetClassOrObject)
             val oldToNewMethodMap = mapOf<PsiElement, PsiElement>(method to movedMethod)
 
             newInternalUsages += restoreInternalUsages(movedMethod, oldToNewMethodMap)

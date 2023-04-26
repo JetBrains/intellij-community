@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.base.psi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -25,6 +26,10 @@ inline fun <reified T : PsiElement> PsiElement.replaced(newElement: T): T {
         is T -> result
         else -> (result as KtParenthesizedExpression).expression as T
     }
+}
+
+fun PsiElement.deleteSingle() {
+    CodeEditUtil.removeChild(parent?.node ?: return, node ?: return)
 }
 
 fun KtBlockStringTemplateEntry.dropCurlyBracketsIfPossible(): KtStringTemplateEntryWithExpression {

@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
 import org.jetbrains.kotlin.idea.refactoring.move.getTargetPackageFqName
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
@@ -206,7 +207,7 @@ internal abstract class MoveKotlinNestedClassesToUpperLevelModel(
             openInEditor = isOpenInEditor
         )
 
-        val processor = MoveKotlinDeclarationsProcessor(moveDescriptor, Mover.Default, throwOnConflicts)
+        val processor = MoveKotlinDeclarationsProcessor(moveDescriptor, KotlinMover.Default, throwOnConflicts)
 
         return ModelResultWithFUSData(
           processor = processor,

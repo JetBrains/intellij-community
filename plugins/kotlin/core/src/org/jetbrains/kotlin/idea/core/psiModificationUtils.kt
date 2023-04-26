@@ -307,6 +307,10 @@ private fun deleteElementWithDelimiters(element: PsiElement) {
     parent.deleteChildRange(from, to)
 }
 
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.deleteSingle()", "org.jetbrains.kotlin.idea.base.psi.deleteSingle")
+)
 fun PsiElement.deleteSingle() {
     CodeEditUtil.removeChild(parent?.node ?: return, node ?: return)
 }

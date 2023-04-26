@@ -52,7 +52,6 @@ import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
@@ -312,7 +311,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
         removeModifiers(element)
 
-        val newDeclaration = Mover.Default(element, companionObject)
+        val newDeclaration = KotlinMover.Default(element, companionObject)
         progressIndicator.checkCanceled()
         for ((index, usage) in externalUsages.withIndex()) {
             progressIndicator.checkCanceled()
@@ -375,9 +374,9 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
                 if (traverseOuterInstanceReferences(element, true)) getNameSuggestionsForOuterInstance(element) else emptyList()
             val outerInstanceName = nameSuggestions.firstOrNull()
             var movedClass: KtClassOrObject? = null
-            val mover = object : Mover {
+            val mover = object : KotlinMover {
                 override fun invoke(originalElement: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration {
-                    return Mover.Default(originalElement, targetContainer).apply { movedClass = this as KtClassOrObject }
+                    return KotlinMover.Default(originalElement, targetContainer).apply { movedClass = this as KtClassOrObject }
                 }
             }
             val moveDescriptor = MoveDeclarationsDescriptor(

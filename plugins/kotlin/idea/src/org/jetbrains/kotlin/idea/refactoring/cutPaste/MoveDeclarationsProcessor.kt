@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsTransferableData.Companion.STUB_RENDERER
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.Mover
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.psi.*
@@ -131,7 +131,7 @@ class MoveDeclarationsProcessor(
             psiDocumentManager.commitDocument(sourceDocument)
         }
 
-        val mover = object : Mover {
+        val mover = object : KotlinMover {
             override fun invoke(declaration: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration {
                 val index = stubDeclarations.indexOf(declaration)
                 assert(index >= 0)
