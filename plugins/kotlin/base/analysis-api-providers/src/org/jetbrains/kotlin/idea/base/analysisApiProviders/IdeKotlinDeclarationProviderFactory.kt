@@ -90,6 +90,10 @@ private class IdeKotlinDeclarationProvider(
         return KotlinMultiFileClassPartIndex[facadeFqName.asString(), project, scope]
     }
 
+    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> {
+        return KotlinScriptFqnIndex[scriptFqName.asString(), project, scope]
+    }
+
     private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? {
         return firstMatchingOrNull(
             stubKey = KotlinTopLevelTypeAliasFqNameIndex.indexKey,

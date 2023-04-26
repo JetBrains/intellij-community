@@ -22,7 +22,7 @@ kotlin {
             }
         }
     }
-    js(BOTH) {
+    js {
         browser {
             commonWebpackConfig {
                 cssSupport {

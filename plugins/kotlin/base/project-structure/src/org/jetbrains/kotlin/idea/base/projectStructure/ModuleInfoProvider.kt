@@ -19,6 +19,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
+import org.jetbrains.kotlin.analysis.project.structure.KtModuleStructureInternals
+import org.jetbrains.kotlin.analysis.project.structure.analysisExtensionFileContextModule
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.runReadAction
@@ -27,6 +29,7 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -109,6 +112,11 @@ class ModuleInfoProvider(private val project: Project) {
 
         val containingKtFile = containingFile as? KtFile
         if (containingKtFile != null) {
+            @OptIn(KtModuleStructureInternals::class, Frontend10ApiUsage::class)
+            containingFile.virtualFile?.analysisExtensionFileContextModule?.let { module ->
+                yield(Result.success(module.moduleInfo))
+            }
+
             val analysisContext = containingKtFile.analysisContext
             if (analysisContext != null) {
                 collectByElement(analysisContext, config)
