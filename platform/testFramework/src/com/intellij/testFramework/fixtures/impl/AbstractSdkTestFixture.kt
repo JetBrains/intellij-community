@@ -12,46 +12,47 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.runInEdtAndGet
 
-class SdkTestFixtureImpl(
-  private val sdkType: SdkType,
-  private val versionFilter: (String) -> Boolean
-) : BaseFixture(), SdkTestFixture {
+abstract class AbstractSdkTestFixture : SdkTestFixture {
+
+  private lateinit var fixtureDisposable: Disposable
 
   private lateinit var sdk: Sdk
+
+  protected abstract val sdkType: SdkType
+
+  protected abstract fun isSdkSupported(versionString: String): Boolean
+
+  protected abstract fun findOrCreateSdk(): Sdk
 
   override fun getSdk(): Sdk {
     return sdk
   }
 
   override fun setUp() {
-    super.setUp()
+    fixtureDisposable = Disposer.newDisposable()
 
     sdk = findOrCreateSdk()
   }
 
-  private fun findOrCreateSdk(): Sdk {
-    return findSdkInTable() ?: findAndAddSdk() ?: throw AssertionError(
-      "Cannot find SDK with defined parameters. " +
-      "Please, research SDK restrictions or discuss it with test author, " +
-      "and install it manually."
-    )
+  override fun tearDown() {
+    Disposer.dispose(fixtureDisposable)
   }
 
-  private fun findSdkInTable(): Sdk? {
+  protected fun findSdkInTable(): Sdk? {
     val table = ProjectJdkTable.getInstance()
     return runReadAction { table.allJdks }.asSequence()
-      .filter { it.versionString != null && versionFilter(it.versionString!!) }
+      .filter { it.versionString != null && isSdkSupported(it.versionString!!) }
       .sortedBy { it.versionString }
       .firstOrNull()
   }
 
-  private fun findAndAddSdk(): Sdk? {
+  protected fun findAndAddSdk(): Sdk? {
     return sdkType.suggestHomePaths().asSequence()
       .filter { sdkType.isValidSdkHome(it) }
       .map { sdkType.getVersionString(it) to it }
-      .filter { it.first != null && versionFilter(it.first!!) }
+      .filter { it.first != null && isSdkSupported(it.first!!) }
       .sortedBy { it.first }
-      .mapNotNull { createAndAddSdk(it.second, sdkType, testRootDisposable) }
+      .mapNotNull { createAndAddSdk(it.second, sdkType, fixtureDisposable) }
       .firstOrNull()
   }
 
