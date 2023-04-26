@@ -2,7 +2,10 @@
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ContextAwareRunnable;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -13,8 +16,14 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
+import kotlin.Pair;
+import kotlin.Unit;
+import kotlin.coroutines.CoroutineContext;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CompletableJob;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
 import java.util.function.Function;
+
+import static com.intellij.openapi.application.ModalityKt.asContextElement;
 
 /**
  * <p>
@@ -438,6 +449,27 @@ public final class ProgressRunner<R> {
     @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
+    Pair<CoroutineContext, CompletableJob> childContextAndJob = Propagation.createChildContext();
+    CoroutineContext childContext = childContextAndJob.getFirst();
+    CompletableJob childJob = childContextAndJob.getSecond();
+    if (childJob != null) {
+      // cancellation of the Job cancels the future
+      childJob.invokeOnCompletion(true, true, (throwable) -> {
+        if (throwable != null) {
+          resultFuture.completeExceptionally(throwable);
+        }
+        return Unit.INSTANCE;
+      });
+      // completion of the future completes the Job
+      resultFuture.whenComplete((result, throwable) -> {
+        if (throwable == null) {
+          childJob.complete();
+        }
+        else {
+          childJob.completeExceptionally(throwable);
+        }
+      });
+    }
     progressIndicatorFuture.whenComplete((progressIndicator, throwable) -> {
       if (throwable != null) {
         resultFuture.completeExceptionally(throwable);
@@ -451,13 +483,19 @@ public final class ProgressRunner<R> {
           resultFuture.completeExceptionally(e);
         }
       };
+      Runnable contextRunnable = childContext.equals(EmptyCoroutineContext.INSTANCE) ? runnable : (ContextAwareRunnable)() -> {
+        CoroutineContext effectiveContext = childContext.plus(asContextElement(progressIndicator.getModalityState()));
+        try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
+          runnable.run();
+        }
+      };
       switch (myThreadToUse) {
         case POOLED:
-          AppExecutorUtil.getAppExecutorService().execute(runnable);
+          AppExecutorUtil.getAppExecutorService().execute(contextRunnable);
           break;
         case WRITE:
           ModalityState processModality = progressIndicator.getModalityState();
-          ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, processModality);
+          ApplicationManager.getApplication().invokeLaterOnWriteThread(contextRunnable, processModality);
           break;
         default:
           throw new IllegalStateException("Unexpected value: " + myThreadToUse);

@@ -62,7 +62,8 @@ class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(Blocki
   companion object : CoroutineContext.Key<BlockingJob>
 }
 
-private fun createChildContext(): Pair<CoroutineContext, CompletableJob?> {
+@Internal
+fun createChildContext(): Pair<CoroutineContext, CompletableJob?> {
   val currentThreadContext = currentThreadContext()
 
   // Problem: a task may infinitely reschedule itself
