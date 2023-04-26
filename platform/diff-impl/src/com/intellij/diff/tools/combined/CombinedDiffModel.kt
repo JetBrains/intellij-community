@@ -4,7 +4,6 @@ package com.intellij.diff.tools.combined
 import com.intellij.diff.DiffContext
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.combined.CombinedDiffModel.NewRequestData
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -37,16 +36,12 @@ interface CombinedDiffModel {
 
   fun addListener(listener: CombinedDiffModelListener, disposable: Disposable)
 
-  data class NewRequestData(val blockId: CombinedBlockId, val position: InsertPosition)
   data class RequestData(val blockId: CombinedBlockId, val producer: DiffRequestProducer)
   data class InsertPosition(val blockId: CombinedBlockId, val above: Boolean)
 }
 
 interface CombinedDiffModelListener : EventListener {
   fun onModelReset()
-
-  @RequiresEdt
-  fun onRequestAdded(requestData: NewRequestData, request: DiffRequest, onAdded: (CombinedBlockId) -> Unit)
 
   @RequiresEdt
   fun onRequestsLoaded(requests: Map<CombinedBlockId, DiffRequest>, blockIdToSelect: CombinedBlockId? = null)

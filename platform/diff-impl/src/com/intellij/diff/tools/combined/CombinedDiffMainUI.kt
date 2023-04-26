@@ -328,7 +328,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
     fun countDifferences(blockId: CombinedBlockId, childViewer: DiffViewer) {
       val combinedViewer = combinedViewer ?: return
-      val index = combinedViewer.diffBlocksPositions[blockId] ?: return
+      val index = combinedViewer.getBlockIndex(blockId) ?: return
 
       loadedDifferences[index] = 1
 

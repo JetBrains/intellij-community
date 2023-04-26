@@ -72,7 +72,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
 
-  internal val diffBlocksPositions = BidirectionalMap<CombinedBlockId, Int>()
+  private val diffBlocksPositions: BidirectionalMap<CombinedBlockId, Int> = BidirectionalMap()
 
   internal val scrollSupport = CombinedDiffScrollSupport(project, this)
 
@@ -123,37 +123,6 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     diffViewers[diffBlock.id] = viewer
     diffBlocksPositions[diffBlock.id] = getDiffBlocksCount() - 1
     viewer.init()
-  }
-
-  internal fun insertChildBlock(content: CombinedDiffBlockContent, position: CombinedDiffModel.InsertPosition?): CombinedDiffBlock<*> {
-    val above = position?.above ?: false
-    val insertIndex =
-      if (position == null) -1
-      else diffBlocksPositions[position.blockId]?.let { if (above) it else it.inc() } ?: -1
-
-    val diffBlock = createDiffBlock(content, getDiffBlocksCount() > 1 && insertIndex > 0)
-    val blockId = diffBlock.id
-    val viewer = content.viewer
-
-    if (insertIndex != -1 && insertIndex < getDiffBlocksCount()) {
-      contentPanel.add(diffBlock.component, insertIndex)
-      for (index in insertIndex until getDiffBlocksCount()) {
-        getBlockId(index)?.let { id -> diffBlocksPositions[id] = index + 1 }
-      }
-      diffBlocks[blockId] = diffBlock
-      diffViewers[blockId] = viewer
-      diffBlocksPositions[blockId] = insertIndex
-    }
-    else {
-      contentPanel.add(diffBlock.component)
-      diffBlocks[blockId] = diffBlock
-      diffViewers[blockId] = viewer
-      diffBlocksPositions[blockId] = contentPanel.componentCount - 1
-    }
-
-    viewer.init()
-
-    return diffBlock
   }
 
   private fun createDiffBlock(content: CombinedDiffBlockContent, needBorder: Boolean): CombinedDiffBlock<*> {
@@ -328,7 +297,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   private fun updateGlobalBlockHeader(visibleBlocks: List<CombinedDiffBlock<*>>, viewRect: Rectangle) {
     val firstVisibleBlock = visibleBlocks.first()
     val blockOnTop = firstVisibleBlock.component.bounds.y == viewRect.y
-    val previousBlockPosition = max((diffBlocksPositions[firstVisibleBlock.id] ?: -1) - 1, 0)
+    val previousBlockPosition = max((getBlockIndex(firstVisibleBlock.id) ?: -1) - 1, 0)
     val firstBlock = diffBlocks.values.first()
     val firstBlockComponent = firstBlock.component
     val firstBlockHeader = firstBlock.header
@@ -358,6 +327,10 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     return getBlockId(scrollSupport.blockIterable.index)
   }
 
+  fun getBlockIndex(id: CombinedBlockId): Int? {
+    return diffBlocksPositions[id]
+  }
+
   internal fun getDifferencesIterable(): PrevNextDifferenceIterable? {
     return getCurrentDataProvider()?.let(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE::getData)
   }
@@ -373,7 +346,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   internal fun getDiffViewerForId(id: CombinedBlockId): DiffViewer? = diffViewers[id]
 
   fun selectDiffBlock(blockId: CombinedBlockId, scrollPolicy: ScrollPolicy, focusBlock: Boolean, onSelected: () -> Unit = {}) {
-    val index = diffBlocksPositions[blockId]
+    val index = getBlockIndex(blockId)
     if (index == null || index == -1) return
 
     selectDiffBlock(index, scrollPolicy, focusBlock, onSelected)
@@ -394,7 +367,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   }
 
   fun selectDiffBlock(block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy, focusBlock: Boolean = true, onSelected: () -> Unit = {}) {
-    val index = diffBlocksPositions[block.id]
+    val index = getBlockIndex(block.id)
     if (index == null || index == -1) return
 
     selectDiffBlock(index, block, scrollPolicy, focusBlock, onSelected)
@@ -477,7 +450,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
     override fun focusGained(editor: Editor) {
       val indexOfSelectedBlock =
-        diffViewers.entries.find { editor == it.value.editor }?.key?.let { blockId -> diffBlocksPositions[blockId] } ?: -1
+        diffViewers.entries.find { editor == it.value.editor }?.key?.let { blockId -> getBlockIndex(blockId) } ?: -1
       if (indexOfSelectedBlock != -1) {
         scrollSupport.blockIterable.index = indexOfSelectedBlock
         diffInfo.update()
@@ -489,7 +462,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
         diffViewers.entries.find {
           val v = it.value
           !v.isEditorBased && (v.preferredFocusedComponent == e.component || v.component == e.component)
-        }?.key?.let { blockId -> diffBlocksPositions[blockId] } ?: -1
+        }?.key?.let { blockId -> getBlockIndex(blockId) } ?: -1
 
       if (indexOfSelectedBlock != -1) {
         scrollSupport.blockIterable.index = indexOfSelectedBlock

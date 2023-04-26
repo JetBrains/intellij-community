@@ -5,7 +5,6 @@ import com.intellij.diff.*
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffSettingsHolder
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.combined.CombinedDiffModel.NewRequestData
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -117,11 +116,6 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
         }
       }
     }
-
-    @RequiresEdt
-    override fun onRequestAdded(requestData: NewRequestData, request: DiffRequest, onAdded: (CombinedBlockId) -> Unit) {
-      addNewBlock(mainUi, combinedViewer, model.context, requestData, request)?.run { onAdded(id) }
-    }
   }
 
   private inner class MyBlockListener : BlockListener {
@@ -176,17 +170,6 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
   }
 
   companion object {
-    private fun addNewBlock(mainUi: CombinedDiffMainUI,
-                            viewer: CombinedDiffViewer,
-                            context: DiffContext,
-                            requestData: NewRequestData,
-                            request: DiffRequest,
-                            needTakeTool: (FrameDiffTool) -> Boolean = { true }): CombinedDiffBlock<*>? {
-      val content = buildBlockContent(mainUi, context, request, requestData.blockId, needTakeTool)
-                    ?: return null
-      return viewer.insertChildBlock(content, requestData.position)
-    }
-
     private fun buildBlockContent(mainUi: CombinedDiffMainUI,
                                   context: DiffContext,
                                   request: DiffRequest,
