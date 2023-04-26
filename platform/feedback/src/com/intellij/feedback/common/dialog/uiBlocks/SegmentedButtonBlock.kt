@@ -14,9 +14,9 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
                               @NlsContexts.Label val mainLabel: String?,
                               val items: List<T>,
                               val renderer: (T) -> String,
-                              @NlsContexts.Label val leftBottomLabel: String?,
-                              @NlsContexts.Label val midBottomLabel: String?,
-                              @NlsContexts.Label val rightBottomLabel: String?) : SingleInputFeedbackBlock<T>(myProperty) {
+                              @NlsContexts.Label val leftBottomLabel: String? = null,
+                              @NlsContexts.Label val midBottomLabel: String? = null,
+                              @NlsContexts.Label val rightBottomLabel: String? = null) : SingleInputFeedbackBlock<T>(myProperty) {
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
@@ -25,8 +25,7 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
           row {
             label(mainLabel)
               .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
-              .bold()
-          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+          }.bottomGap(BottomGap.SMALL)
         }
         row {
           segmentedButton(items, renderer)
@@ -38,10 +37,11 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
             .validation {
               addApplyRule(CommonFeedbackBundle.message("dialog.feedback.segmentedButton.error")) { it.selectedItem == null }
             }
-        }
-
-        if (leftBottomLabel == null && midBottomLabel == null && rightBottomLabel == null) {
-          return@panel
+        }.apply {
+          if (leftBottomLabel == null && midBottomLabel == null && rightBottomLabel == null) {
+            this.bottomGap(BottomGap.MEDIUM)
+            return@panel
+          }
         }
 
         row {
@@ -76,7 +76,7 @@ class SegmentedButtonBlock<T>(myProperty: ObservableMutableProperty<T>,
               }
               .widthGroup("Group")
           }
-        }
+        }.bottomGap(BottomGap.MEDIUM)
       }
     }
   }
