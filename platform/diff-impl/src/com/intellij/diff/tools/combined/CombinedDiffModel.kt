@@ -6,9 +6,7 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.combined.CombinedDiffModel.NewRequestData
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.CheckedDisposable
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
@@ -34,8 +32,6 @@ interface CombinedDiffModel {
 
   fun getLoadedRequests(): List<DiffRequest>
 
-  @RequiresBackgroundThread
-  fun preloadRequests(indicator: ProgressIndicator, requests: List<RequestData>)
   fun loadRequestContents(blockIds: Collection<CombinedBlockId>, blockToSelect: CombinedBlockId?)
   fun unloadRequestContents(blockIds: Collection<CombinedBlockId>)
 
@@ -51,9 +47,6 @@ interface CombinedDiffModelListener : EventListener {
 
   @RequiresEdt
   fun onRequestAdded(requestData: NewRequestData, request: DiffRequest, onAdded: (CombinedBlockId) -> Unit)
-
-  @RequiresEdt
-  fun onRequestsPreloaded(requests: List<Pair<CombinedBlockId, DiffRequest>>)
 
   @RequiresEdt
   fun onRequestsLoaded(requests: Map<CombinedBlockId, DiffRequest>, blockIdToSelect: CombinedBlockId? = null)

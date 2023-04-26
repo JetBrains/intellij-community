@@ -41,7 +41,9 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
 
   private fun scrollToDiffBlock(index: Int) {
     if (viewer.diffBlocksPositions.values.contains(index)) {
-      viewer.contentPanel.components.getOrNull(index)?.bounds?.let(viewer.contentPanel::scrollRectToVisible)
+      val bounds = viewer.contentPanel.components.getOrNull(index)?.bounds ?: return
+      bounds.height = Int.MAX_VALUE
+      viewer.contentPanel.scrollRectToVisible(bounds)
     }
   }
 

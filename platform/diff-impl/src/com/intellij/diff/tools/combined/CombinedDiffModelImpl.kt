@@ -83,12 +83,6 @@ open class CombinedDiffModelImpl(protected val project: Project,
 
   override fun getLoadedRequests(): List<DiffRequest> = loadedRequests.values.toList()
 
-  @RequiresBackgroundThread
-  override fun preloadRequests(indicator: ProgressIndicator, requests: List<CombinedDiffModel.RequestData>) {
-    val preloadedRequests = requests.map { it.blockId to loadRequest(indicator, it.blockId, it.producer) }
-    modelListeners.multicaster.onRequestsPreloaded(preloadedRequests)
-  }
-
   override fun loadRequestContents(blockIds: Collection<CombinedBlockId>, blockToSelect: CombinedBlockId?) {
     val notLoadedBlockIds = blockIds.filter { it !in loadedRequests }
     if (notLoadedBlockIds.isNotEmpty()) {
@@ -117,8 +111,20 @@ open class CombinedDiffModelImpl(protected val project: Project,
   @RequiresBackgroundThread
   private fun loadRequests(indicator: ProgressIndicator, blockIds: Collection<CombinedBlockId>, blockToSelect: CombinedBlockId? = null) {
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(ourDisposable, {
-      val loadedDiffRequests = hashMapOf<CombinedBlockId, DiffRequest>()
       modelListeners.multicaster.onProgressBar(true)
+
+      val blocksToLoad = blockIds.toMutableList()
+      if (blockToSelect != null) {
+        ProgressManager.checkCanceled()
+        val requestProducer = requests[blockToSelect]
+        if (requestProducer != null) {
+          val diffRequest = loadRequest(indicator, blockToSelect, requestProducer)
+          runInEdt { modelListeners.multicaster.onRequestsLoaded(mapOf(blockToSelect to diffRequest), blockToSelect) }
+        }
+        blocksToLoad.remove(blockToSelect)
+        //return@runUnderDisposeAwareIndicator
+      }
+      val loadedDiffRequests = hashMapOf<CombinedBlockId, DiffRequest>()
       for (blockId in blockIds) {
         ProgressManager.checkCanceled()
 

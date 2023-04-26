@@ -41,6 +41,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.NonNls
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -56,6 +57,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   private val project = context.project!! // CombinedDiffContext expected
 
   internal val contentPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false))
+
   internal val scrollPane = JBScrollPane(
     contentPanel,
     ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -91,11 +93,24 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       .also { Disposer.register(this, it) }
 
   internal fun updateBlockContent(block: CombinedDiffBlock<*>, newContent: CombinedDiffBlockContent) {
+    val viewRect = scrollPane.viewport.viewRect
+    val viewSize = scrollPane.viewport.viewSize
+
+    val adjustmentNeeded = isBlockBeforeOrIntersectViewport(block.id)
+
     val newViewer = newContent.viewer
     diffViewers.remove(block.id)?.also(Disposer::dispose)
     diffViewers[block.id] = newViewer
     block.updateBlockContent(newContent)
     newViewer.init()
+
+    val afterSize = scrollPane.viewport.viewSize
+
+    val diff = afterSize.height - viewSize.height
+    if (diff > 0 && adjustmentNeeded) {
+      viewRect.y += diff
+      scrollPane.viewport.viewPosition = Point(viewRect.x, viewRect.y)
+    }
   }
 
   internal fun addChildBlock(content: CombinedDiffBlockContent, needBorder: Boolean) {
@@ -121,7 +136,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
     if (insertIndex != -1 && insertIndex < diffBlocks.size) {
       contentPanel.add(diffBlock.component, insertIndex)
-      for (index in insertIndex until  diffBlocks.size) {
+      for (index in insertIndex until diffBlocks.size) {
         getBlockId(index)?.let { id -> diffBlocksPositions[id] = index + 1 }
       }
       diffBlocks[blockId] = diffBlock
@@ -187,7 +202,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     return if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) getCurrentDiffViewer()?.editor else null
   }
 
-  private inner class ViewportChangeListener: ChangeListener {
+  private inner class ViewportChangeListener : ChangeListener {
 
     override fun stateChanged(e: ChangeEvent) {
       visibleBlocksUpdateQueue.queue(object : Update(e) {
@@ -277,7 +292,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
 
     if (blocksInViewport.isNotEmpty()) {
-      updateGlobalBlockHeader(blocksInViewport, viewRect)
+      //updateGlobalBlockHeader(blocksInViewport, viewRect)
     }
 
     val totalVisible = beforeViewport.filterNotNull() + blocksInViewport + afterViewport.filterNotNull()
@@ -287,6 +302,28 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
   }
 
+  private fun isBlockBeforeOrIntersectViewport(blockId: CombinedBlockId): Boolean {
+    val viewRect = scrollPane.viewport.viewRect
+    var intersectionStarted = false
+
+    for (block in getAllBlocks()) {
+      val viewportIntersected = block.component.bounds.intersects(viewRect)
+
+      if (!intersectionStarted && viewportIntersected) {
+        intersectionStarted = true
+        if (blockId == block.id) return !scrollPane.viewport.viewRect.contains(block.component.bounds)
+      }
+
+      if (!intersectionStarted) {
+        if (blockId == block.id) {
+          val contains = scrollPane.viewport.viewRect.contains(block.component.bounds)
+          if (!contains) return true
+        }
+      }
+    }
+    return false
+  }
+
   private fun updateGlobalBlockHeader(visibleBlocks: List<CombinedDiffBlock<*>>, viewRect: Rectangle) {
     val firstVisibleBlock = visibleBlocks.first()
     val blockOnTop = firstVisibleBlock.component.bounds.y == viewRect.y
@@ -294,7 +331,8 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     val firstBlock = diffBlocks.values.first()
     val firstBlockComponent = firstBlock.component
     val firstBlockHeader = firstBlock.header
-    val previousBlockHeader = (getBlockId(previousBlockPosition)?.let { diffBlocks[it] } as? CombinedDiffGlobalBlockHeaderProvider)?.globalHeader
+    val previousBlockHeader = (getBlockId(
+      previousBlockPosition)?.let { diffBlocks[it] } as? CombinedDiffGlobalBlockHeaderProvider)?.globalHeader
     val firstVisibleBlockHeader = (firstVisibleBlock as? CombinedDiffGlobalBlockHeaderProvider)?.globalHeader
 
     when {
@@ -403,8 +441,8 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     combinedEditorSettingsAction.installGutterPopup()
     combinedEditorSettingsAction.applyDefaults()
     editors.forEach { editor ->
-      editor.settings.additionalLinesCount = 0
-      (editor as? EditorEx)?.setVerticalScrollbarVisible(false)
+      //editor.settings.additionalLinesCount = 5
+      //(editor as? EditorEx)?.setVerticalScrollbarVisible(false)
     }
   }
 

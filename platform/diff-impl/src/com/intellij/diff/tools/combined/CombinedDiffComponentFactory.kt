@@ -106,22 +106,6 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
 
     @RequiresEdt
-    override fun onRequestsPreloaded(requests: List<Pair<CombinedBlockId, DiffRequest>>) {
-      invokeAndWaitIfNeeded {
-        for ((index, blockIdAndRequest) in requests.withIndex()) {
-          val (blockId, request) = blockIdAndRequest
-          buildBlockContent(mainUi, model.context, request, blockId)?.let {
-            combinedViewer.addChildBlock(it, index > 0)
-            mainUi.countDifferences(blockId, it.viewer)
-            request.onAssigned(true)
-          }
-        }
-
-        combinedViewer.contentChanged()
-      }
-    }
-
-    @RequiresEdt
     override fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>) {
       for ((blockId, request) in requests) {
         buildLoadingBlockContent(blockId, combinedViewer.diffViewers[blockId]?.component?.size).let { newContent ->
@@ -169,9 +153,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
                 .asSequence()
                 .map { CombinedDiffModel.RequestData(it.key, it.value) }
 
-              model.preloadRequests(indicator, allRequests.take(visibleBlockCount).toList())
-
-              allRequests.drop(visibleBlockCount).forEachIndexed { index, childRequest ->
+              allRequests.forEachIndexed { index, childRequest ->
                 invokeAndWaitIfNeeded {
                   combinedViewer.addChildBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
                 }
