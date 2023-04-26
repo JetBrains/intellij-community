@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
 import com.intellij.openapi.vcs.changes.DiffRequestProcessorWithProducers
@@ -87,8 +86,8 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
 
   open fun returnFocusToTree() = Unit
 
-  override fun isPreviewOnDoubleClickAllowed(): Boolean = isCombinedPreviewAllowed() && super.isPreviewOnDoubleClickAllowed()
-  override fun isPreviewOnEnterAllowed(): Boolean = isCombinedPreviewAllowed() && super.isPreviewOnEnterAllowed()
+  override fun isPreviewOnDoubleClickAllowed(): Boolean = CombinedDiffRegistry.isEnabled() && super.isPreviewOnDoubleClickAllowed()
+  override fun isPreviewOnEnterAllowed(): Boolean = CombinedDiffRegistry.isEnabled() && super.isPreviewOnEnterAllowed()
 
   protected abstract fun createModel(): CombinedDiffPreviewModel
 
@@ -104,8 +103,6 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
   internal fun getFileSize(): Int = model.requests.size
 
   protected val ChangesTree.id: @NonNls String get() = javaClass.name + "@" + Integer.toHexString(hashCode())
-
-  private fun isCombinedPreviewAllowed() = Registry.`is`("enable.combined.diff")
 }
 
 abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,

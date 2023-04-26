@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -92,7 +91,7 @@ open class CombinedDiffModelImpl(protected val project: Project,
 
   override fun unloadRequestContents(blockIds: Collection<CombinedBlockId>) {
     val unloadedRequests = mutableMapOf<CombinedBlockId, DiffRequest>()
-    val loadedRequestsLimit = Registry.intValue("combined.diff.loaded.content.limit")
+    val loadedRequestsLimit = CombinedDiffRegistry.getMaxBlockCountInMemory()
 
     for (blockId in blockIds) {
       if (loadedRequestsLimit < 0 || loadedRequestsLimit < loadedRequests.size) {

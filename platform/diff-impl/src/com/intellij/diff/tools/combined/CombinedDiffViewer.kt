@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBScrollPane
@@ -261,7 +260,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   internal var iterationState = IterationState.NONE
 
   private fun notifyVisibleBlocksChanged() {
-    val delta = Registry.intValue("combined.diff.visible.viewport.delta")
+    val delta = CombinedDiffRegistry.getPreloadedBlocksCount()
     val viewRect = scrollPane.viewport.viewRect
     val beforeViewport = arrayOfNulls<CombinedDiffBlock<*>>(delta)
     val afterViewport = arrayOfNulls<CombinedDiffBlock<*>>(delta)
