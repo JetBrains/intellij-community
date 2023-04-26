@@ -35,7 +35,7 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
+public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware implements MavenServerIndexer {
 
   private final Maven3ServerEmbedder myEmbedder;
   private final NexusIndexer myIndexer;
