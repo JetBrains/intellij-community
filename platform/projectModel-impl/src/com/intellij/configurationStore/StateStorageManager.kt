@@ -18,7 +18,7 @@ interface StateStorageManager {
 
   fun addStreamProvider(provider: StreamProvider, first: Boolean = false)
 
-  fun removeStreamProvider(clazz: Class<out StreamProvider>)
+  fun removeStreamProvider(aClass: Class<out StreamProvider>)
 
   fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage?
 
