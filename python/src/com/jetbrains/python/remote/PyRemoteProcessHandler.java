@@ -16,6 +16,7 @@ import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyPositionConverter;
 import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PyRemoteProcessHandler extends ColoredRemoteProcessHandler<RemoteProcess>
   implements RemoteDebuggableProcessHandler, KillableProcess {
   private static final Logger LOG = Logger.getInstance(PyRemoteProcessHandler.class);
