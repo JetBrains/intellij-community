@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.InjectionEditService;
@@ -48,8 +49,14 @@ public final class ModCommands {
    * @return a command that selects given element in the editor, assuming that it's opened in the editor
    */
   public static @NotNull ModCommand select(@NotNull PsiElement target) {
-    VirtualFile file = target.getContainingFile().getVirtualFile();
+    PsiFile psiFile = target.getContainingFile();
     TextRange range = target.getTextRange();
+    Document document = psiFile.getViewProvider().getDocument();
+    if (document instanceof DocumentWindow window) {
+      range = window.injectedToHost(range);
+      psiFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
+    }
+    VirtualFile file = psiFile.getVirtualFile();
     return new ModNavigate(file, range.getStartOffset(), range.getEndOffset(), range.getStartOffset());
   }
 
