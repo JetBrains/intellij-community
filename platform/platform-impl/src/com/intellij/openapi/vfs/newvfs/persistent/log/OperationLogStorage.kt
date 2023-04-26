@@ -91,10 +91,12 @@ interface OperationLogStorage {
     /** Couldn't retrieve any information at all */
     data class Invalid(val cause: Throwable) : OperationReadResult
 
-    fun getTag(): VfsOperationTag = when (this) {
-      is Valid -> operation.tag
-      is Incomplete -> tag
-      is Invalid -> throw IllegalAccessException("data access on OperationReadResult.Invalid")
+    companion object {
+      fun OperationReadResult.getTag(): VfsOperationTag = when (this) {
+        is Valid -> operation.tag
+        is Incomplete -> tag
+        is Invalid -> throw IllegalAccessException("data access on OperationReadResult.Invalid")
+      }
     }
   }
 
