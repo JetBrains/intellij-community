@@ -34,7 +34,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   @Parameterized.Parameters(name = "with Maven-{0}")
   public static List<String[]> getMavenVersions() {
     return Arrays.asList(
-     // new String[]{"4.0.0-alpha-4"},
+     // new String[]{"4.0.0-alpha-5"},
       new String[]{"3.9.1"},
       new String[]{"3.9.0"},
       new String[]{"3.8.6"},
