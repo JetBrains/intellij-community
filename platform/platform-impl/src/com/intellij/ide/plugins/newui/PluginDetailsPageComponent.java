@@ -51,11 +51,12 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
+
+import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Alexander Lobas
@@ -89,12 +90,15 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private JLabel myEnabledForProject;
   private JLabel myVersionSize;
   private TagPanel myTagPanel;
+
   private JLabel myDate;
   private JLabel myRating;
   private JLabel myDownloads;
   private JBLabel myVersion1;
   private JLabel myVersion2;
   private JLabel mySize;
+  private JEditorPane myRequiredPlugins;
+
   private LinkPanel myAuthor;
   private BorderLayoutPanel myControlledByOrgNotification;
   private BorderLayoutPanel myPlatformIncompatibleNotification;
@@ -631,7 +635,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false,
                                     () -> ((ApplicationInfoEx)ApplicationInfo.getInstance()).getPluginManagerUrl() +
                                           "/intellij/" +
-                                          URLUtil.encodeURIComponent(Objects.requireNonNull(myPlugin).getPluginId().getIdString()) +
+                                          URLUtil.encodeURIComponent(requireNonNull(myPlugin).getPluginId().getIdString()) +
                                           "/review/new");
 
     JPanel reviewsPanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
@@ -650,7 +654,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
       ListPluginComponent component = myShowComponent;
       PluginNode node = (PluginNode)component.getPluginDescriptor();
-      PageContainer<PluginReviewComment> reviewComments = Objects.requireNonNull(node.getReviewComments());
+      PageContainer<PluginReviewComment> reviewComments = requireNonNull(node.getReviewComments());
       int page = reviewComments.getNextPage();
 
       ProcessIOExecutorService.INSTANCE.execute(() -> {
@@ -694,6 +698,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     infoPanel.add(myVersion2 = new JLabel());
     infoPanel.add(myDate = new JLabel());
     infoPanel.add(mySize = new JLabel());
+    infoPanel.add(myRequiredPlugins = createRequiredPluginsComponent(), VerticalLayout.FILL_HORIZONTAL);
 
     myRating.setForeground(ListPluginComponent.GRAY_COLOR);
     myDownloads.setForeground(ListPluginComponent.GRAY_COLOR);
@@ -702,6 +707,15 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     mySize.setForeground(ListPluginComponent.GRAY_COLOR);
 
     pane.add(IdeBundle.message("plugins.configurable.additional.info.tab.name"), new Wrapper(infoPanel));
+  }
+
+  private static @NotNull JEditorPane createRequiredPluginsComponent() {
+    JEditorPane editorPane = new JEditorPane();
+    UIUtil.convertToLabel(editorPane);
+    editorPane.setCaret(EmptyCaret.INSTANCE);
+    editorPane.setForeground(ListPluginComponent.GRAY_COLOR);
+    editorPane.setContentType("text/plain");
+    return editorPane;
   }
 
   private static void addTabWithoutBorders(@NotNull JBTabbedPane pane, @NotNull Runnable callback) {
@@ -813,11 +827,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             }
 
             loadReviews(marketplace, node, pluginNode);
+            loadDependencyNames(marketplace, pluginNode);
 
             component.setPluginDescriptor(pluginNode);
           });
         }
-        else if (node.getScreenShots() == null || node.getReviewComments() == null) {
+        else if (node.getScreenShots() == null || node.getReviewComments() == null || node.getDependencyNames() == null) {
           syncLoading = false;
           doLoad(component, () -> {
             MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
@@ -833,6 +848,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             }
             if (node.getReviewComments() == null) {
               loadReviews(marketplace, node, node);
+            }
+            if (node.getDependencyNames() == null) {
+              loadDependencyNames(marketplace, node);
             }
           });
         }
@@ -852,6 +870,23 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       reviewComments.addItems(items);
     }
     resultNode.setReviewComments(reviewComments);
+  }
+
+  private static void loadDependencyNames(@NotNull MarketplaceRequests marketplace, @NotNull PluginNode resultNode) {
+    List<String> dependencyNames = resultNode.getDependencies().stream()
+      .filter(dependency -> !dependency.isOptional())
+      .map(IdeaPluginDependency::getPluginId)
+      .filter(PluginDetailsPageComponent::isNotPlatformModule)
+      .map(pluginId -> {
+        IdeaPluginDescriptorImpl existingPlugin = PluginManagerCore.findPlugin(pluginId);
+        if (existingPlugin != null) return existingPlugin.getName();
+
+        PluginNode pluginFromMarketplace = marketplace.getLastCompatiblePluginUpdate(pluginId);
+        return pluginFromMarketplace == null ? pluginId.getIdString() : pluginFromMarketplace.getName();
+      })
+      .toList();
+
+    resultNode.setDependencyNames(dependencyNames);
   }
 
   private void doLoad(@NotNull ListPluginComponent component, @NotNull Runnable task) {
@@ -920,7 +955,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void showPlugin() {
-    @NlsSafe String text = "<html><span>" + myPlugin.getName() + "</span></html>";
+    @NlsSafe String text = "<html><span>" + requireNonNull(myPlugin).getName() + "</span></html>";
     myNameComponent.setText(text);
     myNameComponent.setForeground(null);
     updateNotifications();
@@ -968,6 +1003,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       String rating = null;
       String downloads = null;
       String size = null;
+      Collection<String> requiredPluginNames = emptyList();
+
       if (myPlugin instanceof PluginNode pluginNode) {
         rating = pluginNode.getPresentableRating();
         downloads = pluginNode.getPresentableDownloads();
@@ -982,6 +1019,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         updateUrlComponent(myBugtrackerUrl, "plugins.configurable.bugtracker.url", pluginNode.getBugtrackerUrl());
         updateUrlComponent(myDocumentationUrl, "plugins.configurable.documentation.url", pluginNode.getDocumentationUrl());
         updateUrlComponent(mySourceCodeUrl, "plugins.configurable.source.code", pluginNode.getSourceCodeUrl());
+
+        requiredPluginNames = pluginNode.getDependencyNames() != null ? pluginNode.getDependencyNames() : emptyList();
       }
 
       myRating.setText(myMultiTabs ? IdeBundle.message("plugins.configurable.rate.0", rating) : rating);
@@ -992,6 +1031,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
       mySize.setText(IdeBundle.message("plugins.configurable.size.0", size));
       mySize.setVisible(size != null);
+
+      myRequiredPlugins.setText(IdeBundle.message("plugins.configurable.required.plugins.0",
+                                                  StringUtil.join(ContainerUtil.map(requiredPluginNames, x -> " • " + x), "\n")));
+      myRequiredPlugins.setVisible(!requiredPluginNames.isEmpty());
     }
     else {
       updateEnabledForProject();
@@ -1081,6 +1124,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     else {
       fullRepaint();
     }
+  }
+
+  private static boolean isNotPlatformModule(@NotNull PluginId pluginId) {
+    if ("com.intellij".equals(pluginId.getIdString())) return false;
+
+    return !PluginManagerCore.isModuleDependency(pluginId);
   }
 
   private void updateReviews(@NotNull PluginNode pluginNode) {
@@ -1439,7 +1488,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   private void updateEnabledForProject() {
     if (myEnabledForProject != null) {
-      PluginEnabledState state = myPluginModel.getState(Objects.requireNonNull(myPlugin));
+      PluginEnabledState state = myPluginModel.getState(requireNonNull(myPlugin));
       myEnabledForProject.setText(state.getPresentableText());
       myEnabledForProject.setIcon(AllIcons.General.ProjectConfigurable);
     }

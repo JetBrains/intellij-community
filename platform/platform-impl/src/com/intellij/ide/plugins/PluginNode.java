@@ -67,6 +67,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String mySuggestedCommercialIde = null;
   private Collection<String> mySuggestedFeatures;
 
+  private Collection<String> dependencyNames;
+
   /**
    * @deprecated Use {@link #PluginNode(PluginId)}
    */
@@ -592,6 +594,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setSuggestedFeatures(@NotNull Collection<String> features) {
     mySuggestedFeatures = features;
+  }
+
+  public @Nullable Collection<String> getDependencyNames() {
+    return dependencyNames;
+  }
+
+  public void setDependencyNames(@Nullable Collection<String> dependencyNames) {
+    this.dependencyNames = dependencyNames;
   }
 
   @Override
