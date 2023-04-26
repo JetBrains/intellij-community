@@ -4,7 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -59,19 +59,18 @@ internal class DefaultProjectStoreTest {
   @Test
   fun `save default project configuration changes`() {
     runBlocking {
-      val defaultTestComponent = TestComponentCustom()
       val defaultProject = ProjectManager.getInstance().defaultProject
-      val defaultStateStore = defaultProject.service<IComponentStore>()
-      defaultStateStore.initComponent(defaultTestComponent, null, null)
+      val defaultTestComponent = defaultProject.service<TestComponentCustom>()
       saveSettings(ApplicationManager.getApplication())
       assertThat(defaultTestComponent.saved).isTrue
     }
   }
 
-  @Suppress("DEPRECATION")
-  private class TestComponentCustom : com.intellij.openapi.components.SettingsSavingComponent {
+  @Service(Service.Level.PROJECT)
+  private class TestComponentCustom : SettingsSavingComponent {
     var saved = false
-    override fun save() {
+
+    override suspend fun save() {
       saved = true
     }
   }
