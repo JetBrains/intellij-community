@@ -63,7 +63,9 @@ public interface Application extends ComponentManager {
    * </p>
    */
   @ApiStatus.Obsolete
-  void invokeLaterOnWriteThread(@NotNull Runnable action);
+  default void invokeLaterOnWriteThread(@NotNull Runnable action) {
+    invokeLater(action, getDefaultModalityState());
+  }
 
   /**
    * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
@@ -75,7 +77,9 @@ public interface Application extends ComponentManager {
    * @param modal  the state in which action will be executed
    */
   @ApiStatus.Obsolete
-  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
+  default void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
+    invokeLater(action, modal, getDisposed());
+  }
 
   /**
    * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
@@ -89,7 +93,9 @@ public interface Application extends ComponentManager {
    * @param expired condition to check before execution.
    */
   @ApiStatus.Obsolete
-  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired);
+  default void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
+    invokeLater(action, modal, expired);
+  }
 
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately

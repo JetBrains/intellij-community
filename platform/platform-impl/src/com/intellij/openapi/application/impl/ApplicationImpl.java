@@ -843,23 +843,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
-    invokeLaterOnWriteThread(action, modal, getDisposed());
-  }
-
-  @Override
-  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
-    Runnable r = myTransactionGuard.wrapLaterInvocation(action, modal);
-    // EDT == Write Thread in legacy mode
-    LaterInvocator.invokeLater(modal, expired, wrapWithRunIntendedWriteAction(r));
-  }
-
-  @Override
-  public void invokeLaterOnWriteThread(@NotNull Runnable action) {
-    invokeLaterOnWriteThread(action, getDefaultModalityState());
-  }
-
-  @Override
   public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
     if (isWriteIntentLockAcquired()) {
       action.run();
