@@ -178,7 +178,7 @@ abstract class ComponentStoreImpl : IComponentStore {
                                              forceSavingAllSettings: Boolean,
                                              saveSessionProducerManager: SaveSessionProducerManager) {
     withContext(Dispatchers.EDT) {
-      commitComponents(forceSavingAllSettings, saveSessionProducerManager, saveResult)
+      commitComponents(isForce = forceSavingAllSettings, session = saveSessionProducerManager, saveResult = saveResult)
       saveSessionProducerManager
     }
   }
@@ -195,7 +195,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     names.sort()
     @NonNls var timeLog: StringBuilder? = null
 
-    // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
+    // well, strictly speaking, each component saving takes some time, but +/- several seconds doesn't matter
     val nowInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
     val isSaveModLogEnabled = SAVE_MOD_LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode
     for (name in names) {
