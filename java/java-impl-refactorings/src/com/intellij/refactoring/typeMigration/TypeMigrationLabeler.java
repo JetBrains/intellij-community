@@ -286,8 +286,7 @@ public class TypeMigrationLabeler {
       myRemainConversions = conversions;
     }
 
-    public void change(@NotNull TypeMigrationUsageInfo usageInfo,
-                       @NotNull Consumer<? super PsiNewExpression> consumer) {
+    public void change(@NotNull TypeMigrationUsageInfo usageInfo, @NotNull Consumer<? super PsiNewExpression> consumer) {
       final PsiElement element = usageInfo.getElement();
       if (element == null) return;
       final Project project = element.getProject();
@@ -297,7 +296,7 @@ public class TypeMigrationLabeler {
             final PsiElement expressionToReplace = info.getKey().getElement();
             if (expression.equals(expressionToReplace)) {
               final PsiNewExpression newExpression =
-                TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiNewExpression)expressionToReplace, info);
+                TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiNewExpression)expressionToReplace, info.getValue());
               if (newExpression != null) {
                 consumer.consume(newExpression);
               }
@@ -979,7 +978,12 @@ public class TypeMigrationLabeler {
               final PsiExpression actual = expressions[idx];
               final PsiType type = getTypeEvaluator().evaluateType(actual);
               if (type != null) {
-                migrateExpressionType(actual, strippedType, parent, TypeConversionUtil.isAssignable(strippedType, type), true);
+                if (type instanceof PsiArrayType && migrationType instanceof PsiEllipsisType) {
+                  migrateExpressionType(actual, migrationType, parent, false, true);
+                }
+                else {
+                  migrateExpressionType(actual, strippedType, parent, TypeConversionUtil.isAssignable(strippedType, type), true);
+                }
               }
             }
           }

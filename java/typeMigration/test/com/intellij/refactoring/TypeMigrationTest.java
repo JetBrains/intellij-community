@@ -56,6 +56,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("x", PsiTypes.longType());
   }
 
+  public void testArray2Vararg() {
+    doTestFirstParamType("doSomething", new PsiEllipsisType(myFactory.createTypeFromText("java.lang.CharSequence", null)));
+  }
+
   public void testT07() {
     doTestFieldType("f",
                     myFactory.createTypeFromText("java.lang.Integer", null).createArrayType());
