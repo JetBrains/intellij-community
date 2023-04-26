@@ -984,8 +984,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  @Override
-  public List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
+  private List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                  @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);

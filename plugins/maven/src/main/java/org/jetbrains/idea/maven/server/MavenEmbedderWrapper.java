@@ -187,13 +187,13 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   /**
    * @deprecated use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public List<MavenArtifact> resolveTransitively(
     @NotNull final List<MavenArtifactInfo> artifacts,
     @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
 
-    return performCancelable(() -> getOrCreateWrappee().resolveTransitively(artifacts, remoteRepositories, ourToken));
+    return performCancelable(() -> getOrCreateWrappee().resolveArtifactTransitively(artifacts, remoteRepositories, ourToken)).mavenResolvedArtifacts;
   }
 
   @NotNull

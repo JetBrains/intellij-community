@@ -1229,32 +1229,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return null;
   }
 
-  @Deprecated
-  @NotNull
-  @Override
-  public List<MavenArtifact> resolveTransitively(@NotNull final List<MavenArtifactInfo> artifacts,
-                                                 @NotNull final List<MavenRemoteRepository> remoteRepositories, MavenToken token)
-    throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    try {
-      final MavenExecutionRequest request =
-        createRequest(null, null, null, null);
-
-      final Ref<List<MavenArtifact>> mavenArtifacts = Ref.create();
-      executeWithMavenSession(request, new RunnableThrownRemote() {
-        @Override
-        public void run() throws RemoteException {
-          mavenArtifacts.set(Maven3XServerEmbedder.this.doResolveTransitively(artifacts, remoteRepositories));
-        }
-      });
-      return mavenArtifacts.get();
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
   @NotNull
   @Override
   public MavenArtifactResolveResult resolveArtifactTransitively(
