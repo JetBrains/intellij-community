@@ -4,6 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
@@ -37,7 +37,7 @@ public abstract class PerformanceWatcher implements Disposable {
     String getLogResponsivenessSinceCreationMessage(@NonNls @NotNull String activityName);
   }
 
-  public abstract ScheduledExecutorService getExecutor();
+  public abstract @NotNull Job scheduleWithFixedDelay(@NotNull Runnable task, long delayInMs);
 
   public static @NotNull Snapshot takeSnapshot() {
     return getInstance().newSnapshot();

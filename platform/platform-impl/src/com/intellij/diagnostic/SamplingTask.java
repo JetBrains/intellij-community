@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.sun.management.OperatingSystemMXBean;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.management.GarbageCollectorMXBean;
@@ -10,11 +11,9 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class SamplingTask {
+class SamplingTask {
   private final static ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
   private final static List<GarbageCollectorMXBean> GC_MX_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
 
@@ -23,7 +22,7 @@ public class SamplingTask {
 
   private final List<ThreadInfo[]> myThreadInfos = new ArrayList<>();
 
-  private final ScheduledFuture<?> myFuture;
+  private final Job job;
 
   private final long myStartTime;
   private long myCurrentTime;
@@ -31,21 +30,20 @@ public class SamplingTask {
   private long myGcCurrentTime;
   private final double myProcessCpuLoad;
 
-  public SamplingTask(int intervalMs, int maxDurationMs) {
+  SamplingTask(int intervalMs, int maxDurationMs) {
     myDumpInterval = intervalMs;
     myMaxDumps = maxDurationMs / intervalMs;
     myCurrentTime = myStartTime = System.nanoTime();
     myGcCurrentTime = myGcStartTime = currentGcTime();
     myProcessCpuLoad = ((OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean()).getProcessCpuLoad();
-    ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
-    myFuture = executor.scheduleWithFixedDelay(this::dumpThreads, 0, myDumpInterval, TimeUnit.MILLISECONDS);
+    job = PerformanceWatcher.getInstance().scheduleWithFixedDelay(this::dumpThreads, myDumpInterval);
   }
 
   private void dumpThreads() {
     myCurrentTime = System.nanoTime();
     myGcCurrentTime = currentGcTime();
     ThreadInfo[] infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false);
-    if (!myFuture.isCancelled()) {
+    if (!job.isCancelled()) {
       myThreadInfos.add(infos);
       if (myThreadInfos.size() >= myMaxDumps) {
         stop();
@@ -86,6 +84,6 @@ public class SamplingTask {
   }
 
   public void stop() {
-    myFuture.cancel(false);
+    job.cancel(null);
   }
 }

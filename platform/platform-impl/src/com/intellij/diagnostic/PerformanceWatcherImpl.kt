@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Attachment
@@ -27,9 +28,8 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.sanitizeFileName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.File
@@ -39,25 +39,22 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.Future
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.ObjIntConsumer
-import javax.swing.SwingUtilities
 import kotlin.io.path.name
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 private val LOG = logger<PerformanceWatcherImpl>()
-private const val TOLERABLE_LATENCY = 100
+private const val TOLERABLE_LATENCY = 100L
 private const val THREAD_DUMPS_PREFIX = "threadDumps-"
 private const val DURATION_FILE_NAME = ".duration"
 private const val PID_FILE_NAME = ".pid"
 private val ideStartTime = ZonedDateTime.now()
 
-internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : PerformanceWatcher() {
+@OptIn(ExperimentalCoroutinesApi::class)
+internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope) : PerformanceWatcher() {
   private val logDir = PathManager.getLogDir()
 
   @Volatile
@@ -69,8 +66,8 @@ internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : Performa
   @Volatile
   private var lastSampling = System.nanoTime()
   private var activeEvents = 0
-  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Performance Checker", 1)
-  private var thread: ScheduledFuture<*>? = null
+  private val limitedDispatcher = Dispatchers.Default.limitedParallelism(1)
+  private var sampleJob: Job? = null
   private var currentEDTEventChecker: FreezeCheckerTask? = null
   private val jitWatcher = JitWatcher()
   private val unresponsiveInterval: RegistryValue
@@ -84,15 +81,19 @@ internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : Performa
         override fun afterValueChanged(value: RegistryValue) {
           LOG.info("on UI freezes more than $unresponsiveInterval ms will dump threads each $dumpInterval ms for $maxDumpDuration ms max")
           val samplingIntervalMs = samplingInterval
-          cancelThread()
-          thread = if (samplingIntervalMs <= 0) {
+          sampleJob?.cancel()
+          @Suppress("KotlinConstantConditions")
+          sampleJob = if (samplingIntervalMs <= 0) {
             null
           }
           else {
-            executor.scheduleWithFixedDelay({ samplePerformance(samplingIntervalMs.toLong()) },
-                                            samplingIntervalMs.toLong(),
-                                            samplingIntervalMs.toLong(),
-                                            TimeUnit.MILLISECONDS)
+            coroutineScope.launch(limitedDispatcher) {
+              val publisher = ApplicationManager.getApplication().messageBus.syncPublisher(IdePerformanceListener.TOPIC)
+              while (true) {
+                delay(samplingIntervalMs)
+                samplePerformance(samplingIntervalMs, publisher)
+              }
+            }
           }
         }
       }
@@ -143,16 +144,12 @@ internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : Performa
     }
   }
 
-  private fun cancelThread() {
-    thread?.cancel(true)
-  }
-
   override fun dispose() {
-    cancelThread()
-    executor.shutdownNow()
+    sampleJob?.cancel()
   }
 
-  private fun samplePerformance(samplingIntervalMs: Long) {
+  @Suppress("SameParameterValue")
+  private suspend fun samplePerformance(samplingIntervalMs: Long, publisher: IdePerformanceListener) {
     val current = System.nanoTime()
     var diffMs = TimeUnit.NANOSECONDS.toMillis(current - lastSampling) - samplingIntervalMs
     lastSampling = current
@@ -160,16 +157,15 @@ internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : Performa
     // an unexpected delay of 3 seconds is considered as several delays: of 3, 2 and 1 seconds, because otherwise
     // this background thread would be sampled 3 times.
     while (diffMs >= 0) {
-      generalApdex = generalApdex.withEvent(TOLERABLE_LATENCY.toLong(), diffMs)
+      generalApdex = generalApdex.withEvent(TOLERABLE_LATENCY, diffMs)
       diffMs -= samplingIntervalMs
     }
     jitWatcher.checkJitState()
-    SwingUtilities.invokeLater {
-      val latencyMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current)
-      swingApdex = swingApdex.withEvent(TOLERABLE_LATENCY.toLong(), latencyMs)
-      val publisher = publisher
-      publisher?.uiResponded(latencyMs)
+    val latencyMs = withContext(Dispatchers.EDT) {
+      TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current)
     }
+    swingApdex = swingApdex.withEvent(TOLERABLE_LATENCY, latencyMs)
+    publisher.uiResponded(latencyMs)
   }
 
   /** for dump files on disk and in EA reports (ms)  */
@@ -188,7 +184,7 @@ internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : Performa
   override fun edtEventStarted() {
     val start = System.nanoTime()
     activeEvents++
-    if (thread != null) {
+    if (sampleJob != null) {
       if (currentEDTEventChecker != null) {
         currentEDTEventChecker!!.stop()
       }
@@ -199,7 +195,7 @@ internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : Performa
   @ApiStatus.Internal
   override fun edtEventFinished() {
     activeEvents--
-    if (thread != null) {
+    if (sampleJob != null) {
       currentEDTEventChecker!!.stop()
       currentEDTEventChecker = if (activeEvents > 0) FreezeCheckerTask(System.nanoTime()) else null
     }
@@ -213,7 +209,7 @@ internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : Performa
   }
 
   private fun doDumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, contentsPrefix: String, stripDump: Boolean): Path? {
-    if (thread == null) {
+    if (sampleJob == null) {
       return null
     }
     return dumpThreads(pathPrefix = pathPrefix,
@@ -274,39 +270,46 @@ internal class PerformanceWatcherImpl(coroutineScope: CoroutineScope) : Performa
     currentEDTEventChecker?.stopDumping()
   }
 
-  override fun getExecutor(): ScheduledExecutorService = executor
+  override fun scheduleWithFixedDelay(task: Runnable, delayInMs: Long): Job {
+    return coroutineScope.launch(limitedDispatcher) {
+      delay(delayInMs)
+      task.run()
+    }
+  }
 
   private inner class FreezeCheckerTask(private val taskStart: Long) {
     private val state = AtomicReference(CheckerState.CHECKING)
-    private val future: Future<*>
+    private val job: Job
     private var freezeFolder: String? = null
 
     @Volatile
     private var dumpTask: SamplingTask? = null
 
     init {
-      future = executor.schedule(::edtFrozen, getUnresponsiveInterval().toLong(), TimeUnit.MILLISECONDS)
+      job = coroutineScope.launch(limitedDispatcher) {
+        delay(getUnresponsiveInterval().toLong())
+        edtFrozen()
+      }
     }
 
-    private fun getDuration(current: Long,
-                            unit: TimeUnit): Long {
+    private fun getDuration(current: Long, unit: TimeUnit): Long {
       return unit.convert(current - taskStart, TimeUnit.NANOSECONDS)
     }
 
     fun stop() {
-      future.cancel(false)
+      job.cancel()
       if (state.getAndSet(CheckerState.FINISHED) == CheckerState.FREEZE) {
         val taskStop = System.nanoTime()
         stopDumping() // stop sampling as early as possible
         try {
-          executor.submit {
+          coroutineScope.launch(limitedDispatcher) {
             stopDumping()
             val durationMs = getDuration(taskStop, TimeUnit.MILLISECONDS)
             val publisher = publisher
             publisher?.uiFreezeFinished(durationMs, logDir.resolve(freezeFolder!!))
             val reportDir = postProcessReportFolder(durationMs)
             publisher?.uiFreezeRecorded(durationMs, reportDir)
-          }.get()
+          }.asCompletableFuture().join()
         }
         catch (e: Exception) {
           LOG.warn(e)
@@ -506,7 +509,7 @@ private fun findExtraLogFile(pid: String, lastModified: Long): Path? {
 private val publisher: IdePerformanceListener?
   get() {
     val app = ApplicationManager.getApplication()
-    return if (app != null && !app.isDisposed) app.messageBus.syncPublisher(IdePerformanceListener.TOPIC) else null
+    return if (app == null || app.isDisposed) null else app.messageBus.syncPublisher(IdePerformanceListener.TOPIC)
   }
 
 private fun cleanOldFiles(dir: Path, level: Int) {
@@ -532,8 +535,8 @@ private fun ageInDays(file: Path): Long {
 }
 
 /** for [IdePerformanceListener.uiResponded] events (ms)  */
-private val samplingInterval: Int
-  get() = 1000
+@Suppress("ConstPropertyName")
+private const val samplingInterval = 1000L
 
 private fun buildName(): String = ApplicationInfo.getInstance().build.asString()
 
