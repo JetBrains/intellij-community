@@ -80,7 +80,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(AssertFindUsagesCommand.PREFIX, AssertFindUsagesCommand::new),
       Map.entry(SetBreakpointCommand.PREFIX, SetBreakpointCommand::new),
       Map.entry(DebugRunConfigurationCommand.PREFIX, DebugRunConfigurationCommand::new),
-      Map.entry(DebugStepCommand.PREFIX, DebugStepCommand::new)
+      Map.entry(DebugStepCommand.PREFIX, DebugStepCommand::new),
+      Map.entry(WaitJpsBuildCommand.PREFIX, WaitJpsBuildCommand::new)
     );
   }
 }
