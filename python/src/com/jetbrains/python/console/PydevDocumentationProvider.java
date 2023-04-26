@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
@@ -24,27 +24,32 @@ public class PydevDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
     if (object instanceof PydevConsoleElement) {
-      return (PydevConsoleElement)object;
+      return (PydevConsoleElement) object;
     }
     return super.getDocumentationElementForLookupItem(psiManager, object, element);
   }
 
   @Override
   public @Nls String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
+    // Process PydevConsoleElement case
     if (element instanceof PydevConsoleElement) {
       return PydevConsoleElement.generateDoc((PydevConsoleElement)element);
     }
-    return createDoc(element, originalElement);
+    return null;
   }
 
   @Nullable
   public static @Nls String createDoc(final PsiElement element, final PsiElement originalElement) {
-    if (!PythonRuntimeService.getInstance().isInPydevConsole(element)) {
-      return null;
+    PyReferenceExpression expression = PsiTreeUtil.getNonStrictParentOfType(originalElement, PyReferenceExpression.class);
+    if (expression == null){
+      expression = PsiTreeUtil.getNonStrictParentOfType(element, PyReferenceExpression.class);
+      if (expression == null) {
+        return null;
+      }
     }
-
-    PydevConsoleReference consoleRef = PyUtil.as(element.getReference(), PydevConsoleReference.class);
-    if (consoleRef == null) {
+    // Indicates that we are inside console, not a lookup element!
+    PydevConsoleReference consoleRef = PyUtil.as(expression.getReference(), PydevConsoleReference.class);
+    if (consoleRef == null) { //shouldn't really happen!
       return null;
     }
     PyElement documentationElement = consoleRef.getDocumentationElement();
@@ -74,6 +79,6 @@ public class PydevDocumentationProvider extends AbstractDocumentationProvider {
         }
       }
     }
-      return null;
+    return null;
   }
 }
