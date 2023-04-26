@@ -76,7 +76,7 @@ object MacFullScreenControlsManager {
     }
   }
 
-  fun updateForDistractionFreeMode(enter: Boolean, fromZendMode: Boolean) {
+  fun updateForDistractionFreeMode(enter: Boolean) {
     if (enabled()) {
       if (enter) {
         System.setProperty("apple.awt.distraction.free.mode", "true")
@@ -85,17 +85,15 @@ object MacFullScreenControlsManager {
         System.clearProperty("apple.awt.distraction.free.mode")
       }
 
-      if (enter || !fromZendMode) {
-        ApplicationManager.getApplication().invokeLater {
-          val frames = getAllFrameWindows()
-          Foundation.executeOnMainThread(true, false) {
-            val selector = Foundation.createSelector("updateFullScreenButtons:")
-            for (frameOrTab in frames) {
-              val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
-              val delegate = Foundation.invoke(window, "delegate")
-              if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
-                Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
-              }
+      ApplicationManager.getApplication().invokeLater {
+        val frames = getAllFrameWindows()
+        Foundation.executeOnMainThread(true, false) {
+          val selector = Foundation.createSelector("updateFullScreenButtons:")
+          for (frameOrTab in frames) {
+            val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
+            val delegate = Foundation.invoke(window, "delegate")
+            if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
+              Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
             }
           }
         }

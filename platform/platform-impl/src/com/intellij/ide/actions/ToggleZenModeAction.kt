@@ -25,7 +25,7 @@ class ToggleZenModeAction : DumbAwareAction() {
         }
     }
 
-    private val toggleDistractionFreeModeAction = ToggleDistractionFreeModeAction().setFromZendMode(true)
+    private val toggleDistractionFreeModeAction = ToggleDistractionFreeModeAction()
 
     override fun update(e: AnActionEvent) {
         if (!isFullScreenApplicable()) {
