@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage.Page;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -614,6 +617,19 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     storage.close();
   }
 
+  /** Close the storage and remove all its data files */
+  @Override
+  public void closeAndRemoveAllFiles() throws IOException {
+    close();
+    if (SystemInfoRt.isWindows) {
+      //On Win there are a lot of issues with removing file that was mmapped.
+      // Let's give mapped buffers at least a chance to be collected & unmapped -- not a guarantee from that kind of
+      // issues, but a small step in the right direction
+      System.gc();
+    }
+    FileUtil.delete(storage.storagePath);
+  }
+
   //TODO RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely
   //         on JVM which will unmap pages eventually, as they are collected by GC?
   //         Forcible unmap allows to 'clean after yourself', but carries a risk of JVM crash if
@@ -865,7 +881,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       channel = FileChannel.open(storagePath, READ, WRITE, CREATE);
 
       for (int i = 0; i < pagesCount; i++) {
-        pages.set(i, new Page(i));
+        pages.set(i, new Page(i, channel, pageSize));
       }
     }
 
@@ -880,9 +896,12 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       Page page = pages.get(pageIndex);
       if (page == null) {
         synchronized (pages) {
+          if (!channel.isOpen()) {
+            throw new ClosedStorageException("Storage already closed");
+          }
           page = pages.get(pageIndex);
           if (page == null) {
-            page = new Page(pageIndex);
+            page = new Page(pageIndex, channel, pageSize);
             pages.set(pageIndex, page);
           }
         }
@@ -895,21 +914,33 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     }
 
     public void close() throws IOException {
-      channel.close();
+      synchronized (pages) {
+        channel.close();
+        for (int i = 0; i < pages.length(); i++) {
+          final Page page = pages.get(i);
+          if (page != null) {
+            page.close();
+          }
+          pages.set(i, null);//give GC a chance to unmap buffers
+        }
+      }
     }
 
-    public class Page implements AutoCloseable {
+    public static class Page implements AutoCloseable {
       private final int pageIndex;
       private final long offsetInFile;
       private final ByteBuffer pageBuffer;
 
-      private Page(final int pageIndex) throws IOException {
+      private Page(int pageIndex,
+                   FileChannel channel,
+                   int pageSize) throws IOException {
         this.pageIndex = pageIndex;
         this.offsetInFile = pageIndex * (long)pageSize;
-        this.pageBuffer = map();
+        this.pageBuffer = map(channel, pageSize);
       }
 
-      public MappedByteBuffer map() throws IOException {
+      private MappedByteBuffer map(FileChannel channel,
+                                   int pageSize) throws IOException {
         //TODO RC: this could cause noticeable pauses, hence it may worth to enlarge file in advance, async
         IOUtil.allocateFileRegion(channel, offsetInFile, pageSize);
         return channel.map(READ_WRITE, offsetInFile, pageSize);

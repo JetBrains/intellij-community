@@ -2,12 +2,24 @@
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.io.*
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.exists
+
 
 object PersistentFSRecordsStorageFactory {
+  /**
+   * Fallback option: usually [PersistentFSConnector] deals with storages version changes just fine.
+   * But there are cases where it fails: e.g. with mmapped storages on Win, there file once mapped is hard
+   * to remove (and [PersistentFSConnector] relies on ability to just remove legacy storages files).
+   * In such cases, this option could help get rid of the legacy file early, before it is mapped
+   */
+  @JvmStatic
+  private val FAIL_EARLY_IF_LEGACY_STORAGE_DETECTED: Boolean = getBooleanProperty("vfs.fail-early-if-legacy-storage-detected", false)
+
   private val PERSISTENT_FS_STORAGE_CONTEXT_RW = StorageLockContext(true, true, true)
 
   enum class RecordsStorageKind {
@@ -17,7 +29,8 @@ object PersistentFSRecordsStorageFactory {
     OVER_MMAPPED_FILE
   }
 
-  private var RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage-impl", RecordsStorageKind.OVER_MMAPPED_FILE.name))
+  private var RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(
+    System.getProperty("vfs.records-storage-impl", RecordsStorageKind.OVER_MMAPPED_FILE.name))
 
 
   @JvmStatic
@@ -55,8 +68,20 @@ object PersistentFSRecordsStorageFactory {
       RecordsStorageKind.REGULAR -> PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, recordsLength()))
       RecordsStorageKind.IN_MEMORY -> PersistentInMemoryFSRecordsStorage(file,  /*max size: */1 shl 24)
       RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file)
-      RecordsStorageKind.OVER_MMAPPED_FILE -> PersistentFSRecordsLockFreeOverMMappedFile(file,
-                                                                                         PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE)
+      RecordsStorageKind.OVER_MMAPPED_FILE -> {
+        if (FAIL_EARLY_IF_LEGACY_STORAGE_DETECTED) {
+          val legacyLengthFile = file.resolveSibling(file.fileName.toString() + ".len")
+          if (legacyLengthFile.exists()) {
+            //MAYBE RC: actually, here we can _migrate_ legacy file to the new format: move the files to the tmp folder,
+            // create empty new storage, and just copy all records from legacy storage to the new one...
+            throw IOException("Legacy records file detected (${legacyLengthFile} exists): VFS rebuild required")
+          }
+        }
+        PersistentFSRecordsLockFreeOverMMappedFile(
+          file,
+          PersistentFSRecordsLockFreeOverMMappedFile.DEFAULT_MAPPED_CHUNK_SIZE
+        )
+      }
     }
   }
 

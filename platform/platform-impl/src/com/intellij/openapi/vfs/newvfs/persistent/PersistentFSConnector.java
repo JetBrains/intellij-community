@@ -230,9 +230,20 @@ final class PersistentFSConnector {
         if (!deleted) {
           LOG.info("Can't delete " + contentsHashesFile);
         }
-        deleted = IOUtil.deleteAllFilesStartingWith(recordsFile);
-        if (!deleted) {
-          LOG.info("Can't delete " + recordsFile);
+
+        if (recordsStorage != null) {
+          try {
+            recordsStorage.closeAndRemoveAllFiles();
+          }
+          catch (IOException ex) {
+            LOG.info("Can't delete fs-records: " + ex.getMessage(), ex);
+          }
+        }
+        else {
+          deleted = IOUtil.deleteAllFilesStartingWith(recordsFile);
+          if (!deleted) {
+            LOG.info("Can't delete " + recordsFile);
+          }
         }
         deleted = IOUtil.deleteAllFilesStartingWith(persistentFSPaths.getRootsBaseFile());
         if (!deleted) {

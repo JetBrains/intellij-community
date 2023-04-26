@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
 import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
@@ -357,6 +358,11 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
   }
 
+  /**
+   * Synchronous close: i.e. tries to reclaim all the pages in a current thread, and waits until {@link FilePageCacheLockFree}
+   * cleans up everything associated with this storage. After this method terminates, it is safe to try to create
+   * new storage from the same file.
+   */
   @Override
   public void close() throws IOException, InterruptedException {
     if (isClosed()) {
@@ -383,6 +389,12 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
   }
 
+  /**
+   * Enqueues storage backing structures cleanup, but do not wait for completion.
+   * Storage {@link #isClosed()}=true after this method, but an attempt to open new storage
+   * from the same file may fail, since {@link FilePageCacheLockFree} may not yet cleans up
+   * everything related to the current storage.
+   */
   public synchronized Future<?> closeAsync() {
     if (!isClosed()) {
       final CompletableFuture<Object> closingProgress = new CompletableFuture<>();
@@ -391,6 +403,15 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
     return closingInProgress;
   }
+
+  public void closeAndRemoveAllFiles() throws IOException, InterruptedException {
+    if (!isClosed()) {
+      close();
+    }
+
+    FileUtil.delete(file);
+  }
+
 
   @Override
   public int toOffsetInPage(final long offsetInFile) {

@@ -677,9 +677,22 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   @Override
   public void close() throws IOException {
-    force();
+    if(!storage.isClosed()) {
+      force();
+      try {
+        storage.close();
+      }
+      catch (InterruptedException e) {
+        throw new IOException(e);
+      }
+    }
+  }
+
+  @Override
+  public void closeAndRemoveAllFiles() throws IOException {
+    close();
     try {
-      storage.close();
+      storage.closeAndRemoveAllFiles();
     }
     catch (InterruptedException e) {
       throw new IOException(e);

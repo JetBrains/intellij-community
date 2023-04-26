@@ -22,6 +22,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
@@ -308,6 +309,19 @@ public class ResizeableMappedFile implements Forceable, Closeable {
 
   public void unlockWrite() {
     myStorage.unlockWrite();
+  }
+
+  /** Close the storage and remove all its data files */
+  public void closeAndRemoveAllFiles() throws IOException {
+    List<Exception> exceptions = new SmartList<>();
+
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(myStorage::close));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> FileUtil.delete(myStorage.getFile())));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> FileUtil.delete(getLengthFile())));
+
+    if (!exceptions.isEmpty()) {
+      throw new IOException(new CompoundRuntimeException(exceptions));
+    }
   }
 
   @Override

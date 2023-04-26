@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 
 import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -21,5 +22,9 @@ public class PersistentInMemoryFSRecordsStorageTest
   @Override
   protected PersistentInMemoryFSRecordsStorage openStorage(Path storagePath) throws IOException {
     return new PersistentInMemoryFSRecordsStorage(storagePath, maxRecordsToInsert);
+  }
+
+  @Ignore("InMemory storage doesn't use the file -> doesn't remove it either")
+  public void closeAndRemoveAllFiles_cleansUpEverything_newStorageCreatedFromSameFilenameIsEmpty(){
   }
 }

@@ -353,6 +353,11 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   }
 
   @Override
+  public void closeAndRemoveAllFiles() throws IOException {
+    myFile.closeAndRemoveAllFiles();
+  }
+
+  @Override
   public void force() throws IOException {
     write(() -> {
       saveGlobalModCount();

@@ -361,6 +361,12 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
     force();
   }
 
+  @Override
+  public void closeAndRemoveAllFiles() throws IOException {
+    close();
+    //...and nothing to remove
+  }
+
   /* =============== implementation =============================================================== */
 
   //TODO RC: current implementation uses VarHandle as 'official' way. Unsafe could be (?) better way to do it, if performance proves itself

@@ -5,13 +5,12 @@ import com.intellij.util.ExceptionUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -58,6 +57,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
   @NotNull
   protected abstract T openStorage(final Path storageFile) throws IOException;
+
+
 
   @Test
   public void recordsCountIsZeroForEmptyStorage() {
@@ -147,6 +148,76 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     assertEquals("Cleaned record must have timestamp=0", recordReadBack.timestamp, 0);
     assertEquals("Cleaned record must have modCount=0", recordReadBack.modCount, 0);
   }
+
+  @Test
+  @Ignore("Not true now: storages ignores .close(), and also .close() is not idempotent (fails being called 2nd time)")
+  public void closedStorageFailsOnMethodCalls() throws IOException {
+    storage.close();
+    try {
+      storage.allocateRecord();
+      fail(".allocateRecords() must fail on closed storage");
+    }
+    catch (Exception e) {
+      //OK
+    }
+    try {
+      storage.getTimestamp();
+      fail(".getTimestamp() must fail on closed storage");
+    }
+    catch (Exception e) {
+      //OK
+    }
+
+    try {
+      storage.getVersion();
+      fail(".getVersion() must fail on closed storage");
+    }
+    catch (Exception e) {
+      //OK
+    }
+    try {
+      storage.getGlobalModCount();
+      fail(".getGlobalModCount() must fail on closed storage");
+    }
+    catch (Exception e) {
+      //OK
+    }
+  }
+
+  @Test
+  public void closeAndRemoveAllFiles_cleansUpEverything_newStorageCreatedFromSameFilenameIsEmpty() throws Exception {
+    final int enoughTry = 16;
+    File recordsFile = File.createTempFile("records", "dat");
+    Path recordsPath = recordsFile.toPath();
+
+    for (int tryNo = 0; tryNo < enoughTry; tryNo++) {
+      T storage = openStorage(recordsPath);
+      try {
+        int version = storage.getVersion();
+        int recordsCount = storage.recordsCount();
+        assertEquals(
+          "Storage must be created anew each time => version must be 0",
+          0,
+          version
+        );
+        assertEquals(
+          "Storage must be created anew each time => recordsCount must be 0",
+          0,
+          recordsCount
+        );
+
+        storage.setVersion(42);
+      }
+      finally {
+        storage.closeAndRemoveAllFiles();
+      }
+      assertFalse(
+        recordsPath + " must be deleted",
+        Files.exists(recordsPath)
+      );
+    }
+  }
+
 
 
   @Test

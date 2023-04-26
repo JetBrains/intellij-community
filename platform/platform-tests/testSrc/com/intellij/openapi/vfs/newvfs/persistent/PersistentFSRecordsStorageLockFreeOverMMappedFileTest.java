@@ -35,4 +35,6 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
   protected PersistentFSRecordsLockFreeOverMMappedFile openStorage(Path storagePath) throws IOException {
     return new PersistentFSRecordsLockFreeOverMMappedFile(storagePath, DEFAULT_MAPPED_CHUNK_SIZE);
   }
+
+
 }
