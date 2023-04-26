@@ -296,6 +296,21 @@ open class CachedImageIcon protected constructor(
     }
   }
 
+  fun withAnotherIconModifications(useModificationsFrom: CachedImageIcon): Icon {
+    if (isDarkOverridden == useModificationsFrom.isDarkOverridden &&
+        localFilterSupplier == useModificationsFrom.localFilterSupplier &&
+        colorPatcher == useModificationsFrom.colorPatcher &&
+        useStroke == useModificationsFrom.useStroke) {
+      return this
+    }
+    return CachedImageIcon(originalPath = originalPath,
+                           resolver = resolver,
+                           isDarkOverridden = useModificationsFrom.isDarkOverridden,
+                           localFilterSupplier = useModificationsFrom.localFilterSupplier,
+                           colorPatcher = useModificationsFrom.colorPatcher,
+                           useStroke = useModificationsFrom.useStroke)
+  }
+
   val isDark: Boolean
     get() = isDarkOverridden ?: pathTransform.get().isDark
 

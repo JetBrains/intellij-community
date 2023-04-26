@@ -46,7 +46,7 @@ private fun loadIconCustomVersion(icon: CachedImageIcon, width: Int, height: Int
   val foundIcon = IconLoader.findIcon(path = modifiedPath, classLoader = coords.second) ?: return null
   if (foundIcon is CachedImageIcon &&
       foundIcon.getIconWidth() == JBUIScale.scale(width) && foundIcon.getIconHeight() == JBUIScale.scale(height)) {
-    return foundIcon
+    return foundIcon.withAnotherIconModifications(icon)
   }
   return null
 }
