@@ -243,11 +243,13 @@ public final class ProgressRunner<R> {
         resultFuture.completeExceptionally(t);
       }
     }
-    else if (ApplicationManager.getApplication().isDispatchThread()) {
-      resultFuture = execFromEDT(progressFuture, modalityEntered, onThreadCallable);
-    }
     else {
-      resultFuture = normalExec(progressFuture, modalityEntered, onThreadCallable);
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        resultFuture = execFromEDT(progressFuture, modalityEntered, onThreadCallable);
+      }
+      else {
+        resultFuture = normalExec(progressFuture, modalityEntered, onThreadCallable);
+      }
     }
 
     return resultFuture.handle((result, e) -> {
