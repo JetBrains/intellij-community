@@ -448,34 +448,32 @@ public final class ProgressRunner<R> {
     @NotNull Supplier<R> callable,
     @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
   ) {
-    CompletableFuture<R> resultFuture;
-    switch (myThreadToUse) {
-      case POOLED:
-        resultFuture = CompletableFuture.supplyAsync(callable, AppExecutorUtil.getAppExecutorService());
-        break;
-      case WRITE:
-        resultFuture = new CompletableFuture<>();
-        Runnable runnable = () -> {
-          try {
-            resultFuture.complete(callable.get());
-          }
-          catch (Throwable e) {
-            resultFuture.completeExceptionally(e);
-          }
-        };
-
-        progressIndicatorFuture.whenComplete((progressIndicator, throwable) -> {
-          if (throwable != null) {
-            resultFuture.completeExceptionally(throwable);
-            return;
-          }
+    CompletableFuture<R> resultFuture = new CompletableFuture<>();
+    progressIndicatorFuture.whenComplete((progressIndicator, throwable) -> {
+      if (throwable != null) {
+        resultFuture.completeExceptionally(throwable);
+        return;
+      }
+      Runnable runnable = () -> {
+        try {
+          resultFuture.complete(callable.get());
+        }
+        catch (Throwable e) {
+          resultFuture.completeExceptionally(e);
+        }
+      };
+      switch (myThreadToUse) {
+        case POOLED:
+          AppExecutorUtil.getAppExecutorService().execute(runnable);
+          break;
+        case WRITE:
           ModalityState processModality = progressIndicator.getModalityState();
           ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, processModality);
-        });
-        break;
-      default:
-        throw new IllegalStateException("Unexpected value: " + myThreadToUse);
-    }
+          break;
+        default:
+          throw new IllegalStateException("Unexpected value: " + myThreadToUse);
+      }
+    });
     return resultFuture;
   }
 }
