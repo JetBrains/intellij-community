@@ -27,10 +27,7 @@ object AssertionParser {
 
   private fun parse(assertionMessage: String, @Language("Regexp") rawRegex: String): Result? {
     val regex = rawRegex.toRegex(RegexOption.DOT_MATCHES_ALL)
-    val matchesResult = regex.findAll(assertionMessage).firstOrNull() ?: return null
-    if (matchesResult.groupValues.firstOrNull() != assertionMessage) {
-      return null
-    }
+    val matchesResult = regex.matchEntire(assertionMessage) ?: return null
     val expected = matchesResult.groups["expected"] ?: return null
     val actual = matchesResult.groups["actual"] ?: return null
     val message = matchesResult.groups["message"]

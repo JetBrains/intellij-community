@@ -145,10 +145,7 @@ internal class GradleTestEventConverter(
 
   private fun extractName(name: String?, extractor: Regex): String? {
     if (name == null) return null
-    val result = extractor.findAll(name).firstOrNull() ?: return null
-    if (result.groupValues.firstOrNull() != name) {
-      return null
-    }
+    val result = extractor.matchEntire(name) ?: return null
     return result.groupValues.drop(1).joinToString("")
   }
 
