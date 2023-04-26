@@ -133,7 +133,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
       if (gc.name == "PS MarkSweep" || gc.name == "PS Scavenge") return "Parallel"  // -XX:+UseParallelGC
       if (gc.name == "ConcurrentMarkSweep" || gc.name == "ParNew") return "CMS"     // -XX:+UseConcMarkSweepGC
       if (gc.name.startsWith("G1 ")) return "G1"                                    // -XX:+UseG1GC
-      if (gc.name == "ZGC") return "Z"                                              // -XX:+UseZGC
+      if (gc.name.startsWith("ZGC ")) return "Z"                                    // -XX:+UseZGC
       if (gc.name.startsWith("Shenandoah ")) return "Shenandoah"                    // -XX:+UseShenandoahGC
       if (gc.name.startsWith("Epsilon ")) return "Epsilon"                          // -XX:+UseEpsilonGC
     }
