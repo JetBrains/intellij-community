@@ -49,7 +49,7 @@ class WorkspaceModelAsyncTest {
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
     val job = cs.launch {
       assertEquals(false, application.isWriteAccessAllowed)
-      val entityChange = workspaceModel.changesEventFlow.first()
+      val entityChange = workspaceModel.changesEventFlow.first().getAllChanges().single()
       assertInstanceOf<EntityChange.Added<ModuleEntity>>(entityChange)
 
       assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
@@ -71,7 +71,7 @@ class WorkspaceModelAsyncTest {
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
     val job = cs.launch {
       assertEquals(false, application.isWriteAccessAllowed)
-      val entityChange = workspaceModel.changesEventFlow.first()
+      val entityChange = workspaceModel.changesEventFlow.first().getAllChanges().single()
       assertInstanceOf<EntityChange.Added<ModuleEntity>>(entityChange)
 
       assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
@@ -144,9 +144,8 @@ class WorkspaceModelAsyncTest {
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
     val job = cs.launch {
       assertEquals(false, application.isWriteAccessAllowed)
-      val entityChanges = workspaceModel.changesEventFlow.filter { it is EntityChange.Added<*> }.take(3).toList()
-      assertEquals(3, entityChanges.size)
-      entityChanges.forEach { entityChange ->
+      workspaceModel.changesEventFlow.take(3).collect { storageChange ->
+        val entityChange = storageChange.getAllChanges().single()
         assertContains(moduleNames, (entityChange.newEntity as ModuleEntity).name)
       }
     }

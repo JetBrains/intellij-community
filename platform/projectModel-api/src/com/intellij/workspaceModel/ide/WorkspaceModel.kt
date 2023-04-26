@@ -3,11 +3,9 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.EntityStorageSnapshot
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.*
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -26,7 +24,8 @@ interface WorkspaceModel {
    * Flow of changes from workspace model. It has to be used for asynchronous event handling. To start receiving
    * emitted events, you need to call one of the terminal operations on it.
    */
-  val changesEventFlow: Flow<EntityChange<*>>
+  @get:ApiStatus.Experimental
+  val changesEventFlow: Flow<VersionedStorageChange>
 
   /**
    * Returns a snapshot of the storage containing unloaded entities. 
@@ -55,6 +54,7 @@ interface WorkspaceModel {
    *
    * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
    */
+  @ApiStatus.Experimental
   suspend fun updateProjectModelAsync(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**

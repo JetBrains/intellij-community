@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.jps.model.impl.diagnostic.JpsMetrics
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -29,12 +30,13 @@ import com.intellij.workspaceModel.storage.impl.assertConsistency
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import com.intellij.platform.jps.model.impl.diagnostic.JpsMetrics
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
@@ -48,8 +50,8 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   final override val entityStorage: VersionedEntityStorageImpl
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
 
-  private val mutableChangesEventFlow = MutableSharedFlow<EntityChange<*>>(replay = 0, onBufferOverflow = BufferOverflow.SUSPEND)
-  override val changesEventFlow: Flow<EntityChange<*>> = mutableChangesEventFlow.asSharedFlow()
+  private val mutableChangesEventFlow = MutableSharedFlow<VersionedStorageChange>(replay = 0, onBufferOverflow = BufferOverflow.SUSPEND)
+  override val changesEventFlow: Flow<VersionedStorageChange> = mutableChangesEventFlow.asSharedFlow()
 
   override val currentSnapshot: EntityStorageSnapshot
     get() = entityStorage.current
@@ -175,6 +177,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   }
 
   override suspend fun updateProjectModelAsync(description: String, updater: (MutableEntityStorage) -> Unit) {
+    // TODO:: Make the logic smarter and avoid using WR if there are no subscribers via topic.
+    //  Right now we don't have API to check how many subscribers for the topic we have
+    ApplicationManager.getApplication().assertReadAccessNotAllowed()
     writeAction { updateProjectModel(description, updater) }
   }
 
@@ -318,9 +323,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
                                                                                                                 EntityStorageKind.MAIN)
     }
 
-    cs.launch {
-      change.getAllChanges().forEach { entityChange -> mutableChangesEventFlow.emit(entityChange) }
-    }
+    cs.launch { mutableChangesEventFlow.emit(change) }
 
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)
