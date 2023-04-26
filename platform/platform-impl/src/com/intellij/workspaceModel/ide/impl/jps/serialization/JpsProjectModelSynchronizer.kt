@@ -13,6 +13,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
@@ -219,9 +220,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       override fun after(events: List<VFileEvent>) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
-        val addedUrls = ArrayList<String>()
-        val removedUrls = ArrayList<String>()
-        val changedUrls = ArrayList<String>()
+        var addedUrls: MutableList<String>? = null
+        var removedUrls: MutableList<String>? = null
+        var changedUrls: MutableList<String>? = null
         // JPS model is loaded from *.iml files, files in .idea directory (modules.xml),
         // files from directories in .idea (libraries) and *.ipr file, so we can ignore all other events to speed up processing
         for (event in events) {
@@ -231,27 +232,37 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
                 val fileName = event.childName
                 if ((FileUtilRt.extensionEquals(fileName, ModuleFileType.DEFAULT_EXTENSION) && !event.isDirectory) ||
                     isParentOfStorageFiles(event.parent) && !event.isEmptyDirectory) {
+                  if (addedUrls == null) {
+                    addedUrls = mutableListOf()
+                  }
                   addedUrls.add(JpsPathUtil.pathToUrl(event.path))
                 }
               }
               is VFileDeleteEvent -> {
                 if (isStorageFile(event.file)) {
+                  if (removedUrls == null) {
+                    removedUrls = mutableListOf()
+                  }
                   removedUrls.add(JpsPathUtil.pathToUrl(event.path))
                 }
               }
               is VFileContentChangeEvent -> {
                 if (isStorageFile(event.file)) {
+                  if (changedUrls == null) {
+                    changedUrls = mutableListOf()
+                  }
                   changedUrls.add(JpsPathUtil.pathToUrl(event.path))
                 }
               }
             }
           }
         }
-        if (addedUrls.isNotEmpty() || removedUrls.isNotEmpty() || changedUrls.isNotEmpty()) {
-          val change = JpsConfigurationFilesChange(addedUrls, removedUrls, changedUrls)
+        if (!addedUrls.isNullOrEmpty() || !removedUrls.isNullOrEmpty() || !changedUrls.isNullOrEmpty()) {
+          val change = JpsConfigurationFilesChange(addedFileUrls = addedUrls ?: emptyList(),
+                                                   removedFileUrls = removedUrls ?: emptyList(),
+                                                   changedFileUrls = changedUrls ?: emptyList())
           incomingChanges.add(change)
-
-          StoreReloadManager.getInstance(project).scheduleProcessingChangedFiles()
+          project.serviceIfCreated<StoreReloadManager>()?.scheduleProcessingChangedFiles()
         }
       }
     })
