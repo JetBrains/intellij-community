@@ -65,7 +65,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
         .setCancelCallback { cancel() }
         .setCancelKeyEnabled(false)
-        .setShowBorder(true)
+        .setShowBorder(false)
         .addUserData(IntentionPreviewPopupKey())
         .createPopup()
 
