@@ -12,12 +12,8 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.EdtInvocationManager.invokeAndWaitIfNeeded
 import java.awt.Dimension
 import kotlin.math.min
 
@@ -46,7 +42,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     mainUi = createMainUI()
     combinedViewer = createCombinedViewer()
 
-    buildCombinedDiffChildBlocks()
+    buildLoadingBlocks()
   }
 
   internal fun getPreferredFocusedComponent() = mainUi.getPreferredFocusedComponent()
@@ -80,7 +76,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     override fun onModelReset() {
       Disposer.dispose(combinedViewer)
       combinedViewer = createCombinedViewer()
-      buildCombinedDiffChildBlocks()
+      buildLoadingBlocks()
     }
 
     @RequiresEdt
@@ -123,40 +119,22 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
   }
 
-  private fun buildCombinedDiffChildBlocks() {
-    Alarm(combinedViewer.component, combinedViewer).addComponentRequest(
-      Runnable {
-        val childCount = model.requests.size
-        val visibleBlockCount = min(combinedViewer.scrollPane.visibleRect.height / CombinedLazyDiffViewer.HEIGHT.get(), childCount)
-        val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
+  private fun buildLoadingBlocks() {
+    val childCount = model.requests.size
+    val visibleBlockCount = min(combinedViewer.scrollPane.visibleRect.height / CombinedLazyDiffViewer.HEIGHT.get(), childCount)
+    val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
 
-        BackgroundTaskUtil.executeOnPooledThread(ourDisposable) {
-          val indicator = EmptyProgressIndicator()
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(ourDisposable, {
+    try {
+      val allRequests = model.requests
+        .map { CombinedDiffModel.RequestData(it.key, it.value) }
 
-            runInEdt { mainUi.startProgress() }
-            try {
-              val allRequests = model.requests
-                .asSequence()
-                .map { CombinedDiffModel.RequestData(it.key, it.value) }
-
-              allRequests.forEachIndexed { index, childRequest ->
-                invokeAndWaitIfNeeded {
-                  combinedViewer.addBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
-                }
-              }
-            }
-            finally {
-              runInEdt {
-                mainUi.stopProgress()
-                combinedViewer.selectDiffBlock(blockToSelect, true)
-              }
-            }
-
-          }, indicator)
-        }
-      }, 100
-    )
+      allRequests.forEachIndexed { index, childRequest ->
+        combinedViewer.addBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
+      }
+    }
+    finally {
+      combinedViewer.selectDiffBlock(blockToSelect, true)
+    }
   }
 
   companion object {
