@@ -364,7 +364,6 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
     List<IndexableFileScanner.ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
-    UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex, getForceReindexingTrigger());
 
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
 
@@ -396,9 +395,11 @@ public class UnindexedFilesScanner implements FilesScanningTask {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
         try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class)
           .getSink(provider, projectScanningHistory.getScanningSessionId())) {
-          Function<@Nullable VirtualFile, ContentIterator> singleProviderIteratorFactory =
-            root -> new SingleProviderIterator(project, subTaskIndicator, provider, fileScannerVisitors,
-                                               unindexedFileFinder, scanningStatistics, perProviderSink);
+          Function<@Nullable VirtualFile, ContentIterator> singleProviderIteratorFactory = root -> {
+            UnindexedFilesFinder finder = new UnindexedFilesFinder(project, myIndex, getForceReindexingTrigger(), root);
+            return new SingleProviderIterator(project, subTaskIndicator, provider, fileScannerVisitors,
+                                              finder, scanningStatistics, perProviderSink);
+          };
           provider.iterateFilesInRoots(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter);
           perProviderSink.commit();
         }

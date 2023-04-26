@@ -47,7 +47,8 @@ final class UnindexedFilesFinder {
 
   UnindexedFilesFinder(@NotNull Project project,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
-                       @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger) {
+                       @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger,
+                       @Nullable VirtualFile root) {
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
     myFileTypeIndex = fileBasedIndex.getIndex(FileTypeIndex.NAME);
