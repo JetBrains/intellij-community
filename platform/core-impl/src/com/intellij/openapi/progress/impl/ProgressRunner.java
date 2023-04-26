@@ -11,7 +11,6 @@ import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -228,7 +227,6 @@ public final class ProgressRunner<R> {
     Semaphore modalityEntered = new Semaphore(forceSyncExec ? 0 : 1);
 
     Supplier<R> onThreadCallable = () -> {
-      Ref<R> result = Ref.create();
       if (isModal) {
         modalityEntered.waitFor();
       }
@@ -245,8 +243,7 @@ public final class ProgressRunner<R> {
         throw new IllegalStateException("Expected not-null progress indicator but got null from "+myProgressIndicatorFuture);
       }
 
-      ProgressManager.getInstance().runProcess(() -> result.set(myComputation.apply(progressIndicator)), progressIndicator);
-      return result.get();
+      return ProgressManager.getInstance().runProcess(() -> myComputation.apply(progressIndicator), progressIndicator);
     };
 
     CompletableFuture<R> resultFuture;
