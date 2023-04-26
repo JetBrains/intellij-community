@@ -63,10 +63,10 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
     // SchemeManager (asyncSettingsSavingComponent) must be saved before saving components
     // (component state uses scheme manager in an ipr project, so, we must save it before) so, call it sequentially
-    commitComponentsOnEdt(result, forceSavingAllSettings, saveSessionProducerManager)
+    commitComponents(isForce = forceSavingAllSettings, session = saveSessionProducerManager, saveResult = result)
   }
 
-  override fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
+  override suspend fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
     // ensure that this task will not interrupt regular saving
     runCatching {
       commitObsoleteComponents(session = session, isProjectLevel = false)

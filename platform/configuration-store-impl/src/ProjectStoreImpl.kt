@@ -104,7 +104,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   final override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     coroutineScope {
       launch {
-        // save modules before project
+        // save modules before the project
         val saveSessionManager = createSaveSessionProducerManager()
         val moduleSaveSessions = saveModules(result, forceSavingAllSettings, saveSessionManager)
         saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
@@ -151,7 +151,7 @@ interface ModuleSavingCustomizer {
 }
 
 @ApiStatus.Internal
-open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
+open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
   final override suspend fun saveModules(result: SaveResult,
                                          isForceSavingAllSettings: Boolean,
                                          projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
@@ -169,7 +169,8 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
         val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
         // collectSaveSessions is very cheap, so, do it in EDT
         val saveManager = moduleStore.createSaveSessionProducerManager()
-        commitModuleComponents(moduleStore, saveManager, projectSaveSessionManager, isForceSavingAllSettings, result)
+        moduleStore.commitComponents(isForceSavingAllSettings, saveManager, result)
+        moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, saveManager)
         saveManager.collectSaveSessions(saveSessions)
       }
       saveSessions
@@ -180,14 +181,6 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
     return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
   }
 
-  private fun commitModuleComponents(moduleStore: ComponentStoreImpl,
-                                     moduleSaveSessionManager: SaveSessionProducerManager,
-                                     projectSaveSessionManager: SaveSessionProducerManager,
-                                     isForceSavingAllSettings: Boolean,
-                                     saveResult: SaveResult) {
-    moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, saveResult)
-    moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
-  }
 }
 
 abstract class ProjectStoreFactoryImpl : ProjectStoreFactory {
@@ -197,7 +190,7 @@ abstract class ProjectStoreFactoryImpl : ProjectStoreFactory {
 internal class PlatformLangProjectStoreFactory : ProjectStoreFactoryImpl() {
   override fun createStore(project: Project): IProjectStore {
     LOG.assertTrue(!project.isDefault)
-    return ProjectWithModulesStoreImpl(project)
+    return ProjectWithModuleStoreImpl(project)
   }
 }
 

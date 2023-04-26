@@ -17,7 +17,7 @@ private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryImpl()
   override fun createStore(project: Project) = MyProjectStore(project)
 }
 
-private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(project) {
+private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(project) {
   val isConfigurationFileListenerAdded = AtomicBoolean()
   private val storages = ConcurrentHashMap<Class<Any>, ReadOnlyStorage>()
 
