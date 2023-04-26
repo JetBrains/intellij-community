@@ -35,16 +35,16 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         override fun toString() = ""
     }
 
-    private fun KtFile.getPackageNameInfo(newParent: PsiDirectory?, clearUserData: Boolean): ContainerChangeInfo? {
+    private fun KtFile.getPackageNameInfo(newParent: PsiDirectory?, clearUserData: Boolean): MoveContainerChangeInfo? {
         val shouldUpdatePackageDirective = updatePackageDirective ?: packageMatchesDirectoryOrImplicit()
         updatePackageDirective = if (clearUserData) null else shouldUpdatePackageDirective
 
         if (!shouldUpdatePackageDirective) return null
 
         val oldPackageName = packageFqName
-        val newPackageName = newParent?.getFqNameWithImplicitPrefix() ?: return ContainerChangeInfo(
-            ContainerInfo.Package(oldPackageName),
-            ContainerInfo.UnknownPackage
+        val newPackageName = newParent?.getFqNameWithImplicitPrefix() ?: return MoveContainerChangeInfo(
+            MoveContainerInfo.Package(oldPackageName),
+            MoveContainerInfo.UnknownPackage
         )
 
         if (oldPackageName.asString() == newPackageName.asString()
@@ -52,7 +52,7 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         ) return null
         if (!newPackageName.hasIdentifiersOnly()) return null
 
-        return ContainerChangeInfo(ContainerInfo.Package(oldPackageName), ContainerInfo.Package(newPackageName))
+        return MoveContainerChangeInfo(MoveContainerInfo.Package(oldPackageName), MoveContainerInfo.Package(newPackageName))
     }
 
     fun initMoveProcessor(
@@ -68,7 +68,7 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         val project = psiFile.project
 
         val moveTarget = when (val newPackage = packageNameInfo.newContainer) {
-            ContainerInfo.UnknownPackage -> KotlinMoveTarget.Empty
+            MoveContainerInfo.UnknownPackage -> KotlinMoveTarget.Empty
 
             else -> if (newParent == null) {
                 return null

@@ -233,9 +233,9 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
 
     private fun collectInternalUsages(sourceData: SourceData, targetData: TargetData) = runReadAction {
         val targetPackageName = targetData.targetDirWrapper.getPackageName()
-        val changeInfo = ContainerChangeInfo(
-            ContainerInfo.Package(sourceData.originalFile.packageFqName),
-            ContainerInfo.Package(FqName(targetPackageName))
+        val changeInfo = MoveContainerChangeInfo(
+            MoveContainerInfo.Package(sourceData.originalFile.packageFqName),
+            MoveContainerInfo.Package(FqName(targetPackageName))
         )
         sourceData.elementsToCopy.flatMapTo(LinkedHashSet()) { elementToCopy ->
             elementToCopy.getInternalReferencesToUpdateOnPackageNameChange(changeInfo).filter {

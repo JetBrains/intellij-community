@@ -167,7 +167,7 @@ class MoveKotlinDeclarationsProcessor(
             val targetModule = moveTarget.getTargetModule(project) ?: return projectScope
             if (oldContainer != newContainer || ktDeclaration.module != targetModule) return projectScope
             // Check if facade class may change
-            if (newContainer is ContainerInfo.Package) {
+            if (newContainer is MoveContainerInfo.Package) {
                 val javaScope = projectScope.restrictByFileType(JavaFileType.INSTANCE)
                 val currentFile = ktDeclaration.containingKtFile
                 val newFile = when (moveTarget) {
@@ -267,9 +267,9 @@ class MoveKotlinDeclarationsProcessor(
             val externalUsages = LinkedHashSet<UsageInfo>()
 
             if (moveEntireFile) {
-                val changeInfo = ContainerChangeInfo(
-                    ContainerInfo.Package(sourceFile.packageFqName),
-                    descriptor.moveTarget.targetContainerFqName?.let { ContainerInfo.Package(it) } ?: ContainerInfo.UnknownPackage
+                val changeInfo = MoveContainerChangeInfo(
+                    MoveContainerInfo.Package(sourceFile.packageFqName),
+                    descriptor.moveTarget.targetContainerFqName?.let { MoveContainerInfo.Package(it) } ?: MoveContainerInfo.UnknownPackage
                 )
                 internalUsages += sourceFile.getInternalReferencesToUpdateOnPackageNameChange(changeInfo)
             } else {

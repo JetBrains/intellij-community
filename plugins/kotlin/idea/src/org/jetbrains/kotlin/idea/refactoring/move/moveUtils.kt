@@ -25,8 +25,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
@@ -61,39 +61,8 @@ import java.io.File
 import java.lang.System.currentTimeMillis
 import java.util.*
 
-sealed class ContainerInfo {
-    abstract val fqName: FqName?
-    abstract fun matches(descriptor: DeclarationDescriptor): Boolean
 
-    object UnknownPackage : ContainerInfo() {
-        override val fqName: FqName? = null
-        override fun matches(descriptor: DeclarationDescriptor) = descriptor is PackageViewDescriptor
-    }
-
-    class Package(override val fqName: FqName) : ContainerInfo() {
-        override fun matches(descriptor: DeclarationDescriptor): Boolean {
-            return descriptor is PackageFragmentDescriptor && descriptor.fqName == fqName
-        }
-
-        override fun equals(other: Any?) = other is Package && other.fqName == fqName
-
-        override fun hashCode() = fqName.hashCode()
-    }
-
-    class Class(override val fqName: FqName) : ContainerInfo() {
-        override fun matches(descriptor: DeclarationDescriptor): Boolean {
-            return descriptor is ClassDescriptor && descriptor.importableFqName == fqName
-        }
-
-        override fun equals(other: Any?) = other is Class && other.fqName == fqName
-
-        override fun hashCode() = fqName.hashCode()
-    }
-}
-
-data class ContainerChangeInfo(val oldContainer: ContainerInfo, val newContainer: ContainerInfo)
-
-fun KtElement.getInternalReferencesToUpdateOnPackageNameChange(containerChangeInfo: ContainerChangeInfo): List<UsageInfo> {
+fun KtElement.getInternalReferencesToUpdateOnPackageNameChange(containerChangeInfo: MoveContainerChangeInfo): List<UsageInfo> {
     val usages = ArrayList<UsageInfo>()
     processInternalReferencesToUpdateOnPackageNameChange(containerChangeInfo) { expr, factory -> usages.addIfNotNull(factory(expr)) }
     return usages
@@ -102,7 +71,7 @@ fun KtElement.getInternalReferencesToUpdateOnPackageNameChange(containerChangeIn
 private typealias UsageInfoFactory = (KtSimpleNameExpression) -> UsageInfo?
 
 fun KtElement.processInternalReferencesToUpdateOnPackageNameChange(
-    containerChangeInfo: ContainerChangeInfo,
+    containerChangeInfo: MoveContainerChangeInfo,
     body: (originalRefExpr: KtSimpleNameExpression, usageFactory: UsageInfoFactory) -> Unit
 ) {
     val file = containingFile as? KtFile ?: return
@@ -117,6 +86,12 @@ fun KtElement.processInternalReferencesToUpdateOnPackageNameChange(
             is ClassDescriptor, is PackageViewDescriptor -> isImported(containingDescriptor)
             else -> false
         }
+    }
+
+    fun MoveContainerInfo.matches(decl: DeclarationDescriptor) = when(this) {
+        is MoveContainerInfo.UnknownPackage -> decl is PackageViewDescriptor && decl.fqName == fqName
+        is MoveContainerInfo.Package -> decl is PackageFragmentDescriptor && decl.fqName == fqName
+        is MoveContainerInfo.Class -> decl is ClassDescriptor && decl.importableFqName == fqName
     }
 
     fun processReference(refExpr: KtSimpleNameExpression, bindingContext: BindingContext): (UsageInfoFactory)? {
@@ -171,16 +146,13 @@ fun KtElement.processInternalReferencesToUpdateOnPackageNameChange(
 
         val (oldContainer, newContainer) = containerChangeInfo
 
-        val containerFqName = descriptor
-            .parents
-            .mapNotNull {
-                when {
-                    oldContainer.matches(it) -> oldContainer.fqName
-                    newContainer.matches(it) -> newContainer.fqName
-                    else -> null
-                }
+        val containerFqName = descriptor.parents.mapNotNull {
+            when {
+                oldContainer.matches(it) -> oldContainer.fqName
+                newContainer.matches(it) -> newContainer.fqName
+                else -> null
             }
-            .firstOrNull()
+        }.firstOrNull()
 
         val isImported = isImported(descriptor)
         if (isImported && this is KtFile) return null

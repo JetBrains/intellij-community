@@ -40,7 +40,7 @@ class KotlinChangePackageRefactoring(val file: KtFile) {
                 declarationProcessor.findUsages().toList()
             }
         } ?: return
-        val changeInfo = ContainerChangeInfo(ContainerInfo.Package(currentFqName), ContainerInfo.Package(newFqName))
+        val changeInfo = MoveContainerChangeInfo(MoveContainerInfo.Package(currentFqName), MoveContainerInfo.Package(newFqName))
         val internalUsages = file.getInternalReferencesToUpdateOnPackageNameChange(changeInfo)
 
         project.executeWriteCommand(KotlinBundle.message("text.change.file.package.to.0", newFqName)) {

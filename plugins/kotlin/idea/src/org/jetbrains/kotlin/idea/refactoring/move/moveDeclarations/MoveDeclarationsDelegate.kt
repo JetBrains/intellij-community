@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 
 sealed class MoveDeclarationsDelegate {
-    abstract fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): ContainerChangeInfo
+    abstract fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): MoveContainerChangeInfo
 
     open fun findInternalUsages(descriptor: MoveDeclarationsDescriptor): List<UsageInfo> = emptyList()
 
@@ -42,10 +42,10 @@ sealed class MoveDeclarationsDelegate {
     }
 
     object TopLevel : MoveDeclarationsDelegate() {
-        override fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): ContainerChangeInfo {
-            val sourcePackage = ContainerInfo.Package(originalDeclaration.containingKtFile.packageFqName)
-            val targetPackage = moveTarget.targetContainerFqName?.let { ContainerInfo.Package(it) } ?: ContainerInfo.UnknownPackage
-            return ContainerChangeInfo(sourcePackage, targetPackage)
+        override fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): MoveContainerChangeInfo {
+            val sourcePackage = MoveContainerInfo.Package(originalDeclaration.containingKtFile.packageFqName)
+            val targetPackage = moveTarget.targetContainerFqName?.let { MoveContainerInfo.Package(it) } ?: MoveContainerInfo.UnknownPackage
+            return MoveContainerChangeInfo(sourcePackage, targetPackage)
         }
     }
 
@@ -53,16 +53,16 @@ sealed class MoveDeclarationsDelegate {
       val newClassName: String? = null,
       private val outerInstanceParameterName: String? = null
     ) : MoveDeclarationsDelegate() {
-        override fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): ContainerChangeInfo {
-            val originalInfo = ContainerInfo.Class(originalDeclaration.containingClassOrObject!!.fqName!!)
+        override fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): MoveContainerChangeInfo {
+            val originalInfo = MoveContainerInfo.Class(originalDeclaration.containingClassOrObject!!.fqName!!)
             val movingToClass = (moveTarget as? KotlinMoveTarget.ExistingElement)?.targetElement is KtClassOrObject
             val targetContainerFqName = moveTarget.targetContainerFqName
             val newInfo = when {
-                targetContainerFqName == null -> ContainerInfo.UnknownPackage
-                movingToClass -> ContainerInfo.Class(targetContainerFqName)
-                else -> ContainerInfo.Package(targetContainerFqName)
+                targetContainerFqName == null -> MoveContainerInfo.UnknownPackage
+                movingToClass -> MoveContainerInfo.Class(targetContainerFqName)
+                else -> MoveContainerInfo.Package(targetContainerFqName)
             }
-            return ContainerChangeInfo(originalInfo, newInfo)
+            return MoveContainerChangeInfo(originalInfo, newInfo)
         }
 
         override fun findInternalUsages(descriptor: MoveDeclarationsDescriptor): List<UsageInfo> {

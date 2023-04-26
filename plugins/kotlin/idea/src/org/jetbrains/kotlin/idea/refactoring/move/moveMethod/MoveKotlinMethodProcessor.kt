@@ -67,9 +67,9 @@ class MoveKotlinMethodProcessor(
     }
 
     override fun findUsages(): Array<UsageInfo> {
-        val changeInfo = ContainerChangeInfo(
-            ContainerInfo.Class(method.containingClassOrObject!!.fqName!!),
-            ContainerInfo.Class(targetClassOrObject.fqName!!)
+        val changeInfo = MoveContainerChangeInfo(
+            MoveContainerInfo.Class(method.containingClassOrObject!!.fqName!!),
+            MoveContainerInfo.Class(targetClassOrObject.fqName!!)
         )
         val conflictChecker =
             MoveConflictChecker(myProject, listOf(method), KotlinMoveTarget.ExistingElement(targetClassOrObject), method)
