@@ -326,9 +326,9 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
   private fun getBlockId(index: Int) = diffBlocksPositions.getKeysByValue(index)?.singleOrNull()
 
-  fun getAllBlocks() = diffBlocks.values.asSequence()
+  private fun getAllBlocks(): Sequence<CombinedDiffBlock<*>> = diffBlocks.values.asSequence()
 
-  fun getBlockForId(id: CombinedBlockId) = diffBlocks[id]
+  private fun getBlockForId(id: CombinedBlockId): CombinedDiffBlock<*>? = diffBlocks[id]
   fun getDiffBlocksCount(): Int = diffBlocks.size
 
   fun getCurrentBlockId(): CombinedBlockId? {
