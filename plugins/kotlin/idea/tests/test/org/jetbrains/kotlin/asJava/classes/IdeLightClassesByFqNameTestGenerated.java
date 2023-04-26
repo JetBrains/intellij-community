@@ -133,6 +133,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/TwoOverrides.kt"));
         }
 
+        @TestMetadata("unresolvedQuialifierInAnnotation.kt")
+        public void testUnresolvedQuialifierInAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/unresolvedQuialifierInAnnotation.kt"));
+        }
+
         @TestMetadata("WrongAnnotations.kt")
         public void testWrongAnnotations() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/WrongAnnotations.kt"));
@@ -179,6 +184,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("AllPrivate.kt")
         public void testAllPrivate() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/AllPrivate.kt"));
+        }
+
+        @TestMetadata("InternalFacadeClass.kt")
+        public void testInternalFacadeClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/InternalFacadeClass.kt"));
         }
 
         @TestMetadata("MultiFile.kt")
@@ -294,6 +304,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/Generic.kt"));
         }
 
+        @TestMetadata("ImplicitArrayWithFlexibleParameterTypes.kt")
+        public void testImplicitArrayWithFlexibleParameterTypes() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/ImplicitArrayWithFlexibleParameterTypes.kt"));
+        }
+
         @TestMetadata("IntOverridesAny.kt")
         public void testIntOverridesAny() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/IntOverridesAny.kt"));
@@ -317,6 +332,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("PlatformTypes.kt")
         public void testPlatformTypes() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/PlatformTypes.kt"));
+        }
+
+        @TestMetadata("PrimitiveBackedInlineClasses.kt")
+        public void testPrimitiveBackedInlineClasses() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/PrimitiveBackedInlineClasses.kt"));
         }
 
         @TestMetadata("Primitives.kt")
@@ -437,6 +457,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/AnnotationRepeatable.kt"));
         }
 
+        @TestMetadata("BackingFields.kt")
+        public void testBackingFields() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/BackingFields.kt"));
+        }
+
         @TestMetadata("CompanionObject.kt")
         public void testCompanionObject() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/CompanionObject.kt"));
@@ -522,9 +547,24 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InlineReified.kt"));
         }
 
+        @TestMetadata("InvalidJavaIdentifierAsAnnotationArgument.kt")
+        public void testInvalidJavaIdentifierAsAnnotationArgument() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InvalidJavaIdentifierAsAnnotationArgument.kt"));
+        }
+
+        @TestMetadata("InvalidJavaIdentifierAsPropertyInitializer.kt")
+        public void testInvalidJavaIdentifierAsPropertyInitializer() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InvalidJavaIdentifierAsPropertyInitializer.kt"));
+        }
+
         @TestMetadata("JavaBetween.kt")
         public void testJavaBetween() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/JavaBetween.kt"));
+        }
+
+        @TestMetadata("JavaClassWithAnnotation.kt")
+        public void testJavaClassWithAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/JavaClassWithAnnotation.kt"));
         }
 
         @TestMetadata("JvmNameOnMember.kt")
@@ -557,6 +597,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/OnlySecondaryConstructors.kt"));
         }
 
+        @TestMetadata("PrivateObject.kt")
+        public void testPrivateObject() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/PrivateObject.kt"));
+        }
+
         @TestMetadata("PublishedApi.kt")
         public void testPublishedApi() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/PublishedApi.kt"));
@@ -580,6 +625,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("StubOrderForOverloads.kt")
         public void testStubOrderForOverloads() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/StubOrderForOverloads.kt"));
+        }
+
+        @TestMetadata("Throws.kt")
+        public void testThrows() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/Throws.kt"));
         }
 
         @TestMetadata("TypePararametersInClass.kt")

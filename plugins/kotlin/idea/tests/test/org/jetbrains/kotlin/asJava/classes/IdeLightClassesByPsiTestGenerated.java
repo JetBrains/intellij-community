@@ -93,6 +93,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/throwsAnnotation.kt"));
         }
 
+        @TestMetadata("valueClassInSignature.kt")
+        public void testValueClassInSignature() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/valueClassInSignature.kt"));
+        }
+
         @TestMetadata("wildcardOptimization.kt")
         public void testWildcardOptimization() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/wildcardOptimization.kt"));
@@ -141,6 +146,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             super.setUp();
         }
 
+        @TestMetadata("allowedTargets.kt")
+        public void testAllowedTargets() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/allowedTargets.kt"));
+        }
+
         @TestMetadata("annotationWithSetParamPropertyModifier.kt")
         public void testAnnotationWithSetParamPropertyModifier() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithSetParamPropertyModifier.kt"));
@@ -151,9 +161,24 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotations.kt"));
         }
 
+        @TestMetadata("AnnotationsOnEnumEntry.kt")
+        public void testAnnotationsOnEnumEntry() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/AnnotationsOnEnumEntry.kt"));
+        }
+
+        @TestMetadata("AnnotationsWithUnresolvedAnnotations.kt")
+        public void testAnnotationsWithUnresolvedAnnotations() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/AnnotationsWithUnresolvedAnnotations.kt"));
+        }
+
         @TestMetadata("classModifiers.kt")
         public void testClassModifiers() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/classModifiers.kt"));
+        }
+
+        @TestMetadata("companionDuplication.kt")
+        public void testCompanionDuplication() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/companionDuplication.kt"));
         }
 
         @TestMetadata("constructors.kt")
@@ -181,6 +206,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/defaultMethodInKotlinWithSettingAllCompatibility.kt"));
         }
 
+        @TestMetadata("DelegatedProperty.kt")
+        public void testDelegatedProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/DelegatedProperty.kt"));
+        }
+
         @TestMetadata("delegatesWithAnnotations.kt")
         public void testDelegatesWithAnnotations() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/delegatesWithAnnotations.kt"));
@@ -196,9 +226,24 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/dollarsInNameLocal.kt"));
         }
 
+        @TestMetadata("enumMembers.kt")
+        public void testEnumMembers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/enumMembers.kt"));
+        }
+
         @TestMetadata("enums.kt")
         public void testEnums() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/enums.kt"));
+        }
+
+        @TestMetadata("exposedAnonymousType.kt")
+        public void testExposedAnonymousType() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/exposedAnonymousType.kt"));
+        }
+
+        @TestMetadata("fieldModifiers.kt")
+        public void testFieldModifiers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/fieldModifiers.kt"));
         }
 
         @TestMetadata("generics.kt")
@@ -311,6 +356,16 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/simpleFunctions.kt"));
         }
 
+        @TestMetadata("strangeIdentifiers.kt")
+        public void testStrangeIdentifiers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/strangeIdentifiers.kt"));
+        }
+
+        @TestMetadata("targetAnnotation.kt")
+        public void testTargetAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/targetAnnotation.kt"));
+        }
+
         @TestMetadata("throwsAnnotation.kt")
         public void testThrowsAnnotation() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/throwsAnnotation.kt"));
@@ -324,6 +379,36 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
         @TestMetadata("typeAnnotations.kt")
         public void testTypeAnnotations() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/typeAnnotations.kt"));
+        }
+
+        @TestMetadata("typealiasInAnnotation.kt")
+        public void testTypealiasInAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/typealiasInAnnotation.kt"));
+        }
+
+        @TestMetadata("typealiasInTypeArguments.kt")
+        public void testTypealiasInTypeArguments() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/typealiasInTypeArguments.kt"));
+        }
+
+        @TestMetadata("unresolvedGenericSupertypes.kt")
+        public void testUnresolvedGenericSupertypes() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unresolvedGenericSupertypes.kt"));
+        }
+
+        @TestMetadata("unresolvedWithAliasedImport.kt")
+        public void testUnresolvedWithAliasedImport() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unresolvedWithAliasedImport.kt"));
+        }
+
+        @TestMetadata("unsafePropertyInitializers.kt")
+        public void testUnsafePropertyInitializers() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unsafePropertyInitializers.kt"));
+        }
+
+        @TestMetadata("valueClassInSignature.kt")
+        public void testValueClassInSignature() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/valueClassInSignature.kt"));
         }
 
         @TestMetadata("wildcardOptimization.kt")

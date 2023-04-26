@@ -1335,6 +1335,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoDeferredSamLambdas.kt");
         }
 
+        @TestMetadata("smartStepIntoDelegatedPropertySetterReference.kt")
+        public void testSmartStepIntoDelegatedPropertySetterReference() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoDelegatedPropertySetterReference.kt");
+        }
+
         @TestMetadata("smartStepIntoFunWithDefaultArgs.kt")
         public void testSmartStepIntoFunWithDefaultArgs() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoFunWithDefaultArgs.kt");
