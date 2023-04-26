@@ -160,10 +160,11 @@ sealed class MoveDeclarationsDelegate {
 
                 when (usage) {
                     is OuterInstanceReferenceUsageInfo.ExplicitThis -> {
-                        usage.expression?.replace(newOuterInstanceRef)
+                        usage.expression.replace(newOuterInstanceRef)
                     }
                     is OuterInstanceReferenceUsageInfo.ImplicitReceiver -> {
-                        usage.callElement?.let { it.replace(psiFactory.createExpressionByPattern("$0.$1", outerInstanceParameterName, it)) }
+                        val newElem  = psiFactory.createExpressionByPattern("$0.$1", outerInstanceParameterName, usage.callElement)
+                        usage.callElement.replace(newElem)
                     }
                 }
             }

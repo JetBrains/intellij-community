@@ -295,11 +295,12 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
                 progressIndicator.fraction = index * 1.0 / totalCount
                 when (usage) {
                     is OuterInstanceReferenceUsageInfo.ExplicitThis -> {
-                        usage.expression?.replace(newOuterInstanceRef)
+                        usage.expression.replace(newOuterInstanceRef)
                     }
 
                     is OuterInstanceReferenceUsageInfo.ImplicitReceiver -> {
-                        usage.callElement?.let { it.replace(ktPsiFactory.createExpressionByPattern("$0.$1", newOuterInstanceRef, it)) }
+                        val newElem = ktPsiFactory.createExpressionByPattern("$0.$1", newOuterInstanceRef, usage.callElement)
+                        usage.callElement.replace(newElem)
                     }
                 }
             }
