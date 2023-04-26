@@ -257,7 +257,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }
     val saveManager = createSaveSessionProducerManager()
-    commitComponent(saveManager, ComponentInfoImpl(component, stateSpec), null, false)
+    commitComponent(session = saveManager,
+                    info = ComponentInfoImpl(component, stateSpec),
+                    componentName = null,
+                    modificationCountChanged = false)
     val absolutePath = storageManager.expandMacro(
       findNonDeprecated(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)).path).toString()
     Disposer.newDisposable().use {
@@ -368,7 +371,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       return initComponentWithoutStateSpec(component, configurationSchemaKey)
     }
     else {
-      return doInitComponent(info, component, changedStorages, reloadData)
+      doInitComponent(info = info, component = component, changedStorages = changedStorages, reloadData = reloadData)
+      return true
     }
   }
 
@@ -392,7 +396,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun doInitComponent(info: ComponentInfo,
                               component: PersistentStateComponent<Any>,
                               changedStorages: Set<StateStorage>?,
-                              reloadData: ThreeState): Boolean {
+                              reloadData: ThreeState) {
     @Suppress("UNCHECKED_CAST")
     val stateClass: Class<Any> = when (component) {
       is PersistenceStateAdapter -> component.component::class.java as Class<Any>
@@ -402,7 +406,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = info.stateSpec!!
     val name = stateSpec.name
 
-    // KT-39968: PathMacrosImpl could increase modCount on loadState and the change has to be persisted
+    // KT-39968: PathMacrosImpl could increase modCount on loadState, and the change has to be persisted
     // all other components follow general rule: initial modCount is calculated after loadState phase
     val postLoadStateUpdateModificationCount = name != "PathMacrosImpl"
 
@@ -450,11 +454,12 @@ abstract class ComponentStoreImpl : IComponentStore {
         if (postLoadStateUpdateModificationCount) {
           info.updateModificationCount(info.currentModificationCount)
         }
-        return true
+        return
       }
     }
 
-    // we load default state even if isLoadComponentState false - required for app components (for example, at least one color scheme must exist)
+    // we load the default state even if isLoadComponentState false - required for app components
+    // (for example, at least one color scheme must exist)
     if (defaultState == null) {
       component.noStateLoaded()
     }
@@ -467,7 +472,6 @@ abstract class ComponentStoreImpl : IComponentStore {
         info.updateModificationCount(info.currentModificationCount)
       }
     }
-    return true
   }
 
   protected open fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean {
