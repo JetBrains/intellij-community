@@ -49,26 +49,29 @@ open class SaveSessionProducerManager : SaveExecutor {
   }
 
   override suspend fun save(): SaveResult {
+    if (producers.isEmpty()) {
+      return SaveResult.EMPTY
+    }
+
     val saveSessions = ArrayList<SaveSession>()
-    collectSaveSessions(saveSessions)
+    for (session in producers.values) {
+      saveSessions.add(session.createSaveSession() ?: continue)
+    }
+
     if (saveSessions.isEmpty()) {
       return SaveResult.EMPTY
     }
 
-    val task = {
-      val result = SaveResult()
-      saveSessions(saveSessions, result)
-      result
-    }
-
+    val result = SaveResult()
     if (isVfsRequired) {
-      return writeAction {
-        task()
+      writeAction {
+        saveSessions(saveSessions, result)
       }
     }
     else {
-      return task()
+      saveSessions(saveSessions, result)
     }
+    return result
   }
 }
 
