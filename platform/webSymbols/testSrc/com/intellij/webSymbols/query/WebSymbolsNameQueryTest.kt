@@ -30,7 +30,7 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/attributes/v-foo", null, true, "basic-pattern")
   }
 
-  fun testDeprecationAndExperimentalStatus() {
+  fun testApiStatus() {
     doTest("html/elements/", null, "api-status")
   }
 

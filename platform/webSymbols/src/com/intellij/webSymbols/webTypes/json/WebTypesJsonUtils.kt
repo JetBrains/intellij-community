@@ -489,14 +489,17 @@ private fun parseWebTypesPath(path: List<String>, context: WebSymbol?): List<Web
   return result
 }
 
-internal fun BaseContribution.toApiStatus(origin: WebTypesJsonOrigin): WebSymbol.ApiStatus? =
+@Suppress("HardCodedStringLiteral")
+internal fun BaseContribution.toApiStatus(origin: WebTypesJsonOrigin): WebSymbolApiStatus =
   deprecated?.value?.takeIf { it != false }
-    ?.let { msg -> WebSymbol.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
+    ?.let { msg -> WebSymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }, deprecatedSince) }
   ?: experimental?.value?.takeIf { it != false }
-    ?.let { msg -> WebSymbol.Experimental((msg as? String)?.let { origin.renderDescription(it) }) }
+    ?.let { msg -> WebSymbolApiStatus.Experimental((msg as? String)?.let { origin.renderDescription(it) }, since) }
+  ?: since?.let { WebSymbolApiStatus.Stable(it) }
+  ?: WebSymbolApiStatus.Stable
 
 
-internal fun NamePatternDefault.toApiStatus(origin: WebTypesJsonOrigin): WebSymbol.ApiStatus? =
+internal fun NamePatternDefault.toApiStatus(origin: WebTypesJsonOrigin): WebSymbolApiStatus? =
   deprecated?.value
     ?.takeIf { it != false }
-    ?.let { msg -> WebSymbol.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
+    ?.let { msg -> WebSymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }

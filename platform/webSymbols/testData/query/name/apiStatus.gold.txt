@@ -1,5 +1,18 @@
 [
  {
+  matchedName: "html/elements/a-stable-element",
+  origin: "basic@1.0 (<none>)",
+  complete: true,
+  apiStatus: stable since 2021.12,
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "a-stable-element",
+    symbol: <self>,
+   },
+  ],
+ },
+ {
   matchedName: "html/elements/deprecated",
   origin: "basic@1.0 (<none>)",
   complete: true,
@@ -16,7 +29,7 @@
   matchedName: "html/elements/deprecatedWithMessage",
   origin: "basic@1.0 (<none>)",
   complete: true,
-  apiStatus: deprecated (<p><b>don't</b> use this</p>),
+  apiStatus: deprecated in 2023.4.1 (<p><b>don't</b> use this</p>),
   priority: NORMAL,
   segments: [
    {
@@ -29,7 +42,7 @@
   matchedName: "html/elements/experimental",
   origin: "basic@1.0 (<none>)",
   complete: true,
-  apiStatus: experimental,
+  apiStatus: experimental since 2023.1.2,
   priority: NORMAL,
   segments: [
    {

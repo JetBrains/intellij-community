@@ -59,8 +59,8 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
   val required: Boolean?
     get() = null
 
-  val apiStatus: ApiStatus?
-    get() = null
+  val apiStatus: WebSymbolApiStatus
+    get() = WebSymbolApiStatus.Stable
 
   val attributeValue: WebSymbolHtmlAttributeValue?
     get() = null
@@ -133,17 +133,6 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
   fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
     queryExecutor.namesProvider.adjustRename(namespace, kind, name, newName, occurence)
 
-  sealed interface ApiStatus
-
-  /**
-   * @param message message with HTML markup
-   */
-  data class Deprecated(@Nls val message: String? = null) : ApiStatus
-
-  /**
-   * @param message message with HTML markup
-   */
-  data class Experimental(@Nls val message: String? = null) : ApiStatus
 
   enum class Priority(val value: Double) {
     LOWEST(0.0),
@@ -189,11 +178,13 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
      * to specify whether they require arguments. Defaults to false.
      **/
     const val PROP_ARGUMENTS = "arguments"
+
     /**
      * Name of boolean property used by JS properties to specify whether
      * the property is read-only. Defaults to false.
      **/
     const val PROP_READ_ONLY = "read-only"
+
     /**
      * Name of [WebSymbolJsKind] property used by JS symbols to specify kind of the symbol.
      * By default, symbol is treated as [WebSymbolJsKind.Variable].

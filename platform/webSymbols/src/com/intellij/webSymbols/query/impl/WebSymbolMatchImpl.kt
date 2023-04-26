@@ -82,7 +82,7 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
   override val required: Boolean?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.required }.firstOrNull()
 
-  override val apiStatus: WebSymbol.ApiStatus?
+  override val apiStatus: WebSymbolApiStatus
     get() = coalesceApiStatus(reversedSegments().flatMap { it.symbols }) { it.apiStatus }
 
   override val icon: Icon?

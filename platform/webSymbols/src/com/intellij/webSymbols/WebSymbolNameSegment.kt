@@ -12,7 +12,7 @@ class WebSymbolNameSegment(val start: Int,
                            val displayName: @NlsSafe String? = null,
                            val matchScore: Int = end - start,
                            symbolKinds: Set<WebSymbolQualifiedKind>? = null,
-                           private val explicitApiStatus: WebSymbol.ApiStatus? = null,
+                           private val explicitApiStatus: WebSymbolApiStatus? = null,
                            private val explicitPriority: WebSymbol.Priority? = null,
                            private val explicitProximity: Int? = null) {
 
@@ -27,7 +27,7 @@ class WebSymbolNameSegment(val start: Int,
 
   private val forcedSymbolTypes = symbolKinds
 
-  val apiStatus: WebSymbol.ApiStatus?
+  val apiStatus: WebSymbolApiStatus?
     get() = explicitApiStatus
 
   val priority: WebSymbol.Priority?
@@ -48,7 +48,7 @@ class WebSymbolNameSegment(val start: Int,
     WebSymbolNameSegment(start + offset, end + offset, symbols, problem, displayName,
                          matchScore, symbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
 
-  internal fun copy(apiStatus: WebSymbol.ApiStatus? = null,
+  internal fun copy(apiStatus: WebSymbolApiStatus? = null,
                     priority: WebSymbol.Priority? = null,
                     proximity: Int? = null,
                     problem: MatchProblem? = null,

@@ -326,8 +326,14 @@
         "source": {
           "$ref": "#/definitions/source"
         },
+        "since": {
+          "$ref": "#/definitions/since"
+        },
         "deprecated": {
           "$ref": "#/definitions/deprecated"
+        },
+        "deprecated-since": {
+          "$ref": "#/definitions/deprecated-since"
         },
         "experimental": {
           "$ref": "#/definitions/experimental"
@@ -735,14 +741,24 @@
     "required": {
       "type": "boolean"
     },
+    "since": {
+      "description": "Version since this symbol is available.",
+      "type": "string"
+    },
     "deprecated": {
+      "description": "Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.",
       "type": [
         "boolean",
         "string"
       ],
       "default": false
     },
+    "deprecated-since": {
+      "description": "Version in which this symbol was first deprecated.",
+      "type": "string"
+    },
     "experimental": {
+      "description": "Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.",
       "type": [
         "boolean",
         "string"

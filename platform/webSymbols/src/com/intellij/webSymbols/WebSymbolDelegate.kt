@@ -43,7 +43,7 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.docUrl
   override val icon: Icon?
     get() = delegate.icon
-  override val apiStatus: WebSymbol.ApiStatus?
+  override val apiStatus: WebSymbolApiStatus
     get() = delegate.apiStatus
   override val virtual: Boolean
     get() = delegate.virtual

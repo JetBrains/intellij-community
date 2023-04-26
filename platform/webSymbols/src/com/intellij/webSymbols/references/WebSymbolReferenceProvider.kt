@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
@@ -115,10 +116,10 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
       .mapNotNull { (range, segments) ->
         val problemOnly = problemOnlyRanges[range] ?: false
         val deprecation = segments.mapNotNull mapSegments@{ segment ->
-          segment.apiStatus.asSafely<WebSymbol.Deprecated>()
+          segment.apiStatus.asSafely<WebSymbolApiStatus.Deprecated>()
             ?.let { return@mapSegments it }
           val declarations = segment.symbols.filter { !it.extension }
-          declarations.mapNotNull { it.apiStatus as? WebSymbol.Deprecated }
+          declarations.mapNotNull { it.apiStatus as? WebSymbolApiStatus.Deprecated }
             .takeIf { it.size == declarations.size }
             ?.firstOrNull()
         }.takeIf { it.size == segments.size }?.firstOrNull()
@@ -163,7 +164,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
   private class NameSegmentReferenceWithProblem(element: PsiElement,
                                                 rangeInElement: TextRange,
                                                 nameSegments: Collection<WebSymbolNameSegment>,
-                                                private val deprecation: WebSymbol.Deprecated?,
+                                                private val deprecation: WebSymbolApiStatus.Deprecated?,
                                                 private val problemOnly: Boolean)
     : NameSegmentReference(element, rangeInElement, nameSegments) {
 
@@ -195,17 +196,22 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
         val toolMapping = symbolTypes.map {
           WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, WebSymbolReferenceProblem.ProblemKind.DeprecatedSymbol)
         }.firstOrNull()
+        val cause = deprecation.message
+                      ?.takeIf { it.isNotBlank() }
+                      ?.sanitizeHtmlOutputForProblemMessage()
+                    ?: WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
+
+        @Suppress("HardCodedStringLiteral")
+        val prefix = toolMapping?.getProblemMessage(null)?.trim()?.removeSuffix(".")?.let { if (!it.endsWith(",")) "$it," else it }
+                     ?: deprecation.since?.let { WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.since", it) }
+                     ?: WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.message")
+
         WebSymbolReferenceProblem(
           symbolTypes,
           WebSymbolReferenceProblem.ProblemKind.DeprecatedSymbol,
           inspectionManager.createProblemDescriptor(
             element, rangeInElement,
-            deprecation.message
-              ?.takeIf { it.isNotBlank() }
-              ?.sanitizeHtmlOutputForProblemMessage()
-              ?.let { WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.documented", StringUtil.capitalize(it)) }
-            ?: toolMapping?.getProblemMessage(null)
-            ?: WebSymbolReferenceProblem.ProblemKind.DeprecatedSymbol.getDefaultProblemMessage(null),
+            "$prefix ${StringUtil.decapitalize(cause)}",
             ProblemHighlightType.LIKE_DEPRECATED, true
           )
 

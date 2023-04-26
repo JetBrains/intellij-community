@@ -2,10 +2,7 @@
 package com.intellij.webSymbols.query
 
 import com.intellij.util.applyIf
-import com.intellij.webSymbols.DebugOutputPrinter
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.utils.completeMatch
@@ -22,7 +19,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       is WebSymbol -> builder.printSymbol(level, value)
       is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
       is WebSymbolNameSegment -> builder.printSegment(level, value)
-      is WebSymbol.ApiStatus -> builder.printApiStatus(value)
+      is WebSymbolApiStatus -> builder.printApiStatus(value)
       else -> super.printValueImpl(builder, level, value)
     }
 
@@ -69,7 +66,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "descriptionSections", source.descriptionSections.takeIf { it.isNotEmpty() })
       printProperty(level, "abstract", source.abstract.takeIf { it })
       printProperty(level, "virtual", source.virtual.takeIf { it })
-      printProperty(level, "apiStatus", source.apiStatus)
+      printProperty(level, "apiStatus", source.apiStatus.takeIf { it !is WebSymbolApiStatus.Stable || it.since != null })
       printProperty(level, "priority", source.priority ?: WebSymbol.Priority.NORMAL)
       printProperty(level, "proximity", source.proximity?.takeIf { it > 0 })
       printProperty(level, "has-pattern", if (source.pattern != null) true else null)
@@ -109,12 +106,16 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
         .printProperty(level, "default", value.default)
     }
 
-  private fun StringBuilder.printApiStatus(apiStatus: WebSymbol.ApiStatus): StringBuilder =
+  private fun StringBuilder.printApiStatus(apiStatus: WebSymbolApiStatus): StringBuilder =
     when (apiStatus) {
-      is WebSymbol.Deprecated -> append("deprecated")
+      is WebSymbolApiStatus.Deprecated -> append("deprecated")
+        .applyIf(apiStatus.since != null) { append(" in ").append(apiStatus.since) }
         .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
-      is WebSymbol.Experimental -> append("experimental")
+      is WebSymbolApiStatus.Experimental -> append("experimental")
+        .applyIf(apiStatus.since != null) { append(" since ").append(apiStatus.since) }
         .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
+      is WebSymbolApiStatus.Stable -> append("stable")
+        .applyIf(apiStatus.since != null) { append(" since ").append(apiStatus.since) }
     }
 
 }

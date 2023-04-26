@@ -25,7 +25,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
     "doc-url",
     "icon",
     "source",
+    "since",
     "deprecated",
+    "deprecated-since",
     "experimental",
     "priority",
     "proximity",
@@ -79,9 +81,33 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("source")
     @JsonPropertyDescription("Allows to specify the source of the entity. For Vue.js component this may be for instance a class.")
     private SourceBase source;
+    /**
+     * Version since this symbol is available.
+     * 
+     */
+    @JsonProperty("since")
+    @JsonPropertyDescription("Version since this symbol is available.")
+    private String since;
+    /**
+     * Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
     @JsonProperty("deprecated")
+    @JsonPropertyDescription("Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.")
     private Deprecated deprecated = null;
+    /**
+     * Version in which this symbol was first deprecated.
+     * 
+     */
+    @JsonProperty("deprecated-since")
+    @JsonPropertyDescription("Version in which this symbol was first deprecated.")
+    private String deprecatedSince;
+    /**
+     * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
+     * 
+     */
     @JsonProperty("experimental")
+    @JsonPropertyDescription("Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.")
     private Experimental experimental = null;
     @JsonProperty("priority")
     private BaseContribution.Priority priority;
@@ -247,21 +273,73 @@ public abstract class BaseContribution implements GenericContributionsHost
         this.source = source;
     }
 
+    /**
+     * Version since this symbol is available.
+     * 
+     */
+    @JsonProperty("since")
+    public String getSince() {
+        return since;
+    }
+
+    /**
+     * Version since this symbol is available.
+     * 
+     */
+    @JsonProperty("since")
+    public void setSince(String since) {
+        this.since = since;
+    }
+
+    /**
+     * Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
         return deprecated;
     }
 
+    /**
+     * Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
         this.deprecated = deprecated;
     }
 
+    /**
+     * Version in which this symbol was first deprecated.
+     * 
+     */
+    @JsonProperty("deprecated-since")
+    public String getDeprecatedSince() {
+        return deprecatedSince;
+    }
+
+    /**
+     * Version in which this symbol was first deprecated.
+     * 
+     */
+    @JsonProperty("deprecated-since")
+    public void setDeprecatedSince(String deprecatedSince) {
+        this.deprecatedSince = deprecatedSince;
+    }
+
+    /**
+     * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
+     * 
+     */
     @JsonProperty("experimental")
     public Experimental getExperimental() {
         return experimental;
     }
 
+    /**
+     * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
+     * 
+     */
     @JsonProperty("experimental")
     public void setExperimental(Experimental experimental) {
         this.experimental = experimental;

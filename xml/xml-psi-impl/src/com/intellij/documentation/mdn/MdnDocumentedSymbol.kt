@@ -3,6 +3,7 @@ package com.intellij.documentation.mdn
 
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 
 abstract class MdnDocumentedSymbol : WebSymbol {
@@ -13,11 +14,11 @@ abstract class MdnDocumentedSymbol : WebSymbol {
 
   protected abstract fun getMdnDocumentation(): MdnSymbolDocumentation?
 
-  override val apiStatus: WebSymbol.ApiStatus?
+  override val apiStatus: WebSymbolApiStatus
     get() = when {
-      mdnDoc?.isDeprecated == true -> WebSymbol.Deprecated()
-      mdnDoc?.isExperimental == true -> WebSymbol.Experimental()
-      else -> null
+      mdnDoc?.isDeprecated == true -> WebSymbolApiStatus.Deprecated
+      mdnDoc?.isExperimental == true -> WebSymbolApiStatus.Experimental
+      else -> WebSymbolApiStatus.Stable
     }
 
   override val description: String?

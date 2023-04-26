@@ -7,6 +7,10 @@
     "html": {
       "elements": [
         {
+          "name": "a-stable-element",
+          "since": "2021.12"
+        },
+        {
           "name": "not-deprecated",
           "deprecated": false
         },
@@ -16,11 +20,13 @@
         },
         {
           "name": "deprecatedWithMessage",
-          "deprecated": "**don't** use this"
+          "deprecated": "**don't** use this",
+          "deprecated-since": "2023.4.1"
         },
         {
           "name": "experimental",
-          "experimental": true
+          "experimental": true,
+          "since": "2023.1.2"
         },
         {
           "name": "experimentalWithMessage",

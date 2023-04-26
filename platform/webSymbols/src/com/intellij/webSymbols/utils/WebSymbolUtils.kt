@@ -173,45 +173,46 @@ val WebSymbol.nameSegments: List<WebSymbolNameSegment>
           ?: pattern?.let { listOf(WebSymbolNameSegment(0, 0, this)) }
           ?: listOf(WebSymbolNameSegment(this))
 
-val WebSymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment> get() =
-  Sequence {
-    object : Iterator<WebSymbolNameSegment> {
-      private var next: WebSymbolNameSegment? = null
-      val fifo = LinkedList<WebSymbolNameSegment>()
-      val visitedSymbols = mutableSetOf<WebSymbol>()
+val WebSymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment>
+  get() =
+    Sequence {
+      object : Iterator<WebSymbolNameSegment> {
+        private var next: WebSymbolNameSegment? = null
+        val fifo = LinkedList<WebSymbolNameSegment>()
+        val visitedSymbols = mutableSetOf<WebSymbol>()
 
-      init {
-        addNameSegmentsToQueue(this@nameSegmentsWithProblems)
-        advance()
-      }
-
-      private fun addNameSegmentsToQueue(symbol: WebSymbol) {
-        if (symbol is CompositeWebSymbol && visitedSymbols.add(symbol)) {
-          fifo.addAll(symbol.nameSegments)
+        init {
+          addNameSegmentsToQueue(this@nameSegmentsWithProblems)
+          advance()
         }
-      }
 
-      private fun advance() {
-        while (fifo.isNotEmpty()) {
-          val segment = fifo.removeFirst()
-          segment.symbols.forEach {
-            addNameSegmentsToQueue(it)
-          }
-          if (segment.problem != null) {
-            next = segment
-            return
+        private fun addNameSegmentsToQueue(symbol: WebSymbol) {
+          if (symbol is CompositeWebSymbol && visitedSymbols.add(symbol)) {
+            fifo.addAll(symbol.nameSegments)
           }
         }
-        next = null
+
+        private fun advance() {
+          while (fifo.isNotEmpty()) {
+            val segment = fifo.removeFirst()
+            segment.symbols.forEach {
+              addNameSegmentsToQueue(it)
+            }
+            if (segment.problem != null) {
+              next = segment
+              return
+            }
+          }
+          next = null
+        }
+
+        override fun hasNext(): Boolean =
+          next != null
+
+        override fun next(): WebSymbolNameSegment =
+          next!!.also { advance() }
       }
-
-      override fun hasNext(): Boolean =
-        next != null
-
-      override fun next(): WebSymbolNameSegment =
-        next!!.also { advance() }
     }
-  }
 
 internal val WebSymbol.matchedNameOrName: String
   get() = (this as? WebSymbolMatch)?.matchedName ?: name
@@ -227,28 +228,27 @@ fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegmen
   if (offset != 0) map { it.withOffset(offset) }
   else this
 
-fun WebSymbol.ApiStatus?.coalesceWith(other: WebSymbol.ApiStatus?): WebSymbol.ApiStatus? =
+fun WebSymbolApiStatus?.coalesceWith(other: WebSymbolApiStatus?): WebSymbolApiStatus =
   when (this) {
-    null -> other
-    is WebSymbol.Deprecated -> when {
-      message != null -> this
-      other is WebSymbol.Deprecated && other.message != null -> other
+    null -> other ?: WebSymbolApiStatus.Stable
+    is WebSymbolApiStatus.Deprecated -> this
+    is WebSymbolApiStatus.Experimental -> when (other) {
+      is WebSymbolApiStatus.Deprecated -> other
       else -> this
     }
-    is WebSymbol.Experimental -> when {
-      other is WebSymbol.Deprecated -> other
-      message != null -> this
-      other is WebSymbol.Experimental && other.message != null -> other
+    is WebSymbolApiStatus.Stable -> when (other) {
+      is WebSymbolApiStatus.Deprecated,
+      is WebSymbolApiStatus.Experimental -> other
       else -> this
     }
   }
 
-fun <T : Any> coalesceApiStatus(collection: Iterable<T>?, mapper: (T) -> WebSymbol.ApiStatus?): WebSymbol.ApiStatus? =
+fun <T : Any> coalesceApiStatus(collection: Iterable<T>?, mapper: (T) -> WebSymbolApiStatus?): WebSymbolApiStatus =
   coalesceApiStatus(collection?.asSequence(), mapper)
 
 
-fun <T : Any> coalesceApiStatus(sequence: Sequence<T>?, mapper: (T) -> WebSymbol.ApiStatus?): WebSymbol.ApiStatus? =
-  sequence?.map(mapper)?.reduceOrNull { a, b -> a.coalesceWith(b) }
+fun <T : Any> coalesceApiStatus(sequence: Sequence<T>?, mapper: (T) -> WebSymbolApiStatus?): WebSymbolApiStatus =
+  sequence?.map(mapper)?.reduceOrNull { a, b -> a.coalesceWith(b) } ?: WebSymbolApiStatus.Stable
 
 fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue? {
   var kind: WebSymbolHtmlAttributeValue.Kind? = null

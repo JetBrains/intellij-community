@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -40,7 +41,7 @@ interface WebSymbolDocumentation {
   /**
    * API status of the symbol - deprecated or experimental
    */
-  val apiStatus: WebSymbol.ApiStatus?
+  val apiStatus: WebSymbolApiStatus?
 
   /**
    * Whether the symbol is required
@@ -83,7 +84,7 @@ interface WebSymbolDocumentation {
 
   fun withDocUrl(docUrl: @NlsSafe String?): WebSymbolDocumentation
 
-  fun withApiStatus(apiStatus: WebSymbol.ApiStatus?): WebSymbolDocumentation
+  fun withApiStatus(apiStatus: WebSymbolApiStatus?): WebSymbolDocumentation
 
   fun withRequired(required: Boolean): WebSymbolDocumentation
 
@@ -101,7 +102,7 @@ interface WebSymbolDocumentation {
            definition: @NlsSafe String = this.definition,
            description: @Nls String? = this.description,
            docUrl: @NlsSafe String? = this.docUrl,
-           apiStatus: WebSymbol.ApiStatus? = this.apiStatus,
+           apiStatus: WebSymbolApiStatus? = this.apiStatus,
            required: Boolean = this.required,
            defaultValue: @NlsSafe String? = this.defaultValue,
            library: @NlsSafe String? = this.library,
@@ -123,7 +124,7 @@ interface WebSymbolDocumentation {
                definition: String = Strings.escapeXmlEntities(symbol.name),
                description: @Nls String? = symbol.description,
                docUrl: String? = symbol.docUrl,
-               apiStatus: WebSymbol.ApiStatus? = symbol.apiStatus,
+               apiStatus: WebSymbolApiStatus? = symbol.apiStatus,
                required: Boolean = symbol.required ?: false,
                defaultValue: String? = symbol.defaultValue ?: symbol.attributeValue?.default,
                library: String? = symbol.origin.takeIf { it.library != null }

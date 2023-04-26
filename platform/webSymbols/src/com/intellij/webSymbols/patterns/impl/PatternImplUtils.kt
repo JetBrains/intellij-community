@@ -3,6 +3,7 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -97,7 +98,7 @@ internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
   }
 
 internal fun MatchResult.applyToSegments(vararg contributions: WebSymbol,
-                                         apiStatus: WebSymbol.ApiStatus? = null,
+                                         apiStatus: WebSymbolApiStatus? = null,
                                          priority: WebSymbol.Priority? = null,
                                          proximity: Int? = null): MatchResult =
   if (apiStatus != null || priority != null || proximity != null || contributions.isNotEmpty())

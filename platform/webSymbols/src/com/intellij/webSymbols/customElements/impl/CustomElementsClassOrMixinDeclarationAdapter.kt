@@ -86,8 +86,8 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
                 ?.let { origin.renderDescription(it) }
               ?: superContributions.asSequence().mapNotNull { it.description }.firstOrNull()
 
-    override val apiStatus: WebSymbol.ApiStatus?
-      get() = base.declaration.deprecated.toApiStatus(origin)
+    override val apiStatus: WebSymbolApiStatus
+      get() = base.declaration.deprecated.toApiStatus(origin) ?: WebSymbolApiStatus.Stable
 
     override val queryScope: List<WebSymbolsScope>
       get() = superContributions.asSequence()

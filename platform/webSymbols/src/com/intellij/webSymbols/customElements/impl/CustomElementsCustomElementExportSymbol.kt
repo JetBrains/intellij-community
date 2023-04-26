@@ -16,7 +16,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override val name: String,
   override val origin: WebSymbolOrigin,
   override val pattern: WebSymbolsPattern,
-  override val apiStatus: WebSymbol.ApiStatus?,
+  override val apiStatus: WebSymbolApiStatus,
 ) : CustomElementsSymbol, StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter {
   override val namespace: SymbolNamespace
     get() = WebSymbol.NAMESPACE_HTML
@@ -35,7 +35,8 @@ class CustomElementsCustomElementExportSymbol private constructor(
     fun create(export: CustomElementExport, origin: CustomElementsJsonOrigin): CustomElementsCustomElementExportSymbol? {
       val name = export.name ?: return null
       val referencePattern = export.declaration?.createPattern(origin) ?: return null
-      return CustomElementsCustomElementExportSymbol(name, origin, referencePattern, export.deprecated.toApiStatus(origin))
+      return CustomElementsCustomElementExportSymbol(name, origin, referencePattern,
+                                                     export.deprecated.toApiStatus(origin) ?: WebSymbolApiStatus.Stable)
     }
   }
 

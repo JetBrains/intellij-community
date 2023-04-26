@@ -4,6 +4,7 @@ package com.intellij.webSymbols.webTypes.impl
 import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -80,8 +81,8 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     val delegate = pattern.delegate?.resolve(null, scopeStack, queryParams.queryExecutor)?.firstOrNull()
 
     // Allow delegate pattern to override settings
-    val deprecation = delegate?.apiStatus?.asSafely<WebSymbol.Deprecated>()
-                      ?: pattern.toApiStatus(origin)?.asSafely<WebSymbol.Deprecated>()
+    val deprecation = delegate?.apiStatus?.asSafely<WebSymbolApiStatus.Deprecated>()
+                      ?: pattern.toApiStatus(origin)?.asSafely<WebSymbolApiStatus.Deprecated>()
     val isRequired = (delegate?.required ?: pattern.required) != false
     val priority = delegate?.priority ?: pattern.priority?.wrap()
     val proximity = delegate?.proximity ?: pattern.proximity

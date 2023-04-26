@@ -10,12 +10,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.webSymbols.SymbolKind
-import com.intellij.webSymbols.SymbolNamespace
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Priority
-import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
@@ -190,7 +187,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
                 ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
               ?: superContributions.asSequence().mapNotNull { it.type }.firstOrNull()
 
-    override val apiStatus: WebSymbol.ApiStatus?
+    override val apiStatus: WebSymbolApiStatus
       get() = base.contribution.toApiStatus(origin)
 
     override val virtual: Boolean

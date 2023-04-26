@@ -195,7 +195,9 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
     internal fun ProblemKind.getDefaultProblemMessage(symbolKindName: String?): String {
       @PropertyKey(resourceBundle = WebSymbolsBundle.BUNDLE)
       val key = when (this) {
-        ProblemKind.DeprecatedSymbol -> "web.inspection.message.deprecated.symbol"
+        ProblemKind.DeprecatedSymbol -> return WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.message") +
+                                               " " +
+                                               WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")
         ProblemKind.UnknownSymbol -> "web.inspection.message.segment.unrecognized-identifier"
         ProblemKind.MissingRequiredPart -> "web.inspection.message.segment.missing"
         ProblemKind.DuplicatedPart -> "web.inspection.message.segment.duplicated"

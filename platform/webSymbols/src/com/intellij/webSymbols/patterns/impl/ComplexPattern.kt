@@ -6,6 +6,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.impl.selectBest
@@ -145,7 +146,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                           params: MatchParameters,
                           action: (patterns: List<WebSymbolsPattern>,
                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                   patternDeprecation: WebSymbol.Deprecated?,
+                                   patternDeprecation: WebSymbolApiStatus.Deprecated?,
                                    patternRequired: Boolean,
                                    patternPriority: WebSymbol.Priority?,
                                    patternProximity: Int?,
