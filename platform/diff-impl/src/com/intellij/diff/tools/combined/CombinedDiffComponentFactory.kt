@@ -88,7 +88,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     override fun onRequestsLoaded(requests: Map<CombinedBlockId, DiffRequest>, blockIdToSelect: CombinedBlockId?) {
       for ((blockId, request) in requests) {
         buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
-          combinedViewer.diffBlocks[blockId]?.let { block ->
+          combinedViewer.getBlockForId(blockId)?.let { block ->
             mainUi.countDifferences(blockId, newContent.viewer)
             combinedViewer.updateBlockContent(block, newContent)
             request.onAssigned(true)
@@ -99,7 +99,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       combinedViewer.contentChanged()
 
       if (blockIdToSelect != null) {
-        combinedViewer.diffBlocks[blockIdToSelect]?.let { block ->
+        combinedViewer.getBlockForId(blockIdToSelect)?.let { block ->
           combinedViewer.selectDiffBlock(block, ScrollPolicy.DIFF_BLOCK, false)
         }
       }
@@ -110,7 +110,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       for ((blockId, request) in requests) {
         val size = combinedViewer.getDiffViewerForId(blockId)?.component?.size
         buildLoadingBlockContent(blockId, size).let { newContent ->
-          combinedViewer.diffBlocks[blockId]?.let { block ->
+          combinedViewer.getBlockForId(blockId)?.let { block ->
             combinedViewer.updateBlockContent(block, newContent)
             request.onAssigned(false)
           }

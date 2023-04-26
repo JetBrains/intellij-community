@@ -323,7 +323,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
     private val loadedDifferences = hashMapOf<Int, Int>()
 
-    override fun getFileCount(): Int = combinedViewer?.diffBlocks?.size ?: 0
+    override fun getFileCount(): Int = combinedViewer?.getDiffBlocksCount() ?: 0
     override fun getTotalDifferences(): Int = calculateTotalDifferences()
 
     fun countDifferences(blockId: CombinedBlockId, childViewer: DiffViewer) {

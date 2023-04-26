@@ -68,7 +68,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     viewport.addChangeListener(ViewportChangeListener())
   }
 
-  internal val diffBlocks = linkedMapOf<CombinedBlockId, CombinedDiffBlock<*>>()
+  private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = linkedMapOf()
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
 
@@ -121,7 +121,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     contentPanel.add(diffBlock.component)
     diffBlocks[diffBlock.id] = diffBlock
     diffViewers[diffBlock.id] = viewer
-    diffBlocksPositions[diffBlock.id] = diffBlocks.size - 1
+    diffBlocksPositions[diffBlock.id] = getDiffBlocksCount() - 1
     viewer.init()
   }
 
@@ -131,13 +131,13 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       if (position == null) -1
       else diffBlocksPositions[position.blockId]?.let { if (above) it else it.inc() } ?: -1
 
-    val diffBlock = createDiffBlock(content, diffBlocks.size > 1 && insertIndex > 0)
+    val diffBlock = createDiffBlock(content, getDiffBlocksCount() > 1 && insertIndex > 0)
     val blockId = diffBlock.id
     val viewer = content.viewer
 
-    if (insertIndex != -1 && insertIndex < diffBlocks.size) {
+    if (insertIndex != -1 && insertIndex < getDiffBlocksCount()) {
       contentPanel.add(diffBlock.component, insertIndex)
-      for (index in insertIndex until diffBlocks.size) {
+      for (index in insertIndex until getDiffBlocksCount()) {
         getBlockId(index)?.let { id -> diffBlocksPositions[id] = index + 1 }
       }
       diffBlocks[blockId] = diffBlock
@@ -213,11 +213,11 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
   }
 
-  fun isNavigationEnabled(): Boolean = diffBlocks.size > 0
+  fun isNavigationEnabled(): Boolean = diffBlocks.isNotEmpty()
 
   fun hasNextChange(fromUpdate: Boolean): Boolean {
     val curFilesIndex = scrollSupport.blockIterable.index
-    return curFilesIndex != -1 && curFilesIndex < diffBlocks.size - 1
+    return curFilesIndex != -1 && curFilesIndex < getDiffBlocksCount() - 1
   }
 
   fun hasPrevChange(fromUpdate: Boolean): Boolean {
@@ -351,8 +351,8 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
   fun getAllBlocks() = diffBlocks.values.asSequence()
 
-  fun getBlock(id: CombinedBlockId) = diffBlocks[id]
-  fun getBlock(viewer: DiffViewer) = diffViewers.entries.find { it.value == viewer }?.key?.let { blockId -> diffBlocks[blockId] }
+  fun getBlockForId(id: CombinedBlockId) = diffBlocks[id]
+  fun getDiffBlocksCount(): Int = diffBlocks.size
 
   fun getCurrentBlockId(): CombinedBlockId? {
     return getBlockId(scrollSupport.blockIterable.index)
@@ -387,9 +387,10 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
                       scrollPolicy: ScrollPolicy,
                       focusBlock: Boolean = true,
                       onSelected: () -> Unit = {}) {
-    getBlockId(index)?.let { diffBlocks[it] }?.run {
-      selectDiffBlock(index, this, scrollPolicy, focusBlock, onSelected)
-    }
+    val blockId = getBlockId(index) ?: return
+    val block = getBlockForId(blockId)?: return
+
+    selectDiffBlock(index, block, scrollPolicy, focusBlock, onSelected)
   }
 
   fun selectDiffBlock(block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy, focusBlock: Boolean = true, onSelected: () -> Unit = {}) {

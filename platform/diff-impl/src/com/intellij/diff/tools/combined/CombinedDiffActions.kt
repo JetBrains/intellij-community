@@ -309,7 +309,7 @@ internal class CombinedPrevNextFileAction(private val blockId: CombinedPathBlock
 
   private fun CombinedDiffViewer.nextBlockPosition(): Int {
     val curPosition = curBlockPosition()
-    return if (curPosition != -1 && curPosition < diffBlocks.size - 1) curPosition + 1 else -1
+    return if (curPosition != -1 && curPosition < getDiffBlocksCount() - 1) curPosition + 1 else -1
   }
 
   private fun CombinedDiffViewer.curBlockPosition(): Int = diffBlocksPositions[blockId] ?: -1

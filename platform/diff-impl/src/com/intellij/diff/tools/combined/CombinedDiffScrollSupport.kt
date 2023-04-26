@@ -71,7 +71,7 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
   internal inner class CombinedDiffPrevNextBlocksIterable : PrevNextDifferenceIterable {
     var index = 0
 
-    override fun canGoNext(): Boolean = index < viewer.diffBlocks.size - 1
+    override fun canGoNext(): Boolean = index < viewer.getDiffBlocksCount() - 1
 
     override fun canGoPrev(): Boolean = index > 0
 
