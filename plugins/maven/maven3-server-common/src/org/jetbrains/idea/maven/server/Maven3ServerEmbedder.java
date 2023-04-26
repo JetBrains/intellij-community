@@ -325,7 +325,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
         result.add(ProjectUtils.buildArtifactRepository(MavenModelConverter.toNativeRepository(each), factory, container));
       }
       catch (InvalidRepositoryException e) {
-        Maven3ServerGlobals.getLogger().warn(e);
+        MavenServerGlobals.getLogger().warn(e);
       }
     }
     return result;
@@ -440,7 +440,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     throws RemoteException;
 
   protected static void warn(String message, Throwable e) {
-    Maven3ServerGlobals.getLogger().warn(new RuntimeException(message, e));
+    MavenServerGlobals.getLogger().warn(new RuntimeException(message, e));
   }
 
   @Override
@@ -465,7 +465,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       return getArchetypes(archetypeCatalog);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return Collections.emptyList();
   }
@@ -481,7 +481,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       return getArchetypes(archetypeCatalog);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return Collections.emptyList();
   }
@@ -497,7 +497,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       return getArchetypes(archetypeCatalog);
     }
     catch (ArchetypeDataSourceException e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return Collections.emptyList();
   }

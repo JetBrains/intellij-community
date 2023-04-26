@@ -84,7 +84,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
         defaultRepositorySystem.setDependencyCollector(dependencyCollector);
       }
       catch (Throwable e) {
-        Maven3ServerGlobals.getLogger().warn(e);
+        MavenServerGlobals.getLogger().warn(e);
       }
     }
     return repositorySystem;
@@ -111,7 +111,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
           repoSystemField.set(defaultResolver, getRepositorySystem());
         }
         catch (Exception e) {
-          Maven3ServerGlobals.getLogger().warn(e);
+          MavenServerGlobals.getLogger().warn(e);
         }
       }
     }
@@ -133,7 +133,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
           repoSystemField.set(defaultResolver, getRepositorySystem());
         }
         catch (Exception e) {
-          Maven3ServerGlobals.getLogger().warn(e);
+          MavenServerGlobals.getLogger().warn(e);
         }
       }
     }

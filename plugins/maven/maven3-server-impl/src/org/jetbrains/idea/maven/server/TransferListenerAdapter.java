@@ -111,7 +111,7 @@ public class TransferListenerAdapter implements TransferListener {
     try {
       myIndicator.setText2("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
-      Maven3ServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
+      MavenServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);

@@ -2,9 +2,9 @@
 package org.jetbrains.idea.maven.server;
 
 
-public final class Maven3ServerGlobals {
-  private static MavenServerLoggerWrapper myLogger = new MavenServerLoggerWrapper();
-  private static MavenServerDownloadListenerWrapper myDownloadListener = new MavenServerDownloadListenerWrapper();
+public final class MavenServerGlobals {
+  private static final MavenServerLoggerWrapper myLogger = new MavenServerLoggerWrapper();
+  private static final MavenServerDownloadListenerWrapper myDownloadListener = new MavenServerDownloadListenerWrapper();
 
   public static MavenServerLoggerWrapper getLogger() {
     return myLogger;

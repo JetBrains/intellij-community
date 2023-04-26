@@ -90,7 +90,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
       return IndexReader.indexExists(dir);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return false;
   }
@@ -336,7 +336,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
       }
     }
     catch (ArchetypeDataSourceException e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
   }
 

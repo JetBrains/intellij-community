@@ -55,7 +55,7 @@ public class WagonTransferListenerAdapter implements TransferListener {
 
   @Override
   public void transferCompleted(TransferEvent event) {
-    Maven3ServerGlobals.getDownloadListener().artifactDownloaded(event.getLocalFile(), event.getResource().getName());
+    MavenServerGlobals.getDownloadListener().artifactDownloaded(event.getLocalFile(), event.getResource().getName());
 
     checkCanceled();
 

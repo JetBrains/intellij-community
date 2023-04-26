@@ -81,7 +81,7 @@ public final class Maven3XProfileUtil {
             }
           }
           catch (Exception e) {
-            Maven3ServerGlobals.getLogger().warn(e);
+            MavenServerGlobals.getLogger().warn(e);
           }
         }
       }
@@ -131,7 +131,7 @@ public final class Maven3XProfileUtil {
     }
     catch (Exception e) {
       // don't bother user if maven failed to build parent project
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
     }
     return collectProfilesIds(profiles);
   }
@@ -167,10 +167,10 @@ public final class Maven3XProfileUtil {
       result = interpolator.interpolate(result, basedir, config, false);
     }
     catch (ModelInterpolationException e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     catch (InitializationException e) {
-      Maven3ServerGlobals.getLogger().error(e);
+      MavenServerGlobals.getLogger().error(e);
     }
     return result;
   }
@@ -190,7 +190,7 @@ public final class Maven3XProfileUtil {
           processor.invoke(interpolator, component);
         }
         catch (Exception e) {
-          Maven3ServerGlobals.getLogger().error(e);
+          MavenServerGlobals.getLogger().error(e);
         }
       }
       //interpolator.initialize();
@@ -234,12 +234,12 @@ public final class Maven3XProfileUtil {
 
       for (ModelProblemCollectorRequest problem : problems) {
         if (problem.getException() != null) {
-          Maven3ServerGlobals.getLogger().warn(problem.getException());
+          MavenServerGlobals.getLogger().warn(problem.getException());
         }
       }
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().error(e);
+      MavenServerGlobals.getLogger().error(e);
     }
     return result;
   }
@@ -262,7 +262,7 @@ public final class Maven3XProfileUtil {
       sysPropertyActivator.contextualize(context);
     }
     catch (ContextException e) {
-      Maven3ServerGlobals.getLogger().error(e);
+      MavenServerGlobals.getLogger().error(e);
       return new ProfileActivator[0];
     }
 

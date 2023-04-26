@@ -116,7 +116,7 @@ public class Maven30TransferListenerAdapter implements TransferListener {
       myIndicator.setIndeterminate(true);
       myIndicator.completedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, formatResourceName(event));
 
-      Maven3ServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
+      MavenServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);

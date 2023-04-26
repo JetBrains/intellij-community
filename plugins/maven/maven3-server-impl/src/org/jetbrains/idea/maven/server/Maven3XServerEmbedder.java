@@ -315,7 +315,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       result = builder.build(settingsRequest).getEffectiveSettings();
     }
     catch (SettingsBuildingException e) {
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
     }
 
     result.setOffline(settings.isOffline());
@@ -503,7 +503,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           methodSetModelVersionProcessor.invoke(interpolator, component);
         }
         catch (Exception e) {
-          Maven3ServerGlobals.getLogger().error(e);
+          MavenServerGlobals.getLogger().error(e);
         }
       }
 
@@ -980,7 +980,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           result.setMultiModuleProjectDirectory(mavenMultiModuleProjectDirectory);
         }
         catch (Exception e) {
-          Maven3ServerGlobals.getLogger().error(e);
+          MavenServerGlobals.getLogger().error(e);
         }
       }
 
@@ -1117,7 +1117,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     for (Throwable each : exceptions) {
       if (each == null) continue;
 
-      Maven3ServerGlobals.getLogger().print(ExceptionUtils.getFullStackTrace(each));
+      MavenServerGlobals.getLogger().print(ExceptionUtils.getFullStackTrace(each));
       myConsoleWrapper.info("Validation error:", each);
 
       Artifact problemTransferArtifact = getProblemTransferArtifact(each);
@@ -1278,7 +1278,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         return new MavenArtifactResolveResult(mavenArtifacts.get(), null);
       }
       catch (Exception e) {
-        Maven3ServerGlobals.getLogger().error(e);
+        MavenServerGlobals.getLogger().error(e);
         Artifact transferArtifact = getProblemTransferArtifact(e);
         String message = getRootMessage(e);
         MavenProjectProblem problem;
@@ -1316,7 +1316,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return MavenModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
       throw wrapToSerializableRuntimeException(e);
     }
   }
@@ -1443,7 +1443,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return new PluginResolutionResponse(mavenPluginId, true, artifacts);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
       return new PluginResolutionResponse(mavenPluginId, false, artifacts);
     }
   }
@@ -1468,7 +1468,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         catch (ComponentLookupException ignore) {
         }
         catch (Throwable e) {
-          Maven3ServerGlobals.getLogger().warn(e);
+          MavenServerGlobals.getLogger().warn(e);
         }
       }
 
@@ -1485,12 +1485,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           return MavenModelConverter.convertModel(model, null);
         }
         catch (Exception e) {
-          Maven3ServerGlobals.getLogger().warn(e);
+          MavenServerGlobals.getLogger().warn(e);
         }
       }
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return null;
   }
@@ -1532,7 +1532,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return resolve(artifact, remoteRepositories);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
     }
     return artifact;
   }

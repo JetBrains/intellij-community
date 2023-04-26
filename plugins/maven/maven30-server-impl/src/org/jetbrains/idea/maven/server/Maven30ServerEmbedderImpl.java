@@ -245,7 +245,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       result = builder.build(settingsRequest).getEffectiveSettings();
     }
     catch (SettingsBuildingException e) {
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
     }
 
     result.setOffline(settings.isOffline());
@@ -281,7 +281,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
     catch (Exception e) {
       // don't bother user if maven failed to build parent project
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
     }
     return collectProfilesIds(profiles);
   }
@@ -357,7 +357,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
             }
           }
           catch (Exception e) {
-            Maven3ServerGlobals.getLogger().warn(e);
+            MavenServerGlobals.getLogger().warn(e);
           }
         }
       }
@@ -401,10 +401,10 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       result = interpolator.interpolate(result, basedir, config, false);
     }
     catch (ModelInterpolationException e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     catch (InitializationException e) {
-      Maven3ServerGlobals.getLogger().error(e);
+      MavenServerGlobals.getLogger().error(e);
     }
     return result;
   }
@@ -427,7 +427,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       sysPropertyActivator.contextualize(context);
     }
     catch (ContextException e) {
-      Maven3ServerGlobals.getLogger().error(e);
+      MavenServerGlobals.getLogger().error(e);
       return new ProfileActivator[0];
     }
 
@@ -950,7 +950,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     for (Throwable each : exceptions) {
       if (each == null) continue;
 
-      Maven3ServerGlobals.getLogger().info(each);
+      MavenServerGlobals.getLogger().info(each);
 
       if (each instanceof IllegalStateException && each.getCause() != null) {
         each = each.getCause();
@@ -1005,7 +1005,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       return MavenModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
       throw wrapToSerializableRuntimeException(e);
     }
   }
@@ -1074,7 +1074,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       return new PluginResolutionResponse(pluginId, true, artifacts);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
       return new PluginResolutionResponse(pluginId, false, artifacts);
     }
   }
@@ -1111,7 +1111,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       return resolve(artifact, remoteRepositories);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
     }
     return artifact;
   }

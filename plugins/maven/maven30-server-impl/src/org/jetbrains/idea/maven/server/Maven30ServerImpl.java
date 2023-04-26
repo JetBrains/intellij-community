@@ -98,7 +98,7 @@ public class Maven30ServerImpl extends MavenWatchdogAware implements MavenServer
   public MavenPullServerLogger createPullLogger(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      MavenServerLoggerWrapper result = Maven3ServerGlobals.getLogger();
+      MavenServerLoggerWrapper result = MavenServerGlobals.getLogger();
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
@@ -111,7 +111,7 @@ public class Maven30ServerImpl extends MavenWatchdogAware implements MavenServer
   public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      MavenServerDownloadListenerWrapper result = Maven3ServerGlobals.getDownloadListener();
+      MavenServerDownloadListenerWrapper result = MavenServerGlobals.getDownloadListener();
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }

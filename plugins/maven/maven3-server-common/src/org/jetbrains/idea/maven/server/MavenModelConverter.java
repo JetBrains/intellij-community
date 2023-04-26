@@ -296,7 +296,7 @@ public class MavenModelConverter {
       result = new Element(xpp.getName());
     }
     catch (IllegalNameException e) {
-      Maven3ServerGlobals.getLogger().info(e);
+      MavenServerGlobals.getLogger().info(e);
       return null;
     }
 
