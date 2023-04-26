@@ -51,7 +51,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
+      return Maven3XProfileUtil.interpolateAndAlignModel(model, basedir);
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -76,7 +76,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
                                                 Collection<String> alwaysOnProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+      return Maven3XProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);

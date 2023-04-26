@@ -19,12 +19,11 @@ import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.rmi.RemoteException;
 import java.util.*;
 
 public class MavenModelConverter {
   @NotNull
-  public static MavenModel convertModel(Model model, File localRepository) throws RemoteException {
+  public static MavenModel convertModel(Model model, File localRepository) {
     if(model.getBuild() == null) {
       model.setBuild(new Build());
     }
@@ -49,7 +48,7 @@ public class MavenModelConverter {
                                         Collection<? extends Artifact> dependencies,
                                         Collection<? extends DependencyNode> dependencyTree,
                                         Collection<? extends Artifact> extensions,
-                                        File localRepository) throws RemoteException {
+                                        File localRepository) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -247,7 +246,7 @@ public class MavenModelConverter {
     return result;
   }
 
-  public static List<MavenPlugin> convertPlugins(Model mavenModel) throws RemoteException {
+  public static List<MavenPlugin> convertPlugins(Model mavenModel) {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
     Build build = mavenModel.getBuild();
 
@@ -263,7 +262,7 @@ public class MavenModelConverter {
     return result;
   }
 
-  private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin) throws RemoteException {
+  private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin) {
     List<MavenPlugin.Execution> executions = new ArrayList<MavenPlugin.Execution>(plugin.getExecutions().size());
     for (PluginExecution each : plugin.getExecutions()) {
       executions.add(convertExecution(each));
@@ -283,15 +282,15 @@ public class MavenModelConverter {
                            executions, deps);
   }
 
-  public static MavenPlugin.Execution convertExecution(PluginExecution execution) throws RemoteException {
+  public static MavenPlugin.Execution convertExecution(PluginExecution execution) {
     return new MavenPlugin.Execution(execution.getId(), execution.getPhase(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
   }
 
-  private static Element convertConfiguration(Object config) throws RemoteException {
+  private static Element convertConfiguration(Object config) {
     return config == null ? null : xppToElement((Xpp3Dom)config);
   }
 
-  private static Element xppToElement(Xpp3Dom xpp) throws RemoteException {
+  private static Element xppToElement(Xpp3Dom xpp) {
     Element result;
     try {
       result = new Element(xpp.getName());
