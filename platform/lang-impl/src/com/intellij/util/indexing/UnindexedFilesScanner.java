@@ -570,14 +570,14 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       if (e instanceof ControlFlowException) {
         LOG.info("Cancelled indexing of " + myProject.getName());
         if(ApplicationManagerEx.isInIntegrationTest()) {
-          LOG.info("Began finalization of scanning");
+          LOG.info("Began finalization of scanning in catch");
         }
       }
       throw e;
     }
     finally {
       if(ApplicationManagerEx.isInIntegrationTest()) {
-        LOG.info("Began finalization of scanning");
+        LOG.info("Began finalization of scanning in finally");
       }
       scanningHistory.finishDumbModeBeginningTracking();
       myIndex.filesUpdateFinished(myProject);

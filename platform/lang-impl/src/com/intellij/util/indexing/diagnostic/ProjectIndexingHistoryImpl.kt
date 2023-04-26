@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
@@ -403,7 +404,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   fun startDumbModeBeginningTracking() {
     logInTests("startDumbModeBeginningTracking")
-    ReadAction.run<RuntimeException> {
+    doInReadActionWithLogging {
       if (!project.isDisposed) {
         project.getService(DumbModeFromScanningTrackerService::class.java).setScanningDumbModeStartCallback(scanningDumbModeCallBack)
       }
@@ -415,13 +416,28 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   fun finishDumbModeBeginningTracking() {
     logInTests("finishDumbModeBeginningTracking")
-    ReadAction.run<RuntimeException> {
+    doInReadActionWithLogging {
       if (!project.isDisposed) {
         project.getService(DumbModeFromScanningTrackerService::class.java).cleanScanningDumbModeStartCallback(scanningDumbModeCallBack)
       }
       else {
         logInTests("finishDumbModeBeginningTracking didn't work: project disposed")
       }
+    }
+  }
+
+  private fun doInReadActionWithLogging(action: ThrowableRunnable<RuntimeException>) {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      try {
+        ReadAction.run(action)
+      }
+      catch (e: Throwable) {
+        thisLogger().info("RunAction returned exception $e")
+        throw e
+      }
+    }
+    else {
+      ReadAction.run(action)
     }
   }
 
