@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.nextIncomplete
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.*
 import com.intellij.util.io.DataEnumerator
 import java.io.InputStream
@@ -70,11 +71,15 @@ value class VfsOperationTagsMask(val mask: Long) {
   fun contains(tag: VfsOperationTag) = (mask and (1L shl tag.ordinal)) != 0L
 
   companion object {
+    /**
+     * @see [IteratorUtils.nextIncomplete]
+     */
     val EMPTY = VfsOperationTagsMask(0L)
     val RecordsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isRecordOperation }.toTypedArray())
     val AttributesMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isAttributeOperation }.toTypedArray())
     val ContentsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isContentOperation }.toTypedArray())
     val VFileEventsStartMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventStartOperation }.toTypedArray())
     val VFileEventsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventOperation }.toTypedArray())
+    val VFileEventEndMask = VfsOperationTagsMask(VfsOperationTag.VFILE_EVENT_END)
   }
 }

@@ -97,6 +97,10 @@ interface OperationLogStorage {
         is Incomplete -> tag
         is Invalid -> throw IllegalAccessException("data access on OperationReadResult.Invalid")
       }
+
+      inline fun OperationReadResult.onInvalid(body: (cause: Throwable) -> Nothing): OperationReadResult = this.also {
+        if (this is Invalid) body(cause)
+      }
     }
   }
 
@@ -106,7 +110,7 @@ interface OperationLogStorage {
    *
    * Comparison is performed in terms of relative position, e.g. `iter1 < iter2` means that `iter1` is positioned strictly before `iter2`
    */
-  interface Iterator: Comparable<Iterator>, BiDiIterator<OperationReadResult> {
+  interface Iterator : Comparable<Iterator>, BiDiIterator<OperationReadResult> {
     /**
      * Creates a complete and independent copy of an iterator.
      */
@@ -122,4 +126,17 @@ interface OperationLogStorage {
      */
     fun previousFiltered(mask: VfsOperationTagsMask): OperationReadResult
   }
+
+  enum class TraverseDirection {
+    /** absolute position decreases */
+    RETREAT,
+    /** absolute position increases */
+    ADVANCE
+  }
+
+  fun Iterator.move(direction: TraverseDirection) =
+    when (direction) {
+      TraverseDirection.RETREAT -> previous()
+      TraverseDirection.ADVANCE -> next()
+    }
 }
