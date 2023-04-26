@@ -4,7 +4,6 @@ package com.intellij.util.indexing;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -15,18 +14,14 @@ import com.intellij.openapi.project.DumbModeProgressTitle;
 import com.intellij.openapi.project.FilesScanningTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.BooleanFunction;
-import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
@@ -40,7 +35,6 @@ import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -52,15 +46,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.project.UnindexedFilesScannerExecutor.shouldScanInSmartMode;
-import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getImmediateValuesEx;
-import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
 
 @ApiStatus.Internal
 public class UnindexedFilesScanner implements FilesScanningTask {
   @VisibleForTesting
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
 
-  private static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);  // only for test debugging purpose
+  static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);  // only for test debugging purpose
 
   public enum TestMode {
     PUSHING, PUSHING_AND_SCANNING
@@ -401,9 +393,10 @@ public class UnindexedFilesScanner implements FilesScanningTask {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
         try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class)
           .getSink(provider, projectScanningHistory.getScanningSessionId())) {
-          CollectingIterator collectingIterator = new CollectingIterator(project, subTaskIndicator, provider, fileScannerVisitors,
-                                                                         unindexedFileFinder, scanningStatistics, perProviderSink);
-          provider.iterateFiles(project, collectingIterator, thisProviderDeduplicateFilter);
+          SingleProviderIterator
+            singleProviderIterator = new SingleProviderIterator(project, subTaskIndicator, provider, fileScannerVisitors,
+                                                                unindexedFileFinder, scanningStatistics, perProviderSink);
+          provider.iterateFiles(project, singleProviderIterator, thisProviderDeduplicateFilter);
           perProviderSink.commit();
         }
         catch (ProcessCanceledException pce) {
@@ -435,106 +428,6 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       synchronized (allTasksFinished) {
         allTasksFinished.set(true);
       }
-    }
-  }
-
-  private static final class CollectingIterator implements ContentIterator {
-    private final Project project;
-    private final PerProviderSink perProviderSink;
-    private final SubTaskProgressIndicator subTaskIndicator;
-    private final List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors;
-    private final List<FilePropertyPusher<?>> pushers;
-    private final List<FilePropertyPusherEx<?>> pusherExs;
-    private final Object[] moduleValues;
-    private final UnindexedFilesFinder unindexedFileFinder;
-    private final ScanningStatistics scanningStatistics;
-    private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
-
-    CollectingIterator(Project project, SubTaskProgressIndicator subTaskIndicator, IndexableFilesIterator provider,
-                       List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors,
-                       UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics,
-                       PerProviderSink perProviderSink) {
-      this.project = project;
-      this.subTaskIndicator = subTaskIndicator;
-      this.fileScannerVisitors = fileScannerVisitors;
-      this.unindexedFileFinder = unindexedFileFinder;
-      this.scanningStatistics = scanningStatistics;
-
-      pushedFilePropertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
-
-      // We always need to properly dispose perProviderSink. Make this fact explicit to clients by requiring clients to provide an instance
-      this.perProviderSink = perProviderSink;
-
-      IndexableSetOrigin origin = provider.getOrigin();
-      if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
-        pushers = FilePropertyPusher.EP_NAME.getExtensionList();
-        pusherExs = null;
-        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule()));
-      }
-      else {
-        pushers = null;
-        List<FilePropertyPusherEx<?>> extendedPushers = new SmartList<>();
-        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
-          if (pusher instanceof FilePropertyPusherEx && ((FilePropertyPusherEx<?>)pusher).acceptsOrigin(project, origin)) {
-            extendedPushers.add((FilePropertyPusherEx<?>)pusher);
-          }
-        }
-        if (extendedPushers.isEmpty()) {
-          pusherExs = null;
-          moduleValues = null;
-        }
-        else {
-          pusherExs = extendedPushers;
-          moduleValues = ReadAction.compute(() -> getImmediateValuesEx(extendedPushers, origin));
-        }
-      }
-    }
-
-    @Override
-    public boolean processFile(@NotNull VirtualFile fileOrDir) {
-      ProgressManager.checkCanceled(); // give a chance to suspend indexing
-      if (subTaskIndicator.isCanceled()) {
-        return false;
-      }
-
-      try {
-        processFileRethrowExceptions(fileOrDir);
-      }
-      catch (ProcessCanceledException pce) {
-        throw pce;
-      }
-      catch (Exception e) {
-        LOG.error("Error while scanning " + fileOrDir.getPresentableUrl() + "\n" +
-                                     "To reindex this file IDEA has to be restarted", e);
-      }
-      return true;
-    }
-
-    private void processFileRethrowExceptions(@NotNull VirtualFile fileOrDir) {
-      long scanningStart = System.nanoTime();
-      PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
-      if (pushers != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
-        ((PushedFilePropertiesUpdaterImpl)pushedFilePropertiesUpdater).applyPushersToFile(fileOrDir, pushers, moduleValues);
-      }
-      else if (pusherExs != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
-        ((PushedFilePropertiesUpdaterImpl)pushedFilePropertiesUpdater).applyPushersToFile(fileOrDir, pusherExs, moduleValues);
-      }
-
-      UnindexedFileStatus status;
-      long statusTime = System.nanoTime();
-      try {
-        status = ourTestMode == TestMode.PUSHING ? null : unindexedFileFinder.getFileStatus(fileOrDir);
-      }
-      finally {
-        statusTime = System.nanoTime() - statusTime;
-      }
-      if (status != null) {
-        if (status.getShouldIndex() && ourTestMode == null) {
-          perProviderSink.addFile(fileOrDir);
-        }
-        scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
-      }
-      scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
     }
   }
 
