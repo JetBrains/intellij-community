@@ -35,6 +35,8 @@
               class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction" internal="true"/>
       <action id="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction"
               class="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction" internal="true"/>
+      <action id="com.intellij.feedback.aqua.TestShowAquaOldUserFeedbackAction"
+              class="com.intellij.feedback.aqua.TestShowAquaOldUserFeedbackAction" internal="true"/>
       <action id="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
               class="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
               internal="true"/>

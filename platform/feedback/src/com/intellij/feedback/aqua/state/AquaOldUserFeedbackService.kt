@@ -5,24 +5,24 @@ import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
-@State(name = "AquaNewUserFeedbackInfoState", storages = [Storage("AquaNewUserFeedbackService.xml")])
-class AquaNewUserFeedbackService : PersistentStateComponent<AquaOldUserInfoState> {
+@State(name = "AquaOldUserFeedbackInfoState", storages = [Storage("AquaOldUserFeedbackService.xml")])
+class AquaOldUserFeedbackService : PersistentStateComponent<AquaNewUserInfoState> {
   companion object {
     @JvmStatic
-    fun getInstance(): AquaNewUserFeedbackService = service()
+    fun getInstance(): AquaOldUserFeedbackService = service()
   }
 
-  private var state = AquaOldUserInfoState()
+  private var state = AquaNewUserInfoState()
 
-  override fun getState(): AquaOldUserInfoState = state
+  override fun getState(): AquaNewUserInfoState = state
 
-  override fun loadState(state: AquaOldUserInfoState) {
+  override fun loadState(state: AquaNewUserInfoState) {
     this.state = state
   }
 }
 
 @Serializable
-data class AquaNewUserInfoState(
+data class AquaOldUserInfoState(
   var numberNotificationShowed: Int = 0,
   var feedbackSent: Boolean = false,
 )
