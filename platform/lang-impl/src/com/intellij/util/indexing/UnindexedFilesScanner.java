@@ -14,12 +14,14 @@ import com.intellij.openapi.project.DumbModeProgressTitle;
 import com.intellij.openapi.project.FilesScanningTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.SystemProperties;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.*;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.project.UnindexedFilesScannerExecutor.shouldScanInSmartMode;
@@ -393,10 +396,10 @@ public class UnindexedFilesScanner implements FilesScanningTask {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
         try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class)
           .getSink(provider, projectScanningHistory.getScanningSessionId())) {
-          SingleProviderIterator
-            singleProviderIterator = new SingleProviderIterator(project, subTaskIndicator, provider, fileScannerVisitors,
-                                                                unindexedFileFinder, scanningStatistics, perProviderSink);
-          provider.iterateFiles(project, singleProviderIterator, thisProviderDeduplicateFilter);
+          Function<@Nullable VirtualFile, ContentIterator> singleProviderIteratorFactory =
+            root -> new SingleProviderIterator(project, subTaskIndicator, provider, fileScannerVisitors,
+                                               unindexedFileFinder, scanningStatistics, perProviderSink);
+          provider.iterateFilesInRoots(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter);
           perProviderSink.commit();
         }
         catch (ProcessCanceledException pce) {
