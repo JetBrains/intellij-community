@@ -40,7 +40,7 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean nonRecursive = false;
   private boolean alwaysUpdateSnapshots = false;
   private boolean showDialogWithAdvancedSettings = false;
-  private boolean useMavenConfig = false;
+  private boolean useMavenConfig = true;
   private String threads;
   private boolean emulateTerminal = false;
 

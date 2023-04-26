@@ -386,7 +386,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     if (getParameters().myGeneralSettingsCache == null) {
       ApplicationManager.getApplication().runReadAction(() -> {
         getParameters().myGeneralSettingsCache = getDirectProjectsSettings().getGeneralSettings().clone();
-        getParameters().myGeneralSettingsCache.setUseMavenConfig(true);
         List<VirtualFile> rootFiles = getParameters().myFiles;
         if (rootFiles == null) {
           rootFiles = Collections.singletonList(LocalFileSystem.getInstance().findFileByNioFile(getRootPath()));
