@@ -515,10 +515,12 @@ public class TypeMigrationLabeler {
             return;
           }
 
-          final TypeMigrationUsageInfo usageInfo = new TypeMigrationUsageInfo(expr);
-          usageInfo.setOwnerRoot(myCurrentRoot);
-          myNewExpressionTypeChange.put(usageInfo, migrationType);
-          getTypeEvaluator().setType(new TypeMigrationUsageInfo(expr), migrationType);
+          if (!alreadyProcessed) {
+            final TypeMigrationUsageInfo usageInfo = new TypeMigrationUsageInfo(expr);
+            usageInfo.setOwnerRoot(myCurrentRoot);
+            myNewExpressionTypeChange.put(usageInfo, migrationType);
+            getTypeEvaluator().setType(new TypeMigrationUsageInfo(expr), migrationType);
+          }
           return;
         } else if (migrationType instanceof PsiClassType && originalType instanceof PsiClassType &&
                    ((PsiClassType)migrationType).rawType().isAssignableFrom(((PsiClassType)originalType).rawType())) {
