@@ -147,14 +147,7 @@ class TerminalCompletionContributor : CompletionContributor() {
         values.split(SPLIT_REGEX).mapTo(result) { CompletionItem(it, description) }
       }
       else {
-        val items = line.trim().split(SPLIT_REGEX)
-        if (items.firstOrNull() == "zsh:") {
-          // TODO: it is a hack to not parse following zsh question:
-          //  "zsh: do you wish to see all <N> possibilities (<M> lines)?"
-          //  More general way of avoiding is required here
-          continue
-        }
-        items.mapTo(result) { CompletionItem(it) }
+        line.trim().split(SPLIT_REGEX).mapTo(result) { CompletionItem(it) }
       }
     }
     return result
