@@ -13,6 +13,8 @@ python_installations = [
     r'%s/py38_64/bin/python' % miniconda64_envs,
     r'%s/py39_64/bin/python' % miniconda64_envs,
     r'%s/py310_64/bin/python' % miniconda64_envs,
+    r'%s/py311_64/bin/python' % miniconda64_envs,
+    r'%s/py312_64/bin/python' % miniconda64_envs,
     ]
 
 

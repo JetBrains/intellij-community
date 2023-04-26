@@ -117,7 +117,8 @@ def build():
         # set VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\Tools
 
         env = os.environ.copy()
-        if sys.version_info[:2] in ((2, 7), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10)):
+        if sys.version_info[:2] in ((2, 7), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10),
+                                    (3, 11), (3, 12)):
             import setuptools  # We have to import it first for the compiler to be found.
             from msvccompiler_wrapper import find_vcvarsall
 
