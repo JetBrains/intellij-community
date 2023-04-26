@@ -18,7 +18,7 @@ import java.util.function.IntConsumer
 import java.util.zip.Deflater
 
 const val UTIL_JAR = "util.jar"
-const val BOOT_JAR = "boot.jar"
+const val PLATFORM_LOADER_JAR = "platform-loader.jar"
 const val UTIL_RT_JAR = "util_rt.jar"
 const val UTIL_8_JAR = "util-8.jar"
 

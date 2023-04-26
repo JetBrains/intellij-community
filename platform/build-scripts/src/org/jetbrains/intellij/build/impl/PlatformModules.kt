@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.tasks.BOOT_JAR
+import org.jetbrains.intellij.build.tasks.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_8_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_RT_JAR
@@ -197,7 +197,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // cannot be in 3rd-party-rt.jar, because this JAR must contain classes for java versions <= 7 only
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
   // boot.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
-  addModule(BOOT_JAR, listOf(
+  addModule(PLATFORM_LOADER_JAR, listOf(
     "intellij.platform.util.rt.java8",
     "intellij.platform.util.classLoader",
     "intellij.platform.util.zip",
