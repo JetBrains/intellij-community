@@ -12,9 +12,13 @@ class PassRunningAssert(val assertMessage: String) {
 
   private val passIsRunning = ThreadLocal<Boolean>()
 
-  fun runPass(): AccessToken {
+  fun runPass(): AccessToken = makeTokenForcingValue(true)
+
+  fun suppressAssertInPass(): AccessToken = makeTokenForcingValue(false)
+
+  private fun makeTokenForcingValue(forcedValue: Boolean): AccessToken {
     val prevValue = passIsRunning.get()
-    passIsRunning.set(true)
+    passIsRunning.set(forcedValue)
     return object : AccessToken() {
       override fun finish() {
         if (prevValue != null)

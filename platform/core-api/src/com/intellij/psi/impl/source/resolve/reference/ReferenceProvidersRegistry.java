@@ -57,6 +57,15 @@ public abstract class ReferenceProvidersRegistry {
     CONTRIBUTING_REFERENCES.assertPassNotRunning();
   }
 
+  /**
+   * @deprecated suppressing this assert could cause a performance flaw
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  public static AccessToken suppressAssertNotContributingReferences() {
+    return CONTRIBUTING_REFERENCES.suppressAssertInPass();
+  }
+
   @ApiStatus.Internal
   public abstract void unloadProvidersFor(@NotNull Language language);
 
