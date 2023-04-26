@@ -97,7 +97,7 @@ open class IdeStatusBarImpl internal constructor(
 
   private var preferredTextHeight: Int = 0
 
-  private var editorProvider: () -> FileEditor? = createDefaultEditorProvider(project)
+  private var editorProvider: () -> FileEditor? = createDefaultEditorProvider(frameHelper)
 
   private val children = LinkedHashSet<IdeStatusBarImpl>()
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
@@ -651,7 +651,7 @@ open class IdeStatusBarImpl internal constructor(
 
   @ApiStatus.Internal
   fun resetEditorProvider() {
-    editorProvider = createDefaultEditorProvider(project)
+    editorProvider = createDefaultEditorProvider(frameHelper)
   }
 
   override fun getAccessibleContext(): AccessibleContext {
@@ -815,9 +815,9 @@ private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent
   return result
 }
 
-private fun createDefaultEditorProvider(project: Project?): () -> FileEditor? {
+private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> FileEditor? {
   return p@{
-    if (project == null) return@p null
+    val project = frameHelper.project ?: return@p null
     project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
   }
 }
