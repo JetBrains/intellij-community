@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
 abstract class AbstractKotlinRangesHintsProviderTest :
@@ -16,15 +17,16 @@ abstract class AbstractKotlinRangesHintsProviderTest :
     }
 
     fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests
-        assertThatActualHintsMatch(testPath)
+        val fileContents = FileUtil.loadFile(File(testPath), true)
+        withCustomCompilerOptions(fileContents, project, module) {
+            assertThatActualHintsMatch(testPath)
+        }
     }
 
-    private fun assertThatActualHintsMatch(fileName: String) {
+    private fun assertThatActualHintsMatch(fileContents: String) {
         with(KotlinValuesHintsProvider()) {
-            val fileContents = FileUtil.loadFile(File(fileName), true)
             val settings = createSettings()
             doTestProvider("KotlinValuesHintsProvider.kt", fileContents, this, settings)
         }
     }
-
 }
