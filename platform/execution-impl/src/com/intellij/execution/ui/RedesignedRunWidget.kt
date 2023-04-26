@@ -21,11 +21,13 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.BadgeRectProvider
@@ -240,7 +242,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
 
   override fun getDisabledIcon(icon: Icon): Icon {
     if (!isContrastRunWidget) {
-      return super.getDisabledIcon(icon)
+      return IconLoader.getDisabledIcon(icon, lightThemeDarkHeaderDisableFilter)
     }
     return PreparedIcon(icon.iconWidth, icon.iconHeight) {
       toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)

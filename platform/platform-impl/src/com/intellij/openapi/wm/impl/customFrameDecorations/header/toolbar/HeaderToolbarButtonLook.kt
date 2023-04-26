@@ -11,6 +11,7 @@ import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -19,7 +20,8 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager
 
-private val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  {
+@ApiStatus.Internal
+val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  {
   if (isDarkHeader()) UIUtil.GrayFilter(-70, -70, 100) else UIUtil.getGrayFilter()
 }
 
