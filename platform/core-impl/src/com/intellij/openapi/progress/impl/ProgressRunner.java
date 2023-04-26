@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * <p>
@@ -225,24 +224,11 @@ public final class ProgressRunner<R> {
     });
 
     Semaphore modalityEntered = new Semaphore(forceSyncExec ? 0 : 1);
-
-    Supplier<R> onThreadCallable = () -> {
+    Function<@NotNull ProgressIndicator, R> onThreadCallable = (progressIndicator) -> {
       if (isModal) {
         modalityEntered.waitFor();
       }
-
       // runProcess handles starting/stopping progress and setting thread's current progress
-      ProgressIndicator progressIndicator;
-      try {
-        progressIndicator = progressFuture.join();
-      }
-      catch (Throwable e) {
-        throw new RuntimeException("Can't get progress", e);
-      }
-      if (progressIndicator == null) {
-        throw new IllegalStateException("Expected not-null progress indicator but got null from "+myProgressIndicatorFuture);
-      }
-
       return ProgressManager.getInstance().runProcess(() -> myComputation.apply(progressIndicator), progressIndicator);
     };
 
@@ -250,7 +236,8 @@ public final class ProgressRunner<R> {
     if (forceSyncExec) {
       resultFuture = new CompletableFuture<>();
       try {
-        resultFuture.complete(onThreadCallable.get());
+        ProgressIndicator progressIndicator = progressFuture.join();
+        resultFuture.complete(onThreadCallable.apply(progressIndicator));
       }
       catch (Throwable t) {
         resultFuture.completeExceptionally(t);
@@ -306,7 +293,7 @@ public final class ProgressRunner<R> {
   @NotNull
   private CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
                                            @NotNull Semaphore modalityEntered,
-                                           @NotNull Supplier<R> onThreadCallable) {
+                                           @NotNull Function<ProgressIndicator, R> onThreadCallable) {
     CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture);
     CompletableFuture<R> resultFuture;
 
@@ -354,7 +341,7 @@ public final class ProgressRunner<R> {
   @NotNull
   private CompletableFuture<R> normalExec(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
                                           @NotNull Semaphore modalityEntered,
-                                          @NotNull Supplier<R> onThreadCallable) {
+                                          @NotNull Function<@NotNull ProgressIndicator, R> onThreadCallable) {
 
     if (isModal) {
       Function<ProgressIndicator, ProgressIndicator> modalityRunnable = progressIndicator -> {
@@ -445,7 +432,7 @@ public final class ProgressRunner<R> {
   }
 
   private @NotNull CompletableFuture<R> launchTask(
-    @NotNull Supplier<R> callable,
+    @NotNull Function<@NotNull ProgressIndicator, R> task,
     @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
@@ -456,7 +443,7 @@ public final class ProgressRunner<R> {
       }
       Runnable runnable = () -> {
         try {
-          resultFuture.complete(callable.get());
+          resultFuture.complete(task.apply(progressIndicator));
         }
         catch (Throwable e) {
           resultFuture.completeExceptionally(e);
