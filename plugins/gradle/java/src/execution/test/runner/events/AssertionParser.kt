@@ -18,7 +18,6 @@ object AssertionParser {
            // JUnit 4: assertSame: org.junit.Assert | junit.framework.Assert | junit.framework.TestCase | org.testng.AssertJUnit
            ?: parse(assertionMessage, "((?<message>.+) )?expected same:<(?<expected>.*)> was not:<(?<actual>.*)>")
            // AssertJ: assertEquals: org.assertj.core.api.Assertions
-           ?: parse(assertionMessage, "(?<message>)\nexpected: \"(?<expected>.*)\"\n but was: \"(?<actual>.*)\"")
            ?: parse(assertionMessage, "(?<message>)\nexpected: (?<expected>.*)\n but was: (?<actual>.*)")
            // AssertJ: assertSame: org.assertj.core.api.Assertions
            ?: parse(assertionMessage, "(?<message>)\nExpecting actual:\n {2}(?<actual>.*)\nand:\n {2}(?<expected>.*)\nto refer to the same object")

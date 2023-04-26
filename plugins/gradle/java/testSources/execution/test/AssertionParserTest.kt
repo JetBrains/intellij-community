@@ -49,15 +49,15 @@ class AssertionParserTest {
 
     // AssertJ: assertEquals: org.assertj.core.api.Assertions
     assertComparisonParsing("\nexpected: 1\n but was: 2", "1", "2")
-    assertComparisonParsing("\nexpected: \"expected\"\n but was: \"actual\"", "expected", "actual")
-    assertComparisonParsing("\nexpected: \"<expected>\"\n but was: \"<actual>\"", "<expected>", "<actual>")
-    assertComparisonParsing("\nexpected: \"[expected]\"\n but was: \"[actual]\"", "[expected]", "[actual]")
-    assertComparisonParsing("\nexpected: \"exp\nected\"\n but was: \"a\nctual\"", "exp\nected", "a\nctual")
-    assertComparisonParsing("\nexpected: \"exp\\nected\"\n but was: \"act\\nual\"", "exp\\nected", "act\\nual")
-    assertComparisonParsing("\nexpected: \"\nexpected\n\"\n but was: \"\nactual\n\"", "\nexpected\n", "\nactual\n")
-    assertComparisonParsing("\nexpected: \" expected \"\n but was: \" actual \"", " expected ", " actual ")
+    assertComparisonParsing("\nexpected: \"expected\"\n but was: \"actual\"", "\"expected\"", "\"actual\"")
+    assertComparisonParsing("\nexpected: \"<expected>\"\n but was: \"<actual>\"", "\"<expected>\"", "\"<actual>\"")
+    assertComparisonParsing("\nexpected: \"[expected]\"\n but was: \"[actual]\"", "\"[expected]\"", "\"[actual]\"")
+    assertComparisonParsing("\nexpected: \"exp\nected\"\n but was: \"a\nctual\"", "\"exp\nected\"", "\"a\nctual\"")
+    assertComparisonParsing("\nexpected: \"exp\\nected\"\n but was: \"act\\nual\"", "\"exp\\nected\"", "\"act\\nual\"")
+    assertComparisonParsing("\nexpected: \"\nexpected\n\"\n but was: \"\nactual\n\"", "\"\nexpected\n\"", "\"\nactual\n\"")
+    assertComparisonParsing("\nexpected: \" expected \"\n but was: \" actual \"", "\" expected \"", "\" actual \"")
     assertComparisonParsing("\nexpected: \"string (org.example.Class@31bcf236)\"\n but was: \"string (org.example.Class@4b3ed2f0)\"",
-                            "string (org.example.Class@31bcf236)", "string (org.example.Class@4b3ed2f0)")
+                            "\"string (org.example.Class@31bcf236)\"", "\"string (org.example.Class@4b3ed2f0)\"")
 
     // AssertJ: assertSame: org.assertj.core.api.Assertions
     assertComparisonParsing("\nExpecting actual:\n  actual\nand:\n  expected\nto refer to the same object", "expected", "actual")

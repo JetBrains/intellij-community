@@ -199,30 +199,16 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test assert equals for texts") {
-            if (isTestLauncherSupported()) {
-              assertTestConsoleContains("""
-                |
-                |Expected :"expected"
-                |Actual   :"actual"
-                |<Click to see difference>
-                |
-                |org.opentest4j.AssertionFailedError: 
-                |expected: "expected"
-                | but was: "actual"
-              """.trimMargin())
-            }
-            else {
-              assertTestConsoleContains("""
-                |
-                |Expected :expected
-                |Actual   :actual
-                |<Click to see difference>
-                |
-                |org.opentest4j.AssertionFailedError: 
-                |expected: "expected"
-                | but was: "actual"
-              """.trimMargin())
-            }
+            assertTestConsoleContains("""
+              |
+              |Expected :"expected"
+              |Actual   :"actual"
+              |<Click to see difference>
+              |
+              |org.opentest4j.AssertionFailedError: 
+              |expected: "expected"
+              | but was: "actual"
+            """.trimMargin())
           }
           assertNode("test assert equals for objects") {
             assertTestConsoleContains("""
