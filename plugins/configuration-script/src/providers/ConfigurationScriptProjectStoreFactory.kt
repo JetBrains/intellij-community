@@ -65,9 +65,13 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     }
   }
 
-  // In general this method is not required in this form, because SaveSessionBase.setState accepts serialized state (Element) without any side-effects or performance degradation,
+  // In general, this method is not required in this form,
+  // because SaveSessionBase.setState accepts serialized state (Element) without any side effects or performance degradation,
   // but it is better to express contract in code to make sure that it will be not broken in the future.
-  override fun setStateToSaveSessionProducer(state: Any?, info: ComponentInfo, effectiveComponentName: String, sessionProducer: SaveSessionProducer) {
+  override fun setStateToSaveSessionProducer(state: Any?,
+                                             info: ComponentInfo,
+                                             effectiveComponentName: String,
+                                             sessionProducer: SaveSessionProducer) {
     val configurationSchemaKey = info.configurationSchemaKey
     if (state == null || configurationSchemaKey == null || info.affectedPropertyNames.isEmpty() || sessionProducer !is SaveSessionBase) {
       super.setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
@@ -98,8 +102,10 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
   }
 }
 
-private class ReadOnlyStorage(val configurationSchemaKey: String, val componentClass: Class<Any>, private val store: MyProjectStore) : StateStorage {
-  override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
+private class ReadOnlyStorage(val configurationSchemaKey: String,
+                              val componentClass: Class<Any>,
+                              private val store: MyProjectStore) : StateStorage {
+  override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T {
     val state = ReflectionUtil.newInstance(stateClass, false) as BaseState
 
     val configurationFileManager = ConfigurationFileManager.getInstance(store.project)

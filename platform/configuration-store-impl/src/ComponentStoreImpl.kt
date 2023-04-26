@@ -304,7 +304,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateStorageChooser = component as? StateStorageChooserEx
 
     @Suppress("UNCHECKED_CAST")
-    val storageSpecs = getStorageSpecs(component as PersistentStateComponent<Any>, stateSpec, StateStorageOperation.WRITE)
+    val storageSpecs = getStorageSpecs(component = component as PersistentStateComponent<Any>,
+                                       stateSpec = stateSpec,
+                                       operation = StateStorageOperation.WRITE)
     for (storageSpec in storageSpecs) {
       @Suppress("IfThenToElvis")
       var resolution = if (stateStorageChooser == null) {
