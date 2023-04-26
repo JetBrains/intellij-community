@@ -11,7 +11,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
-public class Maven3ServerImpl extends MavenWatchdogAware implements MavenServer {
+public class Maven3ServerImpl extends MavenServerBase {
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
     MavenServerUtil.checkToken(token);
@@ -78,36 +78,5 @@ public class Maven3ServerImpl extends MavenWatchdogAware implements MavenServer 
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
     }
-  }
-
-  @Override
-  public MavenPullServerLogger createPullLogger(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      MavenServerLoggerWrapper result = MavenServerGlobals.getLogger();
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
-    }
-    catch (RemoteException e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      MavenServerDownloadListenerWrapper result = MavenServerGlobals.getDownloadListener();
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
-    }
-    catch (RemoteException e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public synchronized void unreferenced() {
-    System.exit(0);
   }
 }
