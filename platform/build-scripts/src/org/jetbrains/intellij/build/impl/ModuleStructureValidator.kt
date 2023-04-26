@@ -127,7 +127,7 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
           continue
         }
 
-        if (modules.none { it.moduleName != dependantModule.name }) {
+        if (modules.none { it.moduleName == dependantModule.name }) {
           errors.add(AssertionError("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name}]", null))
           continue
         }
