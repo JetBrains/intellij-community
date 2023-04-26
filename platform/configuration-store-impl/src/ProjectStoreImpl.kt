@@ -28,6 +28,7 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
+import java.util.*
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
@@ -126,7 +127,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
 
   protected open suspend fun saveModules(result: SaveResult,
                                          isForceSavingAllSettings: Boolean,
-                                         projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
+                                         projectSaveSessionManager: SaveSessionProducerManager): Collection<SaveSession> {
     return emptyList()
   }
 
@@ -154,27 +155,24 @@ interface ModuleSavingCustomizer {
 open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
   final override suspend fun saveModules(result: SaveResult,
                                          isForceSavingAllSettings: Boolean,
-                                         projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
+                                         projectSaveSessionManager: SaveSessionProducerManager): Collection<SaveSession> {
     moduleSavingCustomizer.saveModules(projectSaveSessionManager, this)
     val modules = ModuleManager.getInstance(project).modules
     if (modules.isEmpty()) {
       return emptyList()
     }
 
-    return withContext(Dispatchers.EDT) {
-      // do not create with capacity because very rarely a lot of modules will be modified
-      val saveSessions = ArrayList<SaveSession>()
-      // commit components
-      for (module in modules) {
-        val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
-        // collectSaveSessions is very cheap, so, do it in EDT
-        val saveManager = moduleStore.createSaveSessionProducerManager()
-        moduleStore.commitComponents(isForceSavingAllSettings, saveManager, result)
-        moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, saveManager)
-        saveManager.collectSaveSessions(saveSessions)
-      }
-      saveSessions
+    // do not create with capacity because very rarely a lot of modules will be modified
+    val saveSessions = Collections.synchronizedList(mutableListOf<SaveSession>())
+    // commit components
+    for (module in modules) {
+      val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
+      val saveManager = moduleStore.createSaveSessionProducerManager()
+      moduleStore.commitComponents(isForce = isForceSavingAllSettings, session = saveManager, saveResult = result)
+      moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, saveManager)
+      saveManager.collectSaveSessions(saveSessions)
     }
+    return saveSessions
   }
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
