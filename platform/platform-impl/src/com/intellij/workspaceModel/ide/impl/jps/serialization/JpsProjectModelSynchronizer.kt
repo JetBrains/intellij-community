@@ -57,7 +57,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Manages serialization and deserialization from JPS format (*.iml and *.ipr files, .idea directory) for workspace model in IDE.
+ * Manages serialization and deserialization from JPS format (*.iml and *.ipr files, .idea directory) for a workspace model in the IDE.
  */
 @Service(Service.Level.PROJECT)
 class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
@@ -149,10 +149,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     fileContentReader.clearCache()
     LOG.debugValues("Changed entity sources", reloadingResult.affectedSources)
 
-    if (reloadingResult.affectedSources.isEmpty()
-        && !reloadingResult.builder.hasChanges()
-        && !reloadingResult.unloadedEntityBuilder.hasChanges()
-        && !reloadingResult.orphanageBuilder.hasChanges()) return
+    if (reloadingResult.affectedSources.isEmpty() &&
+        !reloadingResult.builder.hasChanges() &&
+        !reloadingResult.unloadedEntityBuilder.hasChanges() &&
+        !reloadingResult.orphanageBuilder.hasChanges()) {
+      return
+    }
 
     writeAction {
       val affectedEntityFilter: (EntitySource) -> Boolean = {
@@ -212,7 +214,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return parent != null && isParentOfStorageFiles(parent)
     }
 
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
@@ -226,8 +228,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
             when (event) {
               is VFileCreateEvent -> {
                 val fileName = event.childName
-                if (FileUtilRt.extensionEquals(fileName, ModuleFileType.DEFAULT_EXTENSION) && !event.isDirectory
-                    || isParentOfStorageFiles(event.parent) && !event.isEmptyDirectory) {
+                if ((FileUtilRt.extensionEquals(fileName, ModuleFileType.DEFAULT_EXTENSION) && !event.isDirectory) ||
+                    isParentOfStorageFiles(event.parent) && !event.isEmptyDirectory) {
                   addedUrls.add(JpsPathUtil.pathToUrl(event.path))
                 }
               }
@@ -255,7 +257,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val listener = object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
-        event.getAllChanges().forEach { change ->
+        for (change in event.getAllChanges()) {
           change.oldEntity?.entitySource?.let { if (it !is JpsGlobalFileEntitySource) sourcesToSave.add(it) }
           change.newEntity?.entitySource?.let { if (it !is JpsGlobalFileEntitySource) sourcesToSave.add(it) }
         }
@@ -426,7 +428,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val unloadedModuleSources = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(
       ModuleEntity::class.java).map { it.entitySource }
     synchronized(sourcesToSave) {
-      // to trigger save for modules.xml
+      // trigger save for modules.xml
       sourcesToSave.addAll(moduleSources)
       sourcesToSave.addAll(unloadedModuleSources)
     }

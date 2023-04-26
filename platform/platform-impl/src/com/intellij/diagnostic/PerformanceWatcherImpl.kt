@@ -15,7 +15,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
@@ -68,15 +67,15 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   private var activeEvents = 0
   private val limitedDispatcher = Dispatchers.Default.limitedParallelism(1)
   private var sampleJob: Job? = null
-  private var currentEDTEventChecker: FreezeCheckerTask? = null
+  private var currentEdtEventChecker: FreezeCheckerTask? = null
   private val jitWatcher = JitWatcher()
   private val unresponsiveInterval: RegistryValue
 
   init {
-    val application = ApplicationManager.getApplication() ?: throw ExtensionNotApplicableException.create()
     val registryManager = RegistryManager.getInstance()
-    unresponsiveInterval = registryManager.get("performance.watcher.unresponsive.interval.ms")
-    if (!application.isHeadlessEnvironment) {
+    val unresponsiveInterval = registryManager.get("performance.watcher.unresponsive.interval.ms")
+    this.unresponsiveInterval = unresponsiveInterval
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       val cancelingListener = object : RegistryValueListener {
         override fun afterValueChanged(value: RegistryValue) {
           LOG.info("on UI freezes more than $unresponsiveInterval ms will dump threads each $dumpInterval ms for $maxDumpDuration ms max")
@@ -185,10 +184,8 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     val start = System.nanoTime()
     activeEvents++
     if (sampleJob != null) {
-      if (currentEDTEventChecker != null) {
-        currentEDTEventChecker!!.stop()
-      }
-      currentEDTEventChecker = FreezeCheckerTask(start)
+      currentEdtEventChecker?.stop()
+      currentEdtEventChecker = FreezeCheckerTask(start)
     }
   }
 
@@ -196,8 +193,8 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   override fun edtEventFinished() {
     activeEvents--
     if (sampleJob != null) {
-      currentEDTEventChecker!!.stop()
-      currentEDTEventChecker = if (activeEvents > 0) FreezeCheckerTask(System.nanoTime()) else null
+      currentEdtEventChecker!!.stop()
+      currentEdtEventChecker = if (activeEvents > 0) FreezeCheckerTask(System.nanoTime()) else null
     }
   }
 
@@ -267,7 +264,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   override fun getJitProblem(): String? = jitWatcher.jitProblem
 
   override fun clearFreezeStacktraces() {
-    currentEDTEventChecker?.stopDumping()
+    currentEdtEventChecker?.stopDumping()
   }
 
   override fun scheduleWithFixedDelay(task: Runnable, delayInMs: Long): Job {
@@ -300,7 +297,8 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       job.cancel()
       if (state.getAndSet(CheckerState.FINISHED) == CheckerState.FREEZE) {
         val taskStop = System.nanoTime()
-        stopDumping() // stop sampling as early as possible
+        // stop sampling as early as possible
+        stopDumping()
         try {
           coroutineScope.launch(limitedDispatcher) {
             stopDumping()
