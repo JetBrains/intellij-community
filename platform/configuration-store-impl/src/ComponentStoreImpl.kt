@@ -627,6 +627,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override fun release() {
     components.clear()
+    (storageManager as? StateStorageManagerImpl)?.disposed()
   }
 
   override fun toString() = storageManager.componentManager.toString()

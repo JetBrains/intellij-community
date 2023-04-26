@@ -3,12 +3,10 @@
 
 package com.intellij.configurationStore
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.roots.ProjectModelElement
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -369,6 +367,10 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   }
 
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
+
+  internal fun disposed() {
+    virtualFileTracker?.remove { it.storageManager === this }
+  }
 }
 
 fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")
@@ -394,7 +396,7 @@ data class Macro(@JvmField val key: String, @JvmField var value: Path)
 
 @TestOnly
 fun checkStorageIsNotTracked(module: ComponentManager) {
-  service<StorageVirtualFileTrackerHolder>().tracker.remove {
+  service<StorageVirtualFileTracker>().remove {
     if (it.storageManager.componentManager === module) {
       throw AssertionError("Storage manager is not disposed, module $module, storage $it")
     }
@@ -402,26 +404,12 @@ fun checkStorageIsNotTracked(module: ComponentManager) {
   }
 }
 
-@Service(Service.Level.APP)
-private class StorageVirtualFileTrackerHolder {
-  @JvmField
-  val tracker = StorageVirtualFileTracker()
-}
-
 private class MyAsyncVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    return service<StorageVirtualFileTrackerHolder>().tracker.prepare(events)
+    return service<StorageVirtualFileTracker>().prepare(events)
   }
 }
 
 private fun createDefaultVirtualTracker(componentManager: ComponentManager?): StorageVirtualFileTracker? {
-  if (componentManager == null) {
-    return null
-  }
-
-  val tracker = service<StorageVirtualFileTrackerHolder>().tracker
-  Disposer.register(componentManager, Disposable {
-    tracker.remove { it.storageManager.componentManager === componentManager }
-  })
-  return tracker
+  return if (componentManager == null) null else service<StorageVirtualFileTracker>()
 }

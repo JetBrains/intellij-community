@@ -3,6 +3,7 @@
 
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -16,13 +17,11 @@ import com.intellij.openapi.vfs.newvfs.events.*
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
+@Service(Service.Level.APP)
 internal class StorageVirtualFileTracker {
   private val filePathToStorage = ConcurrentHashMap<String, TrackedStorage>()
   @Volatile
   private var hasDirectoryBasedStorages = false
-
-  @Volatile
-  private var vfsListenerIsActive = false
 
   interface TrackedStorage : StateStorage {
     val storageManager: StateStorageManagerImpl
@@ -33,8 +32,6 @@ internal class StorageVirtualFileTracker {
     if (storage is DirectoryBasedStorage) {
       hasDirectoryBasedStorages = true
     }
-
-    vfsListenerIsActive = true
   }
 
   fun remove(path: String) {
@@ -46,10 +43,6 @@ internal class StorageVirtualFileTracker {
   }
 
   fun prepare(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (!vfsListenerIsActive) {
-      return null
-    }
-
     var storageEvents: LinkedHashMap<IComponentStore, LinkedHashSet<StateStorage>>? = null
     eventLoop@ for (event in events) {
       var storage: StateStorage?
@@ -57,14 +50,16 @@ internal class StorageVirtualFileTracker {
         val oldPath = event.oldPath
         storage = filePathToStorage.remove(oldPath)
         if (storage != null) {
-          filePathToStorage.put(event.path, storage)
+          val newPath = event.newPath
+          val newFile = Path.of(newPath)
+          filePathToStorage.put(newPath, storage)
           if (storage is FileBasedStorage) {
-            storage.setFile(null, Path.of(event.path))
+            storage.setFile(null, newFile)
           }
           // we don't support DirectoryBasedStorage renaming
 
           // StoragePathMacros.MODULE_FILE -> old path, we must update value
-          (storage.storageManager as? RenameableStateStorageManager)?.pathRenamed(Path.of(event.path), event)
+          (storage.storageManager as? RenameableStateStorageManager)?.pathRenamed(newFile, event)
         }
       }
       else {
@@ -88,7 +83,7 @@ internal class StorageVirtualFileTracker {
       when (event) {
         is VFileMoveEvent -> {
           if (storage is FileBasedStorage) {
-            storage.setFile(null, Path.of(event.path))
+            storage.setFile(null, Path.of(event.newPath))
           }
         }
         is VFileCreateEvent -> {

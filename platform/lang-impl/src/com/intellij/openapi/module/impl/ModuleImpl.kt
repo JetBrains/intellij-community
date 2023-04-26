@@ -8,10 +8,7 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentConfig
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.Logger
@@ -156,6 +153,9 @@ open class ModuleImpl @ApiStatus.Internal constructor(name: String, project: Pro
   @Synchronized
   override fun dispose() {
     isModuleAdded = false
+    runCatching {
+      serviceIfCreated<IComponentStore>()?.release()
+    }.getOrLogException(LOG)
     super.dispose()
   }
 
