@@ -7,6 +7,8 @@
                        key="notification.group.feedback"/>
 
     <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
+    <typedHandler implementation="com.intellij.feedback.aqua.AquaEditorTypingChecker"/>
+    <backgroundPostStartupActivity implementation="com.intellij.feedback.aqua.AquaFirstUsageLogger"/>
     <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
     <editorFactoryMouseMotionListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
 
