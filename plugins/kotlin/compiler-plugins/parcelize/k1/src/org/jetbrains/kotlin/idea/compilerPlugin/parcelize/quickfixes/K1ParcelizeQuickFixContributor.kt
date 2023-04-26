@@ -19,10 +19,10 @@ class K1ParcelizeQuickFixContributor : QuickFixContributor {
         quickFixes.register(ErrorsParcelize.PARCELABLE_SHOULD_HAVE_PRIMARY_CONSTRUCTOR, ParcelizeAddPrimaryConstructorQuickFix.FACTORY)
         quickFixes.register(ErrorsParcelize.PROPERTY_WONT_BE_SERIALIZED, ParcelizeAddIgnoreOnParcelAnnotationQuickFix.FACTORY)
 
-        quickFixes.register(ErrorsParcelize.OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED, ParcelMigrateToParcelizeQuickFix.FACTORY_FOR_WRITE)
+        quickFixes.register(ErrorsParcelize.OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED, K1ParcelMigrateToParcelizeQuickFix.FACTORY_FOR_WRITE)
         quickFixes.register(ErrorsParcelize.OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED, ParcelRemoveCustomWriteToParcel.FACTORY)
 
-        quickFixes.register(ErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED, ParcelMigrateToParcelizeQuickFix.FACTORY_FOR_CREATOR)
+        quickFixes.register(ErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED, K1ParcelMigrateToParcelizeQuickFix.FACTORY_FOR_CREATOR)
         quickFixes.register(ErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED, ParcelRemoveCustomCreatorProperty.FACTORY)
 
         quickFixes.register(ErrorsParcelize.REDUNDANT_TYPE_PARCELER, ParcelizeRemoveDuplicatingTypeParcelerAnnotationQuickFix.FACTORY)

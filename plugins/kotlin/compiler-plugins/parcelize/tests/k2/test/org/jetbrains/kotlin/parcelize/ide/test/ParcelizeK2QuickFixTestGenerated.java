@@ -87,6 +87,49 @@ public abstract class ParcelizeK2QuickFixTestGenerated extends AbstractParcelize
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/quickfix/migrations")
+    public static class Migrations extends AbstractParcelizeK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../testData/quickfix/migrations/basic.kt");
+        }
+
+        @TestMetadata("complexCase1.kt")
+        public void testComplexCase1() throws Exception {
+            runTest("../testData/quickfix/migrations/complexCase1.kt");
+        }
+
+        @TestMetadata("customDescribeContents.kt")
+        public void testCustomDescribeContents() throws Exception {
+            runTest("../testData/quickfix/migrations/customDescribeContents.kt");
+        }
+
+        @TestMetadata("fromCreatorObject.kt")
+        public void testFromCreatorObject() throws Exception {
+            runTest("../testData/quickfix/migrations/fromCreatorObject.kt");
+        }
+
+        @TestMetadata("innerClassFactory.kt")
+        public void testInnerClassFactory() throws Exception {
+            runTest("../testData/quickfix/migrations/innerClassFactory.kt");
+        }
+
+        @TestMetadata("jvmField.kt")
+        public void testJvmField() throws Exception {
+            runTest("../testData/quickfix/migrations/jvmField.kt");
+        }
+
+        @TestMetadata("withoutDescribeContents.kt")
+        public void testWithoutDescribeContents() throws Exception {
+            runTest("../testData/quickfix/migrations/withoutDescribeContents.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/quickfix/noParcelableSupertype")
     public static class NoParcelableSupertype extends AbstractParcelizeK2QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

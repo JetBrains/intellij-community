@@ -73,7 +73,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("compiler-plugins/parcelize/tests/k2", testDataPath = "../testData") {
         testClass<AbstractParcelizeK2QuickFixTest> {
-            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"), excludedDirectories = listOf("migrations"))
+            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
         }
     }
 

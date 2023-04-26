@@ -15,16 +15,17 @@ abstract class AbstractParcelizeK2QuickFixTest : AbstractK2QuickFixTest() {
         if (!project.extensionArea.hasExtensionPoint(FirExtensionRegistrarAdapter.extensionPointName)) {
             FirExtensionRegistrarAdapter.registerExtensionPoint(project)
         }
-        ExtensionTestUtil.addExtensions(
-            FirExtensionRegistrarAdapter.extensionPointName,
-            listOf(FirParcelizeExtensionRegistrar()),
-            myFixture.projectDisposable,
-            areaInstance = project,
-        )
+        FirExtensionRegistrarAdapter.registerExtension(project, FirParcelizeExtensionRegistrar())
     }
 
     override fun tearDown() {
         runAll(
+            {
+                project.extensionArea
+                    .getExtensionPoint(FirExtensionRegistrarAdapter.extensionPointName)
+                    .unregisterExtension(FirParcelizeExtensionRegistrar::class.java)
+            },
+            { project.extensionArea.unregisterExtensionPoint(FirExtensionRegistrarAdapter.extensionPointName.name) },
             { removeParcelizeLibraries(module) },
             { super.tearDown() },
         )
