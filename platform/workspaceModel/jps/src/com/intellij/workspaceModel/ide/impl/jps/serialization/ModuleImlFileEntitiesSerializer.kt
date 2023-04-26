@@ -11,7 +11,6 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.WorkspaceMode
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Attribute
@@ -25,7 +24,6 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
-import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.exists
 
@@ -970,7 +968,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {
     val moduleManagerTag = reader.loadComponent(fileUrl, componentName) ?: return emptyList()
     return ModulePath.getPathsToModuleFiles(moduleManagerTag).map {
-      Path.of(it.path).toVirtualFileUrl(virtualFileManager) to it.group
+      virtualFileManager.fromUrl("file://${it.path}") to it.group
     }
   }
 
