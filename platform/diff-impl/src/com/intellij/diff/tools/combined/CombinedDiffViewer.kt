@@ -93,15 +93,22 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     MergingUpdateQueue("CombinedDiffViewer.visibleBlocksUpdateQueue", 500, true, null, this, null, Alarm.ThreadToUse.SWING_THREAD)
       .also { Disposer.register(this, it) }
 
-  internal fun updateBlockContent(block: CombinedDiffBlock<*>, newContent: CombinedDiffBlockContent) {
+  internal fun updateBlockContent(newContent: CombinedDiffBlockContent) {
     val viewRect = scrollPane.viewport.viewRect
     val viewSize = scrollPane.viewport.viewSize
 
-    val adjustmentNeeded = isBlockBeforeOrIntersectViewport(block.id)
+    val blockId = newContent.blockId
+    val block = getBlockForId(blockId)
+
+    if (block == null) {
+      throw IllegalStateException("Block with id $blockId not found in CombinedDiffViewer" )
+    }
+
+    val adjustmentNeeded = isBlockBeforeOrIntersectViewport(blockId)
 
     val newViewer = newContent.viewer
-    diffViewers.remove(block.id)?.also(Disposer::dispose)
-    diffViewers[block.id] = newViewer
+    diffViewers.remove(blockId)?.also(Disposer::dispose)
+    diffViewers[blockId] = newViewer
     block.updateBlockContent(newContent)
     newViewer.init()
 

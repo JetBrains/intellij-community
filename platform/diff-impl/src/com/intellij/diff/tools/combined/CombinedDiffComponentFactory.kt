@@ -87,11 +87,9 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     override fun onRequestsLoaded(requests: Map<CombinedBlockId, DiffRequest>, blockIdToSelect: CombinedBlockId?) {
       for ((blockId, request) in requests) {
         buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
-          combinedViewer.getBlockForId(blockId)?.let { block ->
-            mainUi.countDifferences(blockId, newContent.viewer)
-            combinedViewer.updateBlockContent(block, newContent)
-            request.onAssigned(true)
-          }
+          mainUi.countDifferences(blockId, newContent.viewer)
+          combinedViewer.updateBlockContent(newContent)
+          request.onAssigned(true)
         }
       }
 
@@ -109,10 +107,8 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       for ((blockId, request) in requests) {
         val size = combinedViewer.getDiffViewerForId(blockId)?.component?.size
         buildLoadingBlockContent(blockId, size).let { newContent ->
-          combinedViewer.getBlockForId(blockId)?.let { block ->
-            combinedViewer.updateBlockContent(block, newContent)
-            request.onAssigned(false)
-          }
+          combinedViewer.updateBlockContent(newContent)
+          request.onAssigned(false)
         }
       }
     }
@@ -139,7 +135,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
         val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
 
         BackgroundTaskUtil.executeOnPooledThread(ourDisposable) {
-         val indicator = EmptyProgressIndicator()
+          val indicator = EmptyProgressIndicator()
           BackgroundTaskUtil.runUnderDisposeAwareIndicator(ourDisposable, {
 
             runInEdt { mainUi.startProgress() }
