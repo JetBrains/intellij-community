@@ -10,9 +10,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Call {@link #shutdown()} when the browser is no longer needed.
+ */
 public class SimpleAsyncChangesBrowser extends AsyncChangesBrowserBase {
   private @NotNull List<Change> myChanges = new ArrayList<>();
-  @Nullable private ChangeNodeDecorator myChangeNodeDecorator;
+  private @Nullable ChangeNodeDecorator myChangeNodeDecorator;
 
   public SimpleAsyncChangesBrowser(@NotNull Project project,
                                    boolean showCheckboxes,
