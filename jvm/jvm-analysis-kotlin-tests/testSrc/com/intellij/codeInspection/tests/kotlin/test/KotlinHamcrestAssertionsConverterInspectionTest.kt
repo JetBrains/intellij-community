@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.HamcrestAssertionsConverterInspectionTestBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -20,7 +20,7 @@ class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConver
   }
 
   fun `test highlighting`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Assert
 
       class Foo {
@@ -62,7 +62,7 @@ class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConver
   }
 
   fun `test quickfix binary expression`() {
-    myFixture.testAllQuickfixes(ULanguage.KOTLIN, """
+    myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
 
       class MigrationTest {
@@ -108,7 +108,7 @@ class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConver
   }
 
   fun `test quickfix string`() {
-    myFixture.testAllQuickfixes(ULanguage.KOTLIN, """
+    myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
 
       class Foo {
@@ -136,7 +136,7 @@ class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConver
   }
 
   fun `test quickfix collection`() {
-    myFixture.testAllQuickfixes(ULanguage.KOTLIN, """
+    myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
 
       class Foo {
@@ -170,7 +170,7 @@ class KotlinHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConver
   }
 
   fun `test quickfix array`() {
-    myFixture.testAllQuickfixes(ULanguage.KOTLIN, """
+    myFixture.testAllQuickfixes(JvmLanguage.KOTLIN, """
       import org.junit.Assert
 
       class Foo {

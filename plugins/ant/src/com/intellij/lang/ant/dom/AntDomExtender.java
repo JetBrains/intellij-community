@@ -72,8 +72,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
   @Override
   public void registerExtensions(@NotNull final AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
     final XmlElement xmlElement = antDomElement.getXmlElement();
-    if (xmlElement instanceof XmlTag) {
-      final XmlTag xmlTag = (XmlTag)xmlElement;
+    if (xmlElement instanceof XmlTag xmlTag) {
       final String tagName = xmlTag.getName();
 
       final AntDomProject antProject = antDomElement.getAntProject();
@@ -332,10 +331,9 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
 
     @Override
     public Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent) {
-      if (!(parent instanceof AntDomElement)) {
+      if (!(parent instanceof AntDomElement element)) {
         return Collections.emptySet();
       }
-      final AntDomElement element = (AntDomElement)parent;
       final AntDomProject antDomProject = element.getAntProject();
       if (antDomProject == null) {
         return Collections.emptySet();
@@ -365,10 +363,9 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
 
     @Nullable
     private static PomTarget doFindDeclaration(DomElement parent, XmlName xmlName) {
-      if (!(parent instanceof AntDomElement)) {
+      if (!(parent instanceof AntDomElement parentElement)) {
         return null;
       }
-      final AntDomElement parentElement = (AntDomElement)parent;
       final AntDomProject antDomProject = parentElement.getAntProject();
       if (antDomProject == null) {
         return null;
@@ -379,8 +376,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
         return null;
       }
       DomTarget target = DomTarget.getTarget(declaringElement);
-      if (target == null && declaringElement instanceof AntDomTypeDef) {
-        final AntDomTypeDef typedef = (AntDomTypeDef)declaringElement;
+      if (target == null && declaringElement instanceof AntDomTypeDef typedef) {
         final GenericAttributeValue<PsiFileSystemItem> resource = typedef.getResource();
         if (resource != null) {
           target = DomTarget.getTarget(declaringElement, resource);

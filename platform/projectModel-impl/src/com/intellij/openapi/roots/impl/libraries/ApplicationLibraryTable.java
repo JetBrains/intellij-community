@@ -58,8 +58,4 @@ public class ApplicationLibraryTable extends LibraryTableBase {
   public LibraryTablePresentation getPresentation() {
     return GLOBAL_LIBRARY_TABLE_PRESENTATION;
   }
-
-  public static String getExternalFileName() {
-    return "applicationLibraries";
-  }
 }

@@ -66,8 +66,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
 
   public boolean equals(Object obj) {
     synchronized (mySections) {
-      if (!(obj instanceof CompositeAppearance)) return false;
-      CompositeAppearance appearance = (CompositeAppearance)obj;
+      if (!(obj instanceof CompositeAppearance appearance)) return false;
       if (SwingUtilities.isEventDispatchThread()) {
         return appearance.mySections.equals(mySections);
       }
@@ -155,8 +154,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
 
     public boolean equals(Object obj) {
-      if (!(obj instanceof TextSection)) return false;
-      TextSection section = (TextSection)obj;
+      if (!(obj instanceof TextSection section)) return false;
       return section.ATTRIBUTES.equals(ATTRIBUTES) && section.TEXT.equals(TEXT);
     }
 

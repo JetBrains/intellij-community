@@ -38,10 +38,9 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
   @Override
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiMethod)) {
+    if (!(element instanceof PsiMethod method)) {
       return;
     }
-    final PsiMethod method = (PsiMethod)element;
     final Collection<PsiElement> writtenElements = new ArrayList<>();
     writtenElements.add(method);
     final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
@@ -70,10 +69,9 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
     final PsiParameter lastParameter = parameters[parameters.length - 1];
     lastParameter.normalizeDeclaration();
     final PsiType type = lastParameter.getType();
-    if (!(type instanceof PsiArrayType)) {
+    if (!(type instanceof PsiArrayType arrayType)) {
       return;
     }
-    final PsiArrayType arrayType = (PsiArrayType)type;
     final PsiType componentType = arrayType.getComponentType();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     final PsiType ellipsisType = new PsiEllipsisType(componentType, TypeAnnotationProvider.Static.create(type.getAnnotations()));
@@ -87,20 +85,18 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
   private static void makeMethodCallsVarargs(Collection<PsiReferenceExpression> referenceExpressions) {
     for (final PsiReferenceExpression referenceExpression : referenceExpressions) {
       final PsiElement parent = referenceExpression.getParent();
-      if (!(parent instanceof PsiMethodCallExpression)) {
+      if (!(parent instanceof PsiMethodCallExpression methodCallExpression)) {
         continue;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
         continue;
       }
       final PsiExpression lastArgument = arguments[arguments.length - 1];
-      if (!(lastArgument instanceof PsiNewExpression)) {
+      if (!(lastArgument instanceof PsiNewExpression newExpression)) {
         continue;
       }
-      final PsiNewExpression newExpression = (PsiNewExpression)lastArgument;
       final PsiArrayInitializerExpression arrayInitializerExpression = newExpression.getArrayInitializer();
       if (arrayInitializerExpression == null) {
         continue;

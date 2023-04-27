@@ -53,10 +53,9 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,
     @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefClass)) {
+    if (!(refEntity instanceof RefClass refClass)) {
       return null;
     }
-    final RefClass refClass = (RefClass)refEntity;
     if (refClass.isAnonymous() || refClass.isLocalClass() || refClass.isSyntheticJSP()) {
       return null;
     }

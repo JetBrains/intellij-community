@@ -500,7 +500,7 @@ final class ServiceTreeView extends ServiceView {
   private class ServiceViewTreeModelListener implements ServiceViewModel.ServiceViewModelListener {
     @Override
     public void eventProcessed(ServiceEventListener.@NotNull ServiceEvent e) {
-      if (e.type == ServiceEventListener.EventType.SYNC_RESET) {
+      if (e.type == ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
         AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
           resetTreeModel();
           updateNavBar();
@@ -537,9 +537,11 @@ final class ServiceTreeView extends ServiceView {
     }
 
     private void updateNavBar() {
-      myNavBarPanel.hidePopup();
-      myNavBarPanel.getModel().updateModel((Object)null);
-      myNavBarPanel.getUpdateQueue().rebuildUi();
+      AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+        myNavBarPanel.hidePopup();
+        myNavBarPanel.getModel().updateModel((Object)null);
+        myNavBarPanel.getUpdateQueue().rebuildUi();
+      });
     }
   }
 

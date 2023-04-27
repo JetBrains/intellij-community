@@ -10,7 +10,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlChunk
@@ -24,8 +23,6 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JScrollPane
-
-internal val LOG: Logger = Logger.getInstance("#com.intellij.lang.documentation.ide.ui")
 
 /**
  * @see com.intellij.find.actions.ShowUsagesAction.ourPopupDelayTimeout

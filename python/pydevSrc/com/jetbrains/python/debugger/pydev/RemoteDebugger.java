@@ -809,7 +809,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
     catch (PyDebuggerException e) {
       if (isConnected()) {
-        LOG.error(command);
+        LOG.error("Command " + command + " failed", e);
       }
     }
   }

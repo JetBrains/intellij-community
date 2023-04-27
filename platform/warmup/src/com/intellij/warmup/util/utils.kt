@@ -23,10 +23,10 @@ fun <Y : Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?): Y {
 }
 
 private fun assertInnocentThreadToWait() {
-  require(!ApplicationManager.getApplication().isReadAccessAllowed) { "Must not leak read action" }
   require(!ApplicationManager.getApplication().isWriteAccessAllowed) { "Must not leak write action" }
   require(!ApplicationManager.getApplication().isWriteIntentLockAcquired) { "Must not run in Write Thread" }
-  require(!ApplicationManager.getApplication().isDispatchThread) { "Must not run in Dispatch Thread" }
+  ApplicationManager.getApplication().assertIsNonDispatchThread();
+  ApplicationManager.getApplication().assertReadAccessNotAllowed();
 }
 
 suspend fun yieldThroughInvokeLater() {

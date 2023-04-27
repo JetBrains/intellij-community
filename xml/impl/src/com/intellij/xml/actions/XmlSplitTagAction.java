@@ -86,8 +86,7 @@ public class XmlSplitTagAction implements IntentionAction {
       final PsiElement psiElement = file.findElementAt(offset);
       if (psiElement != null) {
         final PsiElement containingTag = psiElement.getParent().getParent();
-        if (containingTag instanceof XmlTag) {
-          XmlTag tag = (XmlTag)containingTag;
+        if (containingTag instanceof XmlTag tag) {
           TextRange tagRange = tag.getTextRange();
 
           String name = tag.getName();

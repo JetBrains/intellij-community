@@ -1,25 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "BlockingMethodInNonBlockingContext")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.*
-import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-
-private val JAVA_IDE_API_MODULES = java.util.List.of(
-  "intellij.xml.dom",
-  "intellij.jsp.base"
-)
-
-private val JAVA_IDE_IMPLEMENTATION_MODULES = java.util.List.of(
-  "intellij.xml.dom.impl",
-  "intellij.tools.testsBootstrap"
-)
 
 private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "" to "17",
@@ -44,8 +35,6 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "plugins/maven/lib/artifact-resolver-m3.jar" to "1.7",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.7",
   "plugins/xpath/lib/rt/xslt-rt.jar" to "1.7",
-  "plugins/xslt-debugger/lib/xslt-debugger-rt.jar" to "1.7",
-  "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar" to "1.8",
 )
 
 /**
@@ -86,7 +75,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.junit",
   "intellij.testng",
   "intellij.xpath",
-  "intellij.xslt.debugger",
   "intellij.android.plugin",
   "intellij.android.design-plugin",
   "intellij.java.i18n",
@@ -127,6 +115,19 @@ val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAl
   "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.7",
 ))
 
+val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
+  for (name in listOf("intellij.platform.testFramework.common",
+                      "intellij.platform.testFramework.junit5",
+                      "intellij.platform.testFramework",
+                      "intellij.platform.testFramework.core",
+                      "intellij.platform.testFramework.impl",
+                      "intellij.tools.testsBootstrap",
+                      "intellij.java.rt")) {
+    layout.withModule(name, "testFramework.jar")
+  }
+}
+
+
 /**
  * Base class for all editions of IntelliJ IDEA
  */
@@ -135,15 +136,11 @@ abstract class BaseIdeaProperties : ProductProperties() {
     @Suppress("LeakingThis")
     configureJetBrainsProduct(this)
 
-    productLayout.mainJarName = "idea.jar"
-
-    productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.java.ide.resources")
-
     productLayout.addPlatformSpec { layout, _ ->
-      for (name in JAVA_IDE_API_MODULES) {
-        if (!productLayout.productApiModules.contains(name)) {
-          layout.withModule(name)
-        }
+      layout.withModule("intellij.java.ide.resources")
+
+      if (!productLayout.productApiModules.contains("intellij.jsp.base")) {
+        layout.withModule("intellij.jsp.base")
       }
       for (moduleName in arrayOf(
         "intellij.java.testFramework",
@@ -153,14 +150,10 @@ abstract class BaseIdeaProperties : ProductProperties() {
         "intellij.platform.testFramework.junit5",
         "intellij.platform.testFramework",
         "intellij.platform.uast.tests",
+        "intellij.tools.testsBootstrap",
       )) {
-        if (!productLayout.productApiModules.contains(moduleName)) {
-          layout.withModule(moduleName, "testFramework.jar")
-        }
-      }
-      for (name in JAVA_IDE_IMPLEMENTATION_MODULES) {
-        if (!productLayout.productImplementationModules.contains(name)) {
-          layout.withModule(name)
+        if (!productLayout.productApiModules.contains(moduleName) && !productLayout.productImplementationModules.contains(moduleName)) {
+          layout.withModule(moduleName, TEST_FRAMEWORK_JAR)
         }
       }
       //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin

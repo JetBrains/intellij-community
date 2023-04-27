@@ -18,9 +18,8 @@ public class CommentLanguageInjector implements LanguageInjectionContributor {
   @Nullable
   @Override
   public Injection getInjection(@NotNull PsiElement context) {
-    if (!(context instanceof PsiLanguageInjectionHost) || context instanceof PsiComment) return null;
+    if (!(context instanceof PsiLanguageInjectionHost host) || context instanceof PsiComment) return null;
     if (!((PsiLanguageInjectionHost)context).isValidHost()) return null;
-    PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
 
     boolean applicableFound = false;
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {

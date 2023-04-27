@@ -80,7 +80,9 @@ final class BuildSession implements Runnable, CanceledStatus {
     myChannel = channel;
 
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
-    myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
+    String projectId = params.getProjectId();
+    LOG.assertTrue(projectId != null, "projectId is not specified");
+    myProjectPath = FileUtil.toCanonicalPath(projectId);
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
     myScopes = params.getScopeList();
@@ -288,11 +290,6 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   private void runBuild(final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
     final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
-    if (dataStorageRoot == null) {
-      msgHandler.processMessage(new CompilerMessage(BuildRunner.getRootCompilerName(), BuildMessage.Kind.ERROR,
-                                                    JpsBuildBundle.message("build.message.cannot.determine.build.data.storage.root.for.project.0", myProjectPath)));
-      return;
-    }
     final boolean storageFilesAbsent = !dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists();
     if (storageFilesAbsent) {
       // invoked the very first time for this project

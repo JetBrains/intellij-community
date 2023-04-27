@@ -189,8 +189,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   private static boolean handleSelectionIntersection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
-    if (editor instanceof EditorWindow) {
-      EditorWindow editorWindow = (EditorWindow)editor;
+    if (editor instanceof EditorWindow editorWindow) {
       Editor hostEditor = editorWindow.getDelegate();
       PsiFile injected = editorWindow.getInjectedFile();
       TextRange hostSelectedRange = InjectedLanguageManager.getInstance(hostEditor.getProject()).injectedToHost(injected, selectedRange);

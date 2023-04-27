@@ -75,10 +75,9 @@ public class MavenDomGutterAnnotator implements Annotator {
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof XmlTag) {
       final DomElement element = DomManager.getDomManager(psiElement.getProject()).getDomElement((XmlTag)psiElement);
-      if (element instanceof MavenDomDependency) {
+      if (element instanceof MavenDomDependency dependency) {
         if (element.getParentOfType(MavenDomPlugin.class, true) != null) return;
 
-        MavenDomDependency dependency = (MavenDomDependency)element;
         if (isDependencyManagementSection(dependency)) {
           annotateDependencyUsages(dependency, holder);
         }

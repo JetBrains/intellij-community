@@ -69,6 +69,10 @@ private class ScaledResultIcon(image: Image,
       this
     }
   }
+
+  override fun toString(): String {
+    return "ScaledResultIcon for $original"
+  }
 }
 
 private fun createScaledIcon(image: Image, cii: CachedImageIcon, scale: Float): ImageIcon? {

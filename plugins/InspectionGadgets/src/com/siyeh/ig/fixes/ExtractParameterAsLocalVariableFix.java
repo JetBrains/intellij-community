@@ -37,15 +37,13 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
       return;
     }
     final PsiExpression expression = PsiUtil.skipParenthesizedExprDown((PsiExpression)element);
-    if (!(expression instanceof PsiReferenceExpression)) {
+    if (!(expression instanceof PsiReferenceExpression parameterReference)) {
       return;
     }
-    final PsiReferenceExpression parameterReference = (PsiReferenceExpression)expression;
     final PsiElement target = parameterReference.resolve();
-    if (!(target instanceof PsiParameter)) {
+    if (!(target instanceof PsiParameter parameter)) {
       return;
     }
-    final PsiParameter parameter = (PsiParameter)target;
     final PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiLambdaExpression) {
       CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)declarationScope);
@@ -122,10 +120,9 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
       return null;
     }
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(reference);
-    if (!(parent instanceof PsiAssignmentExpression)) {
+    if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
       return null;
     }
-    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
     final IElementType tokenType = assignmentExpression.getOperationTokenType();
     if (!JavaTokenType.EQ.equals(tokenType)) {
       return null;

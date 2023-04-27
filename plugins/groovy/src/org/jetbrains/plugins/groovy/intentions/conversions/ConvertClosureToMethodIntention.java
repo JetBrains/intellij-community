@@ -55,9 +55,8 @@ public class ConvertClosureToMethodIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof GrField)) return;
+    if (!(parent instanceof GrField field)) return;
 
-    final GrField field = (GrField)parent;
     final HashSet<PsiReference> usages = new HashSet<>();
     usages.addAll(ReferencesSearch.search(field).findAll());
     final GrAccessorMethod[] getters = field.getGetters();
@@ -190,9 +189,8 @@ public class ConvertClosureToMethodIntention extends Intention {
       if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
 
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof GrField)) return false;
+      if (!(parent instanceof GrField field)) return false;
 
-      final GrField field = (GrField)parent;
       if (field.getNameIdentifierGroovy() != element) return false;
 
       final PsiElement varDeclaration = field.getParent();

@@ -49,16 +49,13 @@ public abstract class ProjectFileNodeUpdater {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
-          if (event instanceof VFileCreateEvent) {
-            VFileCreateEvent create = (VFileCreateEvent)event;
+          if (event instanceof VFileCreateEvent create) {
             updateFromFile(create.getParent());
           }
-          else if (event instanceof VFileCopyEvent) {
-            VFileCopyEvent copy = (VFileCopyEvent)event;
+          else if (event instanceof VFileCopyEvent copy) {
             updateFromFile(copy.getNewParent());
           }
-          else if (event instanceof VFileMoveEvent) {
-            VFileMoveEvent move = (VFileMoveEvent)event;
+          else if (event instanceof VFileMoveEvent move) {
             updateFromFile(move.getNewParent());
             updateFromFile(move.getOldParent());
             updateFromFile(move.getFile());

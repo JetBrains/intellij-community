@@ -346,7 +346,6 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       gotItStep(Balloon.Position.above, width = 0,
                 JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
                                           strong(UIBundle.message("tool.window.name.debug")),
-                                          if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
                                           strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       restoreIfModified(sample)
     }

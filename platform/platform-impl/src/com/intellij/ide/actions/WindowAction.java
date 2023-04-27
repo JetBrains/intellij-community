@@ -53,8 +53,7 @@ public abstract class WindowAction extends AnAction implements DumbAware {
   }
 
   private static @Nullable JRootPane getRootPane(@Nullable Window window) {
-    if (window instanceof RootPaneContainer) {
-      RootPaneContainer container = (RootPaneContainer)window;
+    if (window instanceof RootPaneContainer container) {
       return container.getRootPane();
     }
     return null;

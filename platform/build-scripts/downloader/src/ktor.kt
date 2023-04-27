@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext", "ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.intellij.build
 
 import io.ktor.client.HttpClient
@@ -297,7 +297,6 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
 
 fun CoroutineScope.readChannel(file: Path): ByteReadChannel {
   return writer(CoroutineName("file-reader") + Dispatchers.IO, autoFlush = false) {
-    @Suppress("BlockingMethodInNonBlockingContext")
     FileChannel.open(file, StandardOpenOption.READ).use { fileChannel ->
       @Suppress("DEPRECATION")
       channel.writeSuspendSession {

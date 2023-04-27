@@ -272,11 +272,10 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
       topStatements = createGroovyFileChecked("def " + text).getTopStatements();
     }
-    if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
+    if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration statement)) {
       throw new RuntimeException("Invalid arguments, text = " + text);
     }
 
-    final GrVariableDeclaration statement = (GrVariableDeclaration)topStatements[0];
     //todo switch-case formatting should work without this hack
     CodeEditUtil.markToReformatBefore(statement.getNode().findLeafElementAt(0), true);
     return statement;

@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.TestOnlyInspectionTestBase
 
 class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
   fun `test @TestOnly not highlighting in javadoc`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       package test;
 
       import org.jetbrains.annotations.TestOnly;
@@ -30,7 +30,7 @@ class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
   }
 
   fun `test @TestOnly in production code`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       package test;
 
       import org.jetbrains.annotations.TestOnly;
@@ -90,7 +90,7 @@ class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
         static void bar() { }
       }
     """.trimIndent())
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       package test;
 
       import org.jetbrains.annotations.VisibleForTesting;

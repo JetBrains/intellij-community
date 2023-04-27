@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 
-public class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibraryDependencyImpl> implements JpsLibraryDependency {
+public final class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibraryDependencyImpl> implements JpsLibraryDependency {
   public static final JpsElementChildRole<JpsLibraryReference>
     LIBRARY_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("library reference");
 

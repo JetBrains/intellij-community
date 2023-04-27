@@ -87,10 +87,9 @@ public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
         return;
       }
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();
-      if (!(methodExpression instanceof GrReferenceExpression)) {
+      if (!(methodExpression instanceof GrReferenceExpression referenceExpression)) {
         return;
       }
-      final GrReferenceExpression referenceExpression = (GrReferenceExpression) methodExpression;
       final String name = referenceExpression.getReferenceName();
       if (!"get".equals(name)) {
         return;

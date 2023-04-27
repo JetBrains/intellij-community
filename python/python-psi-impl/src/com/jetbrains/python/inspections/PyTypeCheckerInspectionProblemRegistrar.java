@@ -181,8 +181,7 @@ final class PyTypeCheckerInspectionProblemRegistrar {
 
   @NotNull
   private static PsiElement getMultiCalleeElementToHighlight(@NotNull PyCallSiteExpression callSite) {
-    if (callSite instanceof PyCallExpression) {
-      final PyCallExpression call = (PyCallExpression)callSite;
+    if (callSite instanceof PyCallExpression call) {
       final PyArgumentList argumentList = call.getArgumentList();
 
       final PsiElement result = Optional

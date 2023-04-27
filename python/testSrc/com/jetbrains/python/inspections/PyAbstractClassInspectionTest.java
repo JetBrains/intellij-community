@@ -15,7 +15,8 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testSuperMethodRaisesNotImplementerError() {
+  // PY-38680
+  public void testClassWithMethodWhichRaisesNotImplementedErrorNotTreatedAsAbstract() {
     doTest();
   }
 

@@ -59,9 +59,7 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
         @Override
         public Comparator getComparator() {
           return (o1, o2) -> {
-            if (o1 instanceof PluginDescriptorTreeElement && o2 instanceof PluginDescriptorTreeElement) {
-              PluginDescriptorTreeElement e1 = (PluginDescriptorTreeElement)o1;
-              PluginDescriptorTreeElement e2 = (PluginDescriptorTreeElement)o2;
+            if (o1 instanceof PluginDescriptorTreeElement e1 && o2 instanceof PluginDescriptorTreeElement e2) {
               if (e1.isTopLevelNode() && e2.isTopLevelNode()) {
                 return 0;
               }

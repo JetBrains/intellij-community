@@ -451,7 +451,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       float numberOfProcessedClasses = 0;
       for (PsiClass copiedClass : oldToNewMap.values()) {
         if (copiedClass == null) {
-          LOG.error(oldToNewMap.keySet());
+          LOG.error("Unexpected null value, keys = " + oldToNewMap.keySet());
           continue;
         }
         if (progress != null) {

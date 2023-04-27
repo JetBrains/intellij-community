@@ -34,9 +34,7 @@ public final class HighlightedText {
   }
 
   public boolean equals(Object o) {
-    if (!(o instanceof HighlightedText)) return false;
-
-    HighlightedText highlightedText = (HighlightedText)o;
+    if (!(o instanceof HighlightedText highlightedText)) return false;
 
     return StringUtil.equals(myBuffer, highlightedText.myBuffer) &&
            myHighlightedRegions.equals(highlightedText.myHighlightedRegions);

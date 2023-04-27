@@ -190,8 +190,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
         @Override
         public boolean execute(@NotNull PsiElement element) {
           PyPsiUtils.assertValid(element);
-          if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
-            PyReferenceExpression ref = (PyReferenceExpression)element;
+          if (element instanceof PyReferenceExpression ref && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
             if (!ref.isQualified()) {
               ResolveResult[] resolved = ref.getReference().multiResolve(false);
               for (ResolveResult rr : resolved) {

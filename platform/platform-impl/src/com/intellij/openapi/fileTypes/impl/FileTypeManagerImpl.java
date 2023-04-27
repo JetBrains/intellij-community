@@ -506,8 +506,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (!fileType.getName().equals(fileTypeName)) {
         LOG.error(new PluginException("Incorrect name specified in <fileType>, should be " + fileType.getName() + ", actual " + fileTypeName, pluginId));
       }
-      if (fileType instanceof LanguageFileType) {
-        LanguageFileType languageFileType = (LanguageFileType)fileType;
+      if (fileType instanceof LanguageFileType languageFileType) {
         String expectedLanguage = languageFileType.isSecondary() ? null : languageFileType.getLanguage().getID();
         if (!Objects.equals(bean.language, expectedLanguage)) {
           LOG.error(new PluginException("Incorrect language specified in <fileType> for " + fileType.getName() +
@@ -928,8 +927,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myPatternsTable.removeAllAssociations(ftd);
     myInitialAssociations.removeAllAssociations(fileType);
     mySchemeManager.removeScheme(fileType.getName());
-    if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
-      FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;
+    if (fileType instanceof FileTypeIdentifiableByVirtualFile fakeFileType) {
       mySpecialFileTypes = ArrayUtil.remove(mySpecialFileTypes, fakeFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
     if (pluginDescriptor != null) {
@@ -1416,18 +1414,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           LOG.debug(newMatcher + " had a conflict between " + oldFtd + " and " + newFtd + " and the winner is ... ... ... " + result);
         }
       }
-      if (!result.approved && myConflictResultConsumer != null) {
+      if (!result.approved() && myConflictResultConsumer != null) {
         myConflictResultConsumer.accept(result);
       }
-      FileTypeWithDescriptor resolvedFtd = result.resolved;
+      FileTypeWithDescriptor resolvedFtd = result.resolved();
       FileType oldFileType = oldFtd == null ? null : oldFtd.fileType;
       if (!resolvedFtd.equals(oldFtd)) {
         myPatternsTable.addAssociation(newMatcher, resolvedFtd);
-        if (result.approved && oldFileType != null) {
+        if (result.approved() && oldFileType != null) {
           myRemovedMappingTracker.add(newMatcher, oldFileType.getName(), true);
         }
       }
-      else if (oldFileType instanceof AbstractFileType && result.approved) {
+      else if (oldFileType instanceof AbstractFileType && result.approved()) {
         myPatternsTable.addAssociation(newMatcher, newFtd);
       }
 
@@ -1659,9 +1657,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (fileType == PlainTextFileType.INSTANCE) return;
     for (FileNameMatcher matcher : pair.matchers) {
       registerReDetectedMapping(fileType.getName(), matcher);
-      if (matcher instanceof ExtensionFileNameMatcher) {
+      if (matcher instanceof ExtensionFileNameMatcher extMatcher) {
         // also check exact file name matcher
-        ExtensionFileNameMatcher extMatcher = (ExtensionFileNameMatcher)matcher;
         registerReDetectedMapping(fileType.getName(), new ExactFileNameMatcher("." + extMatcher.getExtension()));
       }
     }

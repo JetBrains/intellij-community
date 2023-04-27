@@ -111,8 +111,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       }
     }
 
-    if (insertedScalar.getParent() instanceof YAMLSequenceItem) {
-      YAMLSequenceItem currentItem = (YAMLSequenceItem)insertedScalar.getParent();
+    if (insertedScalar.getParent() instanceof YAMLSequenceItem currentItem) {
 
       List<YAMLSequenceItem> siblingItems = Optional.ofNullable(currentItem.getParent())
         .filter(YAMLSequence.class::isInstance)

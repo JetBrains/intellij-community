@@ -334,8 +334,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   public static void setBreakpointSuspendPolicy(Project project, int line, SuspendPolicy policy) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XBreakpoint breakpoint : XDebuggerTestUtil.getBreakpoints(breakpointManager)) {
-      if (breakpoint instanceof XLineBreakpoint) {
-        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+      if (breakpoint instanceof XLineBreakpoint lineBreakpoint) {
 
         if (lineBreakpoint.getLine() == line) {
           WriteAction.runAndWait(() -> lineBreakpoint.setSuspendPolicy(policy));

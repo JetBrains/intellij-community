@@ -124,8 +124,7 @@ public final class Painter {
 
     boolean highlightBoundaries = (getDesignTimeInsets(component) > 2);
 
-    if (component instanceof RadContainer && !component.isDragBorder()) {
-      RadContainer container = (RadContainer)component;
+    if (component instanceof RadContainer container && !component.isDragBorder()) {
       if (!highlightBoundaries && (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE)) {
         return;
       }
@@ -181,10 +180,9 @@ public final class Painter {
     if (!editor.isShowGrid()) {
       return;
     }
-    if (!(component instanceof RadContainer)) {
+    if (!(component instanceof RadContainer container)) {
       return;
     }
-    final RadContainer container = (RadContainer)component;
     if (!container.getLayoutManager().isGrid()) {
       return;
     }

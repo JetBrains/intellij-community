@@ -52,8 +52,7 @@ public final class MaximizeActiveDialogAction extends WindowAction {
     if (!canBeNormalized(dialog)) return;
     JRootPane rootPane = dialog.getRootPane();
     Object value = rootPane.getClientProperty(NORMAL_BOUNDS);
-    if (value instanceof Rectangle) {
-      Rectangle bounds = (Rectangle)value;
+    if (value instanceof Rectangle bounds) {
       ScreenUtil.fitToScreen(bounds);
       dialog.setBounds(bounds);
       rootPane.putClientProperty(NORMAL_BOUNDS, null);

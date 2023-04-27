@@ -158,9 +158,8 @@ public class AssignmentExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof AssignmentExprent)) return false;
+    if (!(o instanceof AssignmentExprent as)) return false;
 
-    AssignmentExprent as = (AssignmentExprent)o;
     return Objects.equals(left, as.getLeft()) &&
            Objects.equals(right, as.getRight()) &&
            condType == as.getCondType();

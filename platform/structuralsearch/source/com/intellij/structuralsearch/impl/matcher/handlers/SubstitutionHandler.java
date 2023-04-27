@@ -102,8 +102,7 @@ public class SubstitutionHandler extends MatchingHandler {
   private static @Nullable <T extends MatchPredicate> T findPredicate(@Nullable MatchPredicate start, @NotNull Class<T> aClass) {
     if (start == null) return null;
     if (aClass.isInstance(start)) return aClass.cast(start);
-    if (start instanceof AndPredicate) {
-      final AndPredicate binaryPredicate = (AndPredicate)start;
+    if (start instanceof AndPredicate binaryPredicate) {
       final T firstBranchCheck = findPredicate(binaryPredicate.getFirst(), aClass);
       if (firstBranchCheck != null) return firstBranchCheck;
       return findPredicate(binaryPredicate.getSecond(), aClass);

@@ -81,12 +81,11 @@ public final class GuiUtils {
 
   public static void replaceJSplitPaneWithIDEASplitter(JComponent root, boolean useOnePixelDivider) {
     final Container parent = root.getParent();
-    if (root instanceof JSplitPane) {
+    if (root instanceof JSplitPane pane) {
       // we can painlessly replace only splitter which is the only child in container
       if (parent.getComponents().length != 1 && !(parent instanceof Splitter)) {
         return;
       }
-      final JSplitPane pane = (JSplitPane)root;
       final Component component1 = pane.getTopComponent();
       final Component component2 = pane.getBottomComponent();
       final int orientation = pane.getOrientation();
@@ -113,8 +112,7 @@ public final class GuiUtils {
         });
       }
 
-      if (parent instanceof Splitter) {
-        final Splitter psplitter = (Splitter)parent;
+      if (parent instanceof Splitter psplitter) {
         if (psplitter.getFirstComponent() == root) {
           psplitter.setFirstComponent(splitter);
         }
@@ -178,10 +176,9 @@ public final class GuiUtils {
         ((TitledBorder)border).setTitleColor(color);
       }
     }
-    else if (component instanceof JLabel) {
+    else if (component instanceof JLabel label) {
       Color color = NamedColorUtil.getInactiveTextColor();
       @NonNls String changeColorString = "<font color=#" + colorToHex(color) + ">";
-      final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
         if (StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && enabled) {

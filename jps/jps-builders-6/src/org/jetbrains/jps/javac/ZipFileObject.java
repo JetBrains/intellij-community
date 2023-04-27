@@ -102,18 +102,10 @@ public final class ZipFileObject extends JpsFileObject {
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
     // todo: consider adding content caching if needed
     // todo: currently ignoreEncodingErrors is not honored. Do we actually need to support it?
-    final InputStream in = openInputStream();
-    try {
-      final InputStreamReader reader = myEncoding != null ? new InputStreamReader(in, myEncoding) : new InputStreamReader(in);
-      try {
+    try (InputStream in = openInputStream()) {
+      try (InputStreamReader reader = myEncoding != null ? new InputStreamReader(in, myEncoding) : new InputStreamReader(in)) {
         return CharBuffer.wrap(FileUtilRt.loadText(reader, (int)myEntry.getSize()));
       }
-      finally {
-        reader.close();
-      }
-    }
-    finally {
-      in.close();
     }
   }
 }

@@ -20,10 +20,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @State(name = ProjectFacetManagerImpl.COMPONENT_NAME)
 public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements PersistentStateComponent<ProjectFacetManagerImpl.ProjectFacetManagerState> {
@@ -72,17 +69,17 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
 
   @NotNull
   private MultiMap<FacetTypeId<?>, Module> getIndex() {
-    MultiMap<FacetTypeId<?>, Module> index = myIndex;
-    if (index == null) {
-      index = MultiMap.createLinkedSet();
+    MultiMap<FacetTypeId<?>, Module> index = null == myIndex ? MultiMap.createLinkedSet() : myIndex;
+    if (myIndex == null) {
       for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-        for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
-          index.putValue(facet.getTypeId(), module);
-        }
+        Arrays.stream(FacetManager.getInstance(module).getAllFacets())
+          .map(facet -> facet.getTypeId())
+          .distinct()
+          .forEach(facetTypeId -> index.putValue(facetTypeId, module));
       }
       myIndex = index;
     }
-    return index;
+    return myIndex;
   }
 
   @NotNull

@@ -140,16 +140,13 @@ public final class SerializationUtils {
     if (type instanceof PsiWildcardType || type instanceof PsiPrimitiveType) {
       return true;
     }
-    if (type instanceof PsiArrayType) {
-      final PsiArrayType arrayType = (PsiArrayType)type;
+    if (type instanceof PsiArrayType arrayType) {
       final PsiType componentType = arrayType.getComponentType();
       return isProbablySerializable(componentType);
     }
-    if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)type;
+    if (type instanceof PsiClassType classType) {
       final PsiClass aClass = classType.resolve();
-      if (aClass instanceof PsiTypeParameter) {
-        final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+      if (aClass instanceof PsiTypeParameter typeParameter) {
         final PsiReferenceList extendsList = typeParameter.getExtendsList();
         return ContainerUtil.and(extendsList.getReferencedTypes(), SerializationUtils::isProbablySerializable);
       }

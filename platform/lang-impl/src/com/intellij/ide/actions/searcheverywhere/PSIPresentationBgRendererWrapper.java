@@ -83,8 +83,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
 
   private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
                                                                   Function<? super PsiElement, ? extends TargetPresentation> presentationCalculator) {
-    if (elementDescriptor.getItem() instanceof PsiElement) {
-      PsiElement psi = (PsiElement)elementDescriptor.getItem();
+    if (elementDescriptor.getItem() instanceof PsiElement psi) {
       TargetPresentation presentation = presentationCalculator.apply(psi);
       return new FoundItemDescriptor<>(new PsiItemWithPresentation(psi, presentation), elementDescriptor.getWeight());
     }
@@ -124,9 +123,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
 
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (!(value instanceof PsiItemWithPresentation)) return delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-      PsiItemWithPresentation itemAndPresentation = (PsiItemWithPresentation)value;
+      if (!(value instanceof PsiItemWithPresentation itemAndPresentation)) return delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
       TargetPresentation presentation = itemAndPresentation.getPresentation();
       PsiElementListCellRenderer.ItemMatchers matchers = getItemMatchers(list, itemAndPresentation);

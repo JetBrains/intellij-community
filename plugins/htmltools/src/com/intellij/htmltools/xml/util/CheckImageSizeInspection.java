@@ -91,10 +91,9 @@ public class CheckImageSizeInspection extends XmlSuppressableInspectionTool {
             final boolean isHeight = HtmlReferenceProvider.SizeReference.HEIGHT_ATTR_NAME.equalsIgnoreCase(name);
 
             if (refs.length == 1 &&
-                refs[0] instanceof HtmlReferenceProvider.SizeReference &&
+                refs[0] instanceof HtmlReferenceProvider.SizeReference sizeReference &&
                 refs[0].getRangeInElement().getLength() >= 2 // avoid errors on concatenations
               ) {
-              HtmlReferenceProvider.SizeReference sizeReference = (HtmlReferenceProvider.SizeReference)refs[0];
               PsiElement element = sizeReference.resolve();
 
               if (element == null) {

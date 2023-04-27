@@ -26,11 +26,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(name = "RemoteServers", storages = @Storage(value = "remote-servers.xml", roamingType = RoamingType.DISABLED))
 public final class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
   private SkipDefaultValuesSerializationFilters myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
-  private final List<RemoteServer<?>> myServers = new ArrayList<>();
+  private final List<RemoteServer<?>> myServers = new CopyOnWriteArrayList<>();
   private final List<RemoteServerState> myUnknownServers = new ArrayList<>();
 
   public RemoteServersManagerImpl() {

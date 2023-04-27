@@ -35,8 +35,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
-    if (!(context.getCodeClass() instanceof GroovyScriptClass)) return;
-    GroovyScriptClass scriptClass = (GroovyScriptClass)context.getCodeClass();
+    if (!(context.getCodeClass() instanceof GroovyScriptClass scriptClass)) return;
 
     LightMethodBuilder mainMethod = new LightMethodBuilder(scriptClass.getManager(), GroovyLanguage.INSTANCE, "main")
       .setMethodReturnType(PsiTypes.voidType())

@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -197,7 +196,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       @Override
       public int compareTo(Entry o) {
         if (myNode == o.myNode) return 0;
-        int res = Comparing.compare(myOffset, o.myOffset);
+        int res = Long.compare(myOffset, o.myOffset);
         if (res == 0) {
           return XValueNodeImpl.COMPARATOR.compare(myNode, o.myNode);
         }

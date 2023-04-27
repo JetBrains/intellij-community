@@ -2,11 +2,15 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.openapi.util.NlsSafe
+import java.util.*
 
 @GraphQLFragment("/graphql/fragment/glCommit.graphql")
 class GitLabCommitDTO(
   val sha: String,
   val shortId: String,
-  val title: String?,
-  val description: String?
+  val title: @NlsSafe String?,
+  val description: @NlsSafe String?,
+  val author: GitLabUserDTO,
+  val authoredDate: Date
 )

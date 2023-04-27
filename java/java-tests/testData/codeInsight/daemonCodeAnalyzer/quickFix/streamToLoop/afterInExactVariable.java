@@ -28,14 +28,14 @@ public class InExactVariable {
   public void testList() {
       List<String> result1 = new ArrayList<>();
       for (Integer integer5 : Arrays.asList(1, 2, 3, 4)) {
-          String valueOf1 = String.valueOf(integer5);
-          result1.add(valueOf1);
+          String valuedOf = String.valueOf(integer5);
+          result1.add(valuedOf);
       }
       Object list1 = result1;
       List<String> result = new ArrayList<>();
       for (Integer integer4 : Arrays.asList(1, 2, 3, 4)) {
-          String s1 = String.valueOf(integer4);
-          result.add(s1);
+          String valued = String.valueOf(integer4);
+          result.add(valued);
       }
       Iterable<String> list2 = result;
       Collection<String> list3 = new ArrayList<>();
@@ -82,8 +82,8 @@ public class InExactVariable {
   public void testGroupingBy() {
       TreeMap<Integer, Set<String>> result = new TreeMap<>();
       for (Integer integer4 : Arrays.asList(1, 2, 3, 4)) {
-          String s1 = String.valueOf(integer4);
-          result.computeIfAbsent(s1.length(), k2 -> new HashSet<>()).add(s1);
+          String valued = String.valueOf(integer4);
+          result.computeIfAbsent(valued.length(), k2 -> new HashSet<>()).add(valued);
       }
       Object map1 = result;
       TreeMap<Integer, Set<String>> map2 = new TreeMap<>();

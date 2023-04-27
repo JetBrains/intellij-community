@@ -44,8 +44,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     @DirtyUI
     @Override
     public void layoutContainer(Container parent) {
-      if (parent instanceof JViewport) {
-        JViewport viewport = (JViewport)parent;
+      if (parent instanceof JViewport viewport) {
         Component view = viewport.getView();
         if (view != null) {
           Container grand = viewport.getParent();
@@ -62,8 +61,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     @DirtyUI
     @Override
     public Dimension preferredLayoutSize(Container parent) {
-      if (parent instanceof JViewport) {
-        JViewport viewport = (JViewport)parent;
+      if (parent instanceof JViewport viewport) {
         Dimension size = getPreferredScrollableViewportSize(viewport.getView());
         if (size != null) return size; // may be null for for tables or custom components
       }
@@ -324,8 +322,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private static Insets getInnerInsets(JComponent view) {
     Border border = view.getBorder();
-    if (border instanceof ViewBorder) {
-      ViewBorder vb = (ViewBorder)border;
+    if (border instanceof ViewBorder vb) {
       border = vb.myBorder;
     }
     return border == null ? null : border.getBorderInsets(view);
@@ -333,8 +330,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   static Insets getViewInsets(JComponent view) {
     Border border = view.getBorder();
-    if (border instanceof ViewBorder) {
-      ViewBorder vb = (ViewBorder)border;
+    if (border instanceof ViewBorder vb) {
       Insets insets = JBInsets.emptyInsets();
       vb.addViewInsets(view, insets);
       return insets;
@@ -401,8 +397,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private static void updateBorder(@Nullable Component view) {
     if (ScrollSettings.isNotSupportedYet(view)) return;
-    if (view instanceof JComponent) {
-      JComponent component = (JComponent)view;
+    if (view instanceof JComponent component) {
       Border border = component.getBorder();
       if (border instanceof ViewBorder) return; // already set
       component.setBorder(border == null || border instanceof UIResource
@@ -449,10 +444,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       }
       if (!myInsets.equals(insets)) {
         myInsets.set(insets.top, insets.left, insets.bottom, insets.right);
-        if (view instanceof JComponent) {
-          JComponent component = (JComponent)view;
-          if (component instanceof JTree) {
-            JTree tree = (JTree)component;
+        if (view instanceof JComponent component) {
+          if (component instanceof JTree tree) {
             TreeUtil.invalidateCacheAndRepaint(tree.getUI());
           }
           component.revalidate();

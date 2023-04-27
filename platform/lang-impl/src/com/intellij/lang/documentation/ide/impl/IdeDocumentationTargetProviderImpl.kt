@@ -5,6 +5,7 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
+import com.intellij.lang.documentation.impl.documentationTargets
 import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.model.Pointer
@@ -32,6 +33,6 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
   }
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {
-    return com.intellij.lang.documentation.impl.documentationTargets(file, offset)
+    return documentationTargets(file, offset)
   }
 }

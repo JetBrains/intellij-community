@@ -86,8 +86,7 @@ public class ClassSerializer {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof ClassSerializer) {
-      ClassSerializer other = (ClassSerializer) o;
+    if (o instanceof ClassSerializer other) {
       return other.myInstance.equals(myInstance);
     } else {
       return false;

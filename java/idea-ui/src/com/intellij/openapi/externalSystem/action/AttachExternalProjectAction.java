@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.action;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.actions.ImportModuleAction;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -78,16 +77,15 @@ public final class AttachExternalProjectAction extends DumbAwareAction {
     if (projectImportProvider == null) {
       return;
     }
-    AddModuleWizard wizard = ImportModuleAction.Companion.selectFileAndCreateWizard(
-      project,
-      null,
-      getFileChooserDescriptor(manager, project, externalSystemId),
-      getSelectedFileValidator(project, externalSystemId),
-      projectImportProvider
+    ImportModuleAction.doImport(project, () ->
+      ImportModuleAction.selectFileAndCreateWizard(
+        project,
+        null,
+        getFileChooserDescriptor(manager, project, externalSystemId),
+        getSelectedFileValidator(project, externalSystemId),
+        projectImportProvider
+      )
     );
-    if (wizard != null && (wizard.getStepCount() <= 0 || wizard.showAndGet())) {
-      ImportModuleAction.createFromWizard(project, wizard);
-    }
   }
 
   private static FileChooserDescriptor getFileChooserDescriptor(

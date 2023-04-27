@@ -77,8 +77,7 @@ public class NewObjectEqualityInspection extends BaseInspection {
     private static PsiExpression resolveExpression(PsiExpression expression) {
       PsiElement parent = expression.getParent();
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (!(expression instanceof PsiReferenceExpression)) return expression;
-      PsiReferenceExpression reference = (PsiReferenceExpression)expression;
+      if (!(expression instanceof PsiReferenceExpression reference)) return expression;
       PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
       if (variable == null) return expression;
       PsiExpression initializer = variable.getInitializer();

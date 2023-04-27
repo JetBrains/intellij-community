@@ -108,15 +108,13 @@ public class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection 
     @Nullable
     private static PsiReferenceExpression findNonSynchronizedVolatileFieldRef(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression reference)) {
         return null;
       }
-      final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
       final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return null;
       }
-      final PsiField field = (PsiField)referent;
       if (!field.hasModifierProperty(PsiModifier.VOLATILE)) {
         return null;
       }

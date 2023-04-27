@@ -281,8 +281,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       if (path == null) return null;
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       final Object userObject = node.getUserObject();
-      if (!(userObject instanceof ProjectViewNode)) return null;
-      ProjectViewNode pvNode = (ProjectViewNode) userObject;
+      if (!(userObject instanceof ProjectViewNode pvNode)) return null;
       VirtualFile vFile = pvNode.getVirtualFile();
       if (vFile != null && !vFile.isDirectory()) {
         return PsiManager.getInstance(myProject).findFile(vFile);
@@ -438,8 +437,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         continue;
       }
       else {
-        if (o instanceof ProjectViewNode) {
-          final ProjectViewNode projectViewNode = (ProjectViewNode)o;
+        if (o instanceof ProjectViewNode projectViewNode) {
           if (!projectViewNode.canHaveChildrenMatching(condition)) {
             continue;
           }

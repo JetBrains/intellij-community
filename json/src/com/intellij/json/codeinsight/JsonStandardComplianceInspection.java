@@ -222,8 +222,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
     @Override
     public void visitValue(@NotNull JsonValue value) {
-      if (value.getContainingFile() instanceof JsonFile) {
-        final JsonFile jsonFile = (JsonFile)value.getContainingFile();
+      if (value.getContainingFile() instanceof JsonFile jsonFile) {
         if (myWarnAboutMultipleTopLevelValues &&
             value.getParent() == jsonFile &&
             value != jsonFile.getTopLevelValue() &&

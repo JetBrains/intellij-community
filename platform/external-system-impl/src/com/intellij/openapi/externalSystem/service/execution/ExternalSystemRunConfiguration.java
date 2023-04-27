@@ -250,8 +250,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (consoleView instanceof ConsoleViewImpl) {
       consoleViewImpl = (ConsoleViewImpl)consoleView;
     }
-    else if (consoleView instanceof DuplexConsoleView) {
-      DuplexConsoleView duplexConsoleView = (DuplexConsoleView)consoleView;
+    else if (consoleView instanceof DuplexConsoleView duplexConsoleView) {
       if (duplexConsoleView.getPrimaryConsoleView() instanceof ConsoleViewImpl) {
         consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getPrimaryConsoleView();
       }

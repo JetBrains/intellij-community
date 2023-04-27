@@ -20,6 +20,8 @@ interface GitLabNoteViewModel {
 
   val actionsVm: GitLabNoteAdminActionsViewModel?
 
+  val resolveVm: GitLabDiscussionResolveViewModel?
+
   val htmlBody: Flow<@Nls String>
 }
 
@@ -27,7 +29,8 @@ private val LOG = logger<GitLabNoteViewModel>()
 
 class GitLabNoteViewModelImpl(
   parentCs: CoroutineScope,
-  note: GitLabNote
+  note: GitLabNote,
+  override val resolveVm: GitLabDiscussionResolveViewModel? = null
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)

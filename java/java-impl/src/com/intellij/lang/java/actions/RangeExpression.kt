@@ -23,7 +23,7 @@ internal class RangeExpression(
     it.isGreedyToRight = true
   }
 
-  val text: String get() = document.getText(TextRange.create(marker))
+  val text: String get() = document.getText(marker.textRange)
 
   override fun calculateResult(context: ExpressionContext): Result = TextResult(text)
 

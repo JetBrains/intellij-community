@@ -67,8 +67,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
       return;
     }
 
-    if (component instanceof Container) {
-      Container container = (Container)component;
+    if (component instanceof Container container) {
       int componentCount = container.getComponentCount();
       for (int i = 0; i < componentCount; i++) {
         deinstall(container.getComponent(i));
@@ -120,8 +119,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
   }
 
   private void installImpl(Component component) {
-    if (component instanceof Container) {
-      Container container = (Container)component;
+    if (component instanceof Container container) {
       synchronized (container.getTreeLock()) {
         int componentCount = container.getComponentCount();
         for (int i = 0; i < componentCount; i++) {

@@ -2,6 +2,7 @@
 
 package com.intellij.stats.completion.tracker
 
+import com.intellij.codeInsight.completion.BaseCompletionService
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.storage.LookupStorage
@@ -89,6 +90,20 @@ class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
     }
   }
 
+  private fun computeAnalyticsItemFeatures(lookupElement: LookupElement): Map<String, String> {
+    val features = mutableMapOf<String, String>()
+    lookupElement.getUserData(LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS)?.let {
+      features["analytics_timestamp_show"] = it.toString()
+    }
+    lookupElement.getUserData(BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS)?.let {
+      features["analytics_timestamp_add"] = it.toString()
+    }
+    lookupElement.getUserData(BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER)?.let {
+      features["analytics_to_result_set_add_order"] = it.toString()
+    }
+    return features
+  }
+
   private fun calculateRelevance(lookup: LookupImpl, items: List<LookupElement>): Map<String, Map<String, String>> {
     val lookupStorage = LookupStorage.get(lookup)
     if (lookupStorage?.shouldComputeFeatures() == false) {
@@ -101,7 +116,7 @@ class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
         val id = item.idString()
         val factors = lookupStorage.getItemStorage(id).getLastUsedFactors()?.mapValues { it.value.toString() }
         if (factors != null) {
-          result.setFactors(id, factors)
+          result.setFactors(id, factors + computeAnalyticsItemFeatures(item))
         }
       }
     }
@@ -116,6 +131,7 @@ class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
           val features = mutableMapOf<String, String>()
           relevanceMap.forEach { features[it.key] = it.value.toString() }
           additionalMap.forEach { features[it.key] = it.value.toString() }
+          features += computeAnalyticsItemFeatures(item)
           return@let features
         } ?: emptyMap()
         result.setFactors(item.idString(), relevanceMap)

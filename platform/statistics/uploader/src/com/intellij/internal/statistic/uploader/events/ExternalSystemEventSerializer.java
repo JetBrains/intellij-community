@@ -20,22 +20,19 @@ public final class ExternalSystemEventSerializer {
   @NotNull
   public static String serialize(@NotNull ExternalSystemEvent event) {
     String prefix = event.getTimestamp() + " " + event.getEventType().name() + " " + event.getRecorderId();
-    if (event instanceof ExternalUploadFinishedEvent) {
-      ExternalUploadFinishedEvent failed = (ExternalUploadFinishedEvent)event;
+    if (event instanceof ExternalUploadFinishedEvent failed) {
       if (isNotEmpty(failed.getError())) {
         return prefix + " " + escape(failed.getError());
       }
       return prefix;
     }
-    else if (event instanceof ExternalUploadSendEvent) {
-      ExternalUploadSendEvent finished = (ExternalUploadSendEvent)event;
+    else if (event instanceof ExternalUploadSendEvent finished) {
       String hashedFiles = filesToString(finished.getSuccessfullySentFiles());
       String errors = errorsToString(finished.getErrors());
       return prefix + " " + finished.getSucceed() + " " + finished.getFailed() + " " + finished.getTotal() +
              " " + hashedFiles + " " + errors;
     }
-    else if (event instanceof ExternalSystemErrorEvent) {
-      ExternalSystemErrorEvent error = (ExternalSystemErrorEvent)event;
+    else if (event instanceof ExternalSystemErrorEvent error) {
       return prefix + " " + escape(error.getEvent()) + " " + escape(error.getErrorClass());
     }
     return prefix;

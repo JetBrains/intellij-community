@@ -69,8 +69,7 @@ public abstract class ProjectViewDeleteElementProvider implements DeleteProvider
     PsiElement[] elements = getSelectedPSIElements(dataContext);
     for (int idx = 0; idx < elements.length; idx++) {
       final PsiElement element = elements[idx];
-      if (element instanceof PsiDirectory) {
-        PsiDirectory directory = (PsiDirectory)element;
+      if (element instanceof PsiDirectory directory) {
         final ProjectViewDirectoryHelper directoryHelper = ProjectViewDirectoryHelper.getInstance(project);
         if (hideEmptyMiddlePackages(dataContext) &&
             directory.getChildren().length == 0 &&

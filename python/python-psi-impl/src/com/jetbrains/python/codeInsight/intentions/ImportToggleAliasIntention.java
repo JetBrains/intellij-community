@@ -172,8 +172,7 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
               if (files != null) {
                 for (Pair<PsiElement, TextRange> pair : files) {
                   final PsiElement first = pair.getFirst();
-                  if (first instanceof ScopeOwner) {
-                    final ScopeOwner scopeOwner = (ScopeOwner)first;
+                  if (first instanceof ScopeOwner scopeOwner) {
                     PsiTreeUtil.processElements(scopeOwner, new PsiElementProcessor<>() {
                       @Override
                       public boolean execute(@NotNull PsiElement element) {
@@ -189,9 +188,8 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
           }
 
           private void getReferences(PsiElement element) {
-            if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element,
-                                                                                        PyImportElement.class) == null) {
-              PyReferenceExpression ref = (PyReferenceExpression)element;
+            if (element instanceof PyReferenceExpression ref && PsiTreeUtil.getParentOfType(element,
+                                                                                            PyImportElement.class) == null) {
               if (remove_name.equals(PyPsiUtils.toPath(ref))) {  // filter out other names that might resolve to our target
                 PsiElement resolved = ref.getReference().resolve();
                 if (resolved == referee ||

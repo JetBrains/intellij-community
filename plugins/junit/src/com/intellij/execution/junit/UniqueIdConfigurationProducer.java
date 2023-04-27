@@ -47,9 +47,8 @@ public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
     GlobalSearchScope searchScope = configuration.getSearchScope();
       if (searchScope != null) {
         Location<?> location = selectedProxy.getLocation(configuration.getProject(), searchScope);
-        if (location instanceof MethodLocation) {
+        if (location instanceof MethodLocation methodLocation) {
           StringJoiner stringJoiner = new StringJoiner(".");
-          MethodLocation methodLocation = (MethodLocation)location;
           stringJoiner.add(methodLocation.getContainingClass().getName());
           String methodName = methodLocation.getPsiElement().getName();
           String proxyName = selectedProxy.getName();

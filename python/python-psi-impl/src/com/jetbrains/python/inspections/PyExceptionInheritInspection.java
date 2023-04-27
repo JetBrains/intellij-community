@@ -54,8 +54,7 @@ public class PyExceptionInheritInspection extends PyInspection {
         if (callee instanceof PyReferenceExpression) {
           final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(getResolveContext());
           PsiElement psiElement = reference.resolve();
-          if (psiElement instanceof PyClass) {
-            PyClass aClass = (PyClass) psiElement;
+          if (psiElement instanceof PyClass aClass) {
             for (PyClassLikeType type : aClass.getAncestorTypes(myTypeEvalContext)) {
               if (type == null) {
                 return;

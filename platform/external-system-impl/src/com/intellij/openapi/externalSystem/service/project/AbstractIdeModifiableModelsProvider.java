@@ -496,8 +496,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
           }
         }
 
-        if (!(orderEntry instanceof LibraryOrderEntry)) continue;
-        LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+        if (!(orderEntry instanceof LibraryOrderEntry libraryOrderEntry)) continue;
         if (!libraryOrderEntry.isModuleLevel() && libraryOrderEntry.getLibraryName() != null) {
           String workspaceModule = toSubstitute.get(libraryOrderEntry.getLibraryName());
           if (workspaceModule != null) {

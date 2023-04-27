@@ -64,17 +64,13 @@ public class NewInstanceOfSingletonInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
       PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof GrNewExpression)) return;
-
-      GrNewExpression newExpression = (GrNewExpression)element;
+      if (!(element instanceof GrNewExpression newExpression)) return;
 
       GrCodeReferenceElement refElement = newExpression.getReferenceElement();
       if (refElement == null) return;
 
       PsiElement resolved = refElement.resolve();
-      if (!(resolved instanceof GrTypeDefinition)) return;
-
-      GrTypeDefinition singleton = (GrTypeDefinition)resolved;
+      if (!(resolved instanceof GrTypeDefinition singleton)) return;
 
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(singleton, GROOVY_LANG_SINGLETON);
       if (annotation == null) return;

@@ -208,9 +208,7 @@ public class DirectoryNode extends PackageDependenciesNode {
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof DirectoryNode)) return false;
-
-    final DirectoryNode packageNode = (DirectoryNode)o;
+    if (!(o instanceof DirectoryNode packageNode)) return false;
 
     if (!toString().equals(packageNode.toString())) return false;
 

@@ -305,8 +305,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     @Override
     public void activeLookupChanged(@Nullable Lookup oldLookup,
                                     @Nullable Lookup newLookup) {
-      if (newLookup instanceof LookupImpl && shouldTryDeselectingFirstPopupItem(newLookup)) {
-        LookupImpl lookup = (LookupImpl)newLookup;
+      if (newLookup instanceof LookupImpl lookup && shouldTryDeselectingFirstPopupItem(newLookup)) {
         lookup.setPrefixChangeListener(new PrefixChangeListener() {
           @Override
           public void afterAppend(char c) {

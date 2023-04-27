@@ -25,8 +25,7 @@ import static org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter.M
 public class GradleDslAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element instanceof GrReferenceExpression) {
-      GrReferenceExpression referenceExpression = (GrReferenceExpression)element;
+    if (element instanceof GrReferenceExpression referenceExpression) {
 
       PsiElement resolved = referenceExpression.resolve();
       if (resolved instanceof OriginInfoAwareElement &&

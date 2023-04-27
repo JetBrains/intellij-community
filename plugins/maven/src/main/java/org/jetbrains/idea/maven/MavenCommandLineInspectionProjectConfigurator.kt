@@ -60,9 +60,6 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
     Registry.get(DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT).setValue(true)
     Registry.get(MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY).setValue(false)
-    if (!"false".equals(System.getProperty(MAVEN_LINEAR_IMPORT), ignoreCase = true)) {
-      Registry.get(MAVEN_LINEAR_IMPORT).setValue(true)
-    }
   }
 
   override fun configureProject(project: Project, context: ConfiguratorContext) {

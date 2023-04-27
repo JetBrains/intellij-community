@@ -47,8 +47,7 @@ public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection
   @NotNull
   public String buildErrorString(Object... infos) {
     final Object info = infos[0];
-    if (info instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)info;
+    if (info instanceof PsiPostfixExpression postfixExpression) {
       final IElementType tokenType = postfixExpression.getOperationTokenType();
       if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
         return InspectionGadgetsBundle.message(
@@ -203,8 +202,7 @@ public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection
         parent.addBefore(newStatement, statement);
       }
     }
-    else if (operand instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
+    else if (operand instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
       if (target != null) {
         final SearchScope useScope = target.getUseScope();
@@ -218,9 +216,8 @@ public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection
         }
       }
     }
-    if (statement instanceof PsiLoopStatement) {
+    if (statement instanceof PsiLoopStatement loopStatement) {
       // in/decrement inside loop statement condition
-      final PsiLoopStatement loopStatement = (PsiLoopStatement)statement;
       final PsiStatement body = loopStatement.getBody();
       if (body instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)body;

@@ -18,8 +18,7 @@ public class SetupKeywordArgumentProvider implements PyKeywordArgumentProvider {
   public List<String> getKeywordArguments(PyFunction function, PyCallExpression callExpr) {
     if ("setup".equals(function.getName())) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(function, ScopeOwner.class, true);
-      if (scopeOwner instanceof PyFile) {
-        final PyFile file = (PyFile)scopeOwner;
+      if (scopeOwner instanceof PyFile file) {
         if (file.getName().equals("core.py") && file.getParent().getName().equals("distutils")) {
           final List<String> arguments = getSetupPyKeywordArguments(file);
           if (arguments != null) {

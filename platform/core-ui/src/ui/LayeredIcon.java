@@ -117,9 +117,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof LayeredIcon)) return false;
-
-    final LayeredIcon icon = (LayeredIcon)o;
+    if (!(o instanceof LayeredIcon icon)) return false;
 
     if (myHeight != icon.myHeight) return false;
     if (myWidth != icon.myWidth) return false;

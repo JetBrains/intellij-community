@@ -121,7 +121,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner<T
   }
 
   static List<Test> getTestCasesOf(Test test) {
-    List<Test> testCases = new ArrayList<Test>();
+    List<Test> testCases = new ArrayList<>();
     if (test instanceof TestRunnerUtil.SuiteMethodWrapper) {
       test = ((TestRunnerUtil.SuiteMethodWrapper)test).getSuite();
     }
@@ -153,7 +153,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner<T
     }
 
     private void testFailure(Throwable failure, String messageName, String methodName) {
-      final Map<String, String> attrs = new HashMap<String, String>();
+      final Map<String, String> attrs = new HashMap<>();
       attrs.put("name", methodName);
       final long duration = System.currentTimeMillis() - myCurrentTestStart;
       if (duration > 0) {

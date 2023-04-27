@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -154,8 +153,7 @@ public final class ScopeEditorPanel implements Disposable {
       }
     });
     myPatternLegend.setForeground(new JBColor(Gray._50, Gray._130));
-    myPatternLegend.setText(new HtmlBuilder().appendRaw(
-      LangBundle.message("scope.editor.pattern.legend.label")).wrapWithHtmlBody().toString());
+    myPatternLegend.setText("");
 
     initTree(myPackageTree);
     Disposer.register(this, new UiNotifyConnector(myPanel, new Activatable() {
@@ -456,6 +454,11 @@ public final class ScopeEditorPanel implements Disposable {
     PanelProgressIndicator progress = createProgressIndicator(requestFocus);
     progress.setBordersVisible(false);
     myCurrentProgress = progress;
+
+    PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+    String hintMessage = provider != null ? provider.getHintMessage() : "";
+    myPatternLegend.setText(new HtmlBuilder().appendRaw(hintMessage).wrapWithHtmlBody().toString());
+
     final Runnable request = () -> {
       if (updateText) {
         final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
@@ -625,8 +628,7 @@ public final class ScopeEditorPanel implements Disposable {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      if (value instanceof PackageDependenciesNode) {
-        PackageDependenciesNode node = (PackageDependenciesNode)value;
+      if (value instanceof PackageDependenciesNode node) {
         setIcon(node.getIcon());
 
         setForeground(UIUtil.getTreeForeground(selected, hasFocus));

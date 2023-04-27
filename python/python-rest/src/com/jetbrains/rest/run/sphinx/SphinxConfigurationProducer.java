@@ -30,9 +30,8 @@ public class SphinxConfigurationProducer extends LazyRunConfigurationProducer<Re
                                                   @NotNull Ref<PsiElement> sourceElement) {
     assert (configuration instanceof SphinxRunConfiguration);
     PsiElement element = sourceElement.get();
-    if (!(element instanceof PsiDirectory)) return false;
+    if (!(element instanceof PsiDirectory directory)) return false;
 
-    PsiDirectory directory = (PsiDirectory)element;
     boolean hasRstFile = false;
     boolean hasConf = false;
     for (PsiFile file : directory.getFiles()) {

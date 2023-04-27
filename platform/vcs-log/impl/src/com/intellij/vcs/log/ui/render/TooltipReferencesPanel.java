@@ -21,11 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 class TooltipReferencesPanel extends ReferencesPanel {
   private static final int REFS_LIMIT = 10;
@@ -58,7 +55,7 @@ class TooltipReferencesPanel extends ReferencesPanel {
   protected @Nullable Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
     if (refIndex == 0) {
       Color color = type.getBackgroundColor();
-      return new LabelIcon(this, height, getBackground(),
+      return new LabelIcon(this, height, UIUtil.getToolTipBackground(),
                            refs.size() > 1 ? List.of(color, color) : Collections.singletonList(color)) {
         @Override
         public int getIconWidth() {

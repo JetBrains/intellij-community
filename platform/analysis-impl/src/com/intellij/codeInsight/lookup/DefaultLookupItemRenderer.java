@@ -81,8 +81,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
     if (presentableText != null) return presentableText;
     final Object o = item.getObject();
     String name = null;
-    if (o instanceof PsiElement) {
-      final PsiElement element = (PsiElement)o;
+    if (o instanceof PsiElement element) {
       if (element.isValid()) {
         name = PsiUtilCore.getName(element);
       }

@@ -35,10 +35,9 @@ public class ConnectionResourceInspection extends ResourceInspection {
 
   @Override
   protected boolean isResourceCreation(PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     return MethodCallUtils.isCallToMethod(methodCallExpression, "javax.microedition.io.Connector", null, "open", (PsiType[])null);
   }
 

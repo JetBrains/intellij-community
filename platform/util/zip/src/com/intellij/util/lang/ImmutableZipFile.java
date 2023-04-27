@@ -92,13 +92,13 @@ public final class ImmutableZipFile implements ZipFile {
     int entryCount = ikv.getEntryCount();
     names = new String[entryCount];
     short[] nameLengthInBytes = new short[entryCount];
-    ikv.getMappedBufferAt(nameDataPosition).asShortBuffer().get(nameLengthInBytes);
-    int position = (nameDataPosition + (entryCount * Short.BYTES));
+    ByteBuffer buffer = ikv.getMappedBufferAt(nameDataPosition);
+    buffer.asShortBuffer().get(nameLengthInBytes);
+    buffer.position(buffer.position() + (entryCount * Short.BYTES));
     for (int i = 0; i < entryCount; i++) {
       short sizeInBytes = nameLengthInBytes[i];
-      ikv.readByteArrayAt(position, tempNameBytes, sizeInBytes);
+      buffer.get(tempNameBytes, 0, sizeInBytes);
       names[i] = new String(tempNameBytes, 0, sizeInBytes, StandardCharsets.UTF_8);
-      position += sizeInBytes;
     }
 
     this.names = names;

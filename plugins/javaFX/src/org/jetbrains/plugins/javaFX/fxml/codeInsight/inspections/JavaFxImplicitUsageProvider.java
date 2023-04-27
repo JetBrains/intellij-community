@@ -64,8 +64,7 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitWrite(@NotNull PsiElement element) {
-    if (element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
+    if (element instanceof PsiField field) {
       if (!isImplicitFxmlAccess(field)) return false;
       final String fieldName = field.getName();
 

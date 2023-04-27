@@ -124,16 +124,14 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     if (field != null) {
       return field;
     }
-    if (condition instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
+    if (condition instanceof PsiPrefixExpression prefixExpression) {
       IElementType type = prefixExpression.getOperationTokenType();
       if(!type.equals(JavaTokenType.PLUSPLUS) && !type.equals(JavaTokenType.MINUSMINUS)) {
         final PsiExpression operand = prefixExpression.getOperand();
         return getFieldIfSimpleFieldComparison(operand);
       }
     }
-    if (condition instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+    if (condition instanceof PsiBinaryExpression binaryExpression) {
       final PsiExpression lOperand = binaryExpression.getLOperand();
       final PsiExpression rOperand = binaryExpression.getROperand();
       if (ExpressionUtils.isLiteral(rOperand)) {
@@ -155,19 +153,17 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     if (expression == null) {
       return null;
     }
-    if (!(expression instanceof PsiReferenceExpression)) {
+    if (!(expression instanceof PsiReferenceExpression reference)) {
       return null;
     }
-    final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
     final PsiExpression qualifierExpression = reference.getQualifierExpression();
     if (qualifierExpression != null) {
       return null;
     }
     final PsiElement referent = reference.resolve();
-    if (!(referent instanceof PsiField)) {
+    if (!(referent instanceof PsiField field)) {
       return null;
     }
-    final PsiField field = (PsiField)referent;
     if (field.hasModifierProperty(PsiModifier.VOLATILE) && !PsiUtil.isLanguageLevel9OrHigher(field)) {
       return null;
     }
@@ -235,8 +231,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
 
     private static void addVolatile(PsiElement element) {
       PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiWhileStatement)) return;
-      PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
+      if (!(parent instanceof PsiWhileStatement whileStatement)) return;
       PsiExpression condition = whileStatement.getCondition();
       PsiField field = getFieldIfSimpleFieldComparison(condition);
       if (field == null) return;

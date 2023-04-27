@@ -526,8 +526,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
         addProperty(result, CustomCreateProperty.getInstance(myProject));
       }
 
-      if(component instanceof RadContainer){
-        RadContainer container = (RadContainer) component;
+      if(component instanceof RadContainer container){
         if (container.getLayoutManager().getName() != null) {
           addProperty(result, myLayoutManagerProperty);
         }

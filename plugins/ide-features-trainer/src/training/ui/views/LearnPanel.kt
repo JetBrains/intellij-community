@@ -158,10 +158,14 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   private fun createLessonNameLabel(lesson: Lesson): JLabel {
-    val lessonNameLabel = JLabel()
+    val lessonNameLabel = object: JLabel() {
+      override fun updateUI() {
+        super.updateUI()
+        border = UISettings.getInstance().lessonHeaderBorder
+        font = UISettings.getInstance().getFont(5).deriveFont(Font.BOLD)
+      }
+    }
     lessonNameLabel.name = "lessonNameLabel"
-    lessonNameLabel.border = UISettings.getInstance().lessonHeaderBorder
-    lessonNameLabel.font = UISettings.getInstance().getFont(5).deriveFont(Font.BOLD)
     lessonNameLabel.alignmentX = Component.LEFT_ALIGNMENT
     lessonNameLabel.isFocusable = false
     lessonNameLabel.text = lesson.name

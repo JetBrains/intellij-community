@@ -1306,8 +1306,7 @@ public abstract class DialogWrapper {
     if (centerPanel != null) {
       centerPanel.putClientProperty(DIALOG_CONTENT_PANEL_PROPERTY, true);
       centerSection.add(centerPanel, BorderLayout.CENTER);
-      if (centerPanel instanceof DialogPanel) {
-        DialogPanel dialogPanel = (DialogPanel)centerPanel;
+      if (centerPanel instanceof DialogPanel dialogPanel) {
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         dialogPanel.registerValidators(myDisposable, map -> {
           setOKActionEnabled(ContainerUtil.and(map.values(), info -> info.okEnabled));

@@ -91,8 +91,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
         }
       });
     }
-    else if (component instanceof JComboBox) {
-      JComboBox jComboBox = ((JComboBox)component);
+    else if (component instanceof JComboBox jComboBox) {
 
       jComboBox.addActionListener(new ActionListener() {
         @Override
@@ -180,8 +179,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     if (psifile instanceof XmlFile) {
       xmlFile = (XmlFile)psifile;
     }
-    else if (psifile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
-      TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)psifile.getViewProvider();
+    else if (psifile.getViewProvider() instanceof TemplateLanguageFileViewProvider viewProvider) {
       if (viewProvider.getPsi(viewProvider.getTemplateDataLanguage()) instanceof XmlFile) {
         xmlFile = (XmlFile)viewProvider.getPsi(viewProvider.getTemplateDataLanguage());
       }

@@ -156,8 +156,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
   @Nullable
   private static XmlAttribute getXmlnsDeclaration(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (parent instanceof XmlTag) {
-      XmlTag tag = (XmlTag)parent;
+    if (parent instanceof XmlTag tag) {
       if (tag.getNamespacePrefix().isEmpty()) {
         while (tag != null) {
           final XmlAttribute attr = tag.getAttribute("xmlns");

@@ -467,7 +467,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
     else {
-      LOG.error(target);
+      LOG.error("Unexpected target type: " + target);
     }
     return true;
   }

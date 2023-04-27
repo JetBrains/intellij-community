@@ -993,8 +993,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   private static void setupSelectionOnPreferredComponent(final JComponent component) {
-    if (component instanceof JTextField) {
-      JTextField field = (JTextField)component;
+    if (component instanceof JTextField field) {
       String text = field.getText();
       if (text != null && field.getClientProperty(HAVE_INITIAL_SELECTION) == null) {
         field.setSelectionStart(0);

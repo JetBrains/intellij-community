@@ -55,9 +55,8 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
 
           PsiElement psiElement = targetFile != null ? XmlEntityCache.getCachedEntity(targetFile, name): null;
 
-          if (psiElement instanceof XmlEntityDecl) {
-            final XmlEntityDecl decl = (XmlEntityDecl)psiElement;
-            
+          if (psiElement instanceof XmlEntityDecl decl) {
+
             if(decl.isInternalReference()) {
               for (ASTNode e = decl.getNode().getFirstChildNode(); e != null; e = e.getTreeNext()) {
                 if (e.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {

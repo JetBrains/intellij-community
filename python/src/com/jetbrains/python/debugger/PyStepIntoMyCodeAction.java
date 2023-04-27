@@ -23,8 +23,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
       @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         final XDebugProcess debugProcess = session.getDebugProcess();
-        if (debugProcess instanceof PyDebugProcess) {
-          PyDebugProcess pyDebugProcess = (PyDebugProcess)debugProcess;
+        if (debugProcess instanceof PyDebugProcess pyDebugProcess) {
           pyDebugProcess.startStepIntoMyCode(debugProcess.getSession().getSuspendContext());
         }
       }

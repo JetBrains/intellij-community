@@ -119,8 +119,7 @@ public final class Touchbar {
     if (EXPAND_OPTION_BUTTONS) {
       DefaultActionGroup options = null;
       for (JButton jb : buttons) {
-        if (jb instanceof JBOptionButton) {
-          final JBOptionButton ob = (JBOptionButton)jb;
+        if (jb instanceof JBOptionButton ob) {
           final Action[] opts = ob.getOptions();
           if (opts != null) {
             for (Action a : opts) {

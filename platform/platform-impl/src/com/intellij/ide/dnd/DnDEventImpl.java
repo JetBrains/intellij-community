@@ -284,11 +284,9 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     if( this == o ) {
       return true;
     }
-    if( !(o instanceof DnDEventImpl) ) {
+    if( !(o instanceof DnDEventImpl event) ) {
       return false;
     }
-
-    final DnDEventImpl event = (DnDEventImpl) o;
 
     if( myDropPossible != event.myDropPossible ) {
       return false;

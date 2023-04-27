@@ -127,8 +127,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       if (TypeUtils.isTypeParameter(expectedType)) {
         return;
       }
-      if (expectedType instanceof PsiArrayType) {
-        final PsiArrayType arrayType = (PsiArrayType)expectedType;
+      if (expectedType instanceof PsiArrayType arrayType) {
         final PsiType componentType = arrayType.getDeepComponentType();
         if (TypeUtils.isTypeParameter(componentType)) {
           return;
@@ -140,14 +139,12 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       if (PsiPrimitiveType.getUnboxedType(type) != null || PsiPrimitiveType.getUnboxedType(expectedType) != null) {
         return;
       }
-      if (expectedType instanceof PsiClassType) {
-        final PsiClassType expectedClassType = (PsiClassType)expectedType;
+      if (expectedType instanceof PsiClassType expectedClassType) {
         final PsiClassType expectedRawType = expectedClassType.rawType();
         if (type.equals(expectedRawType)) {
           return;
         }
-        if (type instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)type;
+        if (type instanceof PsiClassType classType) {
           final PsiClassType rawType = classType.rawType();
           if (rawType.equals(expectedRawType)) {
             return;

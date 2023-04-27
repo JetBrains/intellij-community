@@ -1,28 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Defines a mapping between document line number and the numbers displayed in gutter.
+ * Defines a mapping between document line numbers and the numbers displayed in the gutter.
  *
  * @see EditorGutter#setLineNumberConverter(LineNumberConverter, LineNumberConverter)
  * @see Increasing
  */
 public interface LineNumberConverter {
   /**
-   * Defines the number to be displayed in gutter for the given document line.
+   * Defines the number to be displayed in the gutter for the given document line.
    *
-   * @param lineNumber one-based line number
+   * @param lineNumber 1-based line number
    * @return number to be displayed in gutter, {@code null} means no number is displayed
    */
   @Nullable
   Integer convert(@NotNull Editor editor, int lineNumber);
 
   /**
-   * Number which should be used to calculate width of line number area in gutter. This should be the largest number which will be
-   * displayed. {@code null} means no width will be allocated to the line number area.
+   * Number which should be used to calculate the width of the line number area in the gutter.
+   * This should be the largest number that will be displayed.
+   * {@code null} means no width will be allocated to the line number area.
    */
   @Nullable
   Integer getMaxLineNumber(@NotNull Editor editor);

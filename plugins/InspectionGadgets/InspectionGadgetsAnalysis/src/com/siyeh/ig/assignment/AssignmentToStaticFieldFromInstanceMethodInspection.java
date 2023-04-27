@@ -68,10 +68,9 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
       if (referent == null) {
         return;
       }
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField fieldReferenced)) {
         return;
       }
-      final PsiField fieldReferenced = (PsiField)referent;
       if (!fieldReferenced.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }

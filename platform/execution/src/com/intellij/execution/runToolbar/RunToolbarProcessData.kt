@@ -39,7 +39,7 @@ class RunToolbarProcessData {
     fun prepareSuppressMainSlotCustomization(project: Project, addition: Consumer<in ExecutionEnvironment>? = null): Consumer<in ExecutionEnvironment> {
       return Consumer { ee: ExecutionEnvironment ->
         val runManager = getInstance(project)
-        if (runManager.isRunWidgetActive()) {
+        if (runManager.isRiderRunWidgetActive()) {
           ee.putUserData(RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY, true)
         }
       }

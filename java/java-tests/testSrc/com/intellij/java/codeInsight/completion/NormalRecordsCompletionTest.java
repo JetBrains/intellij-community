@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
@@ -63,4 +64,26 @@ public class NormalRecordsCompletionTest extends NormalCompletionTestCase {
   public void testTopLevelPublicRecordParenthesisExists() { doTest(); }
 
   public void testTopLevelPublicRecordBraceExists() { doTest(); }
+
+  @NeedsIndex.SmartMode(reason = "To avoid merging")
+  public void testInsertKnownConstructorParameter() {
+    doTestWithHints();
+  }
+
+  @NeedsIndex.SmartMode(reason = "To avoid merging")
+  public void testInsertKnownConstructorParameterVoid() {
+    doTestWithHints();
+  }
+
+  private void doTestWithHints() {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    boolean old = settings.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
+    settings.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = true;
+    try {
+      doTest("\n");
+    }
+    finally {
+      settings.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = old;
+    }
+  }
 }

@@ -501,8 +501,7 @@ public class CommanderPanel extends JPanel {
     private PsiDirectory getDirectory() {
       if (myBuilder == null) return null;
       final Object parentElement = myBuilder.getParentNode();
-      if (parentElement instanceof AbstractTreeNode) {
-        final AbstractTreeNode parentNode = (AbstractTreeNode)parentElement;
+      if (parentElement instanceof AbstractTreeNode parentNode) {
         if (!(parentNode.getValue() instanceof PsiDirectory)) return null;
         return (PsiDirectory)parentNode.getValue();
       }

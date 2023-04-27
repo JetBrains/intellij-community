@@ -119,11 +119,10 @@ public class MacColorPipette extends ColorPipetteBase {
   }
 
   private static void applyRenderingHints(@NotNull Graphics graphics) {
-    if (!(graphics instanceof Graphics2D)) {
+    if (!(graphics instanceof Graphics2D g2d)) {
       return;
     }
 
-    Graphics2D g2d = (Graphics2D)graphics;
     GraphicsUtil.applyRenderingHints(g2d);
     g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

@@ -87,8 +87,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     else if (expression instanceof PsiPrefixExpression) {
       buildSimplifiedPrefixExpression((PsiPrefixExpression)expression, out, tracker);
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression expression1 = parenthesizedExpression.getExpression();
       out.append('(');
       buildSimplifiedExpression(expression1, out, tracker);
@@ -316,10 +315,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiAssignmentExpression)) {
+      if (!(element instanceof PsiAssignmentExpression assignmentExpression)) {
         return;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
       final PsiElement parent = assignmentExpression.getParent();
       assert parent instanceof PsiStatement;
       final List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(assignmentExpression.getLExpression());
@@ -360,10 +358,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiExpression)) {
+      if (!(element instanceof PsiExpression expression)) {
         return;
       }
-      PsiExpression expression = (PsiExpression)element;
       CommentTracker tracker = new CommentTracker();
       String simplifiedExpression = buildSimplifiedExpression(expression, new StringBuilder(), tracker).toString();
       boolean isConstant = simplifiedExpression.equals("true") || simplifiedExpression.equals("false");
@@ -392,10 +389,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection impleme
     }
 
     private List<PsiExpression> extractSideEffects(PsiExpression expression) {
-      if (!(expression instanceof PsiPolyadicExpression)) {
+      if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
         return Collections.emptyList();
       }
-      PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       IElementType sign = polyadicExpression.getOperationTokenType();
       Boolean stopper = (sign == JavaTokenType.ANDAND) ? Boolean.FALSE : sign == JavaTokenType.OROR ? Boolean.TRUE : null;
       PsiExpression[] operands = polyadicExpression.getOperands();

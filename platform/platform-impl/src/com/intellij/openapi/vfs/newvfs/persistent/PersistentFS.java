@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -109,4 +110,8 @@ public abstract class PersistentFS extends ManagingFS {
 
   // 'true' if the FS persisted at least one child, or it has never been queried for children
   public abstract boolean mayHaveChildren(int id);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public abstract @NotNull VfsLog getVfsLog();
 }

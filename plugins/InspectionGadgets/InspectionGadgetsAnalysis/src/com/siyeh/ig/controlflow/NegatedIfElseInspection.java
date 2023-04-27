@@ -100,8 +100,7 @@ public class NegatedIfElseInspection extends BaseInspection {
       final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
       String elseText = tracker.text(elseBranch);
       final PsiElement lastChild = elseBranch.getLastChild();
-      if (lastChild instanceof PsiComment) {
-        final PsiComment comment = (PsiComment)lastChild;
+      if (lastChild instanceof PsiComment comment) {
         final IElementType tokenType = comment.getTokenType();
         if (JavaTokenType.END_OF_LINE_COMMENT.equals(tokenType)) {
           elseText += '\n';

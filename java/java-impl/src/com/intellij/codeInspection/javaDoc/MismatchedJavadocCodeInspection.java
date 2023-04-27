@@ -60,14 +60,7 @@ public class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocalInspec
     MAYBE_TYPE_SINGULAR
   }
 
-  static class ReturnItem {
-    final @NotNull Kind kind;
-    final @NotNull TextRange range;
-
-    ReturnItem(@NotNull Kind kind, @NotNull TextRange range) {
-      this.kind = kind;
-      this.range = range;
-    }
+  record ReturnItem(@NotNull Kind kind, @NotNull TextRange range) {
   }
 
   @Override

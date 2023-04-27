@@ -20,7 +20,8 @@ import javax.swing.table.TableCellRenderer
 
 @ApiStatus.Internal
 internal class VcsLogNewUiTableCellRenderer(
-  val delegate: TableCellRenderer
+  val delegate: TableCellRenderer,
+  private val hasMultiplePaths: () -> Boolean,
 ) : TableCellRenderer,
     VcsLogCellRenderer,
     TableCellRendererWrapper {
@@ -28,6 +29,7 @@ internal class VcsLogNewUiTableCellRenderer(
   private var isRight = false
   private var isLeft = false
   private var cachedRenderer: JComponent? = null
+  private var hasRootColumn: Boolean = false;
 
   private lateinit var selectablePanel: SelectablePanel
 
@@ -43,7 +45,7 @@ internal class VcsLogNewUiTableCellRenderer(
     val isLeftColumn = column == ROOT_COLUMN_INDEX + 1
     val isRightColumn = column == table.columnCount - 1
 
-    updateSelectablePanelIfNeeded(isRightColumn, isLeftColumn, columnRenderer)
+    updateSelectablePanelIfNeeded(isRightColumn, isLeftColumn, columnRenderer, hasMultiplePaths())
 
     val isHovered = TableHoverListener.getHoveredRow(table) == row
 
@@ -55,8 +57,8 @@ internal class VcsLogNewUiTableCellRenderer(
 
       if ((isLeft || isRight)) {
         when {
-          isSelected -> getSelectedRowType(table, row).tune(selectablePanel, isLeft, isRight)
-          isHovered -> SelectedRowType.SINGLE.tune(selectablePanel, isLeft, isRight)
+          isSelected -> getSelectedRowType(table, row).tune(selectablePanel, isLeft, isRight, hasRootColumn)
+          isHovered -> SelectedRowType.SINGLE.tune(selectablePanel, isLeft, isRight, hasRootColumn)
         }
       }
     }
@@ -66,12 +68,15 @@ internal class VcsLogNewUiTableCellRenderer(
 
   override fun getBaseRenderer(): TableCellRenderer = delegate
 
-  private fun updateSelectablePanelIfNeeded(isRightColumn: Boolean, isLeftColumn: Boolean, columnRenderer: JComponent) {
-    if (isRight != isRightColumn || isLeft != isLeftColumn || cachedRenderer !== columnRenderer) {
+  private fun updateSelectablePanelIfNeeded(isRightColumn: Boolean,
+                                            isLeftColumn: Boolean,
+                                            columnRenderer: JComponent,
+                                            hasMultiplePaths: Boolean) {
+    if (isRight != isRightColumn || isLeft != isLeftColumn || cachedRenderer !== columnRenderer || hasMultiplePaths != hasRootColumn) {
       cachedRenderer = columnRenderer
       isLeft = isLeftColumn
       isRight = isRightColumn
-
+      hasRootColumn = hasMultiplePaths
       selectablePanel = wrap(createWrappablePanel(columnRenderer, isLeft, isRight))
     }
   }
@@ -191,8 +196,8 @@ internal class VcsLogNewUiTableCellRenderer(
       }
     };
 
-    fun tune(selectablePanel: SelectablePanel, isLeft: Boolean, isRight: Boolean) {
-      selectablePanel.selectionInsets = JBUI.insets(0, if (isLeft) INSETS else 0, 0, if (isRight) INSETS else 0)
+    fun tune(selectablePanel: SelectablePanel, isLeft: Boolean, isRight: Boolean, hasRootColumn: Boolean) {
+      selectablePanel.selectionInsets = JBUI.insets(0, if (isLeft && !hasRootColumn) INSETS else 0, 0, if (isRight) INSETS else 0)
 
       selectablePanel.tuneArcAndCorners(isLeft, isRight)
     }

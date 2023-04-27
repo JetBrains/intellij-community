@@ -412,8 +412,7 @@ public final class GenerationUtil {
         return !PsiTypes.charType().equals(PsiPrimitiveType.getOptionallyUnboxedType(target));
       }
     }
-    else if (initializer instanceof GrListOrMap && target instanceof PsiArrayType) {
-      GrListOrMap listOrMap = (GrListOrMap)initializer;
+    else if (initializer instanceof GrListOrMap listOrMap && target instanceof PsiArrayType) {
       return listOrMap.isMap();
     }
     return true;

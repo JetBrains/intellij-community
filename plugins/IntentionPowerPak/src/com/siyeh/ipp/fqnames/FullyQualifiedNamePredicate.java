@@ -30,10 +30,9 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaCodeReferenceElement)) {
+    if (!(element instanceof PsiJavaCodeReferenceElement referenceElement)) {
       return false;
     }
-    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
     if (!referenceElement.isQualified()) {
       return false;
     }
@@ -53,10 +52,9 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement qualifier = referenceElement.getQualifier();
-    if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement qualifierReferenceElement)) {
       return false;
     }
-    final PsiJavaCodeReferenceElement qualifierReferenceElement = (PsiJavaCodeReferenceElement)qualifier;
     final PsiElement resolved = qualifierReferenceElement.resolve();
     if (!(resolved instanceof PsiPackage)) {
       if (!(resolved instanceof PsiClass)) {
@@ -67,10 +65,9 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
       }
     }
     final PsiElement target = referenceElement.resolve();
-    if (!(target instanceof PsiClass)) {
+    if (!(target instanceof PsiClass aClass)) {
       return false;
     }
-    final PsiClass aClass = (PsiClass)target;
     final String fqName = aClass.getQualifiedName();
     return fqName != null && ImportUtils.nameCanBeImported(fqName, element);
   }

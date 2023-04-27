@@ -26,10 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 class ConvertIntegerToHexPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrLiteral)) {
+    if (!(element instanceof GrLiteral expression)) {
       return false;
     }
-    final GrLiteral expression = (GrLiteral) element;
     final PsiType type = expression.getType();
     if (type == null) {
       return false;

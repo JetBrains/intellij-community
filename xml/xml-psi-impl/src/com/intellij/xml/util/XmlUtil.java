@@ -266,8 +266,7 @@ public final class XmlUtil {
     PsiElement[] children = element.getChildren();
 
     for (PsiElement child : children) {
-      if (child instanceof XmlToken) {
-        XmlToken token = (XmlToken)child;
+      if (child instanceof XmlToken token) {
 
         if (token.getTokenType() == type) {
           return token;
@@ -378,8 +377,7 @@ public final class XmlUtil {
         final XmlTag[] simpleContent = new XmlTag[1];
 
         processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), element -> {
-          if (element instanceof XmlTag) {
-            final XmlTag tag1 = (XmlTag)element;
+          if (element instanceof XmlTag tag1) {
             @NonNls final String s = ((XmlTag)element).getLocalName();
 
             if ((s.equals(XSD_SIMPLE_CONTENT_TAG) ||
@@ -428,8 +426,7 @@ public final class XmlUtil {
   }
 
   public static boolean isAntFile(final PsiFile file) {
-    if (file instanceof XmlFile) {
-      final XmlFile xmlFile = (XmlFile)file;
+    if (file instanceof XmlFile xmlFile) {
       final XmlDocument document = xmlFile.getDocument();
       if (document != null) {
         final XmlTag tag = document.getRootTag();
@@ -458,14 +455,12 @@ public final class XmlUtil {
 
   @Nullable
   public static PsiFile findRelativeFile(String uri, PsiElement base) {
-    if (base instanceof PsiFile) {
-      PsiFile baseFile = (PsiFile)base;
+    if (base instanceof PsiFile baseFile) {
       VirtualFile file = UriUtil.findRelative(uri, baseFile.getOriginalFile());
       if (file == null) return null;
       return base.getManager().findFile(file);
     }
-    else if (base instanceof PsiDirectory) {
-      PsiDirectory baseDir = (PsiDirectory)base;
+    else if (base instanceof PsiDirectory baseDir) {
       VirtualFile file = UriUtil.findRelative(uri, baseDir);
       if (file == null) return null;
       return base.getManager().findFile(file);
@@ -488,8 +483,7 @@ public final class XmlUtil {
   @Nullable
   public static XmlElementDescriptor getDescriptorFromContext(@NotNull XmlTag tag) {
     PsiElement parent = tag.getParent();
-    if (parent instanceof XmlTag) {
-      XmlTag parentTag = (XmlTag)parent;
+    if (parent instanceof XmlTag parentTag) {
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if (parentDescriptor != null) {
@@ -503,8 +497,7 @@ public final class XmlUtil {
     XmlTag newTag = XmlElementFactory.getInstance(tag.getProject()).createTagFromText('<' + tag.getName() + "></" + tag.getName() + '>');
 
     ASTNode node = tag.getNode();
-    if (!(node instanceof CompositeElement)) return;
-    CompositeElement compositeElement = (CompositeElement)node;
+    if (!(node instanceof CompositeElement compositeElement)) return;
 
     final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(compositeElement);
     if (emptyTagEnd == null) return;
@@ -805,8 +798,7 @@ public final class XmlUtil {
         }
       }
 
-      if (typeDecr instanceof XmlNSDescriptorImpl) {
-        final XmlNSDescriptorImpl schemaDescriptor = (XmlNSDescriptorImpl)typeDecr;
+      if (typeDecr instanceof XmlNSDescriptorImpl schemaDescriptor) {
         elementDescriptor = schemaDescriptor.getDescriptorByType(type, xmlTag);
       }
     }

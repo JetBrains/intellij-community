@@ -120,8 +120,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       final PsiElement definition = instruction.getElement();
       // TODO: This check may slow down resolving, but it is the current solution to the comprehension scopes problem
       if (isInnerComprehension(element, definition)) continue;
-      if (definition instanceof PyImportedNameDefiner && !(definition instanceof PsiNamedElement)) {
-        final PyImportedNameDefiner definer = (PyImportedNameDefiner)definition;
+      if (definition instanceof PyImportedNameDefiner definer && !(definition instanceof PsiNamedElement)) {
         final List<RatedResolveResult> resolvedResults = definer.multiResolveName(name);
         for (RatedResolveResult result : resolvedResults) {
           ret.add(new ImportedResolveResult(result.getElement(), result.getRate(), definer));
@@ -479,14 +478,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         resolveResult = resolveResult.getNavigationElement();
       }
       if (element instanceof PsiDirectory) {
-        if (resolveResult instanceof PyFile) {
-          final PyFile file = (PyFile)resolveResult;
+        if (resolveResult instanceof PyFile file) {
           if (PyUtil.isPackage(file) && file.getContainingDirectory() == element) {
             return true;
           }
         }
-        else if (resolveResult instanceof PsiDirectory) {
-          final PsiDirectory directory = (PsiDirectory)resolveResult;
+        else if (resolveResult instanceof PsiDirectory directory) {
           if (PyUtil.isPackage(directory, null) && directory == element) {
             return true;
           }
@@ -526,8 +523,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             }
           }
         }
-        if (element instanceof PyExpression) {
-          final PyExpression expr = (PyExpression)element;
+        if (element instanceof PyExpression expr) {
           if (PyUtil.isClassAttribute(myElement) && (PyUtil.isClassAttribute(expr) || PyUtil.isInstanceAttribute(expr))) {
             final PyClass c1 = PsiTreeUtil.getParentOfType(element, PyClass.class);
             final PyClass c2 = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
@@ -630,8 +626,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   protected boolean resolvesToWrapper(PsiElement element, PsiElement resolveResult) {
     if (element instanceof PyFunction && ((PyFunction) element).getContainingClass() != null && resolveResult instanceof PyTargetExpression) {
       final PyExpression assignedValue = ((PyTargetExpression)resolveResult).findAssignedValue();
-      if (assignedValue instanceof PyCallExpression) {
-        final PyCallExpression call = (PyCallExpression)assignedValue;
+      if (assignedValue instanceof PyCallExpression call) {
         final Pair<String,PyFunction> functionPair = PyCallExpressionHelper.interpretAsModifierWrappingCall(call);
         if (functionPair != null && functionPair.second == element) {
           return true;

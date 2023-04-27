@@ -307,7 +307,11 @@ def jb_start_tests():
 
 def jb_finish_tests():
     # To be called before process exist to close all suites
-    NewTeamcityServiceMessages.INSTANCE.close_suites()
+    instance = NewTeamcityServiceMessages.INSTANCE
+
+    # instance may not be set if you run like pytest --version
+    if instance:
+        instance.close_suites()
 
 
 def start_protocol():

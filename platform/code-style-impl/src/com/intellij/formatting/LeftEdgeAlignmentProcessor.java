@@ -25,7 +25,7 @@ public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor 
 
   @Override
   protected IndentData calculateAlignmentAnchorIndent(@NotNull Context context) {
-    LeafBlockWrapper offsetResponsibleBlock = context.alignment.getOffsetRespBlockBefore(context.targetBlock);
+    LeafBlockWrapper offsetResponsibleBlock = context.alignment().getOffsetRespBlockBefore(context.targetBlock());
     if (offsetResponsibleBlock == null) {
       return null;
     }
@@ -36,7 +36,7 @@ public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor 
     }
     else {
       final int offsetBeforeBlock = CoreFormatterUtil.getStartColumn(offsetResponsibleBlock);
-      final AbstractBlockWrapper prevIndentedBlock = CoreFormatterUtil.getIndentedParentBlock(context.targetBlock);
+      final AbstractBlockWrapper prevIndentedBlock = CoreFormatterUtil.getIndentedParentBlock(context.targetBlock());
       if (prevIndentedBlock == null) {
         return new IndentData(0, offsetBeforeBlock);
       }
@@ -54,14 +54,14 @@ public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor 
 
   @Override
   protected boolean applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
-    WhiteSpace whiteSpace = context.targetBlock.getWhiteSpace();
+    WhiteSpace whiteSpace = context.targetBlock().getWhiteSpace();
     whiteSpace.setSpaces(alignmentAnchorIndent.getSpaces(), alignmentAnchorIndent.getIndentSpaces());
     return true;
   }
 
   @Override
   protected int getAlignmentIndentDiff(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
-    IndentData indentBeforeBlock = context.targetBlock.getNumberOfSymbolsBeforeBlock();
+    IndentData indentBeforeBlock = context.targetBlock().getNumberOfSymbolsBeforeBlock();
     return alignmentAnchorIndent.getTotalSpaces() - indentBeforeBlock.getTotalSpaces();
   }
 }

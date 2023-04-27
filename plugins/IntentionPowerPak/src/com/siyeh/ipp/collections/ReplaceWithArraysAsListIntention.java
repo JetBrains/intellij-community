@@ -38,10 +38,9 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
   @Override
   protected PsiElementPredicate getElementPredicate() {
     return e -> {
-      if (!(e instanceof PsiMethodCallExpression)) {
+      if (!(e instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)e;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) {
         return false;

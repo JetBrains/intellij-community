@@ -8,7 +8,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Supplier
 
-@Suppress("unused")
 @ApiStatus.Internal
 object TeamCityHelper {
   val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null

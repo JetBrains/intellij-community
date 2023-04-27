@@ -36,10 +36,9 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
         return;
       }
       final PsiElement target = classReference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_EXCEPTION)) {
         return;
       }
@@ -59,10 +58,9 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
         return;
       }
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiMethod)) {
+      if (!(target instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)target;
       if (method.getParameterList().getParametersCount() != 0) {
         return;
       }

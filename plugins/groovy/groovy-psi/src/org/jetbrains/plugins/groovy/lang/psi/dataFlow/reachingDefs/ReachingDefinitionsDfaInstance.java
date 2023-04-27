@@ -13,8 +13,7 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
 
   @Override
   public DefinitionMap fun(@NotNull DefinitionMap m, @NotNull Instruction instruction) {
-    if (instruction instanceof ReadWriteVariableInstruction) {
-      final ReadWriteVariableInstruction varInsn = (ReadWriteVariableInstruction)instruction;
+    if (instruction instanceof ReadWriteVariableInstruction varInsn) {
       final int descriptor = varInsn.getDescriptor();
       if (varInsn.isWrite()) {
         return m.withRegisteredDef(descriptor, instruction);

@@ -112,7 +112,7 @@ public final class UnInterruptibleFileChannel extends FileChannel {
 
   @Override
   public MappedByteBuffer map(MapMode mode, long position, long size) throws IOException {
-    throw new UnsupportedOperationException();
+    return myFileChannelHandle.executeOperation(ch -> ch.map(mode, position, size));
   }
 
   @Override

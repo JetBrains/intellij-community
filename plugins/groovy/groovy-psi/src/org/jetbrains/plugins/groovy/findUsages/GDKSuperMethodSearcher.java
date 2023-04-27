@@ -60,8 +60,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
-      if (element instanceof PsiMethod) {
-        final PsiMethod m = (PsiMethod)element;
+      if (element instanceof PsiMethod m) {
         if (!isTheSameMethod(method, psiManager, m) && PsiImplUtil.isExtendsSignature(m.getHierarchicalMethodSignature(), signature)) {
           goodSupers.add(m);
         }

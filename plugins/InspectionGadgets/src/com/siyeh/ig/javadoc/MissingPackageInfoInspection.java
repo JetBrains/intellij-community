@@ -125,10 +125,9 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
           }
           final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
           final PsiElement target = packageReference.resolve();
-          if (!(target instanceof PsiPackage)) {
+          if (!(target instanceof PsiPackage aPackage)) {
             return;
           }
-          final PsiPackage aPackage = (PsiPackage)target;
           if (MoveAnnotationToPackageInfoFileFix.getPackageInfoFile(aPackage) != null) {
             return;
           }

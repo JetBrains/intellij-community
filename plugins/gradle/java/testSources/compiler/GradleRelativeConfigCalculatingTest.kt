@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.gradle.compiler
 
 import com.intellij.compiler.server.BuildManager
-import com.intellij.testFramework.*
+import com.intellij.testFramework.useProjectAsync
+import com.intellij.testFramework.withProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
 import org.gradle.internal.impldep.org.apache.commons.io.filefilter.DirectoryFileFilter
@@ -45,7 +46,7 @@ class GradleRelativeConfigCalculatingTest : GradleJpsCompilingTestCase() {
     requireNotNull(buildManager) { "BuildManager is disposed" }
     val buildSystemDirectory = File(buildManager.getBuildSystemDirectory(myProject).toString())
     require(buildSystemDirectory.exists()) { "compile-server folder does not exists" }
-    val dirs = buildSystemDirectory.listFiles()
+    val dirs = buildSystemDirectory.listFiles()!!
     require(dirs.size == 2) { "Number of project caches != 2" }
     val firstProjectConfig = getConfigsList(dirs[0]).sorted()
     val secondProjectConfig = getConfigsList(dirs[1]).sorted()

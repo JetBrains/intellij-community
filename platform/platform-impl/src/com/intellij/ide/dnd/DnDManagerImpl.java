@@ -176,8 +176,7 @@ public final class DnDManagerImpl extends DnDManager {
 
     DnDEventImpl currentEvent = myCurrentEvent;
 
-    if (myCurrentEvent == null && aComponentOverDragging instanceof JComponent) {
-      JComponent jComp = (JComponent)aComponentOverDragging;
+    if (myCurrentEvent == null && aComponentOverDragging instanceof JComponent jComp) {
       DnDTarget target = getTarget(jComp);
       if (target instanceof DnDNativeTarget) {
         DnDEventImpl event = (DnDEventImpl)jComp.getClientProperty(DnDNativeTarget.EVENT_KEY);
@@ -393,8 +392,7 @@ public final class DnDManagerImpl extends DnDManager {
     // update selected row bounds according to the visible rectangle
     RelativePoint point = rectangle.getPoint();
     Component component = point == null ? null : point.getOriginalComponent();
-    if (component instanceof JTree) {
-      JTree tree = (JTree)component;
+    if (component instanceof JTree tree) {
       Rectangle visible = tree.getVisibleRect();
       int dx = point.getOriginalPoint().x - visible.x;
       if (aType == DnDEvent.DropTargetHighlightingType.RECTANGLE || dx < 0) {
@@ -405,8 +403,7 @@ public final class DnDManagerImpl extends DnDManager {
         bounds.width = visible.width - dx;
       }
     }
-    else if (component instanceof JList) {
-      JList<?> list = (JList<?>)component;
+    else if (component instanceof JList<?> list) {
       if (JList.VERTICAL == list.getLayoutOrientation()) {
         Rectangle visible = list.getVisibleRect();
         int dx = point.getOriginalPoint().x - visible.x;

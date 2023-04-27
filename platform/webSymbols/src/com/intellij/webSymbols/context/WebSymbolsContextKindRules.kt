@@ -14,6 +14,7 @@ interface WebSymbolsContextKindRules {
                               val fileNamePatterns: List<Regex>)
 
   data class EnablementRules(val pkgManagerDependencies: List<String>,
+                             val projectTools: List<String>,
                              val fileExtensions: List<String>,
                              val ideLibraries: List<String>,
                              val fileNamePatterns: List<Regex>,

@@ -1,6 +1,8 @@
 package com.intellij.codeInsight.codeVision
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 /**
@@ -13,8 +15,8 @@ import javax.swing.Icon
  */
 abstract class CodeVisionEntry(val providerId: String,
                                val icon: Icon?,
-                               val longPresentation: String,
-                               val tooltip: String,
+                               @Nls val longPresentation: String,
+                               @NlsContexts.Tooltip val tooltip: String,
                                val extraActions: List<CodeVisionEntryExtraActionModel>) : UserDataHolderBase() {
   /**
    * Defines if we show entry in 'More' popup

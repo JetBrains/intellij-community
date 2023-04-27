@@ -277,8 +277,7 @@ public class RefManagerImpl extends RefManager {
       fileElement.addContent(virtualFile.getUrl());
       problem.addContent(fileElement);
     }
-    else if (refEntity instanceof RefElement) {
-      final RefElement refElement = (RefElement)refEntity;
+    else if (refEntity instanceof RefElement refElement) {
       final SmartPsiElementPointer<?> pointer = refElement.getPointer();
       PsiFile psiFile = pointer.getContainingFile();
       if (psiFile == null) return null;
@@ -306,8 +305,7 @@ public class RefManagerImpl extends RefManager {
 
       appendModule(problem, refElement.getModule());
     }
-    else if (refEntity instanceof RefModule) {
-      final RefModule refModule = (RefModule)refEntity;
+    else if (refEntity instanceof RefModule refModule) {
       final VirtualFile moduleFile = refModule.getModule().getModuleFile();
       final Element fileElement = new Element("file");
       fileElement.addContent(moduleFile != null ? moduleFile.getUrl() : refEntity.getName());

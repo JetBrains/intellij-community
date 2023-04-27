@@ -89,8 +89,7 @@ public class XmlAttributeInjection extends AbstractTagInjection {
   @Override
   public XmlAttributeInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
-    if (o instanceof XmlAttributeInjection) {
-      XmlAttributeInjection other = (XmlAttributeInjection)o;
+    if (o instanceof XmlAttributeInjection other) {
       setApplyToSubTags(other.isApplyToSubTags());
       setAttributeName(other.getAttributeName());
       setAttributeNamespace(other.getAttributeNamespace());

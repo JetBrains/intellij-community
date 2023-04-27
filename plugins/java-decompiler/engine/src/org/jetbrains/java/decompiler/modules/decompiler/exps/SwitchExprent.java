@@ -92,11 +92,10 @@ public class SwitchExprent extends Exprent {
       return true;
     }
 
-    if (!(o instanceof SwitchExprent)) {
+    if (!(o instanceof SwitchExprent sw)) {
       return false;
     }
 
-    SwitchExprent sw = (SwitchExprent)o;
     return Objects.equals(value, sw.getValue());
   }
 

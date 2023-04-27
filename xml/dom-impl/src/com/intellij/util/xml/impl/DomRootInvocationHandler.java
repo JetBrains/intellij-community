@@ -75,9 +75,8 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   }
 
   public boolean equals(final Object obj) {
-    if (!(obj instanceof DomRootInvocationHandler)) return false;
+    if (!(obj instanceof DomRootInvocationHandler handler)) return false;
 
-    final DomRootInvocationHandler handler = (DomRootInvocationHandler)obj;
     return myParent.equals(handler.myParent);
   }
 

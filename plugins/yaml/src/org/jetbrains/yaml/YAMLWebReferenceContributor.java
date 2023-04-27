@@ -28,10 +28,8 @@ final class YAMLWebReferenceContributor extends PsiReferenceContributor {
 
         @Override
         public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-          if (!(element instanceof YAMLScalar)) return PsiReference.EMPTY_ARRAY;
+          if (!(element instanceof YAMLScalar scalarElement)) return PsiReference.EMPTY_ARRAY;
           if (!element.textContains(':')) return PsiReference.EMPTY_ARRAY;
-
-          YAMLScalar scalarElement = (YAMLScalar)element;
 
           LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = scalarElement.createLiteralTextEscaper();
           if (!escaper.isOneLine()) return PsiReference.EMPTY_ARRAY;

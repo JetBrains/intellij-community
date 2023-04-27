@@ -132,8 +132,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
     for (int i = markers.size() - 1; i >= 0; i--) {
       LineMarkerInfo<?> marker = markers.get(i);
-      if (marker instanceof MergeableLineMarkerInfo) {
-        MergeableLineMarkerInfo<?> mergeable = (MergeableLineMarkerInfo<?>)marker;
+      if (marker instanceof MergeableLineMarkerInfo<?> mergeable) {
         markers.remove(i);
 
         int line = document.getLineNumber(marker.startOffset);

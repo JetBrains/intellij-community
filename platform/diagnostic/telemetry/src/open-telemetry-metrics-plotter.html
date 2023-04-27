@@ -936,8 +936,6 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
       let data = []
       for (const content of contents) {
         const lines = content.split('\n')
-        lines.shift()//comment
-        lines.shift()//header (field names)
         for (const line of lines) {
           if (!line.startsWith('#') && line.trim().length > 0) {
             const parts = line.split(',')
@@ -964,7 +962,7 @@ Uses jquery for DOM manipulation and plotly.js for plotting.
 
       const timeSeriesChooser = $("#timeSeriesChooser")
       timeSeriesChooser.html("")
-      for (const name of names) {
+      for (const name of names.sort()) {
         timeSeriesChooser.append(`<option value="${name}">${name}</option>`)
       }
       //click on <select> propagates to parent .caption, and click on .caption collapses/expands

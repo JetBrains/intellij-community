@@ -330,8 +330,7 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
       }
 
       final PsiDirectory psiDirectory;
-      if (targetElement instanceof PsiDirectoryContainer) {
-        final PsiDirectoryContainer directoryContainer = (PsiDirectoryContainer)targetElement;
+      if (targetElement instanceof PsiDirectoryContainer directoryContainer) {
         final PsiDirectory[] psiDirectories = directoryContainer.getDirectories();
         psiDirectory = psiDirectories.length != 0 ? psiDirectories[0] : null;
       }

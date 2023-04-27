@@ -317,6 +317,6 @@ class MixingMultiThreadSearchTest extends BasePlatformTestCase {
     }
 
     @Override
-    void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {}
+    void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {}
   }
 }

@@ -61,9 +61,7 @@ public class CustomTaskState {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof CustomTaskState)) return false;
-
-    final CustomTaskState state = (CustomTaskState)o;
+    if (!(o instanceof CustomTaskState state)) return false;
 
     return myId.equals(state.myId);
   }

@@ -57,8 +57,7 @@ public class TestTextFieldAction extends DumbAwareAction {
     private final JPanel center = new JPanel(new GridBagLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        if (g instanceof Graphics2D && gradient.isSelected()) {
-          Graphics2D g2d = (Graphics2D)g;
+        if (g instanceof Graphics2D g2d && gradient.isSelected()) {
           Rectangle bounds = new Rectangle(getWidth(), getHeight());
           g2d.setPaint(new LinearGradientPaint(
             bounds.x, bounds.y, bounds.width, bounds.height, new float[]{0, 1},

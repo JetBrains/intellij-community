@@ -70,12 +70,10 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
       if (children.length > 2) {
         for (int i = 1, length = children.length - 1; i < length; i++) {
           final PsiElement child = children[i];
-          if (child instanceof PsiDeclarationStatement) {
-            final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)child;
+          if (child instanceof PsiDeclarationStatement declarationStatement) {
             final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
             for (PsiElement declaredElement : declaredElements) {
-              if (declaredElement instanceof PsiVariable) {
-                final PsiVariable variable = (PsiVariable)declaredElement;
+              if (declaredElement instanceof PsiVariable variable) {
                 final PsiModifierList modifierList = variable.getModifierList();
                 if (modifierList != null) {
                   modifierList.setModifierProperty(PsiModifier.FINAL, false);
@@ -113,13 +111,11 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
       if (children.length > 2) {
         for (int i = 1; i < children.length - 1; i++) {
           final PsiElement child = children[i];
-          if (child instanceof PsiDeclarationStatement) {
-            final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)child;
+          if (child instanceof PsiDeclarationStatement declarationStatement) {
             final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
             for (PsiElement declaredElement : declaredElements) {
-              if (declaredElement instanceof PsiVariable) {
+              if (declaredElement instanceof PsiVariable variable) {
                 // prevent duplicate variable declarations.
-                final PsiVariable variable = (PsiVariable)declaredElement;
                 final PsiExpression initializer = variable.getInitializer();
                 if (initializer != null) {
                   replacementText.append(variable.getName()).append(" = ").append(commentTracker.text(initializer)).append(';');

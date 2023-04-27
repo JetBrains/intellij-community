@@ -13,7 +13,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.MultiMap
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinOutputPathsData
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.resourceType
+import org.jetbrains.kotlin.idea.gradleJava.configuration.sourceType
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
@@ -21,17 +23,11 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 
-internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleCompileOutputSettings(
-    gradleModule: IdeaModule,
-    ideModule: DataNode<ModuleData>,
-    mppModel: KotlinMPPGradleModel,
-    resolverCtx: ProjectResolverContext,
-) {
-    val ideaOutDir = File(ideModule.data.linkedExternalProjectPath, "out")
-    val projectDataNode = ideModule.getDataNode(ProjectKeys.PROJECT)!!
+internal fun KotlinMppGradleProjectResolver.Context.populateModuleCompileOutputSettings() {
+    val ideaOutDir = File(moduleDataNode.data.linkedExternalProjectPath, "out")
     val moduleOutputsMap = projectDataNode.getUserData(GradleProjectResolver.MODULES_OUTPUTS)!!
     val outputDirs = HashSet<String>()
-    getCompilations(gradleModule, mppModel, ideModule, resolverCtx)
+    KotlinMppGradleProjectResolver.getCompilations(gradleModule, mppModel, moduleDataNode, resolverCtx)
         .filterNot { (_, compilation) -> shouldDelegateToOtherPlugin(compilation) }
         .forEach { (dataNode, compilation) ->
             var gradleOutputMap = dataNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS)
@@ -59,7 +55,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleCompileOutpu
             dataNode.createChild(KotlinOutputPathsData.KEY, KotlinOutputPathsData(gradleOutputMap.copy()))
         }
     if (outputDirs.any { FileUtil.isAncestor(ideaOutDir, File(it), false) }) {
-        excludeOutDir(ideModule, ideaOutDir)
+        excludeOutDir(moduleDataNode, ideaOutDir)
     }
 }
 
@@ -78,13 +74,13 @@ private fun recordOutputDir(
     }
 }
 
-private fun excludeOutDir(ideModule: DataNode<ModuleData>, ideaOutDir: File) {
-    val contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT)
+private fun excludeOutDir(moduleDataNode: DataNode<ModuleData>, ideaOutDir: File) {
+    val contentRootDataDataNode = ExternalSystemApiUtil.find(moduleDataNode, ProjectKeys.CONTENT_ROOT)
 
     val excludedContentRootData: ContentRootData
     if (contentRootDataDataNode == null || !FileUtil.isAncestor(File(contentRootDataDataNode.data.rootPath), ideaOutDir, false)) {
         excludedContentRootData = ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.absolutePath)
-        ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData)
+        moduleDataNode.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData)
     } else {
         excludedContentRootData = contentRootDataDataNode.data
     }

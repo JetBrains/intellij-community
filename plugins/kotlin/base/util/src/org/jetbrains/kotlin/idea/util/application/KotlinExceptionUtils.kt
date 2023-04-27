@@ -2,7 +2,7 @@
 @file:JvmName("KotlinExceptionUtils")
 package org.jetbrains.kotlin.idea.util.application
 
-import com.intellij.diagnostic.AttachmentFactory
+import com.intellij.diagnostic.CoreAttachmentFactory
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -30,7 +30,7 @@ fun attachmentByPsiFile(file: PsiFile?): Attachment? {
 
     val virtualFile = file.virtualFile
     if (virtualFile != null) {
-        return AttachmentFactory.createAttachment(virtualFile)
+        return CoreAttachmentFactory.createAttachment(virtualFile)
     }
 
     return runReadAction {

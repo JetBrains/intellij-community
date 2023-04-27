@@ -206,10 +206,9 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       if (queried) return;
       super.visitReferenceExpression(expression);
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-      if (!(parent instanceof PsiPolyadicExpression)) {
+      if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
         return;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (!JavaTokenType.PLUS.equals(tokenType)) {
         return;
@@ -274,16 +273,13 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
     private static boolean isVariableValueUsed(PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)parent;
+      if (parent instanceof PsiParenthesizedExpression parenthesizedExpression) {
         return isVariableValueUsed(parenthesizedExpression);
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         return isVariableValueUsed(polyadicExpression);
       }
-      if (parent instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+      if (parent instanceof PsiTypeCastExpression typeCastExpression) {
         return isVariableValueUsed(typeCastExpression);
       }
       if (parent instanceof PsiReturnStatement) {
@@ -298,13 +294,11 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       else if (parent instanceof PsiArrayInitializerExpression) {
         return true;
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression rhs = assignmentExpression.getRExpression();
         return expression.equals(rhs);
       }
-      else if (parent instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)parent;
+      else if (parent instanceof PsiVariable variable) {
         final PsiExpression initializer = variable.getInitializer();
         return expression.equals(initializer);
       }
@@ -313,25 +307,21 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   }
 
   static boolean hasReferenceToVariable(PsiVariable variable, PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+    if (element instanceof PsiReferenceExpression referenceExpression) {
       return referenceExpression.isReferenceTo(variable);
     }
-    else if (element instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)element;
+    else if (element instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression expression = parenthesizedExpression.getExpression();
       return hasReferenceToVariable(variable, expression);
     }
-    else if (element instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+    else if (element instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
       if (returnSelfNames.contains(name)) {
         return hasReferenceToVariable(variable, methodExpression.getQualifierExpression());
       }
     }
-    else if (element instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
+    else if (element instanceof PsiConditionalExpression conditionalExpression) {
       final PsiExpression thenExpression = conditionalExpression.getThenExpression();
       if (hasReferenceToVariable(variable, thenExpression)) {
         return true;

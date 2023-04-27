@@ -2,15 +2,11 @@
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
-import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
-import gnu.trove.THashSet
 import java.lang.reflect.ParameterizedType
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
-// marker value of collection that skipped because empty
+// marker value of a collection that skipped because empty
 private const val EMPTY_SKIPPED_COLLECTION = 0
 
 private const val EMPTY_JAVA_LIST = 1
@@ -18,7 +14,8 @@ private const val EMPTY_JAVA_SET = 2
 private const val EMPTY_KOTLIN_SET = 4
 private const val EMPTY_KOTLIN_LIST = 3
 
-internal class CollectionBinding(type: ParameterizedType, context: BindingInitializationContext) : BaseCollectionBinding(type.actualTypeArguments[0], context) {
+internal class CollectionBinding(type: ParameterizedType,
+                                 context: BindingInitializationContext) : BaseCollectionBinding(type.actualTypeArguments[0], context) {
   private val collectionClass = ClassUtil.typeToClass(type)
 
   override fun deserialize(context: ReadContext, hostObject: Any?): Collection<Any?> {
@@ -46,7 +43,7 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
     val collection = obj as Collection<*>
 
     if (context.filter.skipEmptyCollection && collection.isEmpty()) {
-      // some value must be written otherwise on deserialize null will be used for constructor parameters (and it can be not expected)
+      // some value must be written otherwise on deserializing null will be used for constructor parameters (and it can be unexpected.)
       writer.writeInt(EMPTY_SKIPPED_COLLECTION.toLong())
       return
     }
@@ -103,14 +100,21 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
       }
     }
     else {
+      @Suppress("DEPRECATION")
       return when (collectionClass) {
         HashSet::class.java -> HashSet()
         ArrayList::class.java -> ArrayList()
-        THashSet::class.java -> THashSet()
+        gnu.trove.THashSet::class.java -> gnu.trove.THashSet()
         SmartList::class.java -> SmartList()
         else -> {
+          val constructor = collectionClass.getDeclaredConstructor()
+          try {
+            constructor.setAccessible(true)
+          }
+          catch (ignored: SecurityException) {
+          }
           @Suppress("UNCHECKED_CAST")
-          ReflectionUtil.newInstance(collectionClass, false) as MutableCollection<Any?>
+          return constructor.newInstance() as MutableCollection<Any?>
         }
       }
     }

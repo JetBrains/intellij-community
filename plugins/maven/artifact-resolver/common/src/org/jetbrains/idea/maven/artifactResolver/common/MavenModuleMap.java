@@ -21,12 +21,8 @@ public final class MavenModuleMap {
     String path = System.getProperty(PATHS_FILE_PROPERTY);
     if (path != null) {
       try {
-        BufferedInputStream in = new BufferedInputStream(new FileInputStream(path));
-        try {
+        try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(path))) {
           myMap.load(in);
-        }
-        finally {
-          in.close();
         }
       }
       catch (IOException e) {

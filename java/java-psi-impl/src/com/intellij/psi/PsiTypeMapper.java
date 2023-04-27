@@ -63,7 +63,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
 
   @Override
   public PsiType visitType(@NotNull final PsiType type) {
-    LOG.error(type);
+    LOG.error("No visit* methods were calleed for " + type);
     return null;
   }
 

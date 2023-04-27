@@ -38,7 +38,7 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
   public String getDescription(@NotNull final String refSuffix, @NotNull final Editor editor) {
     final Project project = editor.getProject();
     if (project == null) {
-      LOG.error(editor);
+      LOG.error("Project is null for " + editor);
       return null;
     }
     if (project.isDisposed()) return null;

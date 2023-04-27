@@ -8,10 +8,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
@@ -60,7 +57,13 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), file);
-    element.delete();
+    if (element instanceof PsiClass && element.getParent() instanceof PsiJavaFile javaFile && javaFile.getClasses().length == 1) {
+      var doc = file.getViewProvider().getDocument();
+      doc.deleteString(0, doc.getTextLength());
+    }
+    else {
+      element.delete();
+    }
     return IntentionPreviewInfo.DIFF;
   }
 

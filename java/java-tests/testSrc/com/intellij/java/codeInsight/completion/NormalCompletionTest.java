@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -2832,5 +2832,46 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
           private static void test(Exposed exposed) {
           }
       }""");
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testDoubleNMatching() {
+    myFixture.configureByText("Test.java", """
+                         class X {
+                           @NN<caret>
+                           void test() {}
+                         }
+                         """);
+    myFixture.completeBasic();
+    assertEquals(List.of("NonNls", "NotNull"), myFixture.getLookupElementStrings());
+  }
+
+  @NeedsIndex.Full
+  public void testEnumMapNoTypeParams() {
+    myFixture.configureByText("Test.java", """
+      import java.util.Map;
+            
+      public abstract class SuperClass {
+          enum X {A, B, C}
+            
+          void run() {
+              Map<X, String> map = new EnumM<caret>
+          }
+      }
+      """);
+    myFixture.completeBasic();
+    myFixture.type('\n');
+    myFixture.checkResult("""
+                            import java.util.EnumMap;
+                            import java.util.Map;
+                                                        
+                            public abstract class SuperClass {
+                                enum X {A, B, C}
+                                                        
+                                void run() {
+                                    Map<X, String> map = new EnumMap<>()
+                                }
+                            }
+                            """);
   }
 }

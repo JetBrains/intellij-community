@@ -266,8 +266,7 @@ public final class PyClassRefactoringUtil {
       if (target instanceof PsiDirectory) {
         target = (PsiNamedElement)PyUtil.getPackageElement((PsiDirectory)target, sourceNode);
       }
-      if (target instanceof PyFunction) {
-        final PyFunction f = (PyFunction)target;
+      if (target instanceof PyFunction f) {
         final PyClass c = f.getContainingClass();
         if (c != null && c.multiFindInitOrNew(false, null).contains(f)) {
           target = c;

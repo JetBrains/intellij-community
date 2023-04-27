@@ -43,8 +43,7 @@ public class UnknownLanguageID extends LocalInspectionTool {
             final String name = valuePair.getName();
             if (name == null || "value".equals(name)) {
               final PsiAnnotationMemberValue value = valuePair.getValue();
-              if (value instanceof PsiExpression) {
-                final PsiExpression expression = (PsiExpression)value;
+              if (value instanceof PsiExpression expression) {
                 final Object id = JavaPsiFacade.getInstance(expression.getProject()).
                   getConstantEvaluationHelper().computeConstantExpression(expression);
                 if (id instanceof String) {

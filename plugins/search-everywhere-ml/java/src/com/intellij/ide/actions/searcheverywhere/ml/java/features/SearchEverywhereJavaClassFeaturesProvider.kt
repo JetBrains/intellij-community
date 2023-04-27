@@ -17,14 +17,12 @@ class SearchEverywhereJavaClassFeaturesProvider : SearchEverywhereElementFeature
   companion object {
     private val IS_INTERFACE_KEY = EventFields.Boolean("javaIsInterface")
     private val IS_ABSTRACT_KEY = EventFields.Boolean("javaIsAbstract")
-    private val IS_LOCAL_OR_ANONYMOUS_KEY = EventFields.Boolean("javaIsLocalOrAnonymous")
     private val IS_INSTANTIATABLE_KEY = EventFields.Boolean("javaIsInstantiatable")
     private val IS_INNER_CLASS_KEY = EventFields.Boolean("javaIsInner")
     private val IS_PUBLIC_KEY = EventFields.Boolean("javaIsPublic")
     private val IS_PROTECTED_KEY = EventFields.Boolean("javaIsProtected")
     private val IS_PRIVATE_KEY = EventFields.Boolean("javaIsPrivate")
     private val IS_STATIC_KEY = EventFields.Boolean("javaIsStatic")
-    private val NUMBER_OF_SUPERS_KEY = EventFields.Int("javaNumberOfSupers")
     private val NUMBER_OF_FIELDS = EventFields.Int("javaNumberOfFields")
     private val NUMBER_OF_METHODS = EventFields.Int("javaNumberOfMethods")
     private val NUMBER_OF_ANNOTATIONS = EventFields.Int("javaNumberOfAnnotations")
@@ -37,11 +35,10 @@ class SearchEverywhereJavaClassFeaturesProvider : SearchEverywhereElementFeature
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> = listOf(
-    IS_INTERFACE_KEY, IS_ABSTRACT_KEY, IS_LOCAL_OR_ANONYMOUS_KEY,
+    IS_INTERFACE_KEY, IS_ABSTRACT_KEY,
     IS_INSTANTIATABLE_KEY, IS_INNER_CLASS_KEY, IS_STATIC_KEY,
     IS_PUBLIC_KEY, IS_PROTECTED_KEY, IS_PRIVATE_KEY,
-    NUMBER_OF_SUPERS_KEY, NUMBER_OF_FIELDS, NUMBER_OF_METHODS,
-    NUMBER_OF_ANNOTATIONS
+    NUMBER_OF_FIELDS, NUMBER_OF_METHODS, NUMBER_OF_ANNOTATIONS
   )
 
 
@@ -58,8 +55,6 @@ class SearchEverywhereJavaClassFeaturesProvider : SearchEverywhereElementFeature
       add(IS_INTERFACE_KEY.with(psiClass.isInterface))
       add(IS_ABSTRACT_KEY.with(PsiUtil.isAbstractClass(psiClass)))
 
-      add(IS_LOCAL_OR_ANONYMOUS_KEY.with(PsiUtil.isLocalOrAnonymousClass(psiClass)))
-
       add(IS_INSTANTIATABLE_KEY.with(PsiUtil.isInstantiatable(psiClass)))
 
       add(IS_INNER_CLASS_KEY.with(PsiUtil.isInnerClass(psiClass)))
@@ -69,8 +64,6 @@ class SearchEverywhereJavaClassFeaturesProvider : SearchEverywhereElementFeature
       add(IS_PUBLIC_KEY.with(psiClass.hasModifierProperty(PsiModifier.PUBLIC)))
       add(IS_PROTECTED_KEY.with(psiClass.hasModifierProperty(PsiModifier.PROTECTED)))
       add(IS_PRIVATE_KEY.with(psiClass.hasModifierProperty(PsiModifier.PRIVATE)))
-
-      add(NUMBER_OF_SUPERS_KEY.with(psiClass.extendsListTypes.size + psiClass.implementsListTypes.size))
 
       val classFields = psiClass.fields
       add(NUMBER_OF_FIELDS.with(classFields.size))

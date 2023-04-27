@@ -13,7 +13,7 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   }
 
   fun withModules(names: Iterable<String>) {
-    names.forEach(layout::withModule)
+    layout.withModules(names)
   }
 
   /**
@@ -86,6 +86,6 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    * Include contents of JARs of the project library {@code libraryName} into JAR {@code jarName}
    */
   fun withProjectLibraryUnpackedIntoJar(libraryName: String, jarName: String) {
-    layout.withProjectLibraryUnpackedIntoJar(libraryName, jarName)
+    layout.withProjectLibrary(libraryName, jarName)
   }
 }

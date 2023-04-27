@@ -76,17 +76,14 @@ public class GroovyOverlyComplexBooleanExpressionInspectionBase extends BaseInsp
       if (!isBoolean(expression)) {
         return 1;
       }
-      if (expression instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression = (GrBinaryExpression) expression;
+      if (expression instanceof GrBinaryExpression binaryExpression) {
         final GrExpression lhs = binaryExpression.getLeftOperand();
         final GrExpression rhs = binaryExpression.getRightOperand();
         return countTerms(lhs) + countTerms(rhs);
-      } else if (expression instanceof GrUnaryExpression) {
-        final GrUnaryExpression prefixExpression = (GrUnaryExpression) expression;
+      } else if (expression instanceof GrUnaryExpression prefixExpression) {
         final GrExpression operand = prefixExpression.getOperand();
         return countTerms(operand);
-      } else if (expression instanceof GrParenthesizedExpression) {
-        final GrParenthesizedExpression parenthesizedExpression = (GrParenthesizedExpression) expression;
+      } else if (expression instanceof GrParenthesizedExpression parenthesizedExpression) {
         final GrExpression contents = parenthesizedExpression.getOperand();
         return countTerms(contents);
       }
@@ -102,17 +99,14 @@ public class GroovyOverlyComplexBooleanExpressionInspectionBase extends BaseInsp
     }
 
     private boolean isBoolean(GrExpression expression) {
-      if (expression instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression = (GrBinaryExpression) expression;
+      if (expression instanceof GrBinaryExpression binaryExpression) {
         final IElementType sign = binaryExpression.getOperationTokenType();
         return GroovyTokenTypes.mLAND.equals(sign) ||
             GroovyTokenTypes.mLOR.equals(sign);
-      } else if (expression instanceof GrUnaryExpression) {
-        final GrUnaryExpression prefixExpression = (GrUnaryExpression) expression;
+      } else if (expression instanceof GrUnaryExpression prefixExpression) {
         final IElementType sign = prefixExpression.getOperationTokenType();
         return GroovyTokenTypes.mLNOT.equals(sign);
-      } else if (expression instanceof GrParenthesizedExpression) {
-        final GrParenthesizedExpression parenthesizedExpression = (GrParenthesizedExpression) expression;
+      } else if (expression instanceof GrParenthesizedExpression parenthesizedExpression) {
         final GrExpression contents = parenthesizedExpression.getOperand();
         return isBoolean(contents);
       }

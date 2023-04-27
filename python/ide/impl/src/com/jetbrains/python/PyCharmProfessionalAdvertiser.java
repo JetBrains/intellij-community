@@ -30,9 +30,8 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
       return;
     }
 
-    if (element instanceof PyFile) {
+    if (element instanceof PyFile pyFile) {
 
-      final PyFile pyFile = (PyFile)element;
       final VirtualFile vFile = pyFile.getVirtualFile();
       if (vFile != null && FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
         return;

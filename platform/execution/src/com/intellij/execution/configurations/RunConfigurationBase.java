@@ -276,8 +276,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
       //noinspection unchecked
       return (Class<? extends RunConfigurationOptions>)result;
     }
-    else if (this instanceof PersistentStateComponent) {
-      PersistentStateComponent instance = (PersistentStateComponent)this;
+    else if (this instanceof PersistentStateComponent instance) {
       return ComponentSerializationUtil.getStateClass(instance.getClass());
     }
     else {

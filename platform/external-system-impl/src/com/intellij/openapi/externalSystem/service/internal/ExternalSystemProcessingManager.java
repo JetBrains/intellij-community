@@ -91,8 +91,7 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
                                                @NotNull ProjectSystemId projectSystemId,
                                                final @NotNull String externalProjectPath) {
     for(ExternalSystemTask task : myTasksDetails.values()) {
-      if(task instanceof AbstractExternalSystemTask) {
-        AbstractExternalSystemTask externalSystemTask = (AbstractExternalSystemTask)task;
+      if(task instanceof AbstractExternalSystemTask externalSystemTask) {
         if(externalSystemTask.getId().getType() == type &&
            externalSystemTask.getExternalSystemId().getId().equals(projectSystemId.getId()) &&
            externalSystemTask.getExternalProjectPath().equals(externalProjectPath)){
@@ -108,8 +107,7 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
                                                             ExternalSystemTaskState @NotNull ... taskStates) {
     List<ExternalSystemTask> result = new SmartList<>();
     for (ExternalSystemTask task : myTasksDetails.values()) {
-      if (task instanceof AbstractExternalSystemTask) {
-        AbstractExternalSystemTask externalSystemTask = (AbstractExternalSystemTask)task;
+      if (task instanceof AbstractExternalSystemTask externalSystemTask) {
         if (externalSystemTask.getExternalSystemId().getId().equals(projectSystemId.getId()) &&
             ArrayUtil.contains(externalSystemTask.getState(), taskStates)) {
           result.add(task);

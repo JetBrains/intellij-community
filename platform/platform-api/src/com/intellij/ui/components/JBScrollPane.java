@@ -177,8 +177,7 @@ public class JBScrollPane extends JScrollPane {
         Field field = BasicScrollPaneUI.class.getDeclaredField("mouseScrollListener");
         field.setAccessible(true);
         Object value = field.get(ui);
-        if (value instanceof MouseWheelListener) {
-          MouseWheelListener oldListener = (MouseWheelListener)value;
+        if (value instanceof MouseWheelListener oldListener) {
           MouseWheelListener newListener = new JBMouseWheelListener(oldListener);
           field.set(ui, newListener);
           // replace listener if field updated successfully
@@ -329,8 +328,7 @@ public class JBScrollPane extends JScrollPane {
   public static boolean canBePreprocessed(@NotNull MouseEvent e, @NotNull JScrollBar bar) {
     if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_PRESSED) {
       ScrollBarUI ui = bar.getUI();
-      if (ui instanceof BasicScrollBarUI) {
-        BasicScrollBarUI bui = (BasicScrollBarUI)ui;
+      if (ui instanceof BasicScrollBarUI bui) {
         try {
           Rectangle rect = (Rectangle)ReflectionUtil.getDeclaredMethod(BasicScrollBarUI.class, "getThumbBounds", ArrayUtil.EMPTY_CLASS_ARRAY).invoke(bui);
           Point point = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), bar);
@@ -340,8 +338,7 @@ public class JBScrollPane extends JScrollPane {
           return true;
         }
       }
-      else if (ui instanceof DefaultScrollBarUI) {
-        DefaultScrollBarUI dui = (DefaultScrollBarUI)ui;
+      else if (ui instanceof DefaultScrollBarUI dui) {
         Point point = e.getLocationOnScreen();
         SwingUtilities.convertPointFromScreen(point, bar);
         return !dui.isThumbContains(point.x, point.y);

@@ -32,8 +32,7 @@ public final class DuplicateNodeRenderer {
       TreePath accumPath = null;
       while (node != null) {
         Object userObject = node.getUserObject();
-        if (!(userObject instanceof DuplicatableNode)) break;
-        DuplicatableNode duplicatableNode = (DuplicatableNode)userObject;
+        if (!(userObject instanceof DuplicatableNode duplicatableNode)) break;
         Object duplicate = duplicatableNode.getDuplicate();
         if (duplicate == null) break;
         accumPath = accumRect == null ? path : accumPath.getParentPath();

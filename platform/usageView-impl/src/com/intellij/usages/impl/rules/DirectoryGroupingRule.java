@@ -61,8 +61,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   @Nullable
   @Override
   protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
-    if (usage instanceof UsageInFile) {
-      UsageInFile usageInFile = (UsageInFile)usage;
+    if (usage instanceof UsageInFile usageInFile) {
       VirtualFile file = usageInFile.getFile();
       if (file != null) {
         if (file instanceof VirtualFileWindow) {

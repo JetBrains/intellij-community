@@ -49,9 +49,8 @@ public interface DisplayPrioritySortable {
    */
   static <T> int compare(@NotNull T o1, @NotNull T o2, @NotNull Function<? super T, String> nameExtractor) {
     if (o1 instanceof DisplayPrioritySortable) {
-      if (o2 instanceof DisplayPrioritySortable) {
+      if (o2 instanceof DisplayPrioritySortable d2) {
         DisplayPrioritySortable d1 = (DisplayPrioritySortable)o1;
-        DisplayPrioritySortable d2 = (DisplayPrioritySortable)o2;
         int result = (d1.getPriority()).compareTo(d2.getPriority());
         if (result != 0) return result;
         result = -Integer.compare(d1.getWeight(), d2.getWeight());

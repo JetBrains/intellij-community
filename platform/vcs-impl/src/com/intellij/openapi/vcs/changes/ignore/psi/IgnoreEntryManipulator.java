@@ -47,10 +47,9 @@ public class IgnoreEntryManipulator extends AbstractElementManipulator<IgnoreEnt
   @Override
   public IgnoreEntry handleContentChange(@NotNull IgnoreEntry entry, @NotNull TextRange range, String newContent)
     throws IncorrectOperationException {
-    if (!(entry.getLanguage() instanceof IgnoreLanguage)) {
+    if (!(entry.getLanguage() instanceof IgnoreLanguage language)) {
       return entry;
     }
-    IgnoreLanguage language = (IgnoreLanguage)entry.getLanguage();
     IgnoreFileType fileType = (IgnoreFileType)language.getAssociatedFileType();
     assert fileType != null;
     PsiFile file = PsiFileFactory.getInstance(entry.getProject())

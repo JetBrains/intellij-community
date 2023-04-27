@@ -411,10 +411,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof MatchVariableConstraint)) return false;
+    if (!(o instanceof MatchVariableConstraint other)) return false;
     if (!super.equals(o)) return false;
-
-    final MatchVariableConstraint other = (MatchVariableConstraint)o;
 
     if (exprTypeWithinHierarchy != other.exprTypeWithinHierarchy) return false;
     if (formalArgTypeWithinHierarchy != other.formalArgTypeWithinHierarchy) return false;

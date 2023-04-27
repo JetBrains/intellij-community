@@ -61,8 +61,7 @@ public class OctalAndDecimalIntegersMixedInspection extends BaseInspection {
       boolean hasOctalLiteral = false;
       for (PsiExpression initializer : initializers) {
         initializer = PsiUtil.skipParenthesizedExprDown(initializer);
-        if (initializer instanceof PsiLiteralExpression) {
-          final PsiLiteralExpression literal = (PsiLiteralExpression)initializer;
+        if (initializer instanceof PsiLiteralExpression literal) {
           if (isDecimalLiteral(literal)) {
             hasDecimalLiteral = true;
           }

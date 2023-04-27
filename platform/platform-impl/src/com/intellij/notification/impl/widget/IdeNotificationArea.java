@@ -160,9 +160,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof TextIcon)) return false;
-
-      TextIcon icon = (TextIcon)o;
+      if (!(o instanceof TextIcon icon)) return false;
 
       if (myWidth != icon.myWidth) return false;
       if (!myComponent.equals(icon.myComponent)) return false;

@@ -31,8 +31,7 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
       if (next instanceof YamlScalarType) {
         flattenedTypes.add(next);
       }
-      else if (next instanceof YamlComposedTypeBase) {
-        YamlComposedTypeBase that = (YamlComposedTypeBase)next;
+      else if (next instanceof YamlComposedTypeBase that) {
         flattenedTypes.addAll(that.myTypes);
       }
       else {

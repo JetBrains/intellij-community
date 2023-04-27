@@ -29,10 +29,9 @@ import java.util.stream.Stream;
 class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiAnnotation)) {
+    if (!(element instanceof PsiAnnotation annotation)) {
       return false;
     }
-    final PsiAnnotation annotation = (PsiAnnotation)element;
     final String annotationName = annotation.getQualifiedName();
     if (annotationName == null) {
       return false;
@@ -45,16 +44,13 @@ class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
     final PsiMethod method;
     final int parameterIndex;
     if (!(grandParent instanceof PsiMethod)) {
-      if (!(grandParent instanceof PsiParameter)) {
+      if (!(grandParent instanceof PsiParameter parameter)) {
         return false;
       }
-      final PsiParameter parameter = (PsiParameter)grandParent;
       final PsiElement greatGrandParent = grandParent.getParent();
-      if (!(greatGrandParent instanceof PsiParameterList)) {
+      if (!(greatGrandParent instanceof PsiParameterList parameterList)) {
         return false;
       }
-      final PsiParameterList parameterList =
-        (PsiParameterList)greatGrandParent;
       parameterIndex = parameterList.getParameterIndex(parameter);
       final PsiElement greatGreatGrandParent =
         greatGrandParent.getParent();

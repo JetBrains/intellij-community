@@ -7,9 +7,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.workspaceModel.ide.JpsFileEntitySource;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -119,7 +119,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     EntitySource sourceEntitySource =
       mFour.getContentRoots().stream().findFirst().get().getSourceRoots().stream().filter(o -> o.getUrl().getUrl().endsWith("java"))
         .findAny().get().getEntitySource();
-    assertTrue(sourceEntitySource instanceof JpsFileEntitySource.FileInDirectory);
+    assertTrue(sourceEntitySource instanceof JpsProjectFileEntitySource.FileInDirectory);
   }
 
   @Test

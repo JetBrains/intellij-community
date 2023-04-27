@@ -166,13 +166,6 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message != null ? new ReadOnlyHint(message, linkListener) : null);
   }
 
-  private static final class ReadOnlyHint {
-    @NotNull public final @NlsContexts.HintText String message;
-    @Nullable public final HyperlinkListener linkListener;
-
-    private ReadOnlyHint(@NotNull @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {
-      this.message = message;
-      this.linkListener = linkListener;
-    }
+  private record ReadOnlyHint(@NotNull @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {
   }
 }

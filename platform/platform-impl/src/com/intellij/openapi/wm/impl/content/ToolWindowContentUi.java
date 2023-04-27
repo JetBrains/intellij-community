@@ -666,8 +666,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   private void processHide(@NotNull MouseEvent e) {
     IdeEventQueue.getInstance().blockNextEvents(e);
     final Component c = e.getComponent();
-    if (c instanceof BaseLabel) {
-      final BaseLabel tab = (BaseLabel)c;
+    if (c instanceof BaseLabel tab) {
       if (tab.getContent() != null) {
         if (contentManager.canCloseContents() && tab.getContent().isCloseable()) {
           contentManager.removeContent(tab.getContent(), true, true, true);

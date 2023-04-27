@@ -26,10 +26,8 @@ public class NamingConventionWithFallbackBean extends NamingConventionBean {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof NamingConventionWithFallbackBean)) return false;
+    if (!(o instanceof NamingConventionWithFallbackBean bean)) return false;
     if (!super.equals(o)) return false;
-
-    NamingConventionWithFallbackBean bean = (NamingConventionWithFallbackBean)o;
 
     if (inheritDefaultSettings != bean.inheritDefaultSettings) return false;
 

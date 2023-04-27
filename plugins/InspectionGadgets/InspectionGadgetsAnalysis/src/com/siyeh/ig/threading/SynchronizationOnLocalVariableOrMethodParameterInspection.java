@@ -64,24 +64,21 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
         return;
       }
       final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(statement.getLockExpression());
-      if (!(lockExpression instanceof PsiReferenceExpression)) {
+      if (!(lockExpression instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lockExpression;
       if (referenceExpression.isQualified()) {
         return;
       }
       boolean localVariable = false;
       final PsiElement target = referenceExpression.resolve();
-      if (target instanceof PsiLocalVariable) {
-        final PsiLocalVariable variable = (PsiLocalVariable)target;
+      if (target instanceof PsiLocalVariable variable) {
         if (!reportLocalVariables || isSynchronizedCollection(variable, referenceExpression) || isReferencedToField(variable, referenceExpression)) {
           return;
         }
         localVariable = true;
       }
-      else if (target instanceof PsiParameter) {
-        final PsiParameter parameter = (PsiParameter)target;
+      else if (target instanceof PsiParameter parameter) {
         final PsiElement scope = parameter.getDeclarationScope();
         if (scope instanceof PsiMethod) {
           if (!reportMethodParameters) {
@@ -134,10 +131,9 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
 
     private static boolean isSynchronizedCollection(@NotNull PsiVariable variable, PsiReferenceExpression referenceExpression) {
       final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
-      if (!(definition instanceof PsiMethodCallExpression)) {
+      if (!(definition instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)definition;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) {
         return false;
@@ -153,8 +149,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
 
   private static boolean isEscaping(PsiVariable variable) {
     final PsiElement scope;
-    if (variable instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)variable;
+    if (variable instanceof PsiParameter parameter) {
       scope = parameter.getDeclarationScope();
     }
     else if (variable instanceof PsiLocalVariable) {

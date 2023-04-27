@@ -109,8 +109,7 @@ public class PyArgumentListInspection extends PyInspection {
       final PyCallableType callableType = mapping.getCallableType();
       if (callableType != null) {
         final PyCallable callable = callableType.getCallable();
-        if (callable instanceof PyFunction) {
-          final PyFunction function = (PyFunction)callable;
+        if (callable instanceof PyFunction function) {
 
           // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
           if (PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, context) ||

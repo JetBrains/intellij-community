@@ -238,8 +238,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       Object[] items = indexResult.apply(matchResult.elementName);
       ProgressManager.checkCanceled();
       for (Object item : items) {
-        if (!(item instanceof PsiFileSystemItem)) continue;
-        PsiFileSystemItem psiItem = (PsiFileSystemItem)item;
+        if (!(item instanceof PsiFileSystemItem psiItem)) continue;
         if (!scope.contains(psiItem.getVirtualFile())) continue;
         String qualifier = getParentPath(psiItem);
         if (qualifier != null) {
@@ -443,8 +442,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       for (MatchResult matchResult : group) {
         for (Object o : myModel.getElementsByName(matchResult.elementName, adjusted, indicator)) {
           ProgressManager.checkCanceled();
-          if (o instanceof PsiFileSystemItem) {
-            PsiFileSystemItem psiItem = (PsiFileSystemItem)o;
+          if (o instanceof PsiFileSystemItem psiItem) {
             String qualifier = getParentPath(psiItem);
             if (qualifier != null) return true;
           }

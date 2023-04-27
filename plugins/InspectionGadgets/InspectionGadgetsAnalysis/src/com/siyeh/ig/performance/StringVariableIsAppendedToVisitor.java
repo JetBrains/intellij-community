@@ -43,10 +43,9 @@ class StringVariableIsAppendedToVisitor extends JavaRecursiveElementWalkingVisit
     if (rhs == null) {
       return;
     }
-    if (!(lhs instanceof PsiReferenceExpression)) {
+    if (!(lhs instanceof PsiReferenceExpression reference)) {
       return;
     }
-    final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;
     final PsiExpression qualifier = reference.getQualifierExpression();
     if (qualifier != null) {
       return;
@@ -78,13 +77,11 @@ class StringVariableIsAppendedToVisitor extends JavaRecursiveElementWalkingVisit
       final PsiElement referent = ((PsiReference)expression).resolve();
       return variable.equals(referent);
     }
-    if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression body = parenthesizedExpression.getExpression();
       return isConcatenation(body);
     }
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       for (PsiExpression operand : polyadicExpression.getOperands()) {
         if (isConcatenation(operand)) return true;
       }

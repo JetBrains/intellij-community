@@ -26,8 +26,7 @@ final class JsonWebReferenceContributor extends PsiReferenceContributor {
 
         @Override
         public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-          if (!(element instanceof JsonStringLiteral)) return PsiReference.EMPTY_ARRAY;
-          JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
+          if (!(element instanceof JsonStringLiteral stringLiteral)) return PsiReference.EMPTY_ARRAY;
 
           PsiElement parent = stringLiteral.getParent();
           if (!(parent instanceof JsonProperty)) return PsiReference.EMPTY_ARRAY;

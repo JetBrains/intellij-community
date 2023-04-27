@@ -766,8 +766,7 @@ public class ClassWriter {
             String typeName;
             boolean isVarArg = i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS);
             List<TypeAnnotation> typeParamAnnotations = TargetInfo.FormalParameterTarget.extract(typeAnnotations, i);
-            if (paramType instanceof GenericType) {
-              GenericType genParamType = (GenericType) paramType;
+            if (paramType instanceof GenericType genParamType) {
               isVarArg &= genParamType.getArrayDim() > 0;
               if (isVarArg) {
                 genParamType = genParamType.decreaseArrayDim();

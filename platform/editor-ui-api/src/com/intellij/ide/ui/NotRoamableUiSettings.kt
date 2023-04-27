@@ -26,7 +26,7 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 
   internal fun migratePresentationModeFontSize(presentationModeFontSize: Int) {
     if (state.presentationModeIdeScale != 0f) return
-    if (presentationModeFontSize == 24) state.presentationModeIdeScale = 1.75f
+    if (presentationModeFontSize == 24) state.presentationModeIdeScale = UISettingsUtils.defaultScale(true)
     else state.presentationModeIdeScale = presentationModeFontSize.toFloat() / state.fontSize
   }
 
@@ -84,7 +84,7 @@ class NotRoamableUiOptions : BaseState() {
     fontFace = fontData.first
     fontSize = fontData.second.toFloat()
     fontScale = UISettings.defFontScale
-    ideScale = 1f
+    ideScale = UISettingsUtils.defaultScale(false)
   }
 }
 

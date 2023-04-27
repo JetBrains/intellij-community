@@ -163,8 +163,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   ) {
     List<RewordedCommitMessageMapping> messages = new ArrayList<>();
     for (GitRebaseTodoModel.Element<T> element : rebaseTodoModel.getElements()) {
-      if (element.getType() instanceof GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword) {
-        GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword type = (GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword)element.getType();
+      if (element.getType() instanceof GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword type) {
         messages.add(RewordedCommitMessageMapping.fromMapping(
           fullMessageGetter.apply(element.getEntry()),
           type.getNewMessage()

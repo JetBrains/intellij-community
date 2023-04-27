@@ -43,12 +43,12 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
           if (!requiredModules.isEmpty()) {
             List<CommonProblemDescriptor> descriptors = new ArrayList<>();
             for (RefJavaModule.RequiredModule requiredModule : requiredModules) {
-              if (requiredModule.isTransitive) continue;
-              String requiredModuleName = requiredModule.moduleName;
+              if (requiredModule.isTransitive()) continue;
+              String requiredModuleName = requiredModule.moduleName();
 
               boolean isJavaBase = PsiJavaModule.JAVA_BASE.equals(requiredModuleName);
               if (isJavaBase ||
-                  isDependencyUnused(requiredModule.packagesExportedByModule, moduleImportedPackages, refJavaModule.getName())) {
+                  isDependencyUnused(requiredModule.packagesExportedByModule(), moduleImportedPackages, refJavaModule.getName())) {
                 PsiRequiresStatement requiresStatement = ContainerUtil.find(
                   psiJavaModule.getRequires(), statement -> requiredModuleName.equals(statement.getModuleName()));
                 if (requiresStatement != null && !isSuppressedFor(requiresStatement)) {

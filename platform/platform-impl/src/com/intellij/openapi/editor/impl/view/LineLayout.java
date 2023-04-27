@@ -197,8 +197,7 @@ abstract class LineLayout {
   private static int[] getCommentPrefixAndOrSuffixBoundaries(char[] text, int start, int end, IElementType token) {
     if (token == null) return null;
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(token.getLanguage());
-    if (!(commenter instanceof CodeDocumentationAwareCommenter)) return null;
-    CodeDocumentationAwareCommenter cdaCommenter = (CodeDocumentationAwareCommenter)commenter;
+    if (!(commenter instanceof CodeDocumentationAwareCommenter cdaCommenter)) return null;
     if (token.equals(cdaCommenter.getLineCommentTokenType())) {
       String prefix = cdaCommenter.getLineCommentPrefix();
       if (prefix != null) prefix = prefix.stripTrailing(); // some commenters (e.g. for Python) include space in comment prefix

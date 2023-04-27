@@ -140,45 +140,26 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
 
       private void highlight(@NotNull ComponentContext context,
                              @NotNull Map<String, List<PsiElement>> components) {
-        for (Map.Entry<String, List<PsiElement>> entry : components.entrySet()) {
-          for (PsiElement element : entry.getValue()) {
-            if (element instanceof PsiVariable variable) {
-              PsiIdentifier identifier = variable.getNameIdentifier();
-              if (identifier != null) {
-                LocalQuickFix localQuickFix = getLocalQuickFix(context, identifier);
-                holder.registerProblem(identifier,
-                                       InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.message"),
-                                       localQuickFix);
-              }
-            }
-            else if (element instanceof PsiReferenceExpression referenceExpression) {
-              registerProblemForIdentifier(referenceExpression, context, holder);
-            }
-            else if (element instanceof PsiMethodCallExpression callExpression) {
-              registerProblemForIdentifier(callExpression.getMethodExpression(), context, holder);
-            }
-          }
-        }
+        registerProblemForIdentifier(context.currentParameter, context, holder);
       }
 
-      private void registerProblemForIdentifier(@NotNull PsiReferenceExpression referenceExpression,
+      private void registerProblemForIdentifier(@NotNull PsiVariable variable,
                                                 @NotNull ComponentContext context,
                                                 @NotNull ProblemsHolder holder) {
-        PsiIdentifier[] identifiers = PsiTreeUtil.getChildrenOfType(referenceExpression, PsiIdentifier.class);
+        PsiIdentifier[] identifiers = PsiTreeUtil.getChildrenOfType(variable, PsiIdentifier.class);
         if (identifiers == null || identifiers.length != 1) {
           return;
         }
         PsiIdentifier identifier = identifiers[0];
-        LocalQuickFix localQuickFix = getLocalQuickFix(context, identifier);
+        LocalQuickFix localQuickFix = getLocalQuickFix(context);
         holder.registerProblem(identifier,
                                InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.message"),
                                localQuickFix);
       }
 
       @NotNull
-      private LocalQuickFix getLocalQuickFix(@NotNull ComponentContext context,
-                                             @NotNull PsiIdentifier identifier) {
-        return new ForEachWithRecordCanBeUsedFix(identifier.getText(), context.base, context.currentParameter);
+      private LocalQuickFix getLocalQuickFix(@NotNull ComponentContext context) {
+        return new ForEachWithRecordCanBeUsedFix(context.base, context.currentParameter);
       }
     };
   }
@@ -194,7 +175,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     PsiClass recordClass = context.recordClass;
     PsiStatement scope = context.base.getBody();
 
-    if ((level != null && level >  context.options.maxLevel) || !recordClass.isRecord() ||
+    if ((level != null && level > context.options.maxLevel) || !recordClass.isRecord() ||
         recordClass.getRecordComponents().length == 0 ||
         recordClass.getRecordComponents().length > context.options.maxComponentCount) {
       return;
@@ -224,7 +205,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       return null;
     }
     PsiType iteratedType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-    if (iteratedType instanceof PsiClassType classType && classType.isRaw()) {
+    if (iteratedType == null || iteratedType instanceof PsiClassType classType && classType.isRaw()) {
       return null;
     }
     if (!PsiTypesUtil.compareTypes(parameterType, iteratedType, false)) {
@@ -268,7 +249,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
         return Map.of();
       }
       PsiType substituted = context.classSubstitutor.substitute(component.getType());
-      if (substituted instanceof PsiWildcardType || substituted instanceof PsiCapturedWildcardType) {
+      if (substituted == null || substituted instanceof PsiWildcardType || substituted instanceof PsiCapturedWildcardType) {
         return Map.of();
       }
 
@@ -307,11 +288,9 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
   private class ForEachWithRecordCanBeUsedFix implements LocalQuickFix {
     private final SmartPsiElementPointer<PsiForeachStatementBase> myForEachStatement;
     private final SmartPsiElementPointer<PsiParameter> myParameter;
-    private final String myName;
 
-    private ForEachWithRecordCanBeUsedFix(@NotNull String name, @NotNull PsiForeachStatementBase forEachStatement,
+    private ForEachWithRecordCanBeUsedFix(@NotNull PsiForeachStatementBase forEachStatement,
                                           @NotNull PsiParameter parameter) {
-      myName = name;
       myForEachStatement = SmartPointerManager.createPointer(forEachStatement);
       myParameter = SmartPointerManager.createPointer(parameter);
     }
@@ -320,7 +299,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.fix.family.name", myName);
+      return InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.fix.family.name");
     }
 
 
@@ -333,7 +312,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       }
       PsiForeachStatementBase foreachInCopy = PsiTreeUtil.findSameElementInCopy(foreachStatementBase, target);
       PsiParameter parameterInCopy = PsiTreeUtil.findSameElementInCopy(parameter, target);
-      return new ForEachWithRecordCanBeUsedFix("", foreachInCopy, parameterInCopy);
+      return new ForEachWithRecordCanBeUsedFix(foreachInCopy, parameterInCopy);
     }
 
     @Override
@@ -416,6 +395,9 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
         String type = "var";
         if (!context.options.useVar) {
           PsiType substituted = context.classSubstitutor.substitute(component.getType());
+          if (substituted == null) {
+            return null;
+          }
           type = substituted.getCanonicalText();
         }
         ArrayList<String> proposedNames = new ArrayList<>();

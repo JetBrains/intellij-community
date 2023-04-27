@@ -92,8 +92,7 @@ public final class GrRefactoringConflictsUtil {
         }
       }
     }
-    else if (scope instanceof GrNewExpression) {
-      final GrNewExpression newExpression = (GrNewExpression)scope;
+    else if (scope instanceof GrNewExpression newExpression) {
       final GrAnonymousClassDefinition anonymousClass = newExpression.getAnonymousClassDefinition();
       if (anonymousClass != null) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, moving, targetClass, false)) {
@@ -109,8 +108,7 @@ public final class GrRefactoringConflictsUtil {
         }
       }
     }
-    else if (scope instanceof GrCodeReferenceElement) {
-      GrCodeReferenceElement refExpr = (GrCodeReferenceElement)scope;
+    else if (scope instanceof GrCodeReferenceElement refExpr) {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {

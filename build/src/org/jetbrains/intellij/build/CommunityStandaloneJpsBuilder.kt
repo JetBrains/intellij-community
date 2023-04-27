@@ -4,58 +4,49 @@ package org.jetbrains.intellij.build
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.impl.BaseLayout
-import org.jetbrains.intellij.build.impl.JarPackager
-import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.intellij.build.tasks.DirSource
-import org.jetbrains.intellij.build.tasks.buildJar
 import java.nio.file.Files
 import java.nio.file.Path
 
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  */
-suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildContext) {
-  val layout = BaseLayout()
+suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
+                                               context: BuildContext,
+                                               dryRun: Boolean = false,
+                                               layoutCustomizer: ((BaseLayout) -> Unit) = {}) {
+  val layout = PlatformLayout()
 
-  listOf(
+  layout.withModules(listOf(
     "intellij.platform.util",
     "intellij.platform.util.classLoader",
-    "intellij.platform.util.text.matching",
     "intellij.platform.util.base",
     "intellij.platform.util.xmlDom",
     "intellij.platform.util.jdom",
     "intellij.platform.tracing.rt",
     "intellij.platform.util.diff",
     "intellij.platform.util.rt.java8",
-  ).forEach {
-    layout.withModule(it, "util.jar")
-  }
+  ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
   layout.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
 
-
-  listOf(
+  layout.withModules(listOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.impl",
     "intellij.platform.jps.model.serialization",
-  ).forEach {
-    layout.withModule(it, "jps-model.jar")
-  }
+  ).map { ModuleItem(moduleName = it, relativeOutputFile = "jps-model.jar", reason = null) })
 
-  listOf(
+  layout.withModules(listOf(
     "intellij.java.guiForms.rt",
     "intellij.java.guiForms.compiler",
     "intellij.java.compiler.instrumentationUtil",
     "intellij.java.compiler.instrumentationUtil.java8",
     "intellij.platform.jps.build",
     "intellij.tools.jps.build.standalone",
-  ).forEach {
-    layout.withModule(it, "jps-builders.jar")
-  }
+  ).map { ModuleItem(moduleName = it, relativeOutputFile = "jps-builders.jar", reason = null) })
 
   layout.withModule("intellij.java.rt", "idea_rt.jar")
   layout.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
@@ -95,6 +86,8 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildCo
 
   layout.withModule("intellij.ant.jps", "ant-jps.jar")
 
+  layoutCustomizer(layout)
+
   val buildNumber = context.fullBuildNumber
 
   val tempDir = withContext(Dispatchers.IO) {
@@ -102,22 +95,22 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildCo
     Files.createTempDirectory(targetDir, "jps-standalone-community-")
   }
   try {
-    JarPackager.pack(jarToModules = layout.jarToModules, outputDir = tempDir, context = context, layout = layout)
+    JarPackager.pack(includedModules = layout.includedModules, outputDir = tempDir, context = context, layout = layout, dryRun = dryRun)
 
+    val targetFile = targetDir.resolve("standalone-jps-$buildNumber.zip")
     withContext(Dispatchers.IO) {
-      buildJar(tempDir.resolve("jps-build-test-$buildNumber.jar"), listOf(
-        "intellij.platform.jps.build",
-        "intellij.platform.jps.model.tests",
-        "intellij.platform.jps.model.serialization.tests"
-      ).map { moduleName ->
-        DirSource(context.getModuleOutputDir(context.findRequiredModule(moduleName)))
-      })
+      buildJar(targetFile = tempDir.resolve("jps-build-test-$buildNumber.jar"),
+               moduleNames = listOf(
+                 "intellij.platform.jps.build",
+                 "intellij.platform.jps.model.tests",
+                 "intellij.platform.jps.model.serialization.tests"
+               ),
+               context = context)
 
-
-      zipWithCompression(targetDir.resolve("standalone-jps-$buildNumber.zip"), mapOf(tempDir to ""))
+      zipWithCompression(targetFile = targetFile, dirs = mapOf(tempDir to ""))
     }
 
-    context.notifyArtifactWasBuilt(targetDir)
+    context.notifyArtifactWasBuilt(targetFile)
   }
   finally {
     withContext(Dispatchers.IO + NonCancellable) {

@@ -21,7 +21,7 @@ public final class RemoteTestNGStarter {
     String param = null;
     String commandFileName = null;
     String workingDirs = null;
-    List<String> resultArgs = new ArrayList<String>();
+    List<String> resultArgs = new ArrayList<>();
     for (; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith("@name")) {
@@ -43,12 +43,8 @@ public final class RemoteTestNGStarter {
         final int port = Integer.parseInt(arg.substring(SOCKET.length()));
         try {
           final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
-          final DataInputStream os = new DataInputStream(socket.getInputStream());
-          try {
+          try (DataInputStream os = new DataInputStream(socket.getInputStream())) {
             os.readBoolean();//wait for ready flag
-          }
-          finally {
-            os.close();
           }
         }
         catch (IOException e) {
@@ -66,7 +62,7 @@ public final class RemoteTestNGStarter {
 
     final BufferedReader reader = new BufferedReader(new FileReader(temp));
 
-    final List<String> newArgs = new ArrayList<String>();
+    final List<String> newArgs = new ArrayList<>();
     try {
       final String cantRunMessage = "CantRunException";
       while (true) {

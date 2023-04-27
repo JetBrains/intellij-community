@@ -40,8 +40,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
   @NotNull
   @Override
   public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
-    if (usage instanceof UsageInModule) {
-      UsageInModule usageInModule = (UsageInModule)usage;
+    if (usage instanceof UsageInModule usageInModule) {
       Module module = usageInModule.getModule();
       if (module != null) {
         if (myFlattenModules) {
@@ -59,8 +58,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       }
     }
 
-    if (usage instanceof UsageInLibrary) {
-      UsageInLibrary usageInLibrary = (UsageInLibrary)usage;
+    if (usage instanceof UsageInLibrary usageInLibrary) {
       OrderEntry entry = usageInLibrary.getLibraryEntry();
       if (entry != null) return Collections.singletonList(new LibraryUsageGroup(entry));
 
@@ -155,9 +153,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
 
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ModuleUsageGroup)) return false;
-
-      final ModuleUsageGroup moduleUsageGroup = (ModuleUsageGroup)o;
+      if (!(o instanceof ModuleUsageGroup moduleUsageGroup)) return false;
 
       return myModule.equals(moduleUsageGroup.myModule);
     }

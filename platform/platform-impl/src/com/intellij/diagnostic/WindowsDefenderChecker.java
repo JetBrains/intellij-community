@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,6 +96,11 @@ public class WindowsDefenderChecker {
    * {@code null} means the IDE cannot detect the status.
    */
   public @Nullable Boolean isRealTimeProtectionEnabled() {
+    if (!JnaLoader.isLoaded()) {
+      LOG.debug("JNA is not loaded");
+      return null;
+    }
+
     try {
       var comInit = Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
       if (LOG.isDebugEnabled()) LOG.debug("CoInitializeEx: " + comInit);

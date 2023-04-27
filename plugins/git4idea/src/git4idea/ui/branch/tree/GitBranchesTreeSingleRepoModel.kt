@@ -23,8 +23,8 @@ open class GitBranchesTreeSingleRepoModel(
 
   private val branchManager = project.service<GitBranchManager>()
 
-  private lateinit var localBranchesTree: LazyBranchesSubtreeHolder
-  private lateinit var remoteBranchesTree: LazyBranchesSubtreeHolder
+  internal lateinit var localBranchesTree: LazyBranchesSubtreeHolder
+  internal lateinit var remoteBranchesTree: LazyBranchesSubtreeHolder
 
   private val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
@@ -74,7 +74,7 @@ open class GitBranchesTreeSingleRepoModel(
   }
 
   protected open fun getTopLevelNodes(): List<Any> {
-    return topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE
+    return topLevelActions + getLocalAndRemoteTopLevelNodes(localBranchesTree, remoteBranchesTree)
   }
 
   private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>): List<Any> {

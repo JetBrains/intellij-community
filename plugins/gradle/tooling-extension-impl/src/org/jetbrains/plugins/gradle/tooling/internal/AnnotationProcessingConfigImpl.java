@@ -22,7 +22,7 @@ public class AnnotationProcessingConfigImpl implements AnnotationProcessingConfi
   public AnnotationProcessingConfigImpl(Collection<File> files, List<String> args, String output, boolean sources) {
     myProcessorOutput = output;
     isTestSources = sources;
-    myPaths = new ArrayList<File>(files);
+    myPaths = new ArrayList<>(files);
     myArgs = args;
   }
 

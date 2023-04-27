@@ -78,8 +78,7 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
 
   @Override
   public int compareTo(Object o) {
-    if (!(o instanceof DItemElement)) return 0;
-    final DItemElement otherProperty = (DItemElement)o;
+    if (!(o instanceof DItemElement otherProperty)) return 0;
 
     return getName().compareTo(otherProperty.getName()) + getType().compareTo(otherProperty.getType());
   }

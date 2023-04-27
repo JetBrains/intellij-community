@@ -28,7 +28,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
   @Attribute("include")
   public boolean INCLUDE = true;
 
-  private Matcher myMatcher;  // to speedup matching
+  private Matcher myMatcher;  // to speed up matching
 
   public ClassFilter() {
   }

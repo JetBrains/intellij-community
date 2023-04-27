@@ -149,15 +149,13 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return type;
     }
     final PsiElement parent = getParent();
-    if (parent instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)parent;
+    if (parent instanceof PyAssignmentStatement assignmentStatement) {
       PyExpression assignedValue = assignmentStatement.getAssignedValue();
       if (assignedValue instanceof PyParenthesizedExpression) {
         assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
       }
       if (assignedValue != null) {
-        if (assignedValue instanceof PyYieldExpression) {
-          PyYieldExpression assignedYield = (PyYieldExpression)assignedValue;
+        if (assignedValue instanceof PyYieldExpression assignedYield) {
           return assignedYield.isDelegating() ? context.getType(assignedValue) : null;
         }
         return context.getType(assignedValue);
@@ -168,8 +166,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       while (nextParent instanceof PyParenthesizedExpression || nextParent instanceof PyTupleExpression) {
         nextParent = nextParent.getParent();
       }
-      if (nextParent instanceof PyAssignmentStatement) {
-        final PyAssignmentStatement assignment = (PyAssignmentStatement)nextParent;
+      if (nextParent instanceof PyAssignmentStatement assignment) {
         final PyExpression value = assignment.getAssignedValue();
         final PyExpression lhs = assignment.getLeftHandSideExpression();
         final PyTupleExpression targetTuple = PsiTreeUtil.findChildOfType(lhs, PyTupleExpression.class, false);
@@ -363,8 +360,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   public static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
                                         @NotNull TypeEvalContext context) {
-    if (iterableType instanceof PyTupleType) {
-      final PyTupleType tupleType = (PyTupleType)iterableType;
+    if (iterableType instanceof PyTupleType tupleType) {
       return tupleType.getIteratedItemType();
     }
     else if (iterableType instanceof PyUnionType) {

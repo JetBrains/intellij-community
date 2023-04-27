@@ -52,11 +52,9 @@ public final class SearchUtil {
   static void processConfigurables(@NotNull List<? extends Configurable> configurables,
                                    @NotNull Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options, boolean i18n) {
     for (final Configurable configurable : configurables) {
-      if (!(configurable instanceof SearchableConfigurable)) {
+      if (!(configurable instanceof SearchableConfigurable searchableConfigurable)) {
         continue;
       }
-
-      final SearchableConfigurable searchableConfigurable = (SearchableConfigurable)configurable;
 
       Set<OptionDescription> configurableOptions = new TreeSet<>();
       options.put(searchableConfigurable, configurableOptions);
@@ -65,8 +63,7 @@ public final class SearchUtil {
         extension.beforeConfigurable(searchableConfigurable, configurableOptions);
       }
 
-      if (configurable instanceof MasterDetails) {
-        final MasterDetails md = (MasterDetails)configurable;
+      if (configurable instanceof MasterDetails md) {
         md.initUi();
         processComponent(searchableConfigurable, configurableOptions, md.getMaster(), i18n);
         processComponent(searchableConfigurable, configurableOptions, md.getDetails().getComponent(), i18n);
@@ -143,8 +140,7 @@ public final class SearchUtil {
       }
     }
     final Border border = component.getBorder();
-    if (border instanceof TitledBorder) {
-      final TitledBorder titledBorder = (TitledBorder)border;
+    if (border instanceof TitledBorder titledBorder) {
       final String title = titledBorder.getTitle();
       if (title != null) {
         processUILabel(title, configurableOptions, path, i18n);
@@ -359,8 +355,7 @@ public final class SearchUtil {
         return true;
       }
     }
-    else if (rootComponent instanceof JTabbedPane) {
-      final JTabbedPane tabbedPane = (JTabbedPane)rootComponent;
+    else if (rootComponent instanceof JTabbedPane tabbedPane) {
 
       final Set<String> paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option);
       for (String path : paths) {

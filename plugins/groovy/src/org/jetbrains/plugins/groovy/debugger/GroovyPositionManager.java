@@ -113,8 +113,7 @@ public class GroovyPositionManager extends PositionManagerEx {
         if (fileType == UnknownFileType.INSTANCE) {
           return ThreeState.UNSURE;
         }
-        if (fileType instanceof LanguageFileType) {
-          LanguageFileType languageFileType = (LanguageFileType)fileType;
+        if (fileType instanceof LanguageFileType languageFileType) {
           if (languageFileType.getLanguage() == GroovyLanguage.INSTANCE) {
             return ThreeState.YES;
           }

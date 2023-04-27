@@ -46,8 +46,7 @@ class XsltPatternValidator {
   }
 
   private static boolean checkPattern(XPathExpression element) {
-    if (element instanceof XPathBinaryExpression) {
-      final XPathBinaryExpression expression = (XPathBinaryExpression)element;
+    if (element instanceof XPathBinaryExpression expression) {
       if (expression.getOperator() == XPathTokenTypes.UNION) {
         if (checkPattern(expression.getLOperand()) && checkPattern(expression.getROperand())) {
           return true;
@@ -101,8 +100,7 @@ class XsltPatternValidator {
   }
 
   private static boolean checkIdKeyPattern(PsiElement child) {
-    if (child instanceof XPathFunctionCall) {
-      final XPathFunctionCall call = (XPathFunctionCall)child;
+    if (child instanceof XPathFunctionCall call) {
       final XPathExpression[] arguments = call.getArgumentList();
       if ("id".equals(call.getFunctionName())) {
         if (arguments.length != 1) return false;

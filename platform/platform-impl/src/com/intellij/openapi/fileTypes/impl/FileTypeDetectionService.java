@@ -108,8 +108,7 @@ final class FileTypeDetectionService implements Disposable {
 
   @Nullable AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     Collection<VirtualFile> files = ContainerUtil.map2SetNotNull(events, event -> {
-      if (event instanceof VFileContentChangeEvent) {
-        VFileContentChangeEvent changeEvent = (VFileContentChangeEvent)event;
+      if (event instanceof VFileContentChangeEvent changeEvent) {
         VirtualFile file = changeEvent.getFile();
         if (changeEvent.getOldLength() == 0) {
           // when something is written to the empty file, clear the file detection-from-content cache, because the file type can change from Unknown to e.g., Text

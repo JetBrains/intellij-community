@@ -662,8 +662,7 @@ public abstract class XmlTagDelegate {
 
     for (final XmlAttribute attribute : attributes) {
       final ASTNode child = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
-      if (child instanceof LeafElement) {
-        final LeafElement attrNameElement = (LeafElement)child;
+      if (child instanceof LeafElement attrNameElement) {
         if ((caseSensitive && Comparing.equal(attrNameElement.getChars(), qname) ||
              !caseSensitive && Comparing.equal(attrNameElement.getChars(), qname, false))) {
           return attribute;

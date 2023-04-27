@@ -190,8 +190,7 @@ public final class DfaBinOpValue extends DfaValue {
           return doCreate((DfaVariableValue)left, right, resultType, LongRangeBinOp.PLUS);
         }
       }
-      if (left instanceof DfaBinOpValue) {
-        DfaBinOpValue sumValue = (DfaBinOpValue)left;
+      if (left instanceof DfaBinOpValue sumValue) {
         if (sumValue.getOperation() != LongRangeBinOp.PLUS && sumValue.getOperation() != LongRangeBinOp.MINUS) return null;
         if (rightConst != null) {
           if (sumValue.getRight() instanceof DfaTypeValue) {

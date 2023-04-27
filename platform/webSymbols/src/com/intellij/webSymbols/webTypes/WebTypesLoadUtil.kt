@@ -17,11 +17,11 @@ import java.util.*
 
 private val objectMapper = ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   .setTypeFactory(TypeFactory.defaultInstance().withClassLoader(WebTypes::class.java.classLoader))
-  .registerModule(SimpleModule().also {
+  .registerModule(SimpleModule().also { module ->
     val interner = Interner.createStringInterner()
-    it.addDeserializer(String::class.java, object: StringDeserializer() {
-      override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): String {
-        return interner.intern(super.deserialize(p, ctxt))
+    module.addDeserializer(String::class.java, object : StringDeserializer() {
+      override fun deserialize(p: JsonParser, ctxt: DeserializationContext): String? {
+        return super.deserialize(p, ctxt)?.let { interner.intern(it) }
       }
     })
   })

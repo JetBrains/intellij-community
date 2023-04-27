@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.TemplateLanguageFileType;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,7 +17,7 @@ import java.util.List;
 
 class FileTypePatternDialog {
   private JTextField myPatternField;
-  private JComboBox<Language> myLanguageCombo;
+  private ComboBox<Language> myLanguageCombo;
   private JLabel myTemplateDataLanguageButton;
   private JPanel myMainPanel;
 
@@ -40,10 +27,11 @@ class FileTypePatternDialog {
     if (fileType instanceof TemplateLanguageFileType) {
       DefaultComboBoxModel<Language> model = (DefaultComboBoxModel<Language>)myLanguageCombo.getModel();
       model.addElement(null);
-      List<Language> languages = ContainerUtil.sorted(TemplateDataLanguageMappings.getTemplateableLanguages(), Comparator.comparing(Language::getID));
+      List<Language> languages = ContainerUtil.sorted(TemplateDataLanguageMappings.getTemplateableLanguages(), Comparator.comparing(Language::getDisplayName));
       for (Language language : languages) {
         model.addElement(language);
       }
+      myLanguageCombo.setSwingPopup(false);
       myLanguageCombo.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
         label.setText(value == null ? "" : value.getDisplayName());
         if (value != null) {

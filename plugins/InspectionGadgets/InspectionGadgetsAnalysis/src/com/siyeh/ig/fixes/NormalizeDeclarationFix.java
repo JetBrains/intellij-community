@@ -66,8 +66,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
         return;
       }
     }
-    if (element instanceof PsiDeclarationStatement) {
-      PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element;
+    if (element instanceof PsiDeclarationStatement declarationStatement) {
       final PsiElement grandParent = element.getParent();
       if (grandParent instanceof PsiForStatement) {
         splitMultipleDeclarationInForStatementInitialization((PsiForStatement)grandParent);
@@ -106,8 +105,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
         }
       }
     }
-    else if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    else if (element instanceof PsiMethod method) {
       final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
       if (returnTypeElement == null) {
         return;
@@ -141,10 +139,9 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
       forStatement = BlockUtils.expandSingleStatementToBlockStatement(forStatement);
     }
     final PsiStatement initialization = forStatement.getInitialization();
-    if (!(initialization instanceof PsiDeclarationStatement)) {
+    if (!(initialization instanceof PsiDeclarationStatement declarationStatement)) {
       return;
     }
-    final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)initialization;
     final List<PsiLocalVariable> variables =
       ContainerUtil.filterIsInstance(declarationStatement.getDeclaredElements(), PsiLocalVariable.class);
     final int min, max;
@@ -194,8 +191,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
   }
 
   private static PsiLocalVariable tryResolveLocalVariable(PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+    if (element instanceof PsiReferenceExpression referenceExpression) {
       if (referenceExpression.getQualifierExpression() == null) {
         return ObjectUtils.tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
       }

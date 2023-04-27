@@ -46,11 +46,10 @@ public class OptionalTraceInterpreter implements CallTraceInterpreter {
 
   @Nullable
   private static Value getOptionalValue(@NotNull Value optionalTrace) {
-    if (!(optionalTrace instanceof ArrayReference)) {
+    if (!(optionalTrace instanceof ArrayReference trace)) {
       throw new UnexpectedValueTypeException("optional trace must be an array value");
     }
 
-    final ArrayReference trace = (ArrayReference)optionalTrace;
     if (!optionalIsPresent(trace)) {
       return null;
     }

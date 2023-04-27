@@ -88,15 +88,13 @@ public class AssignmentToForLoopParameterInspection extends BaseInspection {
         return;
       }
       final PsiElement variableParent = variable.getParent();
-      if (!(variableParent instanceof PsiDeclarationStatement)) {
+      if (!(variableParent instanceof PsiDeclarationStatement declarationStatement)) {
         return;
       }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)variableParent;
       final PsiElement parent = declarationStatement.getParent();
-      if (!(parent instanceof PsiForStatement)) {
+      if (!(parent instanceof PsiForStatement forStatement)) {
         return;
       }
-      final PsiForStatement forStatement = (PsiForStatement)parent;
       final PsiStatement initialization = forStatement.getInitialization();
       if (initialization == null ||
           !initialization.equals(declarationStatement) ||
@@ -112,10 +110,9 @@ public class AssignmentToForLoopParameterInspection extends BaseInspection {
         return;
       }
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       if (referenceExpression.getQualifierExpression() != null) {
         return;
       }

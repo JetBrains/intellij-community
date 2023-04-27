@@ -3,8 +3,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindTextHtml
 import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -21,6 +23,12 @@ internal object GitLabMergeRequestDetailsCommitInfoComponentFactory {
     val description = SimpleHtmlPane().apply {
       bindTextHtml(scope, commit.map { it?.description.orEmpty() })
     }
+    val info = SimpleHtmlPane().apply {
+      bindText(scope, commit.map { commit ->
+        commit ?: return@map ""
+        "${commit.author.name} ${DateFormatUtil.formatPrettyDateTime(commit.authoredDate)}"
+      })
+    }
 
     return VerticalListPanel(GAP).apply {
       isOpaque = false
@@ -29,6 +37,7 @@ internal object GitLabMergeRequestDetailsCommitInfoComponentFactory {
 
       add(title)
       add(description)
+      add(info)
     }
   }
 }

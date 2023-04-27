@@ -8,7 +8,10 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
@@ -62,8 +65,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
         }
         send(result)
         awaitClose()
-      }.onCompletion { models.remove(simpleId) }
-        .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
+      }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
       // this the model will only be alive while it's needed
     }
   }

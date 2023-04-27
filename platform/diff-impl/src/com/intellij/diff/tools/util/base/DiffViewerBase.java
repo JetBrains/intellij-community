@@ -103,7 +103,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @RequiresEdt
   public final void dispose() {
     if (myDisposed) return;
-    if (!ApplicationManager.getApplication().isDispatchThread()) LOG.warn(new Throwable("dispose() not from EDT"));
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myDisposed) return;

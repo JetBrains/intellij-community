@@ -280,11 +280,10 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   private void orderTemplateVariables(Template template) {
-    if (myVariableComparator == null || !(template instanceof TemplateImpl)) {
+    if (myVariableComparator == null || !(template instanceof TemplateImpl templateImpl)) {
       return;
     }
 
-    TemplateImpl templateImpl = ((TemplateImpl)template);
     List<Variable> variables = new ArrayList<>(templateImpl.getVariables());
     variables.sort(myVariableComparator);
     for (int i = variables.size() - 1; i >= 0; i--) {

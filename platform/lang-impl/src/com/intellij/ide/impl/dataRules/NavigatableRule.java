@@ -29,8 +29,7 @@ public class NavigatableRule implements GetDataRule {
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
     final Navigatable navigatable = CommonDataKeys.NAVIGATABLE.getData(dataProvider);
-    if (navigatable instanceof OpenFileDescriptor) {
-      final OpenFileDescriptor openFileDescriptor = (OpenFileDescriptor)navigatable;
+    if (navigatable instanceof OpenFileDescriptor openFileDescriptor) {
 
       if (openFileDescriptor.getFile().isValid()) {
         return openFileDescriptor;

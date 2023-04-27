@@ -281,11 +281,10 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     thenBranch = ConditionalUtils.stripBraces(thenBranch);
     final PsiElement nextStatement =
       PsiTreeUtil.skipWhitespacesForward(ifStatement);
-    if (!(nextStatement instanceof GrStatement)) {
+    if (!(nextStatement instanceof GrStatement elseBranch)) {
       return false;
     }
 
-    final GrStatement elseBranch = (GrStatement) nextStatement;
     return ConditionalUtils.isReturn(thenBranch, "true")
         && ConditionalUtils.isReturn(elseBranch, "false");
   }
@@ -299,10 +298,9 @@ public class GroovyTrivialIfInspection extends BaseInspection {
 
     final PsiElement nextStatement =
       PsiTreeUtil.skipWhitespacesForward(ifStatement);
-    if (!(nextStatement instanceof GrStatement)) {
+    if (!(nextStatement instanceof GrStatement elseBranch)) {
       return false;
     }
-    final GrStatement elseBranch = (GrStatement) nextStatement;
     return ConditionalUtils.isReturn(thenBranch, "false")
         && ConditionalUtils.isReturn(elseBranch, "true");
   }
@@ -383,10 +381,9 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     thenBranch = ConditionalUtils.stripBraces(thenBranch);
     final PsiElement nextStatement =
       PsiTreeUtil.skipWhitespacesBackward(ifStatement);
-    if (!(nextStatement instanceof GrStatement)) {
+    if (!(nextStatement instanceof GrStatement elseBranch)) {
       return false;
     }
-    GrStatement elseBranch = (GrStatement) nextStatement;
 
     elseBranch = ConditionalUtils.stripBraces(elseBranch);
     if (ConditionalUtils.isAssignment(thenBranch, "true") &&
@@ -417,10 +414,9 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     thenBranch = ConditionalUtils.stripBraces(thenBranch);
     final PsiElement nextStatement =
       PsiTreeUtil.skipWhitespacesBackward(ifStatement);
-    if (!(nextStatement instanceof GrStatement)) {
+    if (!(nextStatement instanceof GrStatement elseBranch)) {
       return false;
     }
-    GrStatement elseBranch = (GrStatement) nextStatement;
 
     elseBranch = ConditionalUtils.stripBraces(elseBranch);
     if (ConditionalUtils.isAssignment(thenBranch, "false") &&

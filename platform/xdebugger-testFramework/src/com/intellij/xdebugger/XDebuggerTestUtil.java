@@ -339,8 +339,7 @@ public class XDebuggerTestUtil {
   public static void setBreakpointCondition(Project project, int line, final String condition) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XBreakpoint breakpoint : getBreakpoints(breakpointManager)) {
-      if (breakpoint instanceof XLineBreakpoint) {
-        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+      if (breakpoint instanceof XLineBreakpoint lineBreakpoint) {
 
         if (lineBreakpoint.getLine() == line) {
           WriteAction.runAndWait(() -> lineBreakpoint.setCondition(condition));
@@ -352,8 +351,7 @@ public class XDebuggerTestUtil {
   public static void setBreakpointLogExpression(Project project, int line, final String logExpression) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XBreakpoint breakpoint : getBreakpoints(breakpointManager)) {
-      if (breakpoint instanceof XLineBreakpoint) {
-        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+      if (breakpoint instanceof XLineBreakpoint lineBreakpoint) {
 
         if (lineBreakpoint.getLine() == line) {
           WriteAction.runAndWait(() -> {

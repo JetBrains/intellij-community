@@ -11,7 +11,11 @@ data class FileEditorOpenOptions(
   @JvmField val reuseOpen: Boolean = false,
   @JvmField val usePreviewTab: Boolean = false,
   @JvmField val requestFocus: Boolean = false,
-  @JvmField val pin: Boolean = false,
+  /**
+   * null value means to use current pinned state if file is already opened,
+   * if file is not opened it will be opened as unpinned.
+   */
+  @JvmField val pin: Boolean? = null,
   @JvmField val index: Int = -1,
   @JvmField val isExactState: Boolean = false,
 ) {

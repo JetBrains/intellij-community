@@ -148,25 +148,22 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiAssignmentExpression)) {
+      if (!(element instanceof PsiAssignmentExpression expression)) {
         return;
       }
-      final PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
       final PsiExpression lhs = expression.getLExpression();
       PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getRExpression());
-      if (rhs instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)rhs;
+      if (rhs instanceof PsiTypeCastExpression typeCastExpression) {
         final PsiType castType = typeCastExpression.getType();
         if (castType == null || !castType.equals(lhs.getType())) {
           return;
         }
         rhs = PsiUtil.skipParenthesizedExprDown(typeCastExpression.getOperand());
       }
-      if (!(rhs instanceof PsiPolyadicExpression)) {
+      if (!(rhs instanceof PsiPolyadicExpression polyadicExpression)) {
         return;
       }
       CommentTracker ct = new CommentTracker();
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)rhs;
       final String newExpression = calculateReplacementExpression(lhs, polyadicExpression, ct);
       PsiReplacementUtil.replaceExpression(expression, newExpression, ct);
     }
@@ -188,18 +185,16 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
       }
       final PsiExpression lhs = assignment.getLExpression();
       PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
-      if (rhs instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)rhs;
+      if (rhs instanceof PsiTypeCastExpression typeCastExpression) {
         final PsiType castType = typeCastExpression.getType();
         if (castType == null || !castType.equals(lhs.getType())) {
           return;
         }
         rhs = PsiUtil.skipParenthesizedExprDown(typeCastExpression.getOperand());
       }
-      if (!(rhs instanceof PsiPolyadicExpression)) {
+      if (!(rhs instanceof PsiPolyadicExpression polyadicExpression)) {
         return;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)rhs;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       if (operands.length < 2) {
         return;

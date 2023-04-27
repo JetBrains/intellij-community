@@ -477,8 +477,8 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     for (PsiElement bodyStatement : bodyStatements) {
       if (bodyStatement instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        PsiElement start = PsiTreeUtil.skipWhitespacesForward(codeBlock.getFirstBodyElement());
-        PsiElement end = PsiTreeUtil.skipWhitespacesBackward(codeBlock.getLastBodyElement());
+        PsiElement start = PsiTreeUtil.skipWhitespacesForward(codeBlock.getLBrace());
+        PsiElement end = PsiTreeUtil.skipWhitespacesBackward(codeBlock.getRBrace());
         if (start != null && end != null && start != codeBlock.getRBrace()) {
           for (PsiElement child = start; child != null; child = child.getNextSibling()) {
             out.append(commentTracker.text(child));

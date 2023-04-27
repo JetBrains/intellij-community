@@ -135,8 +135,7 @@ public class ShowControlFlowHandler implements CodeInsightActionHandler {
     for (Instruction instruction : flow.getInstructions()) {
       printInstruction(builder, instruction, provider);
 
-      if (instruction instanceof ConditionalInstruction) {
-        ConditionalInstruction conditionalInstruction = (ConditionalInstruction)instruction;
+      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
         builder.append("\n").append("Its ").append(conditionalInstruction.getResult()).
           append(" branch, condition: ").append(conditionalInstruction.getCondition().getText());
       }

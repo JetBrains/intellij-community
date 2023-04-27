@@ -43,10 +43,9 @@ public class PackageEntry {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof PackageEntry)) {
+    if (!(obj instanceof PackageEntry entry)) {
       return false;
     }
-    PackageEntry entry = (PackageEntry)obj;
     return entry.myWithSubpackages == myWithSubpackages
            && entry.isStatic() == isStatic()
            && Objects.equals(entry.myPackageName, myPackageName);

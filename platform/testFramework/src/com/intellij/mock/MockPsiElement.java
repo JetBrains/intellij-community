@@ -312,8 +312,7 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   @Nullable
   protected <T extends PsiNamedElement> T findDeclaration(String name, Class<T> aClass) {
     for (final PsiElement declaration : myDeclarations) {
-      if (declaration instanceof PsiNamedElement) {
-        final PsiNamedElement psiNamedElement = (PsiNamedElement)declaration;
+      if (declaration instanceof PsiNamedElement psiNamedElement) {
         if (name.equals(psiNamedElement.getName()) && aClass.isInstance(psiNamedElement)) {
           return (T)psiNamedElement;
         }

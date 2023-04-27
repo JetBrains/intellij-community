@@ -892,8 +892,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof DocumentWindowImpl)) return false;
-    DocumentWindowImpl window = (DocumentWindowImpl)o;
+    if (!(o instanceof DocumentWindowImpl window)) return false;
     return myDelegate.equals(window.getDelegate()) && areRangesEqual(window);
   }
 

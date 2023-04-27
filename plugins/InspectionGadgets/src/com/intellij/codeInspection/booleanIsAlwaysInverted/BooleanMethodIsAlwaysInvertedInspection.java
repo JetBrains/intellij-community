@@ -69,8 +69,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
                                                 @NotNull AnalysisScope scope,
                                                 @NotNull InspectionManager manager,
                                                 @NotNull GlobalInspectionContext globalContext) {
-    if (!(refEntity instanceof RefMethod)) return null;
-    RefMethod refMethod = (RefMethod)refEntity;
+    if (!(refEntity instanceof RefMethod refMethod)) return null;
     if (!refMethod.isReferenced() ||
         refMethod.isConstructor() ||
         hasNonInvertedCalls(refMethod) ||
@@ -163,8 +162,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
     if (refWhat.getUserData(ALWAYS_INVERTED) != Boolean.TRUE) return;
     final RefMethod refMethod = (RefMethod)refWhat;
     final PsiElement psiElement = refMethod.getPsiElement();
-    if (!(psiElement instanceof PsiMethod)) return;
-    final PsiMethod psiMethod = (PsiMethod)psiElement;
+    if (!(psiElement instanceof PsiMethod psiMethod)) return;
     final PsiElement psiFrom = refFrom.getPsiElement();
     psiFrom.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override

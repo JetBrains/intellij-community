@@ -46,13 +46,11 @@ public final class ComboBoxTableCellRenderer extends JPanel implements TableCell
   @Override
   @SuppressWarnings("unchecked")
   public JComponent getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    if (value instanceof ListWithSelection) {
-      ListWithSelection tags = (ListWithSelection)value;
+    if (value instanceof ListWithSelection tags) {
       if (tags.getSelection() == null) tags.selectFirst();
       updateCombobox(tags, tags.getSelection());
     }
-    else if (value instanceof Enum) {
-      Enum selectedValue = (Enum)value;
+    else if (value instanceof Enum selectedValue) {
       updateCombobox(EnumSet.allOf(selectedValue.getDeclaringClass()), selectedValue);
     }
     else {

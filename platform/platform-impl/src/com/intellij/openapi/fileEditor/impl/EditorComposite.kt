@@ -7,7 +7,10 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.ide.impl.DataValidators
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
@@ -17,7 +20,10 @@ import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignC
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
@@ -35,7 +41,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
-import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.BoxLayout
 import javax.swing.JComponent
@@ -51,7 +56,7 @@ import javax.swing.SwingConstants
 open class EditorComposite internal constructor(
   val file: VirtualFile,
   editorsWithProviders: List<FileEditorWithProvider>,
-  private val project: Project,
+  internal val project: Project,
 ) : FileEditorComposite, Disposable {
   private val clientId: ClientId
 
@@ -225,7 +230,7 @@ open class EditorComposite internal constructor(
         ClientProperty.put(it, JBTabsImpl.PINNED, if (field) true else null)
       }
       if (pinned != oldPinned) {
-        dispatcher.multicaster.isPinnedChanged(pinned)
+        dispatcher.multicaster.isPinnedChanged(this, pinned)
       }
     }
 
@@ -236,7 +241,7 @@ open class EditorComposite internal constructor(
     set(preview) {
       if (preview != field) {
         field = preview
-        dispatcher.multicaster.isPreviewChanged(preview)
+        dispatcher.multicaster.isPreviewChanged(this, preview)
       }
     }
 
@@ -476,6 +481,7 @@ private class EditorCompositePanel(realComponent: JComponent,
 
   override fun getData(dataId: String): Any? {
     return when {
+      CommonDataKeys.PROJECT.`is`(dataId) -> composite.project
       PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> composite.selectedEditor
       CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> arrayOf(composite.file)

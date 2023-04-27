@@ -106,10 +106,9 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression expression)) {
         return;
       }
-      final PsiMethodCallExpression expression = (PsiMethodCallExpression)grandParent;
       final CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, commentTracker, true);
       if (newExpression == null) return;
@@ -146,10 +145,9 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends BaseIn
         return;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiNewExpression)) {
+      if (!(qualifier instanceof PsiNewExpression newExpression)) {
         return;
       }
-      final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
       final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
         return;

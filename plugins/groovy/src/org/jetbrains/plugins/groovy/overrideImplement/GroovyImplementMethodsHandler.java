@@ -26,8 +26,7 @@ public class GroovyImplementMethodsHandler implements LanguageCodeInsightActionH
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
-    if (aClass instanceof GrTypeDefinition) {
-      GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;
+    if (aClass instanceof GrTypeDefinition typeDefinition) {
       if (GroovyOverrideImplementExploreUtil.getMethodSignaturesToImplement(typeDefinition).isEmpty()) {
         HintManager.getInstance().showErrorHint(editor, JavaBundle.message("implement.method.no.methods.to.implement"));
         return;

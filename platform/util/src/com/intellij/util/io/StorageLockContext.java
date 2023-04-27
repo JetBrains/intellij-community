@@ -182,4 +182,10 @@ public final class StorageLockContext {
   public static long getCacheMaxSize() {
     return DEFAULT_FILE_PAGE_CACHE.getMaxSize();
   }
+
+  /** for monitoring purposes only */
+  @ApiStatus.Internal
+  public static ReentrantReadWriteLock defaultContextLock(){
+    return ourDefaultContext.myLock;
+  }
 }

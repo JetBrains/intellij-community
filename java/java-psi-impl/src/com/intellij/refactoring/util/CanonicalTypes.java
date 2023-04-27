@@ -69,7 +69,7 @@ public final class CanonicalTypes {
 
     @Override
     public String getTypeText() {
-      return myType.getPresentableText();
+      return myType.getPresentableText(true);
     }
   }
 

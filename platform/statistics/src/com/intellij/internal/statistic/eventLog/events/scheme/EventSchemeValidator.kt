@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events.scheme
 
 
@@ -6,11 +6,12 @@ object EventSchemeValidator {
   private const val SYMBOLS_TO_REPLACE_FIELD_NAME = ":;, "
 
   @JvmStatic
-  fun validateEventScheme(eventsScheme: List<GroupDescriptor>): List<String> {
+  fun validateEventScheme(eventsScheme: List<GroupDescriptor>): Map<GroupDescriptor, List<String>> {
     val groupNames = HashSet<String>()
-    val errors = ArrayList<String>()
+    val errors = mutableMapOf<GroupDescriptor, List<String>>()
     for (group in eventsScheme.toSet()) {
-      errors.addAll(validateGroupScheme(group, groupNames))
+      val groupErrors = validateGroupScheme(group, groupNames)
+      if (groupErrors.isNotEmpty()) errors[group] = groupErrors
     }
     return errors
   }
@@ -26,7 +27,7 @@ object EventSchemeValidator {
       errors.add("Duplicate group `${groupId}`")
     }
     if (group.version <= 0) {
-      errors.add("Group version should be not null and > 0 (groupId=${groupId})")
+      errors.add("Group version should not be null and should be > 0 (groupId=${groupId})")
     }
     errors.addAll(validateEvents(group.schema, groupId))
     return errors
@@ -36,7 +37,7 @@ object EventSchemeValidator {
                              groupId: String): List<String> {
     val errors = ArrayList<String>()
     if (schema.isEmpty()) {
-      errors.add("Group should contains at least one event (groupId=${groupId})")
+      errors.add("Group should contain at least one event (groupId=${groupId})")
       return errors
     }
     val eventsNames = HashSet<String>()

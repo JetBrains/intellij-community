@@ -5,7 +5,11 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.CommonProcessors
+import com.intellij.util.Processor
+import com.intellij.util.Processors
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPackageSourcesMemberNamesIndex
@@ -67,6 +71,20 @@ class StubBasedPackageMemberDeclarationProvider(
     override fun getClassOrObjectDeclarations(name: Name): Collection<KtClassOrObjectInfo<*>> = runReadAction {
         KotlinFullClassNameIndex.get(childName(name), project, searchScope)
             .map { KtClassInfoUtil.createClassOrObjectInfo(it) }
+    }
+
+    @ApiStatus.Internal
+    fun checkClassOrObjectDeclarations(name: Name) {
+        val childName = childName(name)
+        if (KotlinFullClassNameIndex.get(childName, project, searchScope).isEmpty()) {
+            val processor = object : CommonProcessors.FindFirstProcessor<String>() {
+                override fun accept(t: String?): Boolean = childName == t
+            }
+            KotlinFullClassNameIndex.processAllKeys(searchScope, null, processor)
+            if (processor.isFound) {
+                throw IllegalStateException("KotlinFullClassNameIndex has '$childName' but has no value for it in $searchScope")
+            }
+        }
     }
 
     override fun getScriptDeclarations(name: Name): Collection<KtScriptInfo> = runReadAction {

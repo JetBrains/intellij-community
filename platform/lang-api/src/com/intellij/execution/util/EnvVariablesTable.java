@@ -209,7 +209,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           if (component instanceof JTextField) {
             text = ((JTextField)component).getSelectedText();
           }
-          if (component instanceof JComboBox<?>) {
+          else if (component instanceof JComboBox<?>) {
             text = ((JTextField)((JComboBox<?>)component).getEditor().getEditorComponent()).getSelectedText();
           }
           else {

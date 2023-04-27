@@ -16,47 +16,42 @@ import java.io.IOException;
  * Adapter for different attributes storage implementations: adapts them to the same interface
  * used by {@link PersistentFSAttributeAccessor}
  */
-public abstract class AbstractAttributesStorage implements Forceable, Closeable {
+public interface AbstractAttributesStorage extends Forceable, Closeable {
 
   /**
    * Exclusive upper bound for inline attribute size: attribute is inlined if its size < this value
    */
-  public static final int INLINE_ATTRIBUTE_SMALLER_THAN = 64;
+  int INLINE_ATTRIBUTE_SMALLER_THAN = 64;
 
-  public static final int NON_EXISTENT_ATTR_RECORD_ID = 0;
+  int NON_EXISTENT_ATTR_RECORD_ID = 0;
 
-  protected AbstractAttributesStorage() { }
+  int getVersion() throws IOException;
 
+  void setVersion(final int version) throws IOException;
 
-  public abstract int getVersion() throws IOException;
-
-  public abstract void setVersion(final int version) throws IOException;
-
-  @Nullable
-  public abstract AttributeInputStream readAttribute(final PersistentFSConnection connection,
-                                                     final int fileId,
-                                                     final @NotNull FileAttribute attribute) throws IOException;
+  @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
+                                               final int fileId,
+                                               final @NotNull FileAttribute attribute) throws IOException;
 
 
-  public abstract boolean hasAttributePage(final PersistentFSConnection connection,
-                                           final int fileId,
-                                           final @NotNull FileAttribute attribute) throws IOException;
+  boolean hasAttributePage(final @NotNull PersistentFSConnection connection,
+                           final int fileId,
+                           final @NotNull FileAttribute attribute) throws IOException;
 
   /**
    * Opens given attribute of given file for writing
    */
-  @NotNull
-  public abstract AttributeOutputStream writeAttribute(final PersistentFSConnection connection,
-                                                       final int fileId,
-                                                       final @NotNull FileAttribute attribute);
+  @NotNull AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
+                                                final int fileId,
+                                                final @NotNull FileAttribute attribute);
 
-  public abstract void deleteAttributes(final PersistentFSConnection connection,
-                                        final int fileId) throws IOException;
+  void deleteAttributes(final @NotNull PersistentFSConnection connection,
+                        final int fileId) throws IOException;
 
-  public abstract int getLocalModificationCount();
+  int getLocalModificationCount();
 
-  public abstract void checkAttributesStorageSanity(final PersistentFSConnection connection,
-                                                    final int fileId,
-                                                    final @NotNull IntList usedAttributeRecordIds,
-                                                    final @NotNull IntList validAttributeIds) throws IOException;
+  void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
+                                    final int fileId,
+                                    final @NotNull IntList usedAttributeRecordIds,
+                                    final @NotNull IntList validAttributeIds) throws IOException;
 }

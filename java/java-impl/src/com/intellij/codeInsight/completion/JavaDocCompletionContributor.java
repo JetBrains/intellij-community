@@ -592,7 +592,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
           PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), paramListMarker.getStartOffset(), PsiDocComment.class, false);
         if (docComment != null) {
           TemplateImpl template = new TemplateImpl("", "");
-          ConstantNode node = new ConstantNode(document.getText(TextRange.create(paramListMarker)));
+          ConstantNode node = new ConstantNode(document.getText(paramListMarker.getTextRange()));
           template.addVariable("PARAMETERS", node, node, true);
           template.addTextSegment(document.getText(TextRange.create(paramListMarker.getEndOffset(), tail)));
           template.addEndVariable();

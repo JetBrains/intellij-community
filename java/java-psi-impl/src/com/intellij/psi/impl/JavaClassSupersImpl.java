@@ -194,7 +194,7 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
         super.visitType(type, map);
       }
     }.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), new HashMap<>());
-    LOG.error(msg);
+    LOG.error(msg.toString());
   }
 
   @SuppressWarnings("StringConcatenationInLoop")

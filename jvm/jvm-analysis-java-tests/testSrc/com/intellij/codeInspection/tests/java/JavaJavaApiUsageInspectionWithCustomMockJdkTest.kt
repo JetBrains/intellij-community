@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -23,7 +23,7 @@ class JavaJavaApiUsageInspectionWithCustomMockJdkTest : JavaApiUsageInspectionTe
 
   fun `test language level 14 with JDK 15`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_14)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Main {
         {
           g("%s".<error descr="Usage of API documented as @since 15+">formatted</error>(1),
@@ -38,7 +38,7 @@ class JavaJavaApiUsageInspectionWithCustomMockJdkTest : JavaApiUsageInspectionTe
 
   fun `test language level 15 with JDK 16`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_15)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Main {
         {
           String.class.<error descr="Usage of API documented as @since 16+">isRecord</error>();
@@ -50,7 +50,7 @@ class JavaJavaApiUsageInspectionWithCustomMockJdkTest : JavaApiUsageInspectionTe
 
   fun `test language level 16 with JDK 17`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_16)
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Main {
         {
           String.class.isRecord();

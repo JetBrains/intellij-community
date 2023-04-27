@@ -122,8 +122,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
 
     @Override
     protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      if (value instanceof MapInfo) {
-        MapInfo info = (MapInfo)value;
+      if (value instanceof MapInfo info) {
         SimpleTextAttributes textAttributes = getAttributes(info);
 
         if (!selected && (info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED)) {

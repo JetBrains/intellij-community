@@ -101,8 +101,7 @@ public class CodeFormatterFacade {
       }
 
       TextRange range = preprocess(element, TextRange.create(startOffset, endOffset));
-      if (document instanceof DocumentWindow) {
-        DocumentWindow documentWindow = (DocumentWindow)document;
+      if (document instanceof DocumentWindow documentWindow) {
         range = documentWindow.injectedToHost(range);
       }
 
@@ -145,9 +144,8 @@ public class CodeFormatterFacade {
     final Project project = file.getProject();
     Document document = file.getViewProvider().getDocument();
     final List<FormatTextRange> textRanges = ranges.getRanges();
-    if (document instanceof DocumentWindow && shouldDelegateToTopLevel(file)) {
+    if (document instanceof DocumentWindow documentWindow && shouldDelegateToTopLevel(file)) {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
-      final DocumentWindow documentWindow = (DocumentWindow)document;
       for (FormatTextRange range : textRanges) {
         range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
       }
@@ -252,7 +250,7 @@ public class CodeFormatterFacade {
     for (FormatTextRange range : textRanges) {
       RangeMarker marker = markers[i];
       if (marker != null) {
-        range.setTextRange(TextRange.create(marker));
+        range.setTextRange(marker.getTextRange());
         marker.dispose();
       }
       i++;

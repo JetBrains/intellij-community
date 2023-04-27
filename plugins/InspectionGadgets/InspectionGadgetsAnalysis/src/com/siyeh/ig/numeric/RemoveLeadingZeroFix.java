@@ -36,10 +36,9 @@ class RemoveLeadingZeroFix extends InspectionGadgetsFix {
   @Override
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiLiteralExpression)) {
+    if (!(element instanceof PsiLiteralExpression literal)) {
       return;
     }
-    final PsiLiteralExpression literal = (PsiLiteralExpression)element;
     removeLeadingZeroes(literal);
   }
 

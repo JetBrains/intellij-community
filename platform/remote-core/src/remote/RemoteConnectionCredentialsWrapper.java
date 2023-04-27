@@ -92,8 +92,7 @@ public class RemoteConnectionCredentialsWrapper {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof RemoteConnectionCredentialsWrapper) {
-      RemoteConnectionCredentialsWrapper w = (RemoteConnectionCredentialsWrapper)obj;
+    if (obj instanceof RemoteConnectionCredentialsWrapper w) {
       try {
         Object credentials = getCredentials();
         Object counterCredentials = w.getCredentials();

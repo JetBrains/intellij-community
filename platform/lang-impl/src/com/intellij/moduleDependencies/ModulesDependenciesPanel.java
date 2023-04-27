@@ -64,8 +64,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (userObject instanceof MyUserObject) {
-        MyUserObject node = (MyUserObject)userObject;
+      if (userObject instanceof MyUserObject node) {
         setIcon(ModuleType.get(node.myModule).getIcon());
         append(node.myModule.getName(), node.myInCycle ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
@@ -428,8 +427,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       }
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
           if (node.getUserObject() instanceof MyUserObject) {
             return ((MyUserObject)node.getUserObject()).myModule;
           }
@@ -440,8 +438,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       }
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
           if (node.getUserObject() instanceof MyUserObject) {
             return node.getUserObject();
           }

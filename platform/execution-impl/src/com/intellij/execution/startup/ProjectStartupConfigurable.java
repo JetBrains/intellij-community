@@ -272,8 +272,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
       }, false);
     final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper<?> setting : allSettings) {
-      if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
-        final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)setting.getValue();
+      if (setting.getValue() instanceof RunnerAndConfigurationSettings settings) {
         if (!settings.isTemporary() && ProjectStartupRunner.canBeRun(settings) && !existing.contains(settings)) {
           wrappers.add(setting);
         }
@@ -286,8 +285,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
         label.setText(value.getText());
       }))
       .setItemChosenCallback((at) -> {
-        if (at.getValue() instanceof RunnerAndConfigurationSettings) {
-          final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
+        if (at.getValue() instanceof RunnerAndConfigurationSettings added) {
           addConfiguration(added);
         }
         else {

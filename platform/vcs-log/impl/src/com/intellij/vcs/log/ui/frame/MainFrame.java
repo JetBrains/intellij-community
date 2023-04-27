@@ -151,10 +151,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     toolbars.add(myNotificationLabel, BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
-    int border = ExperimentalUI.isNewUI() ? SideBorder.NONE : SideBorder.TOP;
-    toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, border),
-                                                      myLogData, logUi.getId(), this), BorderLayout.CENTER);
-
+    JScrollPane scrollPane = VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.NONE);
+    JComponent progress = VcsLogUiUtil.installProgress(scrollPane, myLogData, logUi.getId(), this);
+    toolbarsAndTable.add(progress, BorderLayout.CENTER);
+    ScrollableContentBorder.setup(scrollPane, Side.TOP, progress);
     myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
     myDetailsSplitter.setFirstComponent(changesLoadingPane);
     showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
@@ -226,7 +226,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
     textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
 
-    DefaultActionGroup presentationSettingsGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
+    DefaultActionGroup presentationSettingsGroup =
+      (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
     configureIntelliSortAction(presentationSettingsGroup);
 
     ActionGroup rightCornerGroup = (ActionGroup)Objects.requireNonNull(

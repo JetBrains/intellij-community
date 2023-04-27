@@ -162,9 +162,7 @@ public final class ShelvedChange {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof ShelvedChange)) return false;
-
-    final ShelvedChange that = (ShelvedChange)o;
+    if (!(o instanceof ShelvedChange that)) return false;
 
     if (!Objects.equals(myAfterPath, that.myAfterPath)) return false;
     if (!Objects.equals(myBeforePath, that.myBeforePath)) return false;

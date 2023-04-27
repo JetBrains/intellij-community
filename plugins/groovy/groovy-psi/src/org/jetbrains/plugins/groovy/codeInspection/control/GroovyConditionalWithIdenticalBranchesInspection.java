@@ -52,8 +52,7 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
       PsiElement element = descriptor.getPsiElement();
       if (element == null) return;
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof GrConditionalExpression)) return;
-      final GrConditionalExpression expression = (GrConditionalExpression)parent;
+      if (!(parent instanceof GrConditionalExpression expression)) return;
       final GrExpression thenBranch = expression.getThenBranch();
       replaceExpression(expression, thenBranch.getText());
     }

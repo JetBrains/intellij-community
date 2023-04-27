@@ -50,9 +50,8 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
     for (PsiReference reference : ReferencesSearch.search(parameter).findAll()) {
       PsiElement element = reference.getElement();
       if (element instanceof GrReferenceExpression &&
-          element.getParent() instanceof GrAssignmentExpression &&
+          element.getParent() instanceof GrAssignmentExpression parent &&
           ((GrAssignmentExpression)element.getParent()).getRValue() == element) {
-        GrAssignmentExpression parent = ((GrAssignmentExpression)element.getParent());
         GrExpression value = parent.getLValue();
         if (value instanceof GrReferenceExpression && ((GrReferenceExpression)value).resolve() instanceof PsiField) return true;
       }

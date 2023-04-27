@@ -1119,6 +1119,11 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Don't use serializer(type)" description="Use Class.serizlizer(), it's faster" problemDescriptor="Use Class.serizlizer(), it's faster" text="$MethodCall$($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="MethodCall" regexp="serializer" within="" contains="" />
+        <constraint name="Parameter" nameOfExprType="java\.lang\.Class" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Double ' in without { in property value" description="A double single quote in a propery value without a parameter like &#10;{0} will be rendered as a doubled single quote in the result. When&#10;a parameter is present it will be rendered as a single single &#10;quote." suppressId="DoubleSingleQuote" text="$key$=$value$" recursive="true" caseInsensitive="true" type="Properties" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="key" within="" contains="" />
@@ -1766,6 +1771,14 @@
       <searchConfiguration name="SwingWorker generates too many threads; use Application.execute*() instead" text="javax.swing.SwingWorker" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="TextRange can be simplified" text="com.intellij.openapi.util.TextRange.create($t$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$t$">
+        <constraint name="__context__" script="&quot;__context__ instanceof com.intellij.psi.PsiExpression &#10;  &amp;&amp; ((com.intellij.psi.PsiExpression)__context__).getType() != null &#10;  &amp;&amp; ((com.intellij.psi.PsiExpression)__context__).getType().getCanonicalText().equals(&quot;com.intellij.openapi.util.TextRange&quot;)&quot;" within="" contains="" />
+        <constraint name="t" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="TextRange can be simplified" text="TextRange.create($t$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$t$.getTextRange()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="t" nameOfExprType="com\.intellij\.openapi\.editor" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Timer creates/leaks threads" description="java.util.Timer eagerly creates a Thread on its start, which is too expensive. Please use ApplicationExecutionUtil.getScheduledExecutorService() instead  &#10;&#10;" text="new java.util.Timer($p$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="p" minCount="0" maxCount="2147483647" within="" contains="" />
@@ -1831,14 +1844,16 @@
         <constraint name="myRoot" within="" contains="" />
         <constraint name="myFolder2" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Use !Strings.areSameInstance instead of '!='" uuid="c51501cf-f7af-3a6e-99f9-1f307c8d83a1" description="Comparing Strings by references usually indicate a mistake, if you really need to do this (for performance reeasons or to implement &quot;Sentinel&quot; pattern), use Strings.areSameInstance method to make the intention explicit and get rid of warning." suppressId="StringNegatedEqualitySSR" problemDescriptor="Use !Strings.areSameInstance instead of '!=' if you really need to compare strings by reference" text="$s1$ != $s2$" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="!com.intellij.openapi.util.text.Strings.areSameInstance($s1$, $s2$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
+        <constraint name="s2" nameOfExprType="java\.lang\.String" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="use explicit toArray() method" text="com.intellij.util.ArrayUtil.toObjectArray($collection$, $class$.class)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$collection$.toArray(new $class$[0])">
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" within="" contains="" />
         <constraint name="collection" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="Use Kotlin sequences instead of JBIterable" uuid="6db0f481-2d17-3ff3-9051-2d8f6c0734a9" text="JBIterable" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
-        <constraint name="__context__" within="" contains="" />
-      </searchConfiguration>
       <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="java.lang.Boolean.TRUE" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="true">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
@@ -2182,6 +2197,11 @@
         <constraint name="FieldName" within="" contains="" />
         <constraint name="FieldType" regexp="Collection" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Use Strings.areSameInstance instead of ==" description="Comparing Strings by references usually indicate a mistake, if you really need to do this (for performance reeasons or to implement &quot;Sentinel&quot; pattern), use Strings.areSameInstance method to make the intention explicit and get rid of warning." suppressId="StringEqualitySSR" problemDescriptor="Use !Strings.areSameInstance instead of '!=' if you really need to compare strings by reference" text="$s1$ == $s2$" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.util.text.Strings.areSameInstance($s1$, $s2$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s1" nameOfExprType="java\.lang\.String" within="" contains="" />
+        <constraint name="s2" nameOfExprType="java\.lang\.String" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -2216,6 +2236,7 @@
     <inspection_tool class="StringConstructor" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSubstringArguments" value="false" />
     </inspection_tool>
+    <inspection_tool class="StringEquality" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="StringEqualsEmptyString" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL" value="true" />
     </inspection_tool>

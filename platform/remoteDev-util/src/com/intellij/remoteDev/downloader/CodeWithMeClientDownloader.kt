@@ -5,6 +5,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
@@ -23,7 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
-import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
+import com.intellij.remoteDev.connection.JetbrainsClientDownloadInfo
 import com.intellij.remoteDev.connection.StunTurnServerInfo
 import com.intellij.remoteDev.util.*
 import com.intellij.util.PlatformUtils
@@ -141,7 +142,7 @@ object CodeWithMeClientDownloader {
     else -> "JetBrainsClient"
   }
 
-  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): CodeWithMeSessionInfoProvider {
+  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): JetbrainsClientDownloadInfo {
     val isSnapshot = "SNAPSHOT" in clientBuildVersion
     if (isSnapshot) {
       LOG.warn("Thin client download from sources may result in failure due to different sources on host and client, " +
@@ -216,15 +217,12 @@ object CodeWithMeClientDownloader {
       RemoteDevSystemSettings.getPgpPublicKeyUrl().value
     } else null
 
-    val sessionInfo = object : CodeWithMeSessionInfoProvider {
-      override val hostBuildNumber = hostBuildNumber
-      override val compatibleClientUrl = clientDownloadUrl
-      override val isUnattendedMode = unattendedMode
-      override val compatibleJreUrl = jreDownloadUrl
-      override val hostFeaturesToEnable: Set<String>? = null
-      override val stunTurnServers: List<StunTurnServerInfo>? = null
-      override val downloadPgpPublicKeyUrl: String? = pgpPublicKeyUrl
-    }
+    val sessionInfo = JetbrainsClientDownloadInfo(
+      hostBuildNumber = hostBuildNumber,
+      compatibleClientUrl = clientDownloadUrl,
+      compatibleJreUrl = jreDownloadUrl,
+      downloadPgpPublicKeyUrl = pgpPublicKeyUrl
+    )
 
     LOG.info("Generated session info: $sessionInfo")
     return sessionInfo
@@ -251,7 +249,7 @@ object CodeWithMeClientDownloader {
   @ApiStatus.Experimental
   fun downloadClientAndJdk(clientBuildVersion: String,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     val jdkBuild = if (isClientWithBundledJre(clientBuildVersion)) null else {
       // Obsolete since 2022.3. Now the client has JRE bundled in
@@ -291,7 +289,7 @@ object CodeWithMeClientDownloader {
   fun downloadClientAndJdk(clientBuildVersion: String,
                            jreBuild: String?,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jreBuild, true)
     return downloadClientAndJdk(sessionInfo, progressIndicator)
@@ -300,9 +298,9 @@ object CodeWithMeClientDownloader {
   /**
    * @returns Pair(path/to/thin/client, path/to/jre)
    */
-  fun downloadClientAndJdk(sessionInfoResponse: CodeWithMeSessionInfoProvider,
+  fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
     LOG.info("Downloading Thin Client in $tempDir...")
@@ -498,7 +496,7 @@ object CodeWithMeClientDownloader {
   }
 
   private fun downloadWithRetries(url: URI, path: Path, progressIndicator: ProgressIndicator) {
-    require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     @Suppress("LocalVariableName")
     val MAX_ATTEMPTS = 5

@@ -201,8 +201,8 @@ public final class QueueProcessor<T> {
   }
 
   private void assertCorrectThread() {
-    if (myThreadToUse == ThreadToUse.AWT && ApplicationManager.getApplication().isDispatchThread()) {
-      throw new IllegalStateException("Must not wait for AWT-backed queue in the EDT. Instead, to avoid deadlock, use background thread for that");
+    if (myThreadToUse == ThreadToUse.AWT) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
   }
 

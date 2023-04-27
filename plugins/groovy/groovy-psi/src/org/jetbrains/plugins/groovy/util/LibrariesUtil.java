@@ -53,8 +53,7 @@ public final class LibrariesUtil {
     }
 
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libEntry = (LibraryOrderEntry)entry;
+      if (entry instanceof LibraryOrderEntry libEntry) {
         if (exportedOnly && !libEntry.isExported()) {
           continue;
         }

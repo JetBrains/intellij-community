@@ -6,3 +6,5 @@ enum class EnumClass {
         for (e in values<caret>()) {}
     }
 }
+
+// IGNORE_FIR

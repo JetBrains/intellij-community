@@ -69,8 +69,7 @@ public final class MethodParameterInjection extends BaseInjection {
   @Override
   public MethodParameterInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
-    if (o instanceof MethodParameterInjection) {
-      final MethodParameterInjection other = (MethodParameterInjection)o;
+    if (o instanceof MethodParameterInjection other) {
       myClassName = other.getClassName();
       myParameterMap.clear();
       for (MethodInfo info : other.myParameterMap.values()) {

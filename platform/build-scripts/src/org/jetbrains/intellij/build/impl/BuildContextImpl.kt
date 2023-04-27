@@ -25,7 +25,7 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
-class BuildContextImpl private constructor(
+class BuildContextImpl(
   private val compilationContext: CompilationContextImpl,
   override val productProperties: ProductProperties,
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
@@ -161,7 +161,11 @@ class BuildContextImpl private constructor(
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String): Path? {
-    for (info in getSourceRootsWithPrefixes(findRequiredModule(moduleName))) {
+    return findFileInModuleSources(findRequiredModule(moduleName), relativePath)
+  }
+
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String): Path? {
+    for (info in getSourceRootsWithPrefixes(module)) {
       if (relativePath.startsWith(info.second)) {
         val result = info.first.resolve(Strings.trimStart(Strings.trimStart(relativePath, info.second), "/"))
         if (Files.exists(result)) {

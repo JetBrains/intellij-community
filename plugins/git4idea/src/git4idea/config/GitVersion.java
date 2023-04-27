@@ -215,10 +215,9 @@ public final class GitVersion implements Comparable<GitVersion> {
    */
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof GitVersion)) {
+    if (!(obj instanceof GitVersion other)) {
       return false;
     }
-    GitVersion other = (GitVersion) obj;
     if (compareTo(other) != 0) {
       return false;
     }

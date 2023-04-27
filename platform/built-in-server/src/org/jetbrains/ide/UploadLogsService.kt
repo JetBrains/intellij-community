@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.jackson.obj
@@ -28,6 +27,8 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import kotlin.io.path.name
 
+private const val propertyKeyForTrustedHosts = "idea.api.collectLogs.hosts.trusted"
+
 class UploadLogsService : RestService() {
   private val uploadsServiceUrl = "https://uploads.jetbrains.com"
 
@@ -38,7 +39,13 @@ class UploadLogsService : RestService() {
     return serviceName
   }
 
-  override fun isOriginAllowed(request: HttpRequest) = OriginCheckResult.ALLOW
+  override fun isOriginAllowed(request: HttpRequest): OriginCheckResult  {
+    return if(isHostInPredefinedHosts(request, trustedPredefinedHosts, propertyKeyForTrustedHosts)){
+      OriginCheckResult.ALLOW
+    } else {
+      OriginCheckResult.FORBID
+    }
+  }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val path = urlDecoder.path().split(serviceName).last().trimStart('/')
@@ -49,7 +56,7 @@ class UploadLogsService : RestService() {
     val channel = context.channel()
     if (path != "uploads") {
       sendStatus(HttpResponseStatus.BAD_REQUEST, false, channel)
-      return null;
+      return null
     }
     val project = getLastFocusedOrOpenedProject()
     if (project != null) {
@@ -134,8 +141,7 @@ class UploadLogsService : RestService() {
   }
 
   override fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
-    return isHostInPredefinedHosts(request, urlDecoder, trustedPredefinedHosts, "idea.api.collectLogs.hosts.trusted")
-           || super.isHostTrusted(request, urlDecoder)
+    return isHostInPredefinedHosts(request, trustedPredefinedHosts, propertyKeyForTrustedHosts)
   }
 
 }

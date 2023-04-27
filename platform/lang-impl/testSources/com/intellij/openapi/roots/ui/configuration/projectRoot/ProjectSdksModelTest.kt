@@ -95,7 +95,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
           override fun getPlannedHomeDir() = plannedDir.absolutePath
           override fun getPlannedVersion() = "1.2.3"
           override fun doDownload(indicator: ProgressIndicator) {
-            assertThat(ApplicationManager.getApplication().isDispatchThread).isFalse()
+            ApplicationManager.getApplication().assertIsNonDispatchThread()
 
             //ProgressManager works in the same thread in tests
             assertThat(isSameCallStack).withFailMessage("Is should be in the same call stack!").isTrue()

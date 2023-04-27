@@ -70,8 +70,7 @@ final class PythonSourceRootConfigurator implements DirectoryProjectConfigurator
         final PyKeywordArgument packageDirArg = argList.getKeywordArgument("package_dir");
         if (packageDirArg != null) {
           final PyExpression valueExpression = packageDirArg.getValueExpression();
-          if (valueExpression instanceof PyDictLiteralExpression) {
-            PyDictLiteralExpression packageDirDict = (PyDictLiteralExpression)valueExpression;
+          if (valueExpression instanceof PyDictLiteralExpression packageDirDict) {
             for (PyKeyValueExpression keyValue : packageDirDict.getElements()) {
               final PyExpression keyExpr = keyValue.getKey();
               final PyExpression valueExpr = keyValue.getValue();

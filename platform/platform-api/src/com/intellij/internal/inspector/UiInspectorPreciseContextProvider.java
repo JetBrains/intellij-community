@@ -17,15 +17,6 @@ public interface UiInspectorPreciseContextProvider {
   @Nullable
   UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event);
 
-  class UiInspectorInfo {
-    public final @Nullable String name;
-    public final @NotNull List<PropertyBean> values;
-    public final @Nullable Component component;
-
-    public UiInspectorInfo(@Nullable String name, @NotNull List<PropertyBean> values, @Nullable Component component) {
-      this.name = name;
-      this.values = values;
-      this.component = component;
-    }
+  record UiInspectorInfo(@Nullable String name, @NotNull List<PropertyBean> values, @Nullable Component component) {
   }
 }

@@ -141,10 +141,9 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
         return;
       }
       final PsiElement referent = ((PsiReference)qualifier).resolve();
-      if (!(referent instanceof PsiClass)) {
+      if (!(referent instanceof PsiClass referencedClass)) {
         return;
       }
-      final PsiClass referencedClass = (PsiClass)referent;
       final PsiClass declaringClass = method.getContainingClass();
       if (declaringClass == null) {
         return;

@@ -44,8 +44,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     ArrayList<GroovyResolveResult> candidates = new ArrayList<>();
 
     final PsiElement owner = GrDocCommentUtil.findDocOwner(this);
-    if (owner instanceof GrMethod && !name.startsWith("<")) {
-      final GrMethod method = (GrMethod)owner;
+    if (owner instanceof GrMethod method && !name.startsWith("<")) {
       final GrParameter[] parameters = method.getParameters();
 
       for (GrParameter parameter : parameters) {

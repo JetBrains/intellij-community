@@ -99,8 +99,7 @@ public class Group implements KeymapGroup {
       else if (child instanceof QuickList) {
         myIds.add(((QuickList)child).getActionId());
       }
-      else if (child instanceof Group) {
-        Group childGroup = (Group)child;
+      else if (child instanceof Group childGroup) {
         myIds.addAll(childGroup.initIds());
         if (childGroup.myId != null) {
           myIds.add(childGroup.myId);
@@ -256,8 +255,7 @@ public class Group implements KeymapGroup {
 
   @Override
   public boolean equals(Object object) {
-    if (!(object instanceof Group)) return false;
-    final Group group = ((Group)object);
+    if (!(object instanceof Group group)) return false;
     if (group.getName() != null && getName() != null) {
       return group.getName().equals(getName());
     }

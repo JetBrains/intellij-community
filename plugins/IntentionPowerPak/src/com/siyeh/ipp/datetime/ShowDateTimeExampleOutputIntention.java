@@ -55,10 +55,9 @@ public class ShowDateTimeExampleOutputIntention extends Intention implements Hig
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiExpression)) {
+        if (!(element instanceof PsiExpression expression)) {
           return false;
         }
-        final PsiExpression expression = (PsiExpression)element;
         final PsiType type = expression.getType();
         if (!TypeUtils.isJavaLangString(type)) {
           return false;
@@ -77,17 +76,15 @@ public class ShowDateTimeExampleOutputIntention extends Intention implements Hig
             return false;
           }
         }
-        else if (grandParent instanceof PsiNewExpression) {
-          final PsiNewExpression newExpression = (PsiNewExpression)grandParent;
+        else if (grandParent instanceof PsiNewExpression newExpression) {
           final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
           if (classReference == null || !"SimpleDateFormat".equals(classReference.getReferenceName())) {
             return false;
           }
           final PsiElement target = classReference.resolve();
-          if (!(target instanceof PsiClass)) {
+          if (!(target instanceof PsiClass aClass)) {
             return false;
           }
-          final PsiClass aClass = (PsiClass)target;
           if (!InheritanceUtil.isInheritor(aClass, "java.text.SimpleDateFormat")) {
             return false;
           }
@@ -105,10 +102,9 @@ public class ShowDateTimeExampleOutputIntention extends Intention implements Hig
 
   @Override
   protected void processIntention(Editor editor, @NotNull PsiElement element) {
-    if (!(element instanceof PsiExpression) || dateTimeFormatter == null) {
+    if (!(element instanceof PsiExpression expression) || dateTimeFormatter == null) {
       return;
     }
-    final PsiExpression expression = (PsiExpression)element;
     final Object value = ExpressionUtils.computeConstantExpression(expression);
     if (!(value instanceof String)) {
       return;

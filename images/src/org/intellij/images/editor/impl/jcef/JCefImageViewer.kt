@@ -1,9 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.editor.impl.jcef
 
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.UISettingsUtils
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -15,12 +20,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.ScrollBarPainter
 import com.intellij.ui.jcef.*
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.ui.UIUtil
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -36,12 +43,14 @@ import org.intellij.images.thumbnail.actions.ShowBorderAction
 import org.intellij.images.ui.ImageComponentDecorator
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import java.awt.Point
 import java.beans.PropertyChangeListener
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -58,10 +67,12 @@ class JCefImageViewer(private val myFile: VirtualFile,
     private const val VIEWER_PATH = "/index.html"
     private const val IMAGE_PATH = "/image"
     private const val SCROLLBARS_CSS_PATH = "/scrollbars.css"
+    private const val CHESSBOARD_CSS_PATH = "/chessboard.css"
 
     private const val VIEWER_URL = "$PROTOCOL://$HOST_NAME$VIEWER_PATH"
     private const val IMAGE_URL = "$PROTOCOL://$HOST_NAME$IMAGE_PATH"
     private const val SCROLLBARS_STYLE_URL = "$PROTOCOL://$HOST_NAME$SCROLLBARS_CSS_PATH"
+    private const val CHESSBOARD_STYLE_URL = "$PROTOCOL://$HOST_NAME$CHESSBOARD_CSS_PATH"
   }
 
   private val myDocument: Document = FileDocumentManager.getInstance().getDocument(myFile)!!
@@ -161,6 +172,14 @@ class JCefImageViewer(private val myFile: VirtualFile,
       }
     }
 
+    resourceRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
+      CefStreamResourceHandler(ByteArrayInputStream(buildScrollbarsStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+    }
+
+    resourceRequestHandler.addResource(CHESSBOARD_CSS_PATH) {
+      CefStreamResourceHandler(ByteArrayInputStream(buildChessboardStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+    }
+
     resourceRequestHandler.addResource(IMAGE_PATH) {
       var stream: InputStream? = null
       try {
@@ -181,10 +200,6 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
         return@addResource resourceHandler
       }
-    }
-
-    resourceRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(buildScrollbarsStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myCefClient.addRequestHandler(resourceRequestHandler, myBrowser.cefBrowser)
@@ -217,6 +232,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
     }
 
     myInitializer.set {
+      reloadStyles()
       execute("sendInfo = function(info_text) {${myViewerStateJSQuery.inject("info_text")};}")
       execute("setImageUrl('$IMAGE_URL');")
       isGridVisible = OptionsManager.getInstance().options.editorOptions.gridOptions.isShowDefault
@@ -236,6 +252,11 @@ class JCefImageViewer(private val myFile: VirtualFile,
     else {
       myBrowser.loadURL(VIEWER_URL)
     }
+
+    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+
+    busConnection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { reloadStyles() })
+    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { reloadStyles() })
   }
 
   @Serializable
@@ -256,9 +277,13 @@ class JCefImageViewer(private val myFile: VirtualFile,
     data class Size(val width: Int, val height: Int)
   }
 
+  private fun colorToCSS(color: Color) = "rgba(${color.red}, ${color.blue}, ${color.green}, ${color.alpha / 255.0})"
+
   private fun getColorCSS(key: ColorKey): String {
     val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
-    return (colorScheme.getColor(key) ?: key.defaultColor).let { "rgba(${it.red}, ${it.blue}, ${it.green}, ${it.alpha / 255.0})" }
+    return (colorScheme.getColor(key) ?: key.defaultColor).let {
+      "rgba(${it.red}, ${it.blue}, ${it.green}, ${getScrollbarAlpha(key) ?: (it.alpha / 255.0)})"
+    }
   }
 
   private fun buildScrollbarsStyle(): String {
@@ -270,21 +295,21 @@ class JCefImageViewer(private val myFile: VirtualFile,
     val thumbBorder = getColorCSS(ScrollBarPainter.THUMB_OPAQUE_FOREGROUND)
     val thumbBorderHovered = getColorCSS(ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND)
 
-    val trackSize = if (SystemInfo.isMac) "14px" else "10px"
-    val thumbBorderSize = if (SystemInfo.isMac) "3px" else "1px"
-    val thumbRadius = if (SystemInfo.isMac) "14px" else "0"
+    val scale = UISettingsUtils.instance.currentIdeScale
+    val trackSizePx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 10)) * scale
+    val thumbBorderSizePx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 3 else 1)) * scale
+    val thumbRadiusPx = JBCefApp.normalizeScaledSize((if (SystemInfo.isMac) 14 else 0)) * scale
 
     return /*language=css*/ """
       ::-webkit-scrollbar {
-        width: $trackSize;
-        height: $trackSize;
+        width: ${trackSizePx}px;
+        height: ${trackSizePx}px;
         background-color: $background;
       }
       
       /*!* background of the scrollbar except button or resizer *!*/
       ::-webkit-scrollbar-track {
         background-color:$trackColor;
-        border-width: $thumbBorder solid red;
       }
       
       ::-webkit-scrollbar-track:hover {
@@ -294,39 +319,82 @@ class JCefImageViewer(private val myFile: VirtualFile,
       /*!* scrollbar itself *!*/
       ::-webkit-scrollbar-thumb {
         background-color:$thumbColor;
-        border-radius:$thumbRadius;
-        border-width: $thumbBorderSize;
+        border-radius:${thumbRadiusPx}px;
+        border-width: ${thumbBorderSizePx}px;
         border-style: solid;
         border-color: $trackColor;
         background-clip: padding-box;
         outline: 1px solid $thumbBorder;
-        outline-offset: -$thumbBorderSize;
+        outline-offset: -${thumbBorderSizePx}px;
       }
       
       ::-webkit-scrollbar-thumb:hover {
         background-color:$thumbHoveredColor;
-        border-radius:$thumbRadius;
-        border-width: $thumbBorderSize;
+        border-radius:${thumbRadiusPx}px;
+        border-width: ${thumbBorderSizePx}px;
         border-style: solid;
         border-color: $trackColor;
         background-clip: padding-box;
         outline: 1px solid $thumbBorderHovered;
-        outline-offset: -$thumbBorderSize;
+        outline-offset: -${thumbBorderSizePx}px;
       }
       
       /* set button(top and bottom of the scrollbar) */
       ::-webkit-scrollbar-button {
         display:none;
       }
+      
       ::-webkit-scrollbar-corner {
         background-color: $background;
       }
     """.trimIndent()
   }
 
+  private fun getScrollbarAlpha(colorKey: ColorKey): Int? {
+    val contrastElementsKeys = listOf(
+      ScrollBarPainter.THUMB_OPAQUE_FOREGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_BACKGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_HOVERED_FOREGROUND,
+      ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND,
+      ScrollBarPainter.THUMB_FOREGROUND,
+      ScrollBarPainter.THUMB_BACKGROUND,
+      ScrollBarPainter.THUMB_HOVERED_FOREGROUND,
+      ScrollBarPainter.THUMB_HOVERED_BACKGROUND
+    )
+
+    if (!UISettings.shadowInstance.useContrastScrollbars || colorKey !in contrastElementsKeys) return null
+
+    val lightAlpha = if (SystemInfo.isMac) 120 else 160
+    val darkAlpha = if (SystemInfo.isMac) 255 else 180
+    val alpha = Registry.intValue("contrast.scrollbars.alpha.level")
+    return if (alpha > 0) {
+      Integer.min(alpha, 255)
+    }
+    else {
+      if (UIUtil.isUnderDarcula()) darkAlpha else lightAlpha
+    }
+  }
+
+  private fun buildChessboardStyle(): String {
+    val options = OptionsManager.getInstance().options.editorOptions.transparencyChessboardOptions
+    val cellSize = JBCefApp.normalizeScaledSize(options.cellSize)
+    val blackColor = colorToCSS(options.blackColor)
+    val whiteColor = colorToCSS(options.whiteColor)
+    return /*language=css*/ """
+      #chessboard {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: repeating-conic-gradient(${blackColor} 0% 25%, ${whiteColor} 0% 50%) 50% / ${cellSize * 2}px ${cellSize * 2}px;
+        background-position: 0 0;
+      }
+    """.trimIndent()
+  }
+
   private fun reloadStyles() {
     execute("""
-      loadScrollbarsStyle(${SCROLLBARS_STYLE_URL});
+      loadScrollbarsStyle('$SCROLLBARS_STYLE_URL');
+      loadChessboardStyle('$CHESSBOARD_STYLE_URL');
     """.trimIndent())
   }
 }

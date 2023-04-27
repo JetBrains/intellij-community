@@ -36,7 +36,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -54,7 +54,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -66,7 +66,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven30ServerEmbedderImpl.interpolateAndAlignModel(model, basedir);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -77,7 +77,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven30ServerEmbedderImpl.assembleInheritance(model, parentModel);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -91,7 +91,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven30ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -104,7 +104,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -117,7 +117,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 

@@ -3,10 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.RecentProjectListActionProvider
-import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.*
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -202,7 +199,7 @@ internal class RecentProjectFilteringTree(
 
   private class TreeHoverToSelectionListener(private val popupMenu: ActionPopupMenu) : TreeHoverListener() {
     override fun onHover(tree: JTree, row: Int) {
-      if (row != -1 && !popupMenu.component.isVisible) {
+      if (!popupMenu.component.isVisible) {
         tree.setSelectionRow(row)
       }
     }
@@ -413,7 +410,11 @@ internal class RecentProjectFilteringTree(
         }
 
         val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
-        toolTipText = if (isPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
+        val tooltip = if (isPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
+        if (tooltip != toolTipText) {
+          IdeTooltipManager.getInstance().hideCurrent(null)
+          toolTipText = tooltip
+        }
 
         AccessibleContextUtil.setCombinedName(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
         AccessibleContextUtil.setCombinedDescription(this, projectNameLabel, "-", projectPathLabel) // NON-NLS

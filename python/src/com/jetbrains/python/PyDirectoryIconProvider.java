@@ -18,8 +18,7 @@ import javax.swing.*;
 public class PyDirectoryIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
-    if (element instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)element;
+    if (element instanceof PsiDirectory directory) {
       // Preserve original icons for excluded directories and source roots
       if (isSpecialDirectory(directory)) return null;
       if (PyUtil.isExplicitPackage(directory)) {

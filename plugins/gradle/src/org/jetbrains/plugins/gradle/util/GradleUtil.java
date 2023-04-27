@@ -322,8 +322,7 @@ public final class GradleUtil {
 
   public static @NotNull GradleVersion getGradleVersion(Project project, String filePath) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
-    if (manager instanceof GradleManager) {
-      GradleManager gradleManager = (GradleManager)manager;
+    if (manager instanceof GradleManager gradleManager) {
       String externalProjectPath = gradleManager.getAffectedExternalProjectPath(filePath, project);
       if (externalProjectPath != null) {
         GradleSettings settings = GradleSettings.getInstance(project);

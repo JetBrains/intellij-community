@@ -22,12 +22,11 @@ public final class KotlinStructureViewFactory implements PsiStructureViewFactory
     private static final List<NodeProvider<?>> NODE_PROVIDERS = Collections.singletonList(new KotlinInheritedMembersNodeProvider());
     @Override
     public StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile psiFile) {
-        if (!(psiFile instanceof KtFile)) {
+        if (!(psiFile instanceof KtFile file)) {
             return null;
         }
 
-        KtFile file = (KtFile) psiFile;
-        return new TreeBasedStructureViewBuilder() {
+      return new TreeBasedStructureViewBuilder() {
             @Override
             public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
                 return new KotlinStructureViewModel(file, editor, new KotlinStructureViewElement(file, false)) {

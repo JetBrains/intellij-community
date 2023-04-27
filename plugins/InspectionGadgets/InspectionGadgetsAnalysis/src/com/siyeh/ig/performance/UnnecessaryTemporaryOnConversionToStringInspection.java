@@ -133,10 +133,9 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends BaseInsp
         return;
       }
       final PsiExpression qualifier = PsiUtil.deparenthesizeExpression(methodExpression.getQualifierExpression());
-      if (!(qualifier instanceof PsiNewExpression)) {
+      if (!(qualifier instanceof PsiNewExpression newExpression)) {
         return;
       }
-      final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
       final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
         return;

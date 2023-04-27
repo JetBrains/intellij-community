@@ -45,11 +45,6 @@ class SearchEverywhereKotlinClassFeaturesProvider : SearchEverywhereElementFeatu
     private val NUMBER_OF_METHODS = EventFields.Int("kotlinNumberOfMethods")
     private val NUMBER_OF_OVERRIDDEN_DECLARATIONS = EventFields.Int("kotlinNumberOfOverridden")
     private val NUMBER_OF_CONTEXT_RECEIVERS = EventFields.Int("kotlinNumberOfReceivers")
-
-    private val IS_DOCUMENTED_KEY = EventFields.Boolean("kotlinIsDocumented")
-
-    // Number of documented declarations inside class
-    private val NUMBER_OF_DOCUMENTED_KEY = EventFields.Int("kotlinNumberOfDocs")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> = listOf(
@@ -58,8 +53,7 @@ class SearchEverywhereKotlinClassFeaturesProvider : SearchEverywhereElementFeatu
     IS_INNER_CLASS_KEY, IS_OPEN_CLASS_KEY, IS_ENUM_CLASS_KEY, IS_SEALED_CLASS_KEY, IS_INLINE_CLASS_KEY,
     IS_VALUE_CLASS_KEY, IS_OBJECT_CLASS_KEY, IS_DATA_CLASS_KEY, IS_SAM_CLASS_KEY,
     NUMBER_OF_SUPER_CLASSES_KEY, NUMBER_OF_DECLARATIONS, NUMBER_OF_PROPERTIES,
-    NUMBER_OF_METHODS, NUMBER_OF_OVERRIDDEN_DECLARATIONS, NUMBER_OF_CONTEXT_RECEIVERS,
-    IS_DOCUMENTED_KEY, NUMBER_OF_DOCUMENTED_KEY
+    NUMBER_OF_METHODS, NUMBER_OF_OVERRIDDEN_DECLARATIONS, NUMBER_OF_CONTEXT_RECEIVERS
   )
 
   override fun getElementFeatures(element: Any,
@@ -108,9 +102,6 @@ class SearchEverywhereKotlinClassFeaturesProvider : SearchEverywhereElementFeatu
         add(NUMBER_OF_PROPERTIES.with(declarations.filterIsInstance<KtProperty>().size))
         add(NUMBER_OF_OVERRIDDEN_DECLARATIONS.with(declarations.count { it.hasModifier(KtTokens.OVERRIDE_KEYWORD) }))
         add(NUMBER_OF_CONTEXT_RECEIVERS.with(psiClass.contextReceivers.size))
-
-        add(IS_DOCUMENTED_KEY.with(psiClass.docComment != null))
-        add(NUMBER_OF_DOCUMENTED_KEY.with(declarations.count { it.docComment != null }))
       }
     }
   }

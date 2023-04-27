@@ -41,7 +41,7 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   protected PersistentFSRecordsOverLockFreePagedStorage openStorage(final Path storagePath) throws IOException {
     final int pageSize;
     final boolean nativeBytesOrder;
-    try (var file = PersistentFSRecordsStorage.openRMappedFile(storagePath, RECORD_SIZE_IN_BYTES)) {
+    try (var file = PersistentFSRecordsStorageFactory.openRMappedFile(storagePath, RECORD_SIZE_IN_BYTES)) {
       storageContext = file.getStorageLockContext();
       pageSize = file.getPagedFileStorage().getPageSize();
       nativeBytesOrder = file.isNativeBytesOrder();

@@ -624,7 +624,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       removeParametersFromCall(argList);
     }
     else {
-      LOG.error(element.getParent());
+      LOG.error("Unexpected parent type: " + element.getParent());
     }
   }
 

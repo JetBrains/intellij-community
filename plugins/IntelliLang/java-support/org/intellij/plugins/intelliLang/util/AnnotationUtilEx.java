@@ -73,8 +73,7 @@ public final class AnnotationUtilEx {
         element = ((PsiAssignmentExpression)element).getLExpression();
         continue;
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression p) {
         if (p.getRExpression() == element) {
           element = p.getLExpression();
           continue;
@@ -89,8 +88,7 @@ public final class AnnotationUtilEx {
       else if (parent instanceof PsiModifierListOwner) {
         return (PsiModifierListOwner)parent;
       }
-      else if (parent instanceof PsiArrayInitializerMemberValue) {
-        final PsiArrayInitializerMemberValue value = (PsiArrayInitializerMemberValue)parent;
+      else if (parent instanceof PsiArrayInitializerMemberValue value) {
         final PsiElement pair = value.getParent();
         if (pair instanceof PsiNameValuePair) {
           return AnnotationUtil.getAnnotationMethod((PsiNameValuePair)pair);
@@ -145,8 +143,7 @@ public final class AnnotationUtilEx {
       return visitor.visitAnnotationParameter((PsiNameValuePair)element, (PsiAnnotation)parent.getParent());
     }
 
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression p) {
       if (p.getRExpression() == element || p.getOperationTokenType() == JavaTokenType.PLUSEQ) {
         final PsiExpression left = p.getLExpression();
         if (left instanceof PsiReferenceExpression) {

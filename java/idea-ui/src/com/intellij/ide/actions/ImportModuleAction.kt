@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -36,9 +37,26 @@ private val LOG = logger<ImportModuleAction>()
 
 open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
   companion object {
+
+    @JvmStatic
     fun doImport(project: Project?): List<Module> {
-      val wizard = selectFileAndCreateWizard(project = project, dialogParent = null)
-      return if (wizard == null || wizard.stepCount > 0 && !wizard.showAndGet()) emptyList() else createFromWizard(project, wizard)
+      return doImport(project) {
+        selectFileAndCreateWizard(project = project, dialogParent = null)
+      }
+    }
+
+    @JvmStatic
+    fun doImport(project: Project?, createWizard: () -> AbstractProjectWizard?): List<Module> {
+      val wizard = createWizard() ?: return emptyList()
+      try {
+        if (wizard.stepCount > 0 && !wizard.showAndGet()) {
+          return emptyList()
+        }
+        return doCreateFromWizard(project, wizard)
+      }
+      finally {
+        Disposer.dispose(wizard.disposable)
+      }
     }
 
     @JvmStatic
@@ -76,6 +94,7 @@ open class ImportModuleAction : AnAction(), NewProjectOrModuleAction {
                                        providers = providers)
     }
 
+    @JvmStatic
     fun selectFileAndCreateWizard(
       project: Project?,
       dialogParent: Component?,

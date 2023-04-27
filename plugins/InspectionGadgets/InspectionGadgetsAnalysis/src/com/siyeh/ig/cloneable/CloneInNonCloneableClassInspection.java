@@ -42,8 +42,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
-    if (aClass instanceof PsiAnonymousClass) {
-      final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
+    if (aClass instanceof PsiAnonymousClass anonymousClass) {
       final String text = anonymousClass.getBaseClassType().getPresentableText();
       return InspectionGadgetsBundle.message("clone.method.in.non.cloneable.anonymous.class.problem.descriptor", text);
     }

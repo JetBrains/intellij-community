@@ -340,8 +340,7 @@ final class ValueCellRenderer implements TableCellRenderer {
       return (Map<Object, Object>)table;
     }
 
-    if (table instanceof Object[]) {
-      Object[] arr = (Object[])table;
+    if (table instanceof Object[] arr) {
       Map<Object, Object> properties = new HashMap<>();
       for (int i = 0; i < arr.length; i += 2) {
         if (arr[i].equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;

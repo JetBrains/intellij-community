@@ -24,7 +24,7 @@ def gradleApiBaseVersion = GradleVersion.version(gradleApiVersion).getBaseVersio
 def gradleWrapperFileName = "gradle-wrapper.jar"
 def gradleLauncherFileName = "gradle-launcher-${gradleApiBaseVersion}.jar"
 
-def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build")
+def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build/apiDeps")
 
 task expandGradleApiJar() {
   doLast {
@@ -71,6 +71,7 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
   include 'META-INF/native/**'
   include 'META-INF/gradle-plugins/**'
   include 'META-INF/services/org.gradle.*'
+  include 'META-INF/*.kotlin_module'
   
   exclude 'org/gradle/internal/impldep/META-INF/versions/**'
 }

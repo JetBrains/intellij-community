@@ -8,6 +8,8 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
@@ -32,11 +34,13 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.lang.ref.WeakReference
 
+@ApiStatus.Internal
 @Service
-internal class DocumentationManager(private val project: Project) : Disposable {
+class DocumentationManager(private val project: Project) : Disposable {
 
   companion object {
 
@@ -211,7 +215,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
   ) {
     EDT.assertIsEdt()
     cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
-      val result = withContext(Dispatchers.IO) {
+      val result = withContext(Dispatchers.IO + ClientId.current.asContextElement()) {
         resolveLink(targetSupplier, url, DocumentationTarget::navigatable)
       }
       if (result is InternalResolveLinkResult.Value) {

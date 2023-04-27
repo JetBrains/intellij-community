@@ -47,8 +47,7 @@ public final class FinalUtils {
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new HashMap<>();
     Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new HashMap<>();
     PsiElementProcessor<PsiElement> elementDoesNotViolateFinality = e -> {
-      if (!(e instanceof PsiReferenceExpression)) return true;
-      PsiReferenceExpression ref = (PsiReferenceExpression)e;
+      if (!(e instanceof PsiReferenceExpression ref)) return true;
       if (!ref.isReferenceTo(variable)) return true;
       HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil
         .checkVariableInitializedBeforeUsage(ref, variable, uninitializedVarProblems, variable.getContainingFile(), true);

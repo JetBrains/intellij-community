@@ -16,11 +16,11 @@ import kotlin.io.path.writeText
 
 internal class BuildArtifactsReproducibilityTest {
   private val randomSeedNumber = Random().nextLong()
-  private val iterationsChannel = Channel<BuildContext>()
-  val iterations = if (isEnabled) 2 else 1
+  private val iterationChannel = Channel<BuildContext>()
+  val iterations: Int = if (isEnabled) 2 else 1
 
   companion object {
-    val isEnabled = System.getProperty("intellij.build.test.artifacts.reproducibility") == "true"
+    val isEnabled: Boolean = System.getProperty("intellij.build.test.artifacts.reproducibility") == "true"
   }
 
   fun configure(options: BuildOptions) {
@@ -35,16 +35,16 @@ internal class BuildArtifactsReproducibilityTest {
     if (!isEnabled) return
     build.cleanBuildOutput()
     if (iterationNumber == 1) {
-      iterationsChannel.send(build)
+      iterationChannel.send(build)
       /**
        * Waiting for [compare] to complete not to clean up [BuildPaths.buildOutputDir] of a [build]
        */
-      iterationsChannel.receive()
+      iterationChannel.receive()
     }
     else {
-      val otherBuild = iterationsChannel.receive()
+      val otherBuild = iterationChannel.receive()
       compare(build, otherBuild)
-      iterationsChannel.send(build)
+      iterationChannel.send(build)
     }
   }
 

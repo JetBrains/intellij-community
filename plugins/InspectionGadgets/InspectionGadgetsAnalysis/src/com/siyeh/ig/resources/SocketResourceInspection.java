@@ -33,8 +33,7 @@ public class SocketResourceInspection extends ResourceInspection {
 
   @Override
   protected boolean isResourceCreation(PsiExpression expression) {
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"accept".equals(methodName)) {

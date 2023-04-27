@@ -55,12 +55,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   @NotNull
   @Override
   public Promise<Object> revalidateElement(@NotNull Object element) {
-    if (!(element instanceof AbstractTreeNode)) {
+    if (!(element instanceof AbstractTreeNode node)) {
       return Promises.rejectedPromise();
     }
 
     final AsyncPromise<Object> result = new AsyncPromise<>();
-    AbstractTreeNode node = (AbstractTreeNode)element;
     final Object value = node.getValue();
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
     batch(indicator -> {
@@ -372,8 +371,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean validateNode(@NotNull final Object child) {
-    if (child instanceof ProjectViewNode) {
-      final ProjectViewNode<?> projectViewNode = (ProjectViewNode<?>)child;
+    if (child instanceof ProjectViewNode<?> projectViewNode) {
       return projectViewNode.validate();
     }
     return true;

@@ -191,8 +191,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
      * @return true if the pattern is matched
      */
     private boolean registerProblem(@NotNull PsiBinaryExpression expression, PsiExpression rightOperand, boolean equal) {
-      if (rightOperand instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)rightOperand;
+      if (rightOperand instanceof PsiMethodCallExpression methodCallExpression) {
         final NullCheck nullCheck = NullCheck.create(expression.getLOperand());
         if (nullCheck != null && nullCheck.isEqual != equal) {
           final PsiExpression nullCheckedExpression = nullCheck.compared;
@@ -226,8 +225,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
     @NotNull
     private PsiExpression checkEqualityBefore(@NotNull PsiExpression expression, boolean equal, PsiExpression part1, PsiExpression part2) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
-      if (parent instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
+      if (parent instanceof PsiBinaryExpression binaryExpression) {
         final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (equal && JavaTokenType.OROR.equals(tokenType) || !equal && JavaTokenType.ANDAND.equals(tokenType)) {
           if (PsiTreeUtil.isAncestor(binaryExpression.getROperand(), expression, false)) {
@@ -243,10 +241,9 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
 
     private boolean isEquality(PsiExpression expression, boolean equals, PsiExpression part1, PsiExpression part2) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (!(expression instanceof PsiBinaryExpression)) {
+      if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       if (equals) {
         if (!JavaTokenType.EQEQ.equals(binaryExpression.getOperationTokenType())) {
           return false;
@@ -282,8 +279,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
   @Nullable
   private static PsiExpression findFinalVariableDefinition(@NotNull PsiReferenceExpression expression) {
     final PsiElement resolved = expression.resolve();
-    if (resolved instanceof PsiVariable) {
-      final PsiVariable variable = (PsiVariable)resolved;
+    if (resolved instanceof PsiVariable variable) {
       if (variable.hasModifierProperty(PsiModifier.FINAL)) {
         return PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
       }
@@ -301,21 +297,12 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
   }
 
   //<editor-fold desc="Helpers">
-  private static class Negated {
-    @NotNull final PsiExpression expression;
-    final boolean isEqual;
-
-    Negated(@NotNull PsiExpression expression, boolean isEqual) {
-      this.expression = expression;
-      this.isEqual = isEqual;
-    }
-
+  private record Negated(@NotNull PsiExpression expression, boolean isEqual) {
     @Nullable
     static Negated create(@Nullable PsiExpression maybeNegatedExpression) {
       boolean equal = true;
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(maybeNegatedExpression);
-      if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      if (expression instanceof PsiPrefixExpression prefixExpression) {
         if (JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
           equal = false;
           expression = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
@@ -325,20 +312,11 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
     }
   }
 
-  private static class NullCheck {
-    @NotNull final PsiExpression compared;
-    final boolean isEqual;
-
-    NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
-      this.compared = compared;
-      this.isEqual = isEqual;
-    }
-
+  private record NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
     @Nullable
     private static NullCheck create(@Nullable PsiExpression maybeNullCheckExpression) {
       final Negated n = Negated.create(maybeNullCheckExpression);
-      if (n != null && n.expression instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binaryExpression = (PsiBinaryExpression)n.expression;
+      if (n != null && n.expression instanceof PsiBinaryExpression binaryExpression) {
         PsiExpression comparedWithNull = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getValueComparedWithNull(binaryExpression));
         if (comparedWithNull != null) {
           boolean equal = JavaTokenType.EQEQ.equals(binaryExpression.getOperationTokenType());
@@ -349,22 +327,11 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
     }
   }
 
-  private static class EqualsCheck {
-    @NotNull final PsiExpression argument;
-    @NotNull final PsiExpression qualifier;
-    final boolean isEqual;
-
-    EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
-      this.argument = argument;
-      this.qualifier = qualifier;
-      this.isEqual = isEqual;
-    }
-
+  private record EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
     @Nullable
     private static EqualsCheck create(@Nullable PsiExpression maybeEqualsCheckExpression) {
       final Negated n = Negated.create(maybeEqualsCheckExpression);
-      if (n != null && n.expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)n.expression;
+      if (n != null && n.expression instanceof PsiMethodCallExpression callExpression) {
         if (HardcodedMethodConstants.EQUALS.equals(callExpression.getMethodExpression().getReferenceName())) {
           final PsiExpression argument = getArgumentExpression(callExpression);
           final PsiExpression qualifier = getQualifierExpression(callExpression);

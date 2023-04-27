@@ -88,11 +88,10 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof ImageFileEditorState) {
+    if (state instanceof ImageFileEditorState editorState) {
       Options options = OptionsManager.getInstance().getOptions();
       ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
-      ImageFileEditorState editorState = (ImageFileEditorState)state;
       ImageZoomModel zoomModel = imageEditor.getZoomModel();
       imageEditor.setTransparencyChessboardVisible(editorState.isBackgroundVisible());
       imageEditor.setGridVisible(editorState.isGridVisible());

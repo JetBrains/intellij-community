@@ -51,10 +51,9 @@ public class EmptyDirectoryInspection extends GlobalInspectionTool {
     final Project project = context.getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final SearchScope searchScope = ReadAction.compute(() -> scope.toSearchScope());
-    if (!(searchScope instanceof GlobalSearchScope)) {
+    if (!(searchScope instanceof GlobalSearchScope globalSearchScope)) {
       return;
     }
-    final GlobalSearchScope globalSearchScope = (GlobalSearchScope)searchScope;
     index.iterateContent(file -> {
       if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(file)) {
         return true;

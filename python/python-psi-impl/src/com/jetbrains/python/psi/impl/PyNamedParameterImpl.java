@@ -325,8 +325,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           if (node instanceof ScopeOwner && node != owner) {
             return;
           }
-          if (node instanceof PyQualifiedExpression) {
-            final PyQualifiedExpression expr = (PyQualifiedExpression)node;
+          if (node instanceof PyQualifiedExpression expr) {
             final PyExpression qualifier = expr.getQualifier();
             if (qualifier != null) {
               final String attributeName = expr.getReferencedName();
@@ -447,8 +446,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       final PyCallExpression callExpression = argumentList.getCallExpression();
       if (elementIsArgument && callExpression != null) {
         final PyExpression callee = callExpression.getCallee();
-        if (callee instanceof PyReferenceExpression) {
-          final PyReferenceExpression calleeReferenceExpr = (PyReferenceExpression)callee;
+        if (callee instanceof PyReferenceExpression calleeReferenceExpr) {
           final PyExpression firstQualifier = PyPsiUtils.getFirstQualifier(calleeReferenceExpr);
           final PsiReference ref = firstQualifier.getReference();
           if (ref != null && ref.isReferenceTo(this)) {

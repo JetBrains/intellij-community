@@ -219,18 +219,16 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiPolyadicExpression) {
         parent = parent.getParent();
       }
-      if (!(parent instanceof PsiAssignmentExpression)) {
+      if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
         return false;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
         return false;
       }
       if (assignmentExpression.getOperationTokenType() == JavaTokenType.PLUSEQ) {
         return true;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement element = referenceExpression.resolve();
       if (!(element instanceof PsiVariable)) {
         return false;
@@ -241,8 +239,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
     private static boolean isAppended(PsiReferenceExpression otherRef, PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if(expression instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      if(expression instanceof PsiPolyadicExpression polyadicExpression) {
         if (polyadicExpression.getOperationTokenType().equals(JavaTokenType.PLUS)) {
           for (PsiExpression operand : polyadicExpression.getOperands()) {
             if (isSameReference(operand, otherRef) || isAppended(otherRef, operand)) return true;
@@ -335,8 +332,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       return true;
     }
     Predicate<PsiReference> isPossiblyNullableWrite = ref -> {
-      if (!(ref instanceof PsiExpression)) return false;
-      PsiExpression expression = (PsiExpression)ref;
+      if (!(ref instanceof PsiExpression expression)) return false;
       if (!PsiUtil.isOnAssignmentLeftHand(expression)) return false;
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class);
       if (assignment == null || assignment.getOperationTokenType() != JavaTokenType.EQ) return false;
@@ -432,8 +428,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                          PsiReferenceExpression ref,
                          CommentTracker ct) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
-      if(parent instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+      if(parent instanceof PsiAssignmentExpression assignment) {
         if(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()) == ref) {
           replaceInAssignment(variable, builderVariable, assignment, ct);
           return;
@@ -459,8 +454,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           }
         }
       }
-      if(parent instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)parent;
+      if(parent instanceof PsiBinaryExpression binOp) {
         if(ExpressionUtils.getValueComparedWithNull(binOp) != null) {
           return;
         }
@@ -555,9 +549,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
       String builderName = Objects.requireNonNull(builderVariable.getName());
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
-        if (rValue instanceof PsiPolyadicExpression &&
+        if (rValue instanceof PsiPolyadicExpression concat &&
             ((PsiPolyadicExpression)rValue).getOperationTokenType().equals(JavaTokenType.PLUS)) {
-          PsiPolyadicExpression concat = (PsiPolyadicExpression)rValue;
           PsiExpression[] operands = concat.getOperands();
           if (operands.length > 1) {
             // s = s + ...;

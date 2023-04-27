@@ -28,8 +28,7 @@ public class PyCallSignatureTypeProvider extends PyTypeProviderBase {
 
   @Override
   public Ref<PyType> getReturnType(@NotNull final PyCallable callable, @NotNull TypeEvalContext context) {
-    if (callable instanceof PyFunction) {
-      PyFunction function = (PyFunction)callable;
+    if (callable instanceof PyFunction function) {
       PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
       if (signature != null && signature.getReturnType() != null) {
         final String typeName = signature.getReturnType().getTypeQualifiedName();

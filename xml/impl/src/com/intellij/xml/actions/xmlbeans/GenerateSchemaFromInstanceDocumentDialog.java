@@ -131,8 +131,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
           validateData();
         }
       });
-    } else if (component instanceof JComboBox) {
-      JComboBox jComboBox = ((JComboBox) component);
+    } else if (component instanceof JComboBox jComboBox) {
 
       jComboBox.addActionListener(new ActionListener() {
         @Override

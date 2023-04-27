@@ -35,8 +35,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
     myIntentionSettingsTree = new IntentionSettingsTree() {
       @Override
       protected void selectionChanged(Object selected) {
-        if (selected instanceof IntentionActionMetaData) {
-          final IntentionActionMetaData actionMetaData = (IntentionActionMetaData)selected;
+        if (selected instanceof IntentionActionMetaData actionMetaData) {
           final Runnable runnable = () -> {
             intentionSelected(actionMetaData);
             if (myDetailsComponent != null) {

@@ -47,9 +47,8 @@ public final class AnonymousFromMapGenerator {
     for (GrNamedArgument arg : operand.getNamedArguments()) {
       final String name = arg.getLabelName();
       final GrExpression expression = arg.getExpression();
-      if (name == null || !(expression instanceof GrClosableBlock)) continue;
+      if (name == null || !(expression instanceof GrClosableBlock closure)) continue;
 
-      final GrClosableBlock closure = (GrClosableBlock)expression;
       final GrParameter[] allParameters = closure.getAllParameters();
       List<GrParameter> actual = new ArrayList<>(Arrays.asList(allParameters));
       final PsiType clReturnType = context.typeProvider.getReturnType(closure);

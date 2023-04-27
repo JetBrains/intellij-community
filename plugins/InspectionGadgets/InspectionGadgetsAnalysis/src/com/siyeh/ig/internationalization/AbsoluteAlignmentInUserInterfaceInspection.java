@@ -108,10 +108,9 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
+      if (!(parent instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
       PsiReplacementUtil.replaceExpression(referenceExpression, myClassName + '.' + myReplacement);
     }
   }
@@ -154,10 +153,9 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
 
     private static String checkExpression(PsiReferenceExpression expression, String... classNames) {
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return null;
       }
-      final PsiField field = (PsiField)target;
       final PsiClass containingClass = field.getContainingClass();
       for (String className : classNames) {
         if (InheritanceUtil.isInheritor(containingClass, className)) {

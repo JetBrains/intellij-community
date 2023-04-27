@@ -102,8 +102,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       if (result instanceof Character) {
         result = Integer.valueOf(((Character)result).charValue());
       }
-      if (result instanceof Number) {
-        final Number number = (Number)result;
+      if (result instanceof Number number) {
         if (ignoreOverflowingByteCasts && PsiTypes.intType().equals(operandType) && PsiTypes.byteType().equals(castType)) {
           final int i = number.intValue();
           if (i > Byte.MIN_VALUE && i <= 255) {

@@ -96,8 +96,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         super.visitReferenceExpression(ref);
 
         final PsiElement resolved = ref.resolve();
-        if (resolved instanceof GrField && ((GrField)resolved).hasModifierProperty(PsiModifier.FINAL)) {
-          final GrField field = (GrField)resolved;
+        if (resolved instanceof GrField field && ((GrField)resolved).hasModifierProperty(PsiModifier.FINAL)) {
           final PsiClass containingClass = field.getContainingClass();
 
           if (PsiUtil.isLValue(ref)) {

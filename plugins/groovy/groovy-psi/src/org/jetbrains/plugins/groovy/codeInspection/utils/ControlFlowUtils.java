@@ -85,8 +85,7 @@ public final class ControlFlowUtils {
     else if (statement instanceof GrBlockStatement) {
       return blockMayCompleteNormally((GrBlockStatement)statement);
     }
-    else if (statement instanceof GrSynchronizedStatement) {
-      final GrSynchronizedStatement syncStatement = (GrSynchronizedStatement)statement;
+    else if (statement instanceof GrSynchronizedStatement syncStatement) {
       return openBlockMayCompleteNormally(syncStatement.getBody());
     }
     else if (statement instanceof GrLabeledStatement) {
@@ -248,8 +247,7 @@ public final class ControlFlowUtils {
 
 
   public static GrStatement stripBraces(@NotNull GrStatement branch) {
-    if (branch instanceof GrBlockStatement) {
-      final GrBlockStatement block = (GrBlockStatement)branch;
+    if (branch instanceof GrBlockStatement block) {
       final GrStatement[] statements = block.getBlock().getStatements();
       if (statements.length == 1) {
         return statements[0];
@@ -300,8 +298,7 @@ public final class ControlFlowUtils {
       if (container instanceof GrLoopStatement) {
         return false;
       }
-      else if (container instanceof GrCaseSection) {
-        final GrCaseSection caseSection = (GrCaseSection)container;
+      else if (container instanceof GrCaseSection caseSection) {
 
         if (!statementIsLastInBlock(caseSection, statementToCheck)) return false;
 
@@ -314,13 +311,11 @@ public final class ControlFlowUtils {
           return false;
         }
       }
-      else if (container instanceof GrOpenBlock) {
-        final GrOpenBlock block = (GrOpenBlock)container;
+      else if (container instanceof GrOpenBlock block) {
 
         if (!statementIsLastInBlock(block, statementToCheck)) return false;
         final PsiElement parent = block.getParent();
-        if (parent instanceof GrBlockStatement) {
-          final GrBlockStatement blockStatement = (GrBlockStatement)parent;
+        if (parent instanceof GrBlockStatement blockStatement) {
           if (blockStatement == body) return true;
         }
       }
@@ -788,8 +783,7 @@ public final class ControlFlowUtils {
       Instruction instruction = queue.poll();
       if (instruction == null) break;
 
-      if (instruction instanceof ReadWriteVariableInstruction) {
-        ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction)instruction;
+      if (instruction instanceof ReadWriteVariableInstruction rw) {
         if (variableIndex == rw.getDescriptor()) {
           if (rw.isWrite()) {
             result.add(rw);
@@ -868,8 +862,7 @@ public final class ControlFlowUtils {
 
         final PsiElement element = instruction.getElement();
         if (element instanceof GrVariable && element != var) return bitSet;
-        if (element instanceof GrReferenceExpression) {
-          final GrReferenceExpression ref = (GrReferenceExpression)element;
+        if (element instanceof GrReferenceExpression ref) {
           if (ref.isQualified() || ref.resolve() != var) {
             return bitSet;
           }

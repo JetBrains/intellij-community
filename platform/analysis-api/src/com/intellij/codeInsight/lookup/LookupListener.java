@@ -45,4 +45,12 @@ public interface LookupListener extends EventListener {
 
   default void focusDegreeChanged() {
   }
+
+  /**
+   * Called when the first element in the lookup window is shown.
+   * {@link #lookupShown} is called first. Then, as soon as at least the first element has been shown, this method is called.
+   * Sometimes the window is shown empty, so the timestamps recorded by the two methods are different.
+   */
+  default void firstElementShown() {
+  }
 }

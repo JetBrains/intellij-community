@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode")
 
 package com.intellij.codeInsight.codeVision.ui
@@ -9,7 +10,6 @@ import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.rd.swing.proxyProperty
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.reactive.Property

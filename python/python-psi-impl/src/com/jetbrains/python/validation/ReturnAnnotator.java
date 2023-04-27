@@ -31,8 +31,7 @@ public class ReturnAnnotator extends PyAnnotator {
       getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.yield.outside.of.function")).create();
     }
 
-    if (node.isDelegating() && owner instanceof PyFunction) {
-      final PyFunction function = (PyFunction)owner;
+    if (node.isDelegating() && owner instanceof PyFunction function) {
 
       if (function.isAsync() && function.isAsyncAllowed()) {
         getHolder().newAnnotation(HighlightSeverity.ERROR,

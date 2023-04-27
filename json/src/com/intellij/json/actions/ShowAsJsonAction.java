@@ -164,8 +164,7 @@ class ShowAsJsonAction extends DumbAwareAction {
 
   private static boolean selectOpened(Editor editor, JsonLineExtractor jsonLineExtractor, FileEditorManager fileEditorManager) {
     for (FileEditor fileEditor : fileEditorManager.getAllEditors()) {
-      if (fileEditor instanceof TextEditor) {
-        TextEditor textEditor = (TextEditor)fileEditor;
+      if (fileEditor instanceof TextEditor textEditor) {
         VirtualFile file = FileDocumentManager.getInstance().getFile(textEditor.getEditor().getDocument());
         if (file instanceof LightVirtualFile) {
           Integer line = LINE_KEY.get(file);

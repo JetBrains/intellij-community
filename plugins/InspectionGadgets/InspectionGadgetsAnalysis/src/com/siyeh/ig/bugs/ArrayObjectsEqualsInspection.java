@@ -83,10 +83,9 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent().getParent();
-      if (!(element instanceof PsiMethodCallExpression)) {
+      if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       CommentTracker commentTracker = new CommentTracker();
       String newExpression = "java.util.Arrays." + myKind.getNewMethodName() +
                              commentTracker.text(methodCallExpression.getArgumentList());

@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.TestMethodWithoutAssertionInspectionTestBase
 
 class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase() {
   fun `test highlighting for empty method body`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
       import org.junit.Test;
       import org.junit.Assert;
@@ -23,7 +23,7 @@ class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionI
   }
 
   fun `test no highlighting when assertion is present`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;
       import org.junit.Test;
       import org.junit.Assert;

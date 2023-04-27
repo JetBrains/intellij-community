@@ -62,8 +62,7 @@ public final class GroovyVariableCanBeFinalInspection extends GroovyLocalInspect
     final Collection<PsiReference> references = ReferencesSearch.search(variable, variable.getUseScope()).findAll();
     for (final PsiReference reference : references) {
       final PsiElement element = reference.getElement();
-      if (!(element instanceof GroovyPsiElement)) continue;
-      final GroovyPsiElement groovyElement = (GroovyPsiElement)element;
+      if (!(element instanceof GroovyPsiElement groovyElement)) continue;
       final GroovyPsiElement closure = PsiTreeUtil.getParentOfType(groovyElement, GrClosableBlock.class, GrAnonymousClassDefinition.class);
       if (closure == null || !PsiTreeUtil.isAncestor(owner, closure, false)) continue;
       if (PsiUtil.isLValue(groovyElement)) return true;

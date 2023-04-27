@@ -114,8 +114,7 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
       return new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          if (e.getInputEvent() instanceof MouseEvent) {
-            MouseEvent mouseEvent = (MouseEvent)e.getInputEvent();
+          if (e.getInputEvent() instanceof MouseEvent mouseEvent) {
             switch (mouseEvent.getID()) {
               case MouseEvent.MOUSE_ENTERED -> tooltip.mouseEntered(mouseEvent);
               case MouseEvent.MOUSE_EXITED -> tooltip.mouseExited(mouseEvent);

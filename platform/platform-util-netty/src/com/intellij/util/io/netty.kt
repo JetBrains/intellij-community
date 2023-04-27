@@ -102,9 +102,7 @@ private fun doConnect(bootstrap: Bootstrap,
                        remoteAddress: InetSocketAddress,
                        maxAttemptCount: Int,
                        stopCondition: Condition<Void>): ConnectToChannelResult {
-  if (ApplicationManager.getApplication().isDispatchThread) {
-    Logger.getInstance("com.intellij.util.io.netty").error("Synchronous connection to socket shouldn't be performed on EDT.")
-  }
+  ApplicationManager.getApplication().assertIsNonDispatchThread();
 
   var attemptCount = 0
   @Suppress("DEPRECATION")

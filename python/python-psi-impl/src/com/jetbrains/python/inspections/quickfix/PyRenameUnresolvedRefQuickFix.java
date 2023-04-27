@@ -53,10 +53,9 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PyReferenceExpression)) {
+    if (!(element instanceof PyReferenceExpression referenceExpression)) {
       return;
     }
-    final PyReferenceExpression referenceExpression = (PyReferenceExpression)element;
 
     ScopeOwner parentScope = ScopeUtil.getScopeOwner(referenceExpression);
     if (parentScope == null) return;

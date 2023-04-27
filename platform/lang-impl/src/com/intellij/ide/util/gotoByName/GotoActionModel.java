@@ -272,8 +272,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     }
 
     private static int getTypeWeight(@NotNull Object value) {
-      if (value instanceof ActionWrapper) {
-        ActionWrapper actionWrapper = (ActionWrapper)value;
+      if (value instanceof ActionWrapper actionWrapper) {
         if ((ApplicationManager.getApplication().isDispatchThread() || actionWrapper.hasPresentation()) &&
             actionWrapper.isAvailable()) {
           return 0;
@@ -290,8 +289,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @Override
     public final boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof MatchedValue)) return false;
-      MatchedValue value1 = (MatchedValue)o;
+      if (!(o instanceof MatchedValue value1)) return false;
       return Objects.equals(value, value1.value) &&
              Objects.equals(pattern, value1.pattern);
     }
@@ -678,9 +676,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
-      int byClassHashCode = Comparing.compare(myAction.getClass().hashCode(), o.myAction.getClass().hashCode());
+      int byClassHashCode = Integer.compare(myAction.getClass().hashCode(), o.myAction.getClass().hashCode());
       if (byClassHashCode != 0) return byClassHashCode;
-      int byInstanceHashCode = Comparing.compare(myAction.hashCode(), o.myAction.hashCode());
+      int byInstanceHashCode = Integer.compare(myAction.hashCode(), o.myAction.hashCode());
       if (byInstanceHashCode != 0) return byInstanceHashCode;
       return 0;
     }
@@ -785,8 +783,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       String pattern = ((MatchedValue)matchedValue).pattern;
 
       Border eastBorder = JBUI.Borders.emptyRight(2);
-      if (value instanceof ActionWrapper) {
-        ActionWrapper actionWithParentGroup = (ActionWrapper)value;
+      if (value instanceof ActionWrapper actionWithParentGroup) {
         AnAction anAction = actionWithParentGroup.getAction();
         boolean toggle = anAction instanceof ToggleAction;
         String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();

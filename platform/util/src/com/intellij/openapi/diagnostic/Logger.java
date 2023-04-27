@@ -202,6 +202,10 @@ public abstract class Logger {
     error(message, new Throwable(message), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  /**
+   * @deprecated use {@link #error(String)} instead and provide a meaningful error message
+   */
+  @Deprecated
   public void error(Object message) {
     error(String.valueOf(message));
   }

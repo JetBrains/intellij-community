@@ -154,8 +154,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   public static TargetType @NotNull [] getApplicableElementTypeFields(PsiElement owner) {
-    if (owner instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)owner;
+    if (owner instanceof PsiClass aClass) {
       if (aClass.isAnnotationType()) {
         return new TargetType[]{TargetType.ANNOTATION_TYPE, TargetType.TYPE};
       }

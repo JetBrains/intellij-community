@@ -70,9 +70,6 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
     final BuildManager buildManager = BuildManager.getInstance();
     File projectSystemIoFile = buildManager.getProjectSystemDirectory(project);
-    if (projectSystemIoFile == null) {
-      return;
-    }
 
     final Path projectSystemDir = projectSystemIoFile.toPath();
     RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);

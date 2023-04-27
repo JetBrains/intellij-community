@@ -151,8 +151,8 @@ public final class PluginDescriptorChooser {
       }
 
       if (module1 != null && module2 != null) {
-        int groupComparison = Comparing.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),
-                                                groupMatchLevel(groupPath, grouper.getGroupPath(module1)));
+        int groupComparison = Integer.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),
+                                              groupMatchLevel(groupPath, grouper.getGroupPath(module1)));
         if (groupComparison != 0) {
           return groupComparison;
         }

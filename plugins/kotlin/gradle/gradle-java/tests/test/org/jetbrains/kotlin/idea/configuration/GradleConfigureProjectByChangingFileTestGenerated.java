@@ -30,11 +30,6 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             runTest("../../../idea/tests/testData/configuration/gradle/jreLib/");
         }
 
-        @TestMetadata("js")
-        public void testJs() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/js/");
-        }
-
         @TestMetadata("libraryMissing")
         public void testLibraryMissing() throws Exception {
             runTest("../../../idea/tests/testData/configuration/gradle/libraryMissing/");

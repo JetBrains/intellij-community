@@ -77,8 +77,7 @@ public class CardActionsPanel extends JPanel {
       if (!USE_ICONS) {
         presentation.setIcon(null);
       }
-      if (action instanceof ActionGroup) {
-        ActionGroup childGroup = (ActionGroup)action;
+      if (action instanceof ActionGroup childGroup) {
         if (childGroup.isPopup()) {
           final String id = String.valueOf(++nCards);
           createCardForGroup(childGroup, id, parentId);

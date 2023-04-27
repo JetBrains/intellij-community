@@ -168,9 +168,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     if (!(element instanceof GrTypeDefinitionBody)) return false;
 
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof GrTypeDefinition)) return false;
+    if (!(parent instanceof GrTypeDefinition clazz)) return false;
 
-    final GrTypeDefinition clazz = (GrTypeDefinition)parent;
     if (clazz.isAnonymous() || clazz.getContainingClass() != null) return false;
 
     final PsiFile file = element.getContainingFile();

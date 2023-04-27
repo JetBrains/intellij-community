@@ -171,8 +171,7 @@ public final class SearchScope {
         assert myCustomScope != null;
 
         final ContentIterator iterator;
-        if (myCustomScope instanceof GlobalSearchScope) {
-          final GlobalSearchScope searchScope = (GlobalSearchScope)myCustomScope;
+        if (myCustomScope instanceof GlobalSearchScope searchScope) {
           iterator = new MyFileIterator(processor, virtualFile13 -> searchScope.contains(virtualFile13));
           if (searchScope.isSearchInLibraries()) {
             final OrderEnumerator enumerator = OrderEnumerator.orderEntries(project).withoutModuleSourceEntries().withoutDepModules();

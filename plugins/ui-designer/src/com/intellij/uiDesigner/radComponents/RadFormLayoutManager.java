@@ -143,8 +143,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
     super.addComponentToContainer(container, component, index);
     final CellConstraints cc = gridToCellConstraints(component);
-    if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
-      CellConstraints customCellConstraints = (CellConstraints) component.getCustomLayoutConstraints();
+    if (component.getCustomLayoutConstraints() instanceof CellConstraints customCellConstraints) {
       cc.insets = customCellConstraints.insets;
     }
     component.setCustomLayoutConstraints(cc);
@@ -159,8 +158,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     CellConstraints.Alignment vAlign = ((gc.getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0)
                                        ? CellConstraints.FILL
                                        : CellConstraints.DEFAULT;
-    if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
-      CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
+    if (component.getCustomLayoutConstraints() instanceof CellConstraints cc) {
       hAlign = cc.hAlign;
       vAlign = cc.vAlign;
     }
@@ -170,8 +168,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   @Override
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     writeGridConstraints(writer, child);
-    if (child.getCustomLayoutConstraints() instanceof CellConstraints) {
-      CellConstraints cc = (CellConstraints) child.getCustomLayoutConstraints();
+    if (child.getCustomLayoutConstraints() instanceof CellConstraints cc) {
       writer.startElement(UIFormXmlConstants.ELEMENT_FORMS);
       try {
         if (!cc.insets.equals(new Insets(0, 0, 0, 0))) {
@@ -702,8 +699,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   }
 
   private static ConstantSize scaleSize(final FormSpec rowSpec, final RadContainer container, final int newPx) {
-    if (rowSpec.getSize() instanceof ConstantSize) {
-      ConstantSize oldSize = (ConstantSize) rowSpec.getSize();
+    if (rowSpec.getSize() instanceof ConstantSize oldSize) {
       int oldPx = oldSize.getPixelSize(container.getDelegee());
       double newValue = Math.round(oldSize.getValue() * newPx / oldPx * 10) / 10;
       return new ConstantSize(newValue, oldSize.getUnit());
@@ -859,8 +855,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
 
     @Override
     public Insets getValue(final RadComponent component) {
-      if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
-        final CellConstraints cellConstraints = (CellConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof CellConstraints cellConstraints) {
         return cellConstraints.insets;
       }
       return new Insets(0, 0, 0, 0);
@@ -868,8 +863,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
 
     @Override
     protected void setValueImpl(final RadComponent component, final Insets value) throws Exception {
-      if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
-        final CellConstraints cellConstraints = (CellConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof CellConstraints cellConstraints) {
         cellConstraints.insets = value;
 
         FormLayout layout = (FormLayout) component.getParent().getLayout();

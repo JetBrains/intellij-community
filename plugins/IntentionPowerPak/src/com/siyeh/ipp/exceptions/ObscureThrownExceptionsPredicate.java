@@ -24,18 +24,16 @@ class ObscureThrownExceptionsPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiReferenceList)) {
+    if (!(element instanceof PsiReferenceList throwsList)) {
       return false;
     }
-    final PsiReferenceList throwsList = (PsiReferenceList)element;
     if (throwsList.getReferenceElements().length < 2) {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiMethod)) {
+    if (!(parent instanceof PsiMethod method)) {
       return false;
     }
-    final PsiMethod method = (PsiMethod)parent;
     return method.getThrowsList().equals(element);
   }
 }

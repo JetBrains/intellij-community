@@ -170,8 +170,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       if (child instanceof PsiJavaToken) {
         modifiers.add(child.getText());
       }
-      else if (child instanceof PsiAnnotation) {
-        final PsiAnnotation annotation = (PsiAnnotation)child;
+      else if (child instanceof PsiAnnotation annotation) {
         if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
           final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
           if (typeUseWithType || !modifiers.isEmpty() ||
@@ -270,8 +269,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
           }
           modifiers.add(child);
         }
-        if (child instanceof PsiAnnotation) {
-          final PsiAnnotation annotation = (PsiAnnotation)child;
+        if (child instanceof PsiAnnotation annotation) {
           if (m_requireAnnotationsFirst) {
             if (AnnotationTargetUtil.isTypeAnnotation(annotation) && !isMethodWithVoidReturnType(modifierList.getParent())) {
               // type annotations go next to the type

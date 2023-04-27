@@ -217,7 +217,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     isFiringEvent = true
     try {
       (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
-      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).resetCustomContributors()
+      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(myProject, fileTypes))
     }
     finally {
@@ -229,7 +229,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     isFiringEvent = true
     try {
       (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
-      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).resetCustomContributors()
+      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
 
       val isFromWorkspaceOnly = EntityIndexingService.getInstance().isFromWorkspaceOnly(indexingInfos)
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)

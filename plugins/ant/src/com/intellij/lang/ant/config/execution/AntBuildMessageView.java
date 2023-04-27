@@ -943,8 +943,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         return;
       }
       // proceed messages in a special way
-      if (command instanceof AddMessageCommand) {
-        AddMessageCommand addMessageCommand = (AddMessageCommand)command;
+      if (command instanceof AddMessageCommand addMessageCommand) {
         myDelayedMessages.add(addMessageCommand.getMessage());
       }
       else {

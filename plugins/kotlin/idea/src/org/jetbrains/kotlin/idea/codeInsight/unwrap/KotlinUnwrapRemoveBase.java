@@ -34,10 +34,9 @@ public abstract class KotlinUnwrapRemoveBase extends AbstractUnwrapper<KotlinUnw
     }
 
     protected boolean canExtractExpression(@NotNull KtExpression expression, @NotNull KtElement parent) {
-        if (expression instanceof KtBlockExpression) {
-            KtBlockExpression block = (KtBlockExpression) expression;
+        if (expression instanceof KtBlockExpression block) {
 
-            return block.getStatements().size() <= 1 || parent instanceof KtBlockExpression;
+          return block.getStatements().size() <= 1 || parent instanceof KtBlockExpression;
         }
         return true;
     }

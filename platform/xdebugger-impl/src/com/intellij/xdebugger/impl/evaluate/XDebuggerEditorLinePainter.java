@@ -23,7 +23,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -172,11 +171,9 @@ public final class XDebuggerEditorLinePainter extends EditorLinePainter {
 
   @NotNull
   public static TextAttributes getAttributes(int lineNumber, @NotNull VirtualFile file, XDebugSession session) {
-    final int bpLine = getCurrentBreakPointLineInFile(session, file);
     boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
-    return bpLine == lineNumber
-           && isTopFrame
-           && ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).isFullLineHighlighter()
+    XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject());
+    return isTopFrame && debuggerManager.getExecutionPointManager().isFullLineHighlighterAt(file, lineNumber)
            ? getTopFrameSelectedAttributes() : getNormalAttributes();
   }
 
@@ -205,18 +202,6 @@ public final class XDebuggerEditorLinePainter extends EditorLinePainter {
       return null;
     }
     return text;
-  }
-
-  private static int getCurrentBreakPointLineInFile(@Nullable XDebugSession session, VirtualFile file) {
-    try {
-      if (session != null) {
-        final XSourcePosition position = session.getCurrentPosition();
-        if (position != null && position.getFile().equals(file)) {
-          return position.getLine();
-        }
-      }
-    } catch (Exception ignore){}
-    return -1;
   }
 
   private static TextAttributes getNormalAttributes() {

@@ -145,9 +145,8 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
         sb.append(")");
       }
     }
-    if (parent instanceof PyFromImportStatement) {
+    if (parent instanceof PyFromImportStatement fromImportStatement) {
       sb.append(" from ");
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
       sb.append(StringUtil.repeat(".", fromImportStatement.getRelativeLevel()));
       final PyReferenceExpression source = fromImportStatement.getImportSource();
       if (source != null) {

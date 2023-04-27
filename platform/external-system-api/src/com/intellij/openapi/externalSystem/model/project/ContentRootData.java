@@ -121,8 +121,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SourceRoot)) return false;
-      SourceRoot root = (SourceRoot)o;
+      if (!(o instanceof SourceRoot root)) return false;
       if (packagePrefix != null ? !packagePrefix.equals(root.packagePrefix) : root.packagePrefix != null) return false;
       if (!path.equals(root.path)) return false;
       return true;

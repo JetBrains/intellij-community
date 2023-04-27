@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -133,7 +132,7 @@ object ContentRootCollector {
     override fun compareTo(other: ImportedFolder): Int {
       val result = FileUtil.comparePaths(path, other.path)
       if (result != 0) return result
-      return Comparing.compare(rank, other.rank)
+      return Integer.compare(rank, other.rank)
     }
 
     override fun toString(): String {
@@ -145,7 +144,7 @@ object ContentRootCollector {
     override fun compareTo(other: ImportedFolder): Int {
       val result = super.compareTo(other)
       if (result != 0 || other !is UserOrGeneratedSourceFolder) return result
-      return Comparing.compare(rootTypeRank, other.rootTypeRank)
+      return Integer.compare(rootTypeRank, other.rootTypeRank)
     }
 
     val rootTypeRank

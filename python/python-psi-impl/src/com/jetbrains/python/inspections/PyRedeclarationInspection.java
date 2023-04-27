@@ -119,8 +119,7 @@ public class PyRedeclarationInspection extends PyInspection {
         final Ref<PsiElement> writeElementRef = Ref.create(null);
         final Ref<Boolean> underPossiblyFalseCondition = Ref.create(false);
         ControlFlowUtil.iteratePrev(startInstruction, instructions, instruction -> {
-          if (instruction instanceof ReadWriteInstruction && instruction.num() != startInstruction) {
-            final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+          if (instruction instanceof ReadWriteInstruction rwInstruction && instruction.num() != startInstruction) {
             if (name.equals(rwInstruction.getName())) {
               final PsiElement originalElement = rwInstruction.getElement();
               if (originalElement != null) {
@@ -178,8 +177,7 @@ public class PyRedeclarationInspection extends PyInspection {
         return !PyEvaluator.evaluateAsBoolean(forPart.getSource(), false);
       }
 
-      if (instruction instanceof ConditionalInstruction) {
-        final ConditionalInstruction conditionalInstruction = (ConditionalInstruction)instruction;
+      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
         final PsiElement condition = conditionalInstruction.getCondition();
         if (condition instanceof PyExpression) {
           return conditionalInstruction.getResult()

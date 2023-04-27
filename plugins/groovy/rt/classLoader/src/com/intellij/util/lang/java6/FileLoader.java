@@ -200,11 +200,8 @@ final class FileLoader extends Loader {
 
     File index = getIndexFileFile();
 
-    DataInputStream reader = null;
     boolean isOk = false;
-
-    try {
-      reader = new DataInputStream(new BufferedInputStream(new FileInputStream(index)));
+    try (DataInputStream reader = new DataInputStream(new BufferedInputStream(new FileInputStream(index)))) {
       if (DataInputOutputUtilRt.readINT(reader) == ourVersion) {
         ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData(reader);
         isOk = true;
@@ -217,13 +214,6 @@ final class FileLoader extends Loader {
     catch (IOException ignore) {
     }
     finally {
-      if (reader != null) {
-        try {
-          reader.close();
-        }
-        catch (IOException ignore) {
-        }
-      }
       if (!isOk) {
         index.delete();
       }
@@ -322,12 +312,8 @@ final class FileLoader extends Loader {
     @NotNull
     @Override
     public byte[] getBytes() throws IOException {
-      InputStream stream = getInputStream();
-      try {
+      try (InputStream stream = getInputStream()) {
         return FileUtilRt.loadBytes(stream, (int)myFile.length());
-      }
-      finally {
-        stream.close();
       }
     }
   }

@@ -69,6 +69,5 @@ project.mingwX64Test
 
 
 Test configuration:
-- hiding following roots: resources, android-specific roots, generated
 - hiding following standard dependencies: sdk, self
 - dependencies order is not checked

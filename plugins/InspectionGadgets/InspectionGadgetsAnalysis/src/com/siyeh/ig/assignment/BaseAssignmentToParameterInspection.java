@@ -82,15 +82,13 @@ public abstract class BaseAssignmentToParameterInspection extends BaseInspection
     @Nullable
     private PsiParameter getParameter(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return null;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement variable = referenceExpression.resolve();
-      if (!(variable instanceof PsiParameter)) {
+      if (!(variable instanceof PsiParameter parameter)) {
         return null;
       }
-      final PsiParameter parameter = (PsiParameter)variable;
       return !isApplicable(parameter) ? null : parameter;
     }
   }

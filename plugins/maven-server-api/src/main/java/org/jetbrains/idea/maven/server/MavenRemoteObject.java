@@ -23,8 +23,8 @@ public class MavenRemoteObject extends RemoteObject {
     return ex.getClass().getName().startsWith(MavenRemoteObject.class.getPackage().getName());
   }
 
-  public RuntimeException rethrowException(Throwable e) {
+  public RuntimeException wrapToSerializableRuntimeException(Throwable e) {
     Throwable wrap = wrapException(e);
-    throw wrap instanceof RuntimeException ? (RuntimeException)wrap : new RuntimeException(wrap);
+    return wrap instanceof RuntimeException ? (RuntimeException)wrap : new RuntimeException(wrap);
   }
 }

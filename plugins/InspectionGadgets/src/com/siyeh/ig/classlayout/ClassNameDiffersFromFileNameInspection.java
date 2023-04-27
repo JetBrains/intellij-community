@@ -71,10 +71,9 @@ public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so that it doesn't drill down to inner classes
       final PsiElement parent = aClass.getParent();
-      if (!(parent instanceof PsiJavaFile)) {
+      if (!(parent instanceof PsiJavaFile file)) {
         return;
       }
-      final PsiJavaFile file = (PsiJavaFile)parent;
       final String className = aClass.getName();
       if (className == null) {
         return;

@@ -632,8 +632,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Nullable
   protected Module getNodeModule(@Nullable final Object element) {
-    if (element instanceof PsiElement) {
-      PsiElement psiElement = (PsiElement)element;
+    if (element instanceof PsiElement psiElement) {
       return ModuleUtilCore.findModuleForPsiElement(psiElement);
     }
     return null;

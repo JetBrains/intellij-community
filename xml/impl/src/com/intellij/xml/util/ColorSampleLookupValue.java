@@ -131,11 +131,9 @@ public class ColorSampleLookupValue {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof ColorSampleLookupValue)) {
+    if (!(o instanceof ColorSampleLookupValue value)) {
       return false;
     }
-
-    ColorSampleLookupValue value = (ColorSampleLookupValue)o;
 
     if (myIsStandard != value.myIsStandard) {
       return false;

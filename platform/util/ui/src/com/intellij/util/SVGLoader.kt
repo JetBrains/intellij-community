@@ -250,6 +250,7 @@ object SVGLoader {
       override fun forPath(path: String?): SvgElementColorPatcher? {
         return newPatcher(digest, map + backgroundColors.associateWith { "#00000000" }, alpha)
       }
+      override fun wholeDigest(): ByteArray? = digest
     }
   }
 
@@ -341,6 +342,8 @@ object SVGLoader {
 
   interface SvgElementColorPatcherProvider {
     fun forPath(path: String?): SvgElementColorPatcher?
+
+    fun wholeDigest(): ByteArray? = null
   }
 
   val persistentCache: SvgCacheManager?

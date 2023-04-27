@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="mvstore" level="project" />
+    <orderEntry type="library" name="jbr-api" level="project" />
   </component>
 </module>

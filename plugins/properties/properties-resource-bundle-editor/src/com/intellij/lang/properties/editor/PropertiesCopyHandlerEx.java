@@ -19,8 +19,7 @@ public class PropertiesCopyHandlerEx extends PropertiesCopyHandler {
                  .getDataContextFromFocusAsync()
                  .onSuccess(context -> {
                    final FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
-                   if (fileEditor instanceof ResourceBundleEditor) {
-                     final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)fileEditor;
+                   if (fileEditor instanceof ResourceBundleEditor resourceBundleEditor) {
                      resourceBundleEditor.updateTreeRoot();
                      resourceBundleEditor.selectProperty(newName);
                    }

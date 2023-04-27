@@ -3,7 +3,6 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public final class PyNames {
   /**
    * Any string type
    */
-  public static final List<String> TYPE_STRING_TYPES = ContainerUtil.immutableList(TYPE_UNICODE, TYPE_STR);
+  public static final List<String> TYPE_STRING_TYPES = List.of(TYPE_UNICODE, TYPE_STR);
   /**
    * date type
    */
@@ -77,7 +76,7 @@ public final class PyNames {
   public static final String GET = "__get__";
   public static final String __CLASS__ = "__class__";
   public static final String DUNDER_METACLASS = "__metaclass__";
-  public static final String METACLASS = "metaclass";
+  public static final @NlsSafe String METACLASS = "metaclass";
   public static final String TYPE = "type";
 
   public static final String SUPER = "super";
@@ -221,7 +220,7 @@ public final class PyNames {
 
   public static final String NOT_IMPLEMENTED_ERROR = "NotImplementedError";
 
-  public static final String UNKNOWN_TYPE = "Any";
+  public static final @NlsSafe String UNKNOWN_TYPE = "Any";
 
   public static final @NlsSafe String UNNAMED_ELEMENT = "<unnamed>";
 

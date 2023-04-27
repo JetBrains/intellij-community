@@ -109,7 +109,7 @@ public class GitStandardProgressAnalyzerTest {
     Object resolvingDeltasOperation = null;
     assert operationClass != null;
     for (Object enumConstant : operationClass.getEnumConstants()) {
-      if (enumConstant.toString() == "RESOLVING_DELTAS") {
+      if (enumConstant.toString().equals("RESOLVING_DELTAS")) {
         resolvingDeltasOperation = enumConstant;
       }
     }

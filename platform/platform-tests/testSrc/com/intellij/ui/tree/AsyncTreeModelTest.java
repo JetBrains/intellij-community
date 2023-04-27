@@ -527,8 +527,7 @@ public final class AsyncTreeModelTest {
     }
 
     private void runOnModelThread(@NotNull Runnable task) {
-      if (model instanceof InvokerSupplier) {
-        InvokerSupplier supplier = (InvokerSupplier)model;
+      if (model instanceof InvokerSupplier supplier) {
         supplier.getInvoker().invoke(wrap(task));
       }
       else {
@@ -729,8 +728,7 @@ public final class AsyncTreeModelTest {
     @Override
     public boolean equals(Object object) {
       if (!mutable) return super.equals(object);
-      if (object instanceof Node) {
-        Node node = (Node)object;
+      if (object instanceof Node node) {
         if (node.mutable) return Objects.equals(getUserObject(), node.getUserObject());
       }
       return false;

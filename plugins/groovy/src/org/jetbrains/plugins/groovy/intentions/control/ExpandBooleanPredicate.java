@@ -16,19 +16,16 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrStatement)) {
+    if (!(element instanceof GrStatement statement)) {
       return false;
     }
-    final GrStatement statement = (GrStatement) element;
     return isBooleanReturn(statement) || isBooleanAssignment(statement);
   }
 
   public static boolean isBooleanReturn(GrStatement statement) {
-    if (!(statement instanceof GrReturnStatement)) {
+    if (!(statement instanceof GrReturnStatement returnStatement)) {
       return false;
     }
-    final GrReturnStatement returnStatement =
-        (GrReturnStatement) statement;
     final GrExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null) {
       return false;
@@ -45,11 +42,9 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
 
   public static boolean isBooleanAssignment(GrStatement expression) {
 
-    if (!(expression instanceof GrAssignmentExpression)) {
+    if (!(expression instanceof GrAssignmentExpression assignment)) {
       return false;
     }
-    final GrAssignmentExpression assignment =
-        (GrAssignmentExpression) expression;
     final GrExpression rhs = assignment.getRValue();
     if (rhs == null) {
       return false;

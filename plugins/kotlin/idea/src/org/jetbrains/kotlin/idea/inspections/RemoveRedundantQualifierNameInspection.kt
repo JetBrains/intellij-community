@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.*
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -18,15 +16,15 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
+import org.jetbrains.kotlin.idea.codeinsight.utils.expressionWithoutClassInstanceAsReceiver
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.util.hasNotReceiver
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -38,7 +36,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.scopes.utils.findFirstClassifierWithDeprecationStatus
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import javax.swing.JComponent
 
 class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     /**
@@ -57,7 +54,7 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
             override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
                 val expressionParent = expression.parent
                 if (expressionParent is KtDotQualifiedExpression || expressionParent is KtPackageDirective || expressionParent is KtImportDirective) return
-                var expressionForAnalyze = expression.firstExpressionWithoutReceiver() ?: return
+                var expressionForAnalyze = expression.expressionWithoutClassInstanceAsReceiver() ?: return
                 if (expressionForAnalyze.selectorExpression?.text == expressionParent.getNonStrictParentOfType<KtProperty>()?.name) return
 
                 val context = expression.safeAnalyzeNonSourceRootCode()
@@ -75,7 +72,7 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
                     }
                     receiverReference.isEnumClass() -> {
                         hasCompanion = expressionForAnalyze.selectorExpression?.declarationDescriptor(context).isEnumCompanionObject()
-                        callingBuiltInEnumFunction = expressionForAnalyze.isReferenceToBuiltInEnumFunction()
+                        callingBuiltInEnumFunction = expressionForAnalyze.canBeReferenceToBuiltInEnumFunction()
                         when {
                             receiver is KtDotQualifiedExpression -> expressionForAnalyze = receiver
                             hasCompanion || callingBuiltInEnumFunction -> return
@@ -118,11 +115,6 @@ private fun KtElement.declarationDescriptor(context: BindingContext): Declaratio
 private fun DeclarationDescriptor?.isEnumClass() = safeAs<ClassDescriptor>()?.kind == ClassKind.ENUM_CLASS
 
 private fun DeclarationDescriptor?.isEnumCompanionObject() = this?.isCompanionObject() == true && containingDeclaration.isEnumClass()
-
-private tailrec fun KtDotQualifiedExpression.firstExpressionWithoutReceiver(): KtDotQualifiedExpression? = if (hasNotReceiver())
-    this
-else
-    (receiverExpression as? KtDotQualifiedExpression)?.firstExpressionWithoutReceiver()
 
 private tailrec fun <T : KtElement> T.firstApplicableExpression(validator: T.() -> T?, generator: T.() -> T?): T? {
     ProgressManager.checkCanceled()

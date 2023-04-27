@@ -60,8 +60,7 @@ public class XDebuggerInstanceTreeCreator implements DebuggerTreeCreator<Pair<XI
 
   @Override
   public void createDescriptorByNode(Object node, ResultConsumer<? super Pair<XInstanceEvaluator, String>> resultConsumer) {
-    if (node instanceof XValueNodeImpl) {
-      XValueNodeImpl valueNode = (XValueNodeImpl)node;
+    if (node instanceof XValueNodeImpl valueNode) {
       resultConsumer.onSuccess(Pair.create(valueNode.getValueContainer().getInstanceEvaluator(), valueNode.getName()));
     }
   }

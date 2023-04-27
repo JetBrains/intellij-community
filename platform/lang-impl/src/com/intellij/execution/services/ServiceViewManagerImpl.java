@@ -699,8 +699,9 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   static final class State {
-    final List<ServiceViewState> viewStates = new ArrayList<>();
-    boolean showServicesTree = true;
+    public List<ServiceViewState> viewStates = new ArrayList<>();
+
+    public boolean showServicesTree = true;
   }
 
   static String getToolWindowContextHelpId() {
@@ -964,7 +965,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
     @Override
     public void extensionRemoved(@NotNull ServiceViewContributor<?> extension, @NotNull PluginDescriptor pluginDescriptor) {
-      ServiceEvent e = ServiceEvent.createSyncResetEvent(extension.getClass());
+      ServiceEvent e = ServiceEvent.createUnloadSyncResetEvent(extension.getClass());
       myModel.handle(e).onProcessed(o -> {
         eventHandled(e);
 

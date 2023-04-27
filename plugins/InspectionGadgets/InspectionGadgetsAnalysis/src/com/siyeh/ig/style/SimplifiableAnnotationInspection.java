@@ -112,8 +112,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
     private static void buildAttributeValueText(PsiAnnotationMemberValue value,
                                                 StringBuilder out,
                                                 CommentTracker tracker) {
-      if (value instanceof PsiArrayInitializerMemberValue) {
-        final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)value;
+      if (value instanceof PsiArrayInitializerMemberValue arrayValue) {
         final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
         if (initializers.length == 1) {
           out.append(tracker.text(initializers[0]));
@@ -164,10 +163,9 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
                                   Boolean.FALSE);
           }
         }
-        if (!(attributeValue instanceof PsiArrayInitializerMemberValue)) {
+        if (!(attributeValue instanceof PsiArrayInitializerMemberValue arrayValue)) {
           return;
         }
-        final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)attributeValue;
         final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
         if (initializers.length != 1) {
           return;
@@ -180,10 +178,9 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
       else {
         for (PsiNameValuePair attribute : attributes) {
           final PsiAnnotationMemberValue value = attribute.getValue();
-          if (!(value instanceof PsiArrayInitializerMemberValue)) {
+          if (!(value instanceof PsiArrayInitializerMemberValue arrayValue)) {
             continue;
           }
-          final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)value;
           final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
           if (initializers.length != 1) {
             continue;
@@ -233,10 +230,9 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
       }
 
       for (PsiMethod method : aClass.getMethods()) {
-        if (!(method instanceof PsiAnnotationMethod)) {
+        if (!(method instanceof PsiAnnotationMethod annotationMethod)) {
           continue;
         }
-        final PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
         if (annotationMethod.getDefaultValue() == null && !names.contains(annotationMethod.getName())) {
           return true; // missing a required argument
         }
@@ -274,8 +270,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
       if (value instanceof PsiArrayInitializerMemberValue) {
         return expectedType instanceof PsiArrayType;
       }
-      if (value instanceof PsiExpression) {
-        final PsiExpression expression = (PsiExpression)value;
+      if (value instanceof PsiExpression expression) {
         return expression.getType() != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expression) ||
                expectedType instanceof PsiArrayType &&
                TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(), expression);

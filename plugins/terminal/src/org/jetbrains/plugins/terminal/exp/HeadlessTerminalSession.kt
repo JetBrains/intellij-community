@@ -13,7 +13,7 @@ import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner
-import org.jetbrains.plugins.terminal.TerminalProcessOptions
+import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
@@ -28,7 +28,7 @@ class HeadlessTerminalSession(project: Project, termSize: TermSize): Disposable 
 
   init {
     val terminalRunner = TerminalToolWindowManager.getInstance(project).terminalRunner as AbstractTerminalRunner<Process>
-    val process = terminalRunner.createProcess(TerminalProcessOptions(null, termSize))
+    val process = terminalRunner.createProcess(ShellStartupOptions.Builder().initialTermSize(termSize).build())
     val ttyConnector = terminalRunner.createTtyConnector(process)
 
     val styleState = StyleState()

@@ -250,10 +250,9 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
           return;
         }
         final PsiElement target = expression.resolve();
-        if (!(target instanceof PsiParameter)) {
+        if (!(target instanceof PsiParameter parameter)) {
           return;
         }
-        final PsiParameter parameter = (PsiParameter)target;
         parameters.remove(parameter);
         if (parameters.isEmpty()) {
           stopWalking();

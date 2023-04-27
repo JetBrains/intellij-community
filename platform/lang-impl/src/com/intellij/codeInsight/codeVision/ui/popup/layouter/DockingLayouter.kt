@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.popup.layouter
 
 import com.intellij.openapi.project.Project
@@ -10,7 +11,6 @@ import com.jetbrains.rd.util.reactive.*
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
-import java.util.*
 
 class DockingLayouter(lifetime: Lifetime,
                       private val anchor: AnchoringRect,

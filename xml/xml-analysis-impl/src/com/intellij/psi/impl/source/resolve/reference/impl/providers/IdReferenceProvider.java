@@ -47,8 +47,7 @@ public final class IdReferenceProvider extends PsiReferenceProvider {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         final PsiElement grandParent = ((PsiElement)element).getParent().getParent();
-        if (grandParent instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)grandParent;
+        if (grandParent instanceof XmlTag tag) {
 
           if (!tag.getNamespacePrefix().isEmpty()) {
             return true;

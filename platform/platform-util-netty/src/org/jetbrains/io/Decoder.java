@@ -18,8 +18,7 @@ public abstract class Decoder extends ChannelInboundHandlerAdapter {
 
   @Override
   public final void channelRead(ChannelHandlerContext context, Object message) throws Exception {
-    if (message instanceof ByteBuf) {
-      ByteBuf input = (ByteBuf)message;
+    if (message instanceof ByteBuf input) {
       try {
         messageReceived(context, input);
       }

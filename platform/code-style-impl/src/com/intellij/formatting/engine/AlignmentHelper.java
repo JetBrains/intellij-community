@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.engine;
 
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -59,10 +59,10 @@ public class AlignmentHelper {
   }
 
   private static void reportAlignmentProcessingError(BlockAlignmentProcessor.Context context) {
-    ASTNode node = context.targetBlock.getNode();
+    ASTNode node = context.targetBlock().getNode();
     Language language = node != null ? node.getPsi().getLanguage() : null;
-    String message = (language != null ? language.getDisplayName() + ": " : "") + "Can't align block " + context.targetBlock;
-    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(context.document));
+    String message = (language != null ? language.getDisplayName() + ": " : "") + "Can't align block " + context.targetBlock();
+    LOG.error(message, new Throwable(), CoreAttachmentFactory.createAttachment(context.document()));
   }
 
   LeafBlockWrapper applyAlignment(final AlignmentImpl alignment, final LeafBlockWrapper currentBlock) {

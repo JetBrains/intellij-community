@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
@@ -35,8 +35,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       super.visitRegExpClass(regExpClass);
       final RegExpClassElement[] elements = regExpClass.getElements();
       for (RegExpClassElement element : elements) {
-        if (element instanceof RegExpCharRange) {
-          final RegExpCharRange range = (RegExpCharRange)element;
+        if (element instanceof RegExpCharRange range) {
           final int from = range.getFrom().getValue();
           final RegExpChar to = range.getTo();
           if (from != -1 && to != null && from == to.getValue()) {
@@ -48,8 +47,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       if (regExpClass.isNegated()) {
         if (elements.length == 1) {
           final RegExpClassElement element = elements[0];
-          if (element instanceof RegExpSimpleClass) {
-            final RegExpSimpleClass simpleClass = (RegExpSimpleClass)element;
+          if (element instanceof RegExpSimpleClass simpleClass) {
             final String text = getInverseSimpleClassText(simpleClass);
             if (text != null) {
               // [^\d] -> \D
@@ -98,15 +96,10 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
         return;
       }
       final String category = categoryNode.getText();
-      if ("Digit".equals(category) || "IsDigit".equals(category)) {
-        registerProblem(property, property.isNegated() ? "\\D" : "\\d");
-      }
-      else if ("Blank".equals(category) || "IsBlank".equals(category)) {
-        registerProblem(property, property.isNegated() ? "[^ \\t]" : "[ \\t]");
-      }
-      else if ("Space".equals(category) || "IsSpace".equals(category) ||
-               "IsWhite_Space".equals(category) || "IsWhiteSpace".equals(category)) {
-        registerProblem(property, property.isNegated() ? "\\S" : "\\s");
+      switch (category) {
+        case "Digit", "IsDigit" -> registerProblem(property, property.isNegated() ? "\\D" : "\\d");
+        case "Blank", "IsBlank" -> registerProblem(property, property.isNegated() ? "[^ \\t]" : "[ \\t]");
+        case "Space", "IsSpace", "IsWhite_Space", "IsWhiteSpace" -> registerProblem(property, property.isNegated() ? "\\S" : "\\s");
       }
     }
 

@@ -43,10 +43,9 @@ final class FocusTracesAction extends AnAction implements DumbAware {
     }
 
     final IdeFocusManager manager = IdeFocusManager.getGlobalInstance();
-    if (!(manager instanceof FocusManagerImpl)) {
+    if (!(manager instanceof FocusManagerImpl focusManager)) {
       return;
     }
-    final FocusManagerImpl focusManager = (FocusManagerImpl)manager;
 
     myActive = !myActive;
     if (myActive) {

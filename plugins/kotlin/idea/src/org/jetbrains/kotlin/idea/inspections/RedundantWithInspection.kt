@@ -7,9 +7,11 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection.Companion.replaceBlockExpressionWithLambdaBody
 import org.jetbrains.kotlin.name.FqName
@@ -22,9 +24,6 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class RedundantWithInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
@@ -63,13 +62,13 @@ class RedundantWithInspection : AbstractKotlinInspection() {
 
             if (!used) {
                 val quickfix = when (receiver) {
-                    is KtSimpleNameExpression, is KtStringTemplateExpression, is KtConstantExpression -> RemoveRedundantWithFix()
-                    else -> null
+                    is KtSimpleNameExpression, is KtStringTemplateExpression, is KtConstantExpression -> arrayOf(RemoveRedundantWithFix())
+                    else -> LocalQuickFix.EMPTY_ARRAY
                 }
                 holder.registerProblem(
                     callee,
                     KotlinBundle.message("inspection.redundant.with.display.name"),
-                    quickfix
+                    *quickfix
                 )
             }
         })

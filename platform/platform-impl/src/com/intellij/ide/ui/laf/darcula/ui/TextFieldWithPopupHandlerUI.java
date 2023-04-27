@@ -209,8 +209,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Override
   public boolean value(Object o) {
-    if (o instanceof MouseEvent) {
-      MouseEvent me = (MouseEvent)o;
+    if (o instanceof MouseEvent me) {
       if (getActionUnder(me.getPoint()) != null) {
         if (me.getID() == MouseEvent.MOUSE_CLICKED) {
           //noinspection SSBasedInspection
@@ -556,8 +555,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       icons.clear();
       if (ExtendableTextComponent.VARIANT.equals(variant)) {
         JTextComponent component = getComponent();
-        if (component instanceof ExtendableTextComponent) {
-          ExtendableTextComponent field = (ExtendableTextComponent)component;
+        if (component instanceof ExtendableTextComponent field) {
           for (Extension extension : field.getExtensions()) {
             if (extension != null) addExtension(extension);
           }

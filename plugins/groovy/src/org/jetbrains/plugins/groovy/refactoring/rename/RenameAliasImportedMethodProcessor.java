@@ -131,8 +131,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
                              @NotNull final String newName,
                              @NotNull final Map<? extends PsiElement, String> allRenames,
                              @NotNull final List<UsageInfo> result) {
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       OverridingMethodsSearch.search(method).forEach(overrider -> {
         PsiElement original = overrider;
         if (overrider instanceof PsiMirrorElement) {

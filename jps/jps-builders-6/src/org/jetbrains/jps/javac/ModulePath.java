@@ -56,8 +56,8 @@ public abstract class ModulePath {
 
   public static Builder newBuilder() {
     return new Builder() {
-      private final Map<File, String> myMap = new HashMap<File, String>();
-      private final Collection<File> myPath = new ArrayList<File>();
+      private final Map<File, String> myMap = new HashMap<>();
+      private final Collection<File> myPath = new ArrayList<>();
 
       @Override
       public Builder add(String moduleName, File pathElement) {

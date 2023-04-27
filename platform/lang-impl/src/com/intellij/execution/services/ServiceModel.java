@@ -190,7 +190,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
         listener.eventProcessed(e);
       }
     };
-    if (e.type != ServiceEventListener.EventType.SYNC_RESET) {
+    if (e.type != ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
       return getInvoker().invoke(handler);
     }
     handler.run();
@@ -348,8 +348,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
 
   private void serviceStructureChanged(ServiceEvent e) {
     ServiceViewItem item = findItem(e.target, e.contributorClass);
-    if (item instanceof ServiceNode) {
-      ServiceNode node = (ServiceNode)item;
+    if (item instanceof ServiceNode node) {
       updateServiceViewDescriptor(node, e.target);
       node.reloadChildren();
     }

@@ -55,7 +55,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   public static final PatternContext DEFAULT_CONTEXT = new PatternContext("default", () -> SSRBundle.message("pattern.context.default"));
   public static final PatternContext MEMBER_CONTEXT = new PatternContext("member", () -> SSRBundle.message("pattern.context.class.member"));
-  private static final List<PatternContext> PATTERN_CONTEXTS = ContainerUtil.immutableList(DEFAULT_CONTEXT, MEMBER_CONTEXT);
+  private static final List<PatternContext> PATTERN_CONTEXTS = List.of(DEFAULT_CONTEXT, MEMBER_CONTEXT);
 
   private static final Set<String> PRIMITIVE_TYPES = ContainerUtil.set(
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,

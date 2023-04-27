@@ -150,8 +150,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
       g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
-    if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
+    if (g instanceof Graphics2D g2d) {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, getKeyForCurrentScope(!Registry.is("editor.breadcrumbs.system.font")));
       for (CrumbView view : views) {
@@ -287,8 +286,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     @Override
     public Dimension preferredLayoutSize(Container container) {
       Dimension size = new Dimension();
-      if (container instanceof Breadcrumbs) {
-        Breadcrumbs breadcrumbs = (Breadcrumbs)container;
+      if (container instanceof Breadcrumbs breadcrumbs) {
         breadcrumbs.updatePreferredSize(size, breadcrumbs.getScale());
       }
       JBInsets.addTo(size, container.getInsets());
@@ -297,8 +295,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     @Override
     public void layoutContainer(Container container) {
-      if (container instanceof Breadcrumbs) {
-        Breadcrumbs breadcrumbs = (Breadcrumbs)container;
+      if (container instanceof Breadcrumbs breadcrumbs) {
         Rectangle bounds = new Rectangle(breadcrumbs.getWidth(), breadcrumbs.getHeight());
         JBInsets.removeFrom(bounds, breadcrumbs.getInsets());
         int scale = breadcrumbs.getScale();

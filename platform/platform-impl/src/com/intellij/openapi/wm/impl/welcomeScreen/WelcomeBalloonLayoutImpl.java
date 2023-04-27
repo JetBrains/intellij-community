@@ -42,6 +42,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   private BalloonImpl myPopupBalloon;
   private final BalloonPanel myBalloonPanel = new BalloonPanel();
   private boolean myVisible;
+  private Runnable hideListener;
 
   public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     super(parent, insets);
@@ -97,7 +98,12 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       myPopupBalloon.setAnimationEnabled(false);
       myPopupBalloon.setShadowBorderProvider(
         new NotificationBalloonShadowBorderProvider(FILL_COLOR, BORDER_COLOR));
-      myPopupBalloon.setHideListener(() -> myPopupBalloon.getComponent().setVisible(false));
+      myPopupBalloon.setHideListener(() -> {
+        if (hideListener != null) {
+          hideListener.run();
+        }
+        myPopupBalloon.getComponent().setVisible(false);
+      });
       myPopupBalloon.setActionProvider(new BalloonImpl.ActionProvider() {
         private BalloonImpl.ActionButton myAction;
 
@@ -146,6 +152,10 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     if (myVisible) {
       layoutPopup();
     }
+  }
+
+  public void setHideListener(Runnable hideListener) {
+    this.hideListener = hideListener;
   }
 
   private void layoutPopup() {

@@ -262,8 +262,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     List<AnAction> speedSearchActions = new ArrayList<>();
     if (!isFirstLevel) speedSearchActions.add(new Separator(parentActionGroup.getTemplatePresentation().getText()));
     for (AnAction child : parentActionGroup.getChildren(null)) {
-      if (child instanceof ActionGroup) {
-        ActionGroup childGroup = (ActionGroup)child;
+      if (child instanceof ActionGroup childGroup) {
         if (childGroup instanceof HideableActionGroup) {
           childGroup = ((HideableActionGroup)childGroup).getDelegate();
         }

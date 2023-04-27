@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.impl
 
@@ -70,7 +70,7 @@ class ModuleOutputPatcher {
            ?: error("patched plugin.xml not found for $moduleName module")
   }
 
-  fun getPatchedDir(moduleName: String): Collection<Path> = patchDirs.get(moduleName) ?: emptyList()
+  internal fun getPatchedDir(moduleName: String): Collection<Path> = patchDirs.get(moduleName) ?: emptyList()
 
-  fun getPatchedContent(moduleName: String): Map<String, ByteArray> = patches.get(moduleName) ?: emptyMap()
+  internal fun getPatchedContent(moduleName: String): Map<String, ByteArray> = patches.get(moduleName) ?: emptyMap()
 }

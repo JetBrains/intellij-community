@@ -78,10 +78,9 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent().getParent();
-      if (!(element instanceof PsiMethodCallExpression)) {
+      if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
       final CommentTracker commentTracker = new CommentTracker();

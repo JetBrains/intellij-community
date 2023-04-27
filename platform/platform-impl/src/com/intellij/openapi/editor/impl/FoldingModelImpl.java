@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -497,7 +498,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
         boolean markedForUpdate = caret.getUserData(MARK_FOR_UPDATE) != null;
 
-        if (savedPosition != null && savedPosition.isUpToDate(myEditor)) {
+        if (ClientId.isLocal(ClientEditorManager.getClientId(myEditor)) &&
+            savedPosition != null && savedPosition.isUpToDate(myEditor)) {
           int savedOffset = myEditor.logicalPositionToOffset(savedPosition.position);
           FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
           if (collapsedAtSaved == null) {

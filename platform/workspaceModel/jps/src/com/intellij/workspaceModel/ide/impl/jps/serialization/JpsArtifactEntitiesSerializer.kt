@@ -4,14 +4,11 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
+import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -33,7 +30,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
     get() = ArtifactEntity::class.java
 
   override fun createSerializer(fileUrl: String,
-                                entitySource: JpsFileEntitySource.FileInDirectory,
+                                entitySource: JpsProjectFileEntitySource.FileInDirectory,
                                 virtualFileManager: VirtualFileUrlManager): JpsArtifactEntitiesSerializer {
     return JpsArtifactEntitiesSerializer(virtualFileManager.fromUrl(fileUrl), entitySource, false, virtualFileManager)
   }
@@ -87,7 +84,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
 
 private const val ARTIFACT_MANAGER_COMPONENT_NAME = "ArtifactManager"
 
-internal class JpsArtifactsExternalFileSerializer(private val externalFile: JpsFileEntitySource.ExactFile,
+internal class JpsArtifactsExternalFileSerializer(private val externalFile: JpsProjectFileEntitySource.ExactFile,
                                                   private val internalArtifactsDirUrl: VirtualFileUrl,
                                                   private val fileInDirectorySourceNames: FileInDirectorySourceNames,
                                                   virtualFileManager: VirtualFileUrlManager)
@@ -109,7 +106,7 @@ internal class JpsArtifactsExternalFileSerializer(private val externalFile: JpsF
       logger<JpsLibrariesExternalFileSerializer>().debug{ "Reuse existing source for artifact: ${existingInternalSource.fileNameId}=$artifactName" }
       existingInternalSource
     } else {
-      JpsFileEntitySource.FileInDirectory(internalArtifactsDirUrl, externalFile.projectLocation)
+      JpsProjectFileEntitySource.FileInDirectory(internalArtifactsDirUrl, externalFile.projectLocation)
     }
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
   }

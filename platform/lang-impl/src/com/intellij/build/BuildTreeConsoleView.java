@@ -601,8 +601,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     String failureNodeName = getMessageTitle(message);
     Navigatable failureNavigatable = failure.getNavigatable();
     FilePosition filePosition = null;
-    if (failureNavigatable instanceof OpenFileDescriptor) {
-      OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)failureNavigatable;
+    if (failureNavigatable instanceof OpenFileDescriptor fileDescriptor) {
       File file = VfsUtilCore.virtualToIoFile(fileDescriptor.getFile());
       filePosition = new FilePosition(file, fileDescriptor.getLine(), fileDescriptor.getColumn());
       parentNode = createMessageParentNodes(eventTime, filePosition, failureNavigatable, parentNode);
@@ -1179,10 +1178,9 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     @Override
     protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
       Object userObject = node.getUserObject();
-      if (!(userObject instanceof ExecutionNode)) {
+      if (!(userObject instanceof ExecutionNode executionNode)) {
         return null;
       }
-      final ExecutionNode executionNode = (ExecutionNode)userObject;
       if (node.getChildCount() != 0 || !executionNode.hasWarnings() && !executionNode.isFailed()) {
         return null;
       }
@@ -1363,8 +1361,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     private boolean maybeExpand(TreePath path) {
       if (myTree == null || path == null) return false;
       Object last = path.getLastPathComponent();
-      if (last instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode mutableTreeNode = (DefaultMutableTreeNode)last;
+      if (last instanceof DefaultMutableTreeNode mutableTreeNode) {
         boolean expanded = false;
         Enumeration<?> children = mutableTreeNode.children();
         if (children.hasMoreElements()) {

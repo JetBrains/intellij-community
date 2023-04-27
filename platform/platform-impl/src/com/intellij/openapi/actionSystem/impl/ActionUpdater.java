@@ -662,9 +662,8 @@ final class ActionUpdater {
     return JBTreeTraverser.<AnAction>from(o -> {
       if (o == group) return null;
       if (isDumb && !o.isDumbAware()) return null;
-      if (!(o instanceof ActionGroup)) return null;
-      ActionGroup oo = (ActionGroup)o;
-      Presentation presentation = update(oo, strategy);
+      if (!(o instanceof ActionGroup oo)) return null;
+        Presentation presentation = update(oo, strategy);
       if (presentation == null || !presentation.isVisible()) {
         return null;
       }

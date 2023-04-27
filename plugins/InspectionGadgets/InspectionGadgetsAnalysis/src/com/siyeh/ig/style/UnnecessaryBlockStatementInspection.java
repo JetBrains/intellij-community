@@ -79,10 +79,9 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement leftBrace = descriptor.getPsiElement();
       final PsiElement parent = leftBrace.getParent();
-      if (!(parent instanceof PsiCodeBlock)) {
+      if (!(parent instanceof PsiCodeBlock block)) {
         return;
       }
-      final PsiCodeBlock block = (PsiCodeBlock)parent;
       final PsiElement firstBodyElement = block.getFirstBodyElement();
       final PsiElement lastBodyElement = block.getLastBodyElement();
       final PsiBlockStatement blockStatement = (PsiBlockStatement)block.getParent();
@@ -106,7 +105,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
         }
       }
       final PsiElement parent = blockStatement.getParent();
-      if (!(parent instanceof PsiCodeBlock)) {
+      if (!(parent instanceof PsiCodeBlock parentBlock)) {
         return;
       }
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
@@ -114,7 +113,6 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
       if (brace == null) {
         return;
       }
-      final PsiCodeBlock parentBlock = (PsiCodeBlock)parent;
       if (parentBlock.getStatementCount() > 1 &&
           BlockUtils.containsConflictingDeclarations(codeBlock, parentBlock)) {
         return;

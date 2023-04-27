@@ -71,8 +71,7 @@ public class JavaFxAnnotator implements Annotator {
           }
         }
       }
-    } else if (element instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)element;
+    } else if (element instanceof XmlAttribute attribute) {
       final String attributeName = attribute.getName();
       if (!FxmlConstants.FX_BUILT_IN_ATTRIBUTES.contains(attributeName) &&
           !attribute.isNamespaceDeclaration() &&

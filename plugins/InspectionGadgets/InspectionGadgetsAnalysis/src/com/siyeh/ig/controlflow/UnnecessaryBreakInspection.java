@@ -49,8 +49,7 @@ public class UnnecessaryBreakInspection extends BaseInspection {
       else if (statement.getLabelIdentifier() == null) {
         return;
       }
-      if (exitedStatement instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)exitedStatement;
+      if (exitedStatement instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock block = blockStatement.getCodeBlock();
         if (ControlFlowUtils.blockCompletesWithStatement(block, statement)) {
           registerError(statement.getFirstChild());

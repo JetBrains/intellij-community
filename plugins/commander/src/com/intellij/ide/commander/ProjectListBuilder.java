@@ -173,17 +173,9 @@ public class ProjectListBuilder extends AbstractListBuilder {
     @Override
     public void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
       final String propertyName = event.getPropertyName();
-      if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) {
-        addUpdateRequest();
-      }
-      else if (propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)){
-        childrenChanged();
-      }
-      else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)){
-        childrenChanged();
-      }
-      else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)){
-        addUpdateRequest();
+      switch (propertyName) {
+        case PsiTreeChangeEvent.PROP_ROOTS, PsiTreeChangeEvent.PROP_FILE_TYPES -> addUpdateRequest();
+        case PsiTreeChangeEvent.PROP_WRITABLE, PsiTreeChangeEvent.PROP_FILE_NAME, PsiTreeChangeEvent.PROP_DIRECTORY_NAME -> childrenChanged();
       }
     }
   }

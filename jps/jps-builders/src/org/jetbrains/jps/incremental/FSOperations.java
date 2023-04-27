@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -54,8 +53,7 @@ public final class FSOperations {
    * Note: marked file will well be visible as "dirty" only on the <b>next</b> compilation round!
    *
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @Deprecated(forRemoval = true)
   public static void markDirty(CompileContext context, final File file) throws IOException {
     markDirty(context, CompilationRound.NEXT, file);
   }

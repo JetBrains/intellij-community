@@ -276,10 +276,8 @@ public final class CommentTracker {
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull PsiElement replacement) {
     final PsiElement parent = element.getParent();
-    if (parent instanceof PsiPolyadicExpression && replacement instanceof PsiPolyadicExpression) {
+    if (parent instanceof PsiPolyadicExpression parentPolyadic && replacement instanceof PsiPolyadicExpression childPolyadic) {
       // flatten nested polyadic expressions
-      PsiPolyadicExpression parentPolyadic = (PsiPolyadicExpression)parent;
-      PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
       IElementType parentTokenType = parentPolyadic.getOperationTokenType();
       IElementType childTokenType = childPolyadic.getOperationTokenType();
       if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType) &&

@@ -61,16 +61,14 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
       final GrUnaryExpression expression = (GrUnaryExpression)descriptor.getPsiElement();
       GrExpression operand = (GrExpression)PsiUtil.skipParentheses(expression.getOperand(), false);
-      if (operand instanceof GrUnaryExpression) {
-        final GrUnaryExpression prefixExpression = (GrUnaryExpression)operand;
+      if (operand instanceof GrUnaryExpression prefixExpression) {
         final GrExpression innerOperand = prefixExpression.getOperand();
         if (innerOperand == null) {
           return;
         }
         replaceExpression(expression, innerOperand.getText());
       }
-      else if (operand instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression = (GrBinaryExpression)operand;
+      else if (operand instanceof GrBinaryExpression binaryExpression) {
         final GrExpression lhs = binaryExpression.getLeftOperand();
         final String lhsText = lhs.getText();
         final StringBuilder builder = new StringBuilder(lhsText);
@@ -116,10 +114,9 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
       while (parent instanceof GrParenthesizedExpression) {
         parent = parent.getParent();
       }
-      if (!(parent instanceof GrUnaryExpression)) {
+      if (!(parent instanceof GrUnaryExpression prefixExpression)) {
         return;
       }
-      final GrUnaryExpression prefixExpression = (GrUnaryExpression)parent;
       final IElementType parentTokenType = prefixExpression.getOperationTokenType();
       if (!T_NOT.equals(parentTokenType)) {
         return;

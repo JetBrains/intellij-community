@@ -189,8 +189,7 @@ public abstract class TestUtils {
     file.acceptChildren(new PsiRecursiveElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof GrReferenceExpression) {
-          GrReferenceExpression psiReference = (GrReferenceExpression)element;
+        if (element instanceof GrReferenceExpression psiReference) {
 
           GrExpression qualifier = psiReference.getQualifierExpression();
           if (qualifier instanceof GrReferenceExpression) {

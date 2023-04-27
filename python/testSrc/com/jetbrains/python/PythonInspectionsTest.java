@@ -50,14 +50,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyMethodParametersInspection.class);
   }
 
-  public void testPyMethodParametersInspectionMetacls() {
-    PyMethodParametersInspection inspection = new PyMethodParametersInspection();
-    inspection.MCS = "metacls";
-    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
-    myFixture.enableInspections(inspection);
-    myFixture.checkHighlighting(true, false, true);
-  }
-
   public void testPyMethodParametersInspectionInitSubclass() {
     doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON36);
   }

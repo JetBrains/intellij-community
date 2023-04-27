@@ -49,8 +49,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     List<String> positionalArguments = new ArrayList<>();
     Map<String, String> namedArguments = new HashMap<>();
     for (PyExpression argument : arguments) {
-      if (argument instanceof PyKeywordArgument) {
-        PyKeywordArgument keywordArgument = (PyKeywordArgument)argument;
+      if (argument instanceof PyKeywordArgument keywordArgument) {
         String keyword = keywordArgument.getKeyword();
         String value = extractLiteralValue(keywordArgument.getValueExpression());
         if (keyword != null && value != null) {
@@ -67,8 +66,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   }
 
   private static @Nullable String extractLiteralValue(PyExpression expression) {
-    if (expression instanceof PyLiteralExpression) {
-      PyLiteralExpression literal = (PyLiteralExpression)expression;
+    if (expression instanceof PyLiteralExpression literal) {
       String value;
       if (literal instanceof PyStringLiteralExpression) {
         value = ((PyStringLiteralExpression)literal).getStringValue();

@@ -194,7 +194,7 @@ public final class TerminalShellCommandHandlerHelper {
   private String getWorkingDirectory() {
     String workingDirectory = myWorkingDirectory;
     if (workingDirectory == null) {
-      workingDirectory = StringUtil.notNullize(TerminalWorkingDirectoryManager.getWorkingDirectory(myWidget.asNewWidget(), null));
+      workingDirectory = StringUtil.notNullize(TerminalWorkingDirectoryManager.getWorkingDirectory(myWidget.asNewWidget()));
       myWorkingDirectory = workingDirectory;
     }
     return StringUtil.nullize(workingDirectory);

@@ -98,7 +98,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       @Override
       public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
         myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(
-          ServiceEventListener.ServiceEvent.createSyncResetEvent(RunDashboardServiceViewContributor.class));
+          ServiceEventListener.ServiceEvent.createUnloadSyncResetEvent(RunDashboardServiceViewContributor.class));
       }
     };
     CUSTOMIZER_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);

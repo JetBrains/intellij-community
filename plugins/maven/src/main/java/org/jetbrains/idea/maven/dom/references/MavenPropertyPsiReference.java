@@ -435,8 +435,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     }
 
     for (Object key : myMavenProject.getProperties().keySet()) {
-      if (key instanceof String) {
-        String property = (String)key;
+      if (key instanceof String property) {
         if (variants.add(property)) {
           result.add(LookupElementBuilder.create(property).withIcon(PlatformIcons.PROPERTY_ICON));
         }
@@ -517,9 +516,8 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   private <T> T processSchema(String schema, SchemaProcessor<T> processor) {
     VirtualFile file = MavenSchemaProvider.getSchemaFile(schema);
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    if (!(psiFile instanceof XmlFile)) return null;
+    if (!(psiFile instanceof XmlFile xmlFile)) return null;
 
-    XmlFile xmlFile = (XmlFile)psiFile;
     XmlDocument document = xmlFile.getDocument();
     XmlNSDescriptor desc = (XmlNSDescriptor)document.getMetaData();
     XmlElementDescriptor[] descriptors = desc.getRootElementsDescriptors(document);

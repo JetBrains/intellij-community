@@ -114,8 +114,7 @@ public class PyUnionType implements PyType {
     if (type == null) {
       return null;
     }
-    else if (type instanceof PyUnionType) {
-      final PyUnionType unionType = (PyUnionType)type;
+    else if (type instanceof PyUnionType unionType) {
       if (unionType.isWeak()) {
         return unionType;
       }
@@ -178,8 +177,7 @@ public class PyUnionType implements PyType {
 
   @Override
   public boolean equals(Object other) {
-    if (other instanceof PyUnionType) {
-      final PyUnionType otherType = (PyUnionType)other;
+    if (other instanceof PyUnionType otherType) {
       return myMembers.equals(otherType.myMembers);
     }
     return false;

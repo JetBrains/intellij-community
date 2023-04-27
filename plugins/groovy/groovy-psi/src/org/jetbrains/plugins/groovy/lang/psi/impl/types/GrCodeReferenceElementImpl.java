@@ -108,8 +108,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         if (target instanceof PsiTypeParameter) {
           return StringUtil.notNullize(((PsiTypeParameter)target).getName());
         }
-        else if (target instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)target;
+        else if (target instanceof PsiClass aClass) {
           String name = aClass.getQualifiedName();
           if (name == null) return "";
 
@@ -144,8 +143,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     if (super.bindsCorrectly(element)) return true;
     if (element instanceof PsiClass) {
       final PsiElement resolved = resolve();
-      if (resolved instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)resolved;
+      if (resolved instanceof PsiMethod method) {
         if (method.isConstructor() && getManager().areElementsEquivalent(element, method.getContainingClass())) {
           return true;
         }

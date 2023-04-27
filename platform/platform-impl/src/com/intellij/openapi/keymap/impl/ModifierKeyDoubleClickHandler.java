@@ -81,14 +81,13 @@ public final class ModifierKeyDoubleClickHandler {
   public static class MyEventDispatcher implements IdeEventQueue.EventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent event) {
-      if (!(event instanceof KeyEvent)) {
+      if (!(event instanceof KeyEvent keyEvent)) {
         return false;
       }
 
       ModifierKeyDoubleClickHandler doubleClickHandler = getInstance();
 
       boolean result = false;
-      KeyEvent keyEvent = (KeyEvent)event;
       for (MyDispatcher dispatcher : doubleClickHandler.myDispatchers.values()) {
         if (dispatcher.dispatch(keyEvent)) {
           result = true;

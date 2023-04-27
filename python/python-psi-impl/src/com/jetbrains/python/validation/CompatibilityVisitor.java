@@ -606,8 +606,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         seenKeywordArgument = true;
         keywordArgumentNames.add(keyword);
       }
-      else if (argument instanceof PyStarArgument) {
-        final PyStarArgument starArgument = (PyStarArgument)argument;
+      else if (argument instanceof PyStarArgument starArgument) {
         if (starArgument.isKeyword()) {
           if (seenKeywordContainer) {
             registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON35) && registerForLanguageLevel(level),
@@ -792,8 +791,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (file == null) return;
 
       final PsiElement descriptorElement = descriptor.getPsiElement();
-      if (!(descriptorElement instanceof PyBinaryExpression)) return;
-      final PyBinaryExpression expression = (PyBinaryExpression)descriptorElement;
+      if (!(descriptorElement instanceof PyBinaryExpression expression)) return;
 
       final List<String> types = collectUnionTypes(expression);
       final LanguageLevel languageLevel = LanguageLevel.forElement(file);

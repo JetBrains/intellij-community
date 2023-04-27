@@ -104,15 +104,13 @@ public class MultiplyOrDivideByPowerOfTwoInspection
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiBinaryExpression binaryExpression) {
       final IElementType operationTokenType = binaryExpression.getOperationTokenType();
       if (JavaTokenType.DIV.equals(operationTokenType)) {
         return null;
       }
     }
-    else if (expression instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+    else if (expression instanceof PsiAssignmentExpression assignmentExpression) {
       final IElementType operationTokenType = assignmentExpression.getOperationTokenType();
       if (JavaTokenType.DIVEQ.equals(operationTokenType)) {
         return null;

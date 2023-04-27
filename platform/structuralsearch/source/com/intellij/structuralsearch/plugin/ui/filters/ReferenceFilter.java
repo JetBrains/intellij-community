@@ -33,10 +33,9 @@ public class ReferenceFilter extends FilterAction {
 
   @Override
   public @NotNull String getShortText(NamedScriptableDefinition variable) {
-    if (!(variable instanceof MatchVariableConstraint)) {
+    if (!(variable instanceof MatchVariableConstraint constraint)) {
       return "";
     }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
     if (StringUtil.isEmpty(constraint.getReferenceConstraint())) {
       return "";
     }

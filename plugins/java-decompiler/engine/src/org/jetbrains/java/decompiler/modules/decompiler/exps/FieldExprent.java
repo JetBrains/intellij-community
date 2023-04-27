@@ -153,9 +153,8 @@ public class FieldExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof FieldExprent)) return false;
+    if (!(o instanceof FieldExprent ft)) return false;
 
-    FieldExprent ft = (FieldExprent)o;
     return Objects.equals(name, ft.getName()) &&
            Objects.equals(classname, ft.getClassname()) &&
            isStatic == ft.isStatic() &&

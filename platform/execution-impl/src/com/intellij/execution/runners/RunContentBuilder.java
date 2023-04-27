@@ -141,33 +141,35 @@ public final class RunContentBuilder extends RunTab {
     if (UIExperiment.isNewDebuggerUIEnabled()) {
       var isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical");
 
-      mySupplier = new RunTabSupplier(toolbar) {
-        {
-          setMoveToolbar(!isVerticalToolbar);
-        }
+      if (Registry.is("debugger.new.tool.window.layout.single.content", false)) {
+        mySupplier = new RunTabSupplier(toolbar) {
+          {
+            setMoveToolbar(!isVerticalToolbar);
+          }
 
-        @Override
-        public @Nullable ActionGroup getToolbarActions() {
-          return isVerticalToolbar ? ActionGroup.EMPTY_GROUP : super.getToolbarActions();
-        }
+          @Override
+          public @Nullable ActionGroup getToolbarActions() {
+            return isVerticalToolbar ? ActionGroup.EMPTY_GROUP : super.getToolbarActions();
+          }
 
-        @Override
-        public @NotNull List<AnAction> getContentActions() {
-          return List.of(myUi.getOptions().getLayoutActions());
-        }
+          @Override
+          public @NotNull List<AnAction> getContentActions() {
+            return List.of(myUi.getOptions().getLayoutActions());
+          }
 
-        @NotNull
-        @Override
-        public String getMainToolbarPlace() {
-          return ActionPlaces.RUNNER_TOOLBAR;
-        }
+          @NotNull
+          @Override
+          public String getMainToolbarPlace() {
+            return ActionPlaces.RUNNER_TOOLBAR;
+          }
 
-        @NotNull
-        @Override
-        public String getContentToolbarPlace() {
-          return ActionPlaces.RUNNER_TOOLBAR;
-        }
-      };
+          @NotNull
+          @Override
+          public String getContentToolbarPlace() {
+            return ActionPlaces.RUNNER_TOOLBAR;
+          }
+        };
+      }
       if (myUi instanceof RunnerLayoutUiImpl) {
         ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(isVerticalToolbar);
       }

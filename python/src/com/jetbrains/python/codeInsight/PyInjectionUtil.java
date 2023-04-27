@@ -45,8 +45,8 @@ public final class PyInjectionUtil {
   }
 
   public static final List<Class<? extends PsiElement>> ELEMENTS_TO_INJECT_IN =
-    ContainerUtil.immutableList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class,
-                                PyCallExpression.class, PsiComment.class);
+    List.of(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class,
+            PyCallExpression.class, PsiComment.class);
 
   private PyInjectionUtil() {}
 
@@ -87,8 +87,7 @@ public final class PyInjectionUtil {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
       return contained != null && isStringLiteralPart(contained, context);
     }
-    else if (element instanceof PyBinaryExpression) {
-      final PyBinaryExpression expr = (PyBinaryExpression)element;
+    else if (element instanceof PyBinaryExpression expr) {
       final PyExpression left = expr.getLeftExpression();
       final PyExpression right = expr.getRightExpression();
       if (expr.isOperator("+")) {
@@ -113,8 +112,7 @@ public final class PyInjectionUtil {
   @Nullable
   private static PyExpression getFormatCallQualifier(@NotNull PyCallExpression element) {
     final PyExpression callee = element.getCallee();
-    if (callee instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)callee;
+    if (callee instanceof PyQualifiedExpression qualifiedExpr) {
       final PyExpression qualifier = qualifiedExpr.getQualifier();
       if (qualifier != null && PyNames.FORMAT.equals(qualifiedExpr.getReferencedName())) {
         return qualifier;
@@ -204,8 +202,7 @@ public final class PyInjectionUtil {
         return processStringLiteral(contained, registrar, prefix, suffix, formatting);
       }
     }
-    else if (element instanceof PyBinaryExpression) {
-      final PyBinaryExpression expr = (PyBinaryExpression)element;
+    else if (element instanceof PyBinaryExpression expr) {
       final PyExpression left = expr.getLeftExpression();
       final PyExpression right = expr.getRightExpression();
       final boolean isLeftString = isStringLiteralPart(left, null);

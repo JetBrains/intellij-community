@@ -125,13 +125,11 @@ public final class PsiUtil {
     final UExpression singleExpression = ContainerUtil.getOnlyItem(expressions);
     if (singleExpression == null) return null;
 
-    if (!(singleExpression instanceof UReturnExpression)) return null;
-    UReturnExpression uReturnExpression = (UReturnExpression)singleExpression;
+    if (!(singleExpression instanceof UReturnExpression uReturnExpression)) return null;
     final UExpression returnValue = uReturnExpression.getReturnExpression();
     if (returnValue == null) return null;
 
-    if (returnValue instanceof UReferenceExpression) {
-      UReferenceExpression referenceExpression = (UReferenceExpression)returnValue;
+    if (returnValue instanceof UReferenceExpression referenceExpression) {
       final UElement uElement = UResolvableKt.resolveToUElement(referenceExpression);
       final UField uField = ObjectUtils.tryCast(uElement, UField.class);
       if (uField != null && uField.isFinal()) {
@@ -140,8 +138,7 @@ public final class PsiUtil {
 
       return ObjectUtils.tryCast(uElement, UExpression.class);
     }
-    else if (returnValue instanceof UCallExpression) {
-      UCallExpression uCallExpression = (UCallExpression)returnValue;
+    else if (returnValue instanceof UCallExpression uCallExpression) {
       final PsiMethod psiMethod = uCallExpression.resolve();
       if (psiMethod == null) return null;
       return getReturnedExpression(psiMethod);

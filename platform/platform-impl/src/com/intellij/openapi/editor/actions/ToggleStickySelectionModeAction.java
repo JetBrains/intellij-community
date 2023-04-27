@@ -38,11 +38,10 @@ public class ToggleStickySelectionModeAction extends EditorAction {
   static class Handler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      if (!(editor instanceof EditorEx)) {
+      if (!(editor instanceof EditorEx ex)) {
         return;
       }
-      
-      EditorEx ex = (EditorEx)editor;
+
       ex.setStickySelection(!ex.isStickySelection());
     }
   }

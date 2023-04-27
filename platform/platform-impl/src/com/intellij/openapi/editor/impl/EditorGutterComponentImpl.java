@@ -2714,8 +2714,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final HoverStateListener HOVER_STATE_LISTENER = new HoverStateListener() {
     @Override
     protected void hoverChanged(@NotNull Component component, boolean hovered) {
-      if (component instanceof EditorGutterComponentImpl && ExperimentalUI.isNewUI()) {
-        EditorGutterComponentImpl gutter = (EditorGutterComponentImpl)component;
+      if (component instanceof EditorGutterComponentImpl gutter && ExperimentalUI.isNewUI()) {
         gutter.myAlphaContext.setVisible(hovered);
       }
     }

@@ -27,8 +27,7 @@ public class RegExInputVerifier extends InputVerifier {
 
   @Override
   public boolean shouldYieldFocus(JComponent input) {
-    if (input instanceof JFormattedTextField) {
-      final JFormattedTextField ftf = (JFormattedTextField) input;
+    if (input instanceof JFormattedTextField ftf) {
       final JFormattedTextField.AbstractFormatter formatter = ftf.getFormatter();
       if (formatter != null) {
         try {

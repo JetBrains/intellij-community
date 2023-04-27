@@ -214,8 +214,7 @@ public class HintHint {
     c.setForeground(getTextForeground());
     c.setBackground(getTextBackground());
     c.setFont(getTextFont());
-    if (c instanceof JComponent) {
-      JComponent jc = (JComponent)c;
+    if (c instanceof JComponent jc) {
       jc.setOpaque(isOpaqueAllowed());
       jc.setBorder(isOwnBorderAllowed() ? BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)) : null);
     }

@@ -65,11 +65,9 @@ public class NakedNotifyInspection extends BaseInspection {
       }
       final PsiExpression firstExpression =
         ((PsiExpressionStatement)firstStatement).getExpression();
-      if (!(firstExpression instanceof PsiMethodCallExpression)) {
+      if (!(firstExpression instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)firstExpression;
       final PsiReferenceExpression methodExpression =
         methodCallExpression.getMethodExpression();
       @NonNls final String methodName =

@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.find.FindModel
-import com.intellij.find.SearchReplaceComponent
-import com.intellij.find.SearchSession
+import com.intellij.find.*
 import com.intellij.find.editorHeaderActions.NextOccurrenceAction
 import com.intellij.find.editorHeaderActions.PrevOccurrenceAction
 import com.intellij.find.editorHeaderActions.StatusTextAction
@@ -29,10 +27,13 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
 
   private val searchComponentWrapper: BorderLayoutPanel
 
+  private val project
+    get() = terminalWidget.project
+
   init {
     searchComponentWrapper = object : BorderLayoutPanel() {
       override fun requestFocus() {
-        IdeFocusManager.getInstance(terminalWidget.project).requestFocus(searchComponent.searchTextComponent, false)
+        IdeFocusManager.getInstance(project).requestFocus(searchComponent.searchTextComponent, false)
       }
     }
     searchComponentWrapper.addToCenter(searchComponent)
@@ -48,8 +49,10 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
 
   private fun createFindModel(): FindModel {
     return FindModel().also { findModel ->
+      findModel.copyFrom(FindManager.getInstance(project).findInFileModel)
       findModel.addObserver {
         terminalSearchComponent.eventMulticaster.searchSettingsChanged(findModel.stringToFind, !findModel.isCaseSensitive)
+        FindUtil.updateFindInFileModel(project, findModel, false)
       }
     }
   }
@@ -70,7 +73,7 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
 
   override fun close() {
     terminalSearchComponent.eventMulticaster.hideSearchComponent()
-    IdeFocusManager.getInstance(terminalWidget.project).requestFocus(terminalWidget.terminalPanel, false)
+    IdeFocusManager.getInstance(project).requestFocus(terminalWidget.terminalPanel, false)
   }
 
   override fun getData(dataId: String): Any? {
@@ -79,7 +82,7 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
 
   private fun createSearchComponent(): SearchReplaceComponent {
     return SearchReplaceComponent
-      .buildFor(terminalWidget.project, terminalWidget.terminalPanel)
+      .buildFor(project, terminalWidget.terminalPanel)
       .addExtraSearchActions(ToggleMatchCase())
       .addPrimarySearchActions(StatusTextAction(), PrevOccurrenceAction(), NextOccurrenceAction())
       .withCloseAction { close() }

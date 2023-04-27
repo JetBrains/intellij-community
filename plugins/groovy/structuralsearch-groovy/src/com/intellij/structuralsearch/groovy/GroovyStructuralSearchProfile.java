@@ -11,7 +11,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.PatternContext;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -24,7 +23,7 @@ import java.util.List;
 public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   public static final PatternContext FILE_CONTEXT = new PatternContext("File", () -> SSRBundle.message("pattern.context.default"));
   public static final PatternContext CLASS_CONTEXT = new PatternContext("Class", () -> SSRBundle.message("pattern.context.class.member"));
-  private static final List<PatternContext> PATTERN_CONTEXTS = ContainerUtil.immutableList(FILE_CONTEXT, CLASS_CONTEXT);
+  private static final List<PatternContext> PATTERN_CONTEXTS = List.of(FILE_CONTEXT, CLASS_CONTEXT);
 
   private static final TokenSet VARIABLE_DELIMITERS = TokenSet.create(GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mSEMI);
 

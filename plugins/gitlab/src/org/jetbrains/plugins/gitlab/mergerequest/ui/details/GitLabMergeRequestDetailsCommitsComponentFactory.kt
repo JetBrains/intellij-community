@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.details.CommitRenderer
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
@@ -12,8 +13,6 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.popup.PopupState
-import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +22,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
 import java.awt.event.ActionListener
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -80,13 +80,35 @@ internal object GitLabMergeRequestDetailsCommitsComponentFactory {
             addAll(commits)
           }
 
-          val selectedCommit = ChooserPopupUtil.showChooserPopup(point, popupState, popupItems) { selectedCommit ->
-            val title = selectedCommit?.title ?: CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
-            val isSelected = selectedCommit == commitsVm.selectedCommit.value
-            val icon = if (isSelected) AllIcons.Actions.Checked_selected else JBUIScale.scaleIcon(EmptyIcon.create(12))
+          val selectedCommit = ChooserPopupUtil.showChooserPopup(
+            point,
+            popupState,
+            popupItems,
+            filteringMapper = { commit: GitLabCommitDTO? ->
+              commit?.title ?: CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
+            },
+            renderer = object : CommitRenderer<GitLabCommitDTO?>() {
+              override fun isCommitSelected(value: GitLabCommitDTO?): Boolean {
+                return value == commitsVm.selectedCommit.value
+              }
 
-            return@showChooserPopup ChooserPopupUtil.PopupItemPresentation.Simple(title, icon)
-          }
+              override fun getAllCommitsText(): String {
+                return CollaborationToolsBundle.message("review.details.commits.popup.all", commitsVm.reviewCommits.value.size)
+              }
+
+              override fun getCommitTitle(value: GitLabCommitDTO?): String {
+                return value!!.title.orEmpty()
+              }
+
+              override fun getAuthor(value: GitLabCommitDTO?): String {
+                return value!!.author.name
+              }
+
+              override fun getDate(value: GitLabCommitDTO?): Date {
+                return value!!.authoredDate
+              }
+            }
+          )
 
           commitsVm.selectCommit(selectedCommit)
         }

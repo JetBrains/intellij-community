@@ -26,10 +26,9 @@ class NestedTryStatementsPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken javaToken)) {
       return false;
     }
-    final PsiJavaToken javaToken = (PsiJavaToken)element;
     final IElementType tokenType = javaToken.getTokenType();
     if (!JavaTokenType.TRY_KEYWORD.equals(tokenType)) {
       return false;
@@ -52,10 +51,9 @@ class NestedTryStatementsPredicate implements PsiElementPredicate {
   }
 
   private static boolean isSimpleTry(PsiElement element) {
-    if (!(element instanceof PsiTryStatement)) {
+    if (!(element instanceof PsiTryStatement tryStatement)) {
       return false;
     }
-    final PsiTryStatement tryStatement = (PsiTryStatement)element;
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
       return false;

@@ -166,9 +166,8 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       final DomElement domElement = DomUtil.getDomElement(element);
       if (domElement == null) return null;
       final DomElement rootElement = DomUtil.getFileElement(domElement).getRootElement();
-      if (!(rootElement instanceof IdeaPlugin)) return null;
+      if (!(rootElement instanceof IdeaPlugin plugin)) return null;
 
-      IdeaPlugin plugin = (IdeaPlugin)rootElement;
       final String resourceBundle = plugin.getResourceBundle().getStringValue();
       if (StringUtil.isNotEmpty(resourceBundle)) {
         return resourceBundle;

@@ -1,7 +1,13 @@
 package com.jetbrains.performancePlugin.commands;
 
 import com.google.common.base.Stopwatch;
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionEngine;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.diagnostic.telemetry.TraceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -62,13 +68,18 @@ public final class DoHighlighting extends PerformanceCommand {
       ReadAction.nonBlocking(Context.current().wrap((Callable<Void>)() -> {
         Stopwatch timer = Stopwatch.createStarted();
         TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
-          DefaultHighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(psiFile, highlightErrorElements, runAnnotators,true);
+          GlobalInspectionTool tool = new HighlightVisitorBasedInspection()
+            .setHighlightErrorElements(highlightErrorElements).setRunAnnotators(runAnnotators).setRunVisitors(false);
+          InspectionManager inspectionManager = InspectionManager.getInstance(project);
+          GlobalInspectionContext globalContext = inspectionManager.createNewGlobalContext();
+          InspectionEngine.runInspectionOnFile(psiFile, new GlobalInspectionToolWrapper(tool), globalContext);
+
           span.setAttribute("lines", editor.getDocument().getLineCount());
           span.setAttribute("timeToLines", timer.stop().elapsed(TimeUnit.MILLISECONDS) / (Math.max(1, editor.getDocument().getLineCount())));
         });
         actionCallback.setDone();
         return null;
-      })).submit(AppExecutorUtil.getAppExecutorService());
+      })).wrapProgress(new DaemonProgressIndicator()).submit(AppExecutorUtil.getAppExecutorService());
     }));
     return Promises.toPromise(actionCallback);
   }

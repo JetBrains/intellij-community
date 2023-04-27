@@ -11,7 +11,10 @@ import java.util.Locale;
 /**
  * @author Bas Leijdekkers
  */
-public final class PreserveCaseUtil {
+final class PreserveCaseUtil {
+
+  private PreserveCaseUtil() {
+  }
 
   static String replaceWithCaseRespect(String toReplace, String foundString) {
     if (foundString.isEmpty() || toReplace.isEmpty()) return toReplace;

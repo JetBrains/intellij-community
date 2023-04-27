@@ -43,18 +43,16 @@ public class NegatedEqualityExpressionInspection extends BaseInspection implemen
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiPrefixExpression)) {
+      if (!(parent instanceof PsiPrefixExpression prefixExpression)) {
         return;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
       if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
         return;
       }
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
-      if (!(operand instanceof PsiBinaryExpression)) {
+      if (!(operand instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)operand;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       CommentTracker commentTracker = new CommentTracker();
       StringBuilder text = new StringBuilder(commentTracker.text(binaryExpression.getLOperand()));
@@ -90,10 +88,9 @@ public class NegatedEqualityExpressionInspection extends BaseInspection implemen
         return;
       }
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
-      if (!(operand instanceof PsiBinaryExpression)) {
+      if (!(operand instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)operand;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (JavaTokenType.EQEQ.equals(tokenType)) {
         registerError(expression.getOperationSign(), "==");

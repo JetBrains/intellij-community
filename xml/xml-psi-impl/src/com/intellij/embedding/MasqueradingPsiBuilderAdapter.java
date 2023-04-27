@@ -299,27 +299,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
 
-  private static class MyShiftedToken {
-    public final IElementType elementType;
-
-    public final int realStart;
-    public final int realEnd;
-
-    public final int shrunkStart;
-    public final int shrunkEnd;
-
-    MyShiftedToken(IElementType elementType, int realStart, int realEnd, int shrunkStart, int shrunkEnd) {
-      this.elementType = elementType;
-      this.realStart = realStart;
-      this.realEnd = realEnd;
-      this.shrunkStart = shrunkStart;
-      this.shrunkEnd = shrunkEnd;
-    }
-
-    @Override
-    public String toString() {
-      return "MSTk: [" + realStart + ", " + realEnd + "] -> [" + shrunkStart + ", " + shrunkEnd + "]: " + elementType.toString();
-    }
+  private record MyShiftedToken(IElementType elementType, int realStart, int realEnd, int shrunkStart, int shrunkEnd) {
   }
 
   private class MyMarker extends DelegateMarker {

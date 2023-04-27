@@ -27,8 +27,7 @@ public abstract class ExpandableActions extends DumbAwareAction {
   private static Expandable getExpandable(AnActionEvent event) {
     Object component = event.getData(CONTEXT_COMPONENT);
     if (component instanceof Expandable) return (Expandable)component;
-    if (component instanceof JComponent) {
-      JComponent container = (JComponent)component;
+    if (component instanceof JComponent container) {
       Object property = container.getClientProperty(Expandable.class);
       if (property instanceof Expandable) return (Expandable)property;
     }

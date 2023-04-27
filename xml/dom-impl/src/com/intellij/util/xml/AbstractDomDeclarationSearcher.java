@@ -26,8 +26,7 @@ public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearc
     final PsiElement parentElement = element.getParent();
     final DomManager domManager = DomManager.getDomManager(token.getProject());
     final DomElement nameElement;
-    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && element instanceof XmlText && parentElement instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)parentElement;
+    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && element instanceof XmlText && parentElement instanceof XmlTag tag) {
       for (XmlText text : tag.getValue().getTextElements()) {
         if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) {
           return;

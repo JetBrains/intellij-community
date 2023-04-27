@@ -30,10 +30,9 @@ class ExpressionPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiPolyadicExpression)) {
+    if (!(parent instanceof PsiPolyadicExpression expression)) {
       return false;
     }
-    final PsiPolyadicExpression expression = (PsiPolyadicExpression)parent;
     final PsiExpression[] operands = expression.getOperands();
     if (operands.length < 2) {
       return false;

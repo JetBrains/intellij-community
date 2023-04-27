@@ -86,8 +86,7 @@ public class PropertiesStructuralSearchProfile extends StructuralSearchProfile {
     if (elements.length > 1) throw new MalformedPatternException();
     final CompiledPattern pattern = globalVisitor.getContext().getPattern();
     for (PsiElement element : elements) {
-      if (element instanceof PsiComment) {
-        final PsiComment comment = (PsiComment)element;
+      if (element instanceof PsiComment comment) {
         final String commentText = comment.getText();
         if (globalVisitor.hasFragments(commentText)) {
           final MatchingHandler handler =
@@ -101,8 +100,7 @@ public class PropertiesStructuralSearchProfile extends StructuralSearchProfile {
         }
         pattern.getHandler(element).setFilter(e -> e instanceof PsiComment);
       }
-      else if (element instanceof Property) {
-        final Property property = (Property)element;
+      else if (element instanceof Property property) {
         pattern.getHandler(element).setFilter(e -> e instanceof Property);
         final PsiElement firstChild = property.getFirstChild();
         if (firstChild instanceof PropertyKeyImpl) {

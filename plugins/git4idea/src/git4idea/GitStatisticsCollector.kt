@@ -3,6 +3,7 @@ package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value
+import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.internal.statistic.beans.addIfDiffers
@@ -38,7 +39,9 @@ import kotlin.io.path.exists
 class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(project: Project): MutableSet<MetricEvent> {
+  override fun getMetrics(project: Project): Set<MetricEvent> {
+    if (!project.isTrusted()) return emptySet()
+
     val set = HashSet<MetricEvent>()
 
     val repositoryManager = GitUtil.getRepositoryManager(project)

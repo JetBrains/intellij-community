@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetLoader;
@@ -18,7 +17,7 @@ import java.util.Map;
 public final class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTarget> {
   public static final ResourcesTargetType PRODUCTION = new ResourcesTargetType("resources-production", false);
   public static final ResourcesTargetType TEST = new ResourcesTargetType("resources-test", true);
-  public static final List<ResourcesTargetType> ALL_TYPES = ContainerUtil.immutableList(PRODUCTION, TEST);
+  public static final List<ResourcesTargetType> ALL_TYPES = List.of(PRODUCTION, TEST);
 
   private final boolean myTests;
 

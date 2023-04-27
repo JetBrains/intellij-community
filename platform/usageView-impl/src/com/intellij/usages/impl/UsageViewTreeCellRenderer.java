@@ -67,8 +67,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     }
 
     myCalculated = false;
-    if (value instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+    if (value instanceof DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
 
       Rectangle visibleRect = ((JViewport)tree.getParent()).getViewRect();
@@ -90,7 +89,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       if (myCalculated) return;
       myCalculated = true;
 
-      if (userObject instanceof UsageTarget) {
+      if (userObject instanceof UsageTarget usageTarget) {
         LOG.assertTrue(treeNode instanceof Node);
         if (!((Node)treeNode).isValid()) {
           if (!getCharSequence(false).toString().contains(UsageViewBundle.message("node.invalid"))) {
@@ -99,7 +98,6 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           return;
         }
 
-        UsageTarget usageTarget = (UsageTarget)userObject;
         final ItemPresentation presentation = usageTarget.getPresentation();
         LOG.assertTrue(presentation != null);
         if (showAsReadOnly) {
@@ -192,12 +190,10 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       }
     }
 
-    if (value instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+    if (value instanceof DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
 
-      if (userObject instanceof UsageTarget) {
-        UsageTarget usageTarget = (UsageTarget)userObject;
+      if (userObject instanceof UsageTarget usageTarget) {
         if (usageTarget.isValid()) {
           final ItemPresentation presentation = usageTarget.getPresentation();
           LOG.assertTrue(presentation != null);
@@ -294,10 +290,8 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   }
 
   static @NlsContexts.Tooltip String getTooltipFromPresentation(final Object value) {
-    if (value instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
-      if (treeNode instanceof UsageNode) {
-        UsageNode node = (UsageNode)treeNode;
+    if (value instanceof DefaultMutableTreeNode treeNode) {
+      if (treeNode instanceof UsageNode node) {
         return node.getUsage().getPresentation().getTooltipText();
       }
     }

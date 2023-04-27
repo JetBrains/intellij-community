@@ -86,22 +86,17 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
         return true;
       }
 
-      if (condition instanceof GrUnaryExpression && ((GrUnaryExpression)condition).isPostfix()) {
-        final GrUnaryExpression postfixExpression = (GrUnaryExpression) condition;
+      if (condition instanceof GrUnaryExpression postfixExpression && ((GrUnaryExpression)condition).isPostfix()) {
         final GrExpression operand =
             postfixExpression.getOperand();
         return isSimpleFieldComparison(operand);
       }
-      if (condition instanceof GrUnaryExpression) {
-        final GrUnaryExpression unaryExpression =
-            (GrUnaryExpression) condition;
+      if (condition instanceof GrUnaryExpression unaryExpression) {
         final GrExpression operand =
             unaryExpression.getOperand();
         return isSimpleFieldComparison(operand);
       }
-      if (condition instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression =
-            (GrBinaryExpression) condition;
+      if (condition instanceof GrBinaryExpression binaryExpression) {
         final GrExpression lOperand = binaryExpression.getLeftOperand();
         final GrExpression rOperand = binaryExpression.getRightOperand();
         if (isLiteral(rOperand)) {
@@ -128,21 +123,18 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
       if (expression == null) {
         return false;
       }
-      if (!(expression instanceof GrReferenceExpression)) {
+      if (!(expression instanceof GrReferenceExpression reference)) {
         return false;
       }
-      final GrReferenceExpression reference =
-          (GrReferenceExpression) expression;
       final GrExpression qualifierExpression =
           reference.getQualifierExpression();
       if (qualifierExpression != null) {
         return false;
       }
       final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return false;
       }
-      final PsiField field = (PsiField) referent;
       return !field.hasModifierProperty(PsiModifier.VOLATILE);
     }
 
@@ -150,9 +142,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
       if (statement == null) {
         return false;
       }
-      if (statement instanceof GrBlockStatement) {
-        final GrBlockStatement blockStatement =
-            (GrBlockStatement) statement;
+      if (statement instanceof GrBlockStatement blockStatement) {
         final GrOpenBlock codeBlock = blockStatement.getBlock();
         final GrStatement[] codeBlockStatements = codeBlock.getStatements();
         for (GrStatement codeBlockStatement : codeBlockStatements) {

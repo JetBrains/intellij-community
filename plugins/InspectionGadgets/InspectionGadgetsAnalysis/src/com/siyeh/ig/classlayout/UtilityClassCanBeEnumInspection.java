@@ -53,10 +53,9 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection implements C
         return;
       }
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiClass)) {
+      if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)parent;
       for (PsiMethod constructor : aClass.getConstructors()) {
         constructor.delete();
       }

@@ -30,8 +30,7 @@ public class XMoveWatchDown extends XWatchesTreeActionBase {
     List<? extends WatchNodeImpl> nodes = getSelectedNodes(tree, WatchNodeImpl.class);
     if (nodes.size() == 1) {
       XDebuggerTreeNode root = tree.getRoot();
-      if (root instanceof WatchesRootNode) {
-        WatchesRootNode rootNode = (WatchesRootNode)root;
+      if (root instanceof WatchesRootNode rootNode) {
         int size = rootNode.getWatchChildren().size() - 1 + rootNode.headerNodesCount();
         return root.getIndex(nodes.get(0)) < size;
       }

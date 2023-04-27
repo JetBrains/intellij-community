@@ -141,13 +141,6 @@ public class TextBlockTransferable implements Transferable, Sizeable {
     }
   }
 
-  private static final class DataFlavorWithPriority {
-    private final DataFlavor flavor;
-    private final int priority;
-
-    private DataFlavorWithPriority(DataFlavor flavor, int priority) {
-      this.flavor = flavor;
-      this.priority = priority;
-    }
+  private record DataFlavorWithPriority(DataFlavor flavor, int priority) {
   }
 }

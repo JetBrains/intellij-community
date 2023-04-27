@@ -87,10 +87,9 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
         return;
       }
       final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       if (!(expression instanceof PsiAnonymousClass) && ignoredClasses.contains(aClass.getQualifiedName())) {
         return;
       }

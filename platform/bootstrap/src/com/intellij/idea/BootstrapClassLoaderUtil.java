@@ -56,10 +56,9 @@ public final class BootstrapClassLoaderUtil {
   public static void initClassLoader(boolean addCwmLibs) throws Throwable {
     Path distDir = Path.of(PathManager.getHomePath());
     ClassLoader classLoader = BootstrapClassLoaderUtil.class.getClassLoader();
-    if (!(classLoader instanceof PathClassLoader)) {
+    if (!(classLoader instanceof PathClassLoader pathClassLoader)) {
       throw new RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
     }
-    PathClassLoader pathClassLoader = (PathClassLoader)classLoader;
 
     if (AppMode.isDevServer()) {
       List<Path> paths = loadClassPathFromDevBuild(distDir);

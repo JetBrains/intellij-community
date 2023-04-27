@@ -23,8 +23,6 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
-    <orderEntry type="library" name="Kryo" level="project" />
-    <orderEntry type="library" name="Objenesis" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />

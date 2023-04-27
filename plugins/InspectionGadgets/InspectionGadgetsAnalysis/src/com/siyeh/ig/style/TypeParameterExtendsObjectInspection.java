@@ -86,9 +86,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement identifier = descriptor.getPsiElement();
       final PsiElement parent = identifier.getParent();
-      if (parent instanceof PsiTypeParameter) {
-        final PsiTypeParameter typeParameter =
-          (PsiTypeParameter)parent;
+      if (parent instanceof PsiTypeParameter typeParameter) {
         final PsiReferenceList extendsList =
           typeParameter.getExtendsList();
         final PsiJavaCodeReferenceElement[] referenceElements =
@@ -102,8 +100,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
         final PsiTypeElement typeElement = (PsiTypeElement)parent;
         PsiElement child = typeElement.getLastChild();
         while (child != null) {
-          if (child instanceof PsiJavaToken) {
-            final PsiJavaToken javaToken = (PsiJavaToken)child;
+          if (child instanceof PsiJavaToken javaToken) {
             final IElementType tokenType = javaToken.getTokenType();
             if (tokenType == JavaTokenType.QUEST) {
               return;
@@ -153,10 +150,9 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
         return;
       }
       final PsiType type = typeElement.getType();
-      if (!(type instanceof PsiWildcardType)) {
+      if (!(type instanceof PsiWildcardType wildcardType)) {
         return;
       }
-      final PsiWildcardType wildcardType = (PsiWildcardType)type;
       if (!wildcardType.isExtends()) {
         return;
       }

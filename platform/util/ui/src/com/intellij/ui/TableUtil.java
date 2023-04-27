@@ -62,7 +62,7 @@ public final class TableUtil {
   @NotNull
   public static List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
     final TableModel model = table.getModel();
-    if (!(model instanceof ItemRemovable)) {
+    if (!(model instanceof ItemRemovable itemRemovable)) {
       throw new RuntimeException("model must be instance of ItemRemovable");
     }
 
@@ -71,7 +71,6 @@ public final class TableUtil {
     }
 
     final List<Object[]> removedItems = new SmartList<>();
-    final ItemRemovable itemRemovable = (ItemRemovable)model;
     final int columnCount = model.getColumnCount();
     doRemoveSelectedItems(table, new ItemRemovable() {
       @Override

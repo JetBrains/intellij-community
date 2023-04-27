@@ -190,15 +190,13 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
   }
 
   private static void makeBold(Component component) {
-    if (component instanceof JComponent) {
-      JComponent jComponent = (JComponent)component;
+    if (component instanceof JComponent jComponent) {
       Font font = jComponent.getFont();
       if (font != null) {
         jComponent.setFont(font.deriveFont(Font.BOLD));
       }
     }
-    else if (component instanceof Container) {
-      Container container = (Container)component;
+    else if (component instanceof Container container) {
       for (int i = 0; i < container.getComponentCount(); i++) {
         makeBold(container.getComponent(i));
       }
@@ -763,8 +761,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     @Override
     public TableCellRenderer getCustomizedRenderer(VcsFileRevision revision, TableCellRenderer renderer) {
       if (renderer instanceof AuthorCellRenderer) {
-        if (revision instanceof VcsFileRevisionEx) {
-          VcsFileRevisionEx ex = (VcsFileRevisionEx)revision;
+        if (revision instanceof VcsFileRevisionEx ex) {
           @Nls StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
           if (ex.getAuthorEmail() != null) sb.append(" &lt;").append(ex.getAuthorEmail()).append("&gt;"); // NON-NLS
           if (ex.getCommitterName() != null && !Objects.equals(ex.getAuthor(), ex.getCommitterName())) {
@@ -812,8 +809,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setOpaque(selected);
-          if (value instanceof String) {
-            String message = (String)value;
+          if (value instanceof String message) {
             myIssueLinkRenderer.appendTextWithLinks(message, getDefaultAttributes());
             SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
           }

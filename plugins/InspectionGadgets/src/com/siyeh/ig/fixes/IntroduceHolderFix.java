@@ -61,15 +61,13 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
         return;
       }
       final PsiStatement thenBranch2 = ControlFlowUtils.stripBraces(innerIfStatement.getThenBranch());
-      if (!(thenBranch2 instanceof PsiExpressionStatement)) {
+      if (!(thenBranch2 instanceof PsiExpressionStatement expressionStatement)) {
         return;
       }
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)thenBranch2;
       final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiAssignmentExpression)) {
+      if (!(expression instanceof PsiAssignmentExpression assignmentExpression)) {
         return;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
       if (!(lhs instanceof PsiReferenceExpression)) {
         return;
@@ -84,10 +82,9 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
 
   public static PsiIfStatement getDoubleCheckedLockingInnerIf(PsiIfStatement ifStatement) {
     final PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-    if (!(thenBranch instanceof PsiSynchronizedStatement)) {
+    if (!(thenBranch instanceof PsiSynchronizedStatement synchronizedStatement)) {
       return null;
     }
-    final PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)thenBranch;
     final PsiCodeBlock body = synchronizedStatement.getBody();
     final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(body);
     return (statement instanceof PsiIfStatement) ? (PsiIfStatement)statement : null;
@@ -95,19 +92,17 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
 
   private void replaceWithStaticHolder(PsiReferenceExpression referenceExpression, PsiIfStatement ifStatement) {
     final PsiElement resolved = referenceExpression.resolve();
-    if (!(resolved instanceof PsiField)) {
+    if (!(resolved instanceof PsiField field)) {
       return;
     }
-    final PsiField field = (PsiField)resolved;
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(field.getProject());
     final String fieldName = field.getName();
     @NonNls final String holderName =
       StringUtil.capitalize(codeStyleManager.variableNameToPropertyName(fieldName, VariableKind.STATIC_FINAL_FIELD)) + "Holder";
     final PsiElement expressionParent = referenceExpression.getParent();
-    if (!(expressionParent instanceof PsiAssignmentExpression)) {
+    if (!(expressionParent instanceof PsiAssignmentExpression assignmentExpression)) {
       return;
     }
-    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expressionParent;
     final PsiExpression rhs = assignmentExpression.getRExpression();
     if (rhs == null) {
       return;
@@ -217,24 +212,21 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
       return false;
     }
     final PsiStatement statement = ControlFlowUtils.stripBraces(thenBranch);
-    if (!(statement instanceof PsiExpressionStatement)) {
+    if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
       return false;
     }
-    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
     return isSimpleAssignment(expressionStatement, field);
   }
 
   private static boolean isSimpleAssignment(PsiExpressionStatement expressionStatement, PsiField field) {
     final PsiExpression expression = expressionStatement.getExpression();
-    if (!(expression instanceof PsiAssignmentExpression)) {
+    if (!(expression instanceof PsiAssignmentExpression assignmentExpression)) {
       return false;
     }
-    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-    if (!(lhs instanceof PsiReferenceExpression)) {
+    if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
       return false;
     }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
     if (!field.equals(referenceExpression.resolve())) {
       return false;
     }

@@ -15,6 +15,7 @@ import com.intellij.ui.LanguageTextField
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import javax.swing.JComponent
 
 object GitLabNoteEditorComponentFactory {
@@ -44,6 +45,13 @@ object GitLabNoteEditorComponentFactory {
     }
 
     val textField = CommentTextFieldFactory.create(project, document)
+
+    cs.launch {
+      vm.focusRequests.collect {
+        yield()
+        CollaborationToolsUIUtil.focusPanel(textField)
+      }
+    }
 
     val busyValue = vm.state.mapToValueModel(cs, false) {
       it is GitLabNoteEditingViewModel.SubmissionState.Loading

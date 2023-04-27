@@ -106,8 +106,7 @@ public class EditorSelectionLocalSearchScope extends RangeBasedLocalSearchScope 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EditorSelectionLocalSearchScope)) return false;
-    EditorSelectionLocalSearchScope other = (EditorSelectionLocalSearchScope)o;
+    if (!(o instanceof EditorSelectionLocalSearchScope other)) return false;
 
     VirtualFile[] files = getVirtualFiles();
     VirtualFile[] otherFiles = other.getVirtualFiles();

@@ -50,11 +50,9 @@ final class DomCreator {
   @Nullable
   static DomInvocationHandler createTagHandler(@NotNull XmlTag tag) {
     PsiElement candidate = PhysicalDomParentStrategy.getParentTagCandidate(tag);
-    if (!(candidate instanceof XmlTag)) {
+    if (!(candidate instanceof XmlTag parentTag)) {
       return createRootHandler(tag);
     }
-
-    XmlTag parentTag = (XmlTag)candidate;
 
     DomInvocationHandler parent = getParentDom(parentTag);
     if (parent == null) return null;
@@ -102,8 +100,7 @@ final class DomCreator {
       if (current == null) {
         break;
       }
-      if (current instanceof XmlTag) {
-        final XmlTag xmlTag = (XmlTag)current;
+      if (current instanceof XmlTag xmlTag) {
         if (localName.equals(xmlTag.getLocalName()) && namespace.equals(xmlTag.getNamespace())) {
           index++;
           if (index >= totalCount) {

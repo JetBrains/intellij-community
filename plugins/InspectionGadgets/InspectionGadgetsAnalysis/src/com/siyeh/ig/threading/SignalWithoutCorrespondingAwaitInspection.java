@@ -54,10 +54,9 @@ public class SignalWithoutCorrespondingAwaitInspection extends BaseInspection {
         return;
       }
       final PsiElement referent = ((PsiReference)qualifier).resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)referent;
       final PsiClass fieldClass = field.getContainingClass();
       if (fieldClass == null) {
         return;

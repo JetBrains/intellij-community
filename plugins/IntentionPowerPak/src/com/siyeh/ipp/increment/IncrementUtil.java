@@ -20,8 +20,7 @@ final class IncrementUtil {
   @Nullable
   @Contract("null -> null")
   static PsiReferenceExpression getIncrementOrDecrementOperand(@Nullable PsiElement element) {
-    if (element instanceof PsiUnaryExpression) {
-      final PsiUnaryExpression expression = (PsiUnaryExpression)element;
+    if (element instanceof PsiUnaryExpression expression) {
       return getIncrementOrDecrementOperand(expression.getOperationTokenType(), expression.getOperand());
     }
     return null;

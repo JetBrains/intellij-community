@@ -96,9 +96,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @Override
   public boolean processPrimaryMethod(ChangeInfo changeInfo) {
-    if (!(changeInfo instanceof JavaChangeInfo)) return false;
+    if (!(changeInfo instanceof JavaChangeInfo info)) return false;
 
-    JavaChangeInfo info = (JavaChangeInfo)changeInfo;
     PsiMethod method = info.getMethod();
     if (!(method instanceof GrMethod)) return false;
 
@@ -125,8 +124,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   public boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
     if (!(changeInfo instanceof JavaChangeInfo)) return true;
     for (UsageInfo usageInfo : refUsages.get()) {
-      if (usageInfo instanceof  GrMethodCallUsageInfo) {
-        GrMethodCallUsageInfo methodCallUsageInfo = (GrMethodCallUsageInfo)usageInfo;
+      if (usageInfo instanceof GrMethodCallUsageInfo methodCallUsageInfo) {
         if (methodCallUsageInfo.isToChangeArguments()){
           final PsiElement element = methodCallUsageInfo.getElement();
           if (element == null) continue;

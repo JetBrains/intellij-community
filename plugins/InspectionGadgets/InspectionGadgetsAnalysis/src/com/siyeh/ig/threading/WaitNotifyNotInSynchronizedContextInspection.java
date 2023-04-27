@@ -91,13 +91,11 @@ public class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection
 
     private static boolean isSynchronizedOnThis(@NotNull PsiElement element) {
       final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiSynchronizedStatement.class);
-      if (context instanceof PsiSynchronizedStatement) {
-        final PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)context;
+      if (context instanceof PsiSynchronizedStatement synchronizedStatement) {
         final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(synchronizedStatement.getLockExpression());
         return lockExpression instanceof PsiThisExpression || isSynchronizedOnThis(synchronizedStatement);
       }
-      else if (context instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)context;
+      else if (context instanceof PsiMethod method) {
         if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
           return true;
         }

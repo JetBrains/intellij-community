@@ -129,9 +129,8 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
   private static void checkExtension(Extension extension, DomElementAnnotationHolder holder) {
     for (DomChildrenDescription child : extension.getGenericInfo().getFixedChildrenDescriptions()) {
       for (DomElement value : child.getValues(extension)) {
-        if (!value.exists() || !(value instanceof GenericDomValue)) continue;
+        if (!value.exists() || !(value instanceof GenericDomValue genericDomValue)) continue;
 
-        GenericDomValue genericDomValue = (GenericDomValue)value;
         checkDomValue(extension, holder, child, genericDomValue);
       }
     }
@@ -185,8 +184,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
         ResolveResult[] resolveResults = ((PropertyReference)reference).multiResolve(false);
         if (resolveResults.length == 1 && resolveResults[0].isValidResult()) {
           PsiElement element = resolveResults[0].getElement();
-          if (element instanceof Property) {
-            final Property property = (Property)element;
+          if (element instanceof Property property) {
             String value = property.getValue();
             highlightCapitalization(holder, genericDomValue, value, capitalization, property);
             return;

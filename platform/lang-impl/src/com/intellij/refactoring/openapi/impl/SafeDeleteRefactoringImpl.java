@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.SafeDeleteRefactoring;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
@@ -19,7 +18,7 @@ public final class SafeDeleteRefactoringImpl extends RefactoringImpl<SafeDeleteP
   @Override
   public List<PsiElement> getElements() {
     final PsiElement[] elements = myProcessor.getElements();
-    return ContainerUtil.immutableList(elements);
+    return List.of(elements);
   }
 
   @Override

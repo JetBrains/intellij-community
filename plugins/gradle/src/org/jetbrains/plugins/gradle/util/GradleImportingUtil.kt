@@ -1,5 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleImportingUtil")
+@file:ApiStatus.Internal
 
 package org.jetbrains.plugins.gradle.util
 
@@ -12,16 +13,12 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProces
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
+import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.all
-import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 
 private fun isResolveTask(id: ExternalSystemTaskId): Boolean {
   if (id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
@@ -35,119 +32,123 @@ private fun isResolveTask(id: ExternalSystemTaskId): Boolean {
   return false
 }
 
-@IntellijInternalApi
-fun whenResolveTaskStarted(action: () -> Unit, parentDisposable: Disposable) {
+fun getReloadProjectPromise(parentDisposable: Disposable): Promise<Project> {
+  return getResolveTaskPromise(parentDisposable)
+    .thenAsync { project -> getProjectDataLoadPromise(project, parentDisposable) { true } }
+}
+
+fun getResolveTaskPromise(parentDisposable: Disposable): Promise<Project> {
+  return getExternalSystemTaskPromise(parentDisposable) { isResolveTask(it) }
+}
+
+fun getExecutionTaskPromise(
+  parentDisposable: Disposable
+): Promise<Project> {
+  return getExternalSystemTaskPromise(parentDisposable) { it.type == ExternalSystemTaskType.EXECUTE_TASK }
+}
+
+private fun getExternalSystemTaskPromise(
+  parentDisposable: Disposable,
+  isRelevantTask: (ExternalSystemTaskId) -> Boolean
+): Promise<Project> {
+  val promise = AsyncPromise<Project>()
+  val disposable = Disposer.newDisposable(parentDisposable, "ExternalSystemTaskPromise")
+  whenExternalSystemTaskFinished(parentDisposable) { id, status ->
+    if (isRelevantTask(id)) {
+      Disposer.dispose(disposable)
+      promise.complete(status) { id.findProject()!! }
+    }
+  }
+  return promise
+}
+
+fun getProjectDataLoadPromise(project: Project, parentDisposable: Disposable, isRelevantTask: (String?) -> Boolean): Promise<Project> {
+  val promise = AsyncPromise<Project>()
+  val disposable = Disposer.newDisposable(parentDisposable, "ProjectDataLoadPromise")
+  whenProjectDataLoadFinished(project, disposable) { path, status ->
+    if (isRelevantTask(path)) {
+      Disposer.dispose(disposable)
+      promise.complete(status) { project }
+    }
+  }
+  return promise
+}
+
+private fun <T> AsyncPromise<T>.complete(status: OperationExecutionStatus, result: () -> T) {
+  when (status) {
+    is OperationExecutionStatus.Success -> setResult(result())
+    is OperationExecutionStatus.Failure -> setError(status.cause!!)
+    is OperationExecutionStatus.Cancel -> cancel()
+  }
+}
+
+fun whenResolveTaskStarted(
+  parentDisposable: Disposable,
+  action: (ExternalSystemTaskId, String?) -> Unit
+) {
+  whenExternalSystemTaskStarted(parentDisposable) { id, path ->
+    if (isResolveTask(id)) {
+      action(id, path)
+    }
+  }
+}
+
+fun whenResolveTaskFinished(
+  parentDisposable: Disposable,
+  action: (ExternalSystemTaskId, OperationExecutionStatus) -> Unit
+) {
+  whenExternalSystemTaskFinished(parentDisposable) { id, status ->
+    if (isResolveTask(id)) {
+      action(id, status)
+    }
+  }
+}
+
+private fun whenExternalSystemTaskStarted(
+  parentDisposable: Disposable,
+  action: (ExternalSystemTaskId, String?) -> Unit
+) {
   ExternalSystemProgressNotificationManager.getInstance()
     .addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
-        if (isResolveTask(id)) {
-          action()
-        }
+        action(id, workingDir)
       }
     }, parentDisposable)
 }
 
-@IntellijInternalApi
-fun getProjectDataLoadPromise(parentDisposable: Disposable): Promise<Project> {
-  return getResolveTaskFinishPromise(parentDisposable)
-    .thenAsync { project -> getProjectDataLoadPromise(project, null) }
-}
-
-@TestOnly
-fun getProjectDataLoadPromise(): Promise<Project> {
-  return getExternalSystemTaskFinishPromise(::isResolveTask)
-    .thenAsync { project -> getProjectDataLoadPromise(project, null) }
-}
-
-/**
- * @param expectedProjects specific linked gradle projects paths to wait for
- */
-@TestOnly
-fun getProjectDataLoadPromise(expectedProjects: List<Path>): Promise<Project> {
-  require(expectedProjects.isNotEmpty())
-
-  return getExternalSystemTaskFinishPromise(::isResolveTask).thenAsync { project ->
-      expectedProjects.map {
-        val linkedProjectPath: String = FileUtil.toCanonicalPath(it.absolutePathString())
-        getProjectDataLoadPromise(project, linkedProjectPath)
-      }.all(project, false)
-    }
-}
-
-@TestOnly
-fun getExecutionTaskFinishPromise(): Promise<Project> {
-  return getExternalSystemTaskFinishPromise { it.type == ExternalSystemTaskType.EXECUTE_TASK }
-}
-
-private fun getResolveTaskFinishPromise(parentDisposable: Disposable): Promise<Project> {
-  return getExternalSystemTaskFinishPromise(parentDisposable, ::isResolveTask)
-}
-
-private fun getExternalSystemTaskFinishPromise(
+private fun whenExternalSystemTaskFinished(
   parentDisposable: Disposable,
-  isRelevantTask: (ExternalSystemTaskId) -> Boolean
-): Promise<Project> {
-  val disposable = Disposer.newDisposable(parentDisposable, "")
-  return getExternalSystemTaskFinishPromiseImpl(disposable, isRelevantTask)
-}
-
-private fun getExternalSystemTaskFinishPromise(
-  isRelevantTask: (ExternalSystemTaskId) -> Boolean
-): Promise<Project> {
-  val disposable = Disposer.newDisposable("")
-  return getExternalSystemTaskFinishPromiseImpl(disposable, isRelevantTask)
-}
-
-private fun getExternalSystemTaskFinishPromiseImpl(
-  disposable: Disposable,
-  isRelevantTask: (ExternalSystemTaskId) -> Boolean
-): Promise<Project> {
-  val promise = AsyncPromise<Project>()
+  action: (ExternalSystemTaskId, OperationExecutionStatus) -> Unit
+) {
   ExternalSystemProgressNotificationManager.getInstance()
     .addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onSuccess(id: ExternalSystemTaskId) {
-        if (isRelevantTask(id)) {
-          Disposer.dispose(disposable)
-          promise.setResult(id.findProject()!!)
-        }
+        action(id, OperationExecutionStatus.Success)
       }
 
       override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
-        if (isRelevantTask(id)) {
-          Disposer.dispose(disposable)
-          promise.setError(e)
-        }
+        action(id, OperationExecutionStatus.Failure(e))
       }
 
       override fun onCancel(id: ExternalSystemTaskId) {
-        if (isRelevantTask(id)) {
-          Disposer.dispose(disposable)
-          promise.cancel()
-        }
+        action(id, OperationExecutionStatus.Cancel)
       }
-    }, disposable)
-  return promise
+    }, parentDisposable)
 }
 
-private fun getProjectDataLoadPromise(project: Project, expectedProjectPath: String? = null): Promise<Project> {
-  val promise = AsyncPromise<Project>()
-  val parentDisposable = Disposer.newDisposable()
-  val connection = project.messageBus.connect(parentDisposable)
-
-  connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-    override fun onFinalTasksFinished(projectPath: String?) {
-      if (expectedProjectPath == null || expectedProjectPath == projectPath) {
-        Disposer.dispose(parentDisposable)
-        promise.setResult(project)
+private fun whenProjectDataLoadFinished(
+  project: Project,
+  parentDisposable: Disposable,
+  action: (String?, OperationExecutionStatus) -> Unit
+) {
+  project.messageBus.connect(parentDisposable)
+    .subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
+      override fun onImportFailed(projectPath: String?, t: Throwable) {
+        action(projectPath, OperationExecutionStatus.Failure(t))
       }
-    }
 
-    override fun onImportFailed(projectPath: String?, t: Throwable) {
-      if (expectedProjectPath == null || expectedProjectPath == projectPath) {
-        Disposer.dispose(parentDisposable)
-        promise.setError("Import failed for $projectPath")
+      override fun onFinalTasksFinished(projectPath: String?) {
+        action(projectPath, OperationExecutionStatus.Success)
       }
-    }
-  })
-  return promise
+    })
 }

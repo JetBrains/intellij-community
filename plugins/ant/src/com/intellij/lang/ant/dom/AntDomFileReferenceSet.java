@@ -83,7 +83,7 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
   }
 
   @Override
-  public @NlsSafe String getPathString() {
+  public @NlsSafe @NotNull String getPathString() {
     return myValue.getStringValue();
   }
 

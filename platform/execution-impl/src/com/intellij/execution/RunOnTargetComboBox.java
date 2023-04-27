@@ -110,8 +110,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
   private void validateSelectedTarget() {
     Object selected = getSelectedItem();
     boolean hasErrors = false;
-    if (selected instanceof SavedTarget) {
-      SavedTarget target = (SavedTarget)selected;
+    if (selected instanceof SavedTarget target) {
       target.revalidateConfiguration();
       hasErrors = target.hasErrors();
     }

@@ -90,8 +90,7 @@ public final class InlineMethodConflictSolver {
       }
       if (child instanceof GrAssignmentExpression) {
         GrExpression lValue = ((GrAssignmentExpression) child).getLValue();
-        if (lValue instanceof GrReferenceExpression) {
-          GrReferenceExpression expr = (GrReferenceExpression) lValue;
+        if (lValue instanceof GrReferenceExpression expr) {
           if (expr.getQualifierExpression() == null && name.equals(expr.getReferenceName())) {
             return false;
           }

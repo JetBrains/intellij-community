@@ -123,7 +123,7 @@ class BundledRuntimeImpl(
   /**
    * When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
    */
-  override fun executableFilesPatterns(os: OsFamily, context: BuildContext): List<String> {
+  override fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): List<String> {
     val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home" else "jbr"
     @Suppress("SpellCheckingInspection")
     return buildList {
@@ -131,7 +131,7 @@ class BundledRuntimeImpl(
       if (os == OsFamily.LINUX) {
         add("$pathPrefix/lib/jexec")
         add("$pathPrefix/lib/jspawnhelper")
-        if (context.productProperties.runtimeDistribution == JetBrainsRuntimeDistribution.JCEF) {
+        if (distribution == JetBrainsRuntimeDistribution.JCEF) {
           add("$pathPrefix/lib/chrome-sandbox")
           add("$pathPrefix/lib/jcef_helper")
         }

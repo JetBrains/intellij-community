@@ -42,7 +42,7 @@ internal object GrazieDynamic : DynamicPluginListener {
 
   private fun collectValidLocalBundles(): List<Path> {
     val languages = GrazieRemote.allAvailableLocally()
-    return buildList {
+    val bundles = buildSet {
       for (language in languages) {
         val path = language.remote.file
         if (language.isEnglish() || GrazieRemote.isValidBundleForLanguage(language, path)) {
@@ -55,6 +55,7 @@ internal object GrazieDynamic : DynamicPluginListener {
         }
       }
     }
+    return bundles.toList()
   }
 
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {

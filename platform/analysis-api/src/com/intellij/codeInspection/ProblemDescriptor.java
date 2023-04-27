@@ -103,7 +103,7 @@ public interface ProblemDescriptor extends CommonProblemDescriptor {
       @Override public void setProblemGroup(@Nullable ProblemGroup problemGroup) {}
       @Override public boolean showTooltip() { return pd.showTooltip();}
       @Override public @NotNull String getDescriptionTemplate() { return pd.getDescriptionTemplate();}
-      @Override public QuickFix<?> @Nullable [] getFixes() { return QuickFix.EMPTY_ARRAY;}
+      @Override public @NotNull QuickFix @Nullable [] getFixes() { return QuickFix.EMPTY_ARRAY;}
       //@formatter:on
     };
   }

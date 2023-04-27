@@ -30,10 +30,9 @@ public class TextFilter extends FilterAction {
 
   @Override
   public @NotNull String getShortText(NamedScriptableDefinition variable) {
-    if (!(variable instanceof MatchVariableConstraint)) {
+    if (!(variable instanceof MatchVariableConstraint constraint)) {
       return "";
     }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
     final String text = constraint.getRegExp();
     if (text.isEmpty()) {
       return constraint.isWithinHierarchy() ? SSRBundle.message("hierarchy.tooltip.message") : "";

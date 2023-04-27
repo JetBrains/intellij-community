@@ -89,10 +89,9 @@ public class ReplaceAllDotInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiLiteralExpression)) {
+      if (!(element instanceof PsiLiteralExpression expression)) {
         return;
       }
-      final PsiLiteralExpression expression = (PsiLiteralExpression)element;
       final String text = expression.getText();
       final StringBuilder newExpression = new StringBuilder();
       int length = text.length();

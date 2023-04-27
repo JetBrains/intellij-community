@@ -282,9 +282,8 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
       final PsiMethod method = (PsiMethod)userObject;
       return MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ? myData.get(method).isReturnFlag() : null;
     }
-    else if (userObject instanceof PsiParameter) {
+    else if (userObject instanceof PsiParameter parameter) {
       final PsiMethod method = getMethodByNode(o);
-      final PsiParameter parameter = (PsiParameter)userObject;
       final int index = method.getParameterList().getParameterIndex(parameter);
       return MethodParameterInjection.isInjectable(parameter.getType(), method.getProject()) ? myData.get(method).getParamFlags()[index] : null;
     }

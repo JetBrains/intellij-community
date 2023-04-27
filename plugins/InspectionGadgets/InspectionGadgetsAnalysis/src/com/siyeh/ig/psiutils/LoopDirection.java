@@ -25,16 +25,14 @@ public enum LoopDirection {
     PsiExpressionStatement expressionStatement = tryCast(updateStatement, PsiExpressionStatement.class);
     if (expressionStatement == null) return null;
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(expressionStatement.getExpression());
-    if (expression instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unaryExpression = (PsiUnaryExpression)expression;
+    if (expression instanceof PsiUnaryExpression unaryExpression) {
       IElementType tokenType = unaryExpression.getOperationTokenType();
       if (tokenType != JavaTokenType.PLUSPLUS && tokenType != JavaTokenType.MINUSMINUS) return null;
       PsiExpression operand = unaryExpression.getOperand();
       if (!ExpressionUtils.isReferenceTo(operand, counter)) return null;
       return tokenType == JavaTokenType.PLUSPLUS ? ASCENDING : DESCENDING;
     }
-    if (expression instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+    if (expression instanceof PsiAssignmentExpression assignmentExpression) {
       PsiExpression lhs = assignmentExpression.getLExpression();
       if (!ExpressionUtils.isReferenceTo(lhs, counter)) return null;
       PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());

@@ -346,8 +346,7 @@ public final class PyTypeParser {
       tokens.add(first);
       tokens.addAll(rest);
 
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
+      if (file instanceof PyFile pyFile) {
         final Map<TextRange, PyType> types = new HashMap<>();
         final Map<PyType, TextRange> fullRanges = new HashMap<>();
         final Map<PyType, PyImportElement> imports = new HashMap<>();

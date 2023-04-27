@@ -152,11 +152,9 @@ public class IncompatibleMaskInspection extends BaseInspection {
       if (expression == null) {
         return false;
       }
-      if (!(expression instanceof PsiBinaryExpression)) {
+      if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
       final IElementType tokenType =
         binaryExpression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.OR) &&

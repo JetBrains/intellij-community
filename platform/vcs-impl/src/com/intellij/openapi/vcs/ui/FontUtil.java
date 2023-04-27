@@ -54,7 +54,7 @@ public final class FontUtil {
 
   @NotNull
   public static Font getEditorFont() {
-    return EditorFontType.getGlobalPlainFont().deriveFont(UISettingsUtils.getScaledEditorFontSize());
+    return EditorFontType.getGlobalPlainFont().deriveFont(UISettingsUtils.getInstance().getScaledEditorFontSize());
   }
 
   @NotNull

@@ -117,8 +117,7 @@ public final class SwingHelper {
     panel.setLayout(new BoxLayout(panel, axis));
     for (Component child : children) {
       panel.add(child, childAlignment);
-      if (child instanceof JComponent) {
-        JComponent jChild = (JComponent)child;
+      if (child instanceof JComponent jChild) {
         if (verticalOrientation) {
           jChild.setAlignmentX(childAlignment);
         }
@@ -809,15 +808,13 @@ public final class SwingHelper {
   @Nullable
   public static Component getComponentFromRecentMouseEvent() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-    if (event instanceof MouseEvent) {
-      MouseEvent mouseEvent = (MouseEvent)event;
+    if (event instanceof MouseEvent mouseEvent) {
       Component component = mouseEvent.getComponent();
       if (component != null) {
         component = SwingUtilities.getDeepestComponentAt(component, mouseEvent.getX(), mouseEvent.getY());
         if (component != null) {
-          if (component instanceof JTabbedPane) {
+          if (component instanceof JTabbedPane tabbedPane) {
             mouseEvent = SwingUtilities.convertMouseEvent(mouseEvent.getComponent(), mouseEvent, component);
-            JTabbedPane tabbedPane = (JTabbedPane)component;
             int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, mouseEvent.getX(), mouseEvent.getY());
             if (index != -1) return tabbedPane.getComponentAt(index);
           }

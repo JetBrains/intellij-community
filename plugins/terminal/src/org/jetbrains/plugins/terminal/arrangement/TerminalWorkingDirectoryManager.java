@@ -98,11 +98,11 @@ public class TerminalWorkingDirectoryManager {
     JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
     TerminalWidget newWidget = widget != null ? widget.asNewWidget() : null;
     if (widget != null) {
-      data.myWorkingDirectory = getWorkingDirectory(newWidget, data.myContentName);
+      data.myWorkingDirectory = getWorkingDirectory(newWidget);
     }
   }
 
-  public static @Nullable String getWorkingDirectory(@NotNull TerminalWidget widget, @Nullable String name) {
+  public static @Nullable String getWorkingDirectory(@NotNull TerminalWidget widget) {
     ProcessTtyConnector connector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
     if (connector == null) return null;
     try {
@@ -118,7 +118,7 @@ public class TerminalWorkingDirectoryManager {
     catch (InterruptedException ignored) {
     }
     catch (ExecutionException e) {
-      String message = "Failed to fetch cwd for " + name;
+      String message = "Failed to fetch cwd for " + widget.getTerminalTitle().buildTitle();
       if (LOG.isDebugEnabled()) {
         LOG.warn(message, e);
       }
@@ -127,17 +127,17 @@ public class TerminalWorkingDirectoryManager {
       }
     }
     catch (TimeoutException e) {
-      LOG.warn("Timeout fetching cwd for " + name, e);
+      LOG.warn("Timeout fetching cwd for " + widget.getTerminalTitle().buildTitle(), e);
     }
     return null;
   }
 
   /**
-   * @deprecated use {@link #getWorkingDirectory(TerminalWidget, String)} instead
+   * @deprecated use {@link #getWorkingDirectory(TerminalWidget)} instead
    */
   @Deprecated(forRemoval = true)
   public static @Nullable String getWorkingDirectory(@NotNull JBTerminalWidget widget, @Nullable String name) {
-    return getWorkingDirectory(widget.asNewWidget(), name);
+    return getWorkingDirectory(widget.asNewWidget());
   }
 
   private static boolean checkDirectory(@Nullable String directory) {

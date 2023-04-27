@@ -242,8 +242,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof CheckedTreeNode) {
         final Object userObject = ((CheckedTreeNode)value).getUserObject();
-        if (userObject instanceof CoverageSuite) {
-          CoverageSuite suite = (CoverageSuite)userObject;
+        if (userObject instanceof CoverageSuite suite) {
           getTextRenderer().append(suite.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           final String date = " (" + DateFormatUtil.formatPrettyDateTime(suite.getLastCoverageTimeStamp()) + ")";
           getTextRenderer().append(date, SimpleTextAttributes.GRAY_ATTRIBUTES);
@@ -352,8 +351,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       final CheckedTreeNode[] selectedNodes = mySuitesTree.getSelectedNodes(CheckedTreeNode.class, null);
       for (CheckedTreeNode selectedNode : selectedNodes) {
         final Object userObject = selectedNode.getUserObject();
-        if (userObject instanceof CoverageSuite) {
-          final CoverageSuite selectedSuite = (CoverageSuite)userObject;
+        if (userObject instanceof CoverageSuite selectedSuite) {
           if (selectedSuite.canRemove()) {
             myCoverageManager.removeCoverageSuite(selectedSuite);
             TreeUtil.removeLastPathComponent(mySuitesTree, new TreePath(selectedNode.getPath()));
@@ -369,8 +367,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       presentation.setEnabled(false);
       for (CheckedTreeNode node : selectedSuites) {
         final Object userObject = node.getUserObject();
-        if (userObject instanceof CoverageSuite) {
-          final CoverageSuite selectedSuite = (CoverageSuite)userObject;
+        if (userObject instanceof CoverageSuite selectedSuite) {
           if (selectedSuite.canRemove()) {
             presentation.setEnabled(true);
           }

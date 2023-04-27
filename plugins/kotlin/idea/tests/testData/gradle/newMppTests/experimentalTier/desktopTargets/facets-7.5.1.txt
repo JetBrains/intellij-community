@@ -79,9 +79,3 @@ project.mingwX64Test
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
     targetPlatform = Native (mingw_x64)
-
-
-Test configuration:
-- hiding following roots: resources, android-specific roots, generated
-- hiding following standard dependencies: sdk, self
-- dependencies order is not checked

@@ -230,8 +230,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
   private List<TaskActivationEntry> findTasksUnder(SimpleNode @NotNull [] nodes) {
     List<TaskActivationEntry> tasks = new SmartList<>();
     for (SimpleNode node : nodes) {
-      if (node instanceof TaskNode) {
-        final TaskNode taskNode = (TaskNode)node;
+      if (node instanceof TaskNode taskNode) {
         final String taskName = taskNode.getName();
         final PhaseNode phaseNode = (PhaseNode)taskNode.getParent();
         tasks.add(new TaskActivationEntry(myProjectSystemId, phaseNode.myPhase, phaseNode.myProjectPath, taskName));
@@ -246,8 +245,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
   private List<String> findSelectedProjects() {
     List<String> tasks = new ArrayList<>();
     for (DefaultMutableTreeNode node : myTree.getSelectedNodes(DefaultMutableTreeNode.class, null)) {
-      if (node.getUserObject() instanceof ProjectNode) {
-        final ProjectNode projectNode = (ProjectNode)node.getUserObject();
+      if (node.getUserObject() instanceof ProjectNode projectNode) {
         tasks.add(projectNode.myProjectPath);
       }
     }
@@ -296,8 +294,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ProjectItem)) return false;
-      ProjectItem item = (ProjectItem)o;
+      if (!(o instanceof ProjectItem item)) return false;
       if (!myProjectSettings.equals(item.myProjectSettings)) return false;
       return true;
     }

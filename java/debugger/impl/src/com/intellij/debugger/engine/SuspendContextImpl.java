@@ -114,7 +114,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-        // delay enable collection to speedup the resume
+        // delay enable collection to speed up the resume
         for (ObjectReference r : myKeptReferences) {
           myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection(r));
         }

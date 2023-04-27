@@ -106,10 +106,9 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
                          GlobalInspectionContextBase context,
                          final RefManager refManager,
                          final ProblemDescriptionsProcessor processor) {
-    if (!(file instanceof PropertiesFile)) return;
+    if (!(file instanceof PropertiesFile propertiesFile)) return;
     if (!context.isToCheckFile(file, this) || SuppressionUtil.inspectionResultSuppressed(file, this)) return;
     final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(file.getProject());
-    final PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<IProperty> properties = propertiesFile.getProperties();
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return;
@@ -189,8 +188,7 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
         CharSequence text = file.getViewProvider().getContents();
         LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, offset -> {
           PsiElement element = file.findElementAt(offset);
-          if (element != null && element.getParent() instanceof Property) {
-            final Property property = (Property)element.getParent();
+          if (element != null && element.getParent() instanceof Property property) {
             if (Objects.equals(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
               if (duplicatesCount[0] == 0){
                 message.append(PropertiesBundle.message("duplicate.property.value.problem.descriptor", property.getValue()));
@@ -230,8 +228,7 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
       PsiElement propertyInCurrentFile = null;
       Set<PsiFile> psiFilesWithDuplicates = keyToFiles.get(key);
       for (PsiFile file : psiFilesWithDuplicates) {
-        if (!(file instanceof PropertiesFile)) continue;
-        PropertiesFile propertiesFile = (PropertiesFile)file;
+        if (!(file instanceof PropertiesFile propertiesFile)) continue;
         final List<IProperty> propertiesByKey = propertiesFile.findPropertiesByKey(key);
         for (IProperty property : propertiesByKey) {
           if (duplicatesCount == 0){
@@ -278,8 +275,7 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
         final Set<PsiFile> psiFiles = keyToFiles.get(key);
         boolean firstUsage = true;
         for (PsiFile file : psiFiles) {
-          if (!(file instanceof PropertiesFile)) continue;
-          PropertiesFile propertiesFile = (PropertiesFile)file;
+          if (!(file instanceof PropertiesFile propertiesFile)) continue;
           final List<IProperty> propertiesByKey = propertiesFile.findPropertiesByKey(key);
           for (IProperty property : propertiesByKey) {
             if (firstUsage){

@@ -84,7 +84,7 @@ public class SimplifiableIfStatement {
   }
 
   Boolean wrong1(int i) {
-    if (i == 3) {
+    <warning descr="If statement can be replaced with '?:'">if</warning> (i == 3) {
       return null;
     }
     return false;

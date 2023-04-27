@@ -39,8 +39,7 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
                                                 int row,
                                                 boolean hasFocus) {
     final SimpleColoredComponent component = new SimpleColoredComponent();
-    if (!(value instanceof InspectionConfigTreeNode)) return component;
-    InspectionConfigTreeNode node = (InspectionConfigTreeNode)value;
+    if (!(value instanceof InspectionConfigTreeNode node)) return component;
 
     boolean reallyHasFocus = ((TreeTableTree)tree).getTreeTable().hasFocus();
     Color background = UIUtil.getTreeBackground(selected, reallyHasFocus);

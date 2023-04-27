@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -102,10 +102,10 @@ public final class FileTypeAssocTable<T> {
     myHashBangMap.remove(hashBang, type);
   }
 
-  void removeAssociation(@NotNull FileNameMatcher matcher, @NotNull T type) {
+  void removeAssociation(@NotNull FileNameMatcher matcher, @Nullable T type) {
     if (matcher instanceof ExtensionFileNameMatcher) {
       String extension = ((ExtensionFileNameMatcher)matcher).getExtension();
-      if (type.equals(myExtensionMappings.get(extension))) {
+      if (type == null || type.equals(myExtensionMappings.get(extension))) {
         myExtensionMappings.remove(extension);
       }
       return;
@@ -116,12 +116,12 @@ public final class FileTypeAssocTable<T> {
       String fileName = exactFileNameMatcher.getFileName();
 
       final Map<CharSequence, T> mapToUse = exactFileNameMatcher.isIgnoreCase() ? myExactFileNameAnyCaseMappings : myExactFileNameMappings;
-      if (type.equals(mapToUse.get(fileName))) {
+      if (type == null || type.equals(mapToUse.get(fileName))) {
         mapToUse.remove(fileName);
       }
       return;
     }
-    myMatchingMappings.removeIf(assoc -> matcher.equals(assoc.getFirst()));
+    myMatchingMappings.removeIf(assoc -> matcher.equals(assoc.getFirst()) && (type == null || type.equals(assoc.getSecond())));
   }
 
   void removeAllAssociations(@NotNull T type) {

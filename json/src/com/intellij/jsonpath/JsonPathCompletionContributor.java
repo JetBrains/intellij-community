@@ -179,8 +179,7 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
             if (files == null) return;
 
             for (Pair<PsiElement, TextRange> rangePair : files) {
-              if (rangePair.getFirst() instanceof JsonPathFile) {
-                JsonPathFile jsonPathFile = (JsonPathFile)rangePair.getFirst();
+              if (rangePair.getFirst() instanceof JsonPathFile jsonPathFile) {
                 visitJsonPathLiterals(jsonPathFile);
               }
             }

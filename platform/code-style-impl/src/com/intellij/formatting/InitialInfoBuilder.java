@@ -233,8 +233,7 @@ public final class InitialInfoBuilder {
   }
 
   private void registerExpandableIndents(@NotNull Block block, @NotNull AbstractBlockWrapper wrapper) {
-    if (block.getIndent() instanceof ExpandableIndent) {
-      ExpandableIndent indent = (ExpandableIndent)block.getIndent();
+    if (block.getIndent() instanceof ExpandableIndent indent) {
       myBlocksToForceChildrenIndent.putValue(indent, wrapper);
     }
   }

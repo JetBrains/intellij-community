@@ -47,8 +47,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
     if (component instanceof AbstractTreeNode) {
       return visit(path, (AbstractTreeNode)component, element);
     }
-    if (component instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
+    if (component instanceof DefaultMutableTreeNode node) {
       Object object = node.getUserObject();
       if (object instanceof AbstractTreeNode) {
         return visit(path, (AbstractTreeNode)object, element);

@@ -35,8 +35,7 @@ public class GroovyTypeDefinitionBodySelectioner extends ExtendWordSelectionHand
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
-    if (e instanceof GrTypeDefinitionBody) {
-      GrTypeDefinitionBody block = ((GrTypeDefinitionBody)e);
+    if (e instanceof GrTypeDefinitionBody block) {
       int startOffset = findOpeningBrace(block);
       int endOffset = findClosingBrace(block, startOffset);
       TextRange range = new TextRange(startOffset, endOffset);

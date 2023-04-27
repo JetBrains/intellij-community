@@ -34,6 +34,7 @@ import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.xxh3.Xxh3;
 
 import javax.tools.*;
 import java.io.File;
@@ -132,6 +133,7 @@ public final class ClasspathBootstrap {
     addToClassPath(IXMLBuilder.class, cp);  // nano-xml
     addToClassPath(JavaProjectBuilder.class, cp);  // QDox lightweight java parser
     addToClassPath(Gson.class, cp);  // gson
+    addToClassPath(Xxh3.class, cp);
 
     addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
     addToClassPath(Tracer.class, cp); // tracing infrastructure

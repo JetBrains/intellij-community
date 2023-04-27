@@ -744,8 +744,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     if (myEditConfigOnly) return;
 
     final SearchScope scope = myScopePanel.getScope();
-    if (scope instanceof GlobalSearchScopesCore.DirectoryScope) {
-      final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)scope;
+    if (scope instanceof GlobalSearchScopesCore.DirectoryScope directoryScope) {
       FindInProjectSettings.getInstance(myProject).addDirectory(directoryScope.getDirectory().getPresentableUrl());
     }
 

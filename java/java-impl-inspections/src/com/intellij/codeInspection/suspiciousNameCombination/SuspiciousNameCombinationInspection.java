@@ -7,34 +7,26 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.AddEditDeleteListPanel;
-import com.intellij.ui.ToolbarDecorator;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.MethodMatcher;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 
 public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -69,24 +61,18 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     addNameGroup("y,height,top,bottom");
   }
 
-  @Override @Nullable
-  public JComponent createOptionsPanel() {
-    NameGroupsPanel nameGroupsPanel = new NameGroupsPanel();
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("myNameGroups", AnalysisBundle.message("suspicious.name.combination.options.title")),
+      myIgnoredMethods.getTable(JavaBundle.message("section.title.inspection.suspicious.names.ignore.methods")).prefix("myIgnoredMethods")
+    );
+  }
 
-    ListTable table = new ListTable(new ListWrappingTableModel(
-      Arrays.asList(myIgnoredMethods.getClassNames(), myIgnoredMethods.getMethodNamePatterns()),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    final var tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(
-      InspectionGadgetsBundle.message("choose.class"),
-      JavaBundle.message("section.title.inspection.suspicious.names.ignore.methods"),
-      table,
-      false);
-
-    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-    panel.addGrowing(nameGroupsPanel);
-    panel.addGrowing(tablePanel);
-    return panel;
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onPrefix("myIgnoredMethods", myIgnoredMethods.getOptionController());
   }
 
   @Override
@@ -154,60 +140,6 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
   @NotNull
   private static String canonicalize(String word) {
     return StringUtil.toLowerCase(word.trim());
-  }
-
-  private class NameGroupsPanel extends AddEditDeleteListPanel<String> {
-
-    NameGroupsPanel() {
-      super(AnalysisBundle.message("suspicious.name.combination.options.title"), myNameGroups);
-      setMinimumSize(InspectionOptionsPanel.getMinimumLongListSize());
-      setPreferredSize(InspectionOptionsPanel.getMinimumLongListSize());
-      myListModel.addListDataListener(new ListDataListener() {
-        @Override
-        public void intervalAdded(ListDataEvent e) {
-          saveChanges();
-        }
-
-        @Override
-        public void intervalRemoved(ListDataEvent e) {
-          saveChanges();
-        }
-
-        @Override
-        public void contentsChanged(ListDataEvent e) {
-          saveChanges();
-        }
-      });
-    }
-
-    @Override
-    protected String findItemToAdd() {
-      return Messages.showInputDialog(this,
-                                      AnalysisBundle.message("suspicious.name.combination.options.prompt"),
-                                      AnalysisBundle.message("suspicious.name.combination.add.title"),
-                                      Messages.getQuestionIcon(), "", null);
-    }
-
-    @Override
-    protected String editSelectedItem(@NlsSafe String inputValue) {
-      return Messages.showInputDialog(this,
-                                      AnalysisBundle.message("suspicious.name.combination.options.prompt"),
-                                      AnalysisBundle.message("suspicious.name.combination.edit.title"),
-                                      Messages.getQuestionIcon(),
-                                      inputValue, null);
-    }
-
-    @Override
-    protected void customizeDecorator(ToolbarDecorator decorator) {
-      decorator.setToolbarPosition(ActionToolbarPosition.LEFT);
-    }
-
-    private void saveChanges() {
-      clearNameGroups();
-      for(int i=0; i<myListModel.getSize(); i++) {
-        addNameGroup(myListModel.getElementAt(i));
-      }
-    }
   }
 
   private class MyVisitor extends JavaElementVisitor {

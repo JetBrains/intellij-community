@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
@@ -522,12 +522,8 @@ public final class EditorActionUtil {
   }
 
   /**
-   * Tries to find visual column that points to the first non-white space symbol at the visual line at the given editor.
-   *
-   * @param editor              target editor
-   * @param visualLineNumber    target visual line
-   * @return                    visual column that points to the first non-white space symbol at the target visual line if the one exists;
-   *                            {@code '-1'} otherwise
+   * Returns the visual column that points to the first non-whitespace symbol at the visual line in the given editor,
+   * or -1 if there is no such column.
    */
   public static int findFirstNonSpaceColumnOnTheLine(@NotNull Editor editor, int visualLineNumber) {
     int startOffset = editor.visualPositionToOffset(new VisualPosition(visualLineNumber, 0));

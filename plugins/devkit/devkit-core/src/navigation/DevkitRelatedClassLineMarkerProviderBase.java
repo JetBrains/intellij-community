@@ -16,10 +16,9 @@ abstract class DevkitRelatedClassLineMarkerProviderBase extends DevkitRelatedLin
                                                 @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     // UAST is used for getting the class identifier to work for all UAST languages (not possible in plain PSI)
     UElement uElement = UastUtils.getUParentForIdentifier(element);
-    if (!(uElement instanceof UClass)) {
+    if (!(uElement instanceof UClass uClass)) {
       return;
     }
-    UClass uClass = (UClass)uElement;
     if (uElement instanceof UAnonymousClass) {
       return;
     }

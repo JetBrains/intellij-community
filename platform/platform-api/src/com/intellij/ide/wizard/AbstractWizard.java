@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -42,7 +41,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
 
   public final static Key<AbstractWizard<?>> KEY = Key.create("AbstractWizard");
-  public static final Key<ModifiableModuleModel> MODIFIABLE_MODULE_MODEL_KEY = Key.create("MODIFIABLE_MODULE_MODEL_KEY");
 
   protected int myCurrentStep;
   protected final ArrayList<T> mySteps;
@@ -537,7 +535,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     if (lastStep) {
       if (mySteps.size() > 1) {
         myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message(isNewWizard() ? "button.create" : "button.finish")));
-        myNextButton.setMnemonic(isNewWizard() ? 'C' : 'F');
+        myNextButton.setMnemonic(isNewWizard() ? KeyEvent.VK_C : KeyEvent.VK_F);
       }
       else {
         myNextButton.setText(IdeBundle.message("button.ok"));
@@ -545,7 +543,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
     else {
       myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.wizard.next")));
-      myNextButton.setMnemonic('N');
+      myNextButton.setMnemonic(KeyEvent.VK_N);
     }
     myNextButton.setEnabled(canGoNext);
 

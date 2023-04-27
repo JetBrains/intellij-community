@@ -158,7 +158,7 @@ fun Action.bindEnabled(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
   }
 }
 
-fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent>) {
+fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent?>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     contentFlow.collect {
       setContent(it)

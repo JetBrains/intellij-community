@@ -30,7 +30,8 @@ interface GHPRChangesService {
   @CalledInAny
   fun createChangesProvider(progressIndicator: ProgressIndicator,
                             pullRequestId: GHPRIdentifier,
-                            mergeBaseOid: String,
+                            baseRef: String,
+                            mergeBaseRef: String,
                             commits: Pair<GHCommit, Graph<GHCommit>>)
     : CompletableFuture<GitParsedChangesBundle>
 }

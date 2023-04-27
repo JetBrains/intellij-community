@@ -44,8 +44,7 @@ public abstract class CredentialsManager {
   }
 
   private static void recogniseCredentialType(@Nullable SdkAdditionalData additionalData, @NotNull CredentialsType credentialsType) {
-    if (!(additionalData instanceof RemoteSdkAdditionalData)) return;
-    RemoteSdkAdditionalData<?> data = (RemoteSdkAdditionalData<?>)additionalData;
+    if (!(additionalData instanceof RemoteSdkAdditionalData<?> data)) return;
     if (data.getRemoteConnectionType() != CredentialsType.UNKNOWN) return;
 
     String credentialsId = data.connectionCredentials().getId();
@@ -71,8 +70,7 @@ public abstract class CredentialsManager {
   }
 
   private static void forgetCredentialType(@Nullable SdkAdditionalData additionalData, @NotNull CredentialsType<?> credentialsType) {
-    if (!(additionalData instanceof RemoteSdkAdditionalData)) return;
-    RemoteSdkAdditionalData<?> data = (RemoteSdkAdditionalData<?>)additionalData;
+    if (!(additionalData instanceof RemoteSdkAdditionalData<?> data)) return;
     if (data.getRemoteConnectionType() != credentialsType) return;
     Element root = new Element("root");
     data.connectionCredentials().save(root);

@@ -29,9 +29,7 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
 
   @Override
   public int compare(InspectionTreeNode node1, InspectionTreeNode node2) {
-    if (node1 instanceof InspectionSeverityGroupNode && node2 instanceof InspectionSeverityGroupNode) {
-      final InspectionSeverityGroupNode groupNode1 = (InspectionSeverityGroupNode)node1;
-      final InspectionSeverityGroupNode groupNode2 = (InspectionSeverityGroupNode)node2;
+    if (node1 instanceof InspectionSeverityGroupNode groupNode1 && node2 instanceof InspectionSeverityGroupNode groupNode2) {
       return -groupNode1.getSeverityRegistrar().compare(groupNode1.getSeverityLevel().getSeverity(), groupNode2.getSeverityLevel().getSeverity());
     }
     if (node1 instanceof InspectionSeverityGroupNode) return -1;

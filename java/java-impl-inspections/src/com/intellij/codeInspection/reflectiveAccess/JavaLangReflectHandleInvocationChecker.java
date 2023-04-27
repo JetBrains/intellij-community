@@ -180,7 +180,7 @@ final class JavaLangReflectHandleInvocationChecker {
     } else {
       maybeVararg = false;
     }
-    PsiExpression[] expressions = actualArguments.expressions;
+    PsiExpression[] expressions = actualArguments.expressions();
     if (!maybeVararg || expressions.length < requiredArgumentCount - 1) {
       if (!checkArgumentCount(expressions, requiredArgumentCount, argumentOffset, argumentList, holder)) return false;
     }

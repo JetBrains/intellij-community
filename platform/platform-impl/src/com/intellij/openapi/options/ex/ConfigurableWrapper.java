@@ -87,8 +87,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
 
   @Nullable
   public static <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+    if (configurable instanceof ConfigurableWrapper wrapper) {
       if (wrapper.myConfigurable == null) {
         Class<?> configurableType = wrapper.getExtensionPoint().getConfigurableType();
         if (configurableType != null) {

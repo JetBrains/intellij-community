@@ -74,9 +74,8 @@ public class TemplateInvocationInspection extends XsltInspection {
             }
         }
 
-        if (call instanceof XsltCallTemplate) {
-            final XsltCallTemplate ct = ((XsltCallTemplate)call);
-            final PsiElement nameToken = ct.getNameIdentifier();
+        if (call instanceof XsltCallTemplate ct) {
+          final PsiElement nameToken = ct.getNameIdentifier();
             final XsltTemplate template = ct.getTemplate();
 
             if (template != null) {

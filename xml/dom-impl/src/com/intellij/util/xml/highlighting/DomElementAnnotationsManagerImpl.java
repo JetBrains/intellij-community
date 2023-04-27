@@ -256,8 +256,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       final DomFileElement<DomElement> root = DomUtil.getFileElement(element);
       if (!isHolderOutdated(root.getFile())) {
         final DomElementsProblemsHolder holder = getProblemHolder(element);
-        if (holder instanceof DomElementsProblemsHolderImpl) {
-          DomElementsProblemsHolderImpl holderImpl = (DomElementsProblemsHolderImpl)holder;
+        if (holder instanceof DomElementsProblemsHolderImpl holderImpl) {
           final List<DomElementsInspection<?>> suitableInspections = getSuitableDomInspections(root, true);
           final DomElementsInspection<?> mockInspection = getMockInspection(root);
           final boolean annotatorsFinished = mockInspection == null || holderImpl.isInspectionCompleted(mockInspection);

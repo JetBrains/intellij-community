@@ -3,7 +3,7 @@ package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.highlighting.CustomFoldRegionRendererWrapper;
 import com.intellij.codeHighlighting.RainbowHighlighter;
-import com.intellij.codeInsight.documentation.render.DocRenderItem;
+import com.intellij.codeInsight.documentation.render.DocRenderItemImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -342,7 +342,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     CustomFoldRegion[] region = {null};
     foldingModel.runBatchFoldingOperation(() -> {
       region[0] = foldingModel.addCustomLinesFolding(line, line,
-                                                     new CustomFoldRegionRendererWrapper(DocRenderItem.createDemoRenderer(editor), ourKey));
+                                                     new CustomFoldRegionRendererWrapper(DocRenderItemImpl.createDemoRenderer(editor), ourKey));
     });
     return ourKey && region[0] != null ? region[0].getTextRange() : null;
   }

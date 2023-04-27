@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.customization
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
@@ -101,14 +100,6 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
       val selectedNode = selectedPaths[0].lastPathComponent as? DefaultMutableTreeNode
       if (iconInfo != null && selectedNode != null) {
         CustomizableActionsPanel.setCustomIcon(customActionsSchema, selectedNode, iconInfo, contentPane)
-        if (selectedNode.userObject is Pair<*, *>) {
-          val actionId = CustomizableActionsPanel.getActionId(selectedNode)
-          if (actionId != null) {
-            val action = ActionManager.getInstance().getAction(actionId)
-            action.templatePresentation.icon = iconInfo.icon
-            action.isDefaultIcon = iconInfo.icon == null
-          }
-        }
       }
     }
     super.doOKAction()

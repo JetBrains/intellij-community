@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.internal
 
-import com.intellij.diagnostic.AttachmentFactory
+import com.intellij.diagnostic.CoreAttachmentFactory
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
@@ -73,7 +73,7 @@ fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, exp
     result.add(Attachment("uast-plugins.list", UastFacade.languagePlugins.joinToString("\n") { it.javaClass.toString() }))
     result.add(runCatching { psiElement.containingFile }
                  .mapCatching { it.virtualFile }
-                 .fold({ AttachmentFactory.createAttachment(it) }, { Attachment("containingFile-exception.txt", it.stackTraceToString()) }))
+                 .fold({ CoreAttachmentFactory.createAttachment(it) }, { Attachment("containingFile-exception.txt", it.stackTraceToString()) }))
   }.toTypedArray()
 
   val plugin = parent.sourcePsi?.let { UastFacade.findPlugin(it) } ?: UastFacade.findPlugin(psiElement)

@@ -142,10 +142,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiReferenceList)) {
+      if (!(parent instanceof PsiReferenceList referenceList)) {
         return;
       }
-      final PsiReferenceList referenceList = (PsiReferenceList)parent;
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (!originalNeeded) {
         element.delete();

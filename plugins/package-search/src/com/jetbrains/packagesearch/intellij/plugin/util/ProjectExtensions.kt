@@ -37,6 +37,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.PkgsUiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -125,10 +126,10 @@ internal val Project.moduleChangesSignalFlow: Flow<Unit>
         *FlowModuleChangesSignalProvider.extensions(this)
     )
 
-internal val Project.lifecycleScope: PackageSearchLifecycleScope
-    get() = service()
+internal val Project.lifecycleScope: CoroutineScope
+    get() = service<PackageSearchLifecycleScope>().cs
 
-internal val PackageSearchModule.lifecycleScope: PackageSearchLifecycleScope
+internal val PackageSearchModule.lifecycleScope: CoroutineScope
     get() = nativeModule.project.lifecycleScope
 
 internal val Project.pkgsUiStateModifier: UiStateModifier

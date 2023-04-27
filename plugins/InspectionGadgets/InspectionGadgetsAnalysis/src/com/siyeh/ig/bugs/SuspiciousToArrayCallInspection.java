@@ -155,10 +155,9 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
                                  @NotNull PsiMethodCallExpression expression,
                                  PsiType argumentType,
                                  PsiType itemType) {
-      if (!(argumentType instanceof PsiArrayType)) {
+      if (!(argumentType instanceof PsiArrayType arrayType)) {
         return;
       }
-      final PsiArrayType arrayType = (PsiArrayType)argumentType;
       final PsiType componentType = arrayType.getComponentType();
       PsiType actualType = getActualItemTypeIfMismatch(arrayType, expression, itemType);
       if (actualType != null) {

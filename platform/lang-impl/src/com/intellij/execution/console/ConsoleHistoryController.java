@@ -243,17 +243,17 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   protected void setConsoleText(final Entry command, final boolean storeUserText, final boolean regularMode) {
-    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.getText())) return;
+    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.text())) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     WriteCommandAction.writeCommandAction(myConsole.getProject()).run(() -> {
       if (storeUserText) {
         String text = document.getText();
-        if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
+        if (Comparing.equal(command.text(), text) && myHelper.getContent() != null) return;
         myHelper.setContent(text);
         myHelper.getModel().setContent(text);
       }
-      CharSequence text = Objects.requireNonNullElse(command.getText(), "");
+      CharSequence text = Objects.requireNonNullElse(command.text(), "");
       int offset;
       if (regularMode) {
         if (myMultiline) {
@@ -261,7 +261,7 @@ public class ConsoleHistoryController implements Disposable {
         }
         else {
           document.setText(text);
-          offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
+          offset = command.offset() == -1 ? document.getTextLength() : command.offset();
         }
       }
       else {

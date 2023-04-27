@@ -76,8 +76,7 @@ public final class PyDefUseUtil {
                                 instruction -> {
                                   final PsiElement element = instruction.getElement();
                                   final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
-                                  if (instruction instanceof ReadWriteInstruction) {
-                                    final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+                                  if (instruction instanceof ReadWriteInstruction rwInstruction) {
                                     final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
                                     if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
                                       final String name = elementName(element);

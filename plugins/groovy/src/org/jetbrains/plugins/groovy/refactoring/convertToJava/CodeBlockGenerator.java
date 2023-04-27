@@ -114,8 +114,7 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
     GrParameter[] parameters;
-    if (block.getParent() instanceof GrMethod) {
-      GrMethod method = (GrMethod)block.getParent();
+    if (block.getParent() instanceof GrMethod method) {
       parameters = method.getParameters();
     }
     else {
@@ -406,8 +405,7 @@ public class CodeBlockGenerator extends Generator {
         writeExpression(expression, builder, context);
       }
     }
-    else if (clause instanceof GrTraditionalForClause) {
-      final GrTraditionalForClause cl = (GrTraditionalForClause)clause;
+    else if (clause instanceof GrTraditionalForClause cl) {
       final GrCondition initialization = cl.getInitialization();
       final GrExpression condition = cl.getCondition();
       final GrExpressionList update = cl.getUpdate();

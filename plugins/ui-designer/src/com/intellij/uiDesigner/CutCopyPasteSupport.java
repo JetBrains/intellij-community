@@ -199,11 +199,10 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private static String getSerializedComponents() {
     try {
       final Object transferData = CopyPasteManager.getInstance().getContents(ourDataFlavor);
-      if (!(transferData instanceof SerializedComponentData)) {
+      if (!(transferData instanceof SerializedComponentData dataProxy)) {
         return null;
       }
 
-      final SerializedComponentData dataProxy = (SerializedComponentData)transferData;
       return dataProxy.getSerializedComponents();
     }
     catch (Exception e) {

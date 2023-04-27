@@ -50,8 +50,8 @@ public interface ServiceEventListener {
       return new ServiceEvent(EventType.RESET, rootContributorClass, rootContributorClass);
     }
 
-    public static ServiceEvent createSyncResetEvent(@NotNull Class<?> rootContributorClass) {
-      return new ServiceEvent(EventType.SYNC_RESET, rootContributorClass, rootContributorClass);
+    public static ServiceEvent createUnloadSyncResetEvent(@NotNull Class<?> rootContributorClass) {
+      return new ServiceEvent(EventType.UNLOAD_SYNC_RESET, rootContributorClass, rootContributorClass);
     }
 
     public static ServiceEvent createServiceAddedEvent(@NotNull Object target,
@@ -62,7 +62,7 @@ public interface ServiceEventListener {
   }
 
   enum EventType {
-    RESET, SYNC_RESET,
+    RESET, UNLOAD_SYNC_RESET,
     SERVICE_ADDED, SERVICE_REMOVED, SERVICE_CHANGED, SERVICE_STRUCTURE_CHANGED, SERVICE_GROUP_CHANGED,
     GROUP_CHANGED
   }

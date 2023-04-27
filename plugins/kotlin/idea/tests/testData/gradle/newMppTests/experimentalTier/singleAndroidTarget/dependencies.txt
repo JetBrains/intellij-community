@@ -23,6 +23,5 @@ project.unitTest
 
 
 Test configuration:
-- hiding following roots: resources, android-specific roots, generated
 - hiding following standard dependencies: sdk, self
 - dependencies order is not checked

@@ -78,8 +78,7 @@ public class UnknownInvalidSdk implements UnknownSdk {
   @Nullable
   private static UnknownInvalidSdk resolveInvalidSdk(@NotNull Sdk sdk) {
     SdkTypeId type = sdk.getSdkType();
-    if (!(type instanceof SdkType)) return null;
-    SdkType sdkType = (SdkType)type;
+    if (!(type instanceof SdkType sdkType)) return null;
 
     //for tests
     //noinspection TestOnlyProblems

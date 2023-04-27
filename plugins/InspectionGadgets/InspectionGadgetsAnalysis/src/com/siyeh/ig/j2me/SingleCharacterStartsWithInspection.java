@@ -138,10 +138,9 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
       if (!TypeUtils.isJavaLangString(type)) {
         return false;
       }
-      if (!(arg instanceof PsiLiteralExpression)) {
+      if (!(arg instanceof PsiLiteralExpression literal)) {
         return false;
       }
-      final PsiLiteralExpression literal = (PsiLiteralExpression)arg;
       final String value = (String)literal.getValue();
       return value != null && value.length() == 1;
     }

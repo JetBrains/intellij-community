@@ -91,8 +91,7 @@ public final class UpdateXmlCopyrightsProvider extends UpdateCopyrightsProvider 
 
       PsiElement res = element.getPrevSibling();
       if (res != null) {
-        if (res instanceof XmlProlog) {
-          XmlProlog prolog = (XmlProlog)res;
+        if (res instanceof XmlProlog prolog) {
           if (prolog.getChildren().length > 0) {
             res = prolog.getLastChild();
           }
@@ -116,8 +115,7 @@ public final class UpdateXmlCopyrightsProvider extends UpdateCopyrightsProvider 
 
       PsiElement res = element instanceof XmlProlog ? element : element.getNextSibling();
       if (res != null) {
-        if (res instanceof XmlProlog) {
-          XmlProlog prolog = (XmlProlog)res;
+        if (res instanceof XmlProlog prolog) {
           if (prolog.getChildren().length > 0) {
             res = prolog.getFirstChild();
           }

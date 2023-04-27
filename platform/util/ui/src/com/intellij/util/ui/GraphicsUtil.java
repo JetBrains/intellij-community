@@ -56,8 +56,7 @@ public final class GraphicsUtil {
   }
 
   public static void setupAntialiasing(Graphics g2, boolean enableAA, boolean ignoreSystemSettings) {
-    if (g2 instanceof Graphics2D) {
-      Graphics2D g = (Graphics2D)g2;
+    if (g2 instanceof Graphics2D g) {
       Toolkit tk = Toolkit.getDefaultToolkit();
       Map<?, ?> map = (Map<?, ?>)tk.getDesktopProperty(DESKTOP_HINTS);
       if (map != null && !ignoreSystemSettings) {

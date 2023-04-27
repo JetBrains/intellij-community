@@ -12,7 +12,7 @@ open class SearchAdapter : SearchListenerEx {
 
   override fun searchFinished(hasMoreContributors: MutableMap<SearchEverywhereContributor<*>, Boolean>) {}
 
-  override fun searchStarted(contributors: MutableCollection<out SearchEverywhereContributor<*>>) {}
+  override fun searchStarted(pattern: String, contributors: MutableCollection<out SearchEverywhereContributor<*>>) {}
 
   override fun searchFinished(items: MutableList<Any>) {}
 }

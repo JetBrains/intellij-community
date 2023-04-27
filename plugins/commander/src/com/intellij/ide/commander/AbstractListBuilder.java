@@ -88,8 +88,7 @@ public abstract class AbstractListBuilder implements Disposable {
 
   public final void drillDown() {
     final Object value = getSelectedValue();
-    if (value instanceof AbstractTreeNode) {
-      final AbstractTreeNode node = (AbstractTreeNode)value;
+    if (value instanceof AbstractTreeNode node) {
       drillDown(node, getChildren(node));
     }
     else { // an element that denotes parent
@@ -122,8 +121,7 @@ public abstract class AbstractListBuilder implements Disposable {
       buildList(element);
 
       for (int i = 0; i < myModel.getSize(); i++) {
-        if (myModel.getElementAt(i) instanceof NodeDescriptor) {
-          final NodeDescriptor desc = (NodeDescriptor)myModel.getElementAt(i);
+        if (myModel.getElementAt(i) instanceof NodeDescriptor desc) {
           final Object elem = desc.getElement();
           if (oldParent.equals(elem)) {
             selectItem(i);
@@ -165,8 +163,7 @@ public abstract class AbstractListBuilder implements Disposable {
       for (int i = 0; i < myModel.getSize(); i++) {
         if (myModel.getElementAt(i) instanceof AbstractTreeNode) {
           final AbstractTreeNode<?> desc = (AbstractTreeNode)myModel.getElementAt(i);
-          if (desc.getValue() instanceof StructureViewTreeElement) {
-            StructureViewTreeElement treeelement = (StructureViewTreeElement)desc.getValue();
+          if (desc.getValue() instanceof StructureViewTreeElement treeelement) {
             if (element.equals(treeelement.getValue())) {
               selectItem(i);
             break;
@@ -340,10 +337,9 @@ public abstract class AbstractListBuilder implements Disposable {
     List<NodeDescriptor<?>> resultDescriptors = new ArrayList<>();
     Object[] listChildren = myModel.toArray();
     for (final Object child : listChildren) {
-      if (!(child instanceof NodeDescriptor)) {
+      if (!(child instanceof NodeDescriptor descriptor)) {
         continue;
       }
-      final NodeDescriptor descriptor = (NodeDescriptor)child;
       descriptor.update();
       final Object newElement = descriptor.getElement();
       final Integer index = newElement != null ? elementToIndexMap.get(newElement) : null;

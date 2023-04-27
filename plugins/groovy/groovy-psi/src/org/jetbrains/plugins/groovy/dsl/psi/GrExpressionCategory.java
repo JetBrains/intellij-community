@@ -38,8 +38,7 @@ public class GrExpressionCategory implements PsiEnhancerCategory{
   @Nullable
   public static PsiClass getClassType(GrExpression expr) {
     final PsiType type = expr.getType();
-    if (type instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType)type;
+    if (type instanceof PsiClassType classType) {
       return classType.resolve();
     } else {
       final String text = type.getPresentableText();

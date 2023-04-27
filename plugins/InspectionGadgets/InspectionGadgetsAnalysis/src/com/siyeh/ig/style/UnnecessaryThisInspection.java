@@ -116,10 +116,9 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         return;
       }
       final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(expression.getQualifierExpression());
-      if (!(qualifierExpression instanceof PsiThisExpression)) {
+      if (!(qualifierExpression instanceof PsiThisExpression thisExpression)) {
         return;
       }
-      final PsiThisExpression thisExpression = (PsiThisExpression)qualifierExpression;
       final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
       final String referenceName = expression.getReferenceName();
       if (referenceName == null) {
@@ -140,10 +139,9 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
           return;
         }
         final PsiElement target = expression.resolve();
-        if (!(target instanceof PsiVariable)) {
+        if (!(target instanceof PsiVariable variable)) {
           return;
         }
-        final PsiVariable variable = (PsiVariable)target;
         if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
           return;
         }
@@ -157,8 +155,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         if (qualifierName == null) {
           return;
         }
-        if (parent instanceof PsiCallExpression) {
-          final PsiCallExpression callExpression = (PsiCallExpression)parent;
+        if (parent instanceof PsiCallExpression callExpression) {
           final PsiMethod calledMethod = callExpression.resolveMethod();
           if (calledMethod == null) {
             return;
@@ -187,10 +184,9 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         }
         else {
           final PsiElement target = expression.resolve();
-          if (!(target instanceof PsiVariable)) {
+          if (!(target instanceof PsiVariable variable)) {
             return;
           }
-          final PsiVariable variable = (PsiVariable)target;
           if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
             return;
           }

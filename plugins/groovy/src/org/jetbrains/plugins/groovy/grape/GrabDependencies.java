@@ -222,8 +222,7 @@ public class GrabDependencies implements IntentionAction {
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof GrAnnotation) {
-          GrAnnotation anno = (GrAnnotation)element;
+        if (element instanceof GrAnnotation anno) {
           String qname = anno.getQualifiedName();
           if (GrabAnnos.GRAB_ANNO.equals(qname)) grabs.add(anno);
           else if (GrabAnnos.GRAB_EXCLUDE_ANNO.equals(qname)) excludes.add(anno);

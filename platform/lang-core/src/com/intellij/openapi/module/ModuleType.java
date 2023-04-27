@@ -74,9 +74,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
 
   public final boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ModuleType)) return false;
-
-    final ModuleType moduleType = (ModuleType)o;
+    if (!(o instanceof ModuleType moduleType)) return false;
 
     return myId.equals(moduleType.myId);
   }

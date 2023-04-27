@@ -21,11 +21,11 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.ValidationInfoBuilder
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import kotlin.math.abs
 
 @Service(Service.Level.APP)
 class IdeScaleTransformer : UISettingsListener, Disposable {
-  private var lastSetScale: Float = UISettingsUtils.currentIdeScale
+  private val settingsUtils get() = UISettingsUtils.instance
+  private var lastSetScale: Float = settingsUtils.currentIdeScale
 
   init {
     Disposer.register(ApplicationManager.getApplication(), this)
@@ -33,13 +33,13 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    if (lastSetScale.percentValue != UISettingsUtils.currentIdeScale.percentValue) {
+    if (lastSetScale.percentValue != settingsUtils.currentIdeScale.percentValue) {
       scale()
     }
   }
 
   private fun scale() {
-    lastSetScale = UISettingsUtils.currentIdeScale
+    lastSetScale = settingsUtils.currentIdeScale
     tweakEditorFont()
     notifyAllAndUpdateUI()
   }
@@ -48,7 +48,7 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
     for (editor in EditorFactory.getInstance().allEditors) {
       if (editor is EditorEx) {
         editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true)
-        editor.setFontSize(UISettingsUtils.scaledEditorFontSize)
+        editor.setFontSize(settingsUtils.scaledEditorFontSize)
       }
     }
   }
@@ -62,24 +62,37 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
   class Settings {
     companion object {
       private const val SCALING_STEP = 0.1f
-      private const val PRESENTATION_MODE_MIN_SCALE = 0.4f
+      private const val PRESENTATION_MODE_MIN_SCALE = 0.5f
       private const val PRESENTATION_MODE_MAX_SCALE = 4f
-      val regularScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f)
-      val regularScaleComboboxModel = CollectionComboBoxModel(regularScaleOptions.map { it.percentStringValue },
-                                                              UISettings.getInstance().ideScale.percentStringValue)
-      val presentationModeScaleComboboxModel = CollectionComboBoxModel(regularScaleOptions.map { it.percentStringValue },
-                                                                       UISettings.getInstance().presentationModeIdeScale.percentStringValue)
+      private val ideScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f)
+      private val presentationModeScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f)
+      val currentScaleOptions get() = scaleOptions(UISettings.getInstance().presentationMode)
 
-      fun validatePercentScaleInput(builder: ValidationInfoBuilder, comboBox: ComboBox<String>): ValidationInfo? {
-        val message = validatePercentScaleInput(comboBox.item) ?: return null
+      private fun scaleOptions(isPresentation: Boolean) = if (isPresentation) presentationModeScaleOptions else ideScaleOptions
+
+      fun createIdeScaleComboboxModel() =
+        CollectionComboBoxModel(scaleOptions(false).map { it.percentStringValue },
+                                UISettings.getInstance().ideScale.percentStringValue)
+
+      fun createPresentationModeScaleComboboxModel() =
+        CollectionComboBoxModel(scaleOptions(true).map { it.percentStringValue },
+                                UISettings.getInstance().presentationModeIdeScale.percentStringValue)
+
+      fun validatePresentationModePercentScaleInput(builder: ValidationInfoBuilder, comboBox: ComboBox<String>): ValidationInfo? {
+        val message = validatePresentationModePercentScaleInput(comboBox.item) ?: return null
         return builder.error(message)
       }
 
       @Nls
-      fun validatePercentScaleInput(string: String): String? {
-        val scale = scaleFromPercentStringValue(string)
+      fun validatePresentationModePercentScaleInput(string: String): String? {
+        val scale = scaleFromPercentStringValue(string, true)
                     ?: return IdeBundle.message("presentation.mode.ide.scale.wrong.number.message")
 
+        return validatePresentationModePercentScale(scale)
+      }
+
+      @Nls
+      private fun validatePresentationModePercentScale(scale: Float): String? {
         if (scale.percentValue < PRESENTATION_MODE_MIN_SCALE.percentValue
             || scale.percentValue > PRESENTATION_MODE_MAX_SCALE.percentValue) {
           return IdeBundle.message("presentation.mode.ide.scale.out.of.range.number.message.format",
@@ -90,9 +103,10 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
         return null
       }
 
-      fun scaleFromPercentStringValue(stringValue: String?): Float? {
+      fun scaleFromPercentStringValue(stringValue: String?, isPresentation: Boolean?): Float? {
         var string = stringValue ?: return null
-        regularScaleOptions.firstOrNull { string == it.percentStringValue }?.let { return it }
+        val scaleOption = isPresentation?.let { scaleOptions(it) } ?: currentScaleOptions
+        scaleOption.firstOrNull { string == it.percentStringValue }?.let { return it }
 
         if (string.last() == '%') string = string.dropLast(1)
         val value = string.toFloatOrNull() ?: return null
@@ -101,39 +115,48 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
         return value / 100
       }
 
-      fun increasedScale() = scaleWithIndexShift(1,
-                                                 UISettingsUtils.currentIdeScale,
+      fun increasedScale() = scaleWithIndexShift(true,
+                                                 UISettingsUtils.instance.currentIdeScale,
                                                  UISettings.getInstance().presentationMode)
 
-      fun decreasedScale() = scaleWithIndexShift(-1,
-                                                 UISettingsUtils.currentIdeScale,
+      fun decreasedScale() = scaleWithIndexShift(false,
+                                                 UISettingsUtils.instance.currentIdeScale,
                                                  UISettings.getInstance().presentationMode)
 
-      private fun scaleWithIndexShift(indexShift: Int, scale: Float, isPresentation: Boolean): Float? {
-        return if (isPresentation){
-          (scale + indexShift * SCALING_STEP).takeIf { it > 0 }
-        }
-        else {
-          (getNearestOptionIndex(scale) + indexShift).let { nextIndex ->
-            if (nextIndex < 0 || nextIndex >= regularScaleOptions.size) null
-            else regularScaleOptions[nextIndex]
+      private fun scaleWithIndexShift(isNext: Boolean, scale: Float, isPresentation: Boolean): Float? {
+        val scaleOptions = scaleOptions(isPresentation)
+        val lessOrEqualScaleIndex = getNearestLessOrEqualOptionIndex(scale, scaleOptions)
+        val shift = if (isNext) 1 else -1
+        val lessOrEqualScale = scaleOptions.getOrNull(lessOrEqualScaleIndex)
+
+        val result: Float? =
+          if (isPresentation && (scale <= scaleOptions.first() - SCALING_STEP
+                                 || scale >= scaleOptions.last() + SCALING_STEP)) {
+            scale + SCALING_STEP * shift
           }
-        }
+          else if (lessOrEqualScale != null) {
+            if (lessOrEqualScale.percentValue == scale.percentValue || shift > 0) {
+              val nextScale = scaleOptions.getOrNull(lessOrEqualScaleIndex + shift)
+
+              if (isPresentation && nextScale == null) scale + SCALING_STEP * shift
+              else nextScale
+            }
+            else lessOrEqualScale
+          }
+          else if (lessOrEqualScaleIndex < 0 && shift > 0) scaleOptions.first()
+          else if (lessOrEqualScaleIndex >= scaleOptions.size && shift < 0) scaleOptions.last()
+          else null
+
+        return result?.takeIf { !isPresentation || validatePresentationModePercentScale(it) == null }
       }
 
-      private fun getNearestOptionIndex(scale: Float): Int {
-        var candidateIndex = 0
-        var diff = abs(regularScaleOptions[candidateIndex] - scale)
-
-        regularScaleOptions.forEachIndexed { index, v ->
-          val newDiff = abs(v - scale)
-          if (newDiff < diff) {
-            diff = newDiff
-            candidateIndex = index
-          }
+      private fun getNearestLessOrEqualOptionIndex(scale: Float, scaleOptions: List<Float>): Int {
+        scaleOptions.forEachIndexed { index, v ->
+          if (scale.percentValue == v.percentValue) return index
+          else if (scale.percentValue < v.percentValue) return index - 1
         }
 
-        return candidateIndex
+        return scaleOptions.size
       }
     }
   }

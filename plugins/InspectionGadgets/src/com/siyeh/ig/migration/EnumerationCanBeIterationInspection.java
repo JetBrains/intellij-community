@@ -95,15 +95,11 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
       if (parent instanceof PsiVariable) {
         variable = (PsiVariable)parent;
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression =
-          (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression lhs = assignmentExpression.getLExpression();
-        if (!(lhs instanceof PsiReferenceExpression)) {
+        if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
           return;
         }
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)lhs;
         final PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiVariable)) {
           return;
@@ -122,10 +118,9 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
       final int result = replaceMethodCalls(variable,
                                             statement.getTextOffset(), variableName);
       final PsiType variableType = variable.getType();
-      if (!(variableType instanceof PsiClassType)) {
+      if (!(variableType instanceof PsiClassType classType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)variableType;
       final PsiType[] parameterTypes = classType.getParameters();
       final PsiType parameterType;
       if (parameterTypes.length > 0) {
@@ -269,7 +264,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
       referenceElements.sort(PsiElementOrderComparator.getInstance());
       int result = KEEP_NOTHING;
       for (PsiElement referenceElement : referenceElements) {
-        if (!(referenceElement instanceof PsiReferenceExpression)) {
+        if (!(referenceElement instanceof PsiReferenceExpression referenceExpression)) {
           result = KEEP_DECLARATION;
           continue;
         }
@@ -277,8 +272,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
           result = KEEP_DECLARATION;
           continue;
         }
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)referenceElement;
         final PsiElement referenceParent =
           referenceExpression.getParent();
         if (!(referenceParent instanceof PsiReferenceExpression)) {
@@ -291,12 +284,10 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
         }
         final PsiElement referenceGrandParent =
           referenceParent.getParent();
-        if (!(referenceGrandParent instanceof PsiMethodCallExpression)) {
+        if (!(referenceGrandParent instanceof PsiMethodCallExpression callExpression)) {
           result = KEEP_INITIALIZATION;
           continue;
         }
-        final PsiMethodCallExpression callExpression =
-          (PsiMethodCallExpression)referenceGrandParent;
         final PsiReferenceExpression foundReferenceExpression =
           callExpression.getMethodExpression();
         @NonNls final String foundName =
@@ -378,15 +369,11 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
       if (parent instanceof PsiLocalVariable) {
         variable = (PsiVariable)parent;
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression =
-          (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression lhs = assignmentExpression.getLExpression();
-        if (!(lhs instanceof PsiReferenceExpression)) {
+        if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
           return;
         }
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)lhs;
         final PsiElement element = referenceExpression.resolve();
         if (!(element instanceof PsiVariable)) {
           return;
@@ -462,16 +449,13 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
         }
         final PsiExpression qualifierExpression =
           methodExpression.getQualifierExpression();
-        if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+        if (!(qualifierExpression instanceof PsiReferenceExpression referenceExpression)) {
           return;
         }
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)qualifierExpression;
         final PsiElement element = referenceExpression.resolve();
-        if (!(element instanceof PsiVariable)) {
+        if (!(element instanceof PsiVariable variable)) {
           return;
         }
-        final PsiVariable variable = (PsiVariable)element;
         enumerationMethodCalled = this.variable.equals(variable);
       }
 

@@ -688,8 +688,7 @@ public class FilterEditor extends JComponent implements IFilterEditor /*, Dispos
       @Override
       public void actionPerformed(ActionEvent e) {
         popup.hide();
-        if (e.getSource() instanceof JTextField) {
-          JTextField textField = (JTextField)e.getSource();
+        if (e.getSource() instanceof JTextField textField) {
           textField.setCaretPosition(textField.getCaretPosition());
         }
       }
@@ -709,8 +708,7 @@ public class FilterEditor extends JComponent implements IFilterEditor /*, Dispos
       @Override
       public void actionPerformed(ActionEvent e) {
         if (!popup.isPopupFocused() || !popup.selectLast(false)) {
-          if (e.getSource() instanceof JTextField) {
-            JTextField textField = (JTextField)e.getSource();
+          if (e.getSource() instanceof JTextField textField) {
             textField.setCaretPosition(textField.getText()
                                          .length());
           }
@@ -737,8 +735,7 @@ public class FilterEditor extends JComponent implements IFilterEditor /*, Dispos
         // list;  if the item is already on the very last element, or
         // the focus is on the text field, move the caret to the end
         if (!popup.isPopupFocused() || !popup.selectLast(true)) {
-          if (e.getSource() instanceof JTextField) {
-            JTextField textField = (JTextField)e.getSource();
+          if (e.getSource() instanceof JTextField textField) {
             textField.setCaretPosition(textField.getText()
                                          .length());
           }
@@ -766,8 +763,7 @@ public class FilterEditor extends JComponent implements IFilterEditor /*, Dispos
         // list;  if the item is already on the very first element, or
         // the focus is on the text field, move the caret home
         if (!popup.isPopupFocused() || !popup.selectFirst(true)) {
-          if (e.getSource() instanceof JTextField) {
-            JTextField textField = (JTextField)e.getSource();
+          if (e.getSource() instanceof JTextField textField) {
             textField.setCaretPosition(0);
           }
         }
@@ -797,8 +793,7 @@ public class FilterEditor extends JComponent implements IFilterEditor /*, Dispos
       @Override
       public void actionPerformed(ActionEvent e) {
         if (!popup.isPopupFocused() || !popup.selectFirst(false)) {
-          if (e.getSource() instanceof JTextField) {
-            JTextField textField = (JTextField)e.getSource();
+          if (e.getSource() instanceof JTextField textField) {
             textField.setCaretPosition(0);
           }
         }

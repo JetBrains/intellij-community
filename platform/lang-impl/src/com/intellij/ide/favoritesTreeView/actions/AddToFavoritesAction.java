@@ -119,8 +119,8 @@ public class AddToFavoritesAction extends AnAction {
     if (object instanceof PsiElement) {
       Module containingModule = null;
       if (inProjectView && ProjectView.getInstance(project).isShowModules(currentViewId)) {
-        if (pane != null && pane.getSelectedDescriptor() != null && pane.getSelectedDescriptor().getElement() instanceof AbstractTreeNode) {
-          AbstractTreeNode abstractTreeNode = ((AbstractTreeNode)pane.getSelectedDescriptor().getElement());
+        if (pane != null && pane.getSelectedDescriptor() != null &&
+            pane.getSelectedDescriptor().getElement() instanceof AbstractTreeNode abstractTreeNode) {
           while (abstractTreeNode != null && !(abstractTreeNode.getParent() instanceof AbstractModuleNode)) {
             abstractTreeNode = abstractTreeNode.getParent();
           }

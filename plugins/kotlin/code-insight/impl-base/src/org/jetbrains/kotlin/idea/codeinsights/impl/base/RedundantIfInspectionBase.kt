@@ -150,7 +150,9 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             val condition = when (redundancyType) {
                 RedundancyType.NONE -> return
                 RedundancyType.THEN_TRUE -> element.condition
-                RedundancyType.ELSE_TRUE -> element.condition?.negate(isBooleanExpression = ::checkIsBooleanExpressionFromModalWindow)
+                RedundancyType.ELSE_TRUE -> element.condition?.negate(
+                    optionalBooleanExpressionCheck = ::checkIsBooleanExpressionFromModalWindow
+                )
             } ?: return
             val factory = KtPsiFactory(project)
             val newExpressionOnlyWithCondition = when (branchType) {

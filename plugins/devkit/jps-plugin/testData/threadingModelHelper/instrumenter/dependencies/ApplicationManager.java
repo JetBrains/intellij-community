@@ -6,14 +6,14 @@ public class ApplicationManager {
       @Override
       public void assertIsDispatchThread() {
         if ("TESTING_BACKGROUND_THREAD".equals(Thread.currentThread().getName())) {
-          throw new RuntimeException("Access is allowed from event dispatch thread only.");
+          throw new RuntimeException("Access is allowed from Event Dispatch Thread (EDT) only");
         }
       }
 
       @Override
       public void assertIsNonDispatchThread() {
         if (!"TESTING_BACKGROUND_THREAD".equals(Thread.currentThread().getName())) {
-          throw new RuntimeException("Access from event dispatch thread is not allowed.");
+          throw new RuntimeException("Access from Event Dispatch Thread (EDT) is not allowed");
         }
       }
 

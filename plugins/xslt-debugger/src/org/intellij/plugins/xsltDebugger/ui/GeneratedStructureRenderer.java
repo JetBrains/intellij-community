@@ -44,8 +44,7 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
       // "..." node
       append((String)o, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
       setToolTipText(XsltDebuggerBundle.message("tooltip.element.is.not.finished.yet"));
-    } else if (o instanceof OutputEventQueue.NodeEvent) {
-      final OutputEventQueue.NodeEvent event = (OutputEventQueue.NodeEvent)o;
+    } else if (o instanceof OutputEventQueue.NodeEvent event) {
       final OutputEventQueue.NodeEvent.QName qname = event.getQName();
       switch (event.getType()) {
         case OutputEventQueue.START_ELEMENT -> {

@@ -2,23 +2,20 @@
 package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.util.childScope
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotesContainer
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 interface GitLabNoteEditingViewModel {
   val text: MutableStateFlow<String>
+  val focusRequests: Flow<Unit>
 
   val state: Flow<SubmissionState?>
+
+  fun requestFocus()
 
   fun submit()
 
@@ -27,12 +24,13 @@ interface GitLabNoteEditingViewModel {
   sealed interface SubmissionState {
     object Loading : SubmissionState
     class Error(val error: Throwable) : SubmissionState
+    object Done : SubmissionState
   }
 }
 
-open class GitLabNoteEditingViewModelBase(parentCs: CoroutineScope,
-                                          initialText: String,
-                                          private val submitter: suspend (String) -> Unit)
+class DelegatingGitLabNoteEditingViewModel(parentCs: CoroutineScope,
+                                           initialText: String,
+                                           private val submitter: suspend (String) -> Unit)
   : GitLabNoteEditingViewModel {
 
   private val cs = parentCs.childScope()
@@ -40,8 +38,18 @@ open class GitLabNoteEditingViewModelBase(parentCs: CoroutineScope,
 
   override val text: MutableStateFlow<String> = MutableStateFlow(initialText)
 
+  private val _focusRequestsChannel = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
+  override val focusRequests: Flow<Unit>
+    get() = _focusRequestsChannel.receiveAsFlow()
+
   private val _state = MutableStateFlow<GitLabNoteEditingViewModel.SubmissionState?>(null)
   override val state: Flow<GitLabNoteEditingViewModel.SubmissionState?> = _state.asSharedFlow()
+
+  override fun requestFocus() {
+    cs.launch {
+      _focusRequestsChannel.send(Unit)
+    }
+  }
 
   override fun submit() {
     taskLauncher.launch {
@@ -49,8 +57,7 @@ open class GitLabNoteEditingViewModelBase(parentCs: CoroutineScope,
       _state.value = GitLabNoteEditingViewModel.SubmissionState.Loading
       try {
         submitter(newText)
-        _state.value = null
-        onDone()
+        _state.value = GitLabNoteEditingViewModel.SubmissionState.Done
       }
       catch (ce: CancellationException) {
         throw ce
@@ -60,8 +67,6 @@ open class GitLabNoteEditingViewModelBase(parentCs: CoroutineScope,
       }
     }
   }
-
-  protected open suspend fun onDone() = Unit
 
   override suspend fun destroy() {
     try {
@@ -73,22 +78,22 @@ open class GitLabNoteEditingViewModelBase(parentCs: CoroutineScope,
   }
 }
 
-
-class EditGitLabNoteViewModel(parentCs: CoroutineScope, note: GitLabNote, private val onDone: (suspend () -> Unit))
-  : GitLabNoteEditingViewModelBase(parentCs, note.body.value, note::setBody) {
-  override suspend fun onDone() = onDone.invoke()
-}
-
-
 interface NewGitLabNoteViewModel : GitLabNoteEditingViewModel {
   val currentUser: GitLabUserDTO
 }
 
-class NewGitLabNoteViewModelImpl(parentCs: CoroutineScope,
-                                 override val currentUser: GitLabUserDTO,
-                                 notesContainer: GitLabNotesContainer)
-  : NewGitLabNoteViewModel, GitLabNoteEditingViewModelBase(parentCs, "", notesContainer::addNote) {
-  override suspend fun onDone() {
-    text.value = ""
+fun GitLabNoteEditingViewModel.forNewNote(currentUser: GitLabUserDTO): NewGitLabNoteViewModel =
+  WrappingNewGitLabNoteViewModel(this, currentUser)
+
+private class WrappingNewGitLabNoteViewModel(delegate: GitLabNoteEditingViewModel, override val currentUser: GitLabUserDTO)
+  : NewGitLabNoteViewModel, GitLabNoteEditingViewModel by delegate
+
+fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend () -> Unit) {
+  cs.launch {
+    state.filter { state ->
+      state == GitLabNoteEditingViewModel.SubmissionState.Done
+    }.collect {
+      callback()
+    }
   }
 }

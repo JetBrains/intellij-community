@@ -226,7 +226,7 @@ public final class ColorUtil {
     if (balance >= 1) return c2;
     Supplier<Color> func = new MixedColorProducer(c1, c2, balance);
     return c1 instanceof JBColor || c2 instanceof JBColor ? JBColor.lazy(func) : func.get();
-    }
+  }
 
   /**
    * Returns the color that is the result of having a foreground color on top of a background color

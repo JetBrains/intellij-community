@@ -38,13 +38,13 @@ public class MarkdownTable extends MarkdownCompositePsiElementBase {
   }
 
   public @NotNull List<@NotNull MarkdownTableRow> getRows(boolean includeHeader) {
-    final var rows = PsiTreeUtil.getChildrenOfType(this, MarkdownTableRow.class);
+    MarkdownTableRow[] rows = PsiTreeUtil.getChildrenOfType(this, MarkdownTableRow.class);
     if (rows == null) {
       return ContainerUtil.emptyList();
     }
     if (!includeHeader) {
       return ContainerUtil.filter(rows, row -> PsiUtilCore.getElementType(row) != MarkdownElementTypes.TABLE_HEADER);
     }
-    return ContainerUtil.immutableList(rows);
+    return List.of(rows);
   }
 }

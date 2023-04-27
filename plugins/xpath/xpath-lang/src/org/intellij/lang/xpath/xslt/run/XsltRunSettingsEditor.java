@@ -292,8 +292,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         final Module[] modules = ModuleManager.getInstance(project).getModules();
         myModule.setModel(new DefaultComboBoxModel<>(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
         myModule.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-          if (value instanceof Module) {
-            final Module module = (Module)value;
+          if (value instanceof Module module) {
             final String moduleName = ReadAction.compute(() -> module.getName());
             label.setText(moduleName);
             label.setIcon(ModuleType.get(module).getIcon());

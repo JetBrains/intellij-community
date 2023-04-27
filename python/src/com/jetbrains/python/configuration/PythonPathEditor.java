@@ -263,8 +263,7 @@ public class PythonPathEditor extends SdkPathEditor {
       myFoundFiles.addAll(list);
       myUserAddedToRemove.clear();
 
-      if (modificator.getSdkAdditionalData() instanceof PythonSdkAdditionalData) {
-        PythonSdkAdditionalData data = (PythonSdkAdditionalData)modificator.getSdkAdditionalData();
+      if (modificator.getSdkAdditionalData() instanceof PythonSdkAdditionalData data) {
         setAdded(data.getAddedPathFiles());
         setExcluded(data.getExcludedPathFiles());
         result.addAll(myExcluded);

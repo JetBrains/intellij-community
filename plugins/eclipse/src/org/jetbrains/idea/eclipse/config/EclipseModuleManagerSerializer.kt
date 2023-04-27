@@ -69,7 +69,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     eclipseProperties.eclipseUrls.forEach {
       componentTag.addContent(Element(LIBELEMENT).setAttribute(VALUE_ATTR, it.url))
     }
-    eclipseProperties.variablePaths.forEach { name, path ->
+    eclipseProperties.variablePaths.forEach { (name, path) ->
       val prefix = listOf(SRC_PREFIX, SRC_LINK_PREFIX, LINK_PREFIX).firstOrNull { name.startsWith(it) } ?: ""
       val varTag = Element(VARELEMENT)
       varTag.setAttribute(VAR_ATTRIBUTE, name.removePrefix(prefix))
@@ -87,7 +87,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     }
     val srcDescriptionTag = Element(SRC_DESCRIPTION)
     srcDescriptionTag.setAttribute(EXPECTED_POSITION, eclipseProperties.expectedModuleSourcePlace.toString())
-    eclipseProperties.srcPlace.forEach { url, position ->
+    eclipseProperties.srcPlace.forEach { (url, position) ->
       srcDescriptionTag.addContent(Element(SRC_FOLDER).setAttribute(VALUE_ATTR, url).setAttribute(EXPECTED_POSITION, position.toString()))
     }
     componentTag.addContent(srcDescriptionTag)

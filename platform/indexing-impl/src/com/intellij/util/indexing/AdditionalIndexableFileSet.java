@@ -72,16 +72,6 @@ public final class AdditionalIndexableFileSet implements IndexableFileSet {
            VfsUtilCore.isUnderFiles(file, additionalIndexableRoots.directories);
   }
 
-  private static final class AdditionalIndexableRoots {
-    @NotNull
-    private final Set<VirtualFile> files;
-    @NotNull
-    private final Set<VirtualFile> directories;
-
-    private AdditionalIndexableRoots(@NotNull Set<VirtualFile> files,
-                                     @NotNull Set<VirtualFile> directories) {
-      this.files = files;
-      this.directories = directories;
-    }
+  private record AdditionalIndexableRoots(@NotNull Set<VirtualFile> files, @NotNull Set<VirtualFile> directories) {
   }
 }

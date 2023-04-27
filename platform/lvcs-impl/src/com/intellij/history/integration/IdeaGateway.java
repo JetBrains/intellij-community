@@ -243,15 +243,13 @@ public class IdeaGateway {
 
   @NotNull
   public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
-    NewVirtualFile nf = (NewVirtualFile)f;
+    if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
     return nf.iterInDbChildrenWithoutLoadingVfsFromOtherProjects();
   }
 
   @NotNull
   public static Iterable<VirtualFile> loadAndIterateChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
-    NewVirtualFile nf = (NewVirtualFile)f;
+    if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
     return Arrays.asList(nf.getChildren());
   }
 

@@ -76,9 +76,7 @@ public class EdgePrintElementImpl extends PrintElementWithGraphElement implement
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EdgePrintElement)) return false;
-
-    EdgePrintElement that = (EdgePrintElement)o;
+    if (!(o instanceof EdgePrintElement that)) return false;
 
     if (myPositionInCurrentRow != that.getPositionInCurrentRow()) return false;
     if (myPositionInOtherRow != that.getPositionInOtherRow()) return false;

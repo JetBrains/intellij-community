@@ -10,15 +10,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 
 public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
   private final SmartPsiElementPointer<PsiClass> myParentClass;
-  protected final OccurrenceManager myOccurrenceManager;
-
   private final SmartPsiElementPointer<PsiElement> myAnchorElement;
   private int myAnchorIdx = -1;
   private final SmartPsiElementPointer<PsiElement> myAnchorElementIfAll;
@@ -35,12 +32,10 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
                                             @NlsContexts.Command String title,
                                             PsiClass parentClass,
                                             final PsiElement anchorElement,
-                                            final OccurrenceManager occurrenceManager,
                                             final PsiElement anchorElementIfAll) {
     super(project, editor, expr, localVariable, occurrences, typeSelectorManager, title);
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     myParentClass = smartPointerManager.createSmartPsiElementPointer(parentClass);
-    myOccurrenceManager = occurrenceManager;
     myAnchorElement = anchorElement != null ? smartPointerManager.createSmartPsiElementPointer(anchorElement) : null;
     myAnchorElementIfAll = anchorElementIfAll != null ? smartPointerManager.createSmartPsiElementPointer(anchorElementIfAll) : null;
     for (int i = 0, occurrencesLength = occurrences.length; i < occurrencesLength; i++) {

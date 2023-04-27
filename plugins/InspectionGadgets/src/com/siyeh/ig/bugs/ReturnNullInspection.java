@@ -124,10 +124,9 @@ public class ReturnNullInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiLiteralExpression)) {
+      if (!(element instanceof PsiLiteralExpression literalExpression)) {
         return;
       }
-      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       PsiReplacementUtil.replaceExpression(literalExpression, getReplacementText());
     }
 
@@ -219,8 +218,7 @@ public class ReturnNullInspection extends BaseInspection {
 
     private boolean isInNullableContext(PsiElement element) {
       final PsiElement parent = element instanceof PsiExpression ? ExpressionUtils.getPassThroughParent((PsiExpression)element) : element;
-      if (parent instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)parent;
+      if (parent instanceof PsiVariable variable) {
         final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         if (codeBlock == null) {
           return false;
@@ -230,8 +228,7 @@ public class ReturnNullInspection extends BaseInspection {
       }
       else if (parent instanceof PsiExpressionList) {
         final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        if (grandParent instanceof PsiMethodCallExpression methodCallExpression) {
           return MAP_COMPUTE.test(methodCallExpression);
         }
       }

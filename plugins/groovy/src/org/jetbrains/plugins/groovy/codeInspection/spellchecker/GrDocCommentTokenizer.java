@@ -37,8 +37,7 @@ public class GrDocCommentTokenizer extends Tokenizer<PsiDocComment> {
     final CommentSplitter splitter = CommentSplitter.getInstance();
 
     for (PsiElement el : comment.getChildren()) {
-      if (el instanceof PsiDocTag) {
-        PsiDocTag tag = (PsiDocTag)el;
+      if (el instanceof PsiDocTag tag) {
         if (!excludedTags.contains(tag.getName())) {
           for (PsiElement data : tag.getDataElements()) {
             consumer.consumeToken(data, splitter);

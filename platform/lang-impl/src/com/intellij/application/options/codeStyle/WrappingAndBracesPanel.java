@@ -17,6 +17,7 @@ import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,14 +75,12 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       for (CodeStyleSettingPresentation setting : entry.getValue()) {
         String fieldName = setting.getFieldName();
         String uiName = setting.getUiName();
-        if (setting instanceof CodeStyleBoundedIntegerSettingPresentation) {
-          CodeStyleBoundedIntegerSettingPresentation intSetting = (CodeStyleBoundedIntegerSettingPresentation)setting;
+        if (setting instanceof CodeStyleBoundedIntegerSettingPresentation intSetting) {
           int defaultValue = intSetting.getDefaultValue();
           addOption(fieldName, uiName, group.name, intSetting.getLowerBound(), intSetting.getUpperBound(), defaultValue,
                     getDefaultIntValueRenderer(fieldName));
         }
-        else if (setting instanceof CodeStyleSelectSettingPresentation) {
-          CodeStyleSelectSettingPresentation selectSetting = (CodeStyleSelectSettingPresentation)setting;
+        else if (setting instanceof CodeStyleSelectSettingPresentation selectSetting) {
           addOption(fieldName, uiName, group.name, selectSetting.getOptions(), selectSetting.getValues());
         }
         else if (setting instanceof CodeStyleSoftMarginsPresentation) {
@@ -127,15 +126,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
   }
 
-  protected static class SettingsGroup {
-    public final String title;
-    public final Collection<String> commonCodeStyleSettingFieldNames;
-
-    public SettingsGroup(@NotNull String title,
+  protected record SettingsGroup(@NotNull String title,
                          @NotNull Collection<String> commonCodeStyleSettingFieldNames) {
-      this.title = title;
-      this.commonCodeStyleSettingFieldNames = commonCodeStyleSettingFieldNames;
-    }
   }
 
 
@@ -227,8 +219,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       }
     }
     else if ("BUILDER_METHODS".equals(optionName)) {
-      if (value instanceof String) {
-        String strValue = (String)value;
+      if (value instanceof @Nls String strValue) {
         String tooltipText = ApplicationBundle.message("settings.code.style.builder.methods.tooltip");
         if (StringUtil.isEmptyOrSpaces(strValue)) {
           ColoredLabel hintLabel = new ColoredLabel(ApplicationBundle.message("settings.code.style.builder.method.names"), JBColor.gray);

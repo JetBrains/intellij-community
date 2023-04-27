@@ -36,9 +36,7 @@ final class MyEditorState implements FileEditorState{
 
   public boolean equals(final Object o){
     if (this == o) return true;
-    if (!(o instanceof MyEditorState)) return false;
-
-    final MyEditorState state = (MyEditorState)o;
+    if (!(o instanceof MyEditorState state)) return false;
 
     if (myDocumentModificationStamp != state.myDocumentModificationStamp) return false;
     if (!Arrays.equals(mySelectedComponentIds, state.mySelectedComponentIds)) return false;

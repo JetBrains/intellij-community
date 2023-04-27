@@ -87,10 +87,9 @@ public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection 
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiClass)) {
+      if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)parent;
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList == null) {
         return;

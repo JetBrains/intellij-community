@@ -130,10 +130,9 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       return false;
     }
     final PsiElement qualifierElement = referenceElement.getQualifier();
-    if (!(qualifierElement instanceof PsiJavaCodeReferenceElement)) {
+    if (!(qualifierElement instanceof PsiJavaCodeReferenceElement qualifier)) {
       return false;
     }
-    final PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)qualifierElement;
     if (GenericsUtil.isGenericReference(referenceElement, qualifier)) {
       return false;
     }
@@ -152,11 +151,10 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       return false;
     }
     final PsiElement resolvedQualifier = qualifier.resolve();
-    if (!(resolvedQualifier instanceof PsiClass)) {
+    if (!(resolvedQualifier instanceof PsiClass qualifyingClass)) {
       return false;
     }
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(referenceElement, PsiClass.class);
-    final PsiClass qualifyingClass = (PsiClass)resolvedQualifier;
     if (containingClass == null || !PsiTreeUtil.isAncestor(qualifyingClass, containingClass, false)) {
       return false;
     }

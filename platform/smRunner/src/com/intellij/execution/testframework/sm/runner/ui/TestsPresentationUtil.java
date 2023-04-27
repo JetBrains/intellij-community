@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.*;
 
@@ -242,6 +244,9 @@ public final class TestsPresentationUtil {
                                             : name.trim();
   }
 
+  /**
+   * @see TestIconMapper#getToolbarIcon(TestStateInfo.Magnitude, boolean, BooleanSupplier)
+   */
   private static @NotNull Icon getIcon(final SMTestProxy testProxy,
                                        final TestConsoleProperties consoleProperties) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();

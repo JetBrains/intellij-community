@@ -35,8 +35,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
         if (!COMPARE_METHOD.test(call)) return;
         checkComparison(call);
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-        if (parent instanceof PsiLocalVariable) {
-          PsiLocalVariable var = (PsiLocalVariable)parent;
+        if (parent instanceof PsiLocalVariable var) {
           PsiCodeBlock block = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
           PsiExpression initializer = var.getInitializer();
           if (block != null && initializer != null) {

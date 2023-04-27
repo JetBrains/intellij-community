@@ -243,8 +243,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
-    if (impls.length == 0 && ref instanceof PsiPolyVariantReference) {
-      final PsiPolyVariantReference polyReference = (PsiPolyVariantReference)ref;
+    if (impls.length == 0 && ref instanceof PsiPolyVariantReference polyReference) {
       PsiElement refElement = polyReference.getElement();
       TextRange rangeInElement = polyReference.getRangeInElement();
       String refElementText = refElement.getText();

@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParameter;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public interface PyCallableParameter {
    * Returns null if the parameter is tuple or star, or name is unknown.
    */
   @Nullable
-  String getName();
+  @Nls String getName();
 
   /**
    * @param context type evaluation context

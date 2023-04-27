@@ -63,7 +63,7 @@ class GradleInspectionTest4 : KotlinGradleImportingTestCase() {
         tool.testVersionMessage = "\$PLUGIN_VERSION"
         val problems = getInspectionResultFromTestDataProject(tool)
 
-        assertEquals(0, problems.size)
+        assertEquals(problems.joinToString(separator = "\n"), "Kotlin version that is used for building with Gradle (1.3.70) is not properly supported in the IDE plugin (\$PLUGIN_VERSION)", problems.single())
     }
 
     @Test

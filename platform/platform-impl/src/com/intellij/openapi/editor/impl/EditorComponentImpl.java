@@ -104,7 +104,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         float size = Math.max((float)(currentSize * scale), defaultFontSize);
         myEditor.setFontSize(size);
         if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
-          myEditor.adjustGlobalFontSize(size);
+          myEditor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
         }
 
         return myEditor.visualPositionToXY(magnificationPosition);
@@ -128,8 +128,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != UISettingsUtils.getPresentationModeFontSize()) {
-      myEditor.setFontSize(UISettingsUtils.getPresentationModeFontSize());
+    UISettingsUtils settingsUtils = UISettingsUtils.with(uiSettings);
+    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != settingsUtils.getPresentationModeFontSize()) {
+      myEditor.setFontSize(settingsUtils.getPresentationModeFontSize());
     }
   }
 
@@ -179,6 +180,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         location = myEditor.getCaretModel().getLogicalPosition();
       }
       return EditorCoreUtil.inVirtualSpace(myEditor, location);
+    }
+    if (PlatformDataKeys.EDITOR_CLICK_OVER_TEXT.is(dataId)) {
+      Point point = myEditor.myLastMousePressedPoint;
+      if (point != null) {
+        return EditorUtil.isPointOverText(myEditor, point);
+      }
     }
     return null;
   }

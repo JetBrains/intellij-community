@@ -417,8 +417,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
     InputMap map = myPathTextField.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
     if (map != null) {
       Object object = map.get(KeyStroke.getKeyStrokeForEvent(e));
-      if (object instanceof Action) {
-        Action action = (Action)object;
+      if (object instanceof Action action) {
         if (action.isEnabled()) {
           action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
           e.consume();

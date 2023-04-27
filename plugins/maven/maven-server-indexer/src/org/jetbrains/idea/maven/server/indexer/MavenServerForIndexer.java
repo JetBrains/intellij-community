@@ -47,12 +47,12 @@ public class MavenServerForIndexer extends MavenRemoteObject implements MavenSer
           }
         }
         catch (Exception unexportException) {
-          RuntimeException re = rethrowException(e);
+          RuntimeException re = wrapToSerializableRuntimeException(e);
           re.addSuppressed(re);
           throw re;
         }
 
-        throw rethrowException(e);
+        throw wrapToSerializableRuntimeException(e);
       }
     }
     return myIndexerRef;

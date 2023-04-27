@@ -68,11 +68,9 @@ public abstract class PropertyBunch<MType> {
 
   @Nullable
   public static PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
-    if (source instanceof PyCallExpression) {
-      final PyCallExpression call = (PyCallExpression)source;
+    if (source instanceof PyCallExpression call) {
       final PyExpression callee = call.getCallee();
-      if (callee instanceof PyReferenceExpression) {
-        final PyReferenceExpression ref = (PyReferenceExpression)callee;
+      if (callee instanceof PyReferenceExpression ref) {
 
         if (!ref.isQualified() &&
             PyNames.PROPERTY.equals(callee.getName()) &&

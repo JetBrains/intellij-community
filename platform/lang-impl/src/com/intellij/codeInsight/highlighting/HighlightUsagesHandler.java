@@ -243,8 +243,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   public static Pair<PsiElement, TextRange> getNameIdentifierRangeInCurrentRoot(@NotNull PsiFile file, @NotNull PsiElement element) {
     if (element instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)element).getTarget();
-      if (target instanceof PsiDeclaredTarget) {
-        final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+      if (target instanceof PsiDeclaredTarget declaredTarget) {
         final TextRange range = declaredTarget.getNameIdentifierRange();
         if (range != null) {
           if (range.getStartOffset() < 0 || range.getLength() <= 0) {
@@ -326,7 +325,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(editor.getProject())).getHighlighters(editor);
     int caretOffset = editor.getCaretModel().getOffset();
     for (RangeHighlighter highlighter : highlighters) {
-      if (TextRange.create(highlighter).grown(1).contains(caretOffset)) {
+      if (highlighter.getTextRange().grown(1).contains(caretOffset)) {
         return true;
       }
     }
@@ -348,7 +347,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     int j = 0;
     while (i < highlighters.length && j < rangesToHighlight.size()) {
       RangeHighlighter highlighter = highlighters[i];
-      TextRange highlighterRange = TextRange.create(highlighter);
+      TextRange highlighterRange = highlighter.getTextRange();
       TextRange refRange = rangesToHighlight.get(j);
       if (refRange.equals(highlighterRange) &&
           highlighter.getLayer() == HighlighterLayer.SELECTION - 1 &&

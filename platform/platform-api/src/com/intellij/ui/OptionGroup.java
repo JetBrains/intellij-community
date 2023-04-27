@@ -65,8 +65,7 @@ public class OptionGroup implements PanelWithAnchor {
       int left = myIndented.get(i) ? IdeBorderFactory.TITLED_BORDER_INDENT : 0;
 
       Object option = myOptions.get(i);
-      if (option instanceof JComponent) {
-        JComponent component = (JComponent)option;
+      if (option instanceof JComponent component) {
         panel.add(component, new GridBagConstraints(0, i, REMAINDER, 1, 1, 0, WEST, getFill(component), JBUI.insets(top, left, 0, 0), 0, 0));
       }
       else {
@@ -131,8 +130,8 @@ public class OptionGroup implements PanelWithAnchor {
     double maxWidth = -1;
     JComponent anchor = null;
     for (Object o : myOptions) {
-      if (o instanceof Pair && ((Pair<?, ?>)o).first instanceof AnchorableComponent && ((Pair<?, ?>)o).first instanceof JComponent) {
-        JComponent component = (JComponent)((Pair<?, ?>)o).first;
+      if (o instanceof Pair && ((Pair<?, ?>)o).first instanceof AnchorableComponent &&
+          ((Pair<?, ?>)o).first instanceof JComponent component) {
         if (component.getPreferredSize().getWidth() > maxWidth) {
           maxWidth = component.getPreferredSize().getWidth();
           anchor = component;

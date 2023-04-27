@@ -138,8 +138,7 @@ public abstract class AbstractTagInjection extends BaseInjection {
   @Override
   public AbstractTagInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
-    if (o instanceof AbstractTagInjection) {
-      final AbstractTagInjection other = (AbstractTagInjection)o;
+    if (o instanceof AbstractTagInjection other) {
       myTagName = other.myTagName;
       myTagNamespace = other.myTagNamespace;
       setXPathCondition(other.getXPathCondition());

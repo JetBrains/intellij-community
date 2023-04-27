@@ -191,7 +191,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       ThrowableRunnable<RuntimeException> runnable = () -> {
           try {
             if (objects.size() <= 1 || JobSchedulerImpl.getJobPoolParallelism() <= JobLauncherImpl.CORES_FORK_THRESHOLD) {
-              assertTrue(ApplicationManager.getApplication().isDispatchThread());
+              ApplicationManager.getApplication().assertIsDispatchThread();
             }
             else {
               // generally we know nothing about current thread since FJP can help others task to execute while in current context

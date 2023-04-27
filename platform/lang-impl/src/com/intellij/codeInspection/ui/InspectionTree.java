@@ -236,8 +236,7 @@ public class InspectionTree extends Tree {
     TreePath path = getPathForLocation(e.getX(), e.getY());
     if (path == null) return null;
     Object lastComponent = path.getLastPathComponent();
-    if (!(lastComponent instanceof ProblemDescriptionNode)) return null;
-    final ProblemDescriptionNode node = (ProblemDescriptionNode) lastComponent;
+    if (!(lastComponent instanceof ProblemDescriptionNode node)) return null;
 
     if (!node.needCalculateTooltip()) return node.getToolTipText();
 
@@ -523,8 +522,7 @@ public class InspectionTree extends Tree {
   }
 
   private boolean shouldDelete(InspectionTreeNode node) {
-    if (node instanceof RefElementNode) {
-      RefElementNode refElementNode = (RefElementNode)node;
+    if (node instanceof RefElementNode refElementNode) {
       InspectionToolPresentation presentation = refElementNode.getPresentation();
       RefEntity element = refElementNode.getElement();
       if (element == null ||
@@ -536,8 +534,7 @@ public class InspectionTree extends Tree {
       List<? extends InspectionTreeNode> children = node.getChildren();
       return !children.isEmpty() && ContainerUtil.and(children, this::shouldDelete);
     }
-    if (node instanceof ProblemDescriptionNode) {
-      ProblemDescriptionNode problemDescriptionNode = (ProblemDescriptionNode)node;
+    if (node instanceof ProblemDescriptionNode problemDescriptionNode) {
       CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
       InspectionToolPresentation presentation = problemDescriptionNode.getPresentation();
       return descriptor == null || presentation.isExcluded(descriptor) || presentation.isProblemResolved(descriptor);
@@ -665,8 +662,7 @@ public class InspectionTree extends Tree {
       if (node.isExcluded()) {
         return false;
       }
-      if (node instanceof RefElementNode) {
-        final RefElementNode refNode = (RefElementNode)node;
+      if (node instanceof RefElementNode refNode) {
         if (hasDescriptorUnder(refNode)) return false;
         final RefEntity element = refNode.getElement();
         return element != null && element.isValid();
@@ -679,8 +675,7 @@ public class InspectionTree extends Tree {
       if (node.isExcluded()) {
         return null;
       }
-      if (node instanceof RefElementNode) {
-        final RefElementNode refNode = (RefElementNode)node;
+      if (node instanceof RefElementNode refNode) {
         if (hasDescriptorUnder(refNode)) return null;
         final RefEntity element = refNode.getElement();
         if (element == null || !element.isValid()) return null;
@@ -688,8 +683,7 @@ public class InspectionTree extends Tree {
           return getOpenFileDescriptor((RefElement)element);
         }
       }
-      else if (node instanceof ProblemDescriptionNode) {
-        ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+      else if (node instanceof ProblemDescriptionNode problemNode) {
         boolean isValid = problemNode.isValid() && (!problemNode.isQuickFixAppliedFromView() ||
                                                     problemNode.calculateIsValid());
         return isValid

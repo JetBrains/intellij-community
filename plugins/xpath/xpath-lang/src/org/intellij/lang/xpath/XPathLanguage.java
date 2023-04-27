@@ -121,9 +121,8 @@ public final class XPathLanguage extends Language {
         @NotNull
         public @NlsSafe String getNodeText(@NotNull PsiElement element, boolean useFullName) {
             if (useFullName) {
-                if (element instanceof NavigationItem) {
-                    final NavigationItem navigationItem = ((NavigationItem)element);
-                    final ItemPresentation presentation = navigationItem.getPresentation();
+                if (element instanceof NavigationItem navigationItem) {
+                  final ItemPresentation presentation = navigationItem.getPresentation();
                     if (presentation != null) {
                       final String text = presentation.getPresentableText();
                       if (text != null) {

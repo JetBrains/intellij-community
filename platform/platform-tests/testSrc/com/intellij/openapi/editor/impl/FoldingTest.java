@@ -312,8 +312,8 @@ public class FoldingTest extends AbstractEditorTest {
     WriteAction.run(() -> getEditor().getDocument().deleteString(10, 15));
     FoldRegion[] regions = getEditor().getFoldingModel().getAllFoldRegions();
     assertSize(2, regions);
-    assertEquals(TextRange.create(10, 15), TextRange.create(regions[0]));
-    assertEquals(TextRange.create(11, 12), TextRange.create(regions[1]));
+    assertEquals(TextRange.create(10, 15), regions[0].getTextRange());
+    assertEquals(TextRange.create(11, 12), regions[1].getTextRange());
   }
 
   public void test1() {

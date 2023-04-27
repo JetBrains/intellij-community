@@ -16,8 +16,7 @@ public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
     Font font = list.getFont();
     @NlsSafe String text = value == null ? "" : value.toString();
     append(text);
-    if (value instanceof FontInfo) {
-      FontInfo info = (FontInfo)value;
+    if (value instanceof FontInfo info) {
       Integer size = getFontSize();
       Font f = info.getFont(size != null ? size : font.getSize());
       if (f.canDisplayUpTo(text) == -1) {

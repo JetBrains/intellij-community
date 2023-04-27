@@ -2,6 +2,8 @@
 package com.intellij.model;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
@@ -65,6 +67,8 @@ public interface Pointer<T> {
   /**
    * @return referenced value, or {@code null} if the value was invalidated or cannot be restored
    */
+  @RequiresReadLock
+  @RequiresBackgroundThread
   @Nullable T dereference();
 
   /**

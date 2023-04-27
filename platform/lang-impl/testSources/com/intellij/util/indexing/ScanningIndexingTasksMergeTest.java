@@ -99,6 +99,36 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     assertTrue(checked.isDisposed());
   }
 
+  // we don't care which exact reason will be after merge. We only care that we don't have hundreds of "On refresh of files" in it
+  public void testVFSRefreshIndexingTasksReasonsDoNotAccumulate() {
+    String[][] situations = {
+      {"On refresh of files in awesome.project", "On refresh of files in awesome.project", "On refresh of files in awesome.project"},
+      {"On refresh of A", "On refresh of B", "Merged On refresh of A with On refresh of B"},
+      {"Merged A with B", "Merged A with B", "Merged A with B"},
+      {"Merged A with B", "Merged B with C", "Merged A with B with B with C"},
+      {"Merged A with B with C", "Merged B with C", "Merged A with B with C"},
+      {"Merged On refresh of A with On refresh of B", "On refresh of B", "Merged On refresh of A with On refresh of B"}
+    };
+
+
+    for (String[] situation : situations) {
+      UnindexedFilesIndexer t1 = new UnindexedFilesIndexer(getProject(), situation[0]);
+      UnindexedFilesIndexer t2 = new UnindexedFilesIndexer(getProject(), situation[1]);
+      UnindexedFilesIndexer merged = t1.tryMergeWith(t2);
+      assertEquals(situation[2], merged.getIndexingReason());
+    }
+  }
+
+  public void testNonVFSRefreshIndexingTasksReasonsNotRemoved() {
+    UnindexedFilesIndexer merged = task1.tryMergeWith(task2);
+    String task1Reason = task1.getIndexingReason();
+    String task2Reason = task2.getIndexingReason();
+    assertEquals("Merged " + task1Reason + " with " + task2Reason, merged.getIndexingReason());
+
+    merged = merged.tryMergeWith(task2);
+    assertEquals("Merged " + task1Reason + " with " + task2Reason + " with " + task2Reason, merged.getIndexingReason());
+  }
+
   private UnindexedFilesScanner mergeAsDumbTasks(UnindexedFilesScanner t1, UnindexedFilesScanner t2) {
     UnindexedFilesScannerExecutor executor = new UnindexedFilesScannerExecutor(getProject());
     DumbModeTask dumb1 = executor.wrapAsDumbTask(t1);

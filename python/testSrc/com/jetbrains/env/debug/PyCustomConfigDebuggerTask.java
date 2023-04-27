@@ -173,8 +173,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
   }
 
   protected void killDebugProcess() {
-    if (myDebugProcess.getProcessHandler() instanceof KillableColoredProcessHandler) {
-      KillableColoredProcessHandler h = (KillableColoredProcessHandler)myDebugProcess.getProcessHandler();
+    if (myDebugProcess.getProcessHandler() instanceof KillableColoredProcessHandler h) {
 
       h.killProcess();
     }

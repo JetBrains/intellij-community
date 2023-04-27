@@ -45,8 +45,7 @@ public abstract class PySmartStepIntoVariant extends XSmartStepIntoVariant {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PySmartStepIntoVariant)) return false;
-    PySmartStepIntoVariant variant = (PySmartStepIntoVariant)o;
+    if (!(o instanceof PySmartStepIntoVariant variant)) return false;
     return myElement.equals(variant.myElement);
   }
 

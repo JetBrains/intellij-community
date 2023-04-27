@@ -102,10 +102,9 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     myOccurenceNavigatorSupport = new OccurenceNavigatorSupport(myTree) {
       @Override
       protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
-        if (!(node instanceof MessageNode)) {
+        if (!(node instanceof MessageNode messageNode)) {
           return null;
         }
-        MessageNode messageNode = (MessageNode)node;
         AntBuildMessageView.MessageType type = messageNode.getType();
 
         if (type != AntBuildMessageView.MessageType.MESSAGE && type != AntBuildMessageView.MessageType.ERROR) {
@@ -418,8 +417,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     if (text == null || text.length == 0) return null;
     final String taskName = text[0];
     final TreeNode parentNode = node.getParent();
-    if (!(parentNode instanceof MessageNode)) return null;
-    final MessageNode messageNode = (MessageNode)parentNode;
+    if (!(parentNode instanceof MessageNode messageNode)) return null;
     if (messageNode.getType() != AntBuildMessageView.MessageType.TARGET) return null;
     final BuildTask task = ((AntBuildModelBase)myBuildFile.getModel()).findTask(messageNode.getText()[0], taskName);
     return (task == null) ? null : task.getOpenFileDescriptor();
@@ -508,8 +506,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
     Object[] paths = path.getPath();
     for (Object o : paths) {
-      if (o instanceof MessageNode) {
-        MessageNode messageNode = (MessageNode)o;
+      if (o instanceof MessageNode messageNode) {
         AntBuildMessageView.MessageType type = messageNode.getType();
         if (type == AntBuildMessageView.MessageType.TARGET) {
           selection.mySelectedTarget = messageNode.getText()[0];
@@ -529,8 +526,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
     for (int i = 0; i < root.getChildCount(); i++) {
       TreeNode node = root.getChildAt(i);
-      if (node instanceof MessageNode) {
-        MessageNode messageNode = (MessageNode)node;
+      if (node instanceof MessageNode messageNode) {
         String[] text = messageNode.getText();
         if (text.length == 0) continue;
         if (Objects.equals(treeSelection.mySelectedTarget, text[0])) {
@@ -622,8 +618,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
           public Collection<String> getTextLinesToCopy() {
             TreePath selection = getSelectionPath();
             Object value = selection == null ? null : selection.getLastPathComponent();
-            if (value instanceof MessageNode) {
-              MessageNode messageNode = ((MessageNode)value);
+            if (value instanceof MessageNode messageNode) {
               return Arrays.asList(messageNode.getText());
             }
             return value == null ? null : Collections.singleton(value.toString());

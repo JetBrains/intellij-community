@@ -57,7 +57,8 @@ import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import javax.swing.JFrame
 
-class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.message("local.history.lesson.name")) {
+class LocalHistoryLesson(private val helpUrl: String = "local-history.html")
+  : KLesson("CodeAssistance.LocalHistory", LessonsBundle.message("local.history.lesson.name")) {
   override val languageId = "yaml"
   override val lessonType = LessonType.SCRATCH
   override val properties = LessonProperties(availableSince = "212.5284")
@@ -384,6 +385,6 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("local.history.help.link"),
-         LessonUtil.getHelpLink("local-history.html")),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }

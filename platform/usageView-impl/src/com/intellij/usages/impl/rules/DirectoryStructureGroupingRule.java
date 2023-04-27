@@ -31,11 +31,10 @@ class DirectoryStructureGroupingRule implements DumbAware, UsageGroupingRuleEx {
 
   @Override
   public @NotNull List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
-    if (!(usage instanceof UsageInFile)) {
+    if (!(usage instanceof UsageInFile usageInFile)) {
       return Collections.emptyList();
     }
     List<UsageGroup> result = new ArrayList<>();
-    UsageInFile usageInFile = (UsageInFile)usage;
     VirtualFile file = usageInFile.getFile();
     if (file == null) {
       return Collections.emptyList();

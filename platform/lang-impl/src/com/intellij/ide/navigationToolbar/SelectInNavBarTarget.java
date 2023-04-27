@@ -5,8 +5,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
-import com.intellij.ide.navbar.ide.NavBarIdeUtil;
-import com.intellij.ide.navbar.ide.NavBarService;
+import com.intellij.ide.navbar.ui.StaticNavBarPanel;
+import com.intellij.ide.navbar.vm.NavBarVm;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
@@ -45,34 +45,34 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
 
   @Override
   protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
-    if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      NavBarService.getInstance(myProject).selectTail();
-      return;
-    }
     selectInNavBar(false);
   }
 
   @Override
   protected void select(final PsiElement element, boolean requestFocus) {
-    if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      NavBarService.getInstance(myProject).selectTail();
-      return;
-    }
     selectInNavBar(false);
   }
 
   public static void selectInNavBar(boolean showPopup) {
-    if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      return;
-    }
     DataManager.getInstance().getDataContextFromFocus()
       .doWhenDone((Consumer<DataContext>)context -> {
         IdeFrame frame = IdeFrame.KEY.getData(context);
         if (frame instanceof IdeFrameEx) {
           var navBar = ((IdeFrameEx)frame).getNorthExtension(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
           if (navBar != null) {
-            NavBarPanel panel = (NavBarPanel)navBar.getClientProperty(NavBarRootPaneExtension.PANEL_KEY);
-            panel.rebuildAndSelectLastDirectoryOrTail(showPopup);
+            Object panel = navBar.getClientProperty(NavBarRootPaneExtension.PANEL_KEY);
+            if (panel instanceof StaticNavBarPanel navBarPanel) {
+              NavBarVm vm = navBarPanel.getModel();
+              if (vm != null) {
+                vm.selectTail();
+                if (showPopup) {
+                  vm.showPopup();
+                }
+              }
+            }
+            else {
+              ((NavBarPanel)panel).rebuildAndSelectLastDirectoryOrTail(showPopup);
+            }
           }
         }
       });

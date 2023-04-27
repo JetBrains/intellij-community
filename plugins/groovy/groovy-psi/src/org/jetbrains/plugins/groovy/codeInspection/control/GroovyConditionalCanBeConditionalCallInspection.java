@@ -68,10 +68,9 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       } else {
         branch = expression.getElseBranch();
       }
-      if (!(branch instanceof GrMethodCallExpression)) {
+      if (!(branch instanceof GrMethodCallExpression call)) {
         return;
       }
-      final GrMethodCallExpression call = (GrMethodCallExpression)branch;
       final GrReferenceExpression methodExpression = (GrReferenceExpression) call.getInvokedExpression();
       final GrExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
@@ -104,10 +103,9 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
         return;
       }
       condition = (GrExpression)PsiUtil.skipParentheses(condition, false);
-      if (!(condition instanceof GrBinaryExpression)) {
+      if (!(condition instanceof GrBinaryExpression binaryCondition)) {
         return;
       }
-      final GrBinaryExpression binaryCondition = (GrBinaryExpression) condition;
       final GrExpression lhs = binaryCondition.getLeftOperand();
       final GrExpression rhs = binaryCondition.getRightOperand();
       if (rhs == null) {
@@ -129,15 +127,13 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     }
 
     private static boolean isCallTargeting(GrExpression call, GrExpression expression) {
-      if (!(call instanceof GrMethodCallExpression)) {
+      if (!(call instanceof GrMethodCallExpression callExpression)) {
         return false;
       }
-      final GrMethodCallExpression callExpression = (GrMethodCallExpression) call;
       final GrExpression methodExpression = callExpression.getInvokedExpression();
-      if (!(methodExpression instanceof GrReferenceExpression)) {
+      if (!(methodExpression instanceof GrReferenceExpression referenceExpression)) {
         return false;
       }
-      final GrReferenceExpression referenceExpression = (GrReferenceExpression) methodExpression;
       if (!GroovyTokenTypes.mDOT.equals(referenceExpression.getDotTokenType())) {
         return false;
       }

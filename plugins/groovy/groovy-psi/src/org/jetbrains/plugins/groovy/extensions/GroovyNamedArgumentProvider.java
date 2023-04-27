@@ -83,8 +83,7 @@ public abstract class GroovyNamedArgumentProvider {
         PsiElement element = result.getElement();
         if (element instanceof GrAccessorMethod) continue;
 
-        if (element instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)element;
+        if (element instanceof PsiMethod method) {
           PsiParameter[] parameters = method.getParameterList().getParameters();
 
           if (!method.isConstructor() && !(parameters.length > 0 && canBeMap(parameters[0]))) continue;

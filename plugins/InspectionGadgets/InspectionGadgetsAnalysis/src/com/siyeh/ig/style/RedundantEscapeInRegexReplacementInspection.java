@@ -45,10 +45,9 @@ public class RedundantEscapeInRegexReplacementInspection extends BaseInspection 
       final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       final PsiExpression lastArgument = arguments[arguments.length - 1];
       final Object value = ExpressionUtils.computeConstantExpression(lastArgument);
-      if (!(value instanceof String)) {
+      if (!(value instanceof String string)) {
         return;
       }
-      final String string = (String)value;
       boolean escaped = false;
       for (int i = 0, length = string.length(); i < length; i++) {
         char c = string.charAt(i);

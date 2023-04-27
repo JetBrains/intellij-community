@@ -25,8 +25,7 @@ public class GrSortMapKeysIntention extends Intention {
 
     if (parent instanceof GrArgumentLabel) {
       PsiElement pparent = parent.getParent().getParent();
-      if (pparent instanceof GrListOrMap && !ErrorUtil.containsError(pparent)) {
-        GrListOrMap map = (GrListOrMap)pparent;
+      if (pparent instanceof GrListOrMap map && !ErrorUtil.containsError(pparent)) {
         if (map.getInitializers().length == 0) {
           GrNamedArgument[] namedArgs = map.getNamedArguments();
           if (isLiteralKeys(namedArgs)) {
@@ -76,9 +75,8 @@ public class GrSortMapKeysIntention extends Intention {
         if (grandParent == null) return false;
 
         final PsiElement grandGrandParent = grandParent.getParent();
-        if (!(grandGrandParent instanceof GrListOrMap)) return false;
+        if (!(grandGrandParent instanceof GrListOrMap map)) return false;
 
-        final GrListOrMap map = (GrListOrMap)grandGrandParent;
         return !ErrorUtil.containsError(map) && map.getInitializers().length == 0 && isLiteralKeys(map.getNamedArguments());
       }
     };

@@ -2,7 +2,6 @@
 package git4idea.ui.branch.tree
 
 import com.intellij.openapi.project.Project
-import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopup
 
@@ -17,6 +16,9 @@ class GitBranchesTreeSelectedRepoModel(
   private val branchesSubtreeSeparator = GitBranchesTreePopup.createTreeSeparator()
 
   override fun getTopLevelNodes(): List<Any> {
-    return topLevelActions + repositories + branchesSubtreeSeparator + GitBranchType.LOCAL + GitBranchType.REMOTE
+    val topNodes = topLevelActions + repositories
+    val localAndRemoteNodes = getLocalAndRemoteTopLevelNodes(localBranchesTree, remoteBranchesTree)
+
+    return if (localAndRemoteNodes.isEmpty()) topNodes else topNodes + branchesSubtreeSeparator + localAndRemoteNodes
   }
 }

@@ -70,17 +70,17 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_UNICODE_STRING = TextAttributesKey.createTextAttributesKey("PY.STRING.U", STRING);
   public static final TextAttributesKey PY_NUMBER = TextAttributesKey.createTextAttributesKey("PY.NUMBER", NUMBER);
 
-  static final TextAttributesKey PY_OPERATION_SIGN = TextAttributesKey.createTextAttributesKey("PY.OPERATION_SIGN", OPERATION_SIGN);
+  public static final TextAttributesKey PY_OPERATION_SIGN = TextAttributesKey.createTextAttributesKey("PY.OPERATION_SIGN", OPERATION_SIGN);
 
-  static final TextAttributesKey PY_PARENTHS = TextAttributesKey.createTextAttributesKey("PY.PARENTHS", PARENTHESES);
+  public static final TextAttributesKey PY_PARENTHS = TextAttributesKey.createTextAttributesKey("PY.PARENTHS", PARENTHESES);
 
-  static final TextAttributesKey PY_BRACKETS = TextAttributesKey.createTextAttributesKey("PY.BRACKETS", BRACKETS);
+  public static final TextAttributesKey PY_BRACKETS = TextAttributesKey.createTextAttributesKey("PY.BRACKETS", BRACKETS);
 
-  static final TextAttributesKey PY_BRACES = TextAttributesKey.createTextAttributesKey("PY.BRACES", BRACES);
+  public static final TextAttributesKey PY_BRACES = TextAttributesKey.createTextAttributesKey("PY.BRACES", BRACES);
 
-  static final TextAttributesKey PY_COMMA = TextAttributesKey.createTextAttributesKey("PY.COMMA", COMMA);
+  public static final TextAttributesKey PY_COMMA = TextAttributesKey.createTextAttributesKey("PY.COMMA", COMMA);
 
-  static final TextAttributesKey PY_DOT = TextAttributesKey.createTextAttributesKey("PY.DOT", DOT);
+  public static final TextAttributesKey PY_DOT = TextAttributesKey.createTextAttributesKey("PY.DOT", DOT);
 
   public static final TextAttributesKey PY_LINE_COMMENT = TextAttributesKey.createTextAttributesKey("PY.LINE_COMMENT", LINE_COMMENT);
 

@@ -113,8 +113,7 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
     if (transferable != null) {
       CopyPasteManager.getInstance().setContents(transferable);
 
-      if (editor instanceof EditorEx) {
-        EditorEx ex = (EditorEx)editor;
+      if (editor instanceof EditorEx ex) {
         if (ex.isStickySelection()) {
           ex.setStickySelection(false);
         }

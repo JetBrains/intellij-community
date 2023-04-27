@@ -219,8 +219,7 @@ class TBPanelActionGroup extends TBPanel {
       // 1. create separator
       // NOTE: we don't add separator into Main (or Principal) groups
       // just add separator into current list of actions
-      if (action instanceof Separator) {
-        final Separator sep = (Separator)action;
+      if (action instanceof Separator sep) {
         int increment = 1;
         if (sep.getText() != null) {
           if (sep.getText().equals(ourSmallSeparatorText)) {

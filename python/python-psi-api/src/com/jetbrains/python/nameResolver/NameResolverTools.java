@@ -215,8 +215,7 @@ public final class NameResolverTools {
 
     @Override
     public boolean value(final PsiElement element) {
-      if (element instanceof PyCallExpression) {
-        PyCallExpression callExpression = (PyCallExpression)element;
+      if (element instanceof PyCallExpression callExpression) {
         return isCalleeShortCut(callExpression, myNameToSearch);
       }
       return false;

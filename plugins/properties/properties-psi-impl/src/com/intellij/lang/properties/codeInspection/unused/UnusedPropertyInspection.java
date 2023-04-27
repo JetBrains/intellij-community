@@ -118,8 +118,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (!(element instanceof Property)) return;
-        Property property = (Property)element;
+        if (!(element instanceof Property property)) return;
         if (propertiesBeingCommitted != null && !propertiesBeingCommitted.contains(property)) return;
 
         if (isPropertyUsed(property, helper, isOnTheFly)) return;

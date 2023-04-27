@@ -870,8 +870,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (clause instanceof GrTraditionalForClause) {
       acceptNullable(((GrTraditionalForClause)clause).getInitialization());
     }
-    else if (clause instanceof GrForInClause) {
-      GrForInClause forInClause = (GrForInClause)clause;
+    else if (clause instanceof GrForInClause forInClause) {
       acceptNullable(forInClause.getIteratedExpression());
       addNodeAndCheckPending(new ReadWriteVariableInstruction(
         getDescriptorId(new LoopIteratorVariableDescriptor(forInClause)),

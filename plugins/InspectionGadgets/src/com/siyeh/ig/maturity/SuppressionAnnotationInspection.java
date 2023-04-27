@@ -51,8 +51,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final boolean suppressionIdPresent = ((Boolean)infos[1]).booleanValue();
-    if (infos[0] instanceof PsiAnnotation) {
-      final PsiAnnotation annotation = (PsiAnnotation)infos[0];
+    if (infos[0] instanceof PsiAnnotation annotation) {
       return suppressionIdPresent
              ? new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()}
              : new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null))};

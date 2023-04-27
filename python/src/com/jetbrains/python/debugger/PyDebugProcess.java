@@ -403,8 +403,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void showConsole(PyThreadInfo thread) {
     myConsoleContextFrame = new PyExecutionStack(this, thread).getTopFrame();
-    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
-      PythonDebugLanguageConsoleView consoleView = (PythonDebugLanguageConsoleView)myExecutionConsole;
+    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView consoleView) {
       UIUtil.invokeLaterIfNeeded(() -> {
         consoleView.enableConsole(false);
         consoleView.getPydevConsoleView().setConsoleEnabled(true);
@@ -912,8 +911,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
               if (e.getMessage().startsWith("Timeout")) {
                 value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
                 ConfigureTypeRenderersHyperLink configureLink = new ConfigureTypeRenderersHyperLink(null, getProject(), value);
-                if (node instanceof XValueNodeImpl) {
-                  XValueNodeImpl valueNode = (XValueNodeImpl)node;
+                if (node instanceof XValueNodeImpl valueNode) {
                   valueNode.clearAdditionalHyperlinks();
                   valueNode.addAdditionalHyperlink(configureLink);
                 }
@@ -1340,8 +1338,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if ((element instanceof PyImportElement)) {
-          PyImportElement importElement = (PyImportElement)element;
+        if ((element instanceof PyImportElement importElement)) {
           if (name.equals(importElement.getVisibleName())) {
             if (elementRef.isNull()) {
               elementRef.set(element);

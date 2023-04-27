@@ -76,8 +76,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
           final ASTNode defNode = maybeDef.getNode();
           if (defNode != null && defNode.getElementType() == PyTokenTypes.DEF_KEYWORD) {
             final PsiElement maybeFunc = token.getParent();
-            if (maybeFunc instanceof PyFunction) {
-              final PyFunction func = (PyFunction)maybeFunc;
+            if (maybeFunc instanceof PyFunction func) {
               final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(func);
               if (flags != null) {
                 // we're in a method

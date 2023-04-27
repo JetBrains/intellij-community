@@ -8,6 +8,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextSupport
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.SVGLoader
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.MultiResolutionImageProvider
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
@@ -43,6 +44,9 @@ open class CachedImageIcon protected constructor(
     internal val pathTransform = AtomicReference(
       IconTransform(StartupUiUtil.isUnderDarcula(), arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), null)
     )
+
+    @JvmField
+    internal val iconToStrokeIcon = CollectionFactory.createConcurrentWeakKeyWeakValueMap<CachedImageIcon, CachedImageIcon>()
 
     @Suppress("UndesirableClassUsage")
     val EMPTY_ICON: ImageIcon = object : ImageIcon(BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
@@ -232,12 +236,14 @@ open class CachedImageIcon protected constructor(
 
   fun createStrokeIcon(): Icon {
     val resolver = resolver ?: return EMPTY_ICON
-    return CachedImageIcon(originalPath = originalPath,
-                           resolver = resolver,
-                           isDarkOverridden = isDarkOverridden,
-                           localFilterSupplier = localFilterSupplier,
-                           colorPatcher = colorPatcher,
-                           useStroke = true)
+    return iconToStrokeIcon.computeIfAbsent(this) {
+      CachedImageIcon(originalPath = originalPath,
+                      resolver = resolver,
+                      isDarkOverridden = isDarkOverridden,
+                      localFilterSupplier = localFilterSupplier,
+                      colorPatcher = colorPatcher,
+                      useStroke = true)
+    }
   }
 
   val isDark: Boolean

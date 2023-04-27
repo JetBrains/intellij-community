@@ -287,8 +287,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   @Nullable
   Transferable createTransferable(@Nullable InputEvent event) {
-    if (event instanceof MouseEvent) {
-      MouseEvent mouse = (MouseEvent)event;
+    if (event instanceof MouseEvent mouse) {
       Point location = mouse.getLocationOnScreen();
       SwingUtilities.convertPointFromScreen(location, myTree);
       return createTransferable(myTree.getClosestPathForLocation(location.x, location.y));
@@ -356,12 +355,10 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   @ApiStatus.Internal
   public static @Nullable Project prepareProject(@Nullable CachingSimpleNode parent,
                                                  @Nullable Configurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+    if (configurable instanceof ConfigurableWrapper wrapper) {
       return wrapper.getExtensionPoint().getProject();
     }
-    if (configurable instanceof SortedConfigurableGroup) {
-      SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+    if (configurable instanceof SortedConfigurableGroup group) {
       Configurable[] configurables = group.getConfigurables();
       if (configurables.length != 0) {
         Project project = prepareProject(parent, configurables[0]);
@@ -403,8 +400,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   @Nullable
   private static MyNode extractNode(@Nullable Object object) {
-    if (object instanceof TreePath) {
-      TreePath path = (TreePath)object;
+    if (object instanceof TreePath path) {
       object = path.getLastPathComponent();
     }
     if (object instanceof DefaultMutableTreeNode) {
@@ -546,8 +542,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         if (myConfigurable instanceof ConfigurableTreeRenderer) {
           myRenderer = (ConfigurableTreeRenderer)myConfigurable;
         }
-        else if (myConfigurable instanceof ConfigurableWrapper) {
-          ConfigurableWrapper wrapper = (ConfigurableWrapper)myConfigurable;
+        else if (myConfigurable instanceof ConfigurableWrapper wrapper) {
           UnnamedConfigurable configurable = wrapper.getRawConfigurable();
           if (configurable instanceof ConfigurableTreeRenderer) {
             myRenderer = (ConfigurableTreeRenderer)configurable;
@@ -814,8 +809,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     public String getToolTipText(MouseEvent event) {
       if (event != null) {
         Component component = getDeepestRendererComponentAt(event.getX(), event.getY());
-        if (component instanceof JLabel) {
-          JLabel label = (JLabel)component;
+        if (component instanceof JLabel label) {
           if (label.getIcon() != null) {
             String text = label.getToolTipText();
             if (text != null) {

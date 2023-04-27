@@ -132,8 +132,7 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
       }
 
       try {
-        if (!(element instanceof PsiClass)) return;
-        PsiClass clazz = (PsiClass)element;
+        if (!(element instanceof PsiClass clazz)) return;
 
         PsiMethod ctor = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory().createConstructor();
         PsiUtil.setModifierProperty(ctor, PsiModifier.PUBLIC, true);

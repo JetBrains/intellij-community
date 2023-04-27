@@ -65,15 +65,13 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+      if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
       final PsiElement target = referenceElement.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       ImportUtils.addImportIfNeeded(aClass, element);
       final String shortName = aClass.getName();
       if (isReferenceToTarget(shortName, aClass, parent)) {
@@ -107,13 +105,12 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement qualifier = reference.getQualifier();
-      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;
       }
       if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class) != null) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)qualifier;
       final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
       if (parameterList != null &&
           parameterList.getTypeParameterElements().length > 0) {
@@ -137,10 +134,9 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
         }
       }
       final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       if (!PsiUtil.isAccessible(aClass, referenceClass, null)) {
         return;
       }

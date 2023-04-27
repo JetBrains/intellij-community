@@ -62,22 +62,18 @@ public class FloatingPointEqualityInspection extends BaseInspection {
 
     private static boolean isInfinityOrZero(PsiExpression expression) {
       final Object value = ExpressionUtils.computeConstantExpression(expression);
-      if (value instanceof Double) {
-        final Double aDouble = (Double)value;
+      if (value instanceof Double aDouble) {
         final double v = aDouble.doubleValue();
         return Double.isInfinite(v) || v == 0.0;
       }
-      else if (value instanceof Float) {
-        final Float aFloat = (Float)value;
+      else if (value instanceof Float aFloat) {
         final float v = aFloat.floatValue();
         return Float.isInfinite(v) || v == 0.0f;
       }
-      else if (value instanceof Integer) {
-        final Integer integer = (Integer)value;
+      else if (value instanceof Integer integer) {
         return integer.intValue() == 0;
       }
-      else if (value instanceof Long) {
-        final Long aLong = (Long)value;
+      else if (value instanceof Long aLong) {
         return aLong.longValue() == 0;
       }
       return false;

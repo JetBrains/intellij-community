@@ -17,8 +17,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
  * Implementation uses new {@link PagedFileStorageLockFree}
  */
 @ApiStatus.Internal
-public class PersistentFSRecordsOverLockFreePagedStorage extends PersistentFSRecordsStorage
-  implements IPersistentFSRecordsStorage {
+public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
   //FIXME RC: check is id=0 valid for FSRecords? Better to use 0, as all other storages use NULL_ID=0
   public static final int NULL_ID = -1;

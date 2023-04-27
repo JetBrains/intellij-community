@@ -279,7 +279,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         caretModel.moveToOffset(bounds.getEndOffset());
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
-      editor.putUserData(EditorEx.LAST_PASTED_REGION, TextRange.create(bounds));
+      editor.putUserData(EditorEx.LAST_PASTED_REGION, bounds.getTextRange());
     }
     // Don't dispose the 'bounds' RangeMarker because the processors
     // from 'extraData' may use it later, for instance, in an invokeLater() block.

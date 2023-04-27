@@ -114,9 +114,8 @@ public final class MethodDescriptor {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof MethodDescriptor)) return false;
+    if (!(o instanceof MethodDescriptor md)) return false;
 
-    MethodDescriptor md = (MethodDescriptor)o;
     return ret.equals(md.ret) && Arrays.equals(params, md.params);
   }
 

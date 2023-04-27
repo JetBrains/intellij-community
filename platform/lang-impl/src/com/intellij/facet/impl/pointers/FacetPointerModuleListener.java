@@ -30,8 +30,7 @@ final class FacetPointerModuleListener implements ModuleListener {
                              @NotNull List<? extends Module> modules,
                              @NotNull Function<? super Module, String> oldNameProvider) {
     FacetPointersManager manager = FacetPointersManager.getInstance(myProject);
-    if (manager instanceof FacetPointersManagerImpl) {
-      FacetPointersManagerImpl managerImpl = (FacetPointersManagerImpl)manager;
+    if (manager instanceof FacetPointersManagerImpl managerImpl) {
       managerImpl.refreshPointers();
     }
   }

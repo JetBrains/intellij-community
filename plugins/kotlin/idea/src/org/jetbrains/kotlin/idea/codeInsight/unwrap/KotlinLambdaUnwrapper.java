@@ -42,10 +42,9 @@ public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
 
     @Override
     public boolean isApplicableTo(PsiElement e) {
-        if (!(e instanceof KtLambdaExpression)) return false;
+        if (!(e instanceof KtLambdaExpression lambda)) return false;
 
-        KtLambdaExpression lambda = (KtLambdaExpression) e;
-        KtBlockExpression body = lambda.getBodyExpression();
+      KtBlockExpression body = lambda.getBodyExpression();
         KtElement enclosingElement = getLambdaEnclosingElement(lambda);
 
         if (body == null || enclosingElement == null) return false;

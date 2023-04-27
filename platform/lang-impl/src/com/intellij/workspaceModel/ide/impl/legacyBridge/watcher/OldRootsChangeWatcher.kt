@@ -144,11 +144,11 @@ internal class OldRootsChangeWatcher(private val project: Project) {
     if (WorkspaceFileIndexEx.IS_ENABLED && affectedEntities.isNotEmpty()) {
       val workspaceFileIndex = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
       if (beforeRootsChanged) {
-        workspaceFileIndex.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
+        workspaceFileIndex.indexData.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
       }
       else {
-        workspaceFileIndex.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
-        workspaceFileIndex.updateDirtyEntities()
+        workspaceFileIndex.indexData.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
+        workspaceFileIndex.indexData.updateDirtyEntities()
       }
     }
     // Keep old behaviour for global libraries

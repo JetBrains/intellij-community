@@ -59,8 +59,7 @@ final class ImmutableCollectionModelUtils {
   private static boolean isNonResolvedTypeParameter(@Nullable PsiClass parameter,
                                                     @NotNull PsiElement context,
                                                     @NotNull PsiResolveHelper resolveHelper) {
-    if (!(parameter instanceof PsiTypeParameter)) return false;
-    PsiTypeParameter typeParameter = (PsiTypeParameter)parameter;
+    if (!(parameter instanceof PsiTypeParameter typeParameter)) return false;
     String name = typeParameter.getName();
     return name == null || resolveHelper.resolveReferencedClass(name, context) != parameter;
   }

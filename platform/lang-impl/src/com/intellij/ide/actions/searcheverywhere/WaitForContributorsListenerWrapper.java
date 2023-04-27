@@ -51,9 +51,9 @@ public class WaitForContributorsListenerWrapper implements SearchListener, Dispo
   }
 
   @Override
-  public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
+  public void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
     resetState(contributors);
-    delegateListener.searchStarted(contributors);
+    delegateListener.searchStarted(pattern, contributors);
     long timeout = contributors.size() > 1 ? waitTimeoutMs : throttlingTimeoutMs;
     scheduleFlush(timeout);
   }

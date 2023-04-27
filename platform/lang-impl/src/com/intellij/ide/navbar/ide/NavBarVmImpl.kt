@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
-import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.impl.children
@@ -9,20 +8,19 @@ import com.intellij.ide.navbar.vm.NavBarItemVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVm.SelectionShift
 import com.intellij.model.Pointer
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.project.Project
-import com.intellij.util.flow.zipWithPrevious
+import com.intellij.util.flow.zipWithNext
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 internal class NavBarVmImpl(
-  private val cs: CoroutineScope,
-  private val project: Project,
+  cs: CoroutineScope,
   initialItems: List<NavBarVmItem>,
-  activityFlow: Flow<Unit>,
+  contextItems: Flow<List<NavBarVmItem>>,
+  private val requestNavigation: (NavBarVmItem) -> Unit,
 ) : NavBarVm {
 
   init {
@@ -39,8 +37,7 @@ internal class NavBarVmImpl(
 
   init {
     cs.launch {
-      activityFlow.collectLatest {
-        val items = focusModel(project)
+      contextItems.collectLatest { items ->
         if (items.isNotEmpty()) {
           _items.value = items.mapIndexed(::NavBarItemVmImpl)
           _selectedIndex.value = -1
@@ -100,7 +97,7 @@ internal class NavBarVmImpl(
 
   private suspend fun handleSelectionChange() {
     _items.collectLatest { items: List<NavBarItemVmImpl> ->
-      _selectedIndex.zipWithPrevious().collect { (unselected, selected) ->
+      _selectedIndex.zipWithNext { unselected, selected ->
         if (unselected >= 0) {
           items[unselected].selected.value = false
         }
@@ -110,7 +107,7 @@ internal class NavBarVmImpl(
         if (_popup.value != null) {
           check(_popupRequests.tryEmit(selected))
         }
-      }
+      }.collect()
     }
   }
 
@@ -126,7 +123,7 @@ internal class NavBarVmImpl(
       return
     }
     val items = _items.value
-    val children = items[index].item.children() ?: return
+    val children = items[index].item.childItems() ?: return
     if (children.isEmpty()) {
       return
     }
@@ -150,7 +147,7 @@ internal class NavBarVmImpl(
                        ?: return
     when (expandResult) {
       is ExpandResult.NavigateTo -> {
-        navigateTo(project, expandResult.target)
+        requestNavigation(expandResult.target)
         return
       }
       is ExpandResult.NextPopup -> {
@@ -201,9 +198,7 @@ internal class NavBarVmImpl(
     }
 
     override fun activate() {
-      cs.launch {
-        navigateTo(project, item)
-      }
+      requestNavigation(item)
     }
   }
 }
@@ -216,7 +211,7 @@ private sealed interface ExpandResult {
 private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
   var expanded = emptyList<NavBarVmItem>()
   var currentItem = child
-  var (children, navigateOnClick) = currentItem.fetch(childrenSelector, NavBarItem::navigateOnClick) ?: return null
+  var (children, navigateOnClick) = currentItem.childItemsAndNavigation() ?: return null
 
   if (children.isEmpty() || navigateOnClick) {
     return ExpandResult.NavigateTo(currentItem)
@@ -248,7 +243,7 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
           // Performing auto-expand, keeping invariant
           expanded = expanded + currentItem
           currentItem = children.single()
-          val fetch = currentItem.fetch(childrenSelector, NavBarItem::navigateOnClick) ?: return null
+          val fetch = currentItem.childItemsAndNavigation() ?: return null
           children = fetch.first
           navigateOnClick = fetch.second
         }
@@ -261,29 +256,18 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
   }
 }
 
-private suspend fun navigateTo(project: Project, item: NavBarVmItem) {
-  val navigationRequest = item.fetch(NavBarItem::navigationRequest)
-                          ?: return
-  withContext(Dispatchers.EDT) {
-    navigateRequest(project, navigationRequest)
+private suspend fun NavBarVmItem.childItems(): List<NavBarVmItem>? {
+  return fetch {
+    childItems()
   }
 }
 
-private suspend fun NavBarVmItem.children(): List<NavBarVmItem>? {
-  return fetch(childrenSelector)
-}
-
-private suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
-  return readAction {
-    pointer.dereference()?.selector()
+private suspend fun NavBarVmItem.childItemsAndNavigation(): Pair<List<NavBarVmItem>, Boolean>? {
+  return fetch {
+    Pair(childItems(), navigateOnClick())
   }
 }
 
-private suspend fun <T1, T2> NavBarVmItem.fetch(
-  selector1: NavBarItem.() -> T1,
-  selector2: NavBarItem.() -> T2
-): Pair<T1, T2>? = fetch { Pair(selector1(), selector2()) }
-
-private val childrenSelector: NavBarItem.() -> List<NavBarVmItem> = {
-  children().toVmItems()
+private fun NavBarItem.childItems(): List<NavBarVmItem> {
+  return children().toVmItems()
 }

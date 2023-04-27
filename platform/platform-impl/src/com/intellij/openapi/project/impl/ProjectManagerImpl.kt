@@ -185,7 +185,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun loadProject(path: Path): Project {
-    check(!ApplicationManager.getApplication().isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     val project = ProjectImpl(filePath = path, projectName = null)
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()

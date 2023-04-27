@@ -4,9 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.changes
 import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
-import com.intellij.diff.comparison.ComparisonManagerImpl
-import com.intellij.diff.comparison.iterables.DiffIterableUtil
-import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.icons.AllIcons
@@ -22,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.ex.isValidRanges
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import git4idea.changes.GitParsedChangesBundle
 import git4idea.changes.getDiffComputer
@@ -88,7 +84,7 @@ open class GHPRDiffRequestChainProducer(
 
     VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
 
-    val diffComputer = changesProvider.findChangeDiffData(change)?.getDiffComputer()
+    val diffComputer = changesProvider.diffDataByChange[change]?.getDiffComputer()
     if (diffComputer != null) {
       requestDataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
     }
@@ -118,7 +114,7 @@ open class GHPRDiffRequestChainProducer(
   }
 
   private fun getReviewSupport(changesProvider: GitParsedChangesBundle, change: Change): GHPRDiffReviewSupport? {
-    val diffData = changesProvider.findChangeDiffData(change) ?: return null
+    val diffData = changesProvider.diffDataByChange[change] ?: return null
 
     return GHPRDiffReviewSupportImpl(project,
                                      dataProvider.reviewData, dataProvider.detailsData, avatarIconsProvider,

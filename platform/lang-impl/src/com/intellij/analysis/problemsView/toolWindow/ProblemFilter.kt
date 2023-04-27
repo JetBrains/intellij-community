@@ -73,11 +73,8 @@ private class OtherSeveritiesFilterAction(
   }
 
   override fun updateState(selected: Boolean): Boolean {
-    val state = panel.state.hideBySeverity
-    return when {
-      selected -> state.removeAll(severities)
-      else -> state.addAll(severities)
-    }
+    val state = panel.state
+    return if (selected) state.removeAllSeverities(severities) else state.addAllSeverities(severities)
   }
 }
 
@@ -85,10 +82,7 @@ private class SeverityFilterAction(@Nls name: String, val severity: Int, panel: 
   override fun isSelected(event: AnActionEvent) = !panel.state.hideBySeverity.contains(severity)
 
   override fun updateState(selected: Boolean): Boolean {
-    val state = panel.state.hideBySeverity
-    return when {
-      selected -> state.remove(severity)
-      else -> state.add(severity)
-    }
+    val state = panel.state
+    return if (selected) state.removeSeverity(severity) else state.addSeverity(severity)
   }
 }

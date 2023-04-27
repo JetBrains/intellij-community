@@ -53,8 +53,8 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
 
         String typeName = varargsType.getName();
         final String replacementText = String.format("new %s[]{%s}", typeName, nonArray.getText());
-        final LocalQuickFix fix = PsiAdapter.isPrimitiveArrayType(array.getType()) ? null :
-                                  new WrapInArrayInitializerFix(replacementText, typeName);
+        final LocalQuickFix[] fix = PsiAdapter.isPrimitiveArrayType(array.getType()) ? LocalQuickFix.EMPTY_ARRAY :
+                                  new LocalQuickFix[]{new WrapInArrayInitializerFix(replacementText, typeName)};
 
         holder.registerProblem(nonArray,
                                JavaBundle.message("inspection.suspicious.ternary.in.varargs.description"),

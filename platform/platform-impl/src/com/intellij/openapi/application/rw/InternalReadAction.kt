@@ -23,9 +23,7 @@ internal class InternalReadAction<T>(
 
   suspend fun runReadAction(): T {
     return if (undispatched) {
-      check(!application.isDispatchThread) {
-        "Must not call from EDT"
-      }
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       if (application.isReadAccessAllowed) {
         val unsatisfiedConstraint = findUnsatisfiedConstraint()
         check(unsatisfiedConstraint == null) {

@@ -67,7 +67,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       if (Strings.areSameInstance(signature, UpdateFoldRegionsOperation.NO_SIGNATURE)) continue;
       Boolean storedCollapseByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
       boolean collapseByDefault = storedCollapseByDefault != null && storedCollapseByDefault &&
-                                  !FoldingUtil.caretInsideRange(editor, TextRange.create(region));
+                                  !FoldingUtil.caretInsideRange(editor, region.getTextRange());
       if (collapseByDefault == expanded || signature == null) {
         if (signature != null) {
           myInfos.add(new Info(signature, expanded));

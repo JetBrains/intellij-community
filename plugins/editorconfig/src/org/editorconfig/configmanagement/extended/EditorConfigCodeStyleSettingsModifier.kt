@@ -69,22 +69,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
           }
         }
         catch (toe: TimeoutException) {
-          val trace = psiFile.getUserData(CodeStyleCachingService.CALL_TRACE)
-          val messageBuilder = StringBuilder()
-          if (trace != null) {
-            messageBuilder.apply {
-              append("Timeout which searching .editorconfig for ").append(file.name).append("\n        at ")
-              append(trace.asSequence()
-                       .drop(1)
-                       .take(15)
-                       .map(StackTraceElement::toString)
-                       .joinToString("\n        at "))
-              LOG.warn(toString())
-            }
-          }
-          else {
-            LOG.warn(toe)
-          }
+          LOG.warn(toe)
           if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
             error(project, "timeout", message("error.timeout"), DisableEditorConfigAction(project), true)
           }

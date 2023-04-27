@@ -44,8 +44,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jetbrains.jps.incremental.IncProjectBuilder.MAX_BUILDER_THREADS;
-import static org.jetbrains.jps.incremental.storage.MurmurHashingService.HASH_SIZE;
-import static org.jetbrains.jps.incremental.storage.MurmurHashingService.getStringHash;
+import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getStringHash;
 import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES;
 
 /**
@@ -70,7 +69,7 @@ public class BuildTargetSourcesState implements BuildListener {
   private final Map<String, BuildTarget<?>> myChangedBuildTargets;
   // Some modules can have same out folder for different BuildTarget's to avoid extra hash calculation collection will be used
   // There are no pre-calculated hashes for entries from this collection in FileStampStorage
-  private final Map<String, byte[]> myCalculatedHashes;
+  private final Map<String, Long> myCalculatedHashes;
   private final PathRelativizerService myRelativizer;
   private final BuildTargetIndex myBuildTargetIndex;
   private final BuildRootIndex myBuildRootIndex;
@@ -123,14 +122,13 @@ public class BuildTargetSourcesState implements BuildListener {
         String targetTypeId = target.getTargetType().getTypeId();
 
         getBuildTargetHash(target, myContext).ifPresent(buildTargetHash -> {
-          String hexString = StringUtil.toHexString(buildTargetHash);
-
           // Now in project each build target has single output root
           String relativePath = target.getOutputRoots(myContext).stream()
             .map(file -> myRelativizer.toRelative(file.getAbsolutePath()))
             .findFirst().orElse("");
           synchronized (targetTypeHashMap) {
-            targetTypeHashMap.computeIfAbsent(targetTypeId, key -> new HashMap<>()).put(target.getId(), new BuildTargetState(hexString, relativePath));
+            targetTypeHashMap.computeIfAbsent(targetTypeId, key -> new HashMap<>()).put(target.getId(), new BuildTargetState(buildTargetHash.toString(),
+                                                                                                                             relativePath));
           }
         });
       });
@@ -191,11 +189,11 @@ public class BuildTargetSourcesState implements BuildListener {
       });
   }
 
-  private List<byte[]> compilationOutputHash(File rootFile, BuildTarget<?> target) {
+  private List<Long> compilationOutputHash(File rootFile, BuildTarget<?> target) {
     try {
       if (!rootFile.exists()) return null;
 
-      List<byte[]> targetRootHashes = new ArrayList<>();
+      List<Long> targetRootHashes = new ArrayList<>();
       Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
@@ -206,13 +204,13 @@ public class BuildTargetSourcesState implements BuildListener {
         public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
           String filePathString = path.toString();
           if (filePathString.endsWith(".class")) {
-            byte[] calculatedHash = myCalculatedHashes.get(filePathString);
+            Long calculatedHash = myCalculatedHashes.get(filePathString);
             if (calculatedHash != null) {
               targetRootHashes.add(calculatedHash);
             }
             else {
               File file = path.toFile();
-              byte[] hash = getOutputFileHash(file, rootFile);
+              long hash = getOutputFileHash(file, rootFile);
               targetRootHashes.add(hash);
               myCalculatedHashes.put(filePathString, hash);
             }
@@ -228,12 +226,12 @@ public class BuildTargetSourcesState implements BuildListener {
     }
   }
 
-  private List<byte[]> sourceRootHash(BuildRootDescriptor rootDescriptor, BuildTarget<?> target) {
+  private List<Long> sourceRootHash(BuildRootDescriptor rootDescriptor, BuildTarget<?> target) {
     try {
       File rootFile = rootDescriptor.getRootFile();
       if (!rootFile.exists() || rootFile.getAbsolutePath().startsWith(myOutputFolderPath)) return null;
 
-      List<byte[]> targetRootHashes = new ArrayList<>();
+      List<Long> targetRootHashes = new ArrayList<>();
       Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
@@ -259,32 +257,37 @@ public class BuildTargetSourcesState implements BuildListener {
   }
 
   @NotNull
-  private Optional<byte[]> getBuildTargetHash(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
-    return Stream.concat(target.getOutputRoots(context).stream().map(it -> compilationOutputHash(it, target)),
-                         myBuildRootIndex.getTargetRoots(target, context).stream().map(it -> sourceRootHash(it, target)))
+  private Optional<Long> getBuildTargetHash(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
+    long[] longs = Stream.concat(target.getOutputRoots(context).stream().map(it -> compilationOutputHash(it, target)),
+                                 myBuildRootIndex.getTargetRoots(target, context).stream().map(it -> sourceRootHash(it, target)))
       .filter(it -> !ContainerUtil.isEmpty(it))
       .flatMap(List::stream)
-      .reduce(BuildTargetSourcesState::sum);
+      .mapToLong(x -> x)
+      .toArray();
+    if (longs.length == 0) return Optional.empty();
+    return Optional.of(Xxh3HashingService.getLongsHash(longs));
   }
 
   @NotNull
-  private Optional<byte[]> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
+  private Optional<Long> getFileHash(@NotNull BuildTarget<?> target, @NotNull File file, @NotNull File rootPath) throws IOException {
     StampsStorage<? extends StampsStorage.Stamp> storage = myProjectStamps.getStampStorage();
     assert storage instanceof FileStampStorage;
     FileStampStorage fileStampStorage = (FileStampStorage)storage;
-    byte[] fileHash = fileStampStorage.getStoredFileHash(file, target);
+    Long fileHash = fileStampStorage.getStoredFileHash(file, target);
     if (fileHash == null) {
       return Optional.empty();
     }
 
-    byte[] stringHash = getStringHash(toRelative(file, rootPath));
-    return Optional.of(sum(stringHash, fileHash));
+    String relativePath = toRelative(file, rootPath);
+    if (relativePath.isEmpty()) return Optional.empty();
+    long stringHash = getStringHash(relativePath);
+    return Optional.of(Xxh3HashingService.getLongsHash(stringHash, fileHash));
   }
 
-  private static byte @NotNull [] getOutputFileHash(@NotNull File file, @NotNull File rootPath) throws IOException {
-    byte[] fileHash = MurmurHashingService.getFileHash(file);
-    byte[] stringHash = getStringHash(toRelative(file, rootPath));
-    return sum(stringHash, fileHash);
+  private static long getOutputFileHash(@NotNull File file, @NotNull File rootPath) throws IOException {
+    long fileHash = Xxh3HashingService.getFileHash(file);
+    long stringHash = getStringHash(toRelative(file, rootPath));
+    return Xxh3HashingService.getLongsHash(stringHash, fileHash);
   }
 
   @NotNull
@@ -316,13 +319,5 @@ public class BuildTargetSourcesState implements BuildListener {
     String url = projectExtension.getOutputUrl();
     if (StringUtil.isEmpty(url)) return "";
     return JpsPathUtil.urlToFile(url).getAbsolutePath();
-  }
-
-  private static byte @NotNull [] sum(byte[] firstHash, byte[] secondHash) {
-    byte[] result = firstHash != null ? firstHash : new byte[HASH_SIZE];
-    for (int i = 0; i < result.length; i++) {
-      result[i] += secondHash[i];
-    }
-    return result;
   }
 }

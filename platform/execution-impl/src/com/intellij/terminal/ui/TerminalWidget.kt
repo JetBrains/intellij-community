@@ -4,6 +4,7 @@ package com.intellij.terminal.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
+import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.TerminalTitle
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -43,4 +44,8 @@ interface TerminalWidget : ComponentContainer {
 
 fun TerminalWidget.setNewParentDisposable(newParentDisposable: Disposable) {
   Disposer.register(newParentDisposable, this)
+  val jediTermWidget = JBTerminalWidget.asJediTermWidget(this)
+  if (jediTermWidget != null) {
+    Disposer.register(newParentDisposable, jediTermWidget)
+  }
 }

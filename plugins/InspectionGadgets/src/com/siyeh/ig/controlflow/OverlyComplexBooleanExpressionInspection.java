@@ -119,43 +119,36 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
       if (!isBoolean(expression)) {
         return 1;
       }
-      if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         final PsiExpression[] operands = polyadicExpression.getOperands();
         return Arrays.stream(operands).mapToInt(this::countTerms).sum();
       }
-      else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      else if (expression instanceof PsiPrefixExpression prefixExpression) {
         return countTerms(prefixExpression.getOperand());
       }
-      else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         return countTerms(parenthesizedExpression.getExpression());
       }
       return 1;
     }
 
     private boolean isBoolean(PsiExpression expression) {
-      if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         return s_booleanOperators.contains(polyadicExpression.getOperationTokenType());
       }
-      else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      else if (expression instanceof PsiPrefixExpression prefixExpression) {
         return JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType());
       }
-      else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         return isBoolean(parenthesizedExpression.getExpression());
       }
       return false;
     }
 
     private boolean isPureConjunctionDisjunction(PsiExpression expression) {
-      if (!(expression instanceof PsiPolyadicExpression)) {
+      if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
         return false;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final IElementType sign = polyadicExpression.getOperationTokenType();
       if (!s_booleanOperators.contains(sign)) {
         return false;

@@ -98,8 +98,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
 
   @Override
   public void reset(@NotNull EditorSchemeAttributeDescriptor attributeDescriptor) {
-    if (!(attributeDescriptor instanceof RainbowAttributeDescriptor)) return;
-    RainbowAttributeDescriptor descriptor = (RainbowAttributeDescriptor)attributeDescriptor;
+    if (!(attributeDescriptor instanceof RainbowAttributeDescriptor descriptor)) return;
 
     EditorColorsScheme editedColorsScheme = descriptor.getScheme();
     Boolean rainbowOn = RainbowHighlighter.isRainbowEnabled(editedColorsScheme, descriptor.getLanguage());
@@ -129,8 +128,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
 
   @Override
   public void apply(@NotNull EditorSchemeAttributeDescriptor attributeDescriptor, EditorColorsScheme scheme) {
-    if (!(attributeDescriptor instanceof RainbowAttributeDescriptor)) return;
-    RainbowAttributeDescriptor descriptor = (RainbowAttributeDescriptor)attributeDescriptor;
+    if (!(attributeDescriptor instanceof RainbowAttributeDescriptor descriptor)) return;
 
     boolean isDefaultLanguage = descriptor.getLanguage() == null;
     RainbowHighlighter.setRainbowEnabled(scheme,

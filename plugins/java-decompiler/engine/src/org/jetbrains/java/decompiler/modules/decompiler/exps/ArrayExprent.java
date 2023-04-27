@@ -92,9 +92,8 @@ public class ArrayExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof ArrayExprent)) return false;
+    if (!(o instanceof ArrayExprent arr)) return false;
 
-    ArrayExprent arr = (ArrayExprent)o;
     return Objects.equals(array, arr.getArray()) &&
            Objects.equals(index, arr.getIndex());
   }

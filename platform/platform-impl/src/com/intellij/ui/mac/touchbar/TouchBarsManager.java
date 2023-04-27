@@ -112,11 +112,9 @@ final class TouchBarsManager {
   }
 
   private static void processFocusEvent(AWTEvent e) {
-    if (!(e.getSource() instanceof Component)) {
+    if (!(e.getSource() instanceof Component src)) {
       return;
     }
-
-    final Component src = (Component)e.getSource();
 
     // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focused
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
@@ -545,8 +543,7 @@ final class TouchBarsManager {
 
         myLastShownTouchbar = tb;
 
-        if (myLastShownTouchbar instanceof TBPanelActionGroup) {
-          final TBPanelActionGroup atb = (TBPanelActionGroup)myLastShownTouchbar;
+        if (myLastShownTouchbar instanceof TBPanelActionGroup atb) {
           atb.startUpdateTimer();
 
           // timer can "sleep" sometimes (when user doesn't send input for expamle)

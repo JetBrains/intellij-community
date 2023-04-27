@@ -266,9 +266,8 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     final LinkedHashMap<String, Optional<String>> result = new LinkedHashMap<>();
 
     for (PyExpression argument : arguments) {
-      if (!(argument instanceof PyKeywordArgument)) return null;
+      if (!(argument instanceof PyKeywordArgument keywordArgument)) return null;
 
-      final PyKeywordArgument keywordArgument = (PyKeywordArgument)argument;
       final String keyword = keywordArgument.getKeyword();
       if (keyword == null) return null;
 

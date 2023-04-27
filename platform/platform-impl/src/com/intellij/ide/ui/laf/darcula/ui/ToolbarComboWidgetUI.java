@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -28,7 +29,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   private static final int DEFAULT_MAX_WIDTH = 350;
 
   private final HoverAreaTracker hoverTracker = new HoverAreaTracker();
-  private final ClickListener clickListener = new ClickListener();
+  private final ClickListener clickListener = new ToolbarComboWidgetClickListener();
   private TextCutStrategy textCutStrategy = new DefaultCutStrategy();
   private int maxWidth;
 
@@ -47,14 +48,14 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     ToolbarComboWidget widget = (ToolbarComboWidget)c;
     setUIDefaults(widget);
     hoverTracker.installTo(widget);
-    clickListener.installTo(widget);
+    clickListener.installOn(widget);
   }
 
   @Override
   public void uninstallUI(JComponent c) {
+    ToolbarComboWidget widget = (ToolbarComboWidget)c;
     hoverTracker.uninstall();
-    clickListener.uninstall();
-    c.removeMouseListener(clickListener);
+    clickListener.uninstall(widget);
   }
 
   private static void setUIDefaults(ToolbarComboWidget c) {
@@ -319,32 +320,36 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     }
   }
 
-  private static class ClickListener extends MyMouseTracker {
+  private static class ToolbarComboWidgetClickListener extends ClickListener {
+    private static void notifyPressListeners(MouseEvent e) {
+      ToolbarComboWidget comp = (ToolbarComboWidget)e.getComponent();
+      ActionEvent ae = new ActionEvent(comp, 0, null, System.currentTimeMillis(), e.getModifiersEx());
+      comp.getPressListeners().forEach(listener -> listener.actionPerformed(ae));
+    }
 
     @Override
-    public void mouseClicked(MouseEvent e) {
+    public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+      Component component = e.getComponent();
+      if (!(component instanceof ToolbarComboWidget comp)) return false;
       if (!comp.isExpandable()) {
         notifyPressListeners(e);
-        return;
+        return false;
       }
 
       if (!isSeparatorShown(comp)) {
         comp.doExpand(e);
-        return;
+        return true;
       }
 
       int leftPartWidth = comp.getWidth() - (ELEMENTS_GAP + EXPAND_ICON.getIconWidth() + comp.getInsets().right);
       if (e.getPoint().x <= leftPartWidth) {
         notifyPressListeners(e);
+        return false;
       }
       else {
         comp.doExpand(e);
+        return true;
       }
-    }
-
-    private void notifyPressListeners(MouseEvent e) {
-      ActionEvent ae = new ActionEvent(comp, 0, null, System.currentTimeMillis(), e.getModifiersEx());
-      comp.getPressListeners().forEach(listener -> listener.actionPerformed(ae));
     }
   }
 

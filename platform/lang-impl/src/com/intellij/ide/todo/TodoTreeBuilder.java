@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo;
 
@@ -757,22 +757,22 @@ public abstract class TodoTreeBuilder implements Disposable {
 
     @Override
     public void propertyChanged(@NotNull PsiTreeChangeEvent e) {
-      String propertyName = e.getPropertyName();
-      if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) { // rebuild all tree when source roots were changed
-        rebuildCache();
-      }
-      else if (PsiTreeChangeEvent.PROP_WRITABLE.equals(propertyName) || PsiTreeChangeEvent.PROP_FILE_NAME.equals(propertyName)) {
-        PsiFile psiFile = (PsiFile)e.getElement();
-        if (!canContainTodoItems(psiFile)) { // don't do anything if file cannot contain to-do items
-          return;
-        }
-        updateTree();
-      }
-      else if (PsiTreeChangeEvent.PROP_DIRECTORY_NAME.equals(propertyName)) {
-        PsiDirectory psiDirectory = (PsiDirectory)e.getElement();
-        Iterator<PsiFile> iterator = getFiles(psiDirectory);
-        if (iterator.hasNext()) {
+      switch (e.getPropertyName()) {
+        case PsiTreeChangeEvent.PROP_ROOTS ->  // rebuild all tree when source roots were changed
+          rebuildCache();
+        case PsiTreeChangeEvent.PROP_WRITABLE, PsiTreeChangeEvent.PROP_FILE_NAME -> {
+          PsiFile psiFile = (PsiFile)e.getElement();
+          if (!canContainTodoItems(psiFile)) { // don't do anything if file cannot contain to-do items
+            return;
+          }
           updateTree();
+        }
+        case PsiTreeChangeEvent.PROP_DIRECTORY_NAME -> {
+          PsiDirectory psiDirectory = (PsiDirectory)e.getElement();
+          Iterator<PsiFile> iterator = getFiles(psiDirectory);
+          if (iterator.hasNext()) {
+            updateTree();
+          }
         }
       }
     }

@@ -186,8 +186,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       processReferenceInImportGuard(node, guard);
       return;
     }
-    if (node instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qExpr = (PyQualifiedExpression)node;
+    if (node instanceof PyQualifiedExpression qExpr) {
       final PyExpression qualifier = qExpr.getQualifier();
       final String name = node.getName();
       if (qualifier != null && name != null && PyHasAttrHelper.INSTANCE.getNamesFromHasAttrs(node, qualifier).contains(name)) {
@@ -196,8 +195,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
     PsiElement target = null;
     final boolean unresolved;
-    if (reference instanceof PsiPolyVariantReference) {
-      final PsiPolyVariantReference poly = (PsiPolyVariantReference)reference;
+    if (reference instanceof PsiPolyVariantReference poly) {
       final ResolveResult[] resolveResults = poly.multiResolve(false);
       unresolved = (resolveResults.length == 0);
       for (ResolveResult resolveResult : resolveResults) {
@@ -292,8 +290,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       return;
     }
     List<LocalQuickFix> fixes = new ArrayList<>();
-    if (element instanceof PyReferenceExpression) {
-      PyReferenceExpression expr = (PyReferenceExpression)element;
+    if (element instanceof PyReferenceExpression expr) {
       if (PyNames.COMPARISON_OPERATORS.contains(refName)) {
         return;
       }
@@ -346,8 +343,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
             return;
           }
           ContainerUtil.addAll(fixes, getCreateMemberFromUsageFixes(type, reference, refText));
-          if (type instanceof PyClassType) {
-            final PyClassType classType = (PyClassType)type;
+          if (type instanceof PyClassType classType) {
             if (reference instanceof PyOperatorReference) {
               String className = type.getName();
               if (classType.isDefinition()) {
@@ -639,8 +635,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
           }
         }
         PsiFileSystemItem importedElement;
-        if (unusedImport instanceof PyImportElement) {
-          final PyImportElement importElement = (PyImportElement)unusedImport;
+        if (unusedImport instanceof PyImportElement importElement) {
           final PsiElement element = importElement.resolve();
           if (element == null) {
             if (importElement.getImportedQName() != null) {
@@ -812,8 +807,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         }
       }
     }
-    else if (element instanceof PyReferenceExpression) {
-      final PyReferenceExpression expr = (PyReferenceExpression)element;
+    else if (element instanceof PyReferenceExpression expr) {
       final PyExpression qualifier = expr.getQualifier();
       final String exprName = expr.getName();
       if (exprName != null) {

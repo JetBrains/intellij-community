@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.statistics
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -20,6 +21,8 @@ class VcsUsagesCollector : ProjectUsagesCollector() {
   }
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
+    if (!project.isTrusted()) return emptySet()
+
     val set = HashSet<MetricEvent>()
 
     val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)

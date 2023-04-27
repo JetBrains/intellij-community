@@ -2,7 +2,6 @@
 package com.intellij.util.containers.hash;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractSet;
@@ -12,8 +11,7 @@ import java.util.Set;
 /**
  * @deprecated Use {@link java.util.HashSet}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval
+@Deprecated(forRemoval = true)
 public class HashSet<E> extends AbstractSet<E> implements Set<E> {
   private Entry<E>[] table;
   private int capacity;

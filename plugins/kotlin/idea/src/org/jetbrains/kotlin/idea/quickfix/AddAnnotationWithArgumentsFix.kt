@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -128,7 +129,10 @@ class AddAnnotationWithArgumentsFix(
          // A custom pretty-printer for the `@Deprecated` annotation that deals with optional named arguments and varargs.
         private fun formatDeprecatedAnnotationArguments(annotation: AnnotationDescriptor): List<String> {
             val arguments = mutableListOf<String>()
-            annotation.allValueArguments[MESSAGE_ARGUMENT]?.safeAs<StringValue>()?.let { arguments.add(it.toString()) }
+            annotation.allValueArguments[MESSAGE_ARGUMENT]?.safeAs<StringValue>()
+                ?.toString()
+                ?.removeSurrounding("\"")
+                ?.let { arguments.add("\"${StringUtil.escapeStringCharacters(it)}\"") }
             val replaceWith = annotation.allValueArguments[REPLACE_WITH_ARGUMENT]?.safeAs<AnnotationValue>()?.value
             if (replaceWith != null) {
                 val expression = replaceWith.allValueArguments[EXPRESSION_ARGUMENT]?.safeAs<StringValue>()?.toString()

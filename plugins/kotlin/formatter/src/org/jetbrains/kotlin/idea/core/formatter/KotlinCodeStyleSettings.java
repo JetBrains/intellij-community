@@ -104,11 +104,9 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof KotlinCodeStyleSettings)) return false;
+        if (!(obj instanceof KotlinCodeStyleSettings that)) return false;
 
-        KotlinCodeStyleSettings that = (KotlinCodeStyleSettings)obj;
-
-        if (!Comparing.equal(PACKAGES_TO_USE_STAR_IMPORTS, that.PACKAGES_TO_USE_STAR_IMPORTS)) return false;
+      if (!Comparing.equal(PACKAGES_TO_USE_STAR_IMPORTS, that.PACKAGES_TO_USE_STAR_IMPORTS)) return false;
         if (!Comparing.equal(PACKAGES_IMPORT_LAYOUT, that.PACKAGES_IMPORT_LAYOUT)) return false;
         if (!ReflectionUtil.comparePublicNonFinalFieldsWithSkip(this, that)) return false;
         return true;

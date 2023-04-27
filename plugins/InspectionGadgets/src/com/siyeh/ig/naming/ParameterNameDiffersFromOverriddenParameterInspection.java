@@ -116,10 +116,9 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
       final PsiExpression[] arguments = argumentList.getExpressions();
       for (int i = 0, length = Math.min(arguments.length, parameters.length); i < length; i++) {
         final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[i]);
-        if (!(argument instanceof PsiReferenceExpression)) {
+        if (!(argument instanceof PsiReferenceExpression referenceExpression)) {
           continue;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
         if (referenceExpression.getQualifierExpression() != null) {
           continue;
         }

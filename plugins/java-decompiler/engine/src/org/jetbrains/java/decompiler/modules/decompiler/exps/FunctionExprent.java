@@ -390,9 +390,8 @@ public class FunctionExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof FunctionExprent)) return false;
+    if (!(o instanceof FunctionExprent fe)) return false;
 
-    FunctionExprent fe = (FunctionExprent)o;
     return funcType == fe.funcType &&
            Objects.equals(lstOperands, fe.lstOperands); // TODO: order of operands insignificant
   }

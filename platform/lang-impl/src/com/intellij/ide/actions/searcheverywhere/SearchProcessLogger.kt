@@ -9,7 +9,8 @@ class SearchProcessLogger : SearchAdapter() {
 
   override fun elementsAdded(list: List<SearchEverywhereFoundElementInfo>) = list.forEach { reportOnce(it.contributor) }
 
-  override fun searchStarted(contributors: MutableCollection<out SearchEverywhereContributor<*>>) = reportedContributors.clear()
+  override fun searchStarted(pattern: String,
+                             contributors: MutableCollection<out SearchEverywhereContributor<*>>) = reportedContributors.clear()
 
   private fun reportOnce(contributor: SearchEverywhereContributor<*>) {
     if (reportedContributors.add(contributor)) SearchingProcessStatisticsCollector.elementShown(contributor)

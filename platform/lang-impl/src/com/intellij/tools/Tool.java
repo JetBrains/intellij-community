@@ -231,11 +231,10 @@ public class Tool implements SchemeElement {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof Tool)) {
+    if (!(obj instanceof Tool source)) {
       return false;
     }
 
-    Tool source = (Tool)obj;
     return
       Objects.equals(myName, source.myName) &&
       Objects.equals(myDescription, source.myDescription) &&

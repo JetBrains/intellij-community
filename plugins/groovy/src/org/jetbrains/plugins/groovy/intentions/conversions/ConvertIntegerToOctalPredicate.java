@@ -26,9 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrLiteral)) return false;
+    if (!(element instanceof GrLiteral expression)) return false;
 
-    final GrLiteral expression = (GrLiteral)element;
     final PsiType type = expression.getType();
     if (type == null) return false;
 

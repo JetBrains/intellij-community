@@ -43,8 +43,7 @@ public final class KillRingUtil {
     String s = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
     s = StringUtil.convertLineSeparators(s);
     CopyPasteManager.getInstance().setContents(new KillRingTransferable(s, document, startOffset, endOffset, cut));
-    if (editor instanceof EditorEx) {
-      EditorEx ex = (EditorEx)editor;
+    if (editor instanceof EditorEx ex) {
       if (ex.isStickySelection()) {
         ex.setStickySelection(false);
       }

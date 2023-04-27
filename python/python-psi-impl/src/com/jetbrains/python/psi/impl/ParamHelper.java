@@ -55,8 +55,7 @@ public final class ParamHelper {
       final boolean first = i == 0;
       final boolean last = i == parameters.size() - 1;
 
-      if (psi instanceof PyTupleParameter) {
-        final PyTupleParameter tupleParameter = (PyTupleParameter)psi;
+      if (psi instanceof PyTupleParameter tupleParameter) {
         walker.enterTupleParameter(tupleParameter, first, last);
         walkDownParamArray(tupleParameter.getContents(), walker);
         walker.leaveTupleParameter(tupleParameter, first, last);

@@ -69,8 +69,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     List<VisibilityChecker> checkers = new ArrayList<>(2);
     if (checkModuleApi) {
       PsiFile file = holder.getFile();
-      if (file instanceof PsiJavaFile) {
-        PsiJavaFile javaFile = (PsiJavaFile)file;
+      if (file instanceof PsiJavaFile javaFile) {
         if (javaFile.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
           PsiJavaModule psiModule = JavaModuleGraphUtil.findDescriptorByElement(file);
           if (psiModule != null) {
@@ -130,10 +129,9 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
         return;
       }
       PsiElement resolved = reference.resolve();
-      if (!(resolved instanceof PsiClass) || resolved instanceof PsiTypeParameter) {
+      if (!(resolved instanceof PsiClass psiClass) || resolved instanceof PsiTypeParameter) {
         return;
       }
-      PsiClass psiClass = (PsiClass)resolved;
       for (VisibilityChecker checker : myCheckers) {
         if (checker.checkVisibilityIssue(member, psiClass, reference)) {
           return;

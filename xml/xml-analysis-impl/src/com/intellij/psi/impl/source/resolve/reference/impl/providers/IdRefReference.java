@@ -36,8 +36,7 @@ public class IdRefReference extends BasicAttributeValueReference {
 
   @Nullable
   protected PsiElement getIdValueElement(PsiElement element) {
-    if (element instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
       XmlAttribute attribute = tag.getAttribute(IdReferenceProvider.ID_ATTR_NAME, null);
       if (!myIdAttrsOnly) {
         if (attribute == null) {
@@ -56,8 +55,7 @@ public class IdRefReference extends BasicAttributeValueReference {
 
   @Nullable
   protected String getIdValue(final PsiElement element) {
-    if (element instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
       String s = tag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME);
       if (!myIdAttrsOnly) {
         if (s == null) s = tag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME);

@@ -129,8 +129,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       }
       else {
         final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-        if (window instanceof Dialog) {
-          final Dialog dialog = (Dialog)window;
+        if (window instanceof Dialog dialog) {
           if (dialog.isModal() && !SwingUtilities.isDescendingFrom(myPanel, dialog)) {
             return;
           }

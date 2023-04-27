@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -89,7 +89,7 @@ public class ImplementationViewComponent extends JPanel {
     return myElements != null && myElements.length > 0;
   }
 
-  private record FileDescriptor(@NotNull VirtualFile file, @NotNull TargetPresentation element) {
+  private record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
   }
 
   public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
@@ -216,7 +216,7 @@ public class ImplementationViewComponent extends JPanel {
     JLabel label = new JLabel(myElements[myIndex].getPresentableText(), getIconForFile(virtualFile, project), SwingConstants.LEFT);
     mySingleEntryPanel.add(label, BorderLayout.CENTER);
     label.setForeground(FileStatusManager.getInstance(project).getStatus(virtualFile).getColor());
-    
+
     mySingleEntryPanel.add(new JLabel(myElements[myIndex].getLocationText(), myElements[myIndex].getLocationIcon(), SwingConstants.LEFT), BorderLayout.EAST);
     mySingleEntryPanel.setOpaque(false);
     mySingleEntryPanel.setVisible(true);
@@ -353,10 +353,10 @@ public class ImplementationViewComponent extends JPanel {
       VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
-        files.add(new FileDescriptor(file, getPresentation(element)));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element)));
       }
       else {
-        files.add(new FileDescriptor(file, getPresentation(element.getContainingMemberOrSelf())));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element.getContainingMemberOrSelf())));
       }
       candidates.add(element);
     }
@@ -562,7 +562,7 @@ public class ImplementationViewComponent extends JPanel {
     ForwardAction forward = new ForwardAction();
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
     group.add(forward);
-    
+
     group.add(createGearActionButton(openUsageView));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);

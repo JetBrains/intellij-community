@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,32 +82,26 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
     @Nullable
     @Override
     protected String fromExternal(@NotNull String str) {
-      if (str.equals("lf")) {
-        return "\n";
-      }
-      else if (str.equals("cr")) {
-        return "\r";
-      }
-      else if (str.equals("crlf")) {
-        return "\r\f";
-      }
-      return null;
+      return switch (str) {
+        case "lf" -> "\n";
+        case "cr" -> "\r";
+        case "crlf" -> "\r\n";
+        default -> null;
+      };
     }
 
     @NotNull
     @Override
     protected String toExternal(@NotNull String value) {
-      if ("\n".equals(value)) {
-        return "lf";
-      }
-      else if ("\r".equals(value)) {
-        return "cr";
-      }
-      else if ("\r\n".equals(value)) {
-        return "crlf";
-      }
-      LOG.error("Unexpected field value: " + value);
-      return "";
+      return switch (value) {
+        case "\n" -> "lf";
+        case "\r" -> "cr";
+        case "\r\n" -> "crlf";
+        default -> {
+          LOG.error("Unexpected field value: " + value);
+          yield "";
+        }
+      };
     }
 
     @Override

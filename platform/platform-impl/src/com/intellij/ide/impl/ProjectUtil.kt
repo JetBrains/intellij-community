@@ -608,7 +608,6 @@ object ProjectUtil {
       return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     val created = try {
       withContext(Dispatchers.IO) {
         !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)

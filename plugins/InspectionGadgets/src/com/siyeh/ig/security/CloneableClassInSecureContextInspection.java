@@ -86,10 +86,9 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiClass)) {
+      if (!(element instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)element;
       @NonNls final StringBuilder methodText = new StringBuilder();
       if (PsiUtil.isLanguageLevel5OrHigher(aClass) &&
           JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {

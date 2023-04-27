@@ -20,6 +20,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,12 +96,29 @@ public class XxHash3Test {
     checkPackage("com.intellij.idea", -635775336887217634L);
   }
 
+  @Test
+  public void checkInputStreamAccessor() throws IOException {
+    checkHashing("com/intellij/profiler/async/windows/WinAsyncProfilerLocator".getBytes(StandardCharsets.UTF_8));
+    checkHashing("test".getBytes(StandardCharsets.UTF_8));
+    checkHashing("".getBytes(StandardCharsets.UTF_8));
+    // Check hashing of array consists of one chunk
+    checkHashing(new byte[1042]);
+  }
+
   private static void checkPackage(String s, long expected) {
     assertThat(Xx3UnencodedString.hashUnencodedString(s.replace('.', '/'))).describedAs("Hash as string of: " + s).isEqualTo(expected);
   }
 
   private static void testUnencodedString(String s, long expected) {
     assertThat(Xx3UnencodedString.hashUnencodedString(s)).describedAs("Hash as string of: " + s).isEqualTo(expected);
+  }
+
+  private static void checkHashing(byte[] bytes) throws IOException {
+    long newHashValue;
+    try (InputStream inputStream = new ByteArrayInputStream(bytes)){
+      newHashValue = Xxh3.hash(inputStream, bytes.length);
+    }
+    assertThat(newHashValue).isEqualTo(Xxh3.hash(bytes));
   }
 
   @SuppressWarnings("SameParameterValue")

@@ -32,15 +32,13 @@ public class JspxIncludePathReferenceProvider extends PsiReferenceProvider imple
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-    if (element instanceof XmlAttributeValue) {
-      final XmlAttributeValue attributeValue = ((XmlAttributeValue)element);
+    if (element instanceof XmlAttributeValue attributeValue) {
 
       String valueString = attributeValue.getValue();
       if(valueString.indexOf('?') >= 0)
         return getReferencesByString(valueString.substring(0, valueString.indexOf('?')), attributeValue, 1);
       return getReferencesByString(valueString, attributeValue, 1);
-    } else if (element instanceof XmlTag) {
-      final XmlTag tag = ((XmlTag)element);
+    } else if (element instanceof XmlTag tag) {
 
       final XmlTagValue value = tag.getValue();
       final String text = value.getText();

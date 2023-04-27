@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStrea
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -45,10 +46,11 @@ final class PersistentFSConnector {
   private static final AtomicInteger INITIALIZATION_COUNTER = new AtomicInteger();
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
 
-  public static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes) {
+  public static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes,
+                                                        List<ConnectionInterceptor> interceptors) {
     ourOpenCloseLock.lock();
     try {
-      return init(cachesDir, version, useContentHashes);
+      return init(cachesDir, version, useContentHashes, interceptors);
     }
     finally {
       ourOpenCloseLock.unlock();
@@ -72,11 +74,12 @@ final class PersistentFSConnector {
 
   //=== internals:
 
-  private static @NotNull PersistentFSConnection init(@NotNull String cachesDir, int expectedVersion, boolean useContentHashes) {
+  private static @NotNull PersistentFSConnection init(@NotNull String cachesDir, int expectedVersion, boolean useContentHashes,
+                                                      List<ConnectionInterceptor> interceptors) {
     Exception exception = null;
     for (int i = 0; i < MAX_INITIALIZATION_ATTEMPTS; i++) {
       INITIALIZATION_COUNTER.incrementAndGet();
-      Pair<PersistentFSConnection, Exception> pair = tryInit(cachesDir, expectedVersion, useContentHashes);
+      Pair<PersistentFSConnection, Exception> pair = tryInit(cachesDir, expectedVersion, useContentHashes, interceptors);
       exception = pair.getSecond();
       if (exception == null) {
         return pair.getFirst();
@@ -87,7 +90,8 @@ final class PersistentFSConnector {
 
   private static @NotNull Pair<PersistentFSConnection, Exception> tryInit(@NotNull String cachesDir,
                                                                           int expectedVersion,
-                                                                          boolean useContentHashes) {
+                                                                          boolean useContentHashes,
+                                                                          List<ConnectionInterceptor> interceptors) {
     AbstractAttributesStorage attributes = null;
     RefCountingContentStorage contents = null;
     PersistentFSRecordsStorage records = null;
@@ -132,7 +136,7 @@ final class PersistentFSConnector {
 
       attributes = createAttributesStorage(attributesFile);
 
-      contents = new RefCountingContentStorage(contentsFile,
+      contents = new RefCountingContentStorageImpl(contentsFile,
                                                CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
                                                SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
                                                  "FSRecords Content Write Pool"),
@@ -147,7 +151,7 @@ final class PersistentFSConnector {
       SimpleStringPersistentEnumerator enumeratedAttributes = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
 
 
-      records = PersistentFSRecordsStorage.createStorage(recordsFile);
+      records = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
 
       final boolean initial = records.length() == 0;
 
@@ -182,7 +186,8 @@ final class PersistentFSConnector {
                                                     contentHashesEnumerator,
                                                     enumeratedAttributes,
                                                     freeRecords,
-                                                    markDirty), null);
+                                                    markDirty,
+                                                    interceptors), null);
     }
     catch (Exception e) { // IOException, IllegalArgumentException
       LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());

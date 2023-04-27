@@ -22,21 +22,17 @@ sealed interface Source {
 private val USER_HOME = Path.of(System.getProperty("user.home"))
 private val MAVEN_REPO = USER_HOME.resolve(".m2/repository")
 
-data class ZipSource(val file: Path,
-                     val excludes: List<Regex> = emptyList(),
+data class ZipSource(@JvmField val file: Path,
+                     @JvmField val excludes: List<Regex> = emptyList(),
                      override val filter: ((String) -> Boolean)? = null,
                      override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
   override fun compareTo(other: ZipSource) = file.compareTo(other.file)
 
   override fun toString(): String {
-    val shortPath = if (file.startsWith(MAVEN_REPO)) {
-      MAVEN_REPO.relativize(file).toString()
-    }
-    else if (file.startsWith(USER_HOME)) {
-      "~/" + USER_HOME.relativize(file)
-    }
-    else {
-      file.toString()
+    val shortPath = when {
+      file.startsWith(MAVEN_REPO) -> MAVEN_REPO.relativize(file).toString()
+      file.startsWith(USER_HOME) -> "~/" + USER_HOME.relativize(file)
+      else -> file.toString()
     }
     return "zip(file=$shortPath)"
   }
@@ -47,12 +43,7 @@ data class DirSource(@JvmField val dir: Path,
                      override val sizeConsumer: IntConsumer? = null,
                      @JvmField val prefix: String = "") : Source {
   override fun toString(): String {
-    val shortPath = if (dir.startsWith(USER_HOME)) {
-      "~/" + USER_HOME.relativize(dir)
-    }
-    else {
-      dir.toString()
-    }
+    val shortPath = if (dir.startsWith(USER_HOME)) "~/${USER_HOME.relativize(dir)}" else dir.toString()
     return "dir(dir=$shortPath, excludes=${excludes.size})"
   }
 }
@@ -67,9 +58,7 @@ data class InMemoryContentSource(@JvmField val relativePath: String,
 
     if (relativePath != other.relativePath) return false
     if (!data.contentEquals(other.data)) return false
-    if (sizeConsumer != other.sizeConsumer) return false
-
-    return true
+    return sizeConsumer == other.sizeConsumer
   }
 
   override fun hashCode(): Int {
@@ -240,6 +229,7 @@ private fun checkName(name: String,
                       excludes: List<Regex>,
                       includeManifest: Boolean,
                       requiresMavenFiles: Boolean): Boolean {
+  @Suppress("SpellCheckingInspection")
   return !ignoredNames.contains(name) &&
          excludes.none { it.matches(name) } &&
          !name.endsWith(".kotlin_metadata") &&
@@ -248,6 +238,35 @@ private fun checkName(name: String,
          !name.startsWith("META-INF/license/") &&
          !name.startsWith("META-INF/LICENSE-") &&
          !name.startsWith("native-image/") &&
+
+         //  Class 'jakarta.json.JsonValue' not found while looking for field 'jakarta.json.JsonValue NULL'
+         //!name.startsWith("com/jayway/jsonpath/spi/json/JakartaJsonProvider") &&
+         //!name.startsWith("com/jayway/jsonpath/spi/json/JsonOrgJsonProvider") &&
+         //!name.startsWith("com/jayway/jsonpath/spi/json/TapestryJsonProvider") &&
+         //
+         //!name.startsWith("com/jayway/jsonpath/spi/mapper/JakartaMappingProvider") &&
+         //!name.startsWith("com/jayway/jsonpath/spi/mapper/JsonOrgMappingProvider") &&
+         //!name.startsWith("com/jayway/jsonpath/spi/mapper/TapestryMappingProvider") &&
+
+         //!name.startsWith("io/opentelemetry/exporter/internal/grpc/") &&
+         //!name.startsWith("io/opentelemetry/exporter/internal/okhttp/") &&
+         //// com.thaiopensource.datatype.xsd.regex.xerces2 is used instead
+         //!name.startsWith("com/thaiopensource/datatype/xsd/regex/xerces/RegexEngineImpl") &&
+         //!name.startsWith("com/thaiopensource/relaxng/util/JingTask") &&
+         //!name.startsWith("com/thaiopensource/validate/schematron") &&
+         //!name.startsWith("com/thoughtworks/xstream/core/util/ISO8601JodaTimeConverter") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/BEAStaxDriver") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/AbstractXppDomDriver") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/Xom") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/Dom4") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/JDom2") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/KXml2") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/Wstx") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/Xpp3") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/xppdom") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/XppDom") &&
+         //!name.startsWith("com/michaelbaranov/microba/jgrpah/birdview/Birdview") &&
+
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&
          (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&

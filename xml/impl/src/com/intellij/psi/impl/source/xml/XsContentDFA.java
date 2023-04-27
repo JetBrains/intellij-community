@@ -90,8 +90,7 @@ class XsContentDFA extends XmlContentDFA {
     final List vector = myContentModel.whatCanGoHere(myState);
     ArrayList<XmlElementDescriptor> list = new ArrayList<>();
     for (Object o : vector) {
-      if (o instanceof XSElementDecl) {
-        final XSElementDecl elementDecl = (XSElementDecl)o;
+      if (o instanceof XSElementDecl elementDecl) {
         XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors,
                                                              elementDescriptor -> elementDecl.getName().equals(elementDescriptor.getName()));
         ContainerUtil.addIfNotNull(list, descriptor);

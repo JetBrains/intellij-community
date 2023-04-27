@@ -6,7 +6,7 @@ import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 
-abstract class DependencyInspectionTestBase : UastInspectionTestBase() {
+abstract class DependencyInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = DependencyInspection()
 
   protected val javaFooFile = "JavaFoo.java"

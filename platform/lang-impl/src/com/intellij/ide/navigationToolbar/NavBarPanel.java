@@ -343,8 +343,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   static Object expandDirsWithJustOneSubdir(Object target) {
     if (target instanceof PsiElement && !((PsiElement)target).isValid()) return target;
-    if (target instanceof PsiDirectory) {
-      PsiDirectory directory = (PsiDirectory)target;
+    if (target instanceof PsiDirectory directory) {
       for (VirtualFile file = directory.getVirtualFile(), next; ; file = next) {
         VirtualFile[] children = file.getChildren();
         VirtualFile child = children.length == 1 ? children[0] : null;
@@ -664,8 +663,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   protected void doubleClick(final Object object) {
     Object target = ObjectUtils.chooseNotNull(getNavigatable(object), object);
-    if (target instanceof Navigatable) {
-      Navigatable navigatable = (Navigatable)target;
+    if (target instanceof Navigatable navigatable) {
       if (navigatable.canNavigate()) {
         navigatable.navigate(true);
       }
@@ -758,8 +756,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   public static boolean isExpandable(Object obj) {
-    if (!(obj instanceof PsiElement)) return true;
-    PsiElement psiElement = (PsiElement)obj;
+    if (!(obj instanceof PsiElement psiElement)) return true;
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       Boolean expand = modelExtension.shouldExpandOnClick(psiElement);
       if (expand != null) return expand;

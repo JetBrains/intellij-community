@@ -5,11 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
-import com.intellij.openapi.externalSystem.util.*
-import com.intellij.openapi.util.io.*
+import com.intellij.openapi.externalSystem.util.runReadAction
+import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
+import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -18,9 +19,11 @@ import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.testFramework.utils.vfs.*
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.XmlSerializer
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
+import org.jetbrains.plugins.gradle.testFramework.util.refreshAndWait
 import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import java.nio.file.Path
 import java.util.*
@@ -69,7 +72,9 @@ internal class FileTestFixtureImpl(
     dumpFixtureState()
 
     withSuppressedErrors {
-      configureFixtureCaches(configuration)
+      runBlocking {
+        configureFixtureCaches(configuration)
+      }
     }
 
     isInitialized = true
@@ -147,7 +152,7 @@ internal class FileTestFixtureImpl(
     return Configuration().apply(configure)
   }
 
-  private fun configureFixtureCaches(configuration: Configuration) {
+  private suspend fun configureFixtureCaches(configuration: Configuration) {
     runCatching {
       if (!configuration.areContentsEqual(root)) {
         invalidateFixtureCaches()
@@ -168,7 +173,7 @@ internal class FileTestFixtureImpl(
   }
 
   private fun getErrors(): List<Throwable> {
-    root.refreshAndWait()
+    runBlocking { root.refreshAndWait() }
     return errors
   }
 

@@ -50,8 +50,7 @@ public class DictCreationQuickFix implements LocalQuickFix {
     final PyExpression assignedValue = myStatement.getAssignedValue();
     if (assignedValue instanceof PyDictLiteralExpression) {
       for (PsiElement expression : assignedValue.getChildren()) {
-        if (expression instanceof PyKeyValueExpression) {
-          PyKeyValueExpression kvExpr = (PyKeyValueExpression)expression;
+        if (expression instanceof PyKeyValueExpression kvExpr) {
           final PyExpression value = kvExpr.getValue();
           if (value != null) {
             statementsMap.put(kvExpr.getKey().getText(), value.getText());
@@ -63,8 +62,7 @@ public class DictCreationQuickFix implements LocalQuickFix {
       }
 
       PyStatement statement = PsiTreeUtil.getNextSiblingOfType(myStatement, PyStatement.class);
-      while (statement instanceof PyAssignmentStatement) {
-        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)statement;
+      while (statement instanceof PyAssignmentStatement assignmentStatement) {
         final PyExpression target = myStatement.getTargets()[0];
         final String targetName = target.getName();
         if (targetName != null) {

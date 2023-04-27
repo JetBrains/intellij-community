@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.getArguments
+import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.util.projectStructure.module
@@ -29,15 +30,27 @@ import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptIn
 class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection() {
     override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) {
         when (type) {
-            RANGE_TO, RANGE_UNTIL, DOWN_TO -> return
-            UNTIL -> Unit
+            RANGE_TO, DOWN_TO -> Unit
+            RANGE_UNTIL -> range.containingFile?.virtualFile?.let { file ->
+                KotlinLanguageFeaturesFUSCollector.RangeUntil.logNewRangeUntilOccurence(
+                    file,
+                    range.languageVersionSettings.languageVersion.toString()
+                )
+            }
+            UNTIL -> range.containingFile?.virtualFile?.let { file ->
+                KotlinLanguageFeaturesFUSCollector.RangeUntil.logOldUntilOccurence(
+                    file,
+                    range.languageVersionSettings.languageVersion.toString()
+                )
+            }
         }
-        if (!range.isPossibleToUseRangeUntil(context)) return
-        holder.registerProblem(
-            range,
-            KotlinBundle.message("until.can.be.replaced.with.rangeUntil.operator"),
-            ReplaceFix()
-        )
+        if (type == UNTIL && range.isPossibleToUseRangeUntil(context)) {
+            holder.registerProblem(
+                range,
+                KotlinBundle.message("until.can.be.replaced.with.rangeUntil.operator"),
+                ReplaceFix()
+            )
+        }
     }
 
     private class ReplaceFix : LocalQuickFix {
@@ -47,7 +60,13 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection() {
             val element = descriptor.psiElement as? KtExpression ?: return
             val (left, right) = element.getArguments() ?: return
             if (left == null || right == null) return
-            element.replace(KtPsiFactory(project).createExpressionByPattern("$0..<$1", left, right))
+            val replaced = element.replace(KtPsiFactory(project).createExpressionByPattern("$0..<$1", left, right))
+            replaced.containingFile?.virtualFile?.let { file ->
+                KotlinLanguageFeaturesFUSCollector.RangeUntil.logUntilToRangeUntilQuickFixIsApplied(
+                    file,
+                    element.languageVersionSettings.languageVersion.toString()
+                )
+            }
         }
     }
 

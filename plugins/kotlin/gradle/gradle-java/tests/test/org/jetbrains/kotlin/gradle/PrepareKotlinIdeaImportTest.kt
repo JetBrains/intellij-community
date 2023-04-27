@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
-import org.jetbrains.kotlin.gradle.newTests.testServices.GradleProjectLinkingService.linkGradleProject
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.GradleProjectsLinker
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleTooling.PrepareKotlinIdeImportTaskModel
@@ -121,7 +121,7 @@ class PrepareKotlinIdeaImportTest : MultiplePluginVersionGradleImportingTestCase
         /* Only run against a single configuration */
         assumeTrue(kotlinPluginVersion == KotlinGradlePluginVersions.latest)
         configureByFiles()
-        linkGradleProject("consumerBuild", myProjectRoot.toNioPath(), myProject)
+        GradleProjectsLinker.linkGradleProject("consumerBuild", myProjectRoot.toNioPath().toFile(), myProject)
         val consumerStateFile = myProjectRoot.toNioPath().resolve("consumerBuild/consumerA/prepareKotlinIdeaImport.executed").toFile()
         if(!consumerStateFile.exists()) fail("consumerA: prepareKotlinIdeaImport not executed")
         if(consumerStateFile.readText() != "OK") fail("Unexpected content in consumerStateFile: ${consumerStateFile.readText()}")

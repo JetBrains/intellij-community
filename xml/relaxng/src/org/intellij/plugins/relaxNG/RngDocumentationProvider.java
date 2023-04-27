@@ -51,12 +51,10 @@ final class RngDocumentationProvider implements DocumentationProvider {
       LOG.warn("Invalid context element passed to generateDoc()", new Throwable("<stack trace>"));
       return null;
     }
-    if (c instanceof XmlTag) {
-      final XmlTag xmlElement = (XmlTag)c;
+    if (c instanceof XmlTag xmlElement) {
       final XmlElementDescriptor descriptor = xmlElement.getDescriptor();
-      if (descriptor instanceof CompositeDescriptor) {
+      if (descriptor instanceof CompositeDescriptor d) {
         final StringBuilder sb = new StringBuilder();
-        final CompositeDescriptor d = (CompositeDescriptor)descriptor;
         final DElementPattern[] patterns = d.getElementPatterns();
         final Set<PsiElement> elements = new ReferenceOpenHashSet<>();
         for (DElementPattern pattern : patterns) {
@@ -75,8 +73,7 @@ final class RngDocumentationProvider implements DocumentationProvider {
           return makeDocumentation(getDocumentationFromTag((XmlTag)declaration, xmlElement.getLocalName(), "Element"));
         }
       }
-    } else if (c instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)c;
+    } else if (c instanceof XmlAttribute attribute) {
       final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
       if (descriptor instanceof RngXmlAttributeDescriptor) {
         final StringBuilder sb = new StringBuilder();

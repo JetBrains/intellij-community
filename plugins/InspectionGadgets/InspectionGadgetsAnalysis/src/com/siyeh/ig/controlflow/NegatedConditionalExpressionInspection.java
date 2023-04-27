@@ -46,15 +46,13 @@ public class NegatedConditionalExpressionInspection extends BaseInspection imple
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiPrefixExpression)) {
+      if (!(element instanceof PsiPrefixExpression prefixExpression)) {
         return;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
-      if (!(operand instanceof PsiConditionalExpression)) {
+      if (!(operand instanceof PsiConditionalExpression conditionalExpression)) {
         return;
       }
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)operand;
       final StringBuilder newExpression = new StringBuilder();
       final PsiExpression condition = conditionalExpression.getCondition();
       CommentTracker tracker = new CommentTracker();

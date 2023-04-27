@@ -274,10 +274,9 @@ public class ChoicesListModel extends AbstractListModel
         Object o1 = w1.o;
         Object o2 = w2.o;
         if (o1 instanceof CustomChoice) {
-            if (o2 instanceof CustomChoice) {
+            if (o2 instanceof CustomChoice c2) {
                 CustomChoice c1 = (CustomChoice) o1;
-                CustomChoice c2 = (CustomChoice) o2;
-                int ret = c1.getPrecedence() - c2.getPrecedence();
+              int ret = c1.getPrecedence() - c2.getPrecedence();
                 if (ret == 0) {
                     // in this case, the comparator is string comparator
                     ret = strComparator.compare(w1.str, w2.str);

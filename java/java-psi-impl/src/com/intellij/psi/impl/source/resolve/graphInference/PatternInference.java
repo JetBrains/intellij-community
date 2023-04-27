@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.JavaVarTypeUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.PatternCandidateInfo;
@@ -13,6 +14,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility class for pattern inference
@@ -31,9 +35,7 @@ public class PatternInference {
                                                             @Nullable PsiType type) {
     // JLS 18.5.5
     if (type == null) return resolveResult;
-    if (type instanceof PsiCapturedWildcardType) {
-      type = ((PsiCapturedWildcardType)type).getUpperBound();
-    }
+    type = JavaVarTypeUtil.getUpwardProjection(type);
     Project project = recordClass.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiClassType recordRawType = factory.createType(recordClass);
@@ -54,8 +56,37 @@ public class PatternInference {
                                         PsiElementFactory factory,
                                         InferenceSession session) {
     if (type instanceof PsiClassType) {
-      PsiClass gClass = ((PsiClassType)type).resolve();
+      PsiClassType classType = (PsiClassType)type;
+      PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+      PsiClass gClass = result.getElement();
       if (gClass == null) return false;
+      List<PsiTypeParameter> wildcardTypeParams = new ArrayList<>();
+      List<PsiWildcardType> wildcardTypes = new ArrayList<>();
+      PsiType[] arguments = classType.getParameters();
+      PsiTypeParameter[] parameters = gClass.getTypeParameters();
+      for (int i = 0; i < arguments.length; i++) {
+        PsiType argument = arguments[i];
+        if (argument instanceof PsiWildcardType && i < parameters.length) {
+          wildcardTypeParams.add(parameters[i]);
+          wildcardTypes.add((PsiWildcardType)argument);
+        }
+      }
+      if (!wildcardTypeParams.isEmpty()) {
+        InferenceVariable[] variables =
+          session.initOrReuseVariables(session.getContext(), wildcardTypeParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
+        PsiSubstitutor newSubstitutor = result.getSubstitutor();
+        for (int i = 0; i < variables.length; i++) {
+          PsiWildcardType wildcardType = wildcardTypes.get(i);
+          if (wildcardType.isExtends()) {
+            variables[i].addBound(wildcardType.getExtendsBound(), InferenceBound.UPPER, null);
+          }
+          else if (wildcardType.isSuper()) {
+            variables[i].addBound(wildcardType.getExtendsBound(), InferenceBound.LOWER, null);
+          }
+          newSubstitutor = newSubstitutor.put(wildcardTypeParams.get(i), factory.createType(variables[i]));
+        }
+        type = factory.createType(gClass, newSubstitutor);
+      }
       if (gClass instanceof PsiTypeParameter) {
         for (PsiClassType upperBound : gClass.getExtendsListTypes()) {
           if (!addConstraints(recordClass, upperBound, factory, session)) return false;

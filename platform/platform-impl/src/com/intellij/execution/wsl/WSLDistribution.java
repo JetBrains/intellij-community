@@ -509,6 +509,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     return myDescriptor.getId();
   }
 
+  @Override
   public @NotNull @NlsSafe String getMsId() {
     return myDescriptor.getMsId();
   }

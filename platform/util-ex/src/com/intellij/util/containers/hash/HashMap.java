@@ -2,7 +2,6 @@
 package com.intellij.util.containers.hash;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -10,8 +9,7 @@ import java.util.*;
 /**
  * @deprecated Use {@link java.util.HashMap}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval
+@Deprecated(forRemoval = true)
 public class HashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private Entry<K, V>[] table;
   private int capacity;

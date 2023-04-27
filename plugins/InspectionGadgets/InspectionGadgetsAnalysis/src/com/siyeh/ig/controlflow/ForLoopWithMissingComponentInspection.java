@@ -111,17 +111,15 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
 
     private boolean isCollectionLoopStatement(PsiForStatement forStatement) {
       final PsiStatement initialization = forStatement.getInitialization();
-      if (!(initialization instanceof PsiDeclarationStatement)) {
+      if (!(initialization instanceof PsiDeclarationStatement declaration)) {
         return false;
       }
-      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)initialization;
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       final PsiExpression condition = forStatement.getCondition();
       for (PsiElement declaredElement : declaredElements) {
-        if (!(declaredElement instanceof PsiVariable)) {
+        if (!(declaredElement instanceof PsiVariable variable)) {
           continue;
         }
-        final PsiVariable variable = (PsiVariable)declaredElement;
         if (TypeUtils.variableHasTypeOrSubtype(variable, "java.util.ListIterator")) {
           if (isHasNext(condition, variable) || isHasPrevious(condition, variable)) {
             return true;
@@ -154,8 +152,7 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
     }
 
     private boolean isCallToBooleanZeroArgumentMethod(@NonNls String methodName, PsiExpression expression, PsiVariable calledOn) {
-      if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         for (PsiExpression operand : polyadicExpression.getOperands()) {
           if (isCallToBooleanZeroArgumentMethod(methodName, operand, calledOn)) {
             return true;
@@ -163,19 +160,17 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
         }
         return false;
       }
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression call)) {
         return false;
       }
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       if (!MethodCallUtils.isCallToMethod(call, null, PsiTypes.booleanType(), methodName)) {
         return false;
       }
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiReferenceExpression)) {
+      if (!(qualifier instanceof PsiReferenceExpression referenceExpression)) {
         return true;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
       final PsiElement target = referenceExpression.resolve();
       return calledOn.equals(target);
     }

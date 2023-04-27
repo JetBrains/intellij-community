@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.BuildNumber
@@ -79,7 +80,7 @@ fun findLanguageByID(id: String): Language? {
 fun createBalloon(@Nls text: String): Balloon = createBalloon(text, 3000)
 fun createBalloon(@Nls text: String, delay: Long): Balloon =
   JBPopupFactory.getInstance()
-    .createHtmlTextBalloonBuilder(text, null, UIUtil.getToolTipBackground(), null)
+    .createHtmlTextBalloonBuilder(text, MessageType.WARNING, null)
     .setHideOnClickOutside(true)
     .setCloseButtonEnabled(true)
     .setHideOnKeyOutside(true)
@@ -139,7 +140,7 @@ val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)
 
 val enableLessonsAndPromoters: Boolean
-  get() = !ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.new.ui", false)
+  get() = ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.old.ui", false)
 
 fun invokeActionForFocusContext(action: AnAction) {
   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->

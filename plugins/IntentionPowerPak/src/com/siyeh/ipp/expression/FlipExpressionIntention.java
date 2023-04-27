@@ -64,10 +64,9 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
   public void processIntention(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiElement parent = token.getParent();
-    if (!(parent instanceof PsiPolyadicExpression)) {
+    if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
       return;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final PsiExpression[] operands = polyadicExpression.getOperands();
     final StringBuilder newExpression = new StringBuilder();
     CommentTracker commentTracker = new CommentTracker();

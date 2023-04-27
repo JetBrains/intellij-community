@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -116,6 +116,12 @@ public interface ExtensionPoint extends DomElement {
   @SuppressWarnings("unused")
   @Nullable
   String getExtensionPointClassName();
+
+  /**
+   * @return the EP DOM element that defines the instantiated extension class in implemented extensions.
+   * Determining the element follows the algorithm described in {@link #getExtensionPointClass()}.
+   */
+  DomElement getExtensionPointClassNameElement();
 
   /**
    * Returns EP name prefix (Plugin ID).

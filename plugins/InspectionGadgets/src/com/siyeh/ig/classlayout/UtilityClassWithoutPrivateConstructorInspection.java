@@ -132,10 +132,9 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
-      if (!(parent instanceof PsiClass)) {
+      if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)parent;
       if (isOnTheFly() && hasImplicitConstructorUsage(aClass)) {
         SwingUtilities.invokeLater(() -> Messages.showInfoMessage(
           aClass.getProject(),
@@ -165,10 +164,9 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
-      if (!(parent instanceof PsiClass)) {
+      if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)parent;
       final PsiMethod[] constructors = aClass.getConstructors();
       for (final PsiMethod constructor : constructors) {
         final PsiParameterList parameterList = constructor.getParameterList();

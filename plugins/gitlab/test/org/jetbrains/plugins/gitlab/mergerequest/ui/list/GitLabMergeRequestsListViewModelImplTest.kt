@@ -53,7 +53,7 @@ internal class GitLabMergeRequestsListViewModelImplTest {
   }
 
   @Test
-  fun `reset while loading`() = runTest {
+  fun `refresh while loading`() = runTest {
     val cs = childScope()
     val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
                                                   account = mock(),
@@ -68,18 +68,19 @@ internal class GitLabMergeRequestsListViewModelImplTest {
       Assertions.assertFalse(loadingState.value)
       requestMore()
       Assertions.assertTrue(loadingState.value)
-      reset()
+      refresh()
+      Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.Clear::class.java, updates.first())
       advanceTimeBy(3000)
       Assertions.assertFalse(loadingState.value)
       Assertions.assertTrue(canLoadMoreState.value)
       Assertions.assertNull(errorState.value)
-      Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.Clear::class.java, updates.first())
+      Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.NewBatch::class.java, updates.first())
     }
     cs.cancel()
   }
 
   @Test
-  fun `reset after loading`() = runTest {
+  fun `refresh after loading`() = runTest {
     val cs = childScope()
     val vm = GitLabMergeRequestsListViewModelImpl(cs, filterVmMock(), repository = "",
                                                   account = mock(),
@@ -97,10 +98,15 @@ internal class GitLabMergeRequestsListViewModelImplTest {
       advanceTimeBy(3000)
       Assertions.assertFalse(loadingState.value)
       Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.NewBatch::class.java, updates.first())
-      reset()
-      Assertions.assertTrue(canLoadMoreState.value)
+
+      refresh()
+      Assertions.assertTrue(loadingState.value)
       Assertions.assertNull(errorState.value)
       Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.Clear::class.java, updates.first())
+      advanceTimeBy(3000)
+      Assertions.assertInstanceOf(GitLabMergeRequestsListViewModel.ListDataUpdate.NewBatch::class.java, updates.first())
+      Assertions.assertFalse(loadingState.value)
+      Assertions.assertTrue(canLoadMoreState.value)
     }
     cs.cancel()
   }

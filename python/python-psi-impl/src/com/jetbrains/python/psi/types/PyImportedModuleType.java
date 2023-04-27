@@ -87,8 +87,7 @@ public class PyImportedModuleType implements PyType {
 
         result.addAll(moduleType.getCompletionVariantsAsLookupElements(location, context, false, false, typeEvalContext));
       }
-      else if (resolveResult instanceof PsiDirectory) {
-        final PsiDirectory dir = (PsiDirectory)resolveResult;
+      else if (resolveResult instanceof PsiDirectory dir) {
         if (PyUtil.isPackage(dir, location)) {
           if (ResolveImportUtil.getPointInImport(location) != PointInImport.NONE) {
             result.addAll(PyModuleType.getSubModuleVariants(dir, location, null));

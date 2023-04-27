@@ -63,6 +63,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
    */
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
 
+  public static final Key<HelpTooltip> CUSTOM_HELP_TOOLTIP = Key.create("CUSTOM_HELP_TOOLTIP");
+
   private JBDimension myMinimumButtonSize;
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private PropertyChangeListener myPresentationListener;
@@ -420,8 +422,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
-      if (Strings.isNotEmpty(text) || Strings.isNotEmpty(description)) {
-        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
+      HelpTooltip ht = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
+      if ((Strings.isNotEmpty(text) || Strings.isNotEmpty(description)) && ht == null) {
+        ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
         if (myAction instanceof TooltipLinkProvider) {
           TooltipLinkProvider.TooltipLink link = ((TooltipLinkProvider)myAction).getTooltipLink(this);
           if (link != null) {
@@ -432,6 +435,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         if (!Objects.equals(text, description) && ((id != null && WHITE_LIST.contains(id)) || myAction instanceof TooltipDescriptionProvider)) {
           ht.setDescription(description);
         }
+      }
+      if (ht != null) {
         ht.installOn(this);
       }
     }
@@ -586,6 +591,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     else if (HIDE_DROPDOWN_ICON.toString().equals(propertyName)) {
       repaint();
+    }
+    else if (CUSTOM_HELP_TOOLTIP.toString().equals(propertyName)) {
+      updateToolTipText();
     }
   }
 

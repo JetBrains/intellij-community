@@ -938,10 +938,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     });
     viewSelectionChanged();
+    setupToolwindowActions(toolWindow);
 
     Object multicaster = EditorFactory.getInstance().getEventMulticaster();
-    if (multicaster instanceof EditorEventMulticasterEx) {
-      EditorEventMulticasterEx ex = (EditorEventMulticasterEx)multicaster;
+    if (multicaster instanceof EditorEventMulticasterEx ex) {
       ex.addFocusChangeListener(new FocusChangeListener() {
         @Override
         public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
@@ -969,6 +969,20 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           }
         }
       }, myProject);
+    }
+  }
+
+  private void setupToolwindowActions(@NotNull ToolWindow toolWindow) {
+    List<AnAction> titleActions = new ArrayList<>();
+    createTitleActions(titleActions);
+    if (!titleActions.isEmpty()) {
+      toolWindow.setTitleActions(titleActions);
+    }
+
+    List<AnAction> tabActions = new ArrayList<>();
+    createTabActions(tabActions);
+    if (!tabActions.isEmpty()) {
+      ((ToolWindowEx)toolWindow).setTabActions(tabActions.toArray(AnAction[]::new));
     }
   }
 
@@ -1062,24 +1076,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     pane.addToolbarActions(myActionGroup);
-
-    List<AnAction> titleActions = new ArrayList<>();
-    createTitleActions(titleActions);
-    if (!titleActions.isEmpty()) {
-      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-      if (window != null) {
-        window.setTitleActions(titleActions);
-      }
-    }
-
-    List<AnAction> tabActions = new ArrayList<>();
-    createTabActions(tabActions);
-    if (!tabActions.isEmpty()) {
-      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-      if (window instanceof ToolWindowEx) {
-        ((ToolWindowEx)window).setTabActions(tabActions.toArray(AnAction[]::new));
-      }
-    }
   }
 
   protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
@@ -1214,8 +1210,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     ProjectViewNode<?> descriptor = TreeUtil.getLastUserObject(ProjectViewNode.class, path);
     if (descriptor != null) {
       Object element = descriptor.getValue();
-      if (element instanceof PsiElement) {
-        PsiElement psiElement = (PsiElement)element;
+      if (element instanceof PsiElement psiElement) {
         if (!psiElement.isValid()) return null;
         return psiElement;
       }
@@ -1742,8 +1737,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Nullable
     private SimpleSelectInContext getSelectInContext(@Nullable FileEditor fileEditor) {
-      if (fileEditor instanceof TextEditor) {
-        TextEditor textEditor = (TextEditor)fileEditor;
+      if (fileEditor instanceof TextEditor textEditor) {
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(textEditor.getEditor().getDocument());
         return psiFile == null ? null : new EditorSelectInContext(psiFile, textEditor.getEditor());
       }

@@ -7,7 +7,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 
 abstract class MigrationTestBase : LightJavaCodeInsightFixtureTestCase() {
-  fun migrationTest(lang: ULanguage, before: String, after: String, vararg migrations: MigrationMapEntry) {
+  fun migrationTest(lang: JvmLanguage, before: String, after: String, vararg migrations: MigrationMapEntry) {
     val migrationMap = MigrationMap(migrations)
     myFixture.configureByText("UnderTest${lang.ext}", before)
     MigrationProcessor(project, migrationMap).run()

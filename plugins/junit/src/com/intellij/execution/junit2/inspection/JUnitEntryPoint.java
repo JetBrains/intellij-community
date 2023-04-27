@@ -61,8 +61,7 @@ public final class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
         return true;
       }
     }
-    else if (psiElement instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)psiElement;
+    else if (psiElement instanceof PsiMethod method) {
       if (method.isConstructor() && method.getParameterList().isEmpty()) {
         final PsiClass aClass = method.getContainingClass();
         return aClass != null && JUnitUtil.isTestClass(aClass);

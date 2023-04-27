@@ -59,11 +59,9 @@ public class ExpressionMayBeFactorizedInspection extends BaseInspection {
       }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
-      if (!(lhs instanceof PsiBinaryExpression) || !(rhs instanceof PsiBinaryExpression)) {
+      if (!(lhs instanceof PsiBinaryExpression lBinaryExpression) || !(rhs instanceof PsiBinaryExpression rBinaryExpression)) {
         return;
       }
-      final PsiBinaryExpression lBinaryExpression = (PsiBinaryExpression)lhs;
-      final PsiBinaryExpression rBinaryExpression = (PsiBinaryExpression)rhs;
       final IElementType lTokenType = lBinaryExpression.getOperationTokenType();
       final IElementType rTokenType = rBinaryExpression.getOperationTokenType();
       if (!innerTokens.contains(lTokenType)

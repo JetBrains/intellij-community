@@ -9,7 +9,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ConstructionUtils;
@@ -30,13 +29,12 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 public final class HardcodedContracts {
-  private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = ContainerUtil.immutableList(
+  private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = List.of(
     singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
                             fail()),
     singleConditionContract(ContractValue.argument(2), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
                             fail()),
-    singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail())
-  );
+    singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail()));
 
   private static final CallMatcher QUEUE_POLL = anyOf(
     instanceCall(JAVA_UTIL_QUEUE, "poll").parameterCount(0),

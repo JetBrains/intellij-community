@@ -128,6 +128,9 @@ fun MutableEntityStorage.addLibraryPropertiesEntity(library: LibraryEntity,
   }
 }
 
+/**
+ * Will add an SDK to the project configuration as soon as IDEA-306969, currently these entities are not synchronized with the project model. 
+ */
 fun MutableEntityStorage.addSdkEntity(library: LibraryEntity,
                                       homeUrl: VirtualFileUrl, source: EntitySource): SdkEntity {
   val entity = SdkEntity(homeUrl, source) {

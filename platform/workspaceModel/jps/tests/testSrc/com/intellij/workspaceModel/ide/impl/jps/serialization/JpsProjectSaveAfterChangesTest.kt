@@ -1,12 +1,12 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -80,7 +80,9 @@ class JpsProjectSaveAfterChangesTest {
   @Test
   fun `add library and check vfu index not empty`() {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, _, _, configLocation ->
-      val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"), LibraryRootTypeId.COMPILED)
+      val root = LibraryRoot(
+        virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
+        LibraryRootTypeId.COMPILED)
       val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
       builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
       builder.entities(LibraryEntity::class.java).forEach { libraryEntity ->
@@ -98,7 +100,7 @@ class JpsProjectSaveAfterChangesTest {
     checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule", unloadedModuleNames) { 
       mainBuilder, _, unloadedEntitiesBuilder, configLocation ->
       val builder = if ("newModule" in unloadedModuleNames) unloadedEntitiesBuilder else mainBuilder
-      val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
+      val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
       val dependencies = listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
       val module = builder.addModuleEntity("newModule", dependencies, source)
       builder.modifyEntity(module) {

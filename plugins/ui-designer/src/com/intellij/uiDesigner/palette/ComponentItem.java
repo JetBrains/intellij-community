@@ -200,8 +200,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     // [vova] It's safe to cast to ImageIcon here because all icons loaded by IconLoader
     // are ImageIcon(s).
     final Icon icon = getIcon();
-    if (icon instanceof ImageIcon) {
-      final ImageIcon imageIcon = (ImageIcon)icon;
+    if (icon instanceof ImageIcon imageIcon) {
       mySmallIcon = new MySmallIcon(imageIcon.getImage());
     }
     else {
@@ -297,9 +296,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof ComponentItem)) return false;
-
-    final ComponentItem componentItem = (ComponentItem)o;
+    if (!(o instanceof ComponentItem componentItem)) return false;
 
     if (myClassName != null ? !myClassName.equals(componentItem.myClassName) : componentItem.myClassName != null) return false;
     if (myDefaultConstraints != null

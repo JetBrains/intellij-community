@@ -2,19 +2,16 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
+import java.net.URI
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.exists
 
 @ApiStatus.Internal
 object BuildDependenciesJps {
   private fun getSystemIndependentPath(path: Path): String = path.toString().replace("\\", "/").removeSuffix("/")
-
-  private fun getMavenRepositoryMacro(): String {
-    val m2 = Paths.get(System.getProperty("user.home"), ".m2", "repository")
-    return getSystemIndependentPath(m2)
-  }
 
   @JvmStatic
   fun getProjectModule(projectHome: Path, moduleName: String): Path {
@@ -35,7 +32,7 @@ object BuildDependenciesJps {
   }
 
   @JvmStatic
-  fun getModuleLibraryRoots(iml: Path, libraryName: String): List<Path> = try {
+  fun getModuleLibraryRoots(iml: Path, libraryName: String, mavenRepositoryUrl: String, communityRoot: BuildDependenciesCommunityRoot): List<Path> = try {
     val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
     val rootManager = BuildDependenciesUtil.getComponentElement(root, "NewModuleRootManager")
     val library = BuildDependenciesUtil.getChildElements(rootManager, "orderEntry")
@@ -49,18 +46,11 @@ object BuildDependenciesJps {
       .map { it
         .removePrefix("jar:/")
         .trim('!', '/')
-        .replace("\$MAVEN_REPOSITORY\$", getMavenRepositoryMacro()) }
-      .map { Path.of(it) }
+        .replace("\$MAVEN_REPOSITORY\$", mavenRepositoryUrl.trimEnd('/')) }
+      .map { BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(it)) }
 
     if (roots.isEmpty()) {
       error("No library roots for library '$libraryName'")
-    }
-
-    for (rootPath in roots) {
-      if (!rootPath.exists()) {
-        error("Library root from '$iml' was not found on disk: ${rootPath}\n" +
-              "IDEA downloads all maven library on opening the project. Probably reopening the project will help")
-      }
     }
 
     roots
@@ -70,8 +60,8 @@ object BuildDependenciesJps {
   }
 
   @JvmStatic
-  fun getModuleLibrarySingleRoot(iml: Path, libraryName: String): Path {
-    val roots = getModuleLibraryRoots(iml, libraryName)
+  fun getModuleLibrarySingleRoot(iml: Path, libraryName: String, mavenRepositoryUrl: String, communityRoot: BuildDependenciesCommunityRoot): Path {
+    val roots = getModuleLibraryRoots(iml, libraryName, mavenRepositoryUrl, communityRoot)
     if (roots.size != 1) {
       error("Expected one and only one library '$libraryName' root in '$iml', but got ${roots.size}: ${roots.joinToString()}")
     }

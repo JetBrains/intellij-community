@@ -50,8 +50,7 @@ import java.util.*;
 public final class GroovyMarkerTypes {
   static final MarkerType OVERRIDING_PROPERTY_TYPE = new MarkerType("OVERRIDING_PROPERTY_TYPE", psiElement -> {
     final PsiElement parent = psiElement.getParent();
-    if (!(parent instanceof GrField)) return null;
-    final GrField field = (GrField)parent;
+    if (!(parent instanceof GrField field)) return null;
 
     final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors(field);
     StringBuilder builder = new StringBuilder();
@@ -85,8 +84,7 @@ public final class GroovyMarkerTypes {
     @Override
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
-      if (!(parent instanceof GrField)) return;
-      final GrField field = (GrField)parent;
+      if (!(parent instanceof GrField field)) return;
       final List<GrAccessorMethod> accessors = GroovyPropertyUtils.getFieldAccessors(field);
       final ArrayList<PsiMethod> superMethods = new ArrayList<>();
       for (GrAccessorMethod method : accessors) {
@@ -128,15 +126,13 @@ public final class GroovyMarkerTypes {
     @Override
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
-      if (!(parent instanceof GrField)) return;
+      if (!(parent instanceof GrField field)) return;
       if (DumbService.isDumb(element.getProject())) {
         DumbService.getInstance(element.getProject()).showDumbModeNotification(
           GroovyBundle.message("popup.content.navigation.to.overriding.classes.unavailable")
         );
         return;
       }
-
-      final GrField field = (GrField)parent;
 
 
       Set<PsiMethod> result = new HashSet<>();
@@ -162,8 +158,7 @@ public final class GroovyMarkerTypes {
   public static final MarkerType GR_OVERRIDING_METHOD = new MarkerType("GR_OVERRIDING_METHOD",
                                                                        (NullableFunction<PsiElement, String>)element -> {
                                                                          PsiElement parent = element.getParent();
-                                                                         if (!(parent instanceof GrMethod)) return null;
-                                                                         GrMethod method = (GrMethod)parent;
+                                                                         if (!(parent instanceof GrMethod method)) return null;
 
                                                                          Set<PsiMethod> superMethods = collectSuperMethods(method);
                                                                          if (superMethods.isEmpty()) return null;
@@ -186,8 +181,7 @@ public final class GroovyMarkerTypes {
       @Override
       public void browse(MouseEvent e, PsiElement element) {
         PsiElement parent = element.getParent();
-        if (!(parent instanceof GrMethod)) return;
-        GrMethod method = (GrMethod)parent;
+        if (!(parent instanceof GrMethod method)) return;
 
         Set<PsiMethod> superMethods = collectSuperMethods(method);
         if (superMethods.isEmpty()) return;
@@ -201,8 +195,7 @@ public final class GroovyMarkerTypes {
   public static final MarkerType GR_OVERRIDDEN_METHOD =
     new MarkerType("GR_OVERRIDEN_METHOD", (NullableFunction<PsiElement, String>)element -> {
       PsiElement parent = element.getParent();
-      if (!(parent instanceof GrMethod)) return null;
-      GrMethod method = (GrMethod)parent;
+      if (!(parent instanceof GrMethod method)) return null;
 
       final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor =
         new PsiElementProcessor.CollectElementsWithLimit<>(5);
@@ -239,7 +232,7 @@ public final class GroovyMarkerTypes {
       @Override
       public void browse(MouseEvent e, PsiElement element) {
         PsiElement parent = element.getParent();
-        if (!(parent instanceof GrMethod)) return;
+        if (!(parent instanceof GrMethod method)) return;
         if (DumbService.isDumb(element.getProject())) {
           DumbService.getInstance(element.getProject()).showDumbModeNotification(
             GroovyBundle.message("popup.content.navigation.to.overriding.classes.unavailable"));
@@ -248,7 +241,6 @@ public final class GroovyMarkerTypes {
 
 
         //collect all overrings (including fields with implicit accessors and method with default parameters)
-        final GrMethod method = (GrMethod)parent;
         final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
           new PsiElementProcessor.CollectElementsWithLimit<>(2, new HashSet<>());
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {

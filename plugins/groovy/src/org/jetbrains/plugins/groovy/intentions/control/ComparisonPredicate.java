@@ -26,10 +26,9 @@ class ComparisonPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrBinaryExpression)) {
+    if (!(element instanceof GrBinaryExpression expression)) {
       return false;
     }
-    final GrBinaryExpression expression = (GrBinaryExpression) element;
     if (!ComparisonUtils.isComparison(expression)) {
       return false;
     }

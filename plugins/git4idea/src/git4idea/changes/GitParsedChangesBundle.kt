@@ -7,6 +7,8 @@ import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.isValidRanges
+import com.intellij.util.containers.HashingStrategy
+import java.util.*
 
 /**
  * Represents a set of commits with their changes
@@ -14,12 +16,26 @@ import com.intellij.openapi.vcs.ex.isValidRanges
 interface GitParsedChangesBundle {
   val changes: List<Change>
   val changesByCommits: Map<String, Collection<Change>>
+  val diffDataByChange: Map<Change, GitChangeDiffData>
   val linearHistory: Boolean
 
-  fun findChangeDiffData(change: Change): GitChangeDiffData?
+  companion object {
+    val REVISION_COMPARISON_HASHING_STRATEGY: HashingStrategy<Change> = object : HashingStrategy<Change> {
+      override fun equals(o1: Change?, o2: Change?): Boolean {
+        return o1 == o2 &&
+               o1?.beforeRevision == o2?.beforeRevision &&
+               o1?.afterRevision == o2?.afterRevision
+      }
 
-  fun findCumulativeChange(commitSha: String, filePath: String): Change?
+      override fun hashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
+    }
+  }
 }
+
+fun Map<Change, GitChangeDiffData>.findCumulativeChange(commitSha: String, filePath: String): Change? =
+  entries.find {
+    it.value is GitChangeDiffData.Cumulative && it.value.contains(commitSha, filePath)
+  }?.key
 
 fun GitChangeDiffData.getDiffComputer(): DiffUserDataKeysEx.DiffComputer {
   val diffRanges = diffRangesWithoutContext
@@ -30,7 +46,7 @@ fun GitChangeDiffData.getDiffComputer(): DiffUserDataKeysEx.DiffComputer {
 
     if (!isValidRanges(text1, text2, lineOffsets1, lineOffsets2, diffRanges)) {
       // TODO: exception with attachments
-      error("Invalid diff line ranges for $filePath in $commitSha")
+      error("Invalid diff line ranges for ${patch.filePath} in ${patch.afterVersionId!!}")
     }
     val iterable = DiffIterableUtil.create(diffRanges, lineOffsets1.lineCount,
                                            lineOffsets2.lineCount)

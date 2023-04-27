@@ -94,10 +94,9 @@ public class ClassInitializerInspection extends BaseInspection {
         return;
       }
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiClassInitializer)) {
+      if (!(grandParent instanceof PsiClassInitializer initializer)) {
         return;
       }
-      final PsiClassInitializer initializer = (PsiClassInitializer)grandParent;
       final PsiClass aClass = initializer.getContainingClass();
       if (aClass == null) {
         return;

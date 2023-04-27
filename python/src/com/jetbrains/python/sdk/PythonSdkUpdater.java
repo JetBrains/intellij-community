@@ -525,8 +525,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
   @NotNull
   private static List<String> getRemoteSdkMappedPaths(@NotNull Sdk sdk) {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
-    if (additionalData instanceof RemoteSdkProperties) {
-      final RemoteSdkProperties remoteSdkData = (RemoteSdkProperties)additionalData;
+    if (additionalData instanceof RemoteSdkProperties remoteSdkData) {
       final List<String> paths = new ArrayList<>();
       for (PathMappingSettings.PathMapping mapping : remoteSdkData.getPathMappings().getPathMappings()) {
         paths.add(mapping.getLocalRoot());

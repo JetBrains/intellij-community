@@ -171,7 +171,7 @@ internal abstract class ToolWindowToolbar : JPanel() {
         }
       }
 
-      return JBUI.scale(250)
+      return JBUI.scale(350)
     }
 
     private fun getStatusBarHeight(): Int {

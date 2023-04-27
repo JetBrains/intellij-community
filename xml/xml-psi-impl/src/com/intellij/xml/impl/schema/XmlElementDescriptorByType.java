@@ -64,9 +64,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof XmlElementDescriptorByType)) return false;
-
-    final XmlElementDescriptorByType that = (XmlElementDescriptorByType)o;
+    if (!(o instanceof XmlElementDescriptorByType that)) return false;
 
     if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
 

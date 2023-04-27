@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
+import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -65,12 +66,18 @@ class ReplaceProtectedToPublishedApiCallFix(
                         "@kotlin.PublishedApi\n" +
                                 "internal " + newSignature +
                                 " = $originalName(${paramNames.keys.joinToString(", ") { it }})"
-                    )
+                    ).apply {
+                        if (element is KtOperationReferenceExpression) addModifier(KtTokens.INFIX_KEYWORD)
+                    }
                 }
 
             ShortenReferences.DEFAULT.process(classOwner.addDeclaration(newMember))
         }
-        element.replace(psiFactory.createExpression(originalName.newNameQuoted))
+        if (element is KtOperationReferenceExpression) {
+            element.replace(psiFactory.createOperationName(originalName.newNameQuoted))
+        } else {
+            element.replace(psiFactory.createExpression(originalName.newNameQuoted))
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -98,7 +105,7 @@ class ReplaceProtectedToPublishedApiCallFix(
                 } else {
                     signature.replaceFirst("$originalName(", "${originalName.newNameQuoted}(")
                 }
-            val paramNameAndType = descriptor.valueParameters.associate { it.name.asString() to it.type.getJetTypeFqName(false) }
+            val paramNameAndType = descriptor.valueParameters.associate { it.name.asString() to it.type.getKotlinTypeFqName(false) }
             val classDescriptor = descriptor.containingDeclaration as? ClassDescriptor ?: return null
             val source = classDescriptor.source.getPsi() as? KtClass ?: return null
 

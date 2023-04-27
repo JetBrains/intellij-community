@@ -301,12 +301,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         // Inferred type may change if boxing is removed; if it's possible
         if (typeElement != null && typeElement.isInferredType()) return true;
       }
-      else if (parent instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression castExpression = (PsiTypeCastExpression)parent;
+      else if (parent instanceof PsiTypeCastExpression castExpression) {
         return TypeUtils.isTypeParameter(castExpression.getType());
       }
-      else if (parent instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+      else if (parent instanceof PsiConditionalExpression conditionalExpression) {
         final PsiExpression thenExpression = conditionalExpression.getThenExpression();
         final PsiExpression elseExpression = conditionalExpression.getElseExpression();
         if (elseExpression == null || thenExpression == null) {
@@ -324,8 +322,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
           return false;
         }
       }
-      else if (parent instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      else if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         return isPossibleObjectComparison(boxingExpression, polyadicExpression);
       }
       return MethodCallUtils.isNecessaryForSurroundingMethodCall(boxingExpression, boxedExpression) ||

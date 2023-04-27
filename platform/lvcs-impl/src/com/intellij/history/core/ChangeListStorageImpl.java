@@ -233,7 +233,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
       int eachBlockId = firstObsoleteId;
 
       while (eachBlockId != 0) {
-        processor.consume(doReadBlock(eachBlockId).changeSet);
+        processor.consume(doReadBlock(eachBlockId).changeSet());
         eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
       }
       myStorage.deleteRecordsUpTo(firstObsoleteId);

@@ -314,9 +314,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
                                       int row,
                                       boolean hasFocus) {
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (!(userObject instanceof MavenArchetype)) return;
-
-      MavenArchetype info = (MavenArchetype)userObject;
+      if (!(userObject instanceof MavenArchetype info)) return;
 
       if (leaf) {
         append(info.artifactId, SimpleTextAttributes.GRAY_ATTRIBUTES);

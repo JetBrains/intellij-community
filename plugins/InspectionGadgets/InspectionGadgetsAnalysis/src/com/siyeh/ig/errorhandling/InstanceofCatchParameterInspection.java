@@ -51,15 +51,13 @@ public class InstanceofCatchParameterInspection extends BaseInspection {
         return;
       }
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(exp.getOperand());
-      if (!(operand instanceof PsiReferenceExpression)) {
+      if (!(operand instanceof PsiReferenceExpression ref)) {
         return;
       }
-      final PsiReferenceExpression ref = (PsiReferenceExpression)operand;
       final PsiElement referent = ref.resolve();
-      if (!(referent instanceof PsiParameter)) {
+      if (!(referent instanceof PsiParameter parameter)) {
         return;
       }
-      final PsiParameter parameter = (PsiParameter)referent;
       if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) {
         return;
       }

@@ -61,7 +61,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       myOptions = new HashMap<>();
     }
     if (option == EXTEND_CLASS_NAMES) {
-      SUPER_CLASSES.putValue(myOptions, ContainerUtil.immutableList((String[])value));
+      SUPER_CLASSES.putValue(myOptions, List.of((String[])value));
     }
     else if (option == DEFAULT_PACKAGE) {
       IMPORTS.putValue(myOptions, Collections.singletonList((String)value));

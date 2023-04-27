@@ -50,8 +50,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     final List<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement expression = (PsiElement)infos[0];
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiExpression) {
-      final PsiExpression binaryExpression = (PsiExpression)parent;
+    if (parent instanceof PsiExpression binaryExpression) {
       final PsiType type = binaryExpression.getType();
       if (type instanceof PsiPrimitiveType && !type.equals(PsiTypes.charType())) {
         final String typeText = type.getCanonicalText();
@@ -85,10 +84,9 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiLiteralExpression)) {
+      if (!(element instanceof PsiLiteralExpression literalExpression)) {
         return;
       }
-      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       final Object literal = literalExpression.getValue();
       if (!(literal instanceof Character)) {
         return;
@@ -121,10 +119,9 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiExpression)) {
+      if (!(element instanceof PsiExpression expression)) {
         return;
       }
-      final PsiExpression expression = (PsiExpression)element;
       CommentTracker commentTracker = new CommentTracker();
       final String expressionText = commentTracker.text(expression);
       PsiReplacementUtil.replaceExpression(expression, '(' + typeText + ')' + expressionText, commentTracker);

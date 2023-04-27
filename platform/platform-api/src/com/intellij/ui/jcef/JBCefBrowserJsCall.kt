@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef
 
 import com.intellij.openapi.Disposable
@@ -139,7 +139,7 @@ class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, val bro
       function payload() {
           ${asFunctionBody()}
       }
-    
+
       try {
           let result = payload();
 
@@ -155,13 +155,13 @@ class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, val bro
       } catch (e) {
           // call back the related error handling JBCefJSQuery
           window.${errorQuery.funcName}({
-              request: "" + e, 
+              request: "" + e,
               onSuccess: function (response) {
                   // do nothing
               }, onFailure: function (error_code, error_message) {
                   // do nothing
               }
           });
-      }      
+      }
     """.trimIndent()
 }

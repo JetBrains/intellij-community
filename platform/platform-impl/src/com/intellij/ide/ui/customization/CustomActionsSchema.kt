@@ -77,10 +77,6 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   init {
     val idToName = LinkedHashMap<String, String>()
     idToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle())
-    if (ToolbarSettings.getInstance().isAvailable) {
-      idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar())
-      idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN, ActionsTreeUtil.getExperimentalToolbarXamarin())
-    }
     if (ExperimentalUI.isNewUI()) {
       idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_LEFT, ActionsTreeUtil.getMainToolbarLeft())
       idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_CENTER, ActionsTreeUtil.getMainToolbarCenter())
@@ -391,13 +387,13 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
 
   private fun writeIcons(parent: Element) {
     for (actionId in iconCustomizations.keys) {
-      val action = Element(ELEMENT_ACTION)
-      action.setAttribute(ATTRIBUTE_ID, actionId)
       val icon = iconCustomizations[actionId]
       if (icon != null) {
+        val action = Element(ELEMENT_ACTION)
+        action.setAttribute(ATTRIBUTE_ID, actionId)
         action.setAttribute(ATTRIBUTE_ICON, icon)
+        parent.addContent(action)
       }
-      parent.addContent(action)
     }
   }
 
@@ -420,22 +416,8 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   @ApiStatus.Internal
   fun initActionIcon(anAction: AnAction, actionId: String, actionManager: ActionManager) {
     LOG.assertTrue(anAction !is ActionStub)
-    var icon: Icon? = null
     val iconPath = iconCustomizations.get(actionId)
-    if (iconPath != null) {
-      val reuseFrom = actionManager.getAction(iconPath)
-      if (reuseFrom != null) {
-        icon = reuseFrom.templatePresentation.icon
-      }
-      else {
-        try {
-          icon = loadCustomIcon(iconPath)
-        }
-        catch (e: IOException) {
-          LOG.info(e.message)
-        }
-      }
-    }
+    var icon: Icon? = CustomizationUtil.getIconForPath(actionManager, iconPath)
 
     val presentation = anAction.templatePresentation
     val originalIcon = presentation.icon
@@ -447,7 +429,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     }
     presentation.icon = icon
     presentation.disabledIcon = if (icon == null) null else getDisabledIcon(icon)
-    anAction.isDefaultIcon = iconPath == null
+    anAction.isDefaultIcon = icon == originalIcon
   }
 }
 

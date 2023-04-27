@@ -190,6 +190,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     Disposer.register(disposable, () -> myPropertyChangeSupport.removePropertyChangeListener(listener));
   }
 
+  protected void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+    myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+  }
+
   @NotNull
   @Override
   public OptionSet getState() {

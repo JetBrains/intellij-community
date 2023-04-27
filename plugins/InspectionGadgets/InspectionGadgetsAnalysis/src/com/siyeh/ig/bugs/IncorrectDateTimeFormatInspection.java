@@ -99,8 +99,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
 
       private void processExpression(@NotNull PsiExpression expression) {
         Object patternObject = ExpressionUtils.computeConstantExpression(expression);
-        if (!(patternObject instanceof String)) return;
-        String pattern = (String)patternObject;
+        if (!(patternObject instanceof String pattern)) return;
         record Token(char character, int pos, int length) {}
         List<Token> tokens = new ArrayList<>();
         int optionalDepth = 0;

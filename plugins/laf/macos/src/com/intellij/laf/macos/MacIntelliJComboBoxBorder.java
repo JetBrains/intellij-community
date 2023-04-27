@@ -77,8 +77,7 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
 
   @Override
   protected boolean isFocused(Component c) {
-    if (c instanceof JComboBox) {
-      JComboBox<?> comboBox = (JComboBox<?>)c;
+    if (c instanceof JComboBox<?> comboBox) {
 
       if (!comboBox.isEnabled()) {
         return false;
@@ -100,8 +99,7 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
 
   Area getButtonBounds(Component c) {
     Rectangle bounds = null;
-    if (c instanceof JComboBox && ((JComboBox<?>)c).getUI() instanceof MacIntelliJComboBoxUI) {
-      MacIntelliJComboBoxUI ui = (MacIntelliJComboBoxUI)((JComboBox<?>)c).getUI();
+    if (c instanceof JComboBox && ((JComboBox<?>)c).getUI() instanceof MacIntelliJComboBoxUI ui) {
       bounds = ui.getArrowButtonBounds();
     }
     return bounds != null ? new Area(bounds) : new Area();

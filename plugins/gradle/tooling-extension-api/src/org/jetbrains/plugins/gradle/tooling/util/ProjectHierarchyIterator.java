@@ -11,7 +11,7 @@ import java.util.Queue;
  * @author Vladislav.Soroka
  */
 public final class ProjectHierarchyIterator implements Iterator<ExternalProject> {
-  private final Queue<ExternalProject> myProjects = new LinkedList<ExternalProject>();
+  private final Queue<ExternalProject> myProjects = new LinkedList<>();
 
   public ProjectHierarchyIterator(ExternalProject project) {
     myProjects.add(project);

@@ -110,8 +110,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     AnAction toolbarAction;
     AnAction runContextAction;
     AnAction runNonExistingContextAction;
-    if (executor instanceof ExecutorGroup) {
-      ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
+    if (executor instanceof ExecutorGroup<?> executorGroup) {
       ActionGroup toolbarActionGroup = new SplitButtonAction(new ExecutorGroupActionGroup(executorGroup, ExecutorAction::new));
       Presentation presentation = toolbarActionGroup.getTemplatePresentation();
       presentation.setIcon(executor.getIcon());
@@ -152,9 +151,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionManager actionManager) {
     if (ToolbarSettings.getInstance().isAvailable()) {
       RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
-        if (executor instanceof ExecutorGroup) {
+        if (executor instanceof ExecutorGroup<?> executorGroup) {
 
-          ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
           if (process.getShowInBar()) {
             ActionGroup wrappedAction = new RunToolbarExecutorGroupAction(
               new RunToolbarExecutorGroup(executorGroup, (ex) -> new RunToolbarGroupProcessAction(process, ex), process));
@@ -551,8 +549,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     protected Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration,
                                       @NotNull AnActionEvent e) {
       RunConfiguration configuration = selectedConfiguration.getConfiguration();
-      if (configuration instanceof RunnerIconProvider) {
-        RunnerIconProvider provider = (RunnerIconProvider)configuration;
+      if (configuration instanceof RunnerIconProvider provider) {
         Icon icon = provider.getExecutorIcon(configuration, myExecutor);
         if (icon != null) {
           return icon;
@@ -843,7 +840,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                            @NotNull Executor executor) {
       if (settings != null) {
         RunConfigurationStartHistory.getInstance(project).register(settings);
-        RunManager.getInstance(project).setSelectedConfiguration(settings);
       }
       runSubProcess(project, configuration, settings, dataContext, executor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
     }

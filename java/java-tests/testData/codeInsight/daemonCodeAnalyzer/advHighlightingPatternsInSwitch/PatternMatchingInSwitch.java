@@ -180,9 +180,9 @@ class Main {
 
     // unsafe casts
     switch (list1) {
-      case <error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>:
+      case <error descr="'List<capture of ? extends Number>' cannot be safely cast to 'List<Integer>'">List<Integer> l</error>:
         break;
-      case ((((<error descr="'java.util.List<capture<? extends java.lang.Number>>' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> l</error>)) && Math.random() > 0.5)):
+      case ((((<error descr="'List<capture of ? extends Number>' cannot be safely cast to 'List<Integer>'">List<Integer> l</error>)) && Math.random() > 0.5)):
         break;
     }
 
@@ -202,9 +202,9 @@ class Main {
         break;
     }
     switch (o) {
-      case <error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> ll</error>:
+      case <error descr="'Object' cannot be safely cast to 'List<Integer>'">List<Integer> ll</error>:
         break;
-      case ((((<error descr="'java.lang.Object' cannot be safely cast to 'java.util.List<java.lang.Integer>'">List<Integer> ll</error>)) && Math.random() > 0.5)):
+      case ((((<error descr="'Object' cannot be safely cast to 'List<Integer>'">List<Integer> ll</error>)) && Math.random() > 0.5)):
         break;
       case default:
         break;

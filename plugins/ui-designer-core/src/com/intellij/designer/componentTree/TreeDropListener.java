@@ -118,9 +118,8 @@ public class TreeDropListener extends DropTargetAdapter {
         return;
       }
 
-      if (myToolProvider.getActiveTool() instanceof CreationTool) {
+      if (myToolProvider.getActiveTool() instanceof CreationTool tool) {
         myContext.setType(OperationContext.CREATE);
-        CreationTool tool = (CreationTool)myToolProvider.getActiveTool();
         try {
           myContext.setComponents(Collections.singletonList(tool.getFactory().create()));
         }

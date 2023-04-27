@@ -205,12 +205,10 @@ public final class PyUserSkeletonsUtil {
     if (owner != null && name != null) {
       assert owner != element;
       final PsiElement originalOwner = getUserSkeleton(owner, skeletonFile, context);
-      if (originalOwner instanceof PyClass) {
-        final PyClass classOwner = (PyClass)originalOwner;
+      if (originalOwner instanceof PyClass classOwner) {
         final var fallbackContext = TypeEvalContext.codeInsightFallback(classOwner.getProject());
         final PyType type = fallbackContext.getType(classOwner);
-        if (type instanceof PyClassLikeType) {
-          final PyClassLikeType classType = (PyClassLikeType)type;
+        if (type instanceof PyClassLikeType classType) {
           final PyClassLikeType instanceType = classType.toInstance();
           final PyResolveContext resolveContext = PyResolveContext.defaultContext(ObjectUtils.notNull(context, fallbackContext));
           final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,

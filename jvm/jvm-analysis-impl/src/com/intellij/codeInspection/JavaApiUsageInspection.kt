@@ -219,7 +219,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(targetLanguageLevel) as LocalQuickFix
     }
     else null
-    holder.registerProblem(reference, message, fix)
+    holder.registerProblem(reference, message, *LocalQuickFix.notNullElements(fix))
   }
 
   fun getEffectiveLanguageLevel(module: Module): LanguageLevel {

@@ -34,13 +34,11 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
       return; // Don't brake the template.
     }*/
     Object object = item.getObject();
-    if (!(object instanceof MavenRepositoryArtifactInfo)) {
+    if (!(object instanceof MavenRepositoryArtifactInfo completionItem)) {
       return;
     }
-    MavenRepositoryArtifactInfo completionItem = (MavenRepositoryArtifactInfo)object;
     PsiFile contextFile = context.getFile();
-    if (!(contextFile instanceof XmlFile)) return;
-    XmlFile xmlFile = (XmlFile)contextFile;
+    if (!(contextFile instanceof XmlFile xmlFile)) return;
     PsiElement element = xmlFile.findElementAt(context.getStartOffset());
     XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (tag == null) {

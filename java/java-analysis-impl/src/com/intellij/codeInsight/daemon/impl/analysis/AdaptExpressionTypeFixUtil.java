@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.MoreCollectors;
@@ -111,7 +112,13 @@ final class AdaptExpressionTypeFixUtil {
       PsiType substituted = substitutor.substitute(type);
       PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(x)null", call);
       PsiTypeElement typeElement = factory.createTypeElement(substituted);
-      Objects.requireNonNull(cast.getCastType()).replace(typeElement);
+      try {
+        Objects.requireNonNull(cast.getCastType()).replace(typeElement);
+      }
+      catch (IncorrectOperationException ignored) {
+        // Malformed type
+        continue;
+      }
       PsiMethodCallExpression copy = (PsiMethodCallExpression)LambdaUtil.copyTopLevelCall(call);
       copy.getArgumentList().getExpressions()[i].replace(cast);
       JavaResolveResult resolveResult = copy.resolveMethodGenerics();

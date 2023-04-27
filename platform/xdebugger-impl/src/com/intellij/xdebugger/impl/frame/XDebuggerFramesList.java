@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -26,7 +25,6 @@ import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -53,6 +51,8 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.wrapKeepEditorAreaFocusNavigatable;
+
 public class XDebuggerFramesList extends DebuggerFramesList implements DataProvider {
   private final Project myProject;
   private final FileColorsCache myFileColorsCache;
@@ -64,8 +64,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       StringBuilder plainBuf = new StringBuilder();
       TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();
       for (Object value : items) {
-        if (value instanceof ItemWithSeparatorAbove) {
-          ItemWithSeparatorAbove item = (ItemWithSeparatorAbove)value;
+        if (value instanceof ItemWithSeparatorAbove item) {
           if (item.hasSeparatorAbove()) {
             String caption = " - " + StringUtil.notNullize(item.getCaptionAboveOf());
             plainBuf.append(caption).append('\n');
@@ -203,30 +202,10 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     if (navigatable instanceof OpenFileDescriptor) {
       ((OpenFileDescriptor)navigatable).setUsePreviewTab(true);
     }
-    return navigatable != null ? keepFocus(navigatable) : null;
+    return navigatable != null ? wrapKeepEditorAreaFocusNavigatable(myProject, navigatable) : null;
   }
 
-  /**
-   * Forbids focus requests unless the editor area is already focused.
-   */
-  private @NotNull Navigatable keepFocus(@NotNull Navigatable navigatable) {
-    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-    boolean isEditorAreaFocused = IJSwingUtilities.hasFocus(fileEditorManager.getComponent());
-    return isEditorAreaFocused ? navigatable : new Navigatable() {
-      @Override
-      public void navigate(boolean requestFocus) {
-        navigatable.navigate(false);
-      }
-
-      @Override
-      public boolean canNavigate() { return navigatable.canNavigate(); }
-
-      @Override
-      public boolean canNavigateToSource() { return navigatable.canNavigateToSource(); }
-    };
-  }
-
-  private @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
+  protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
     XSourcePosition position = frame.getSourcePosition();
     return position != null ? position.createNavigatable(myProject) : null;
   }
@@ -535,8 +514,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     }
 
     private static void updateHover(@NotNull Component component, @Nullable Point point) {
-      if (!(component instanceof XDebuggerFramesList)) return;
-      var list = ((XDebuggerFramesList)component);
+      if (!(component instanceof XDebuggerFramesList list)) return;
       var oldHoverIndex = getHoveredIndex(component);
       ClientProperty.put(list, HOVER_POSITION, null);
       ClientProperty.put(list, HOVER_BOUNDS, null);

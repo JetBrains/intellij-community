@@ -397,16 +397,14 @@ public final class FormSourceCodeGenerator {
         if (psiElement == null) {
           return;
         }
-        if (psiElement instanceof PsiField) {
-          PsiField field = (PsiField) psiElement;
+        if (psiElement instanceof PsiField field) {
           if (field.getContainingClass().equals(classToBind)) {
             if (Utils.isBoundField(rootContainer, field.getName())) {
               result.set(Boolean.TRUE);
             }
           }
         }
-        else if (psiElement instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod) psiElement;
+        else if (psiElement instanceof PsiMethod method) {
           if (method.isConstructor()) {
             if (method.getContainingClass() == classToBind) {
               if (callsThisConstructor != null) {
@@ -1062,8 +1060,7 @@ public final class FormSourceCodeGenerator {
       }
     }
 
-    if (component instanceof LwContainer) {
-      final LwContainer container = (LwContainer)component;
+    if (component instanceof LwContainer container) {
       for (int i = 0; i < container.getComponentCount(); i++) {
         generateComponentReferenceProperties((LwComponent)container.getComponent(i), component2variable, class2variableIndex, id2component,
                                              aClass);

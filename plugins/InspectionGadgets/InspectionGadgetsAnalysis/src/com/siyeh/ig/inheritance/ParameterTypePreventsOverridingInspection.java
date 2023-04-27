@@ -60,10 +60,9 @@ public class ParameterTypePreventsOverridingInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiTypeElement)) {
+      if (!(element instanceof PsiTypeElement typeElement)) {
         return;
       }
-      final PsiTypeElement typeElement = (PsiTypeElement)element;
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(typeElement.getProject());
       final PsiTypeElement newTypeElement = factory.createTypeElementFromText(myNewTypeText, typeElement);
       typeElement.replace(newTypeElement);

@@ -10,7 +10,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -38,6 +44,8 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonLocalPackageSpecification
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonVcsPackageSpecification
+import com.jetbrains.python.sdk.pythonSdk
+import icons.PythonIcons
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -45,11 +53,13 @@ import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.event.ListSelectionListener
 
 class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolWindow) : SimpleToolWindowPanel(false, true), Disposable  {
   private val packagingScope = ApplicationManager.getApplication().coroutineScope.childScope(Dispatchers.Default)
@@ -80,7 +90,7 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
   // layout
   private var mainPanel: JPanel? = null
   private var splitter: OnePixelSplitter? = null
-  private val leftPanel: JScrollPane
+  private var leftPanel: JComponent
   private val rightPanel: JComponent
 
   internal var contentVisible: Boolean
@@ -163,8 +173,8 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     }
 
     tablesView = PyPackagingTablesView(project, packageListPanel, this)
-    leftPanel = ScrollPaneFactory.createScrollPane(packageListPanel, true)
 
+    leftPanel = createLeftPanel(service)
     rightPanel = borderPanel {
       add(borderPanel {
         border = SideBorder(JBColor.GRAY, SideBorder.BOTTOM)
@@ -272,6 +282,61 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
       add(splitter!!, BorderLayout.CENTER)
     }
     setContent(mainPanel!!)
+  }
+
+  private fun createLeftPanel(service: PyPackagingToolWindowService): JComponent {
+    if (project.modules.size == 1) return ScrollPaneFactory.createScrollPane(packageListPanel, true)
+
+    val left = JPanel(BorderLayout()).apply {
+      border = BorderFactory.createEmptyBorder()
+    }
+
+    val modulePanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
+      border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.RIGHT)
+      maximumSize = Dimension(80, maximumSize.height)
+      minimumSize = Dimension(50, minimumSize.height)
+    }
+
+    val moduleList = JBList(ModuleManager.getInstance(project).modules.toList().sortedBy { it.name }).apply {
+      selectionMode = ListSelectionModel.SINGLE_SELECTION
+      border = JBUI.Borders.empty()
+
+      val itemRenderer = JBLabel("", PythonIcons.Python.PythonClosed, JLabel.LEFT).apply {
+        border = JBUI.Borders.empty(0, 10)
+      }
+      cellRenderer = ListCellRenderer { _, value, _, _, _ -> itemRenderer.text = value.name; itemRenderer }
+
+      addListSelectionListener(ListSelectionListener { e ->
+        if (e.valueIsAdjusting) return@ListSelectionListener
+        val selectedModule = this@apply.selectedValue
+        val sdk = selectedModule.pythonSdk ?: return@ListSelectionListener
+        packagingScope.launch {
+          service.initForSdk(sdk)
+        }
+      })
+    }
+
+    val fileListener = object : FileEditorManagerListener {
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        if (project.modules.size > 1) {
+          val newFile = event.newFile ?: return
+          val module = ModuleUtilCore.findModuleForFile(newFile, project)
+          packagingScope.launch(Dispatchers.IO) {
+            val index = (moduleList.model as DefaultListModel<Module>).indexOf(module)
+            moduleList.selectionModel.setSelectionInterval(index, index)
+          }
+        }
+      }
+    }
+    service.project.messageBus
+      .connect(service)
+      .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, fileListener)
+
+    modulePanel.add(moduleList)
+    left.add(ScrollPaneFactory.createScrollPane(modulePanel, true), BorderLayout.WEST)
+    left.add(ScrollPaneFactory.createScrollPane(packageListPanel, true), BorderLayout.CENTER)
+
+    return left
   }
 
   private fun showInstallFromVcsDialog(service: PyPackagingToolWindowService): PythonVcsPackageSpecification? {
@@ -485,6 +550,15 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
 
   override fun dispose() {
     packagingScope.cancel()
+  }
+
+  internal suspend fun recreateModulePanel() {
+    val newPanel = createLeftPanel(project.service<PyPackagingToolWindowService>())
+    withContext(Dispatchers.Main) {
+      leftPanel = newPanel
+      splitter?.firstComponent = leftPanel
+      splitter?.repaint()
+    }
   }
 
   companion object {

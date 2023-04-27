@@ -3,11 +3,20 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class TerminalTabState {
   @Attribute("tabName")
   public @Nls String myTabName;
+
+  @Tag("shellCommand")
+  @XCollection(elementName = "arg")
+  public @Nullable List<String> myShellCommand;
 
   @Attribute("userDefinedTabTitle")
   public boolean myIsUserDefinedTabTitle;

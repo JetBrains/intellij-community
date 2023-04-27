@@ -201,9 +201,7 @@ public final class TypeUtils {
     final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(type2);
     if (comparedTypeErasure == null || comparisonTypeErasure == null ||
         TypeConversionUtil.areTypesConvertible(comparedTypeErasure, comparisonTypeErasure)) {
-      if (type1 instanceof PsiClassType && type2 instanceof PsiClassType) {
-        final PsiClassType classType1 = (PsiClassType)type1;
-        final PsiClassType classType2 = (PsiClassType)type2;
+      if (type1 instanceof PsiClassType classType1 && type2 instanceof PsiClassType classType2) {
         final PsiType[] parameters1 = classType1.getParameters();
         final PsiType[] parameters2 = classType2.getParameters();
         if (parameters1.length != parameters2.length) {

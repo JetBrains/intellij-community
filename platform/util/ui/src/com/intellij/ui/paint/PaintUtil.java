@@ -304,8 +304,7 @@ public final class PaintUtil {
     g.scale(1.0 / scaleX, 1.0 / scaleY);
     try {
       Shape clip = g.getClip();
-      if (clip instanceof Rectangle2D && isFractionalScale(transform)) {
-        Rectangle2D rect = (Rectangle2D)clip;
+      if (clip instanceof Rectangle2D rect && isFractionalScale(transform)) {
         double x = rect.getX();
         double y = rect.getY();
         double w = rect.getWidth();

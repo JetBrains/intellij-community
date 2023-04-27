@@ -22,15 +22,13 @@ public class FormClassAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    if (psiElement instanceof PsiField) {
-      PsiField field = (PsiField) psiElement;
+    if (psiElement instanceof PsiField field) {
       final PsiFile boundForm = FormReferenceProvider.getFormFile(field);
       if (boundForm != null) {
         annotateFormField(field, boundForm, holder);
       }
     }
-    else if (psiElement instanceof PsiClass) {
-      PsiClass aClass = (PsiClass) psiElement;
+    else if (psiElement instanceof PsiClass aClass) {
       final List<PsiFile> formsBoundToClass = FormClassIndex.findFormsBoundToClass(aClass.getProject(), aClass);
       if (formsBoundToClass.size() > 0) {
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(aClass.getNameIdentifier()).gutterIconRenderer(new BoundIconRenderer(aClass)).create();

@@ -35,11 +35,10 @@ public final class ExternalSystemRunConfigurationMenu extends DefaultActionGroup
     Project project = e.getProject();
 
     List<ExternalSystemNode> selectedNodes = e.getData(ExternalSystemDataKeys.SELECTED_NODES);
-    if (selectedNodes == null || selectedNodes.size() != 1 || !(selectedNodes.get(0) instanceof RunConfigurationNode)) {
+    if (selectedNodes == null || selectedNodes.size() != 1 || !(selectedNodes.get(0) instanceof RunConfigurationNode runConfigurationNode)) {
       return;
     }
 
-    RunConfigurationNode runConfigurationNode = (RunConfigurationNode)selectedNodes.get(0);
     final RunnerAndConfigurationSettings settings = runConfigurationNode.getSettings();
 
     if (settings == null || project == null) return;

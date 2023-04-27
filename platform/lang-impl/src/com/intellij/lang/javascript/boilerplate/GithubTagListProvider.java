@@ -143,12 +143,10 @@ public class GithubTagListProvider {
 
   @NotNull
   private static ImmutableSet<GithubTagInfo> toGithubTagList(@NotNull JsonElement jsonElement) throws GeneratorException {
-    if (jsonElement instanceof JsonArray) {
-      JsonArray array = (JsonArray) jsonElement;
+    if (jsonElement instanceof JsonArray array) {
       ImmutableSet.Builder<GithubTagInfo> tags = ImmutableSet.builder();
       for (JsonElement element : array) {
-        if (element instanceof JsonObject) {
-          JsonObject obj = (JsonObject) element;
+        if (element instanceof JsonObject obj) {
           JsonElement nameElement = obj.get("name");
           String name = null;
           if (nameElement != null) {

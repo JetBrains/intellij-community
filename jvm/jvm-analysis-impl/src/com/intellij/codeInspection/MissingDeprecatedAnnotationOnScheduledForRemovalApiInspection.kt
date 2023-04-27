@@ -54,7 +54,7 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
           identifierPsi,
           JvmAnalysisBundle.message("jvm.inspections.missing.deprecated.annotation.on.scheduled.for.removal.api.description"),
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-          createAnnotationFix(node)
+          *LocalQuickFix.notNullElements(createAnnotationFix(node))
         )
       }
     }

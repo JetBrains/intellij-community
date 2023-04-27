@@ -30,8 +30,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof XmlToken) {
       PsiElement parent = psiElement.getParent();
-      if (parent instanceof XmlTag) {
-        XmlTag tag = (XmlTag)parent;
+      if (parent instanceof XmlTag tag) {
         XmlToken start = XmlTagUtil.getStartTagNameElement(tag);
         XmlToken endTagName = XmlTagUtil.getEndTagNameElement(tag);
         if (start == psiElement) {

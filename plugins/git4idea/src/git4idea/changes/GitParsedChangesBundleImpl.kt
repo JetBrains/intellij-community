@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.containers.HashingStrategy
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
@@ -17,6 +16,7 @@ import java.util.*
 
 class GitParsedChangesBundleImpl(private val project: Project,
                                  private val vcsRoot: VirtualFile,
+                                 private val baseRef: String,
                                  private val mergeBaseSha: String,
                                  commits: List<GitCommitShaWithPatches>,
                                  private val headPatches: List<FilePatch>)
@@ -28,23 +28,9 @@ class GitParsedChangesBundleImpl(private val project: Project,
   override val changesByCommits = mutableMapOf<String, Collection<Change>>()
   override val linearHistory: Boolean
 
-  private val diffDataByChange = CollectionFactory.createCustomHashingStrategyMap<Change, GitChangeDiffData>(object : HashingStrategy<Change> {
-    override fun equals(o1: Change?, o2: Change?): Boolean {
-      return o1 == o2 &&
-             o1?.beforeRevision == o2?.beforeRevision &&
-             o1?.afterRevision == o2?.afterRevision
-    }
-
-    override fun hashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
-  })
-
-  override fun findChangeDiffData(change: Change) = diffDataByChange[change]
-
-  override fun findCumulativeChange(commitSha: String, filePath: String): Change? {
-    return diffDataByChange.entries.find {
-      it.value is GitChangeDiffData.Cumulative && it.value.contains(commitSha, filePath)
-    }?.key
-  }
+  private val _diffDataByChange: MutableMap<Change, GitChangeDiffData> =
+    CollectionFactory.createCustomHashingStrategyMap(GitParsedChangesBundle.REVISION_COMPARISON_HASHING_STRATEGY)
+  override val diffDataByChange: Map<Change, GitChangeDiffData> = Collections.unmodifiableMap(_diffDataByChange)
 
   init {
     val commitsHashes = commits.mapTo(mutableSetOf()) { it.sha }
@@ -89,7 +75,9 @@ class GitParsedChangesBundleImpl(private val project: Project,
             fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
           }
 
-          diffDataByChange[change] = GitChangeDiffData.Commit(commitSha, patch.filePath, patch, fileHistory)
+          patch.beforeVersionId = previousCommitSha
+          patch.afterVersionId = commitSha
+          _diffDataByChange[change] = GitChangeDiffData.Commit(patch, fileHistory)
         }
       }
       changesByCommits[commitWithPatches.sha] = commitChanges
@@ -111,8 +99,10 @@ class GitParsedChangesBundleImpl(private val project: Project,
           LOG.debug("Unable to find file history for cumulative patch for $filePath")
           continue
         }
+        patch.beforeVersionId = baseRef
+        patch.afterVersionId = headSha
 
-        diffDataByChange[change] = GitChangeDiffData.Cumulative(headSha, filePath, patch, fileHistory)
+        _diffDataByChange[change] = GitChangeDiffData.Cumulative(patch, fileHistory)
       }
     }
   }
@@ -131,7 +121,9 @@ class GitParsedChangesBundleImpl(private val project: Project,
       changes.add(change)
 
       if (patch is TextFilePatch) {
-        diffDataByChange[change] = GitChangeDiffData.Cumulative(headSha, patch.filePath, patch, SinglePatchGitFileHistory(patch))
+        patch.beforeVersionId = baseRef
+        patch.afterVersionId = headSha
+        _diffDataByChange[change] = GitChangeDiffData.Cumulative(patch, SinglePatchGitFileHistory(patch))
       }
     }
   }
@@ -153,8 +145,8 @@ class GitParsedChangesBundleImpl(private val project: Project,
 
   companion object {
     private val LOG = logger<GitParsedChangesBundle>()
-
-    private val FilePatch.filePath
-      get() = (afterName ?: beforeName)!!
   }
 }
+
+val FilePatch.filePath: String
+  get() = (afterName ?: beforeName)!!

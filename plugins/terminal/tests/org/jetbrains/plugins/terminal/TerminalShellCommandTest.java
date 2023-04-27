@@ -40,18 +40,23 @@ public class TerminalShellCommandTest extends TestCase {
     }
   }
 
+  private static List<String> getCommand(@NotNull String shellPath, @NotNull Map<String, String> envs, boolean shellIntegration) {
+    List<String> shellCommand = LocalTerminalDirectRunner.convertShellPathToCommand(shellPath);
+    return shellIntegration ? LocalTerminalDirectRunner.injectShellIntegration(shellCommand, envs, null) : shellCommand;
+  }
+
   private static void hasRcConfig(String path, String configName, Map<String, String> envs) {
-    List<String> res = LocalTerminalDirectRunner.getCommand(path, envs, true);
+    List<String> res = getCommand(path, envs, true);
     assertEquals("--rcfile", res.get(1));
     assertTrue(res.get(2).contains(configName));
   }
 
   private static void doTest(String[] expected, String path, Map<String, String> envs) {
-    assertEquals(Arrays.asList(expected), LocalTerminalDirectRunner.getCommand(path, envs, true));
+    assertEquals(Arrays.asList(expected), getCommand(path, envs, true));
   }
 
   private static void contains(@NotNull String shellPath, boolean shellIntegration, Map<String, String> envs, String... item) {
-    List<String> result = LocalTerminalDirectRunner.getCommand(shellPath, envs, shellIntegration);
+    List<String> result = getCommand(shellPath, envs, shellIntegration);
     for (String i : item) {
       assertTrue(i + " isn't in " + StringUtil.join(result, " "), result.contains(i));
     }

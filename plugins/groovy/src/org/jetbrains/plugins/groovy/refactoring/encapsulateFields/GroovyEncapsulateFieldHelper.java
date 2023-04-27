@@ -77,11 +77,10 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
   public EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
                                                @NotNull FieldDescriptor fieldDescriptor,
                                                @NotNull PsiReference reference) {
-    if (!(reference instanceof GrReferenceExpression)) return null;
+    if (!(reference instanceof GrReferenceExpression ref)) return null;
 
     boolean findSet = descriptor.isToEncapsulateSet();
     boolean findGet = descriptor.isToEncapsulateGet();
-    GrReferenceExpression ref = (GrReferenceExpression)reference;
     if (findGet &&
         JavaEncapsulateFieldHelper.isUsedInExistingAccessor(descriptor.getTargetClass(), fieldDescriptor.getGetterPrototype(), ref)) {
       return null;
@@ -122,15 +121,13 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
                               PsiMethod setter,
                               PsiMethod getter) {
     final PsiElement element = usage.getElement();
-    if (!(element instanceof GrReferenceExpression)) return false;
+    if (!(element instanceof GrReferenceExpression expr)) return false;
 
     final FieldDescriptor fieldDescriptor = usage.getFieldDescriptor();
     PsiField field = fieldDescriptor.getField();
     boolean processGet = descriptor.isToEncapsulateGet();
     boolean processSet = descriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL);
     if (!processGet && !processSet) return true;
-
-    final GrReferenceExpression expr = (GrReferenceExpression)element;
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(descriptor.getTargetClass().getProject());
 

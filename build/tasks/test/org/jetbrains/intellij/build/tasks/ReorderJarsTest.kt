@@ -77,7 +77,7 @@ class ReorderJarsTest {
     Files.createDirectories(tempDir)
 
     runBlocking {
-      doReorderJars(readClassLoadingLog(path.resolve("order.txt").inputStream(), path, "idea.jar"), path, tempDir)
+      doReorderJars(readClassLoadingLog(path.resolve("order.txt").inputStream(), path), path, tempDir)
     }
     val files = tempDir.toFile().listFiles()!!
     assertThat(files).isNotNull()
@@ -102,7 +102,7 @@ class ReorderJarsTest {
 
     val path = testDataPath
     runBlocking {
-      doReorderJars(readClassLoadingLog(path.resolve("zkmOrder.txt").inputStream(), path, "idea.jar"), path, tempDir)
+      doReorderJars(readClassLoadingLog(path.resolve("zkmOrder.txt").inputStream(), path), path, tempDir)
     }
     val files = tempDir.toFile().listFiles()!!
     assertThat(files).isNotNull()

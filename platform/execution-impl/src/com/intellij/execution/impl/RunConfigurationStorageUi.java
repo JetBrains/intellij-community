@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -474,9 +475,9 @@ public class RunConfigurationStorageUi {
           if (file.getPath().equals(myDotIdeaStoragePath)) return true;
           return file.isDirectory() &&
                  super.isFileSelectable(file) &&
-                 ProjectFileIndex.getInstance(project).isInContent(file) &&
                  !file.getPath().endsWith("/.idea") &&
-                 !file.getPath().contains("/.idea/");
+                 !file.getPath().contains("/.idea/") &&
+                 ReadAction.compute(() -> ProjectFileIndex.getInstance(project).isInContent(file));
         }
       };
 

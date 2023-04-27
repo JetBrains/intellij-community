@@ -212,17 +212,15 @@ public class EachToForIntention extends Intention {
   private static class EachToForPredicate implements PsiElementPredicate {
     @Override
     public boolean satisfiedBy(@NotNull PsiElement element) {
-      if (element instanceof GrMethodCallExpression) {
-        final GrMethodCallExpression expression = (GrMethodCallExpression)element;
-//        final PsiElement parent = expression.getParent();
+      if (element instanceof GrMethodCallExpression expression) {
+        //        final PsiElement parent = expression.getParent();
 //        if (parent instanceof GrAssignmentExpression) return false;
 //        if (parent instanceof GrArgumentList) return false;
 //        if (parent instanceof GrReturnStatement) return false;
 //        if (!(parent instanceof GrCodeBlock || parent instanceof GrIfStatement|| parent instanceof GrCaseSection)) return false;
 
         final GrExpression invokedExpression = expression.getInvokedExpression();
-        if (invokedExpression instanceof GrReferenceExpression) {
-          GrReferenceExpression referenceExpression = (GrReferenceExpression)invokedExpression;
+        if (invokedExpression instanceof GrReferenceExpression referenceExpression) {
           if ("each".equals(referenceExpression.getReferenceName())) {
             final GrArgumentList argumentList = expression.getArgumentList();
             if (PsiImplUtil.hasExpressionArguments(argumentList)) return false;

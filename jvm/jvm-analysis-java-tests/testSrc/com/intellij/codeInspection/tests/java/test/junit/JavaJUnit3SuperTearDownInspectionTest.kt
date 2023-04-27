@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnit3SuperTearDownInspectionTestBase
 
 class JavaJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTestBase() {
   fun `test teardown in finally no highlighting`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       class NoProblem extends junit.framework.TestCase {
         public void tearDown() throws Exception {
           super.tearDown();
@@ -36,7 +36,7 @@ class JavaJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTestB
   }
 
   fun `test teardown in finally highlighting`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       class SuperTearDownInFinally extends junit.framework.TestCase {
         @Override
         public void tearDown() throws Exception {

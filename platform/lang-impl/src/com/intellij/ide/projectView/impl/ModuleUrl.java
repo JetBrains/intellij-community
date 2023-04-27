@@ -42,8 +42,7 @@ public class ModuleUrl extends AbstractUrl {
 
   @Override
   public AbstractUrl createUrlByElement(Object element) {
-    if (element instanceof Module) {
-      Module module = (Module)element;
+    if (element instanceof Module module) {
       return new ModuleUrl("", module.getName());
     }
     return null;

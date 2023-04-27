@@ -55,8 +55,7 @@ public abstract class DebuggerSessionTabBase extends RunTab {
   }
 
   protected void attachNotificationTo(final Content content) {
-    if (myConsole instanceof ObservableConsoleView) {
-      ObservableConsoleView observable = (ObservableConsoleView)myConsole;
+    if (myConsole instanceof ObservableConsoleView observable) {
       AtomicBoolean alertFired = new AtomicBoolean();
       observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
         @Override

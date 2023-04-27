@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class DefaultGradleConfiguration implements GradleConfiguration {
   private static final long serialVersionUID = 2L;
@@ -73,8 +74,8 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
 
     if (visible != that.visible) return false;
     if (scriptClasspathConfiguration != that.scriptClasspathConfiguration) return false;
-    if (name != null ? !name.equals(that.name) : that.name != null) return false;
-    if (description != null ? !description.equals(that.description) : that.description != null) return false;
+    if (!Objects.equals(name, that.name)) return false;
+    if (!Objects.equals(description, that.description)) return false;
     if (!declarationAlternatives.equals(that.declarationAlternatives)) return false;
 
     return true;

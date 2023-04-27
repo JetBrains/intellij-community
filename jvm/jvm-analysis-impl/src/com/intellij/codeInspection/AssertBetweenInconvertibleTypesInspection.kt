@@ -13,10 +13,10 @@ import com.siyeh.ig.psiutils.InconvertibleTypesChecker.Convertible
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker.LookForMutualSubclass
 import com.siyeh.ig.psiutils.TypeUtils
 import com.siyeh.ig.testFrameworks.UAssertHint
-import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertEqualsUHint
-import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertNotEqualsUHint
-import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertNotSameUHint
-import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertSameUHint
+import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertEqualsHint
+import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertNotEqualsHint
+import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertNotSameHint
+import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertSameHint
 import org.jetbrains.annotations.Nls
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -29,10 +29,10 @@ class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectio
 
 private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
   override fun visitCallExpression(node: UCallExpression): Boolean {
-    processAssertHint(createAssertEqualsUHint(node), node, holder)
-    processAssertHint(createAssertNotEqualsUHint(node), node, holder)
-    processAssertHint(createAssertSameUHint(node), node, holder)
-    processAssertHint(createAssertNotSameUHint(node), node, holder)
+    processAssertHint(createAssertEqualsHint(node), node, holder)
+    processAssertHint(createAssertNotEqualsHint(node), node, holder)
+    processAssertHint(createAssertSameHint(node), node, holder)
+    processAssertHint(createAssertNotSameHint(node), node, holder)
     processAssertJ(node)
     return true
   }

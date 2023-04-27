@@ -70,15 +70,13 @@ public class ThrowablePrintedToSystemOutInspection extends BaseInspection {
         return;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiReferenceExpression)) {
+      if (!(qualifier instanceof PsiReferenceExpression qualifierReference)) {
         return;
       }
-      final PsiReferenceExpression qualifierReference = (PsiReferenceExpression)qualifier;
       final PsiElement target = qualifierReference.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)target;
       @NonNls final String fieldName = field.getName();
       if (!"out".equals(fieldName) && !"err".equals(fieldName)) {
         return;

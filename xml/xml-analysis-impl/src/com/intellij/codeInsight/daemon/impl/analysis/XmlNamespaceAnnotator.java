@@ -17,8 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlNamespaceAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
       String namespace = tag.getNamespace();
       for (XmlNSColorProvider provider : XmlNSColorProvider.EP_NAME.getExtensionList()) {
         TextAttributesKey key = provider.getKeyForNamespace(namespace, tag);

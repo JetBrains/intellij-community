@@ -1,0 +1,10 @@
+// "Replace with 'newFn(other)'" "true"
+
+@Deprecated("Use newFn instead", ReplaceWith("newFn(other)"))
+infix fun Int.oldPlus(other: Int) = newFn(other)
+
+fun Int.newFn(other: Int) = this + other
+
+fun main() {
+    1.newFn(2)
+}

@@ -50,8 +50,7 @@ public class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuild
 
     HashSet<String> ids = new HashSet<>();
     for (Change change : changes) {
-      if (change instanceof ChangeListChange) {
-        ChangeListChange changeListChange = (ChangeListChange)change;
+      if (change instanceof ChangeListChange changeListChange) {
         ids.add(changeListChange.getChangeListId());
       }
       else {

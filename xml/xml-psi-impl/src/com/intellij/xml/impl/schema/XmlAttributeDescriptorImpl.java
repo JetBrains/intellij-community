@@ -129,12 +129,10 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     if (!contextNs.equals(targetNs)) {
       final XmlElementDescriptor xmlElementDescriptor = contextTag.getDescriptor();
 
-      if (xmlElementDescriptor instanceof XmlElementDescriptorImpl) {
-        final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)xmlElementDescriptor;
+      if (xmlElementDescriptor instanceof XmlElementDescriptorImpl elementDescriptor) {
         final TypeDescriptor type = elementDescriptor.getType();
 
-        if (type instanceof ComplexTypeDescriptor) {
-          final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
+        if (type instanceof ComplexTypeDescriptor typeDescriptor) {
           if (myReferenceName != null) {
             return myReferenceName.indexOf(':') != 0;
           }

@@ -27,8 +27,9 @@ public class MavenProjectsProcessorPluginsResolvingTask extends MavenProjectsPro
   public MavenProjectsProcessorPluginsResolvingTask(MavenProject project,
                                                     NativeMavenProjectHolder nativeMavenProject,
                                                     MavenProjectsTree tree,
+                                                    MavenProjectResolver resolver,
                                                     boolean forceUpdateSnapshots) {
-    super(project, tree);
+    super(project, tree, resolver);
     myNativeMavenProject = nativeMavenProject;
     this.forceUpdateSnapshots = forceUpdateSnapshots;
   }

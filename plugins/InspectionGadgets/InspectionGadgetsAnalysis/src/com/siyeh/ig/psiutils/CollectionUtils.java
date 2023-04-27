@@ -243,8 +243,7 @@ public final class CollectionUtils {
 
   public static boolean isEmptyArray(PsiVariable variable) {
     final PsiExpression initializer = variable.getInitializer();
-    if (initializer instanceof PsiArrayInitializerExpression) {
-      final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)initializer;
+    if (initializer instanceof PsiArrayInitializerExpression arrayInitializerExpression) {
       final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
       return initializers.length == 0;
     }

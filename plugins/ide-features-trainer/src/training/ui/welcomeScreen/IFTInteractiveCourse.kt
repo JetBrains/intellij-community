@@ -2,11 +2,10 @@
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
-import com.intellij.ui.ColorUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
@@ -21,12 +20,10 @@ import training.ui.views.NewContentLabel
 import training.util.enableLessonsAndPromoters
 import training.util.iftPluginIsUsing
 import training.util.learningPanelWasOpenedInCurrentVersion
-import java.awt.Color
 import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
-import javax.swing.text.html.HTMLDocument
 
 internal class IFTInteractiveCourse : InteractiveCourseFactory {
 
@@ -42,18 +39,15 @@ private class IFTInteractiveCoursePanel : InteractiveCoursePanel(IFTInteractiveC
         contentType = "text/html"
         addHyperlinkListener(object : HyperlinkAdapter() {
           override fun hyperlinkActivated(e: HyperlinkEvent) {
-            Registry.get("ide.experimental.ui").setValue(false)
+            ExperimentalUI.setNewUI(true)
           }
         })
         editorKit = HTMLEditorKitBuilder.simple()
         text = LearnBundle.message("welcome.tab.toggle.new.ui.hint")
-
-        val styleSheet = (document as HTMLDocument).styleSheet
-        val textColor = "#" + ColorUtil.toHex(UIUtil.getLabelInfoForeground())
-        styleSheet.addRule("body { color: $textColor; font-size:${JBUI.Fonts.label().lessOn(3f)}pt;}")
         isEditable = false
-        @Suppress("UseJBColor")
-        background = Color(0, true)
+        isOpaque = false
+        highlighter = null
+        foreground = UIUtil.getLabelInfoForeground()
         border = JBUI.Borders.empty(14, leftMargin, 0, 0)
         alignmentX = Component.LEFT_ALIGNMENT
       })

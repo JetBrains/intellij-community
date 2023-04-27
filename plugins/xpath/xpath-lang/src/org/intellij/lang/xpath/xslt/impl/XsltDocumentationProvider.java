@@ -126,8 +126,7 @@ final class XsltDocumentationProvider implements DocumentationProvider {
 
   @Override
   public @Nullable @Nls String generateDoc(PsiElement psiElement, PsiElement psiElement1) {
-    if (psiElement instanceof DocElement) {
-      final DocElement element = (DocElement)psiElement;
+    if (psiElement instanceof DocElement element) {
       return getDocumentation(element.getName(), element.getCategory());
     }
 
@@ -217,8 +216,7 @@ final class XsltDocumentationProvider implements DocumentationProvider {
         }
       }
     }
-    if (object instanceof FunctionLookup) {
-      final FunctionLookup lookup = ((FunctionLookup)object);
+    if (object instanceof FunctionLookup lookup) {
       return new DocElement(mgr, psiElement, "function", lookup.getName());
     }
     else if (object instanceof ElementProvider) {

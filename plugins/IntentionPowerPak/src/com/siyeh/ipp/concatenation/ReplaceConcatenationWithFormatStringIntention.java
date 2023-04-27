@@ -80,10 +80,9 @@ public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedI
       return false;
     }
     final PsiElement grandParent = expressionParent.getParent();
-    if (!(grandParent instanceof PsiMethodCallExpression)) {
+    if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final String name = methodExpression.getReferenceName();
     final boolean insertNewline;

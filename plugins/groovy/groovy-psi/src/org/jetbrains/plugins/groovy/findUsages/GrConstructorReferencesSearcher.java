@@ -17,8 +17,7 @@ public class GrConstructorReferencesSearcher extends QueryExecutorBase<PsiRefere
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement element = queryParameters.getElementToSearch();
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       if (method.isConstructor()) {
         GroovyConstructorUsagesSearcher.processConstructorUsages(method, queryParameters.getEffectiveSearchScope(), consumer, queryParameters.getOptimizer(),
                                                                  false);

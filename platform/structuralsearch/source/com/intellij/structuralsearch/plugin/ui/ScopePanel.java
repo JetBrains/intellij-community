@@ -138,12 +138,10 @@ public class ScopePanel extends JPanel {
     final Scopes.Type scopeType = Scopes.getType(selectedScope);
     myUpdating = true;
     try {
-      if (selectedScope instanceof ModuleWithDependenciesScope) {
-        final ModuleWithDependenciesScope scope = (ModuleWithDependenciesScope)selectedScope;
+      if (selectedScope instanceof ModuleWithDependenciesScope scope) {
         myModulesComboBox.setItem(scope.getModule());
       }
-      else if (selectedScope instanceof GlobalSearchScopesCore.DirectoryScope) {
-        final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)selectedScope;
+      else if (selectedScope instanceof GlobalSearchScopesCore.DirectoryScope directoryScope) {
         myDirectoryComboBox.setDirectory(directoryScope.getDirectory());
         myDirectoryComboBox.setRecursive(directoryScope.isWithSubdirectories());
       }

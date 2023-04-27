@@ -190,8 +190,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       return documentation.getDocumentation(true, null);
     }
 
-    if (element instanceof XmlEntityDecl) {
-      final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+    if (element instanceof XmlEntityDecl entityDecl) {
       return new XmlDocumentationProvider().findDocRightAfterElement(element, entityDecl.getName());
     }
     return null;

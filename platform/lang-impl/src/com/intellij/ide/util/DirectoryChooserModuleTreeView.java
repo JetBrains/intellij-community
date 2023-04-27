@@ -205,8 +205,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object nodeValue, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final Object value = ((DefaultMutableTreeNode)nodeValue).getUserObject();
-      if (value instanceof DirectoryChooser.ItemWrapper) {
-        DirectoryChooser.ItemWrapper wrapper = (DirectoryChooser.ItemWrapper)value;
+      if (value instanceof DirectoryChooser.ItemWrapper wrapper) {
         DirectoryChooser.PathFragment[] fragments = wrapper.getFragments();
         for (DirectoryChooser.PathFragment fragment : fragments) {
           append(fragment.getText(),
@@ -214,12 +213,10 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         }
         setIcon(wrapper.getIcon());
       }
-      else if (value instanceof Module) {
-        final Module module = (Module)value;
+      else if (value instanceof Module module) {
         append(myModuleGrouper.getShortenedName(module), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(ModuleType.get(module).getIcon());
-      } else if (value instanceof ModuleGroup) {
-        ModuleGroup moduleGroup = (ModuleGroup)value;
+      } else if (value instanceof ModuleGroup moduleGroup) {
         append(moduleGroup.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
       }

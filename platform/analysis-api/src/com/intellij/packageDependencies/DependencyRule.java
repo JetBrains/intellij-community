@@ -68,8 +68,7 @@ public class DependencyRule {
   }
 
   public boolean equals(Object o) {
-    if (!(o instanceof DependencyRule)) return false;
-    DependencyRule other = (DependencyRule)o;
+    if (!(o instanceof DependencyRule other)) return false;
     return getDisplayText().equals(other.getDisplayText()) &&
            Comparing.strEqual(getPackageSetPresentation(myFromScope), getPackageSetPresentation(other.myFromScope)) &&
            Comparing.strEqual(getPackageSetPresentation(myToScope), getPackageSetPresentation(other.myToScope));

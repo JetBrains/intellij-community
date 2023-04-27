@@ -52,8 +52,7 @@ class FilePartNode {
     assert nameId > 0 || nameId == JAR_SEPARATOR_NAME_ID : nameId + "; " + getClass();
     this.nameId = nameId;
     myFileOrUrl = fileOrUrl;
-    if (fileOrUrl instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)fileOrUrl;
+    if (fileOrUrl instanceof VirtualFile file) {
       assert file.getFileSystem() == myFS : "myFs=" + myFS + "; myFile().getFileSystem()=" + file.getFileSystem() + "; " + fileOrUrl;
       if (file.getParent() == null && fs instanceof ArchiveFileSystem) {
         assert nameId == JAR_SEPARATOR_NAME_ID : nameId;
@@ -454,8 +453,7 @@ class FilePartNode {
     if (leaves == null) {
       return null;
     }
-    if (leaves instanceof VirtualFilePointerImpl) {
-      VirtualFilePointerImpl leaf = (VirtualFilePointerImpl)leaves;
+    if (leaves instanceof VirtualFilePointerImpl leaf) {
       return leaf.myListener == listener ? leaf : null;
     }
     VirtualFilePointerImpl[] array = (VirtualFilePointerImpl[])leaves;

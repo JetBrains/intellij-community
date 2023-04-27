@@ -171,6 +171,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/classModifiers.kt"));
         }
 
+        @TestMetadata("companionDuplication.kt")
+        public void testCompanionDuplication() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/companionDuplication.kt"));
+        }
+
         @TestMetadata("constructors.kt")
         public void testConstructors() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/constructors.kt"));

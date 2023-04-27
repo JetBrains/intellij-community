@@ -76,11 +76,9 @@ final class ZoomOptionsImpl implements ZoomOptions {
     if (this == obj) {
       return true;
     }
-    if (!(obj instanceof ZoomOptions)) {
+    if (!(obj instanceof ZoomOptions otherOptions)) {
       return false;
     }
-
-    ZoomOptions otherOptions = (ZoomOptions)obj;
 
     Dimension prefferedSize = otherOptions.getPrefferedSize();
     return prefferedSize != null && prefferedHeight == prefferedSize.height &&

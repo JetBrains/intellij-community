@@ -15,11 +15,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MakeVarEffectivelyFinalFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
-import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.*;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.UnimplementInterfaceAction;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
@@ -28,7 +26,7 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -49,7 +47,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -68,6 +68,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
@@ -153,7 +154,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                          @NotNull PsiClassType exceptionClass,
                                                          boolean shouldThrow,
                                                          boolean showContainingClass) {
-    return shouldThrow ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass) : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
+    return shouldThrow
+           ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass)
+           : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
   }
 
   @NotNull
@@ -204,19 +207,29 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   @Nullable
-  public IntentionAction createCreateClassOrPackageFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
+  public IntentionAction createCreateClassOrPackageFix(@NotNull PsiElement context,
+                                                       @NotNull String qualifiedName,
+                                                       boolean createClass,
+                                                       String superClass) {
     return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : null, superClass);
   }
 
   @Override
   @Nullable
-  public IntentionAction createCreateClassOrInterfaceFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
+  public IntentionAction createCreateClassOrInterfaceFix(@NotNull PsiElement context,
+                                                         @NotNull String qualifiedName,
+                                                         boolean createClass,
+                                                         String superClass) {
     return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : ClassKind.INTERFACE, superClass);
   }
 
   @NotNull
   @Override
-  public IntentionAction createCreateFieldOrPropertyFix(@NotNull final PsiClass aClass, @NotNull final String name, @NotNull final PsiType type, @NotNull final PropertyMemberType targetMember, final PsiAnnotation @NotNull ... annotations) {
+  public IntentionAction createCreateFieldOrPropertyFix(@NotNull PsiClass aClass,
+                                                        @NotNull String name,
+                                                        @NotNull PsiType type,
+                                                        @NotNull PropertyMemberType targetMember,
+                                                        PsiAnnotation @NotNull ... annotations) {
     return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
   }
 
@@ -392,7 +405,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiElement element, @NotNull PsiMethod getter, boolean isSetter) {
+  public IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiElement element,
+                                                                           @NotNull PsiMethod getter,
+                                                                           boolean isSetter) {
     return new ReplaceInaccessibleFieldWithGetterSetterFix(element, getter, isSetter);
   }
 
@@ -528,7 +543,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                              @NotNull PsiElement context,
                                                                              boolean changeAllUsages,
                                                                              int minUsagesNumberToShowDialog) {
-    return new ChangeMethodSignatureFromUsageReverseOrderFix(targetMethod, expressions, substitutor, context, changeAllUsages, minUsagesNumberToShowDialog);
+    return new ChangeMethodSignatureFromUsageReverseOrderFix(targetMethod,
+                                                             expressions,
+                                                             substitutor,
+                                                             context,
+                                                             changeAllUsages,
+                                                             minUsagesNumberToShowDialog);
   }
 
   @NotNull
@@ -630,7 +650,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiTypeElement element, @NotNull String typeName, @NotNull String boxedTypeName) {
+  public IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiTypeElement element,
+                                                                   @NotNull String typeName,
+                                                                   @NotNull String boxedTypeName) {
     return new ReplacePrimitiveWithBoxedTypeAction(element, typeName, boxedTypeName);
   }
 
@@ -729,31 +751,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy) {
+  public @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter,
+                                                                                boolean excludingHierarchy) {
     if (excludingHierarchy) {
-      final SetInspectionOptionFix myFix =
-        SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME,
-                                         "myCheckParameterExcludingHierarchy",
-                                         JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false,
-                                         profileEntry -> profileEntry instanceof UnusedDeclarationInspectionBase
-                                                         ? ((UnusedDeclarationInspectionBase)profileEntry).getSharedLocalInspectionTool()
-                                                         : profileEntry);
-      return new AbstractIntentionAction() {
-        @Override
-        public @NotNull String getText() {
-          return JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text");
-        }
-
-        @Override
-        public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-          myFix.applyFix(project, file);
-        }
-
-        @Override
-        public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-          return myFix.generatePreview(project, file);
-        }
-      };
+      Function<InspectionProfileEntry, InspectionProfileEntry> extractor =
+        profileEntry -> profileEntry instanceof UnusedDeclarationInspectionBase
+                        ? ((UnusedDeclarationInspectionBase)profileEntry).getSharedLocalInspectionTool()
+                        : profileEntry;
+      return SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME, "myCheckParameterExcludingHierarchy",
+                                              JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false, extractor);
     }
     else {
       return new SafeDeleteFix(parameter);
@@ -786,7 +792,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement,
+                                                                              boolean useElementNameAsSuffix) {
     return RenameToIgnoredFix.createRenameToIgnoreFix(namedElement, useElementNameAsSuffix);
   }
 
@@ -838,7 +845,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
       if (Comparing.strEqual(beforeText, afterText)) {
         LOG.error("Import optimizer hasn't optimized any imports",
                   new Throwable(file.getViewProvider().getVirtualFile().getPath()),
-                  AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
+                  CoreAttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
       }
     }
   }
@@ -966,7 +973,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createPushDownMethodFix() {
-    return new RunRefactoringAction(JavaRefactoringActionHandlerFactory.getInstance().createPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
+    return new RunRefactoringAction(JavaRefactoringActionHandlerFactory.getInstance().createPushDownHandler(),
+                                    JavaBundle.message("push.method.down.command.name")) {
       @NotNull
       @Override
       public Priority getPriority() {

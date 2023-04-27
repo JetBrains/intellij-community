@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
@@ -90,7 +91,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (isInternal(extension, "isInternal")) {
         return;
       }
-      GenericAttributeValue<?> implementationClass = getAttribute(extension, "implementationClass");
+      GenericAttributeValue<?> implementationClass = DevKitDomUtil.getAttribute(extension, "implementationClass");
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
@@ -111,9 +112,10 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
     else if (InheritanceUtil.isInheritor(beanClass, SchemeConvertorEPBase.class.getName())) {
       checkNonLocalizableAttribute(holder, extension, "name", null);
-    } else if (NotificationGroupEP.class.getName().equals(beanClass.getQualifiedName())){
+    }
+    else if (NotificationGroupEP.class.getName().equals(beanClass.getQualifiedName())) {
       if (hasMissingAttribute(extension, "key")) {
-        GenericAttributeValue<?> value = getAttribute(extension, "hideFromSettings");
+        GenericAttributeValue<?> value = DevKitDomUtil.getAttribute(extension, "hideFromSettings");
         if (value == null || !Boolean.parseBoolean(value.getStringValue())) {
           holder.createProblem(extension, DevKitI18nBundle.message("inspections.plugin.xml.i18n.name"),
                                new NotificationGroupI18NQuickFix());
@@ -126,14 +128,14 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                    DomElement element,
                                                    @NonNls String attributeName,
                                                    @Nullable LocalQuickFix fix) {
-    highlightNonLocalizableElement(holder, getAttribute(element, attributeName), attributeName, fix);
+    highlightNonLocalizableElement(holder, DevKitDomUtil.getAttribute(element, attributeName), attributeName, fix);
   }
 
   private static void checkNonLocalizableTag(DomElementAnnotationHolder holder,
                                              DomElement element,
                                              String tagName,
                                              @Nullable LocalQuickFix quickFix) {
-    highlightNonLocalizableElement(holder, getTag(element, tagName), tagName, quickFix);
+    highlightNonLocalizableElement(holder, DevKitDomUtil.getTag(element, tagName), tagName, quickFix);
   }
 
   private static void highlightNonLocalizableElement(DomElementAnnotationHolder holder,
@@ -189,7 +191,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static boolean isInternal(@NotNull DomElement action, String internalAttributeName) {
-    final GenericAttributeValue<?> internalAttribute = getAttribute(action, internalAttributeName);
+    final GenericAttributeValue<?> internalAttribute = DevKitDomUtil.getAttribute(action, internalAttributeName);
     if (internalAttribute != null && "true".equals(internalAttribute.getStringValue())) return true;
     return false;
   }
@@ -205,7 +207,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @NotNull Set<Module> contextModules = ContainerUtil.map2Set(tags, x -> ModuleUtilCore.findModuleForPsiElement(x));
     ResourceBundleManager finalResourceBundleManager = resourceBundleManager;
     List<String> files = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(() -> finalResourceBundleManager != null ? finalResourceBundleManager.suggestPropertiesFiles(contextModules) 
+      () -> ReadAction.compute(() -> finalResourceBundleManager != null ? finalResourceBundleManager.suggestPropertiesFiles(contextModules)
                                                                         : I18nUtil.defaultSuggestPropertiesFiles(project, contextModules)),
       DevKitBundle.message("progress.title.calculate.target.properties.file"), true, project);
 
@@ -220,9 +222,9 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       .createPopupChooserBuilder(files)
       .setNamerForFiltering(x -> x)
       .setTitle(DevKitI18nBundle.message("inspections.plugin.xml.i18n.choose.bundle.4inspections.title")).
-        setItemChosenCallback(selected -> {
-          doFixConsumer.accept(selected);
-        });
+      setItemChosenCallback(selected -> {
+        doFixConsumer.accept(selected);
+      });
     builder.createPopup().showCenteredInCurrentWindow(project);
   }
 
@@ -291,8 +293,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
-      if (!(psiElement instanceof XmlTag)) return;
-      XmlTag xmlTag = (XmlTag)psiElement;
+      if (!(psiElement instanceof XmlTag xmlTag)) return;
 
 
       choosePropertiesFileAndExtract(project, Collections.singletonList(xmlTag), selection -> {
@@ -306,7 +307,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                 xmlTag.setAttribute("bundle", bundleQName);
               }
 
-              String escapedId = StringUtil.defaultIfEmpty(StringUtil.toLowerCase(xmlTag.getAttributeValue("id")), "notification.id").replace(' ', '.');
+              String escapedId =
+                StringUtil.defaultIfEmpty(StringUtil.toLowerCase(xmlTag.getAttributeValue("id")), "notification.id").replace(' ', '.');
               String messageKey = "notification.group." + escapedId;
               xmlTag.setAttribute("key", messageKey);
 
@@ -443,7 +445,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       VirtualFile nullValue = new LightVirtualFile();
       Map<VirtualFile, List<CommonProblemDescriptor>> byPropertyFiles = Arrays.stream(descriptors)
         .filter(d -> d instanceof ProblemDescriptor)
-        .collect(Collectors.groupingBy(cd -> ObjectUtils.notNull(((ActionOrGroupQuickFixAction)cd.getFixes()[0]).myPropertiesFile, nullValue)));
+        .collect(
+          Collectors.groupingBy(cd -> ObjectUtils.notNull(((ActionOrGroupQuickFixAction)cd.getFixes()[0]).myPropertiesFile, nullValue)));
 
       //in case of multiple files in selection with different bundles, multiple clear read-only status dialog is possible
       for (Map.Entry<VirtualFile, List<CommonProblemDescriptor>> entry : byPropertyFiles.entrySet()) {
@@ -455,8 +458,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof XmlTag)) return;
-      XmlTag tag = (XmlTag)element;
+      if (!(element instanceof XmlTag tag)) return;
 
       doFix(project, myPropertiesFile, Collections.singletonList(tag));
     }

@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
@@ -50,7 +52,7 @@ class ReplaceBySourceTest {
     val baseDir = projectModel.baseProjectDir.rootPath.resolve("test")
     val iprFile = baseDir.resolve("testProject.ipr")
     val configLocation = toConfigLocation(iprFile, virtualFileManager)
-    val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
+    val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
 
     val moduleEntity = builder.addModuleEntity("name", emptyList(), source)

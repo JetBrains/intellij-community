@@ -19,9 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -37,18 +34,10 @@ public final class PsiUtilEx {
   private PsiUtilEx() {
   }
 
-  public static boolean isInSourceContent(PsiElement e) {
-    final VirtualFile file = e.getContainingFile().getVirtualFile();
-    if (file == null) return false;
-    final ProjectFileIndex index = ProjectRootManager.getInstance(e.getProject()).getFileIndex();
-    return index.isInContent(file);
-  }
-
   @Nullable
   public static PsiParameter getParameterForArgument(PsiElement element) {
     PsiElement p = element.getParent();
-    if (!(p instanceof PsiExpressionList)) return null;
-    PsiExpressionList list = (PsiExpressionList)p;
+    if (!(p instanceof PsiExpressionList list)) return null;
     PsiElement parent = list.getParent();
     if (!(parent instanceof PsiCallExpression)) return null;
     PsiExpression[] arguments = list.getExpressions();

@@ -384,10 +384,9 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
   }
 
   private static boolean isEmptyCollectionInitializer(PsiExpression initializer) {
-    if (!(initializer instanceof PsiNewExpression)) {
+    if (!(initializer instanceof PsiNewExpression newExpression)) {
       return ConstructionUtils.isEmptyCollectionInitializer(initializer);
     }
-    final PsiNewExpression newExpression = (PsiNewExpression)initializer;
     final PsiExpressionList argumentList = newExpression.getArgumentList();
     if (argumentList == null) {
       return false;
@@ -522,8 +521,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
             .allMatch(MismatchedCollectionQueryUpdateInspection::isEmptyCollectionInitializer)) {
         return true;
       }
-      if (initializer instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+      if (initializer instanceof PsiNewExpression newExpression) {
         final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
         if (anonymousClass != null) {
           if (getCollectionQueryUpdateInfo(null, anonymousClass, queryNames, updateNames).updated) {

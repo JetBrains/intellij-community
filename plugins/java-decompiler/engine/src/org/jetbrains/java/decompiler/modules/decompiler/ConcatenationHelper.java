@@ -173,8 +173,7 @@ public final class ConcatenationHelper {
             if (c == TAG_ARG) {
               Exprent exprent = parameters.get(parameterId++);
 
-              if ((exprent instanceof VarExprent) && res.isEmpty()) {
-                VarExprent varExprent = (VarExprent) exprent;
+              if ((exprent instanceof VarExprent varExprent) && res.isEmpty()) {
 
                 if (!VarType.VARTYPE_STRING.equals(varExprent.getVarType())) {
                   // First item of concatenation is a variable and variable's type is not a String.

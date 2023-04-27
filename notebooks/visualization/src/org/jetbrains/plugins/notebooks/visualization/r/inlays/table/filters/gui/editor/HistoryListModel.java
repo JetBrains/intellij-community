@@ -163,9 +163,8 @@ class HistoryListModel extends AbstractListModel {
     /** @see  PopupComponent#selectBestMatch(Object) */
     public ChoiceMatch getClosestMatch(Object hint) {
         ChoiceMatch ret = new ChoiceMatch();
-        if ((stringComparator != null) && (hint instanceof String)) {
-        	String strStart = (String) hint;        	
-            int strLen = strStart.length();
+        if ((stringComparator != null) && (hint instanceof String strStart)) {
+          int strLen = strStart.length();
             int historyLen = shownHistory.size();
             while (historyLen-- > 0) {
                 Object content = shownHistory.get(historyLen);

@@ -190,8 +190,7 @@ public final class ControlFlow {
     int startOffset = getStartOffset(element).getInstructionOffset();
     List<DfaVariableValue> synthetics = new ArrayList<>();
     for (DfaValue value : myFactory.getValues()) {
-      if (value instanceof DfaVariableValue) {
-        DfaVariableValue var = (DfaVariableValue)value;
+      if (value instanceof DfaVariableValue var) {
         VariableDescriptor descriptor = var.getDescriptor();
         if (descriptor instanceof Synthetic && ((Synthetic)descriptor).myLocation >= startOffset) {
           synthetics.add(var);

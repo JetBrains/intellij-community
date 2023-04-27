@@ -40,8 +40,7 @@ public class HtmlGotoRelatedProvider extends GotoRelatedProvider {
     List<GotoRelatedItem> items = new ArrayList<>();
 
     for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
-      if (psiFile instanceof XmlFile) {
-        final XmlFile xmlFile = (XmlFile)psiFile;
+      if (psiFile instanceof XmlFile xmlFile) {
 
         for (RelatedToHtmlFilesContributor contributor : RelatedToHtmlFilesContributor.EP_NAME.getExtensionList()) {
           HashSet<PsiFile> resultSet = new HashSet<>();

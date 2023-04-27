@@ -255,8 +255,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void processBinaryChangeError(@NotNull Throwable error) throws VcsException {
-    if (error instanceof VcsException) {
-      VcsException vcsError = (VcsException)error;
+    if (error instanceof VcsException vcsError) {
       if (vcsError.isWarning()) {
         addError(vcsError);
       }

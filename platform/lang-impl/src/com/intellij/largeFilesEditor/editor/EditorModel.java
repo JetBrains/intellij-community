@@ -118,8 +118,7 @@ public class EditorModel {
   private void insertGlobalScrollBarIntoEditorComponent() {
     JComponent mainPanelInEditor = editor.getComponent();
     LayoutManager layout = mainPanelInEditor.getLayout();
-    if (layout instanceof BorderLayout) {
-      BorderLayout borderLayout = (BorderLayout)layout;
+    if (layout instanceof BorderLayout borderLayout) {
       Component originalCentralComponent = borderLayout.getLayoutComponent(BorderLayout.CENTER);
 
       JBLayeredPane intermediatePane = new JBLayeredPane() {

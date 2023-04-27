@@ -88,8 +88,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection impleme
       boolean labelSeen = false;
       for (int i = statements.length - 1; i >= 0; i--) {
         final PsiStatement child = statements[i];
-        if (child instanceof PsiSwitchLabelStatementBase) {
-          final PsiSwitchLabelStatementBase label = (PsiSwitchLabelStatementBase)child;
+        if (child instanceof PsiSwitchLabelStatementBase label) {
           PsiElement defaultElement = SwitchUtils.findDefaultElement(label);
           if (defaultElement != null) {
             if (labelSeen) {

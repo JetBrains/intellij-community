@@ -64,6 +64,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -302,6 +303,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private List<CaretState> myCaretStateBeforeLastPress;
   LogicalPosition myLastMousePressedLocation;
+
+  Point myLastMousePressedPoint;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
   private boolean myRectangularSelectionInProgress;
@@ -511,7 +514,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    setFontSize(UISettingsUtils.getScaledEditorFontSize());
+    setFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -3861,6 +3864,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = createEditorMouseEvent(e);
       myLastPressWasAtBlockInlay = false;
       myLastMousePressedLocation = event.getLogicalPosition();
+      myLastMousePressedPoint = new RelativePoint(event.getMouseEvent()).getPoint(myEditorComponent);
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
       myDragStarted = false;
@@ -4569,7 +4573,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
       }
       if (myFontSize == FONT_SIZE_TO_IGNORE) {
-        return UISettingsUtils.scaleFontSize(getDelegate().getEditorFontSize2D());
+        return UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D());
       }
       return myFontSize;
     }
@@ -4595,7 +4599,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      if (fontSize == UISettingsUtils.scaleFontSize(super.getEditorFontSize2D())) {
+      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(super.getEditorFontSize2D())) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {
@@ -5032,8 +5036,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         FoldRegion foldRegion = event.getCollapsedFoldRegion();
-        if (foldRegion instanceof CustomFoldRegion) {
-          CustomFoldRegion customFoldRegion = (CustomFoldRegion)foldRegion;
+        if (foldRegion instanceof CustomFoldRegion customFoldRegion) {
           ActionGroup group = customFoldRegion.getRenderer().getContextMenuGroup(customFoldRegion);
           if (group != null) return group;
         }
@@ -5073,11 +5076,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (mySettings.isWheelFontChangeEnabled()) {
         if (EditorUtil.isChangeFontSize(e)) {
-          float size = myScheme.getEditorFontSize2D() - e.getWheelRotation();
+          boolean isWheelFontChangePersistent = EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()
+                                                && !UISettings.getInstance().getPresentationMode();
+          float shift = e.getWheelRotation();
+          float size = myScheme.getEditorFontSize2D();
+          if (isWheelFontChangePersistent) {
+            size = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
+          }
+
+          size -= shift;
           if (size >= MIN_FONT_SIZE) {
-            setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
-            if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+            if (isWheelFontChangePersistent) {
+              setFontSize(UISettingsUtils.getInstance().scaleFontSize(size),
+                          SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
               adjustGlobalFontSize(size);
+            }
+            else {
+              setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
             }
           }
           return;

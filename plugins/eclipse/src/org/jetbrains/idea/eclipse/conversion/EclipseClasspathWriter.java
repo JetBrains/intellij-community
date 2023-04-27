@@ -89,8 +89,7 @@ public class EclipseClasspathWriter {
       }
       setExported(orderEntry, ((ExportableOrderEntry)entry));
     }
-    else if (entry instanceof LibraryOrderEntry) {
-      final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+    else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
       final String libraryName = libraryOrderEntry.getLibraryName();
       if (libraryOrderEntry.isModuleLevel()) {
         final String[] files = libraryOrderEntry.getRootUrls(OrderRootType.CLASSES);

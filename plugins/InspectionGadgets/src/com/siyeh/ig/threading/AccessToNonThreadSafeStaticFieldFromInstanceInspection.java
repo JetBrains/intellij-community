@@ -71,10 +71,9 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
         return;
       }
       final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)type;
       final String className = classType.rawType().getCanonicalText();
       boolean deepCheck = false;
       if (!nonThreadSafeClasses.contains(className)) {
@@ -84,10 +83,9 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
         deepCheck = true;
       }
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)target;
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
@@ -118,10 +116,9 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
           return;
         }
         final PsiType initializerType = initializer.getType();
-        if (!(initializerType instanceof PsiClassType)) {
+        if (!(initializerType instanceof PsiClassType classType2)) {
           return;
         }
-        final PsiClassType classType2 = (PsiClassType)initializerType;
         final String className2 = classType2.rawType().getCanonicalText();
         if (!nonThreadSafeClasses.contains(className2)) {
           return;

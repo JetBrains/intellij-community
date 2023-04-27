@@ -103,5 +103,6 @@ open class IntellijPlatformDefaultToolWindowLayoutProvider : DefaultToolWindowLa
     // Problems
     builder.add("Problems View")
     builder.add("Terminal")
+    builder.add("Services")
   }
 }

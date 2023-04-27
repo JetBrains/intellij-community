@@ -464,7 +464,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
       ModuleSdkData moduleSdkData = new ModuleSdkData(sdkName);
       moduleNode.createChild(ModuleSdkData.KEY, moduleSdkData);
     }
-    // todo[Vlad] the catch can be omitted when the support of the Gradle < 3.0 will be dropped
+    // todo[nskvortsov] the catch can be omitted when the support of the Gradle < 3.4 will be dropped
     catch (UnsupportedMethodException ignore) {
     }
   }

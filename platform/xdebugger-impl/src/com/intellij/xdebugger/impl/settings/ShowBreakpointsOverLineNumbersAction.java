@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -16,6 +16,10 @@ import org.jetbrains.annotations.NotNull;
 public class ShowBreakpointsOverLineNumbersAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
+    return isSelected();
+  }
+
+  public static boolean isSelected() {
     return XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isBreakpointsOnLineNumbers()
            && EditorSettingsExternalizable.getInstance().isLineNumbersShown();
   }

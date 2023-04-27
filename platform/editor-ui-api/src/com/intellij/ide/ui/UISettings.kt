@@ -212,6 +212,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.compactTreeIndents = value
     }
 
+  var compactMode: Boolean
+    get() = uiDensity == UIDensity.COMPACT
+    set(value) {
+      uiDensity = if (value) UIDensity.COMPACT else UIDensity.DEFAULT
+    }
+
   var uiDensity: UIDensity
     get() = state.uiDensity
     set(value) {
@@ -298,9 +304,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var presentationModeFontSize: Int
-    get() = UISettingsUtils.presentationModeFontSize.toInt()
+    get() = UISettingsUtils.with(this).presentationModeFontSize.toInt()
     set(value) {
-      UISettingsUtils.presentationModeFontSize = value.toFloat()
+      UISettingsUtils.with(this).presentationModeFontSize = value.toFloat()
     }
 
   var presentationModeIdeScale: Float

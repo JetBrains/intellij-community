@@ -23,7 +23,7 @@ class IdeScaleIndicatorManager(val project: Project) {
   private var balloon: Balloon? = null
   private var indicator: IdeScaleIndicator? = null
   private val alarm = Alarm(project)
-  private val updateScaleHelper = UpdateScaleHelper { UISettingsUtils.currentIdeScale }
+  private val updateScaleHelper = UpdateScaleHelper { UISettingsUtils.instance.currentIdeScale }
 
   init {
     setupLafListener()
@@ -32,7 +32,7 @@ class IdeScaleIndicatorManager(val project: Project) {
   fun showIndicator() {
     cancelCurrentPopup()
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)?.component ?: return
-    val indicator = IdeScaleIndicator(UISettingsUtils.currentIdeScale.percentValue)
+    val indicator = IdeScaleIndicator(UISettingsUtils.instance.currentIdeScale.percentValue)
     this.indicator = indicator
 
     val newUI = ExperimentalUI.isNewUI()
@@ -75,7 +75,7 @@ class IdeScaleIndicatorManager(val project: Project) {
   private fun setupLafListener() {
     ApplicationManager.getApplication().messageBus.connect(project).subscribe(LafManagerListener.TOPIC, LafManagerListener {
       updateScaleHelper.saveScaleAndRunIfChanged {
-        showIndicator()
+        if (shouldIndicate) showIndicator()
       }
     })
   }
@@ -83,12 +83,23 @@ class IdeScaleIndicatorManager(val project: Project) {
   companion object {
     private const val POPUP_TIMEOUT_MS = 4000
     private const val POPUP_SHORT_TIMEOUT_MS = 1000
+    private var shouldIndicate: Boolean = false
 
     @JvmStatic
     fun getInstance(project: Project): IdeScaleIndicatorManager = project.getService(IdeScaleIndicatorManager::class.java)
     @JvmStatic
     fun setup(project: Project) {
       getInstance(project)
+    }
+
+    fun indicateIfChanged(update: () -> Unit) {
+      shouldIndicate = true
+      try {
+        update()
+      }
+      finally {
+        shouldIndicate = false
+      }
     }
   }
 }

@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
 import java.util.Map;
 
 public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet> {
@@ -58,12 +57,11 @@ public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet
   public void setDisplayName(String name) {
     var module = myFacet.getModule();
     // facet names must be unique within the same module and facet type
-    var existingFacetNames = new HashSet<String>();
-    myFacetConfigurables.keySet().stream()
+    var facetNameExists = myFacetConfigurables.keySet().stream()
       .filter(facet -> facet.getModule() == module && facet.getTypeId() == myFacet.getTypeId())
       .map(facet -> myFacetConfigurables.get(facet))
-      .forEach(facetConfigurable -> existingFacetNames.add(facetConfigurable.getDisplayName()));
-    if (!existingFacetNames.contains(name)) {
+      .anyMatch(facetConfigurable -> name.equals(facetConfigurable.getDisplayName()));
+    if (!facetNameExists) {
       getFacetsConfigurator().getOrCreateModifiableModel(module).rename(myFacet, name);
       myFacetName = name;
     }

@@ -131,8 +131,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     add(BorderLayout.CENTER, pane);
 
     EditorGutter gutter = editor.getGutter();
-    if (gutter instanceof EditorGutterComponentEx) {
-      EditorGutterComponentEx gutterComponent = (EditorGutterComponentEx)gutter;
+    if (gutter instanceof EditorGutterComponentEx gutterComponent) {
       MouseEventAdapter mouseListener = new MouseEventAdapter<>(gutterComponent) {
         @NotNull
         @Override
@@ -262,8 +261,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   protected abstract Iterable<? extends Crumb> computeCrumbs(int offset);
 
   protected void navigateToCrumb(Crumb crumb, boolean withSelection) {
-    if (crumb instanceof NavigatableCrumb) {
-      NavigatableCrumb navigatableCrumb = (NavigatableCrumb)crumb;
+    if (crumb instanceof NavigatableCrumb navigatableCrumb) {
       myUserCaretChange = false;
       navigatableCrumb.navigate(myEditor, withSelection);
     }

@@ -122,8 +122,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (myEditor instanceof DataProvider) {
-      DataProvider provider = (DataProvider)myEditor;
+    if (myEditor instanceof DataProvider provider) {
       return provider.getData(dataId);
     }
     return null;

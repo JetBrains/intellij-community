@@ -25,10 +25,9 @@ class SplitElseIfPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrIfStatement)) {
+    if (!(element instanceof GrIfStatement ifStatement)) {
       return false;
     }
-    final GrIfStatement ifStatement = (GrIfStatement) element;
     final GrStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch == null) {
       return false;

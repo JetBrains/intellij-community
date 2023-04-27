@@ -181,10 +181,9 @@ public class ObjectEqualityInspection extends BaseInspection {
     }
 
     private boolean isThisReference(@Nullable PsiExpression expression, @Nullable PsiClass psiClass) {
-      if (!(expression instanceof PsiThisExpression)) {
+      if (!(expression instanceof PsiThisExpression thisExpression)) {
         return false;
       }
-      final PsiThisExpression thisExpression = (PsiThisExpression)expression;
       final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
       return qualifier == null || psiClass != null && qualifier.isReferenceTo(psiClass);
     }

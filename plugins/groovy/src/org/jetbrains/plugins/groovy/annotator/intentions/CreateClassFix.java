@@ -48,8 +48,7 @@ public abstract class CreateClassFix {
       @Override
       protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
         final PsiFile file = element.getContainingFile();
-        if (!(file instanceof GroovyFileBase)) return;
-        GroovyFileBase groovyFile = (GroovyFileBase)file;
+        if (!(file instanceof GroovyFileBase groovyFile)) return;
         final PsiManager manager = myRefElement.getManager();
 
         final String qualifier = ReadAction.compute(() -> groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "");
@@ -113,8 +112,7 @@ public abstract class CreateClassFix {
       @Override
       protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
         final PsiFile file = element.getContainingFile();
-        if (!(file instanceof GroovyFileBase)) return;
-        GroovyFileBase groovyFile = (GroovyFileBase)file;
+        if (!(file instanceof GroovyFileBase groovyFile)) return;
 
         PsiElement qualifier = myRefElement.getQualifier();
 

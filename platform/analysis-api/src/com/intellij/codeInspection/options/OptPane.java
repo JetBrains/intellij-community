@@ -305,7 +305,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    */
   @Contract(pure = true)
   public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId, @NotNull @Nls String label) {
-    return new OptStringList(bindId, new PlainMessage(label), null);
+    return new OptStringList(bindId, new PlainMessage(label), null, null);
   }
 
   /**
@@ -318,7 +318,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
   @Contract(pure = true)
   public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId, @NotNull @Nls String label,
                                                   @NotNull StringValidator validator) {
-    return new OptStringList(bindId, new PlainMessage(label), validator);
+    return new OptStringList(bindId, new PlainMessage(label), validator, null);
   }
 
   /**
@@ -327,7 +327,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
    * @return new table 
    */
   public static @NotNull OptTable table(@NotNull @NlsContexts.Label String label, @NotNull OptStringList @NotNull ... columns) {
-    return new OptTable(new PlainMessage(label), List.of(columns));
+    return new OptTable(new PlainMessage(label), List.of(columns), null);
   }
 
   /* Layout elements */

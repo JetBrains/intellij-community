@@ -104,8 +104,8 @@ internal class NewNavBarPanel(
         itemComponent.focusItem()
         if (!ExperimentalUI.isNewUI()) {
           // Components update themselves on selection change.
-          // In total 2 components ate updated: the one which became selected, and the one which lost the selection.
-          // In the old chevron needs to know whether the next component is selected
+          // In total 2 components are updated: the one which became selected, and the one which lost the selection.
+          // In the old UI chevron needs to know whether the next component is selected
           // regardless of selection moving to the left or right.
           // I don't really want to expose and maintain [NavBarItemVm#isNextSelected] as StateFlow,
           // so in the old UI all components are updated on each selection change.

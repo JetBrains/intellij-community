@@ -89,8 +89,7 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     int caretPos = textComponent.getCaretPosition();
     int line;
     int lineStart;
-    if (textComponent instanceof JTextArea) {
-      final JTextArea textArea = (JTextArea)textComponent;
+    if (textComponent instanceof JTextArea textArea) {
       try {
         line = textArea.getLineOfOffset(caretPos);
         lineStart = textArea.getLineStartOffset(line);

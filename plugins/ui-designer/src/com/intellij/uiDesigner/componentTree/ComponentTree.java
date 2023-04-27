@@ -166,8 +166,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       LOG.assertTrue(node != null);
       final Object userObject = node.getUserObject();
-      if (userObject instanceof ComponentPtrDescriptor) {
-        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)userObject;
+      if (userObject instanceof ComponentPtrDescriptor descriptor) {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr != null && ptr.isValid()) {
           final RadComponent component = ptr.getComponent();
@@ -203,8 +202,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     final ArrayList<RadComponent> result = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (node != null && node.getUserObject() instanceof ComponentPtrDescriptor) {
-        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
+      if (node != null && node.getUserObject() instanceof ComponentPtrDescriptor descriptor) {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr != null && ptr.isValid()) {
           result.add(ptr.getComponent());
@@ -400,8 +398,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       final boolean hasFocus
     ) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-      if (node.getUserObject() instanceof ComponentPtrDescriptor) {
-        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
+      if (node.getUserObject() instanceof ComponentPtrDescriptor descriptor) {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr == null) return;
         final RadComponent component = ptr.getComponent();
@@ -434,8 +431,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         else if (component instanceof RadHSpacer) {
           append(UIDesignerBundle.message("component.horizontal.spacer"), getAttribute(myClassAttributes, level));
         }
-        else if (component instanceof RadErrorComponent) {
-          final RadErrorComponent c = (RadErrorComponent)component;
+        else if (component instanceof RadErrorComponent c) {
           append(c.getErrorDescription(), getAttribute(myUnknownAttributes, level));
         }
         else if (component instanceof RadRootContainer) {

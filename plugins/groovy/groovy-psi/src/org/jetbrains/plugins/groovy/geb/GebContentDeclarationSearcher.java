@@ -26,9 +26,8 @@ public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
     if (!(grClosure instanceof GrClosableBlock)) return;
 
     PsiElement contentField = grClosure.getParent();
-    if (!(contentField instanceof GrField)) return;
+    if (!(contentField instanceof GrField field)) return;
 
-    GrField field = (GrField)contentField;
     if (!"content".equals(field.getName()) || !field.hasModifierProperty(PsiModifier.STATIC)) return;
 
     PsiClass containingClass = field.getContainingClass();

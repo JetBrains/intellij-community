@@ -61,15 +61,37 @@ public class DeconstructionInstanceOf20 {
       System.out.println(m);
     }
     //error
-    if (ob instanceof <error descr="'Object' cannot be safely cast to 'UnaryOperator<Object>'">UnaryOperator<Object></error> objectUnaryOperator) {
+    if (ob instanceof <error descr="'Object' cannot be safely cast to 'UnaryOperator<Object>'">UnaryOperator<Object> objectUnaryOperator</error>) {
 
     }
     //error
-    if (ob instanceof <error descr="'Object' cannot be safely cast to 'UnaryOperator<Object>'">UnaryOperator<Object></error> objectUnaryOperator) {
+    if (ob instanceof <error descr="'Object' cannot be safely cast to 'UnaryOperator<Object>'">UnaryOperator<Object> objectUnaryOperator</error>) {
 
     }
     if (op instanceof Mapper objectUnaryOperator) {
 
     }
   }
+
+  record Pair<T,T1>(T first, T1 second) {};
+
+  public static void notDowncastConvertible(){
+    Object o = "Some string";
+    if (o instanceof Pair(Integer x, String y)) {
+      System.out.println(x + " " + y);
+    } else {
+      System.out.println("notDowncastConvertible default branch");
+    }
+  };
+
+  public static void downcastConvertible(){
+    Pair<Integer, String> pair = new Pair<>(42, "hello");
+
+    Object o = pair;
+    if (o instanceof Pair(Integer x, String y)) {
+      System.out.println(x + " " + y);
+    } else {
+      System.out.println("notDowncastConvertible default branch");
+    }
+  };
 }

@@ -13,13 +13,13 @@ import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
-import com.intellij.ide.wizard.comment.NewProjectLinkNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
-import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Companion.append
+import com.intellij.ide.wizard.comment.NewProjectLinkNewProjectWizardStep
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Cell
+import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.service.ui.spinner.ComponentSpinnerExtension.Companion.setSpinning
 import com.intellij.openapi.observable.util.transform
@@ -348,7 +348,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           putAll(archetypeDescriptor)
         }
       }
-      builder.commit(project)
+      setupProjectFromBuilder(project, builder)
     }
   }
 

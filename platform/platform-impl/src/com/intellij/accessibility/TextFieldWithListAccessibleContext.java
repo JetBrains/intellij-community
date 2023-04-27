@@ -44,8 +44,7 @@ public class TextFieldWithListAccessibleContext extends JTextComponent.Accessibl
                                  Object oldValue,
                                  Object newValue) {
     if (accessibleChangeSupport != null) {
-      if (newValue instanceof PropertyChangeEvent) {
-        PropertyChangeEvent pce = (PropertyChangeEvent)newValue;
+      if (newValue instanceof PropertyChangeEvent pce) {
         accessibleChangeSupport.firePropertyChange(pce);
       } else {
         accessibleChangeSupport.firePropertyChange(propertyName,

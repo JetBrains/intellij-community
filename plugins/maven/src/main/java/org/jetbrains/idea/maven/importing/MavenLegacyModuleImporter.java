@@ -368,8 +368,7 @@ public final class MavenLegacyModuleImporter {
         myRootModelAdapter.addLibraryDependency(((LibraryDependency)dependency).getArtifact(), dependency.getScope(),
                                                 myModifiableModelsProvider, myMavenProject);
       }
-      else if (dependency instanceof ModuleDependency) {
-        ModuleDependency moduleDependency = (ModuleDependency)dependency;
+      else if (dependency instanceof ModuleDependency moduleDependency) {
         myRootModelAdapter.addModuleDependency(moduleDependency.getArtifact(), dependency.getScope(), moduleDependency.isTestJar());
       }
       else if (dependency instanceof BaseDependency) {

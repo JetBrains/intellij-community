@@ -31,8 +31,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   @Override
   protected InspectionGadgetsFix buildFix(final Object... infos) {
     if (infos.length == 0) return null;
-    if (infos[0] instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)infos[0];
+    if (infos[0] instanceof PsiClass aClass) {
       final String signature = "@" + PARAMETERS_FQN + " public static java.lang.Iterable<java.lang.Object[]> parameters()";
       return new DelegatingFix(CreateMethodQuickFix.createFix(aClass, signature, "")) {
         @Override
@@ -56,10 +55,9 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
       @Override
       protected void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement().getParent();
-        if (!(element instanceof PsiMethod)) {
+        if (!(element instanceof PsiMethod method)) {
           return;
         }
-        final PsiMethod method = (PsiMethod)element;
         WriteAction.run(() -> {
           final VirtualFile vFile = method.getContainingFile().getVirtualFile();
           if (ReadonlyStatusHandler.getInstance(method.getProject()).ensureFilesWritable(List.of(vFile)).hasReadonlyFiles()) {

@@ -29,6 +29,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -204,7 +205,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     private PsiElement remapElement(PsiElement element) {
-      String name = JVMNameUtil.getClassVMName(getEnclosingClass(element));
+      String name = JVMNameUtil.getClassVMName(ClassUtils.getContainingClass(element));
       if (name != null && !name.equals(myExpectedClassName)) {
         return null;
       }
@@ -279,7 +280,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     Set<PsiClass> res = new HashSet<>();
     if (document != null) {
       XDebuggerUtil.getInstance().iterateLine(file.getProject(), document, lineNumber, element -> {
-        PsiClass aClass = getEnclosingClass(element);
+        PsiClass aClass = ClassUtils.getContainingClass(element);
         if (aClass != null) {
           res.add(aClass);
         }
@@ -449,48 +450,19 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   private static Pair<PsiClass, Integer> getTopOrStaticEnclosingClass(PsiClass aClass) {
     int depth = 0;
-    PsiClass enclosing = getEnclosingClass(aClass);
+    PsiClass enclosing = ClassUtils.getContainingClass(aClass);
     while (enclosing != null) {
       depth++;
       if (enclosing.hasModifierProperty(PsiModifier.STATIC)) {
         break;
       }
-      PsiClass next = getEnclosingClass(enclosing);
+      PsiClass next = ClassUtils.getContainingClass(enclosing);
       if (next == null) {
         break;
       }
       enclosing = next;
     }
     return Pair.create(enclosing, depth);
-  }
-
-  /**
-   * See IDEA-121739
-   * Anonymous classes inside other anonymous class parameters list should belong to parent class
-   * Inner in = new Inner(new Inner2(){}) {};
-   * Parent of Inner2 sub class here is not Inner sub class
-   */
-  @Nullable
-  private static PsiClass getEnclosingClass(@Nullable PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-
-    element = element.getParent();
-    PsiElement previous = null;
-
-    while (element != null) {
-      if (element instanceof PsiClass && !(previous instanceof PsiExpressionList)) {
-        return (PsiClass)element;
-      }
-      if (element instanceof PsiFile) {
-        return null;
-      }
-      previous = element;
-      element = element.getParent();
-    }
-
-    return null;
   }
 
   @Nullable

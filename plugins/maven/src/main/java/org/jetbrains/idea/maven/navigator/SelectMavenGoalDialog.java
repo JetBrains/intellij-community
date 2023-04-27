@@ -19,15 +19,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.navigator.structure.GoalNode;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 import javax.swing.*;
 
 public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
-  private MavenProjectsStructure.GoalNode myResult;
+  private GoalNode myResult;
 
   public SelectMavenGoalDialog(Project project) {
-    super(project, MavenProjectBundle.message("dialog.title.choose.maven.goal"), MavenProjectsStructure.GoalNode.class);
+    super(project, MavenProjectBundle.message("dialog.title.choose.maven.goal"), MavenProjectsStructure.MavenStructureDisplayMode.SHOW_GOALS);
     init();
   }
 
@@ -41,7 +43,7 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
     SimpleNode node = getSelectedNode();
     if (node instanceof NullNode) node = null;
 
-    myResult = node instanceof MavenProjectsStructure.GoalNode ? ((MavenProjectsStructure.GoalNode)node) : null;
+    myResult = node instanceof GoalNode ? ((GoalNode)node) : null;
     super.doOKAction();
   }
 
@@ -51,7 +53,7 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
     myResult = null;
   }
 
-  public MavenProjectsStructure.GoalNode getResult() {
+  public GoalNode getResult() {
     return myResult;
   }
 }

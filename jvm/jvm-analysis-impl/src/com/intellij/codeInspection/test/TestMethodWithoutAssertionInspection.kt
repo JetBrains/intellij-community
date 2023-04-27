@@ -6,25 +6,24 @@ import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptionController
 import com.intellij.codeInspection.registerUProblem
-import com.intellij.codeInspection.test.junit.HamcrestCommonClassNames.*
-import com.intellij.codeInspection.ui.ListTable
-import com.intellij.codeInspection.ui.ListWrappingTableModel
-import com.intellij.psi.*
+import com.intellij.codeInspection.test.junit.HamcrestCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
-import com.intellij.util.ui.CheckBox
-import com.intellij.util.ui.FormBuilder
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.MethodMatcher
 import com.siyeh.ig.psiutils.TestUtils
-import com.siyeh.ig.ui.UiUtils
 import org.jdom.Element
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
-import javax.swing.JComponent
 
 class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
@@ -52,25 +51,14 @@ class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool
     .add("org.testng.AssertJUnit", "assert.*|fail.*")
     .finishDefault()
 
-  override fun createOptionsPanel(): JComponent? {
-    val table = ListTable(ListWrappingTableModel(
-      listOf(methodMatcher.classNames, methodMatcher.methodNamePatterns),
-      InspectionGadgetsBundle.message("column.assertion.class.name"),
-      InspectionGadgetsBundle.message("method.name.regex")
-    ))
-    val checkBox1 = CheckBox(
-      InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion"), this, "assertKeywordIsAssertion"
-    )
-    val checkBox2 = CheckBox(
-      InspectionGadgetsBundle.message("inspection.test.method.without.assertions.exceptions.option"), this, "ignoreIfExceptionThrown"
-    )
-    val title = InspectionGadgetsBundle.message("test.without.assertion.options.choose.class")
-    return FormBuilder()
-      .addComponentFillVertically(UiUtils.createAddRemoveTreeClassChooserPanel(table, title), 0)
-      .addComponent(checkBox1)
-      .addComponent(checkBox2)
-      .panel
-  }
+  override fun getOptionsPane(): OptPane = pane(
+    methodMatcher.getTable(InspectionGadgetsBundle.message("inspection.test.method.without.assertion.list.name")).prefix("methodMatcher"),
+    checkbox("assertKeywordIsAssertion", InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion")),
+    checkbox("ignoreIfExceptionThrown", InspectionGadgetsBundle.message("inspection.test.method.without.assertions.exceptions.option")),
+  )
+
+  override fun getOptionController(): OptionController =
+    super.getOptionController().onPrefix("methodMatcher", methodMatcher.optionController)
 
   override fun readSettings(node: Element) {
     methodMatcher.readSettings(node)

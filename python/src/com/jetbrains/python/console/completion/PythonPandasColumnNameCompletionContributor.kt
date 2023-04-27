@@ -15,13 +15,9 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.actions.checkIfAvailableAndShowHint
 import com.jetbrains.python.actions.getCustomDescriptor
 import com.jetbrains.python.actions.getSelectedPythonConsole
-import com.jetbrains.python.console.PyConsoleOptions
-import com.jetbrains.python.console.PyExecuteConsoleCustomizer
-import com.jetbrains.python.console.PydevConsoleCommunication
-import com.jetbrains.python.console.PythonConsoleView
+import com.jetbrains.python.console.*
 import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.PyFrameListener
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
@@ -143,8 +139,9 @@ class PyPandasColumnNameRetrievalService(val project: Project) : PandasColumnNam
     val virtualFile = parameters.originalFile.virtualFile
     if (virtualFile.fileType !is PythonFileType) return false
 
-    val editor = parameters.editor
-    if (!checkIfAvailableAndShowHint(editor)) return false
+    if (PyExecuteConsoleCustomizer.instance.getCustomDescriptorType(virtualFile) == DescriptorType.NON_INTERACTIVE) {
+      return false
+    }
     return true
   }
 

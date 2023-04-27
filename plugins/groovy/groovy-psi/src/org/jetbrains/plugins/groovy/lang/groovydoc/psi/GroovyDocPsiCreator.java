@@ -15,8 +15,7 @@ public final class GroovyDocPsiCreator {
   public static PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
 
-    if (type instanceof GroovyDocTagValueTokenType) {
-      GroovyDocTagValueTokenType value = (GroovyDocTagValueTokenType) type;
+    if (type instanceof GroovyDocTagValueTokenType value) {
       GroovyDocTagValueTokenType.TagValueTokenType valueType = GroovyDocTagValueTokenType.getValueType(node);
       if (valueType == GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT) return new GrDocReferenceElementImpl(node);
 

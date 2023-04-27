@@ -27,35 +27,29 @@ class PlatformLayout: BaseLayout() {
     includedProjectLibraries.add(data)
   }
 
-  /**
-   * See [Spec.withoutProjectLibrary]
-   */
+  override fun withModule(moduleName: String) {
+    withModule(moduleName, APP_JAR)
+  }
+
   fun withoutProjectLibrary(libraryName: String) {
     excludedProjectLibraries.add(libraryName)
   }
 
   inline fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
-    val libsToUnpack = projectLibrariesToUnpack.values()
-    for (moduleName in includedModuleNames) {
+    val libsToUnpack = includedProjectLibraries.mapTo(HashSet()) { it.libraryName }
+    for (moduleName in includedModules.asSequence().map { it.moduleName }.distinct()) {
       val module = context.findRequiredModule(moduleName)
       for (library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-        if (library.createReference().parentReference is JpsModuleReference ||
-            libsToUnpack.contains(library.name) ||
-            excludedProjectLibraries.contains(library.name)) {
-          continue
+        if (!isSkippedLibrary(library, libsToUnpack)) {
+          consumer(library, module)
         }
-
-        consumer(library, module)
       }
     }
   }
 
-  class Spec(@Internal val layout: PlatformLayout) : BaseLayoutSpec(layout) {
-    /**
-     * Exclude project library [libraryName] even if it's added to dependencies of some module or plugin included into the product
-     */
-    fun withoutProjectLibrary(libraryName: String) {
-      layout.withoutProjectLibrary(libraryName)
-    }
+  fun isSkippedLibrary(library: JpsLibrary, libsToUnpack: Collection<String>): Boolean {
+    return library.createReference().parentReference is JpsModuleReference ||
+           libsToUnpack.contains(library.name) ||
+           excludedProjectLibraries.contains(library.name)
   }
 }

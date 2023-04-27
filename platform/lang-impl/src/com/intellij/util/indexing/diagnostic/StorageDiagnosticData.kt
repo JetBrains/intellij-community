@@ -4,6 +4,7 @@ package com.intellij.util.indexing.diagnostic
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.intellij.diagnostic.telemetry.ReentrantReadWriteLockUsageMonitor
 import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -11,6 +12,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
@@ -39,6 +41,8 @@ import kotlin.io.path.relativeTo
  * This means index storages, vfs storages and other plugin specific storages are included.
  */
 object StorageDiagnosticData {
+  private val MONITOR_STORAGE_LOCK = SystemProperties.getBooleanProperty("vfs.storage-lock.enable-diagnostic", true)
+
   private const val fileNamePrefix = "storage-diagnostic-"
   private const val onShutdownFileNameSuffix = "on-shutdown-"
 
@@ -230,6 +234,14 @@ object StorageDiagnosticData {
   private fun setupReportingToOpenTelemetry() {
     val otelMeter = TraceManager.getMeter("storage")
 
+    if (MONITOR_STORAGE_LOCK) {
+      ReentrantReadWriteLockUsageMonitor(
+        StorageLockContext.defaultContextLock(),
+        "StorageLockContext",
+        otelMeter
+      )
+    }
+
     val uncachedFileAccess = otelMeter.counterBuilder("FilePageCache.uncachedFileAccess").buildObserver()
     val maxRegisteredFiles = otelMeter.gaugeBuilder("FilePageCache.maxRegisteredFiles").ofLongs().buildObserver()
 
@@ -257,11 +269,12 @@ object StorageDiagnosticData {
       .setDescription("Cache capacity, configured on application startup")
       .ofLongs().buildObserver()
 
-    val directBufferAllocatorHits = otelMeter.counterBuilder("DirectByteBufferAllocator.hits").buildObserver();
-    val directBufferAllocatorMisses = otelMeter.counterBuilder("DirectByteBufferAllocator.misses").buildObserver();
-    val directBufferAllocatorReclaimed = otelMeter.counterBuilder("DirectByteBufferAllocator.reclaimed").buildObserver();
-    val directBufferAllocatorDisposed = otelMeter.counterBuilder("DirectByteBufferAllocator.disposed").buildObserver();
-    val directBufferAllocatorTotalSizeCached = otelMeter.counterBuilder("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes").buildObserver();
+    val directBufferAllocatorHits = otelMeter.counterBuilder("DirectByteBufferAllocator.hits").buildObserver()
+    val directBufferAllocatorMisses = otelMeter.counterBuilder("DirectByteBufferAllocator.misses").buildObserver()
+    val directBufferAllocatorReclaimed = otelMeter.counterBuilder("DirectByteBufferAllocator.reclaimed").buildObserver()
+    val directBufferAllocatorDisposed = otelMeter.counterBuilder("DirectByteBufferAllocator.disposed").buildObserver()
+    val directBufferAllocatorTotalSizeCached = otelMeter.counterBuilder(
+      "DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes").buildObserver()
 
     otelMeter.batchCallback(
       {

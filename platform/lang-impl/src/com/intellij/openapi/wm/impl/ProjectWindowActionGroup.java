@@ -119,10 +119,9 @@ public final class ProjectWindowActionGroup extends DefaultActionGroup {
     }
     final AnAction[] children = getChildren(null);
     for (AnAction child : children) {
-      if (!(child instanceof ProjectWindowAction)) {
+      if (!(child instanceof ProjectWindowAction windowAction)) {
         continue;
       }
-      final ProjectWindowAction windowAction = (ProjectWindowAction) child;
       if (projectLocation.equals(windowAction.getProjectLocation())) {
         return windowAction;
       }
@@ -134,10 +133,9 @@ public final class ProjectWindowActionGroup extends DefaultActionGroup {
     List<ProjectWindowAction> result = null;
     final AnAction[] children = getChildren(null);
     for (AnAction child : children) {
-      if (!(child instanceof ProjectWindowAction)) {
+      if (!(child instanceof ProjectWindowAction windowAction)) {
         continue;
       }
-      final ProjectWindowAction windowAction = (ProjectWindowAction) child;
       if (projectName.equals(windowAction.getProjectName())) {
         if (result == null) {
           result = new ArrayList<>();

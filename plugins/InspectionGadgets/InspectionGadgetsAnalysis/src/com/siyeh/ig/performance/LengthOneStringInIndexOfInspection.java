@@ -104,10 +104,9 @@ public class LengthOneStringInIndexOfInspection extends BaseInspection implement
         return false;
       }
       final PsiElement grandparent = parent.getParent();
-      if (!(grandparent instanceof PsiMethodCallExpression)) {
+      if (!(grandparent instanceof PsiMethodCallExpression call)) {
         return false;
       }
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)grandparent;
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
       @NonNls final String name = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.INDEX_OF.equals(name) &&

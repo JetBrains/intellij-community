@@ -54,9 +54,9 @@ class ThrottlingListenerWrapper implements SearchListener, Disposable {
   }
 
   @Override
-  public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
+  public void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
     buffer.clearBuffer();
-    delegateListener.searchStarted(contributors);
+    delegateListener.searchStarted(pattern, contributors);
   }
 
   @Override

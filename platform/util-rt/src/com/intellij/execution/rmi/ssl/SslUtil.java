@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.X509TrustManager;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -27,7 +28,7 @@ public final class SslUtil {
     throws IOException, CertificateException {
     String string = FileUtilRt.loadFile(new File(caCertPath));
     String[] tokens = string.split(END_CERTIFICATE);
-    List<X509Certificate> certs = new ArrayList<X509Certificate>(tokens.length);
+    List<X509Certificate> certs = new ArrayList<>(tokens.length);
     for (String token : tokens) {
       if (token == null || token.trim().length() == 0) continue;
       certs.add(readCertificate(stringStream(token + END_CERTIFICATE)));
@@ -37,12 +38,7 @@ public final class SslUtil {
 
   @NotNull
   public static InputStream stringStream(@NotNull String str) {
-    try {
-      return new ByteArrayInputStream(str.getBytes("UTF-8"));
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+    return new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
   }
 
   @NotNull

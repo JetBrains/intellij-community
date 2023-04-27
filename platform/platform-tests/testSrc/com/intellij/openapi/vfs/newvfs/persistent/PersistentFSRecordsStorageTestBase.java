@@ -359,8 +359,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
     public void updateInStorage(final PersistentFSRecordsStorage storage) throws IOException {
       //storage.fillRecord(id, this.timestamp, this.length, this.flags, this.nameRef, this.parentRef, false);
-      if (storage instanceof IPersistentFSRecordsStorage) {
-        final IPersistentFSRecordsStorage newStorage = (IPersistentFSRecordsStorage)storage;
+      if (storage instanceof IPersistentFSRecordsStorage newStorage) {
         newStorage.updateRecord(id, record -> {
           record.setParent(this.parentRef);
           record.setNameId(this.nameRef);

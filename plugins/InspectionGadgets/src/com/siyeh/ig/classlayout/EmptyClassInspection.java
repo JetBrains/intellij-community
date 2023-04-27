@@ -136,10 +136,9 @@ public class EmptyClassInspection extends BaseInspection {
     @Override
     public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
-      if (!(file instanceof PsiJavaFile)) {
+      if (!(file instanceof PsiJavaFile javaFile)) {
         return;
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)file;
       if (javaFile.getClasses().length != 0) {
         return;
       }
@@ -211,12 +210,11 @@ public class EmptyClassInspection extends BaseInspection {
     }
 
     private boolean isSuperParametrization(PsiClass aClass) {
-      if (!(aClass instanceof PsiAnonymousClass)) {
+      if (!(aClass instanceof PsiAnonymousClass anonymousClass)) {
         final PsiReferenceList extendsList = aClass.getExtendsList();
         final PsiReferenceList implementsList = aClass.getImplementsList();
         return hasTypeArguments(extendsList) || hasTypeArguments(implementsList);
       }
-      final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
       final PsiJavaCodeReferenceElement reference = anonymousClass.getBaseClassReference();
       final PsiReferenceParameterList parameterList = reference.getParameterList();
       if (parameterList == null) {

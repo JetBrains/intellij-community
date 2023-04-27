@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.findCompilation
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
-internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesByPlatformPropagation(
+internal fun KotlinMppGradleProjectResolver.Companion.populateModuleDependenciesByPlatformPropagation(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
     if (!mppModel.extraFeatures.isHMPPEnabled) return
@@ -29,7 +29,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
  */
 private typealias CompilationDependencies = Set<KotlinDependency>
 
-private fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesByPlatformPropagation(
+private fun KotlinMppGradleProjectResolver.Companion.populateModuleDependenciesByPlatformPropagation(
     context: KotlinMppPopulateModuleDependenciesContext, sourceSet: KotlinSourceSet
 ) = with(context) {
     val sourceSetDataNode = getSiblingKotlinModuleData(sourceSet, gradleIdeaModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
@@ -31,7 +32,8 @@ class PluginDeclarationProviderFactory(
         return PsiBasedClassMemberDeclarationProvider(storageManager, classLikeInfo)
     }
 
-    override fun createPackageMemberDeclarationProvider(name: FqName): PackageMemberDeclarationProvider? {
+    @ApiStatus.Internal
+    public override fun createPackageMemberDeclarationProvider(name: FqName): PackageMemberDeclarationProvider? {
         val fileBasedProvider = fileBasedDeclarationProviderFactory.getPackageMemberDeclarationProvider(name)
         val stubBasedProvider = getStubBasedPackageMemberDeclarationProvider(name)
         return when {

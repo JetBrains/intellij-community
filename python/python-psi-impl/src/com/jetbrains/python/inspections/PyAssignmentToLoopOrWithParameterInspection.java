@@ -152,14 +152,12 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
 
   @NotNull
   private static List<PyExpression> getNamedElementsOfForAndWithStatements(@NotNull PsiElement element) {
-    if (element instanceof PyForStatement) {
-      final PyForStatement forStatement = (PyForStatement)element;
+    if (element instanceof PyForStatement forStatement) {
       final PyExpression target = forStatement.getForPart().getTarget();
 
       return dropUnderscores(PyUtil.flattenedParensAndStars(target));
     }
-    else if (element instanceof PyWithStatement) {
-      final PyWithStatement withStatement = (PyWithStatement)element;
+    else if (element instanceof PyWithStatement withStatement) {
       final List<PyExpression> result = new ArrayList<>();
 
       for (PyWithItem item : withStatement.getWithItems()) {

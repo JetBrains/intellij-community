@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -XXLanguage:-EnumEntries
+
+enum class A {
+    TEST;
+
+    companion object {
+        val entries = ""
+    }
+}
+
+fun main() {
+    A.<caret>Companion.entries
+}

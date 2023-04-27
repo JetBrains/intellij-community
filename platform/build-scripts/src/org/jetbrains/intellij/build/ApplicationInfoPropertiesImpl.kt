@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.readSnapshotBuildNumber
 import org.jetbrains.jps.model.JpsProject
 import java.nio.file.Files
@@ -94,15 +95,11 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
           val expirationDate = buildDate.plus(30, ChronoUnit.DAYS)
           val now = Instant.ofEpochMilli(System.currentTimeMillis())
           if (expirationDate < now) {
-            val msg = "Supplied build date is $buildDate, " +
-                      "so expiration date is in the past, " +
-                      "distribution won't be able to start"
-            if (buildOptions.isInDevelopmentMode) {
-              error(msg)
-            }
-            else {
-              println("##teamcity[buildProblem description='$msg']")
-            }
+            reportBuildProblem(
+              "Supplied build date is $buildDate, " +
+              "so expiration date is in the past, " +
+              "distribution won't be able to start"
+            )
           }
         }
         majorReleaseDate == null || majorReleaseDate.startsWith("__") -> {

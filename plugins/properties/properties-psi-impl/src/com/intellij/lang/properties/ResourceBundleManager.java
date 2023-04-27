@@ -122,7 +122,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
       @Override
       public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
-        if (!(child instanceof PsiFile)) {
+        if (!(child instanceof PsiFile psiFile)) {
           if (child instanceof PsiDirectory) {
             final String deletedDirUrl = ((PsiDirectory)child).getVirtualFile().getUrl() + "/";
             for (String dissociatedFileUrl : new SmartList<>(myState.getDissociatedFiles())) {
@@ -143,7 +143,6 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
           }
           return;
         }
-        PsiFile psiFile = (PsiFile)child;
         if (!PropertiesImplUtil.canBePropertyFile(psiFile)) return;
 
         final VirtualFile virtualFile = psiFile.getVirtualFile();

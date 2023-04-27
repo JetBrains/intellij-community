@@ -51,7 +51,8 @@ class GitBranchesTreePopupStep(internal val project: Project,
     if (ExperimentalUI.isNewUI() && isFirstStep) {
       val experimentalUIActionsGroup = ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP) as? ActionGroup
       if (experimentalUIActionsGroup != null) {
-        topLevelItems.addAll(createTopLevelActionItems(experimentalUIActionsGroup, project, affectedRepositories).addSeparators())
+        topLevelItems.addAll(
+          createTopLevelActionItems(experimentalUIActionsGroup, project, selectedRepository, affectedRepositories).addSeparators())
         if (topLevelItems.isNotEmpty()) {
           topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
         }
@@ -60,7 +61,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
     val actionGroup = ActionManager.getInstance().getAction(TOP_LEVEL_ACTION_GROUP) as? ActionGroup
     if (actionGroup != null) {
       // get selected repo inside actions
-      topLevelItems.addAll(createTopLevelActionItems(actionGroup, project, affectedRepositories).addSeparators())
+      topLevelItems.addAll(createTopLevelActionItems(actionGroup, project, selectedRepository, affectedRepositories).addSeparators())
       if (topLevelItems.isNotEmpty()) {
         topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
       }
@@ -154,19 +155,20 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
     if (branch != null) {
       val actionGroup = ActionManager.getInstance().getAction(BRANCH_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
-      return createActionStep(actionGroup, project, branchUnderRepository?.repository?.let(::listOf) ?: affectedRepositories, branch)
+      return createActionStep(actionGroup, project, selectedRepository,
+                              branchUnderRepository?.repository?.let(::listOf) ?: affectedRepositories, branch)
     }
 
     if (selectedValue is PopupFactoryImpl.ActionItem) {
       if (!selectedValue.isEnabled) return FINAL_CHOICE
       val action = selectedValue.action
       if (action is ActionGroup && (!finalChoice || !selectedValue.isPerformGroup)) {
-        return createActionStep(action, project, affectedRepositories)
+        return createActionStep(action, project, selectedRepository, affectedRepositories)
       }
       else {
         finalRunnable = Runnable {
           val place = if (isFirstStep) TOP_LEVEL_ACTION_PLACE else SINGLE_REPOSITORY_ACTION_PLACE
-          ActionUtil.invokeAction(action, createDataContext(project, affectedRepositories), place, null, null)
+          ActionUtil.invokeAction(action, createDataContext(project, selectedRepository, affectedRepositories), place, null, null)
         }
       }
     }
@@ -212,8 +214,9 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
     private fun createTopLevelActionItems(actionGroup: ActionGroup,
                                           project: Project,
+                                          selectedRepository: GitRepository?,
                                           repositories: List<GitRepository>): List<PopupFactoryImpl.ActionItem> {
-      val dataContext = createDataContext(project, repositories)
+      val dataContext = createDataContext(project, selectedRepository, repositories)
       val actionItems = ActionPopupStep
         .createActionItems(actionGroup, dataContext, false, false, true, false, TOP_LEVEL_ACTION_PLACE, null)
 
@@ -226,17 +229,19 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
     private fun createActionStep(actionGroup: ActionGroup,
                                  project: Project,
+                                 selectedRepository: GitRepository?,
                                  repositories: List<GitRepository>,
                                  branch: GitBranch? = null): ListPopupStep<*> {
-      val dataContext = createDataContext(project, repositories, branch)
+      val dataContext = createDataContext(project, selectedRepository, repositories, branch)
       return JBPopupFactory.getInstance()
         .createActionsStep(actionGroup, dataContext, SINGLE_REPOSITORY_ACTION_PLACE, false, true, null, null, true, 0, false)
     }
 
-    internal fun createDataContext(project: Project, repositories: List<GitRepository>, branch: GitBranch? = null): DataContext =
+    internal fun createDataContext(project: Project, selectedRepository: GitRepository?, repositories: List<GitRepository>, branch: GitBranch? = null): DataContext =
       SimpleDataContext.builder()
         .add(CommonDataKeys.PROJECT, project)
         .add(GitBranchActionsUtil.REPOSITORIES_KEY, repositories)
+        .add(GitBranchActionsUtil.SELECTED_REPO_KEY, selectedRepository)
         .add(GitBranchActionsUtil.BRANCHES_KEY, branch?.let(::listOf))
         .build()
 

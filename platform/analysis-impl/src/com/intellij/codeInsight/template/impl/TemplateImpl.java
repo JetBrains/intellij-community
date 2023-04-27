@@ -27,9 +27,8 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TemplateImpl)) return false;
+    if (!(o instanceof TemplateImpl template)) return false;
 
-    final TemplateImpl template = (TemplateImpl) o;
     if (myId != null && myId.equals(template.myId)) return true;
 
     if (isToReformat != template.isToReformat) return false;

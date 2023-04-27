@@ -13,4 +13,18 @@ public final class SerializationConstants {
    * {@link com.intellij.openapi.components.StateSplitterEx}.
    */
   public static final String EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE = "external-system-id";
+
+  /**
+   * Specifies value of 'external system ID' for elements imported from Maven. 
+   * Historically, we used a special format to mark iml files of modules imported from Maven, so this constant is currently referenced from 
+   * the platform code. 
+   */
+  public static final String MAVEN_EXTERNAL_SOURCE_ID = "Maven";
+
+  /**
+   * Specifies name of the root tag's attribute in iml module which is used to mark modules imported from Maven.
+   * Historically, we used a special format to mark iml files of modules imported from Maven, so this constant is currently referenced from 
+   * the platform code. 
+   */
+  public static final String IS_MAVEN_MODULE_IML_ATTRIBUTE = "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
 }

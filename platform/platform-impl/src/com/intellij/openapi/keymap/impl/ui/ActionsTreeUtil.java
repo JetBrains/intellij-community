@@ -198,8 +198,7 @@ public final class ActionsTreeUtil {
       if (id != null) {
         return id;
       }
-      if (action instanceof DefaultActionGroup) {
-        final DefaultActionGroup group = (DefaultActionGroup)action;
+      if (action instanceof DefaultActionGroup group) {
         if (group.getChildrenCount() == 0) return IdeBundle.message("action.empty.group.text");
         final AnAction[] children = group.getChildActionsOrStubs();
         for (AnAction child : children) {
@@ -238,8 +237,7 @@ public final class ActionsTreeUtil {
         LOG.error(groupName + " contains null actions");
         continue;
       }
-      if (action instanceof ActionGroup) {
-        ActionGroup childGroup = (ActionGroup)action;
+      if (action instanceof ActionGroup childGroup) {
         Group subGroup = createGroup(childGroup, getName(action), null, null, forceAsPopup, filtered, normalizeSeparators);
         if (forceAsPopup || childGroup.isPopup() || StringUtil.isNotEmpty(childGroup.getTemplateText())) {
           if (subGroup.getSize() > 0 ||
@@ -524,8 +522,7 @@ public final class ActionsTreeUtil {
     }
     ActionManager actionManager = ActionManager.getInstance();
     AnAction action = actionManager.getActionOrStub(groupId);
-    if (action instanceof DefaultActionGroup) {
-      DefaultActionGroup group = (DefaultActionGroup)action;
+    if (action instanceof DefaultActionGroup group) {
       AnAction[] children = group.getChildActionsOrStubs();
       for (AnAction child : children) {
         String childId = actionManager.getId(child);
@@ -587,8 +584,7 @@ public final class ActionsTreeUtil {
       final ArrayList<Object> list = mainGroup.getChildren();
       for (Iterator<Object> i = list.iterator(); i.hasNext(); ) {
         final Object o = i.next();
-        if (o instanceof Group) {
-          final Group group = (Group)o;
+        if (o instanceof Group group) {
           if (group.getSize() == 0) {
             if (!SearchUtil.isComponentHighlighted(group.getName(), filter, forceFiltering, null)) {
               i.remove();

@@ -83,8 +83,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
 
   static String getQualifiedAttributeName(PsiElement context, XmlName xmlName) {
     final String localName = xmlName.getLocalName();
-    if (context instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)context;
+    if (context instanceof XmlTag tag) {
       final DomInvocationHandler handler = DomManagerImpl.getDomManager(context.getProject()).getDomHandler(tag);
       if (handler != null) {
         final String ns = handler.createEvaluatedXmlName(xmlName).getNamespace(tag, handler.getFile());

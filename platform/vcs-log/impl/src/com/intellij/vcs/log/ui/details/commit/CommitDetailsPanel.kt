@@ -22,6 +22,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.ui.RootIcon
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.*
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.util.VcsLogUiUtil
@@ -371,7 +372,7 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
 
   fun setRoot(rootColor: CommitDetailsPanel.RootColor?) {
     if (rootColor != null) {
-      icon = JBUIScale.scaleIcon(ColorIcon(ROOT_ICON_SIZE, rootColor.color))
+      icon = RootIcon.createAndScale(rootColor.color)
       tooltipText = rootColor.root.path
     }
     else {

@@ -53,8 +53,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     if (ActionPlaces.isPopupPlace(place)) {
       final RefactoringActionHandler handler = getHandler(context);
       if (handler == null) return false;
-      if (handler instanceof ContextAwareActionHandler) {
-        ContextAwareActionHandler contextAwareActionHandler = (ContextAwareActionHandler)handler;
+      if (handler instanceof ContextAwareActionHandler contextAwareActionHandler) {
         if (!contextAwareActionHandler.isAvailableForQuickList(editor, file, context)) {
           return false;
         }

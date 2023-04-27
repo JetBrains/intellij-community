@@ -35,8 +35,7 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     Project p = e.getProject();
-    if (p != null && node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
-      PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
+    if (p != null && node != null && node.getValueContainer() instanceof PyDebugValue debugValue && node.isComputed()) {
       showNumericViewer(p, debugValue);
     }
   }
@@ -59,12 +58,10 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
     }
 
     XValueNodeImpl node = selectedNodes.get(0);
-    if (!(node.getValueContainer() instanceof PyDebugValue) || !node.isComputed()) {
+    if (!(node.getValueContainer() instanceof PyDebugValue debugValue) || !node.isComputed()) {
       e.getPresentation().setVisible(false);
       return;
     }
-
-    PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
 
     String nodeType = debugValue.getType();
     if ("ndarray".equals(nodeType)) {

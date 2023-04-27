@@ -457,10 +457,9 @@ public class ArrangementMatchingRulesControl extends JBTable {
 
       ArrangementListRowDecorator component = myComponents.get(row);
       if (component == null) {
-        if (!(value instanceof StdArrangementMatchRule)) {
+        if (!(value instanceof StdArrangementMatchRule rule)) {
           return new JLabel(ApplicationBundle.message("arrangement.text.empty.rule"));
         }
-        StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
         final boolean allowModifications = allowModifications(rule);
         ArrangementUiComponent ruleComponent = myFactory.getComponent(rule.getMatcher().getCondition(), rule, allowModifications);
         component = new ArrangementListRowDecorator(ruleComponent, ArrangementMatchingRulesControl.this);

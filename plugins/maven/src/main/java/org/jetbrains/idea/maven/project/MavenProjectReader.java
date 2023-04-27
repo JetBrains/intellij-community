@@ -204,8 +204,7 @@ public final class MavenProjectReader {
     mavenBuildBase.setTestResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "testResources", "testResource")));
     mavenBuildBase.setFilters(MavenJDOMUtil.findChildrenValuesByPath(xmlBuild, "filters", "filter"));
 
-    if (mavenBuildBase instanceof MavenBuild) {
-      MavenBuild mavenBuild = (MavenBuild)mavenBuildBase;
+    if (mavenBuildBase instanceof MavenBuild mavenBuild) {
 
       String source = MavenJDOMUtil.findChildValueByPath(xmlBuild, "sourceDirectory");
       if (!isEmptyOrSpaces(source)) mavenBuild.addSource(source);

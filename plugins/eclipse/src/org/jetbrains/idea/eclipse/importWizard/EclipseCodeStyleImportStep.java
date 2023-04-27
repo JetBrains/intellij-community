@@ -137,8 +137,7 @@ public class EclipseCodeStyleImportStep extends ProjectImportWizardStep {
   private List<EclipseProjectCodeStyleData> getCodeStylesList() {
     List<EclipseProjectCodeStyleData> codeStyleDataList = new ArrayList<>();
     ProjectBuilder builder = getWizardContext().getProjectBuilder();
-    if (builder instanceof EclipseImportBuilder) {
-      EclipseImportBuilder eclipseImportBuilder = (EclipseImportBuilder)builder;
+    if (builder instanceof EclipseImportBuilder eclipseImportBuilder) {
       for (String projectPath : eclipseImportBuilder.getParameters().projectsToConvert) {
         String projectName = EclipseProjectFinder.findProjectName(projectPath);
         if (projectName != null) {

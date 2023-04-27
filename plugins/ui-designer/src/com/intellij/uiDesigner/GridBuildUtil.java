@@ -37,10 +37,9 @@ public final class GridBuildUtil {
     if (selection.size() != 1){
       return;
     }
-    if (!(selection.get(0) instanceof RadContainer)) {
+    if (!(selection.get(0) instanceof RadContainer container)) {
       return;
     }
-    final RadContainer container = (RadContainer)selection.get(0);
     if (
       container instanceof RadScrollPane ||
       container instanceof RadSplitPane ||

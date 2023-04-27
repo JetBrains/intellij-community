@@ -229,9 +229,8 @@ public class UserScaleContext {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof UserScaleContext)) return false;
+    if (!(obj instanceof UserScaleContext that)) return false;
 
-    UserScaleContext that = (UserScaleContext)obj;
     return that.usrScale.value == usrScale.value &&
            that.objScale.value == objScale.value;
   }

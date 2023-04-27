@@ -84,12 +84,10 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
         return;
       }
       final PsiStatement statementWithoutBraces;
-      if (statement instanceof PsiLoopStatement) {
-        final PsiLoopStatement loopStatement = (PsiLoopStatement)statement;
+      if (statement instanceof PsiLoopStatement loopStatement) {
         statementWithoutBraces = loopStatement.getBody();
       }
-      else if (statement instanceof PsiIfStatement) {
-        final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+      else if (statement instanceof PsiIfStatement ifStatement) {
         statementWithoutBraces = (element == ifStatement.getElseElement()) ? ifStatement.getElseBranch() : ifStatement.getThenBranch();
       }
       else {
@@ -114,8 +112,7 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
     protected boolean isApplicable(PsiStatement body) {
       if (body instanceof PsiIfStatement && isVisibleHighlight(body)) {
         final PsiElement parent = body.getParent();
-        if (parent instanceof PsiIfStatement) {
-          final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+        if (parent instanceof PsiIfStatement ifStatement) {
           if (ifStatement.getElseBranch() == body) {
             return false;
           }

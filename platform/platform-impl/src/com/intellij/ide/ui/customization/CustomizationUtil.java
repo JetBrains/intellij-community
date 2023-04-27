@@ -48,6 +48,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,6 +61,35 @@ public final class CustomizationUtil {
 
   private CustomizationUtil() {
   }
+
+  public static @Nullable Icon getOriginalIconFrom(@NotNull AnAction reuseFrom) {
+    Presentation presentation = reuseFrom.getTemplatePresentation();
+    Icon original = presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON);
+    if (original != null) return original;
+    return presentation.getIcon();
+  }
+
+  @Nullable
+  public static Icon getIconForPath(@NotNull ActionManager actionManager, @Nullable String iconPath) {
+    if (iconPath == null) {
+      return null;
+    }
+    AnAction reuseFrom = actionManager.getAction(iconPath);
+    if (reuseFrom != null) {
+      return getOriginalIconFrom(reuseFrom);
+    }
+    else {
+      try {
+        return CustomActionsSchema.loadCustomIcon(iconPath);
+      }
+      catch (IOException e) {
+        LOG.info(e.getMessage());
+        return null;
+      }
+    }
+  }
+
+
 
   public static ActionGroup correctActionGroup(final ActionGroup group,
                                                final CustomActionsSchema schema,
@@ -133,8 +163,7 @@ public final class CustomizationUtil {
       }
     }
     for (int i = 0; i < reorderedChildren.size(); i++) {
-      if (reorderedChildren.get(i) instanceof ActionGroup) {
-        final ActionGroup groupToCorrect = (ActionGroup)reorderedChildren.get(i);
+      if (reorderedChildren.get(i) instanceof ActionGroup groupToCorrect) {
         final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName, false);
         reorderedChildren.set(i, correctedAction);
       }
@@ -248,9 +277,7 @@ public final class CustomizationUtil {
 
   @Nullable
   private static TreePath getTreePath(final int positionInPath, final List<String> path, final Object root) {
-    if (!(root instanceof DefaultMutableTreeNode)) return null;
-
-    final DefaultMutableTreeNode treeNode = ((DefaultMutableTreeNode)root);
+    if (!(root instanceof DefaultMutableTreeNode treeNode)) return null;
 
     final String pathElement;
     if (path.size() > positionInPath) {
@@ -379,8 +406,7 @@ public final class CustomizationUtil {
     else if (obj instanceof Separator) {
       text = "-------------";
     }
-    else if (obj instanceof QuickList) {
-      QuickList quickList = (QuickList)obj;
+    else if (obj instanceof QuickList quickList) {
       text = quickList.getDisplayName();
       if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
         description = quickList.getActionId();

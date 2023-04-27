@@ -730,12 +730,11 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> statusPair;
       statusPair = statusService.getDeltaWithLastIndexedStatus();
       Collection<? extends IndexableIteratorBuilder> builders = statusPair.getFirst();
-      List<VirtualFileUrl> actualRootUrls = new ArrayList<>();
+      List<VirtualFile> actualRoots = new ArrayList<>();
       for (IndexableIteratorBuilder builder : builders) {
-        assertInstanceOf(builder, ModuleRootsIteratorBuilder.class);
-        actualRootUrls.addAll(((ModuleRootsIteratorBuilder)builder).getUrls());
+        assertInstanceOf(builder, ModuleRootsFileBasedIteratorBuilder.class);
+        actualRoots.addAll(((ModuleRootsFileBasedIteratorBuilder)builder).getFiles());
       }
-      List<VirtualFile> actualRoots = ContainerUtil.map(actualRootUrls, url -> ((VirtualFilePointer)url).getFile());
       assertContainsElements(actualRoots, roots);
 
       finishIndexing(finishIndexingWithStatus, statusPair.getSecond(), statusService);

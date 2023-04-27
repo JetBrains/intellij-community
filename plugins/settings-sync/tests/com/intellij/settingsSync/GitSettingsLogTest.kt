@@ -33,7 +33,10 @@ internal class GitSettingsLogTest {
   private val tempDirManager = TemporaryDirectory()
   private val appRule = ApplicationRule()
   private val disposableRule = DisposableRule()
-  @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
+
+  @Rule
+  @JvmField
+  val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
 
   private lateinit var configDir: Path
   private lateinit var settingsSyncStorage: Path
@@ -148,7 +151,8 @@ internal class GitSettingsLogTest {
     assertEquals("The date of the snapshot incorrect", instant, snapshot.metaInfo.dateCreated)
   }
 
-  @Test fun `setBranchPosition should reset the working tree as well`() {
+  @Test
+  fun `setBranchPosition should reset the working tree as well`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
@@ -162,11 +166,14 @@ internal class GitSettingsLogTest {
     )
     settingsLog.setCloudPosition(masterPosition)
 
-    assertEquals(masterPosition, settingsLog.getCloudPosition()) // this is just a safety-check that setCloudPosition set the label correctly
-    assertEquals("editorContent", (settingsSyncStorage / "options"/ "editor.xml").readText()) // this is real test that the cloud changes have gone away
+    assertEquals(masterPosition,
+                 settingsLog.getCloudPosition()) // this is just a safety-check that setCloudPosition set the label correctly
+    assertEquals("editorContent",
+                 (settingsSyncStorage / "options" / "editor.xml").readText()) // this is real test that the cloud changes have gone away
   }
 
-  @Test fun `collectCurrentSnapshot should take the master content`() {
+  @Test
+  fun `collectCurrentSnapshot should take the master content`() {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
@@ -189,13 +196,7 @@ internal class GitSettingsLogTest {
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
-    (settingsSyncStorage / ".git" / "config").writeText("""
-      [commit]
-          gpgsign = true
-      [user]
-          signingkey = KEYHERE
-      [gpg]
-        program = /opt/homebrew/bin/gpg""".trimIndent())
+    writeGpgSigningOptionToGitConfig()
 
     settingsLog.forceWriteToMaster(
       settingsSnapshot {
@@ -205,6 +206,40 @@ internal class GitSettingsLogTest {
     settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
       fileState("options/editor.xml", "ideEditorContent")
     }
+  }
+
+  @Test
+  fun `do not fail on merge if commit signature is requested in global config`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    writeGpgSigningOptionToGitConfig()
+
+    // make a non-conflicting merge
+    settingsLog.applyCloudState(settingsSnapshot {
+      fileState("options/editor.xml", "Cloud Editor")
+    }, "Local changes")
+    settingsLog.applyIdeState(settingsSnapshot {
+      fileState("options/laf.xml", "IDE LaF")
+    }, "Local changes")
+
+    settingsLog.advanceMaster()
+
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "Cloud Editor")
+      fileState("options/laf.xml", "IDE LaF")
+    }
+  }
+
+  private fun writeGpgSigningOptionToGitConfig() {
+    (settingsSyncStorage / ".git" / "config").writeText("""
+        [commit]
+            gpgsign = true
+        [user]
+            signingkey = KEYHERE
+        [gpg]
+          program = /opt/homebrew/bin/gpg""".trimIndent())
   }
 
   @Test

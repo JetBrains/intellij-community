@@ -102,10 +102,9 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements 
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiDocTag)) {
+      if (!(parent instanceof PsiDocTag docTag)) {
         return;
       }
-      final PsiDocTag docTag = (PsiDocTag)parent;
       final PsiDocComment docComment = docTag.getContainingComment();
       if (docComment != null) {
         if (shouldDeleteEntireComment(docComment)) {
@@ -183,10 +182,9 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements 
                       Integer.valueOf(THIS_CLASS));
         return;
       }
-      if (!(target instanceof PsiMethod)) {
+      if (!(target instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)target;
       if (!isSuperMethod(method, containingMethod)) {
         return;
       }

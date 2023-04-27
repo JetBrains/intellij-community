@@ -40,7 +40,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.documentation.DocumentationTarget
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
@@ -64,9 +63,6 @@ import kotlin.math.min
 
 internal class InitCtrlMouseHandlerActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (!Registry.`is`("documentation.v2.ctrl.mouse", true)) {
-      return
-    }
     project.service<CtrlMouseHandler2>()
   }
 }

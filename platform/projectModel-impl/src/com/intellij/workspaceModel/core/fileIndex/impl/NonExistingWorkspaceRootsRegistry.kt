@@ -22,7 +22,7 @@ import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
-internal class NonExistingWorkspaceRootsRegistry(private val project: Project, private val indexData: WorkspaceFileIndexData) {
+internal class NonExistingWorkspaceRootsRegistry(private val project: Project, private val indexData: WorkspaceFileIndexDataImpl) {
   private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
   /** access guarded by the global read/write locks; todo: replace by MostlySingularMultiMap to reduce memory usage  */
   private val nonExistingFiles = MultiMap.create<VirtualFileUrl, Pair<EntityReference<WorkspaceEntity>, EntityStorageKind>>()

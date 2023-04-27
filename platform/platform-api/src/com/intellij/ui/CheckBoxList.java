@@ -204,8 +204,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     bounds.x = 0;
     bounds.y = 0;
     component.setBounds(bounds);
-    if (component instanceof Container) {
-      Container c = (Container)component;
+    if (component instanceof Container c) {
       Component found = c.findComponentAt(x, y);
       if (found == checkBox) {
         Point checkBoxLocation = getChildLocationRelativeToAncestor(component, checkBox);

@@ -1076,9 +1076,7 @@ public class CommonCodeStyleSettings {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof IndentOptions)) return false;
-
-      IndentOptions that = (IndentOptions)o;
+      if (!(o instanceof IndentOptions that)) return false;
 
       if (CONTINUATION_INDENT_SIZE != that.CONTINUATION_INDENT_SIZE) return false;
       if (INDENT_SIZE != that.INDENT_SIZE) return false;
@@ -1195,7 +1193,7 @@ public class CommonCodeStyleSettings {
     return mySoftMargins.getValues();
   }
 
-  void setSoftMargins(List<Integer> values) {
+  public void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
   }
 }

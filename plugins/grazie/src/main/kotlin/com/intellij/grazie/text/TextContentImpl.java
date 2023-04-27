@@ -87,8 +87,7 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TextContentImpl)) return false;
-    TextContentImpl that = (TextContentImpl) o;
+    if (!(o instanceof TextContentImpl that)) return false;
     return domain == that.domain && tokens.equals(that.tokens);
   }
 
@@ -471,8 +470,7 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof PsiToken)) return false;
-      PsiToken psiToken = (PsiToken) o;
+      if (!(o instanceof PsiToken psiToken)) return false;
       return kind == psiToken.kind && psi.equals(psiToken.psi) && (kind != TokenKind.text || rangeInPsi.equals(psiToken.rangeInPsi));
     }
 

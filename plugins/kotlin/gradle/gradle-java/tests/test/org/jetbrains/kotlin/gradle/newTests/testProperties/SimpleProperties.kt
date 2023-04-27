@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestFunctionName")
+@file:Suppress("TestFunctionName", "LocalVariableName", "UNUSED_VARIABLE")
 
 package org.jetbrains.kotlin.gradle.newTests.testProperties
 
@@ -8,8 +8,14 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import kotlin.reflect.KProperty
 
-@Suppress("UNUSED_VARIABLE")
-fun SimpleProperties(gradleVersion: GradleVersion, kgpVersion: KotlinToolingVersion) : Map<String, String> {
+/**
+ * Declare simple properties in this method like this:
+ *
+ * val my_property by simplePropertyWithValue("my-default-value")
+ *
+ * This will tell tests' infrastructure to substitute all occurrences of {{my_property}} in the test data with "my-default-value".
+ */
+internal fun SimpleProperties(gradleVersion: GradleVersion, kgpVersion: KotlinToolingVersion) : Map<String, String> {
     val result: MutableMap<String, String> = mutableMapOf()
 
     fun simplePropertyWithValue(defaultValue: String) = object {

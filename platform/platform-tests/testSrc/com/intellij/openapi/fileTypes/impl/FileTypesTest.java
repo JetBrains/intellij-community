@@ -1003,10 +1003,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   public void testEveryLanguageHasOnePrimaryFileType() {
     Map<String, LanguageFileType> map = new HashMap<>();
     for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
-      if (!(type instanceof LanguageFileType)) {
+      if (!(type instanceof LanguageFileType languageFileType)) {
         continue;
       }
-      LanguageFileType languageFileType = (LanguageFileType)type;
       if (!languageFileType.isSecondary()) {
         String id = languageFileType.getLanguage().getID();
         LanguageFileType oldFileType = map.get(id);

@@ -13,8 +13,7 @@ import java.util.List;
 public final class XmlIncludeHandler {
   @NonNls private static final String INCLUDE_TAG_NAME = "include";
   public static boolean isXInclude(PsiElement element) {
-    if (element instanceof XmlTag) {
-      XmlTag xmlTag = (XmlTag)element;
+    if (element instanceof XmlTag xmlTag) {
 
       if (xmlTag.getParent() instanceof XmlDocument) return false;
 

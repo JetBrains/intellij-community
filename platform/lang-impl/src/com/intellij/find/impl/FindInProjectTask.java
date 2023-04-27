@@ -360,8 +360,7 @@ final class FindInProjectTask {
           return true;
         });
       }
-      else if (obj instanceof VirtualFile) {
-        VirtualFile file = (VirtualFile)obj;
+      else if (obj instanceof VirtualFile file) {
         if (file instanceof VirtualFileWithId && visitedFiles.set(((VirtualFileWithId)file).getId())) {
           return true;
         }

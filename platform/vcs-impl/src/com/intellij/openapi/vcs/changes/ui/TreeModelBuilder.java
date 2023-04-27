@@ -55,7 +55,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   private static final Comparator<ChangesBrowserNode> BROWSER_NODE_COMPARATOR = (node1, node2) -> {
-    int sortWeightDiff = Comparing.compare(node1.getSortWeight(), node2.getSortWeight());
+    int sortWeightDiff = Integer.compare(node1.getSortWeight(), node2.getSortWeight());
     if (sortWeightDiff != 0) return sortWeightDiff;
 
     Class<?> clazz1 = node1.getClass();
@@ -509,9 +509,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     }
 
     if (parent instanceof ChangesBrowserModuleNode &&
-        childUserObject instanceof FilePath) {
+        childUserObject instanceof FilePath childPath) {
       FilePath parentPath = ((ChangesBrowserModuleNode)parent).getModuleRoot();
-      FilePath childPath = (FilePath)childUserObject;
       if (!parentPath.equals(childPath)) return null;
 
       parent.remove(0);

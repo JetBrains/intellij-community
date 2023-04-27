@@ -25,8 +25,7 @@ public final class MultiResolutionImageProvider {
   private static final class Converter {
     @Nullable
     public static Image convert(Image jbImage) {
-      if (jbImage instanceof JBHiDPIScaledImage) {
-        JBHiDPIScaledImage scaledImage = (JBHiDPIScaledImage)jbImage;
+      if (jbImage instanceof JBHiDPIScaledImage scaledImage) {
         Image lowResImage = ImageUtil.toBufferedImage(scaledImage, true);
         Image highResImage = ImageUtil.toBufferedImage(scaledImage);
         return new BaseMultiResolutionImage(lowResImage, highResImage);

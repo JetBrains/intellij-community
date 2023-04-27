@@ -16,7 +16,7 @@ public final class InternalJavaEnvironment implements JavaEnvironment, Serializa
 
   public InternalJavaEnvironment(File javaHome, List<String> jvmArguments) {
     myJavaHome = javaHome;
-    myJvmArguments = new ArrayList<String>(jvmArguments);
+    myJvmArguments = new ArrayList<>(jvmArguments);
   }
 
   @Override

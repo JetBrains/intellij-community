@@ -5,31 +5,19 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData
-import com.intellij.openapi.externalSystem.model.project.ModuleData
-import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver.Context
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 interface KotlinMppGradleProjectResolverExtension {
     companion object {
-        val EP_NAME = ExtensionPointName.create<KotlinMppGradleProjectResolverExtension>(
-            "org.jetbrains.kotlin.mppProjectResolve"
-        )
+        val EP_NAME = ExtensionPointName.create<KotlinMppGradleProjectResolverExtension>("org.jetbrains.kotlin.mppProjectResolve")
     }
 
     enum class Result {
         Skip, Proceed
-    }
-
-    interface Context {
-        val model: KotlinMPPGradleModel
-        val resolverCtx: ProjectResolverContext
-        val gradleModule: IdeaModule
-        val moduleDataNode: DataNode<ModuleData>
     }
 
     fun beforeMppGradleSourceSetDataNodeCreation(
@@ -64,4 +52,6 @@ interface KotlinMppGradleProjectResolverExtension {
     ) = Unit
 
     fun provideAdditionalProjectArtifactDependencyResolvers(): List<KotlinProjectArtifactDependencyResolver> = emptyList()
+
+    fun afterResolveFinished(context: Context) = Unit
 }

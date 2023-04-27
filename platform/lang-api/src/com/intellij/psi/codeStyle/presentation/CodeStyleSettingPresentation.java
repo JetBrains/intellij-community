@@ -24,8 +24,7 @@ public class CodeStyleSettingPresentation {
 
     @Override
     public boolean equals(Object o) {
-      if (o instanceof SettingsGroup) {
-        SettingsGroup other = (SettingsGroup) o;
+      if (o instanceof SettingsGroup other) {
         return name != null && name.equals(other.name);
       } else {
         return false;

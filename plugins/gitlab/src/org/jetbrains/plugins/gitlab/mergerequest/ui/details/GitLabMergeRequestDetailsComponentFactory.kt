@@ -8,7 +8,10 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
@@ -17,6 +20,8 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshDetails
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import javax.swing.JComponent
@@ -26,27 +31,29 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   fun createDetailsComponent(
     project: Project,
     scope: CoroutineScope,
-    detailsVm: GitLabMergeRequestDetailsLoadingViewModel,
+    detailsLoadingVm: GitLabMergeRequestDetailsLoadingViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    val wrapper = Wrapper()
-
-    wrapper.bindContent(scope, detailsVm.mergeRequestLoadingFlow) { contentCs, loadingState ->
-      when (loadingState) {
-        GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
-        is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
-        is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
-          createDetailsComponent(
-            project,
-            contentCs,
-            loadingState.detailsVm,
-            avatarIconsProvider
-          )
+    return Wrapper().apply {
+      bindContent(scope, detailsLoadingVm.mergeRequestLoadingFlow) { contentCs, loadingState ->
+        when (loadingState) {
+          GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
+          is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
+          is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> createDetailsComponent(
+            project, contentCs, loadingState.detailsVm, avatarIconsProvider
+          ).apply {
+            val actionGroup = DefaultActionGroup(GitLabMergeRequestRefreshDetails())
+            PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestDetailsPanelPopup")
+            DataManager.registerDataProvider(this) { dataId ->
+              when {
+                GitLabMergeRequestsActionKeys.REVIEW_DETAILS_LOADING_VM.`is`(dataId) -> detailsLoadingVm
+                else -> null
+              }
+            }
+          }
         }
       }
     }
-
-    return wrapper
   }
 
   private fun createDetailsComponent(
@@ -58,11 +65,12 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     val detailsInfoVm = detailsVm.detailsInfoVm
     val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
     val changesVm = detailsVm.changesVm
+    val repository = detailsVm.repository
 
     val commitsAndBranches = JPanel(HorizontalLayout(0)).apply {
       isOpaque = false
       add(GitLabMergeRequestDetailsCommitsComponentFactory.create(cs, changesVm), HorizontalLayout.LEFT)
-      add(GitLabMergeRequestDetailsBranchComponentFactory.create(cs, detailsInfoVm), HorizontalLayout.RIGHT)
+      add(GitLabMergeRequestDetailsBranchComponentFactory.create(project, cs, detailsInfoVm, repository), HorizontalLayout.RIGHT)
     }
 
     val layout = MigLayout(
@@ -90,7 +98,6 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
                            right = ReviewDetailsUIUtil.indentRight,
                            bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
-
       add(GitLabMergeRequestDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit),
           CC().growX().maxHeight("${ReviewDetailsUIUtil.commitInfoMaxHeight}")
             .gap(left = ReviewDetailsUIUtil.indentLeft,
@@ -98,7 +105,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                  bottom = ReviewDetailsUIUtil.gapBetweenCommitInfoAndCommitsBrowser))
       add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
           CC().grow().push())
-      add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, detailsInfoVm),
+      add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, detailsInfoVm, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}")
             .gap(left = ReviewDetailsUIUtil.indentLeft,
                  right = ReviewDetailsUIUtil.indentRight,

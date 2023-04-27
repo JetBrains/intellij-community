@@ -232,8 +232,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static boolean isSuperOrThisCall(GrStatement statement, boolean testForSuper, boolean testForThis) {
-    if (!(statement instanceof GrConstructorInvocation)) return false;
-    GrConstructorInvocation expr = (GrConstructorInvocation) statement;
+    if (!(statement instanceof GrConstructorInvocation expr)) return false;
     return (testForSuper && expr.isSuperCall()) || (testForThis && expr.isThisCall());
   }
 
@@ -602,8 +601,7 @@ public abstract class GroovyRefactoringUtil {
         super.visitCodeReferenceElement(reference);
         if (reference.getQualifier() == null) {
           final PsiElement resolved = reference.resolve();
-          if (resolved instanceof PsiTypeParameter) {
-            final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
+          if (resolved instanceof PsiTypeParameter typeParameter) {
             if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false)) {
               used.add(typeParameter);
             }

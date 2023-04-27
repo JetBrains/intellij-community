@@ -76,10 +76,8 @@ public class War extends Jar {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof War)) return false;
+    if (!(o instanceof War war)) return false;
     if (!super.equals(o)) return false;
-
-    War war = (War)o;
 
     if (!webAppDirName.equals(war.webAppDirName)) return false;
     if (!webResources.equals(war.webResources)) return false;

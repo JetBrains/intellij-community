@@ -64,9 +64,8 @@ public abstract class NamedScriptableDefinition implements JDOMExternalizable {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof NamedScriptableDefinition)) return false;
+    if (!(o instanceof NamedScriptableDefinition that)) return false;
 
-    final NamedScriptableDefinition that = (NamedScriptableDefinition)o;
     return name.equals(that.name) && scriptCodeConstraint.equals(that.scriptCodeConstraint);
   }
 

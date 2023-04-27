@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -174,22 +174,18 @@ public class KeyStrokeAdapter implements KeyListener {
           }
           return getKeyStroke(code, modifiers, released);
         }
-        if (tokenLowerCase.equals("typed")) {
-          typed = true;
-        }
-        else if (tokenLowerCase.equals("pressed")) {
-          pressed = true;
-        }
-        else if (tokenLowerCase.equals("released")) {
-          released = true;
-        }
-        else {
-          Integer mask = LazyModifiers.mapNameToMask.get(tokenLowerCase);
-          if (mask == null) {
-            LOG.error("unexpected key stroke modifier: " + token);
-            return null;
+        switch (tokenLowerCase) {
+          case "typed" -> typed = true;
+          case "pressed" -> pressed = true;
+          case "released" -> released = true;
+          default -> {
+            Integer mask = LazyModifiers.mapNameToMask.get(tokenLowerCase);
+            if (mask == null) {
+              LOG.error("unexpected key stroke modifier: " + token);
+              return null;
+            }
+            modifiers |= mask;
           }
-          modifiers |= mask;
         }
       }
       LOG.error("key stroke declaration is not completed");

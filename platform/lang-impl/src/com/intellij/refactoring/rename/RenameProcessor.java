@@ -205,8 +205,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     try {
       for (Iterator<Map.Entry<PsiElement, String>> iterator = myAllRenames.entrySet().iterator(); iterator.hasNext(); ) {
         Map.Entry<PsiElement, String> entry = iterator.next();
-        if (entry.getKey() instanceof PsiFile) {
-          final PsiFile file = (PsiFile)entry.getKey();
+        if (entry.getKey() instanceof PsiFile file) {
           final PsiDirectory containingDirectory = file.getContainingDirectory();
           if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue(),
                                                            RefactoringBundle.message("command.name.rename"))) {

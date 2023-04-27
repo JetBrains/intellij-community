@@ -80,8 +80,7 @@ public final class JavaStylePropertiesUtil {
   private static boolean isSetterInvocation(GrMethodCall call) {
     GrExpression expr = call.getInvokedExpression();
 
-    if (!(expr instanceof GrReferenceExpression)) return false;
-    GrReferenceExpression refExpr = (GrReferenceExpression)expr;
+    if (!(expr instanceof GrReferenceExpression refExpr)) return false;
 
     PsiMethod method;
     if (call instanceof GrApplicationStatement) {

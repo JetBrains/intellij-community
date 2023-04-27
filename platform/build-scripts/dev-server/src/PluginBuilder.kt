@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext", "PrivatePropertyName")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("PrivatePropertyName")
 
 package org.jetbrains.intellij.build.devServer
 
@@ -123,7 +123,7 @@ internal class PluginBuilder(private val outDir: Path,
 
       if (mainModule != "intellij.platform.builtInHelp") {
         checkOutputOfPluginModules(mainPluginModule = mainModule,
-                                   jarToModules = plugin.layout.jarToModules,
+                                   includedModules = plugin.layout.includedModules,
                                    moduleExcludes = plugin.layout.moduleExcludes,
                                    context = context)
       }
@@ -139,7 +139,7 @@ internal class PluginBuilder(private val outDir: Path,
         layoutDistribution(layout = plugin.layout,
                            targetDirectory = plugin.dir,
                            moduleOutputPatcher = moduleOutputPatcher,
-                           jarToModule = plugin.layout.jarToModules,
+                           includedModules = plugin.layout.includedModules,
                            context = context)
         withContext(Dispatchers.IO) {
           plugin.markAsBuilt(outDir)

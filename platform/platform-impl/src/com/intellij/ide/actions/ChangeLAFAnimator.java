@@ -61,9 +61,8 @@ final class ChangeLAFAnimator {
     Window[] windows = Window.getWindows();
     myMap = new LinkedHashMap<>();
     for (Window window : windows) {
-      if (window instanceof RootPaneContainer && window.isShowing()) {
+      if (window instanceof RootPaneContainer rootPaneContainer && window.isShowing()) {
         Rectangle bounds = window.getBounds();
-        RootPaneContainer rootPaneContainer = (RootPaneContainer)window;
         JLayeredPane layeredPane = rootPaneContainer.getLayeredPane();
         BufferedImage image =
           ImageUtil.createImage(window.getGraphicsConfiguration(), bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);

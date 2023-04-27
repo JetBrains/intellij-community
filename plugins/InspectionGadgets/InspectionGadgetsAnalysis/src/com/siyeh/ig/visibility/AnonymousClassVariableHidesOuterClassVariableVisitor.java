@@ -42,16 +42,14 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor extends BaseInspectio
       if (statement.getTextOffset() >= offset) {
         break;
       }
-      if (!(statement instanceof PsiDeclarationStatement)) {
+      if (!(statement instanceof PsiDeclarationStatement declarationStatement)) {
         continue;
       }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
       final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
       for (PsiElement declaredElement : declaredElements) {
-        if (!(declaredElement instanceof PsiLocalVariable)) {
+        if (!(declaredElement instanceof PsiLocalVariable localVariable)) {
           continue;
         }
-        final PsiLocalVariable localVariable = (PsiLocalVariable)declaredElement;
         final String name = localVariable.getName();
         final PsiVariable[] variables = collector.getVariables(name);
         for (PsiVariable variable : variables) {

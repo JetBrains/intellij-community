@@ -154,7 +154,7 @@ public abstract class InspectionTreeNode implements TreeNode {
   @NotNull
   public List<? extends InspectionTreeNode> getChildren() {
     Children children = myChildren;
-    return children == null ? Collections.emptyList() : ContainerUtil.immutableList(children.myChildren);
+    return children == null ? Collections.emptyList() : List.of(children.myChildren);
   }
 
   @Override

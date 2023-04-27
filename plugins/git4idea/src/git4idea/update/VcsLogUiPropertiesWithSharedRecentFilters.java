@@ -20,16 +20,15 @@ public abstract class VcsLogUiPropertiesWithSharedRecentFilters<S extends VcsLog
   @NotNull
   @Override
   public List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
-    return VcsLogProjectTabsProperties.getRecentGroup(getCommonState().RECENT_FILTERS, filterName);
+    return getCommonProperties().getRecentlyFilteredGroups(filterName);
   }
 
   @Override
   public void addRecentlyFilteredGroup(@NotNull String filterName, @NotNull Collection<String> values) {
-    VcsLogProjectTabsProperties.addRecentGroup(getCommonState().RECENT_FILTERS, filterName, values);
+    getCommonProperties().addRecentlyFilteredGroup(filterName, values);
   }
 
-  @NotNull
-  private VcsLogProjectTabsProperties.State getCommonState() {
-    return myProject.getService(VcsLogProjectTabsProperties.class).getState();
+  private @NotNull VcsLogProjectTabsProperties getCommonProperties() {
+    return myProject.getService(VcsLogProjectTabsProperties.class);
   }
 }

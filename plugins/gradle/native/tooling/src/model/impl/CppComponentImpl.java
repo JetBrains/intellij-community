@@ -23,7 +23,7 @@ public class CppComponentImpl implements CppComponent {
   public CppComponentImpl(String name, String baseName) {
     this.name = name;
     this.baseName = baseName;
-    this.binaries = new LinkedHashSet<CppBinary>();
+    this.binaries = new LinkedHashSet<>();
   }
 
   public CppComponentImpl(CppComponent component) {

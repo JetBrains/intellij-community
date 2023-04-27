@@ -78,8 +78,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
         PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<>() {
           @Override
           public boolean execute(@NotNull PsiElement element) {
-            if (element instanceof XmlDoctype) {
-              XmlDoctype xmlDoctype = (XmlDoctype)element;
+            if (element instanceof XmlDoctype xmlDoctype) {
               final String dtdUri = getDtdForEntity(xmlDoctype);
               if (dtdUri != null) {
                 XmlFile file = XmlUtil.getContainingFile(element);
@@ -97,8 +96,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
                 if (!XmlUtil.processXmlElements(markupDecl, this, true)) return false;
               }
             }
-            else if (element instanceof XmlEntityDecl) {
-              XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+            else if (element instanceof XmlEntityDecl entityDecl) {
               final String declName = entityDecl.getName();
               if (StringUtil.equals(declName, entityName)) {
                 result[0] = entityDecl;

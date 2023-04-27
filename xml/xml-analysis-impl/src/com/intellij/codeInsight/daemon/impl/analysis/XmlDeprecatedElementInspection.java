@@ -72,10 +72,9 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
     }
     
     PsiElement declaration = metaData.getDeclaration();
-    if (!(declaration instanceof XmlTag)) return false;
+    if (!(declaration instanceof XmlTag tag)) return false;
     XmlComment comment = XmlUtil.findPreviousComment(declaration);
     if (comment != null && pattern.matcher(comment.getCommentText().trim()).matches()) return true;
-    XmlTag tag = (XmlTag)declaration;
     return checkTag(ArrayUtil.getFirstElement(tag.findSubTags("annotation", tag.getNamespace())), pattern);
   }
 

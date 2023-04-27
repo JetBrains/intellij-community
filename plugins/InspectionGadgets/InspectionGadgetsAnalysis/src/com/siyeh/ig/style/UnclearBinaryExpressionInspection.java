@@ -95,16 +95,14 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
 
   @Contract("null, _ -> false")
   public static boolean isUnclearExpression(PsiExpression expression, PsiElement parent) {
-    if (expression instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+    if (expression instanceof PsiAssignmentExpression assignmentExpression) {
       final IElementType tokenType = assignmentExpression.getOperationTokenType();
       if (parent instanceof PsiVariable) {
         if (!tokenType.equals(JavaTokenType.EQ)) {
           return true;
         }
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression nestedAssignment = (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression nestedAssignment) {
         final IElementType nestedTokenType = nestedAssignment.getOperationTokenType();
         if (!tokenType.equals(nestedTokenType)) {
           return true;
@@ -112,8 +110,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
       }
       return isUnclearExpression(assignmentExpression.getRExpression(), assignmentExpression);
     }
-    else if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+    else if (expression instanceof PsiConditionalExpression conditionalExpression) {
       if (PsiUtilCore.hasErrorElementChild(expression)) {
         return false;
       }
@@ -122,12 +119,11 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
              isUnclearExpression(conditionalExpression.getThenExpression(), conditionalExpression) ||
              isUnclearExpression(conditionalExpression.getElseExpression(), conditionalExpression);
     }
-    else if (expression instanceof PsiPolyadicExpression) {
+    else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       if ((parent instanceof PsiConditionalExpression) || (parent instanceof PsiPolyadicExpression) ||
           (parent instanceof PsiInstanceOfExpression)) {
         return true;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       for (PsiExpression operand : polyadicExpression.getOperands()) {
         final PsiType type = operand.getType();
         if ((type == null) || type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
@@ -138,15 +134,13 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
         }
       }
     }
-    else if (expression instanceof PsiInstanceOfExpression) {
+    else if (expression instanceof PsiInstanceOfExpression instanceOfExpression) {
       if ((parent instanceof PsiPolyadicExpression) || (parent instanceof PsiConditionalExpression)) {
         return true;
       }
-      final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
       return isUnclearExpression(instanceOfExpression.getOperand(), instanceOfExpression);
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression nestedExpression = parenthesizedExpression.getExpression();
       return isUnclearExpression(nestedExpression, parenthesizedExpression);
     }
@@ -154,17 +148,15 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
   }
 
   public static void replaceElement(PsiElement element) {
-    if (!(element instanceof PsiExpression)) {
+    if (!(element instanceof PsiExpression expression)) {
       return;
     }
-    final PsiExpression expression = (PsiExpression)element;
     final String newExpressionText = createReplacementText(expression, new StringBuilder()).toString();
     PsiReplacementUtil.replaceExpression(expression, newExpressionText);
   }
 
   private static StringBuilder createReplacementText(@Nullable PsiExpression expression, StringBuilder out) {
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final PsiElement parent = expression.getParent();
       final boolean parentheses = (parent instanceof PsiConditionalExpression) ||
                                   (parent instanceof PsiInstanceOfExpression) ||
@@ -173,8 +165,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
     }
     else if (expression instanceof PsiParenthesizedExpression) {
       for (PsiElement child = expression.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiExpression) {
-          final PsiExpression unwrappedExpression = (PsiExpression)child;
+        if (child instanceof PsiExpression unwrappedExpression) {
           createReplacementText(unwrappedExpression, out);
         }
         else {
@@ -193,8 +184,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
                                   (parent instanceof PsiInstanceOfExpression);
       appendText(expression, parentheses, out);
     }
-    else if (expression instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+    else if (expression instanceof PsiAssignmentExpression assignmentExpression) {
       final PsiElement parent = expression.getParent();
       final boolean parentheses = !isSimpleAssignment(assignmentExpression, parent);
       appendText(assignmentExpression, parentheses, out);
@@ -210,8 +200,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
     if (parent instanceof PsiExpressionStatement) {
       return true;
     }
-    else if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression parentAssignmentExpression = (PsiAssignmentExpression)parent;
+    else if (parent instanceof PsiAssignmentExpression parentAssignmentExpression) {
       parentTokenType = parentAssignmentExpression.getOperationTokenType();
     }
     else if (parent instanceof PsiVariable) {

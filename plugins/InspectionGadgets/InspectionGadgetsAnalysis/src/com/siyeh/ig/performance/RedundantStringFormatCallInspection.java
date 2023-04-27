@@ -156,13 +156,11 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
         return false;
       }
       final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(expr);
-      if (expression instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
+      if (expression instanceof PsiLiteralExpression literalExpression) {
         final String expressionText = literalExpression.getText();
         return expressionText.contains("%n");
       }
-      if (expression instanceof PsiCallExpression) {
-        final PsiCallExpression callExpression = (PsiCallExpression)expression;
+      if (expression instanceof PsiCallExpression callExpression) {
         final PsiMethod method = callExpression.resolveMethod();
         if (method != null) {
           final PsiClass aClass = method.getContainingClass();
@@ -180,8 +178,7 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
           }
         }
       }
-      if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         final IElementType tokenType = polyadicExpression.getOperationTokenType();
         if (!tokenType.equals(JavaTokenType.PLUS)) {
           return false;
@@ -425,8 +422,8 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
     private static void removeRedundantStringFormatCall(@NotNull PsiMethodCallExpression stringFormat) {
       final PsiElement parent = PsiUtil.skipParenthesizedExprUp(stringFormat.getParent());
-      if (parent instanceof PsiExpressionList && ((PsiExpressionList)parent).getExpressionCount() == 1 && parent.getParent() instanceof PsiMethodCallExpression){
-        final PsiMethodCallExpression printCall = (PsiMethodCallExpression)parent.getParent();
+      if (parent instanceof PsiExpressionList && ((PsiExpressionList)parent).getExpressionCount() == 1 &&
+          parent.getParent() instanceof PsiMethodCallExpression printCall){
         final PsiExpression[] args = stringFormat.getArgumentList().getExpressions();
         if (args.length > 1) {
           new CommentTracker().deleteAndRestoreComments(args[0]);

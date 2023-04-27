@@ -274,8 +274,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       if (!GradleProjectSettings.isDelegatedBuildEnabled(module)) return false;
       return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
-    if (projectTask instanceof BuildTask) {
-      BuildTask buildTask = (BuildTask)projectTask;
+    if (projectTask instanceof BuildTask buildTask) {
       for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
         if (buildTasksProvider.isApplicable(buildTask)) return true;
       }

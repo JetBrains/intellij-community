@@ -17,7 +17,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.NumericMnemonicItem;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +43,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected JComponent myIconBar;
 
   private final PopupInlineActionsSupport myInlineActionsSupport;
+
+  private UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<>() {
@@ -123,7 +124,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     myValueLabel = new JLabel();
     myValueLabel.setEnabled(false);
-    JBEmptyBorder valueBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0);
+    JBEmptyBorder valueBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, 8, 1, 0);
     myValueLabel.setBorder(valueBorder);
     myValueLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     panel.add(myValueLabel, BorderLayout.CENTER);
@@ -278,6 +279,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     boolean hasInlineButtons = updateExtraButtons(list, value, step, isSelected, hasNextIcon);
 
     if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
+      myUpdateScaleHelper.saveScaleAndRunIfChanged(() -> {
+        if (ExperimentalUI.isNewUI()) {
+          PopupUtil.configListRendererFixedHeight(selectablePanel);
+        }
+      });
+
       selectablePanel.setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
 
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();

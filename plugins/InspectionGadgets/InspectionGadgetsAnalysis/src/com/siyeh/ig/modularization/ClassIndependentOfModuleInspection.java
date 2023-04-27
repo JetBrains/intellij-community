@@ -39,10 +39,9 @@ public class ClassIndependentOfModuleInspection extends BaseGlobalInspection {
     @NotNull AnalysisScope scope,
     @NotNull InspectionManager manager,
     @NotNull GlobalInspectionContext globalContext) {
-    if (!(refEntity instanceof RefClass)) {
+    if (!(refEntity instanceof RefClass refClass)) {
       return null;
     }
-    final RefClass refClass = (RefClass)refEntity;
     final RefEntity owner = refClass.getOwner();
     if (!(owner instanceof RefPackage)) {
       return null;

@@ -38,6 +38,8 @@ class CommonLocationFeatures : ContextFeatureProvider {
       "is_in_line_beginning" to MLFeatureValue.binary(StringUtil.isEmptyOrSpaces(linePrefix))
     )
 
+    result["is_completion_performance_mode"] = MLFeatureValue.binary(false)
+
     if (DumbService.isDumb(lookup.project)) {
       result["dumb_mode"] = MLFeatureValue.binary(true)
     }

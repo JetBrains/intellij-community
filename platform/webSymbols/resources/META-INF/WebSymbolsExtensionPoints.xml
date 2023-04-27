@@ -54,8 +54,8 @@
     <extensionPoint qualifiedName="com.intellij.webSymbols.highlightInLanguage"
                     beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.dependencyProximityProvider"
-                    interface="com.intellij.webSymbols.context.DependencyProximityProvider"
+    <extensionPoint qualifiedName="com.intellij.webSymbols.contextSourceProximityProvider"
+                    interface="com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

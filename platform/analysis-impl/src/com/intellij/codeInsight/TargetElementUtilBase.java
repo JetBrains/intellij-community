@@ -125,8 +125,7 @@ public final class TargetElementUtilBase {
 
     final List<PomTarget> targets = new ArrayList<>();
     final Consumer<PomTarget> consumer = target -> {
-      if (target instanceof PsiDeclaredTarget) {
-        final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+      if (target instanceof PsiDeclaredTarget declaredTarget) {
         final PsiElement navigationElement = declaredTarget.getNavigationElement();
         final TextRange range = declaredTarget.getNameIdentifierRange();
         if (range != null && !range.shiftRight(navigationElement.getTextRange().getStartOffset())

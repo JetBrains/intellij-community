@@ -38,7 +38,7 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
                 final PsiElement element = reference.getElement();
                 final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
                 final PsiClass providerClass = TestNGUtil.getProviderClass(element, topLevelClass);
-                if (!(dataProviderMethod instanceof PsiMethod)) {
+                if (!(dataProviderMethod instanceof PsiMethod providerMethod)) {
                   final LocalQuickFix[] fixes;
                   if (isOnTheFly && providerClass != null) {
                     fixes = new LocalQuickFix[] {createMethodFix(provider, providerClass, topLevelClass)};
@@ -52,7 +52,6 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
                   if (TestNGUtil.isVersionOrGreaterThan(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClass), 6, 9, 13)) {
                     break;
                   }
-                  final PsiMethod providerMethod = (PsiMethod)dataProviderMethod;
                   if (providerClass != topLevelClass && !providerMethod.hasModifierProperty(PsiModifier.STATIC)) {
                     holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.need.to.be.static"));
                   }

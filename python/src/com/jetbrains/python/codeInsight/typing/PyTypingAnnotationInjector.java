@@ -51,8 +51,7 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   @Nullable
   @Override
   public Language getInjectedLanguage(@NotNull PsiElement context) {
-    if (context instanceof PyStringLiteralExpression) {
-      final PyStringLiteralExpression expr = (PyStringLiteralExpression)context;
+    if (context instanceof PyStringLiteralExpression expr) {
       final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
       if (isTypingLiteralArgument(expr, typeEvalContext) || isTypingAnnotatedMetadataArgument(expr, typeEvalContext)) {
         return null;

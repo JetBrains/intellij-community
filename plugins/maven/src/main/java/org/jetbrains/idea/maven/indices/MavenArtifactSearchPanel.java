@@ -353,8 +353,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       else if (value instanceof MavenArtifactSearchResult) {
         formatSearchResult(tree, (MavenArtifactSearchResult)value, selected);
       }
-      else if (value instanceof MavenDependencyCompletionItem) {
-        MavenDependencyCompletionItem info = (MavenDependencyCompletionItem)value;
+      else if (value instanceof MavenDependencyCompletionItem info) {
         String version = info.getVersion();
         Icon icon = MavenDependencyCompletionUtil.getIcon(info.getType());
 

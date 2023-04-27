@@ -36,7 +36,7 @@ public final class ModelFactory {
   public static Collection<ExternalDependency> createCopy(@Nullable Collection<? extends ExternalDependency> dependencies) {
     if (dependencies == null) return null;
 
-    Collection<ExternalDependency> result = new ArrayList<ExternalDependency>(dependencies.size());
+    Collection<ExternalDependency> result = new ArrayList<>(dependencies.size());
     for (ExternalDependency dependency : dependencies) {
       result.add(createCopy(dependency));
     }

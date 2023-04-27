@@ -121,8 +121,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
     private static FixData prepareDataForFix(PsiElement element) {
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMember)) return null;
-      final PsiMember member = (PsiMember)grandParent;
+      if (!(grandParent instanceof PsiMember member)) return null;
       final PsiModifierList modifierList = member.getModifierList();
       if (modifierList == null) return null;
       final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();

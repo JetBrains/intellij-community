@@ -93,8 +93,7 @@ class NewPropertyAction extends AnAction {
       if (selectedElement == null) {
         return;
       }
-      if (selectedElement instanceof PropertiesPrefixGroup) {
-        final PropertiesPrefixGroup group = (PropertiesPrefixGroup)selectedElement;
+      if (selectedElement instanceof PropertiesPrefixGroup group) {
         prefix = group.getPrefix();
         separator = group.getSeparator();
       }
@@ -183,8 +182,7 @@ class NewPropertyAction extends AnAction {
   @Nullable
   private static String getSelectedPrefixText(@NotNull ResourceBundleEditor resourceBundleEditor) {
     Object item = resourceBundleEditor.getSelectedElementIfOnlyOne();
-    if (item instanceof PropertiesPrefixGroup) {
-      PropertiesPrefixGroup prefixGroup = (PropertiesPrefixGroup)item;
+    if (item instanceof PropertiesPrefixGroup prefixGroup) {
       return prefixGroup.getPrefix() + prefixGroup.getSeparator();
     }
     return null;

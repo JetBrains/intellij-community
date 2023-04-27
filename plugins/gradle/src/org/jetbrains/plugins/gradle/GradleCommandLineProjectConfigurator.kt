@@ -213,7 +213,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
       val gradleText = (if (stdOut) "" else "STDERR: ") + text
       gradleLogWriter.write(gradleText)
-      logger.reportMessage(1, gradleText)
+      //logger.reportMessage(1, gradleText)
     }
 
     override fun onEnd(id: ExternalSystemTaskId) {

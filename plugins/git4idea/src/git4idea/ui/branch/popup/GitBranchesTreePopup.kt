@@ -348,9 +348,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
     return am.createActionToolbar(TOP_LEVEL_ACTION_PLACE, toolbarGroup, true)
       .apply {
-        targetComponent = this@GitBranchesTreePopup.component
+        targetComponent = component
         setReservePlaceAutoPopupIcon(false)
         component.isOpaque = false
+        DataManager.registerDataProvider(component, DataProvider { dataId ->
+          when {
+            POPUP_KEY.`is`(dataId) -> this@GitBranchesTreePopup
+            GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.repositories
+            else -> null
+          }
+        })
       }
   }
 
@@ -366,7 +373,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         }
       }
 
-      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.affectedRepositories)
+      val stepContext = GitBranchesTreePopupStep.createDataContext(project, treeStep.selectedRepository, treeStep.affectedRepositories)
       val resultContext =
         with(SimpleDataContext.builder().setParent(stepContext)) {
           actionContext.forEach { (key, value) -> add(key, value) }
@@ -724,7 +731,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     @JvmStatic
     fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
       val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepository, repositories, true))
+      val selectedRepoIfNeeded = if (GitBranchActionsUtil.userWantsSyncControl(project)) null else selectedRepository
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true))
     }
 
     @JvmStatic

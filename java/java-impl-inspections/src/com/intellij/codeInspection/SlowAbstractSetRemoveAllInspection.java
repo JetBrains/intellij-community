@@ -51,13 +51,13 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
         final LongRangeSet listSizeRange = getSizeRangeOfCollection(arg);
         if (listSizeRange.isEmpty() || listSizeRange.max() <= 2) return;
         if (setSizeRange.min() > listSizeRange.max()) return;
-        final LocalQuickFix fix;
+        final LocalQuickFix[] fix;
         if (PsiUtil.isLanguageLevel8OrHigher(call) && ExpressionUtils.isVoidContext(call)) {
           final String replacement =
             ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".forEach(" + qualifier.getText() + "::remove)";
-          fix = new ReplaceWithListForEachFix(replacement);
+          fix = new LocalQuickFix[]{new ReplaceWithListForEachFix(replacement)};
         } else {
-          fix = null;
+          fix = LocalQuickFix.EMPTY_ARRAY;
         }
         final PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;

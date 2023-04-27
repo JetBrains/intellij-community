@@ -110,8 +110,7 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
 
     @Override
     public void accept(RepositoryArtifactData rad) {
-      if (rad instanceof MavenRepositoryArtifactInfo) {
-        MavenRepositoryArtifactInfo mrai = (MavenRepositoryArtifactInfo)rad;
+      if (rad instanceof MavenRepositoryArtifactInfo mrai) {
         if (StringUtil.equals(mrai.getArtifactId(), myArtifactId) &&
             (StringUtil.isEmpty(myGroupId) || StringUtil.equals(mrai.getGroupId(), myGroupId))) {
           myConsumer.accept(mrai);

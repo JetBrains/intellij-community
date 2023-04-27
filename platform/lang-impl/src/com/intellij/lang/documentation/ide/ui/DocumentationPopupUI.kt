@@ -35,7 +35,6 @@ import java.awt.BorderLayout
 import java.util.function.Supplier
 import javax.swing.JComponent
 
-
 internal class DocumentationPopupUI(
   private val project: Project,
   ui: DocumentationUI,

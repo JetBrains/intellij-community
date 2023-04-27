@@ -305,10 +305,9 @@ class EmojiListPanel extends JBScrollPane {
     }
 
     private void paintNoEmojiFound(Graphics g) {
-      if (g instanceof Graphics2D) {
+      if (g instanceof Graphics2D g2) {
         int x = (getWidth() - myNoEmojiFoundImage.getWidth(this)) / 2;
         int y = (getHeight() - myNoEmojiFoundImage.getHeight(this)) / 2;
-        Graphics2D g2 = (Graphics2D)g;
         final Composite saveComposite = g2.getComposite();
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.5F));
         StartupUiUtil.drawImage(g, myNoEmojiFoundImage, x, y, null);

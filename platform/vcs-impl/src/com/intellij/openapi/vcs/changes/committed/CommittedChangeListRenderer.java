@@ -71,8 +71,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
   public void customize(JComponent tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-    if (userObject instanceof CommittedChangeList) {
-      CommittedChangeList changeList = (CommittedChangeList)userObject;
+    if (userObject instanceof CommittedChangeList changeList) {
       renderChangeList(tree, changeList);
     }
     else if (userObject instanceof String) {
@@ -175,8 +174,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   public static int getRowX(JTree tree, int depth) {
     if (tree == null) return 0;
     final TreeUI ui = tree.getUI();
-    if (ui instanceof BasicTreeUI) {
-      final BasicTreeUI treeUI = ((BasicTreeUI)ui);
+    if (ui instanceof BasicTreeUI treeUI) {
       return (treeUI.getLeftChildIndent() + treeUI.getRightChildIndent()) * depth;
     }
 

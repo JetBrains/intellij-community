@@ -221,8 +221,7 @@ public final class OrderEntryUtil {
     OrderEntry[] orderEntries = model.getOrderEntries();
     List<Library> libraries = new ArrayList<>();
     for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry entry = (LibraryOrderEntry)orderEntry;
+      if (orderEntry instanceof LibraryOrderEntry entry) {
         if (entry.isModuleLevel()) {
           libraries.add(entry.getLibrary());
         }

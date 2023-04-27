@@ -97,8 +97,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
         }
       }
     }
-    if (expression instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiBinaryExpression binOp) {
       RelationType rel = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
       if (rel == null) return null;
       PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());

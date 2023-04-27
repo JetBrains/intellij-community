@@ -158,9 +158,8 @@ public class ThrowableNotThrownInspection extends BaseInspection {
         return checkDeep && !isUsedElsewhere((PsiLocalVariable)parent);
       }
     }
-    else if (parent instanceof PsiExpressionStatement) {
+    else if (parent instanceof PsiExpressionStatement expressionStatement) {
       // void method (like printStackTrace()) provides no result, thus can't be ignored
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)parent;
       final PsiExpression expression1 = expressionStatement.getExpression();
       return !PsiTypes.voidType().equals(expression1.getType());
     }
@@ -174,17 +173,15 @@ public class ThrowableNotThrownInspection extends BaseInspection {
              || parent instanceof PsiIfStatement || parent instanceof PsiAssertStatement) {
       return false;
     }
-    else if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+    else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       final PsiExpression rhs = assignmentExpression.getRExpression();
       if (!PsiTreeUtil.isAncestor(rhs, expression, false)) {
         return false;
       }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiLocalVariable)) {
         return false;

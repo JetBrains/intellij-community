@@ -13,9 +13,9 @@ interface TestFilesConfiguration {
 
   fun withFile(relativePath: String, content: String)
 
-  fun withFiles(action: (VirtualFile) -> Unit)
+  fun withFiles(action: suspend (VirtualFile) -> Unit)
 
   fun areContentsEqual(root: VirtualFile): Boolean
 
-  fun createFiles(root: VirtualFile)
+  suspend fun createFiles(root: VirtualFile)
 }

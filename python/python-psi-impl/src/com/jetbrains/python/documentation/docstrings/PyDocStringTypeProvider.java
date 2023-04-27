@@ -94,11 +94,10 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
 
   // A hack to update scope owners of type parameters parsed out of docstrings
   private void setTypeVarScopeOwners(@Nullable PyType type, @NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    if (!(callable instanceof PyFunction)) return;
+    if (!(callable instanceof PyFunction pyFunction)) return;
     PyTypeChecker.Generics typeParameters = PyTypeChecker.collectGenerics(type, context);
     if (typeParameters.isEmpty()) return;
 
-    PyFunction pyFunction = (PyFunction)callable;
     PyClass pyClass = pyFunction.getContainingClass();
 
     Function<PyGenericType, PyQualifiedNameOwner> findScopeOwner = typeVar -> pyFunction;

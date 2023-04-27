@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.attachAsChildTo
-import com.intellij.util.childScope
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -154,8 +153,21 @@ abstract class ComponentManagerImpl(
   internal var componentContainerIsReadonly: String? = null
 
   private val coroutineScope: CoroutineScope? = when {
-    parent == null -> CoroutineScope(SupervisorJob(parent = mainScope?.coroutineContext?.job) + Dispatchers.Default)
-    parent.parent == null -> parent.coroutineScope!!.childScope()
+    parent == null -> { // application
+      // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the Job
+      val mainJob = mainScope?.coroutineContext?.job
+      val parentScope = if (mainJob == null) {
+        @OptIn(DelicateCoroutinesApi::class)
+        GlobalScope
+      }
+      else {
+        CoroutineScope(mainJob)
+      }
+      parentScope.namedChildScope(debugString(short = true))
+    }
+    parent.parent == null -> { // project
+      parent.coroutineScope!!.namedChildScope(debugString(short = true))
+    }
     else -> null
   }
 

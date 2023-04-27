@@ -26,8 +26,7 @@ final class GroovyFileIconProvider implements FileIconProvider {
   public Icon getIcon(@NotNull VirtualFile virtualFile, @Iconable.IconFlags int flags, @Nullable Project project) {
     if (project == null || !FileTypeRegistry.getInstance().isFileOfType(virtualFile, GroovyFileType.GROOVY_FILE_TYPE)) return null;
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-    if (!(psiFile instanceof GroovyFile)) return null;
-    final GroovyFile file = (GroovyFile)psiFile;
+    if (!(psiFile instanceof GroovyFile file)) return null;
     final Icon icon;
     if (file.isScript()) {
       icon = GroovyScriptTypeDetector.getIcon(file);

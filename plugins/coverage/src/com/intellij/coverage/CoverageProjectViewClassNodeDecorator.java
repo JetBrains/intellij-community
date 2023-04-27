@@ -35,8 +35,7 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
     else if (value instanceof SmartPsiElementPointer) {
       element = ((SmartPsiElementPointer<?>)value).getElement();
     }
-    else if (value instanceof PackageElement) {
-      PackageElement packageElement = (PackageElement)value;
+    else if (value instanceof PackageElement packageElement) {
       final String coverageString = javaCovAnnotator.getPackageCoverageInformationString(packageElement.getPackage(),
                                                                                          packageElement.getModule(),
                                                                                          coverageDataManager);

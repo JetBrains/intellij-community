@@ -221,8 +221,7 @@ public final class ScriptRunnerUtil {
       return;
     }
     processHandler.destroyProcess();
-    if (processHandler instanceof KillableProcess) {
-      KillableProcess killableProcess = (KillableProcess) processHandler;
+    if (processHandler instanceof KillableProcess killableProcess) {
       if (killableProcess.canKillProcess()) {
         if (!processHandler.waitFor(millisTimeout)) {
           // doing 'force quite'

@@ -291,8 +291,7 @@ public class MovablePopup {
   }
 
   private static JRootPane getRootPane(Window window) {
-    if (window instanceof RootPaneContainer) {
-      RootPaneContainer container = (RootPaneContainer)window;
+    if (window instanceof RootPaneContainer container) {
       return container.getRootPane();
     }
     return null;

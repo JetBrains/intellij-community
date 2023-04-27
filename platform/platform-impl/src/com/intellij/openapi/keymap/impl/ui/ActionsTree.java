@@ -407,8 +407,7 @@ public final class ActionsTree {
   @Nullable
   private String getPath(DefaultMutableTreeNode node, boolean presentable) {
     final Object userObject = node.getUserObject();
-    if (userObject instanceof String) {
-      String actionId = (String)userObject;
+    if (userObject instanceof String actionId) {
 
       final TreeNode parent = node.getParent();
       if (parent instanceof DefaultMutableTreeNode) {
@@ -767,14 +766,7 @@ public final class ActionsTree {
     return new RowData(shortcuts, abbreviations);
   }
 
-  private static final class RowData {
-    public final Shortcut[] shortcuts;
-    public final Set<String> abbreviations;
-
-    private RowData(Shortcut[] shortcuts, Set<String> abbreviations) {
-      this.shortcuts = shortcuts;
-      this.abbreviations = abbreviations;
-    }
+  private record RowData(Shortcut[] shortcuts, Set<String> abbreviations) {
   }
 
   @SuppressWarnings("UseJBColor")

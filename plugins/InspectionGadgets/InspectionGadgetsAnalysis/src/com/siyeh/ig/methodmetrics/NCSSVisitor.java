@@ -34,8 +34,7 @@ class NCSSVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
     final PsiElement parent = statement.getParent();
-    if (parent instanceof PsiForStatement) {
-      final PsiForStatement forStatement = (PsiForStatement)parent;
+    if (parent instanceof PsiForStatement forStatement) {
       if (forStatement.getInitialization() == statement || forStatement.getUpdate() == statement) {
         return;
       }

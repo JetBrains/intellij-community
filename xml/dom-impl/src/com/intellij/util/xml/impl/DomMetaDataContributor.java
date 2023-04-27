@@ -18,8 +18,7 @@ public class DomMetaDataContributor implements MetaDataContributor {
     registrar.registerMetaData(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
-        if (element instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)element;
+        if (element instanceof XmlTag tag) {
           final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
           if (domElement != null) {
             return domElement.getGenericInfo().getNameDomElement(domElement) != null;

@@ -132,9 +132,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrMethodCall)) return false;
-    
-    GrMethodCall methodCall = (GrMethodCall)element;
+    if (!(element instanceof GrMethodCall methodCall)) return false;
 
     PsiMethod method = methodCall.resolveMethod();
     if (method == null) return false;

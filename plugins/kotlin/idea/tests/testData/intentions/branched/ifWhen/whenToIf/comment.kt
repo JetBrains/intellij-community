@@ -8,3 +8,5 @@ fun foo(b: Boolean) {
         else -> 2
     }
 }
+
+// IGNORE_FIR

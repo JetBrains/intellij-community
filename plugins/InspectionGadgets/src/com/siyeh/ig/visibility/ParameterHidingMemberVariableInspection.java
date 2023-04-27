@@ -95,10 +95,9 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
     public void visitParameter(@NotNull PsiParameter variable) {
       super.visitParameter(variable);
       final PsiElement declarationScope = variable.getDeclarationScope();
-      if (!(declarationScope instanceof PsiMethod)) {
+      if (!(declarationScope instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)declarationScope;
       if (method.isConstructor() &&
           (m_ignoreForConstructors || JavaPsiRecordUtil.isCanonicalConstructor(method))) {
         return;

@@ -52,8 +52,7 @@ public interface InspectionToolResultExporter extends ProblemDescriptionsProcess
                                         @NotNull InspectionToolResultExporter presentation) {
     HighlightSeverity severity = null;
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(presentation.getProject()).getCurrentProfile();
-    if (entity instanceof RefElement) {
-      final RefElement refElement = (RefElement)entity;
+    if (entity instanceof RefElement refElement) {
       severity = presentation.getSeverity(refElement);
     }
     if (severity == null) {

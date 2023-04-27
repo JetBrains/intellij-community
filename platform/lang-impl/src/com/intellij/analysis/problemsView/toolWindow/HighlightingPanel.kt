@@ -48,6 +48,10 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     return super.getData(dataId)
   }
 
+  override fun getSortBySeverity(): Option? {
+    return mySortBySeverity
+  }
+
   override fun selectionChangedTo(selected: Boolean) {
     super.selectionChangedTo(selected)
     if (selected) updateCurrentFile()

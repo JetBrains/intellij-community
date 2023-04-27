@@ -78,9 +78,8 @@ final class CtxDialogs {
       final TouchbarActionCustomizations ac = TouchbarActionCustomizations.getCustomizations(button.getAnAction());
       if (ac != null) {
         isDefault = ac.isDefault();
-        if (!isDefault && ac.getComponent() instanceof JButton) {
+        if (!isDefault && ac.getComponent() instanceof JButton jb) {
           // also check properties of JButton
-          final JButton jb = (JButton)ac.getComponent();
           isDefault = jb.getAction() != null ? jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null : jb.isDefaultButton();
         }
 

@@ -184,8 +184,7 @@ public class AnnotateDiffViewerAction {
   private static FileAnnotationLoader createThreesideAnnotationsLoader(@NotNull Project project,
                                                                        @NotNull DiffRequest request,
                                                                        @NotNull ThreeSide side) {
-    if (request instanceof ContentDiffRequest) {
-      ContentDiffRequest requestEx = (ContentDiffRequest)request;
+    if (request instanceof ContentDiffRequest requestEx) {
       if (requestEx.getContents().size() == 3) {
         DiffContent content = side.select(requestEx.getContents());
         FileAnnotationLoader loader = createAnnotationsLoader(project, content);
@@ -218,8 +217,7 @@ public class AnnotateDiffViewerAction {
       }
     }
 
-    if (request instanceof ContentDiffRequest) {
-      ContentDiffRequest requestEx = (ContentDiffRequest)request;
+    if (request instanceof ContentDiffRequest requestEx) {
       if (requestEx.getContents().size() == 2) {
         DiffContent content = side.select(requestEx.getContents());
         return createAnnotationsLoader(project, content);
@@ -293,8 +291,7 @@ public class AnnotateDiffViewerAction {
   public static class MyDiffExtension extends DiffExtension {
     @Override
     public void onViewerCreated(@NotNull DiffViewer diffViewer, @NotNull DiffContext context, @NotNull DiffRequest request) {
-      if (diffViewer instanceof DiffViewerBase) {
-        DiffViewerBase viewer = (DiffViewerBase)diffViewer;
+      if (diffViewer instanceof DiffViewerBase viewer) {
         viewer.addListener(new MyDiffViewerListener(viewer));
       }
     }

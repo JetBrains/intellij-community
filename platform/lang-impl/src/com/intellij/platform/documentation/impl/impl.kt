@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.platform.documentation.*
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 
 internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
@@ -18,7 +17,6 @@ internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   return DocumentationRequest(createPointer(), computePresentation())
 }
 
-@Internal
 fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out DocumentationTarget>): Deferred<DocumentationData?> {
   return async(Dispatchers.Default) {
     computeDocumentation(targetPointer)
@@ -40,7 +38,6 @@ internal suspend fun computeDocumentation(targetPointer: Pointer<out Documentati
   }
 }
 
-@Internal
 suspend fun handleLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
   return withContext(Dispatchers.Default) {
     tryResolveLink(targetPointer, url)
@@ -66,7 +63,6 @@ internal sealed class InternalResolveLinkResult<out X> {
 /**
  * @return `null` if [contextTarget] was invalidated, or [url] cannot be resolved
  */
-@Internal // for Fleet
 suspend fun resolveLinkToTarget(contextTarget: Pointer<out DocumentationTarget>, url: String): Pointer<out DocumentationTarget>? {
   return when (val resolveLinkResult = resolveLink(contextTarget::dereference, url, DocumentationTarget::createPointer)) {
     InternalResolveLinkResult.CannotResolve -> null
@@ -177,6 +173,7 @@ private fun contentUpdater(target: DocumentationTarget, url: String): ContentUpd
 
 @TestOnly
 fun computeDocumentationBlocking(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
+  @Suppress("RAW_RUN_BLOCKING")
   return runBlocking {
     withTimeout(1000 * 60) {
       computeDocumentation(targetPointer)

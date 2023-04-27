@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import kotlin.reflect.KClass
 
 abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
   //override lateinit var entitySource: EntitySource
@@ -119,16 +118,16 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
       val parentEntityClass = connectionId.parentClass.findWorkspaceEntity()
       // Remove outdated references
       if (!entityInterfaceToEntity.contains(parentEntityClass)) {
-        updateReferenceToEntity(parentEntityClass.kotlin, false, listOf(null))
+        updateReferenceToEntity(parentEntityClass, false, listOf(null))
       }
     }
     // Update existing references
     entityInterfaceToEntity.forEach { (parentEntityClass, parentEntity) ->
-      updateReferenceToEntity(parentEntityClass.kotlin, false, listOf(parentEntity))
+      updateReferenceToEntity(parentEntityClass, false, listOf(parentEntity))
     }
   }
 
-  fun updateReferenceToEntity(entityClass: KClass<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>) {
+  fun updateReferenceToEntity(entityClass: Class<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>) {
     val foundConnectionId = findConnectionId(entityClass, entities)
     if (foundConnectionId == null) return
 
@@ -252,11 +251,11 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
     }
   }
 
-  private fun findConnectionId(entityClass: KClass<out WorkspaceEntity>, entity: List<WorkspaceEntity?>): ConnectionId? {
+  private fun findConnectionId(entityClass: Class<out WorkspaceEntity>, entity: List<WorkspaceEntity?>): ConnectionId? {
     val someEntity = entity.filterNotNull().firstOrNull()
     val firstClass = this.getEntityClass()
-    val connectionChecker = { connectionId: ConnectionId -> isCorrectConnection(connectionId, firstClass, entityClass.java)
-                                                            || isCorrectConnection(connectionId, entityClass.java, firstClass) }
+    val connectionChecker = { connectionId: ConnectionId -> isCorrectConnection(connectionId, firstClass, entityClass)
+                                                            || isCorrectConnection(connectionId, entityClass, firstClass) }
     if (someEntity != null) {
       someEntity as WorkspaceEntityBase
       val resultingConnection = someEntity.connectionIdList().firstOrNull(connectionChecker)
@@ -267,7 +266,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
       val resultingConnection = entityLinks.keys.asSequence().map { it.connectionId }.firstOrNull(connectionChecker)
       if (resultingConnection != null) return resultingConnection
       // Attempt to find connection by old entities still existing in storage
-      val connectionsFromOldEntities = (referrers(entityClass.java, true).firstOrNull() as? WorkspaceEntityBase)?.connectionIdList()
+      val connectionsFromOldEntities = (referrers(entityClass, true).firstOrNull() as? WorkspaceEntityBase)?.connectionIdList()
                                        ?: emptyList()
       // It's okay to have two identical connections e.g. if entity linked to themselves as parent and child
       return connectionsFromOldEntities.firstOrNull(connectionChecker)

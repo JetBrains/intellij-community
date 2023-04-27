@@ -121,8 +121,8 @@ public final class ScratchFileActions {
         new LanguageItem(null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
 
       Consumer<LanguageItem> consumer = o -> {
-        context.language = o.language;
-        context.fileExtension = o.fileExtension;
+        context.language = o.language();
+        context.fileExtension = o.fileExtension();
         if (o == extractItem) {
           context.text = StringUtil.notNullize(textExtractor.extractText());
           context.caretOffset = 0;
@@ -140,7 +140,7 @@ public final class ScratchFileActions {
       LRUPopupBuilder<LanguageItem> builder = ScratchImplUtil.buildLanguagesPopup(
         project, ActionsBundle.message("action.NewScratchFile.text.with.new"));
       if (selectionItem != null) {
-        String displayName = LangBundle.message("scratch.file.action.new.from.selection", selectionItem.fileType.getDisplayName());
+        String displayName = LangBundle.message("scratch.file.action.new.from.selection", selectionItem.fileType().getDisplayName());
         builder.withExtraTopValue(selectionItem, displayName, EmptyIcon.ICON_16);
       }
       else if (extractItem != null) {

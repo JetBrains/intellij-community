@@ -48,9 +48,8 @@ public class ScopeVariableImpl implements ScopeVariable {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ScopeVariableImpl)) return false;
+    if (!(o instanceof ScopeVariableImpl that)) return false;
 
-    ScopeVariableImpl that = (ScopeVariableImpl)o;
     if (isParameter != that.isParameter) return false;
     if (myDeclarations != null ? !myDeclarations.equals(that.myDeclarations) : that.myDeclarations != null) return false;
     if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;

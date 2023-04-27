@@ -127,8 +127,7 @@ public final class StartupActionScriptManager {
         return new CopyCommand(Paths.get(((CopyCommand)command).mySource), destination);
       }
     }
-    else if (command instanceof UnzipCommand) {
-      UnzipCommand unzipCommand = (UnzipCommand)command;
+    else if (command instanceof UnzipCommand unzipCommand) {
       Path destination = mapPath(unzipCommand.myDestination, oldTarget, newTarget);
       if (destination != null) {
         return new UnzipCommand(Path.of(unzipCommand.mySource), destination, unzipCommand.myFilenameFilter);

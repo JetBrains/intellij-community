@@ -1,0 +1,18 @@
+// COMPILER_ARGUMENTS: -XXLanguage:-EnumEntries
+package test;
+
+import test.A.*
+
+enum class A {
+    A1, A2;
+
+    companion object {
+        val entries = ""
+    }
+}
+
+fun foo() {
+    A1
+    A2
+    Companion.entries
+}

@@ -122,8 +122,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
           return;
         }
         final PsiElement previousSibling = PsiTreeUtil.skipWhitespacesBackward(statement);
-        if (previousSibling instanceof PsiComment) {
-          final PsiComment comment = (PsiComment)previousSibling;
+        if (previousSibling instanceof PsiComment comment) {
           final String commentText = comment.getText();
           if (commentPattern.matcher(commentText).find() && JavaSuppressionUtil.getSuppressedInspectionIdsIn(comment) == null) {
             continue;

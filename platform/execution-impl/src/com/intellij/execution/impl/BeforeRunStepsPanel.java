@@ -336,8 +336,7 @@ public final class BeforeRunStepsPanel extends JPanel {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value instanceof BeforeRunTask) {
-        BeforeRunTask<?> task = (BeforeRunTask<?>)value;
+      if (value instanceof BeforeRunTask<?> task) {
         //noinspection rawtypes
         BeforeRunTaskProvider provider = getProvider(myRunConfiguration.getProject(), task.getProviderId());
         if (provider == null) {

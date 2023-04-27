@@ -6,9 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
-import com.intellij.ui.CollectionListModel
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -18,6 +16,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActio
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
 import javax.swing.JComponent
+import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ChangeEvent
 
@@ -56,6 +55,7 @@ internal class GitLabMergeRequestsPanelFactory {
         }
       }
     }
+    ScrollableContentBorder.setup(listLoaderPanel, Side.TOP, progressStripe)
 
     val searchPanel = createSearchPanel(scope, listVm)
 
@@ -86,7 +86,7 @@ internal class GitLabMergeRequestsPanelFactory {
     return listModel
   }
 
-  private fun createListLoaderPanel(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel, list: JComponent): JComponent {
+  private fun createListLoaderPanel(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel, list: JComponent): JScrollPane {
     return ScrollPaneFactory.createScrollPane(list, true).apply {
       isOpaque = false
       viewport.isOpaque = false
@@ -112,9 +112,6 @@ internal class GitLabMergeRequestsPanelFactory {
               }
             }
             GitLabMergeRequestsListViewModel.ListDataUpdate.Clear -> {
-              if (isShowing) {
-                listVm.requestMore()
-              }
             }
           }
         }

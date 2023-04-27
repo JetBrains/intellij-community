@@ -77,7 +77,7 @@ class IdeaSuite extends Suite {
 
   @Override
   protected List<Runner> getChildren() {
-    final List<Runner> children = new ArrayList<Runner>(super.getChildren());
+    final List<Runner> children = new ArrayList<>(super.getChildren());
     boolean containsSuiteInside = false;
     for (Runner child : children) {
       if (isSuite(child)) {
@@ -87,7 +87,7 @@ class IdeaSuite extends Suite {
     }
     if (!containsSuiteInside) return children;
     try {
-      final Set<String> allNames = new HashSet<String>();
+      final Set<String> allNames = new HashSet<>();
       for (Runner child : children) {
         allNames.add(describeChild(child).getDisplayName());
       }

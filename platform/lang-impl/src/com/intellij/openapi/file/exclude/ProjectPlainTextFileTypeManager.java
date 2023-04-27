@@ -2,6 +2,7 @@
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,6 +10,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 /**
  * @deprecated use {@link OverrideFileTypeManager} instead
@@ -33,10 +35,14 @@ public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   @Override
   public void loadState(@NotNull Element state) {
     super.loadState(state);
+
+    LinkedHashMap<VirtualFile, FileType> files = new LinkedHashMap<>();
     for (VirtualFile file : super.getFiles()) {
       if (OverrideFileTypeManager.isOverridable(file.getFileType())) {
-        OverrideFileTypeManager.getInstance().addFile(file, PlainTextFileType.INSTANCE);
+        files.put(file, PlainTextFileType.INSTANCE);
       }
     }
+
+    OverrideFileTypeManager.getInstance().addFiles(files);
   }
 }

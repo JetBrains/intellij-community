@@ -49,10 +49,10 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
 
     detailsData.loadDetails()
       .thenCompose {
-        changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid)
-      }.thenCompose { mergeBase ->
-        commitsRequest.thenCompose {
-          changesService.createChangesProvider(indicator, pullRequestId, mergeBase, it)
+        changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid).thenCombine(commitsRequest) { mergeBaseRef, commits ->
+          mergeBaseRef to commits
+        }.thenCompose { (mergeBaseRef, commits) ->
+          changesService.createChangesProvider(indicator, pullRequestId, it.baseRefOid, mergeBaseRef, commits)
         }
       }
   }

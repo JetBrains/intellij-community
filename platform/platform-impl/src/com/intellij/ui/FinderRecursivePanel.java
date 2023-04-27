@@ -638,8 +638,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     T value = getSelectedValue();
     if (value != null) {
       myChild = createRightComponent(value);
-      if (myChild instanceof FinderRecursivePanel) {
-        FinderRecursivePanel<?> childPanel = (FinderRecursivePanel<?>)myChild;
+      if (myChild instanceof FinderRecursivePanel<?> childPanel) {
         if (withUpdatePanel) {
           childPanel.initPanel();
         }

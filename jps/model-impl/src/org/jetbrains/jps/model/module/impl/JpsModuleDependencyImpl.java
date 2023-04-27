@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
-public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleDependencyImpl> implements JpsModuleDependency {
+public final class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleDependencyImpl> implements JpsModuleDependency {
   private static final JpsElementChildRole<JpsModuleReference>
     MODULE_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("module reference");
 
@@ -38,9 +38,8 @@ public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleD
     super(original);
   }
 
-  @NotNull
   @Override
-  public JpsModuleReference getModuleReference() {
+  public @NotNull JpsModuleReference getModuleReference() {
     return myContainer.getChild(MODULE_REFERENCE_CHILD_ROLE);
   }
 
@@ -54,9 +53,8 @@ public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleD
     return moduleRef.get();
   }
 
-  @NotNull
   @Override
-  public JpsModuleDependencyImpl createCopy() {
+  public @NotNull JpsModuleDependencyImpl createCopy() {
     return new JpsModuleDependencyImpl(this);
   }
 

@@ -26,19 +26,17 @@ class WhileLoopPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-    final PsiJavaToken token = (PsiJavaToken)element;
     final IElementType tokenType = token.getTokenType();
     if (!JavaTokenType.WHILE_KEYWORD.equals(tokenType)) {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiWhileStatement)) {
+    if (!(parent instanceof PsiWhileStatement whileStatement)) {
       return false;
     }
-    final PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
     return !(whileStatement.getCondition() == null ||
              whileStatement.getBody() == null);
   }

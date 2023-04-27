@@ -58,9 +58,7 @@ class RecursionUtils {
         statement instanceof GrAssertStatement ||
         statement instanceof GrVariableDeclaration) {
       return false;
-    } else if (statement instanceof GrReturnStatement) {
-      final GrReturnStatement returnStatement =
-          (GrReturnStatement) statement;
+    } else if (statement instanceof GrReturnStatement returnStatement) {
       final GrExpression returnValue = returnStatement.getReturnValue();
       if (returnValue != null) {
         if (expressionDefinitelyRecurses(returnValue, method)) {
@@ -78,9 +76,7 @@ class RecursionUtils {
       final GrCodeBlock body = ((GrSynchronizedStatement) statement)
           .getBody();
       return codeBlockMayReturnBeforeRecursing(body, method, false);
-    } else if (statement instanceof GrBlockStatement) {
-      final GrBlockStatement blockStatement =
-          (GrBlockStatement) statement;
+    } else if (statement instanceof GrBlockStatement blockStatement) {
       final GrCodeBlock codeBlock = blockStatement.getBlock();
       return codeBlockMayReturnBeforeRecursing(codeBlock, method, false);
     } else if (statement instanceof GrIfStatement) {
@@ -385,8 +381,7 @@ class RecursionUtils {
   private static boolean methodCallExpressionDefinitelyRecurses(
       GrMethodCallExpression exp, GrMethod method) {
     final GrExpression invoked = exp.getInvokedExpression();
-    if (invoked instanceof GrReferenceExpression) {
-      final GrReferenceExpression methodExpression = (GrReferenceExpression) invoked;
+    if (invoked instanceof GrReferenceExpression methodExpression) {
       final PsiMethod referencedMethod = exp.resolveMethod();
       if (referencedMethod == null) {
         return false;
@@ -419,13 +414,9 @@ class RecursionUtils {
         statement instanceof GrThrowStatement ||
         statement instanceof GrAssertStatement) {
       return false;
-    } else if (statement instanceof GrExpression) {
-      final GrExpression expression =
-          (GrExpression) statement;
+    } else if (statement instanceof GrExpression expression) {
       return expressionDefinitelyRecurses(expression, method);
-    } else if (statement instanceof GrVariableDeclaration) {
-      final GrVariableDeclaration declaration =
-          (GrVariableDeclaration) statement;
+    } else if (statement instanceof GrVariableDeclaration declaration) {
       final GrVariable[] declaredElements =
           declaration.getVariables();
       for (final GrVariable variable : declaredElements) {
@@ -435,9 +426,7 @@ class RecursionUtils {
         }
       }
       return false;
-    } else if (statement instanceof GrReturnStatement) {
-      final GrReturnStatement returnStatement =
-          (GrReturnStatement) statement;
+    } else if (statement instanceof GrReturnStatement returnStatement) {
       final GrExpression returnValue = returnStatement.getReturnValue();
       if (returnValue != null) {
         if (expressionDefinitelyRecurses(returnValue, method)) {

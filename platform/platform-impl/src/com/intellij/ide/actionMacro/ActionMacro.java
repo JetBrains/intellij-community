@@ -103,9 +103,8 @@ public final class ActionMacro {
     final ActionDescriptor[] actions = getActions();
     for (ActionDescriptor action : actions) {
       Element actionNode = null;
-      if (action instanceof TypedDescriptor) {
+      if (action instanceof TypedDescriptor typedDescriptor) {
         actionNode = new Element(ELEMENT_TYPING);
-        TypedDescriptor typedDescriptor = (TypedDescriptor)action;
         actionNode.setText(typedDescriptor.getText().replaceAll(" ", "&#x20;"));
         actionNode.setAttribute(ATTRIBUTE_KEY_CODES, unparseKeyCodes(
           Couple.of(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
@@ -145,9 +144,7 @@ public final class ActionMacro {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ActionMacro)) return false;
-
-    final ActionMacro actionMacro = (ActionMacro)o;
+    if (!(o instanceof ActionMacro actionMacro)) return false;
 
     if (!myActions.equals(actionMacro.myActions)) return false;
     if (!myName.equals(actionMacro.myName)) return false;

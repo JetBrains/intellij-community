@@ -80,15 +80,13 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
     final PsiMethod method;
     final int parameterIndex;
     if (!(grandParent instanceof PsiMethod)) {
-      if (!(grandParent instanceof PsiParameter)) {
+      if (!(grandParent instanceof PsiParameter parameter)) {
         return;
       }
-      final PsiParameter parameter = (PsiParameter)grandParent;
       final PsiElement greatGrandParent = grandParent.getParent();
-      if (!(greatGrandParent instanceof PsiParameterList)) {
+      if (!(greatGrandParent instanceof PsiParameterList parameterList)) {
         return;
       }
-      final PsiParameterList parameterList = (PsiParameterList)greatGrandParent;
       parameterIndex = parameterList.getParameterIndex(parameter);
       final PsiElement greatGreatGrandParent = greatGrandParent.getParent();
       if (!(greatGreatGrandParent instanceof PsiMethod)) {

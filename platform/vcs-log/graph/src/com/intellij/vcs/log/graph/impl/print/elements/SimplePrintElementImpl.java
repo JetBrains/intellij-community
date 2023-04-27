@@ -33,9 +33,7 @@ public class SimplePrintElementImpl extends PrintElementWithGraphElement impleme
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof NodePrintElement)) return false;
-
-    NodePrintElement that = (NodePrintElement)o;
+    if (!(o instanceof NodePrintElement that)) return false;
 
     if (myPositionInCurrentRow != that.getPositionInCurrentRow()) return false;
     if (myRowIndex != that.getRowIndex()) return false;

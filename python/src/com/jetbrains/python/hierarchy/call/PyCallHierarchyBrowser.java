@@ -35,8 +35,7 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   @Nullable
   @Override
   protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
-    if (descriptor instanceof PyHierarchyNodeDescriptor) {
-      PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;
+    if (descriptor instanceof PyHierarchyNodeDescriptor pyDescriptor) {
       return pyDescriptor.getPsiElement();
     }
     return null;

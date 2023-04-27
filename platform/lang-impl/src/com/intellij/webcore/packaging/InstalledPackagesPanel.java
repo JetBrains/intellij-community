@@ -206,8 +206,7 @@ public class InstalledPackagesPanel extends JPanel {
       final Set<String> packagesShouldBePostponed = getPackagesToPostpone();
       for (int row : rows) {
         final Object packageObj = myPackagesTableModel.getValueAt(row, 0);
-        if (packageObj instanceof InstalledPackage) {
-          InstalledPackage pkg = (InstalledPackage)packageObj;
+        if (packageObj instanceof InstalledPackage pkg) {
           final String packageName = pkg.getName();
           final String currentVersion = pkg.getVersion();
           final String availableVersion = (String)myPackagesTableModel.getValueAt(row, 2);
@@ -319,8 +318,7 @@ public class InstalledPackagesPanel extends JPanel {
         final int index = selected[i];
         if (index >= myPackagesTable.getRowCount()) continue;
         final Object value = myPackagesTable.getValueAt(index, 0);
-        if (value instanceof InstalledPackage) {
-          final InstalledPackage pkg = (InstalledPackage)value;
+        if (value instanceof InstalledPackage pkg) {
           if (!canUninstallPackage(pkg)) {
             canUninstall = false;
           }

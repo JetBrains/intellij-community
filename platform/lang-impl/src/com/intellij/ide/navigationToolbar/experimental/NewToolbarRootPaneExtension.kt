@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.ToolbarActionsUpdatedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -56,8 +55,8 @@ fun interface ExperimentalToolbarStateListener {
   fun refreshVisibility()
 }
 
-@Service
-private class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker() {
+
+open class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker() {
   companion object {
     fun getInstance(project: Project): NewToolbarRootPaneManager = project.service()
   }
@@ -95,20 +94,20 @@ private class NewToolbarRootPaneManager(private val project: Project) : SimpleMo
     }
   }
 
+  open fun isLeftSideAction(action: AnAction): Boolean =
+    action.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text"))
+
+  open fun isRightSideAction(action: AnAction): Boolean =
+    action.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text"))
+
   @RequiresBackgroundThread
   private fun correctedToolbarActions(): Map<String, ActionGroup?> {
     val toolbarGroup = getToolbarGroup() ?: return emptyMap()
 
     val children = toolbarGroup.getChildren(null)
 
-    val leftGroup = children.firstOrNull {
-      it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) || it.templateText.equals(
-        ActionsBundle.message("group.LeftToolbarSideGroupXamarin.text"))
-    }
-    val rightGroup = children.firstOrNull {
-      it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) || it.templateText.equals(
-        ActionsBundle.message("group.RightToolbarSideGroupXamarin.text"))
-    }
+    val leftGroup = children.firstOrNull(::isLeftSideAction)
+    val rightGroup = children.firstOrNull(::isRightSideAction)
     val restGroup = DefaultActionGroup(children.filter { it != leftGroup && it != rightGroup })
 
     val map = mutableMapOf<String, ActionGroup?>()
@@ -124,13 +123,8 @@ private class NewToolbarRootPaneManager(private val project: Project) : SimpleMo
     return CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
   }
 
-  private fun mainGroupName(): String {
-    return if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
-      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
-    }
-    else {
-      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN
-    }
+  open fun mainGroupName(): String {
+      return IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
   }
 
   private class MyActionToolbarImpl(place: String,

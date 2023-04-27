@@ -263,8 +263,7 @@ public final class ComponentPropertiesCollector {
   }
 
   private void addToolbarInfo(Object component) {
-    if (component instanceof ActionToolbarImpl) {
-      ActionToolbarImpl toolbar = (ActionToolbarImpl)component;
+    if (component instanceof ActionToolbarImpl toolbar) {
       myProperties.addAll(UiInspectorUtil.collectActionGroupInfo("Toolbar", toolbar.getActionGroup(), toolbar.getPlace()));
 
       JComponent targetComponent = ReflectionUtil.getField(ActionToolbarImpl.class, toolbar, JComponent.class, "myTargetComponent");
@@ -295,8 +294,7 @@ public final class ComponentPropertiesCollector {
 
   private void addLayoutProperties(@NotNull Container component) {
     LayoutManager layout = component.getLayout();
-    if (layout instanceof GridBagLayout) {
-      GridBagLayout bagLayout = (GridBagLayout)layout;
+    if (layout instanceof GridBagLayout bagLayout) {
       GridBagConstraints defaultConstraints =
         ReflectionUtil.getField(GridBagLayout.class, bagLayout, GridBagConstraints.class, "defaultConstraints");
 
@@ -311,8 +309,7 @@ public final class ComponentPropertiesCollector {
         addSubValue(UiInspectorUtil.getComponentName(child), toString(bagLayout.getConstraints(child)));
       }
     }
-    else if (layout instanceof BorderLayout) {
-      BorderLayout borderLayout = (BorderLayout)layout;
+    else if (layout instanceof BorderLayout borderLayout) {
 
       myProperties.add(new PropertyBean("BorderLayout constraints",
                                         String.format("hgap - %s, vgap - %s", borderLayout.getHgap(), borderLayout.getVgap())));
@@ -321,8 +318,7 @@ public final class ComponentPropertiesCollector {
         addSubValue(UiInspectorUtil.getComponentName(child), borderLayout.getConstraints(child));
       }
     }
-    else if (layout instanceof CardLayout) {
-      CardLayout cardLayout = (CardLayout)layout;
+    else if (layout instanceof CardLayout cardLayout) {
       Integer currentCard = ReflectionUtil.getField(CardLayout.class, cardLayout, null, "currentCard");
       //noinspection UseOfObsoleteCollectionType
       Vector<?> vector = ReflectionUtil.getField(CardLayout.class, cardLayout, Vector.class, "vector");

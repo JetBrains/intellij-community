@@ -35,9 +35,8 @@ public final class WritesCounterDFAInstance implements DfaInstance<Object2IntMap
 
   @Override
   public Object2IntMap<GrVariable> fun(@NotNull Object2IntMap<GrVariable> map, @NotNull Instruction instruction) {
-    if (!(instruction instanceof ReadWriteVariableInstruction)) return map;
+    if (!(instruction instanceof ReadWriteVariableInstruction rwInstruction)) return map;
 
-    final ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)instruction;
     if (!rwInstruction.isWrite()) return map;
 
     final GrVariable variable = getVariable(instruction.getElement());

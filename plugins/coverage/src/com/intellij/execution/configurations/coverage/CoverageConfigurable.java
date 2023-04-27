@@ -107,8 +107,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
   }
 
   private void setUpBranchCoverage(CoverageRunner runner, boolean branchCoverage, boolean testTracking) {
-    if (runner instanceof JavaCoverageRunner) {
-      final JavaCoverageRunner javaRunner = (JavaCoverageRunner)runner;
+    if (runner instanceof JavaCoverageRunner javaRunner) {
       final boolean alwaysAvailable = javaRunner.isBranchInfoAvailable(false);
       final boolean neverAvailable = !javaRunner.isBranchInfoAvailable(true);
       myBranchCoverageCb.setEnabled(!(alwaysAvailable || neverAvailable));

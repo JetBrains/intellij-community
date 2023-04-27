@@ -66,10 +66,9 @@ public class JDBCResourceInspection extends ResourceInspection {
 
   @Override
   protected boolean isResourceCreation(PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final String name = methodExpression.getReferenceName();
     if (name == null || !creationMethodNameSet.contains(name)) {

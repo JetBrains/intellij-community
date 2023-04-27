@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -20,16 +20,20 @@ import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
   /**
-   * The key to retrieve a logical editor line position of a latest actionable click inside the gutter.
-   * Available to gutter popup actions (see {@link #setGutterPopupGroup(ActionGroup)},
-   * {@link GutterIconRenderer#getPopupMenuActions()}, {@link TextAnnotationGutterProvider#getPopupActions(int, Editor)})
+   * The key to retrieve the logical editor line position of the latest actionable click inside the gutter.
+   * Available to gutter popup actions,
+   * see {@link #setGutterPopupGroup(ActionGroup)},
+   * {@link GutterIconRenderer#getPopupMenuActions()},
+   * {@link TextAnnotationGutterProvider#getPopupActions(int, Editor)}.
    */
   public static final DataKey<Integer> LOGICAL_LINE_AT_CURSOR = DataKey.create("EditorGutter.LOGICAL_LINE_AT_CURSOR");
 
   /**
-   * The key to retrieve a editor gutter icon center position of a latest actionable click inside the gutter.
-   * Available to gutter popup actions (see {@link #setGutterPopupGroup(ActionGroup)},
-   * {@link GutterIconRenderer#getPopupMenuActions()}, {@link TextAnnotationGutterProvider#getPopupActions(int, Editor)})
+   * The key to retrieve the editor gutter icon's center position of the latest actionable click inside the gutter.
+   * Available to gutter popup actions,
+   * see {@link #setGutterPopupGroup(ActionGroup)},
+   * {@link GutterIconRenderer#getPopupMenuActions()},
+   * {@link TextAnnotationGutterProvider#getPopupActions(int, Editor)}.
    */
   public static final DataKey<Point> ICON_CENTER_POSITION = DataKey.create("EditorGutter.ICON_CENTER_POSITION");
 

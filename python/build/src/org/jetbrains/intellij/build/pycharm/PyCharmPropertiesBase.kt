@@ -13,18 +13,7 @@ abstract class PyCharmPropertiesBase : JetBrainsProductProperties() {
   init {
     reassignAltClickToMultipleCarets = true
     useSplash = true
-    productLayout.mainJarName = "pycharm.jar"
-    productLayout.withAdditionalPlatformJar(
-      "testFramework.jar",
-      "intellij.platform.testFramework.core",
-      "intellij.platform.testFramework.impl",
-      "intellij.platform.testFramework.common",
-      "intellij.platform.testFramework.junit5",
-      "intellij.platform.testFramework",
-      "intellij.tools.testsBootstrap",
-      "intellij.java.rt",
-      )
-
+    productLayout.addPlatformSpec(TEST_FRAMEWORK_WITH_JAVA_RT)
     buildCrossPlatformDistribution = true
     mavenArtifacts.additionalModules = mavenArtifacts.additionalModules.addAll(listOf(
       "intellij.java.compiler.antTasks",

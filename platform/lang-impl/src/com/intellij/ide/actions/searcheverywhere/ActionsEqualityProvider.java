@@ -27,8 +27,7 @@ public class ActionsEqualityProvider extends AbstractEqualityProvider {
       item = ((GotoActionModel.MatchedValue)item).value;
     }
 
-    if (item instanceof GotoActionModel.ActionWrapper) {
-      GotoActionModel.ActionWrapper wrapper = (GotoActionModel.ActionWrapper)item;
+    if (item instanceof GotoActionModel.ActionWrapper wrapper) {
       return wrapper.getAction();
     }
 

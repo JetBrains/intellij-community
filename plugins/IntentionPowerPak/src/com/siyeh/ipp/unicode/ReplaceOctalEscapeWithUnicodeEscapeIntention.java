@@ -58,8 +58,7 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
       replacement.append(text, anchor, textLength);
       document.replaceString(start, end, replacement);
     }
-    else if (element instanceof PsiLiteralExpression) {
-      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+    else if (element instanceof PsiLiteralExpression literalExpression) {
       final String text = literalExpression.getText();
       final CaretModel model = editor.getCaretModel();
       final int offset = model.getOffset() - literalExpression.getTextOffset();
@@ -157,8 +156,7 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
         final String text = editor.getDocument().getCharsSequence().subSequence(start, end).toString();
         return indexOfOctalEscape(text, 1) >= 0;
       }
-      else if (element instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+      else if (element instanceof PsiLiteralExpression literalExpression) {
         final String text = literalExpression.getText();
         final CaretModel model = editor.getCaretModel();
         final int offset = model.getOffset() - literalExpression.getTextOffset();

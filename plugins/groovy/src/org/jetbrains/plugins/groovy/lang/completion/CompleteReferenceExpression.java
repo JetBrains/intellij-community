@@ -376,7 +376,7 @@ public final class CompleteReferenceExpression {
     return InheritanceUtil.isInheritor(qType, CommonClassNames.JAVA_UTIL_MAP);
   }
 
-  private class CompleteReferenceProcessor extends ResolverProcessorImpl implements Consumer<Object> {
+  private class CompleteReferenceProcessor extends ResolverProcessorImpl {
 
     private final Consumer<LookupElement> myConsumer;
 
@@ -433,9 +433,7 @@ public final class CompleteReferenceExpression {
       if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor() && !(element instanceof NewifiedConstructor)) {
         return true;
       }
-      if (element instanceof PsiNamedElement) {
-
-        PsiNamedElement namedElement = (PsiNamedElement)element;
+      if (element instanceof PsiNamedElement namedElement) {
 
         boolean isAccessible = isAccessible(namedElement);
         final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
@@ -450,19 +448,12 @@ public final class CompleteReferenceExpression {
           }
         }
 
-        consume(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
+        processResult(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
       }
       return true;
     }
 
-    @Override
-    public void consume(Object o) {
-      if (!(o instanceof GroovyResolveResult)) {
-        LOG.error(o);
-        return;
-      }
-
-      GroovyResolveResult result = (GroovyResolveResult)o;
+    private void processResult(GroovyResolveResult result) {
       if (!result.isStaticsOK()) {
         if (myInapplicable == null) myInapplicable = new ArrayList<>();
         myInapplicable.add(result);
@@ -536,9 +527,8 @@ public final class CompleteReferenceExpression {
 
       final PsiParameter parameter = method.getParameterList().getParameters()[0];
       final PsiType type = parameter.getType();
-      if (!(type instanceof PsiClassType)) return;
+      if (!(type instanceof PsiClassType classType)) return;
 
-      final PsiClassType classType = (PsiClassType)type;
       final PsiClass listenerClass = classType.resolve();
       if (listenerClass == null) return;
 

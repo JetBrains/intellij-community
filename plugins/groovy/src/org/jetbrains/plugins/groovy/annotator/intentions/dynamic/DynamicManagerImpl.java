@@ -89,8 +89,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
     window.activate(() -> {
       final Object rootObject = myTreeTableModel.getRoot();
-      if (!(rootObject instanceof DefaultMutableTreeNode)) return;
-      final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) rootObject;
+      if (!(rootObject instanceof DefaultMutableTreeNode rootNode)) return;
 
       DefaultMutableTreeNode node = new DefaultMutableTreeNode(itemElement);
       if (rootNode.getChildCount() > 0) {
@@ -99,9 +98,8 @@ public class DynamicManagerImpl extends DynamicManager {
              classNode = (DefaultMutableTreeNode) rootNode.getChildAfter(classNode)) {
 
           final Object classRow = classNode.getUserObject();
-          if (!(classRow instanceof DClassElement)) return;
+          if (!(classRow instanceof DClassElement otherClassName)) return;
 
-          DClassElement otherClassName = (DClassElement) classRow;
           if (otherClassName.equals(classElement)) {
             int index = getIndexToInsert(classNode, itemElement);
             classNode.insert(node, index);

@@ -66,7 +66,7 @@ class GroupedResultsSearcher implements SESearcher {
       ProgressIndicatorWithCancelListener indicatorWithCancelListener = new ProgressIndicatorWithCancelListener();
       accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener,
                                                                                   myNotificationExecutor, indicatorWithCancelListener);
-      accumulator.startSearch();
+      accumulator.startSearch(pattern);
 
       for (SearchEverywhereContributor<?> contributor : contributors) {
         Runnable task = createSearchTask(pattern, accumulator,
@@ -85,7 +85,7 @@ class GroupedResultsSearcher implements SESearcher {
     else {
       indicator = new ProgressIndicatorBase();
       accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor, indicator);
-      accumulator.startSearch();
+      accumulator.startSearch(pattern);
     }
 
     indicator.start();
@@ -113,7 +113,7 @@ class GroupedResultsSearcher implements SESearcher {
     ResultsAccumulator accumulator = new ShowMoreResultsAccumulator(alreadyFound, myEqualityProvider, contributor, newLimit,
                                                                     myListener, myNotificationExecutor, indicator);
     indicator.start();
-    accumulator.startSearch();
+    accumulator.startSearch(pattern);
     Runnable task = createSearchTask(pattern, accumulator, indicator, contributor, () -> indicator.stop());
     ApplicationManager.getApplication().executeOnPooledThread(task);
 
@@ -261,8 +261,8 @@ class GroupedResultsSearcher implements SESearcher {
     public abstract void contributorFinished(SearchEverywhereContributor<?> contributor);
     public abstract void setContributorHasMore(SearchEverywhereContributor<?> contributor, boolean hasMore);
 
-    public void startSearch() {
-      runInNotificationExecutor(() -> myListener.searchStarted(sections.keySet()));
+    public void startSearch(@NotNull String pattern) {
+      runInNotificationExecutor(() -> myListener.searchStarted(pattern, sections.keySet()));
     }
   }
 

@@ -19,8 +19,7 @@ public class PyFieldsFilter implements Filter {
 
   @Override
   public boolean isVisible(TreeElement treeNode) {
-    if (treeNode instanceof PyStructureViewElement) {
-      final PyStructureViewElement sve = (PyStructureViewElement)treeNode;
+    if (treeNode instanceof PyStructureViewElement sve) {
       return !sve.isField();
     }
     return true;

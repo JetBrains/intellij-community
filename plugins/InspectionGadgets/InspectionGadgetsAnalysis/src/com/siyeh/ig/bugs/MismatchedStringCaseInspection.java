@@ -74,8 +74,7 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
     if (str != null) {
       return fromConstant(str);
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       if (CASE_PRESERVING_METHODS.test(call)) {
         return fromExpression(call.getMethodExpression().getQualifierExpression(), energy - 1);
       }

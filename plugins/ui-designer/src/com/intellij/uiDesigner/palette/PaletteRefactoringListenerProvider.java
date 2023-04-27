@@ -13,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
 final class PaletteRefactoringListenerProvider implements RefactoringElementListenerProvider {
   @Override
   public RefactoringElementListener getListener(PsiElement element) {
-    if (element instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass) element;
+    if (element instanceof PsiClass psiClass) {
       final String oldName = ClassUtil.getJVMClassName(psiClass);
       if (oldName != null) {
         final ComponentItem item = Palette.getInstance(element.getProject()).getItem(oldName);

@@ -157,8 +157,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
     @Override
     public final boolean equals(Object o) {
-      if (!(o instanceof LongEntry)) return false;
-      LongEntry<?> e = (LongEntry<?>)o;
+      if (!(o instanceof LongEntry<?> e)) return false;
       if (e.getKey() != key) return false;
       Object v = e.getValue();
       Object u = val;
@@ -621,9 +620,8 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
                 }
               }
             }
-            else if (f instanceof TreeBin) {
+            else if (f instanceof TreeBin<V> t) {
               validated = true;
-              TreeBin<V> t = (TreeBin<V>)f;
               TreeNode<V> r, p;
               if ((r = t.root) != null &&
                   (p = r.findTreeNode(hash, key)) != null) {
@@ -1268,8 +1266,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
               setTabAt(tab, i, fwd);
               advance = true;
             }
-            else if (f instanceof TreeBin) {
-              TreeBin<V> t = (TreeBin<V>)f;
+            else if (f instanceof TreeBin<V> t) {
               TreeNode<V> lo = null, loTail = null;
               TreeNode<V> hi = null, hiTail = null;
               int lc = 0, hc = 0;
@@ -2616,8 +2613,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
     @Override
     public boolean contains(Object o) {
-      if (!(o instanceof LongEntry)) return false;
-      LongEntry<?> e = (LongEntry<?>)o;
+      if (!(o instanceof LongEntry<?> e)) return false;
       Object r = map.get(e.getKey());
       if (r == null) return false;
       Object v = e.getValue();
@@ -2626,8 +2622,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
 
     @Override
     public boolean remove(Object o) {
-      if (!(o instanceof LongEntry)) return false;
-      LongEntry<?> e = (LongEntry<?>)o;
+      if (!(o instanceof LongEntry<?> e)) return false;
       Object v = e.getValue();
       return map.remove(e.getKey(), v);
     }

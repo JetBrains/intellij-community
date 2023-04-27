@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analyzer.ResolverForModuleComputationTracker
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.resolveMainReference
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
 import org.jetbrains.kotlin.idea.completion.test.withComponentRegistered
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -52,7 +53,7 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
             val modificationCountBeforeType = tracker.modificationCount
 
             // have to analyze file before any change to support incremental analysis
-            ktFile?.analyzeWithAllCompilerChecks()
+            val initialAnalyzeWithAllCompilerChecks = ktFile?.analyzeWithAllCompilerChecks()
             resolverTracker.clear()
             myFixture.type(stringToType)
             PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
@@ -69,15 +70,24 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
                         + FileUtil.loadFile(dataFile()),
                 expectedOutOfBlock, oobBeforeType != oobAfterCount
             )
-            ktFile?.let {
+            ktFile?.let { file ->
                 if (!isErrorChecksDisabled) {
-                    checkForUnexpectedErrors(it)
+                    checkForUnexpectedErrors(file)
                 }
-                DirectiveBasedActionUtils.inspectionChecks(name, it)
+                InTextDirectivesUtils.findListWithPrefixes(text, "// RESOLVE_REF_AFTER:").forEach { refName ->
+                    val index = ktFile.text.indexOf(refName).takeIf { it >= 0 } ?: error("Reference '$refName' not found in file")
+                    val expression = ktFile.findElementAt(index)?.parent
+                    expression as? KtReferenceExpression ?: error("Element at $index is ${expression} while REF is expected")
+                    //val analyzeWithAllCompilerChecks = file.analyzeWithAllCompilerChecks()
+                    expression.resolveMainReference()
+                }
+                DirectiveBasedActionUtils.inspectionChecks(name, file)
 
                 if (!isSkipCheckDefined && !isErrorChecksDisabled) {
                     checkOOBWithDescriptorsResolve(expectedOutOfBlock)
                 }
+
+
             }
 
             assertEquals("no library dependencies have to be recalculated",0, resolverTracker.librariesComputed.size)

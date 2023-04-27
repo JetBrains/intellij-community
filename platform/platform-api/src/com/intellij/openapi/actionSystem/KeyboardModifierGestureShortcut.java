@@ -53,9 +53,8 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
 
   @Override
   public boolean startsWith(@NotNull final Shortcut sc) {
-    if (!(sc instanceof KeyboardModifierGestureShortcut)) return false;
+    if (!(sc instanceof KeyboardModifierGestureShortcut other)) return false;
 
-    final KeyboardModifierGestureShortcut other = (KeyboardModifierGestureShortcut)sc;
     if (myType.equals(other.myType)) {
       if (myStroke.getModifiers() != other.myStroke.getModifiers()) return false;
       return other.myStroke.getKeyCode() != -1 || other.myStroke.getKeyCode() == myStroke.getKeyCode();

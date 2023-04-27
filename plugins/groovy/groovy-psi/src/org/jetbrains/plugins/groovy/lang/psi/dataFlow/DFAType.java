@@ -93,9 +93,7 @@ public final class DFAType {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof DFAType)) return false;
-
-    final DFAType other = (DFAType)obj;
+    if (!(obj instanceof DFAType other)) return false;
 
     if (!eq(primary, other.primary)) return false;
 

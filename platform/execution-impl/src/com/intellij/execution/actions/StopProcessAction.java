@@ -67,8 +67,7 @@ public class StopProcessAction extends DumbAwareAction {
     String description = templatePresentation.getDescription();
     if (processHandler != null && !processHandler.isProcessTerminated()) {
       enable = true;
-      if (processHandler.isProcessTerminating() && processHandler instanceof KillableProcess) {
-        KillableProcess killableProcess = (KillableProcess) processHandler;
+      if (processHandler.isProcessTerminating() && processHandler instanceof KillableProcess killableProcess) {
         if (killableProcess.canKillProcess()) {
           // 'force quite' action presentation
           icon = AllIcons.Debugger.KillProcess;

@@ -152,19 +152,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
     return true;
   }
 
-  private static class Key {
-    final List<String> words;
-    final TreeElement node;
-
-    Key(final List<String> words, final TreeElement node) {
-      this.words = words;
-      this.node = node;
-    }
-
-    @Override
-    public String toString() {
-      return "Key{words=" + words + ", node=" + node + '}';
-    }
+  private record Key(List<String> words, TreeElement node) {
   }
 
   @Nullable

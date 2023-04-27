@@ -48,7 +48,7 @@ class SelectProjectOpenProcessorDialog(
     private var testShowAndGetChoice: (List<ProjectOpenProcessor>, VirtualFile) -> ProjectOpenProcessor? = { it, _ -> it.firstOrNull() }
 
     @TestOnly
-    fun setTestDialog(showAndGetChoice: (List<ProjectOpenProcessor>, VirtualFile) -> ProjectOpenProcessor?, parentDisposable: Disposable) {
+    fun setTestDialog(parentDisposable: Disposable, showAndGetChoice: (List<ProjectOpenProcessor>, VirtualFile) -> ProjectOpenProcessor?) {
       val prevDialog = testShowAndGetChoice
       testShowAndGetChoice = showAndGetChoice
       Disposer.register(parentDisposable, Disposable { testShowAndGetChoice = prevDialog })

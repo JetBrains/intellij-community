@@ -79,6 +79,10 @@
                  description="Use redesigned run popup"
                  defaultValue="TRUE"
                  restartRequired="false"/>
+    <registryKey key="ide.experimental.ui.contrast.run.widget"
+                 description="Use contrast run widget in the new UI"
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
 
     <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService"/>
 

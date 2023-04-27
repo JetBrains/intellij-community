@@ -71,7 +71,7 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
       if (!LITERAL_TYPES.contains(type.getCanonicalText())) {
           return;
       }
-      if (!(lockExpression instanceof PsiReferenceExpression)) {
+      if (!(lockExpression instanceof PsiReferenceExpression referenceExpression)) {
         if (ExpressionUtils.isLiteral(lockExpression)) {
           registerError(lockExpression, type, Integer.valueOf(2));
         }
@@ -80,15 +80,13 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
         }
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lockExpression;
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiVariable)) {
+      if (!(target instanceof PsiVariable variable)) {
         if (warnOnAllPossiblyLiterals) {
           registerError(lockExpression, type, Integer.valueOf(3));
         }
         return;
       }
-      final PsiVariable variable = (PsiVariable)target;
       final PsiExpression initializer = variable.getInitializer();
       if (!ExpressionUtils.isLiteral(initializer)) {
         if (warnOnAllPossiblyLiterals) {

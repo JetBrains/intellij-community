@@ -15,10 +15,10 @@ enum class LibraryPackMode {
 }
 
 class ProjectLibraryData(
-  val libraryName: String,
-  val packMode: LibraryPackMode,
-  val outPath: String? = null,
-  val reason: String? = null,
+  @JvmField val libraryName: String,
+  @JvmField val packMode: LibraryPackMode,
+  @JvmField val outPath: String? = null,
+  @JvmField val reason: String? = null,
 ) {
   init {
     require(outPath == null || !outPath.isBlank()) {
@@ -26,20 +26,20 @@ class ProjectLibraryData(
     }
   }
 
-  // plugin to list of modules that uses the library
+  // plugin to a list of modules that uses the library
   val dependentModules: MutableMap<String, MutableList<String>> = TreeMap()
 
   override fun toString() = "ProjectLibraryData(name=$libraryName, packMode=$packMode, relativeOutputPath=$outPath)"
 
   override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
+    if (this === other) {
+      return true
+    }
+    if (javaClass != other?.javaClass) {
+      return false
+    }
     other as ProjectLibraryData
-
-    if (libraryName != other.libraryName) return false
-
-    return true
+    return libraryName == other.libraryName
   }
 
   override fun hashCode() = libraryName.hashCode()

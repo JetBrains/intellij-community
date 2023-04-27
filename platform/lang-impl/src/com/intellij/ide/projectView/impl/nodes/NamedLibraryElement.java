@@ -45,9 +45,7 @@ public final class NamedLibraryElement {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof NamedLibraryElement)) return false;
-
-    final NamedLibraryElement namedLibraryElement = (NamedLibraryElement)o;
+    if (!(o instanceof NamedLibraryElement namedLibraryElement)) return false;
 
     if (!myEntry.equals(namedLibraryElement.myEntry)) return false;
     if (!Comparing.equal(myContextModule, namedLibraryElement.myContextModule)) return false;

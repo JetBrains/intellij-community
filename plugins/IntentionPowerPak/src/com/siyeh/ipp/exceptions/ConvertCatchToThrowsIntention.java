@@ -75,8 +75,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
   }
 
   private static void addToThrowsList(PsiReferenceList throwsList, PsiType catchType) {
-    if (catchType instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)catchType;
+    if (catchType instanceof PsiClassType classType) {
       final PsiClassType[] types = throwsList.getReferencedTypes();
       for (PsiClassType type : types) {
         if (catchType.equals(type)) {
@@ -88,8 +87,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
       final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
       throwsList.add(referenceElement);
     }
-    else if (catchType instanceof PsiDisjunctionType) {
-      final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)catchType;
+    else if (catchType instanceof PsiDisjunctionType disjunctionType) {
       final List<PsiType> disjunctions = disjunctionType.getDisjunctions();
       for (PsiType disjunction : disjunctions) {
         addToThrowsList(throwsList, disjunction);

@@ -128,8 +128,7 @@ public class HtmlFileDropHandler extends CustomFileDropHandler {
 
   private static boolean checkIfPresent(Editor editor, String tagTemplate, String relativePath, PsiElement parent) {
     for (PsiElement element : parent.getChildren()) {
-      if (element instanceof XmlTag) {
-        final XmlTag tag = (XmlTag)element;
+      if (element instanceof XmlTag tag) {
         if (tagTemplate.startsWith("<" + tag.getName() + " ")) {
           final String attrName = HtmlUtil.SCRIPT_TAG_NAME.equals(tag.getName()) ? "src" : "href";
           String path = tag.getAttributeValue(attrName);

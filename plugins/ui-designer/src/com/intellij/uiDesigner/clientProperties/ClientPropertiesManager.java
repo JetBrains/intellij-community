@@ -212,10 +212,9 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof ClientPropertiesManager)) {
+    if (!(obj instanceof ClientPropertiesManager rhs)) {
       return false;
     }
-    ClientPropertiesManager rhs = (ClientPropertiesManager) obj;
     if (rhs.myPropertyMap.size() != myPropertyMap.size()) {
       return false;
     }

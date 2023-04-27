@@ -138,7 +138,7 @@ internal class InstallPluginService : RestService() {
   }
 
   override fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
-    return isHostInPredefinedHosts(request, urlDecoder, trustedPredefinedHosts, "idea.api.install.hosts.trusted")
+    return isHostInPredefinedHosts(request, trustedPredefinedHosts, "idea.api.install.hosts.trusted")
            || super.isHostTrusted(request, urlDecoder)
   }
 }

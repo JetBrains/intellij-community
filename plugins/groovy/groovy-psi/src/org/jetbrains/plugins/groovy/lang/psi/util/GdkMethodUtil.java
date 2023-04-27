@@ -90,8 +90,7 @@ public final class GdkMethodUtil {
       final PsiScopeProcessor delegate = new DelegatingScopeProcessor(each) {
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
-          if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {
-            PsiMethod method = (PsiMethod)element;
+          if (element instanceof PsiMethod method && isCategoryMethod((PsiMethod)element, null, null, null)) {
             return each.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
           }
           return true;
@@ -309,8 +308,7 @@ public final class GdkMethodUtil {
   @Nullable
   private static Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrMethodCall methodCall) {
     GrExpression invoked = methodCall.getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpression)) return null;
-    GrReferenceExpression referenceExpression = (GrReferenceExpression)invoked;
+    if (!(invoked instanceof GrReferenceExpression referenceExpression)) return null;
     if (GrImportUtil.acceptName(referenceExpression, "mixin")) {
 
       PsiElement resolved = referenceExpression.resolve();

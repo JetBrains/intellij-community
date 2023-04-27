@@ -120,15 +120,13 @@ final class ItemsContainer {
 
   synchronized void softClear(@NotNull Map<AnAction, TBItemAnActionButton> actPool, @NotNull Map<Integer, TBItemGroup> groupPool) {
     myItems.forEach((item -> {
-      if (item instanceof TBItemAnActionButton) {
-        final TBItemAnActionButton actItem = (TBItemAnActionButton)item;
+      if (item instanceof TBItemAnActionButton actItem) {
         TBItemAnActionButton prev = actPool.put(actItem.getAnAction(), actItem);
         if (prev != null) { // just for insurance
           prev.releaseNativePeer();
         }
       }
-      if (item instanceof TBItemGroup) {
-        final TBItemGroup group = (TBItemGroup)item;
+      if (item instanceof TBItemGroup group) {
         TBItemGroup prev = groupPool.put(group.size(), group);
         if (prev != null) { // just for insurance
           prev.releaseNativePeer();

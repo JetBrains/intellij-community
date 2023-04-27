@@ -36,8 +36,7 @@ public class NamespaceFilter implements ElementFilter {
 
   @Override
   public boolean isAcceptable(Object element, PsiElement context){
-    if(element instanceof XmlTag){
-      final XmlTag psiElement = (XmlTag)element;
+    if(element instanceof XmlTag psiElement){
       if (!psiElement.isValid()) return false;
       final String ns = psiElement.getNamespace();
 

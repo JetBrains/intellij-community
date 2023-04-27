@@ -18,7 +18,8 @@ class SlowContributorDetector: SearchListener {
   private val finishedContributors = HashMap<String, Long>()
   private val contributorsWithEvents = HashSet<String>()
 
-  override fun searchStarted(contributors: Collection<SearchEverywhereContributor<*>>) = restart()
+  override fun searchStarted(pattern: String,
+                             contributors: Collection<SearchEverywhereContributor<*>>) = restart()
 
   override fun elementsAdded(list: List<SearchEverywhereFoundElementInfo>) = updateContributorsWithEvents(list)
 

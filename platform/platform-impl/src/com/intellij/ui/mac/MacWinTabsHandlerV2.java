@@ -13,6 +13,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,12 +150,14 @@ public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
         return;
       }
 
+      int index = ArrayUtil.indexOfIdentity(info.frames, myFrame);
+
       for (IdeFrameImpl frame : info.frames) {
         if (frame == myFrame || isTabsNotVisible(frame)) {
           createTabBarsForFrame(frame, info.helpersMap.get(frame), info.frames);
         }
         else {
-          insertTabForFrame(frame, myFrame, -1);
+          insertTabForFrame(frame, myFrame, index);
         }
       }
     }
@@ -164,6 +167,7 @@ public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
         if (Disposer.isDisposed(helper)) {
           continue;
         }
+
         IdeFrameImpl frame = helper.getFrame();
         if (frame == myFrame) {
           continue;

@@ -1,7 +1,7 @@
 -InheritedMembers.kt
- -class Test : Runnable
+ -class Test
   fun equals(other: Any?): Boolean location=→Any
   fun hashCode(): Int location=→Any
-  fun run(): Unit location=→Runnable
-  fun test(): Unit
+  fun run() location=→Runnable
+  fun test()
   fun toString(): String location=→Any

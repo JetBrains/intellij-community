@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator
 
 import com.intellij.execution.process.mediator.client.MediatedProcess
@@ -67,7 +67,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `error on create process`() {
+  fun `error on create process`() {
     val path = "/path/to/non-existent/binary"
     assertFalse(FileUtil.exists(path))
     assertThrows(IOException::class.java) {
@@ -76,7 +76,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `create simple process returning zero exit code`() {
+  fun `create simple process returning zero exit code`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
       .startMediatedProcess()
     val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
@@ -85,7 +85,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `create simple process returning non-zero exit code`() {
+  fun `create simple process returning non-zero exit code`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.False::class)
       .startMediatedProcess()
     val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
@@ -94,7 +94,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `destroy process with endless loop`() {
+  fun `destroy process with endless loop`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Loop::class)
       .startMediatedProcess()
     val pid = process.pid()
@@ -105,7 +105,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `destroy exited process`() {
+  fun `destroy exited process`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
       .startMediatedProcess()
 
@@ -116,7 +116,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `write to closed stream`() {
+  fun `write to closed stream`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
       .startMediatedProcess()
 
@@ -131,7 +131,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `write to externally closed stream`() {
+  fun `write to externally closed stream`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.StreamInterruptor::class)
       .startMediatedProcess()
 
@@ -147,7 +147,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `read from closed stream`() {
+  fun `read from closed stream`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.True::class)
       .startMediatedProcess()
 
@@ -169,7 +169,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `read from externally closed stream`() {
+  fun `read from externally closed stream`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.StreamInterruptor::class)
       .startMediatedProcess()
 
@@ -187,7 +187,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `close streams and read (write) externally`() {
+  fun `close streams and read (write) externally`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.TestClosedStream::class)
       .startMediatedProcess()
 
@@ -208,7 +208,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `test echo process`() {
+  fun `test echo process`() {
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class)
       .startMediatedProcess()
 
@@ -221,7 +221,7 @@ open class ProcessMediatorTest {
     }
 
     val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
-    assertEquals("Hello World\n", output)
+    assertEquals("Hello World" + System.lineSeparator(), output)
 
     val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
     assertTrue(hasExited)
@@ -229,7 +229,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `input redirect`(@TempDir tmpDir: Path) {
+  fun `input redirect`(@TempDir tmpDir: Path) {
     val content = "test data"
     val inputFile = File(tmpDir.toFile(), "input.txt")
     inputFile.writeText(content)
@@ -247,7 +247,7 @@ open class ProcessMediatorTest {
     }
 
     val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
-    assertEquals(content + '\n', output)
+    assertEquals(content + System.lineSeparator(), output)
 
     val hasExited = process.waitFor(TIMEOUT_MS, TimeUnit.MILLISECONDS)
     assertTrue(hasExited)
@@ -255,13 +255,13 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `output redirect`(@TempDir tmpDir: Path) {
+  fun `output redirect`(@TempDir tmpDir: Path) {
     val outputFile = File(tmpDir.toFile(), "output.txt")
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class)
       .redirectOutput(outputFile)
       .startMediatedProcess()
 
-    val content = "test data\n"
+    val content = "test data" + System.lineSeparator()
     OutputStreamWriter(process.outputStream).use {
       it.write(content)
       it.flush()
@@ -279,14 +279,14 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `error redirect`(@TempDir tmpDir: Path) {
+  fun `error redirect`(@TempDir tmpDir: Path) {
     val errorFile = File(tmpDir.toFile(), "error.txt")
     val process = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class)
       .apply { command().add("with_stderr") }
       .redirectError(errorFile)
       .startMediatedProcess()
 
-    val content = "test data\n"
+    val content = "test data" + System.lineSeparator()
     OutputStreamWriter(process.outputStream).use {
       it.write(content)
       it.flush()
@@ -304,7 +304,7 @@ open class ProcessMediatorTest {
   }
 
   @Test
-  internal fun `stress test input - output`() {
+  fun `stress test input - output`() {
     val builder = createProcessBuilderForJavaClass(MediatedProcessTestMain.Echo::class).apply {
       command().add("with_stderr")
     }
@@ -321,11 +321,10 @@ open class ProcessMediatorTest {
               .collect(Collectors.joining())
             it.write(content)
             it.flush()
-
             expected += content
           }
         }
-        expected
+        expected.replace("\n", System.lineSeparator())
       })
 
       val inputData = executor.submit(Callable {

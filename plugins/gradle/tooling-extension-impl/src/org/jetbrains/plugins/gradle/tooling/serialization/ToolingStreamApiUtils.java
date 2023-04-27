@@ -67,7 +67,7 @@ public class ToolingStreamApiUtils {
 
   public static List<File> readFiles(@NotNull IonReader reader) {
     reader.next();
-    List<File> list = new ArrayList<File>();
+    List<File> list = new ArrayList<>();
     reader.stepIn();
     File file;
     while ((file = readFile(reader, null)) != null) {
@@ -84,7 +84,7 @@ public class ToolingStreamApiUtils {
   public static @NotNull Set<File> readFilesSet(@NotNull IonReader reader, @Nullable String fieldName) {
     reader.next();
     assertFieldName(reader, fieldName);
-    Set<File> set = new HashSet<File>();
+    Set<File> set = new HashSet<>();
     reader.stepIn();
     File file;
     while ((file = readFile(reader, null)) != null) {
@@ -106,7 +106,7 @@ public class ToolingStreamApiUtils {
                                          @NotNull Supplier<? extends V> valueReader) {
     reader.next();
     reader.stepIn();
-    Map<K, V> map = new HashMap<K, V>();
+    Map<K, V> map = new HashMap<>();
     while (reader.next() != null) {
       reader.stepIn();
       map.put(keyReader.get(), valueReader.get());
@@ -188,7 +188,7 @@ public class ToolingStreamApiUtils {
   }
 
   public static Set<String> readStringSet(@NotNull IonReader reader) {
-    Set<String> set = new HashSet<String>();
+    Set<String> set = new HashSet<>();
     reader.next();
     reader.stepIn();
     String nextString;
@@ -200,7 +200,7 @@ public class ToolingStreamApiUtils {
   }
 
   public static List<String> readStringList(@NotNull IonReader reader) {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     String nextString;

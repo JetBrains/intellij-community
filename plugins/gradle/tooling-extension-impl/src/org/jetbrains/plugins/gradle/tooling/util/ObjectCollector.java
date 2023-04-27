@@ -24,7 +24,7 @@ public final class ObjectCollector<T, E extends Exception> {
   }
 
   public ObjectCollector(TObjectHashingStrategy<T> hashingStrategy) {
-    myObjectMap = new TObjectIntHashMap<T>(hashingStrategy);
+    myObjectMap = new TObjectIntHashMap<>(hashingStrategy);
   }
 
   public void add(@NotNull T object, @NotNull Processor<? extends E> consumer) throws E {

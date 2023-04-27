@@ -1,14 +1,14 @@
 package com.intellij.codeInspection.tests.test.junit
 
 import com.intellij.codeInspection.test.junit.JUnitMalformedDeclarationInspection
-import com.intellij.codeInspection.tests.UastInspectionTestBase
+import com.intellij.codeInspection.tests.JvmInspectionTestBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
-abstract class JUnitMalformedDeclarationInspectionTestBase : UastInspectionTestBase() {
+abstract class JUnitMalformedDeclarationInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = JUnitMalformedDeclarationInspection()
 
   protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {

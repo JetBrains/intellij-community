@@ -115,8 +115,7 @@ public final class UiInspectorUtil {
 
   private static void recursiveCollectGroupIds(@NotNull ActionGroup group, @NotNull Set<? super String> result) {
     for (AnAction action : group.getChildren(null)) {
-      if (action instanceof ActionGroup) {
-        ActionGroup child = (ActionGroup)action;
+      if (action instanceof ActionGroup child) {
         ContainerUtil.addIfNotNull(result, getActionId(child));
         recursiveCollectGroupIds(child, result);
       }

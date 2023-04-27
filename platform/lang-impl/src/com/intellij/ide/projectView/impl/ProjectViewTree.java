@@ -99,8 +99,7 @@ public class ProjectViewTree extends DnDAwareTree {
   @Nullable
   @Override
   public Color getFileColorFor(Object object) {
-    if (object instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
+    if (object instanceof DefaultMutableTreeNode node) {
       object = node.getUserObject();
     }
     if (object instanceof PresentableNodeDescriptor) {

@@ -142,9 +142,10 @@ public final class CsvMetricsExporter implements MetricExporter {
   @NotNull
   private static List<String> csvHeadersLines() {
     return List.of(
-      "# OpenTelemetry Metrics report: .csv, 4 fields (metric name, period start-end nanoseconds, metric value)" +
-      "# See CsvMetricsExporter for details",
-      "name, startEpochNanos, endEpochNanos, value"
+      "# OpenTelemetry Metrics report: .csv, 4 fields " +
+      "# <metric name>, <period start, nanoseconds>, <period end, nanoseconds>, <metric value>",
+      "# See CsvMetricsExporter for details.",
+      "# NAME, PERIOD_START_NANOS, PERIOD_END_NANOS, VALUE"
     );
   }
 

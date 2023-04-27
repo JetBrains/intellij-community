@@ -121,7 +121,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod method = (PsiMethod)startElement;
-
+    if(!method.isPhysical()) return false;
     final PsiType newType = myReturnTypePointer.getType();
     if (BaseIntentionAction.canModify(method) && newType != null && newType.isValid()) {
       final PsiType returnType = method.getReturnType();

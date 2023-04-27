@@ -26,18 +26,16 @@ public class GrUnusedDefaultParameterInspection extends GroovyLocalInspectionToo
       @Override
       public void visitExpression(@NotNull GrExpression expression) {
         PsiElement expressionParent = expression.getParent();
-        if (!(expressionParent instanceof GrParameter)) return;
+        if (!(expressionParent instanceof GrParameter parameter)) return;
 
-        GrParameter parameter = (GrParameter)expressionParent;
         if (parameter.getInitializerGroovy() != expression) return;
 
         PsiElement parameterParent = parameter.getParent();
         if (!(parameterParent instanceof GrParameterList)) return;
 
         PsiElement parameterListParent = parameterParent.getParent();
-        if (!(parameterListParent instanceof GrMethod)) return;
+        if (!(parameterListParent instanceof GrMethod method)) return;
 
-        GrMethod method = (GrMethod)parameterListParent;
         if (PsiUtil.OPERATOR_METHOD_NAMES.contains(method.getName())) return;
 
         if (isInitializerUnused(parameter, method)) {

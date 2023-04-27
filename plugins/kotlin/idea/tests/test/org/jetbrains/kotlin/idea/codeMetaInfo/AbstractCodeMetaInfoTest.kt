@@ -126,14 +126,14 @@ class CodeMetaInfoTestCase(
         }
     }
 
-    fun checkFile(file: VirtualFile, expectedFile: File, project: Project) {
+    fun checkFile(file: VirtualFile, expectedFile: File, project: Project, postprocessActualTestData: (String) -> String = { it }) {
         myProject = project
         myPsiManager = PsiManager.getInstance(myProject) as PsiManagerImpl
         configureByExistingFile(file)
-        check(expectedFile)
+        check(expectedFile, postprocessActualTestData)
     }
 
-    fun check(expectedFile: File) {
+    fun check(expectedFile: File, postprocessActualTestData: (String) -> String = { it }) {
         val codeMetaInfoForCheck = mutableListOf<CodeMetaInfo>()
         PsiDocumentManager.getInstance(myProject).commitAllDocuments()
 
@@ -194,9 +194,10 @@ class CodeMetaInfoTestCase(
                 codeMetaInfoForCheck.add(it)
         }
         val textWithCodeMetaInfo = CodeMetaInfoRenderer.renderTagsToText(codeMetaInfoForCheck, myEditor.document.text)
+        val postprocessedText = postprocessActualTestData(textWithCodeMetaInfo.toString())
         KotlinTestUtils.assertEqualsToFile(
             expectedFile,
-            textWithCodeMetaInfo.toString()
+            postprocessedText
         )
 
         if (checkNoDiagnosticError) {

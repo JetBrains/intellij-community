@@ -209,8 +209,7 @@ public final class KeywordArgumentCompletionUtil {
       else if (node.isCalleeText("__init__")) {
         kwArgsTransit = false;
         for (PyExpression e : node.getArguments()) {
-          if (e instanceof PyStarArgument) {
-            PyStarArgument kw = (PyStarArgument)e;
+          if (e instanceof PyStarArgument kw) {
             if (Objects.equals(myKwArgs.getName(), kw.getFirstChild().getNextSibling().getText())) {
               kwArgsTransit = true;
               break;

@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -143,9 +144,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   private static boolean ourShowPlatformUpdateIcon;
   private static boolean ourShowPluginsUpdateIcon;
+  private static boolean ourNewUiIcon;
 
   public static void updateState() {
     resetActionIcon();
+
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+    ourNewUiIcon = !ExperimentalUI.isNewUI() && !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY)
+                   && ExperimentalUI.getPromotionDaysCount() < 14;
 
     loop:
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
@@ -179,11 +185,16 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         }
       }
     }
-    return IdeBundle.message(updates ? "settings.entry.point.with.updates.tooltip" : "settings.entry.point.tooltip");
+    if (updates) {
+      return IdeBundle.message("settings.entry.point.with.updates.tooltip");
+    }
+    return IdeBundle.message(ourNewUiIcon ? "settings.entry.point.newUi.tooltip" : "settings.entry.point.tooltip");
   }
 
   private static void resetActionIcon() {
-    ourShowPlatformUpdateIcon = ourShowPluginsUpdateIcon = false;
+    ourShowPlatformUpdateIcon = false;
+    ourShowPluginsUpdateIcon = false;
+    ourNewUiIcon = false;
   }
 
   private static @NotNull Icon getActionIcon() {
@@ -197,6 +208,10 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
              ? GEAR_ICON.getInfoIcon()
              : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
+    if (ourNewUiIcon) {
+      return GEAR_ICON.getInfoIcon();
+    }
+
     return getCustomizedIcon(GEAR_ICON);
   }
 

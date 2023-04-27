@@ -65,8 +65,7 @@ final class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
 
   static Block getDelegatingBlock(final CodeStyleSettings settings, FormattingModel baseModel) {
     final Block block = baseModel.getRootBlock();
-    if (block instanceof XmlBlock) {
-      final XmlBlock xmlBlock = (XmlBlock)block;
+    if (block instanceof XmlBlock xmlBlock) {
 
       final XmlPolicy xmlPolicy = new XmlPolicy(settings, baseModel.getDocumentModel()) {
         @Override

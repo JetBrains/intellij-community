@@ -133,8 +133,7 @@ public class VarargParameterInspection extends BaseInspection {
       final PsiEllipsisType type = (PsiEllipsisType)lastParameter.getType();
       final PsiType componentType = type.getComponentType();
       final String typeText;
-      if (componentType instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)componentType;
+      if (componentType instanceof PsiClassType classType) {
         typeText = classType.rawType().getCanonicalText();
       }
       else {

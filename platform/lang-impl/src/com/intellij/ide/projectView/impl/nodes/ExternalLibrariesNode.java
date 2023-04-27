@@ -56,8 +56,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (final OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof LibraryOrderEntry) {
-          final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+        if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
           final Library library = libraryOrderEntry.getLibrary();
           if (library == null) continue;
           String libraryPresentableName = libraryOrderEntry.getPresentableName();
@@ -76,8 +75,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
             children.add(new NamedLibraryElementNode(project, new NamedLibraryElement(null, libraryOrderEntry), getSettings()));
           }
         }
-        else if (orderEntry instanceof JdkOrderEntry) {
-          final JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
+        else if (orderEntry instanceof JdkOrderEntry jdkOrderEntry) {
           final Sdk jdk = jdkOrderEntry.getJdk();
           if (jdk != null) {
             if (processedSdk.contains(jdk)) continue;

@@ -15,7 +15,7 @@ import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyTableTab;
 import com.intellij.designer.propertyTable.TablePanelActionPolicy;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -359,7 +359,7 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   protected Attachment[] getErrorAttachments(ErrorInfo info) {
-    return new Attachment[]{AttachmentFactory.createAttachment(myFile)};
+    return new Attachment[]{CoreAttachmentFactory.createAttachment(myFile)};
   }
 
   protected abstract void configureError(@NotNull ErrorInfo info);

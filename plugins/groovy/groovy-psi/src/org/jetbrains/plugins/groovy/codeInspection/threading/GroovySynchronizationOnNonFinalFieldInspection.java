@@ -52,10 +52,9 @@ public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspecti
         return;
       }
       final PsiElement referent = ((PsiReference) lock).resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField) referent;
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }

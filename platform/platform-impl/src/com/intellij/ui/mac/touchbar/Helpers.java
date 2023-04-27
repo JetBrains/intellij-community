@@ -194,8 +194,7 @@ public final class Helpers {
       if (childAction == null) {
         continue;
       }
-      if (childAction instanceof ActionGroup) {
-        final ActionGroup childGroup = (ActionGroup)childAction;
+      if (childAction instanceof ActionGroup childGroup) {
         collectLeafActions(childGroup, out);
         continue;
       }

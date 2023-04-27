@@ -15,7 +15,11 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,4 +47,23 @@ public interface FileReferenceResolver {
    * @return additional variants for code completion
    */
   Collection<Object> getVariants(@NotNull FileReference reference);
+
+  /**
+   * Provides a way to customize file reference "bind" operation.
+   * The path will be updated from the start of the reference set to the end of the reference.
+   * The default implementation returns the first "relative" path, but in many cases it can be incorrectly.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  default String getRelativePath(@NotNull FileReference reference,
+                                 @NotNull VirtualFile contextFile,
+                                 @NotNull final PsiElement newElement) {
+    final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)newElement;
+    final VirtualFile dstVFile = fileSystemItem.getVirtualFile();
+
+    if (VfsUtilCore.isAncestor(contextFile, dstVFile, true)) {
+      return VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
+    }
+    return null;
+  }
 }

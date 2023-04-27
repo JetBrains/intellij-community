@@ -39,10 +39,9 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
-    if (!(element instanceof PsiFile) || quick || !isFoldingsOn()) {
+    if (!(element instanceof PsiFile file) || quick || !isFoldingsOn()) {
       return FoldingDescriptor.EMPTY_ARRAY;
     }
-    final PsiFile file = (PsiFile)element;
     final List<FoldingDescriptor> result = new ArrayList<>();
     boolean hasJsp = ContainerUtil.exists(file.getViewProvider().getLanguages(), (l) -> l instanceof JspLanguage || l instanceof JspxLanguage);
     //hack here because JspFile PSI elements are not threaded correctly via nextSibling/prevSibling
@@ -88,9 +87,8 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
     final UElement parent = expression.getUastParent();
     if (!msg.equals(UastLiteralUtils.getValueIfStringLiteral(expression)) &&
-        parent instanceof UCallExpression &&
+        parent instanceof UCallExpression expressions &&
         ((UCallExpression)parent).getValueArguments().get(0).getSourcePsi() == expression.getSourcePsi()) {
-      final UCallExpression expressions = (UCallExpression)parent;
       PsiElement callSourcePsi = expressions.getSourcePsi();
       if (callSourcePsi == null) return;
       final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
@@ -237,8 +235,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
           final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
           for (ResolveResult result : results) {
             final PsiElement element = result.getElement();
-            if (element instanceof IProperty) {
-              IProperty p = (IProperty)element;
+            if (element instanceof IProperty p) {
               sourcePsi.putUserData(CACHE, p);
               return p;
             }
@@ -246,8 +243,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
         }
         else {
           final PsiElement element = reference.resolve();
-          if (element instanceof IProperty) {
-            IProperty p = (IProperty)element;
+          if (element instanceof IProperty p) {
             sourcePsi.putUserData(CACHE, p);
             return p;
           }

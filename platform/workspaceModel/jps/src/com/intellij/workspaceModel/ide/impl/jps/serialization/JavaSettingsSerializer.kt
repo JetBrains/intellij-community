@@ -1,18 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 
 internal object JavaSettingsSerializer {
-  fun saveJavaSettings(javaSettings: JavaModuleSettingsEntity?, rootManagerElement: Element) {
+  fun saveJavaSettings(javaSettings: JavaModuleSettingsEntity?, rootManagerElement: Element, context: SerializationContext) {
     if (javaSettings == null) {
-      if (javaPluginPresent()) {
+      if (context.isJavaPluginPresent) {
         rootManagerElement.setAttribute(INHERIT_COMPILER_OUTPUT_ATTRIBUTE, true.toString())
         rootManagerElement.addContent(Element(EXCLUDE_OUTPUT_TAG))
       }
@@ -42,8 +40,8 @@ internal object JavaSettingsSerializer {
   }
 
   fun loadJavaModuleSettings(rootManagerElement: Element,
-                             virtualFileManager: VirtualFileUrlManager,
-                             contentRotEntitySource: EntitySource): JavaModuleSettingsEntity? {
+                             context: SerializationContext,
+                             contentRotEntitySource: EntitySource ): JavaModuleSettingsEntity? {
     val inheritedCompilerOutput = rootManagerElement.getAttributeAndDetach(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
     val languageLevel = rootManagerElement.getAttributeAndDetach(MODULE_LANGUAGE_LEVEL_ATTRIBUTE)
     val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG)
@@ -57,18 +55,16 @@ internal object JavaSettingsSerializer {
                                                  excludeOutput = excludeOutput != null,
                                                  entitySource = contentRotEntitySource
       ) {
-        this.compilerOutput = compilerOutput?.let { virtualFileManager.fromUrl(it) }
-        this.compilerOutputForTests = compilerOutputForTests?.let { virtualFileManager.fromUrl(it) }
+        this.compilerOutput = compilerOutput?.let { context.virtualFileUrlManager.fromUrl(it) }
+        this.compilerOutputForTests = compilerOutputForTests?.let { context.virtualFileUrlManager.fromUrl(it) }
         this.languageLevelId = languageLevel
       }
     }
-    else if (javaPluginPresent()) {
+    else if (context.isJavaPluginPresent) {
       JavaModuleSettingsEntity(true, true, contentRotEntitySource)
     }
     else null
   }
-
-  private fun javaPluginPresent() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
 
   private fun Element.getAttributeAndDetach(name: String): String? {
     val result = getAttributeValue(name)

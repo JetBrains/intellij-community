@@ -64,8 +64,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
 
   @Override
   protected boolean acceptItem(final NavigationItem item) {
-    if (item instanceof PsiFile) {
-      final PsiFile file = (PsiFile)item;
+    if (item instanceof PsiFile file) {
       final Collection<FileTypeRef> types = getFilterItems();
       // if language substitutors are used, PsiFile.getFileType() can be different from
       // PsiFile.getVirtualFile().getFileType()

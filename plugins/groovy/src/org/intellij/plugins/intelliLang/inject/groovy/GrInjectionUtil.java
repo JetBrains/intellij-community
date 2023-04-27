@@ -22,13 +22,12 @@ import java.util.Map;
 public final class GrInjectionUtil {
   static int findParameterIndex(PsiElement arg, GrCall call) {
     final GroovyResolveResult result = call.advancedResolve();
-    if (!(result.getElement() instanceof PsiMethod)) return -1;
+    if (!(result.getElement() instanceof PsiMethod method)) return -1;
 
     final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil
       .mapArgumentsToParameters(result, call, false, false, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments());
     if (map == null) return -1;
 
-    final PsiMethod method = (PsiMethod)result.getElement();
     final PsiParameter parameter = map.get(arg).first;
     if (parameter == null) return -1;
 
@@ -60,8 +59,7 @@ public final class GrInjectionUtil {
       return visitor.visitAnnotationParameter((GrAnnotationNameValuePair)element, (PsiAnnotation)parent.getParent());
     }
 
-    if (parent instanceof GrAssignmentExpression) {
-      final GrAssignmentExpression p = (GrAssignmentExpression)parent;
+    if (parent instanceof GrAssignmentExpression p) {
       if (p.getRValue() == element || p.getOperationTokenType() == GroovyTokenTypes.mPLUS_ASSIGN) {
         final GrExpression left = p.getLValue();
         if (left instanceof GrReferenceExpression) {

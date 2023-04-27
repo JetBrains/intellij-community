@@ -148,8 +148,7 @@ public final class MoveFilesOrDirectoriesUtil {
         int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
         List<PsiElement> els = new ArrayList<>();
         for (PsiElement psiElement : adjustedElements) {
-          if (psiElement instanceof PsiFile) {
-            PsiFile file = (PsiFile)psiElement;
+          if (psiElement instanceof PsiFile file) {
             if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(),
                                                              RefactoringBundle.message("command.name.move"))) continue;
           }
@@ -177,8 +176,7 @@ public final class MoveFilesOrDirectoriesUtil {
                 if (element instanceof PsiDirectory) {
                   doJustMoveDirectory((PsiDirectory)element, targetDirectory, MoveFilesOrDirectoriesUtil.class);
                 }
-                else if (element instanceof PsiFile) {
-                  final PsiFile movedFile = (PsiFile)element;
+                else if (element instanceof PsiFile movedFile) {
                   PsiFile moving = targetDirectory.findFile(movedFile.getName());
                   if (moving == null) {
                     doMoveFile(movedFile, targetDirectory);

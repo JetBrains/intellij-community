@@ -276,8 +276,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
 
   private static SliceNode fromPath(TreePath path) {
     Object lastPathComponent = path.getLastPathComponent();
-    if (lastPathComponent instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+    if (lastPathComponent instanceof DefaultMutableTreeNode node) {
       Object userObject = node.getUserObject();
       if (userObject instanceof SliceNode) {
         return (SliceNode)userObject;
@@ -324,8 +323,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     final ArrayList<Navigatable> navigatables = new ArrayList<>();
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
-      if (lastPathComponent instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+      if (lastPathComponent instanceof DefaultMutableTreeNode node) {
         Object userObject = node.getUserObject();
         if (userObject instanceof Navigatable) {
           navigatables.add((Navigatable)userObject);

@@ -135,8 +135,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiExpressionList) {
         final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        if (grandParent instanceof PsiMethodCallExpression methodCallExpression) {
           final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
           if ("valueOf".equals(methodExpression.getReferenceName())) {
             PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, newExpressionText, commentTracker);

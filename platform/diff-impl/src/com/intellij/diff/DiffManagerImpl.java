@@ -130,8 +130,7 @@ public class DiffManagerImpl extends DiffManagerEx {
       return;
     }
 
-    if (request instanceof ThreesideMergeRequest) {
-      ThreesideMergeRequest mergeRequest = (ThreesideMergeRequest)request;
+    if (request instanceof ThreesideMergeRequest mergeRequest) {
       DiffContent outputContent = mergeRequest.getOutputContent();
       FileType fileType = outputContent.getContentType();
 

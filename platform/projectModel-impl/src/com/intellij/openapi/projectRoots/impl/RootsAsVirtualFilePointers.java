@@ -138,7 +138,7 @@ public class RootsAsVirtualFilePointers implements RootProvider {
 
     List<Element> composites = child.getChildren();
     if (composites.size() != 1) {
-      LOG.error(composites);
+      LOG.error("Single child expected by " + composites + " found");
     }
     Element composite = composites.get(0);
     if (!composite.getChildren("root").isEmpty()) {

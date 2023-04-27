@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.HamcrestAssertionsConverterInspectionTestBase
 
 class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverterInspectionTestBase() {
   fun `test highlighting`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.junit.Assert;
       import java.util.Collection;
 
@@ -49,7 +49,7 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
   }
 
   fun `test quickfix binary expression`() {
-    myFixture.testAllQuickfixes(ULanguage.JAVA, """
+    myFixture.testAllQuickfixes(JvmLanguage.JAVA, """
       import org.junit.Assert;
 
       class MigrationTest {
@@ -96,7 +96,7 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
   }
 
   fun `test quickfix string`() {
-    myFixture.testAllQuickfixes(ULanguage.JAVA, """
+    myFixture.testAllQuickfixes(JvmLanguage.JAVA, """
       import org.junit.Assert;
 
       class Foo {
@@ -125,7 +125,7 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
   }
 
   fun `test quickfix collection`() {
-    myFixture.testAllQuickfixes(ULanguage.JAVA, """
+    myFixture.testAllQuickfixes(JvmLanguage.JAVA, """
       import org.junit.Assert;
       import java.util.Collection;
       
@@ -163,7 +163,7 @@ class JavaHamcrestAssertionsConverterInspectionTest : HamcrestAssertionsConverte
   }
 
   fun `test quickfix array`() {
-    myFixture.testAllQuickfixes(ULanguage.JAVA, """
+    myFixture.testAllQuickfixes(JvmLanguage.JAVA, """
       import org.junit.Assert;
 
       class Foo {

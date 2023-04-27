@@ -119,8 +119,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection implemen
       final PsiStatement update = forStatement.getUpdate();
       if (update != null) {
         final PsiStatement[] updateStatements;
-        if (update instanceof PsiExpressionListStatement) {
-          final PsiExpressionListStatement expressionListStatement = (PsiExpressionListStatement)update;
+        if (update instanceof PsiExpressionListStatement expressionListStatement) {
           final PsiExpressionList expressionList = expressionListStatement.getExpressionList();
           final PsiExpression[] expressions = expressionList.getExpressions();
           updateStatements = new PsiStatement[expressions.length];

@@ -121,7 +121,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
         indicator.fraction = PATCHES_FRACTION
 
         val projectSystemDir = File(backupDir, "project-system")
-        FileUtil.copyDir(BuildManager.getInstance().getProjectSystemDirectory(project)!!, projectSystemDir)
+        FileUtil.copyDir(BuildManager.getInstance().getProjectSystemDirectory(project), projectSystemDir)
 
         indicator.fraction = PATCHES_FRACTION + LOGS_FRACTION + PROJECT_SYSTEM_FRACTION
     }

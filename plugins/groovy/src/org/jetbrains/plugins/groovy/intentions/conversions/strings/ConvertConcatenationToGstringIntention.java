@@ -199,9 +199,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
         }
       }
     }
-    else if (operand instanceof GrLiteral) {
+    else if (operand instanceof GrLiteral literal) {
       String text = GrStringUtil.removeQuotes(operand.getText());
-      GrLiteral literal = (GrLiteral)operand;
 
       if (GrStringUtil.isSingleQuoteString(literal)) {
         processSinglelineString(builder, text);
@@ -269,9 +268,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     if (!(operand instanceof GrMethodCallExpression)) return false;
 
     final GrExpression expression = ((GrMethodCallExpression)operand).getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression)) return false;
+    if (!(expression instanceof GrReferenceExpression refExpr)) return false;
 
-    final GrReferenceExpression refExpr = (GrReferenceExpression)expression;
     final GrExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) return false;
 
@@ -279,9 +277,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     if (results.length != 1) return false;
 
     final PsiElement element = results[0].getElement();
-    if (!(element instanceof PsiMethod)) return false;
+    if (!(element instanceof PsiMethod method)) return false;
 
-    final PsiMethod method = (PsiMethod)element;
     final PsiClass objectClass =
       JavaPsiFacade.getInstance(operand.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, operand.getResolveScope());
     if (objectClass == null) return false;
@@ -305,9 +302,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
         return true;
       }
 
-      if (!(element instanceof GrBinaryExpression)) return false;
+      if (!(element instanceof GrBinaryExpression binaryExpression)) return false;
 
-      GrBinaryExpression binaryExpression = (GrBinaryExpression)element;
       if (!GroovyTokenTypes.mPLUS.equals(binaryExpression.getOperationTokenType())) return false;
 
       if (ErrorUtil.containsError(element)) return false;
@@ -323,8 +319,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
 
     private static boolean isApplicableLiteral(PsiElement element) {
-      if (!(element instanceof GrLiteral)) return false;
-      GrLiteral literal = (GrLiteral)element;
+      if (!(element instanceof GrLiteral literal)) return false;
       if (!(literal.getValue() instanceof String)) return false;
       IElementType literalType = GrLiteralImpl.getLiteralType(literal);
       return literalType != STRING_DQ && literalType != STRING_TDQ;

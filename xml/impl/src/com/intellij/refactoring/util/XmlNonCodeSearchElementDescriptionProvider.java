@@ -13,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlNonCodeSearchElementDescriptionProvider implements ElementDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
-    if (!(location instanceof NonCodeSearchDescriptionLocation)) return null;
-    final NonCodeSearchDescriptionLocation ncdLocation = (NonCodeSearchDescriptionLocation)location;
+    if (!(location instanceof NonCodeSearchDescriptionLocation ncdLocation)) return null;
     if (ncdLocation.isNonJava()) return null;
     if (element instanceof XmlTag) {
       return ((XmlTag)element).getValue().getTrimmedText();

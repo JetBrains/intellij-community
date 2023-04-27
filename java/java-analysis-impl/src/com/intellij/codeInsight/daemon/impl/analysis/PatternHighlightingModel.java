@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 final class PatternHighlightingModel {
 
@@ -70,15 +69,11 @@ final class PatternHighlightingModel {
           holder.add(builder.create());
         }
       }
-      else if (JavaGenericsUtil.isUncheckedCast(Objects.requireNonNull(deconstructionComponentType),
-                                                GenericsUtil.getVariableTypeByExpressionType(substitutedRecordComponentType))) {
-        hasMismatchedPattern = true;
-        if (recordComponents.length == deconstructionComponents.length) {
-          PsiType recordComponentTypeErasure = TypeConversionUtil.erasure(recordComponentType);
-          String message = JavaErrorBundle.message("unsafe.cast.in.instanceof",
-                                                   JavaHighlightUtil.formatType(recordComponentTypeErasure),
-                                                   JavaHighlightUtil.formatType(deconstructionComponentType));
-          holder.add(SwitchBlockHighlightingModel.createError(deconstructionComponent, message).create());
+      else {
+        HighlightInfo.Builder info = getUncheckedPatternConversionError(deconstructionComponent);
+        if (info != null) {
+          hasMismatchedPattern = true;
+          holder.add(info.create());
         }
       }
       if (recordComponents.length != deconstructionComponents.length && hasMismatchedPattern) {
@@ -93,6 +88,26 @@ final class PatternHighlightingModel {
                                                                       !hasMismatchedPattern);
       holder.add(info);
     }
+  }
+
+  static @Nullable HighlightInfo.Builder getUncheckedPatternConversionError(@NotNull PsiPattern pattern) {
+    PsiType patternType = JavaPsiPatternUtil.getPatternType(pattern);
+    if (patternType == null) return null;
+    if (pattern instanceof PsiDeconstructionPattern subPattern) {
+      PsiJavaCodeReferenceElement element = subPattern.getTypeElement().getInnermostComponentReferenceElement();
+      if (element != null && element.getTypeParameterCount() == 0 && patternType instanceof PsiClassType classType) {
+        patternType = classType.rawType();
+      }
+    }
+    PsiType contextType = JavaPsiPatternUtil.getContextType(pattern);
+    if (contextType == null) return null;
+    if (contextType instanceof PsiWildcardType wildcardType) {
+      contextType = wildcardType.getExtendsBound();
+    }
+    if (!JavaGenericsUtil.isUncheckedCast(patternType, contextType)) return null;
+    String message = JavaErrorBundle.message("unsafe.cast.in.instanceof", contextType.getPresentableText(),
+                                             patternType.getPresentableText());
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(message);
   }
 
   private static boolean isApplicable(@NotNull PsiType recordType, @Nullable PsiType patternType) {

@@ -291,18 +291,16 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @Override
   protected @Nullable Color computeBackgroundColor() {
     Object value = getValue();
-    if (!(value instanceof PsiElement)) {
+    if (!(value instanceof PsiElement element)) {
       return null;
     }
-    PsiElement element = (PsiElement)value;
     return FilePresentationService.getInstance(element.getProject()).getFileBackgroundColor(element);
   }
 
   private @Nullable VirtualFile extractFileFromValue() {
     Object value = getEqualityObject();
-    if (value instanceof SmartPsiElementPointer) {
+    if (value instanceof SmartPsiElementPointer<?> pointer) {
       // see #getValue && default implementation of TreeAnchorizer
-      SmartPsiElementPointer<?> pointer = (SmartPsiElementPointer<?>)value;
       return pointer.getVirtualFile();
     }
     return null;
@@ -321,8 +319,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     if (object instanceof PsiElement) {
       object = PsiUtilCore.getVirtualFile((PsiElement)object);
     }
-    if (object instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)object;
+    if (object instanceof VirtualFile file) {
       if (!file.isValid()) return false; // do not search for invalid files
       return VfsUtilCore.isAncestor(ancestor, file, false);
     }

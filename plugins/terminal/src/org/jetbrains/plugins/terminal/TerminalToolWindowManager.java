@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -61,12 +62,14 @@ import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
+import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -103,9 +106,17 @@ public final class TerminalToolWindowManager implements Disposable {
   public void dispose() {
   }
 
+  /**
+   * @deprecated use {@link #getTerminalWidgets()} instead
+   */
+  @Deprecated
   public Set<JBTerminalWidget> getWidgets() {
     return ContainerUtil.map2SetNotNull(myContainerByWidgetMap.keySet(),
                                         widget -> JBTerminalWidget.asJediTermWidget(widget));
+  }
+
+  public @NotNull Set<TerminalWidget> getTerminalWidgets() {
+    return Collections.unmodifiableSet(myContainerByWidgetMap.keySet());
   }
 
   private final List<Consumer<TerminalWidget>> myTerminalSetupHandlers = new CopyOnWriteArrayList<>();
@@ -135,7 +146,7 @@ public final class TerminalToolWindowManager implements Disposable {
       .subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
         @Override
         public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-          if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId()) && myToolWindow == toolWindow &&
+          if (isTerminalToolWindow(toolWindow) && myToolWindow == toolWindow &&
               toolWindow.isVisible() && toolWindow.getContentManager().isEmpty()) {
             // open a new session if all tabs were closed manually
             createNewSession(myTerminalRunner, null, true, true);
@@ -170,6 +181,10 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner, @Nullable TerminalTabState tabState) {
     createNewSession(terminalRunner, tabState, true);
+  }
+
+  public @NotNull TerminalWidget createNewSession() {
+    return createNewSession(myTerminalRunner, null, true, true);
   }
 
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
@@ -269,8 +284,18 @@ public final class TerminalToolWindowManager implements Disposable {
     TerminalWidget widget = terminalWidget;
     if (widget == null) {
       String currentWorkingDir = terminalRunner.getCurrentWorkingDir(tabState);
-      widget = terminalRunner.startShellTerminalWidget(content, currentWorkingDir, deferSessionStartUntilUiShown);
-      //TerminalArrangementManager.getInstance(myProject).assignCommandHistoryFile(terminalWidget, tabState);
+      NullableLazyValue<Path> commandHistoryFileLazyValue = NullableLazyValue.atomicLazyNullable(() -> {
+        return TerminalCommandHistoryManager.getInstance().getOrCreateCommandHistoryFile(
+          tabState != null ? tabState.myCommandHistoryFileName : null,
+          myProject
+        );
+      });
+      ShellStartupOptions startupOptions = new ShellStartupOptions.Builder()
+        .workingDirectory(currentWorkingDir)
+        .shellCommand(tabState != null ? tabState.myShellCommand : null)
+        .commandHistoryFileProvider(() -> commandHistoryFileLazyValue.getValue())
+        .build();
+      widget = terminalRunner.startShellTerminalWidget(content, startupOptions, deferSessionStartUntilUiShown);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {
@@ -404,7 +429,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public void split(boolean vertically) {
-        TerminalToolWindowManager.this.split(terminalWidget, vertically);
+        TerminalToolWindowManager.this.split(widget, vertically);
       }
 
       @Override
@@ -414,7 +439,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public void gotoNextSplitTerminal(boolean forward) {
-        TerminalToolWindowManager.this.gotoNextSplitTerminal(terminalWidget, forward);
+        TerminalToolWindowManager.this.gotoNextSplitTerminal(widget, forward);
       }
     });
     terminalWidget.getTerminalPanel().addFocusListener(new FocusAdapter() {
@@ -444,20 +469,30 @@ public final class TerminalToolWindowManager implements Disposable {
     return container.isSplitTerminal();
   }
 
-  public void gotoNextSplitTerminal(@NotNull JBTerminalWidget widget, boolean forward) {
+  public boolean isSplitTerminal(@NotNull TerminalWidget widget) {
     TerminalContainer container = getContainer(widget);
-    TerminalWidget next = container.getNextSplitTerminal(forward);
-    if (next != null) {
-      next.requestFocus();
+    return container != null && container.isSplitTerminal();
+  }
+
+  public void gotoNextSplitTerminal(@NotNull TerminalWidget widget, boolean forward) {
+    TerminalContainer container = getContainer(widget);
+    if (container != null) {
+      TerminalWidget next = container.getNextSplitTerminal(forward);
+      if (next != null) {
+        next.requestFocus();
+      }
     }
   }
 
-  public void split(@NotNull JBTerminalWidget widget, boolean vertically) {
+  public void split(@NotNull TerminalWidget widget, boolean vertically) {
     TerminalContainer container = getContainer(widget);
-    String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget.asNewWidget(), container.getContent().getDisplayName());
-    TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), workingDirectory, true);
-    setupTerminalWidget(myToolWindow, newWidget, container.getContent());
-    container.split(!vertically, newWidget);
+    if (container != null) {
+      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
+      ShellStartupOptions startupOptions = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
+      TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), startupOptions, true);
+      setupTerminalWidget(myToolWindow, newWidget, container.getContent());
+      container.split(!vertically, newWidget);
+    }
   }
 
   public void register(@NotNull TerminalContainer terminalContainer) {
@@ -544,6 +579,10 @@ public final class TerminalToolWindowManager implements Disposable {
     return data != null ? JBTerminalWidget.asJediTermWidget(data) : null;
   }
 
+  public static @Nullable TerminalWidget findWidgetByContent(@NotNull Content content) {
+    return content.getUserData(TERMINAL_WIDGET_KEY);
+  }
+
   public static @Nullable AbstractTerminalRunner<?> getRunnerByContent(@NotNull Content content) {
     return content.getUserData(RUNNER_KEY);
   }
@@ -561,7 +600,7 @@ public final class TerminalToolWindowManager implements Disposable {
   public static boolean isInTerminalToolWindow(@NotNull JBTerminalWidget widget) {
     DataContext dataContext = DataManager.getInstance().getDataContext(widget.getTerminalPanel());
     ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
-    return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
+    return isTerminalToolWindow(toolWindow);
   }
 
   public static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {

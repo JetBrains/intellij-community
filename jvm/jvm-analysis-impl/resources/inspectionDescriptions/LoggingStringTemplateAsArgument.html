@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports string templates that are used as arguments to <b>SLF4J</b> and <b>Log4j 2</b> logging methods.
-Methods <code>org.apache.logging.log4j.Logger.log()</code> is supported only for <b>all log levels</b> option.
+The method <code>org.apache.logging.log4j.Logger.log()</code> and its overloads are supported only for <b>all log levels</b> option.
 String templates are evaluated at runtime even when the logging message is not logged; this can negatively impact performance.
 It is recommended to use a parameterized log message instead, which will not be evaluated when logging is disabled.
 <p><b>Example (for Kotlin):</b></p>

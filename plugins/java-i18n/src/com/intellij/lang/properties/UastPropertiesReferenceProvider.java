@@ -41,10 +41,9 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
       return PsiReference.EMPTY_ARRAY;
     }
     Object value = element.evaluate();
-    if (!(value instanceof String)) {
+    if (!(value instanceof String text)) {
       return PsiReference.EMPTY_ARRAY;
     }
-    String text = (String)value;
     if (text.indexOf('\n') != -1) {
       return PsiReference.EMPTY_ARRAY;
     }

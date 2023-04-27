@@ -28,13 +28,12 @@ class CStyleCommentPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiComment)) {
+    if (!(element instanceof PsiComment comment)) {
       return false;
     }
     if (element instanceof PsiDocComment) {
       return false;
     }
-    final PsiComment comment = (PsiComment)element;
     final IElementType type = comment.getTokenType();
     if (!JavaTokenType.C_STYLE_COMMENT.equals(type)) {
       return false;

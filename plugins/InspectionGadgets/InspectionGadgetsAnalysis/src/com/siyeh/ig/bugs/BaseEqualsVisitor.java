@@ -116,8 +116,7 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
 
       //example: Predicate.not(Predicate.isEqual("1")) or predicate.or(Predicate.isEqual("1")) or predicate.and(Predicate.isEqual("1"))
       final PsiElement parent = PsiUtil.skipParenthesizedExprUp(highestPredicate.getParent());
-      if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpression) {
-        final PsiExpression psiExpressionNextParent = (PsiExpression)parent.getParent();
+      if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpression psiExpressionNextParent) {
         if (PREDICATE_NOT_OR_AND.matches(psiExpressionNextParent)) {
           highestPredicate = psiExpressionNextParent;
           continue;
@@ -158,10 +157,9 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
   @Nullable
   private static PsiType findPredicateExpectedType(@NotNull PsiExpression predicate) {
     final PsiType expectedType = ExpectedTypeUtils.findExpectedType(predicate, true);
-    if (!(expectedType instanceof PsiClassType)) {
+    if (!(expectedType instanceof PsiClassType classType)) {
       return null;
     }
-    PsiClassType classType = (PsiClassType)expectedType;
     if (classType.getParameterCount() != 1 || !PsiTypesUtil.classNameEquals(classType, JAVA_UTIL_FUNCTION_PREDICATE)) {
       return null;
     }
@@ -170,8 +168,7 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     if (parameter == null || parameter.equalsToText(JAVA_LANG_OBJECT)) {
       return null;
     }
-    if (parameter instanceof PsiWildcardType) {
-      PsiWildcardType psiWildcardType = (PsiWildcardType)parameter;
+    if (parameter instanceof PsiWildcardType psiWildcardType) {
       parameter = psiWildcardType.isSuper() ? psiWildcardType.getSuperBound() : parameter;
     }
     return parameter;
@@ -202,10 +199,9 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
   }
 
   protected static PsiType getType(PsiExpression expression) {
-    if (!(expression instanceof PsiNewExpression)) {
+    if (!(expression instanceof PsiNewExpression newExpression)) {
       return expression.getType();
     }
-    final PsiNewExpression newExpression = (PsiNewExpression)expression;
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
     return anonymousClass != null ? anonymousClass.getBaseClassType() : expression.getType();
   }

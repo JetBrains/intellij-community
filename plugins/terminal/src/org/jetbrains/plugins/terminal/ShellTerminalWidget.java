@@ -11,8 +11,10 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
@@ -48,6 +50,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
+  private List<String> myShellCommand;
   private final Prompt myPrompt = new Prompt();
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
   private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
@@ -144,9 +147,16 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     myCommandHistoryFilePath = commandHistoryFilePath;
   }
 
-  @Nullable
-  public static String getCommandHistoryFilePath(@Nullable JBTerminalWidget terminalWidget) {
-    return terminalWidget instanceof ShellTerminalWidget ? ((ShellTerminalWidget)terminalWidget).myCommandHistoryFilePath : null;
+  public @Nullable String getCommandHistoryFilePath() {
+    return myCommandHistoryFilePath;
+  }
+
+  public void setShellCommand(@Nullable List<String> shellCommand) {
+    myShellCommand = shellCommand != null ? List.copyOf(shellCommand) : null;
+  }
+
+  public @Nullable List<String> getShellCommand() {
+    return myShellCommand;
   }
 
   @NotNull
@@ -394,5 +404,9 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @Override
   protected @NotNull JediTermSearchComponent createSearchComponent() {
     return new TerminalSearchSession(this).getTerminalSearchComponent();
+  }
+
+  public static @Nullable ShellTerminalWidget asShellJediTermWidget(@NotNull TerminalWidget widget) {
+    return ObjectUtils.tryCast(JBTerminalWidget.asJediTermWidget(widget), ShellTerminalWidget.class);
   }
 }

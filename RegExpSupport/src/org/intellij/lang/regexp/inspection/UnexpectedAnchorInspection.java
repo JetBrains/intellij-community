@@ -84,16 +84,13 @@ public class UnexpectedAnchorInspection extends LocalInspectionTool {
           default -> true;
         };
       }
-      else if (sibling instanceof  RegExpClosure) {
-        final RegExpClosure closure = (RegExpClosure)sibling;
+      else if (sibling instanceof RegExpClosure closure) {
         return isUnexpectedSibling(element, next, closure.getAtom());
       }
-      else if (sibling instanceof RegExpGroup) {
-        final RegExpGroup group = (RegExpGroup)sibling;
+      else if (sibling instanceof RegExpGroup group) {
         return isUnexpectedSibling(element, next, group.getPattern());
       }
-      else if (sibling instanceof RegExpPattern) {
-        final RegExpPattern pattern = (RegExpPattern)sibling;
+      else if (sibling instanceof RegExpPattern pattern) {
         for (RegExpBranch branch : pattern.getBranches()) {
           if (isUnexpectedSibling(element, next, branch)) {
             return true;

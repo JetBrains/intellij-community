@@ -89,8 +89,7 @@ public class YamlMetaTypeProvider {
       Field root = myMetaModel.getRoot((YAMLDocument)typed);
       return FieldAndRelation.forNullable(root, Field.Relation.OBJECT_CONTENTS);
     }
-    if (typed instanceof YAMLSequenceItem) {
-      YAMLSequenceItem sequenceItem = (YAMLSequenceItem)typed;
+    if (typed instanceof YAMLSequenceItem sequenceItem) {
       YAMLSequence sequence = ObjectUtils.tryCast(sequenceItem.getParent(), YAMLSequence.class);
       if (sequence == null) {
         debug(() -> "Unexpected: sequenceItem parent is not a sequence: " + sequenceItem.getParent());
@@ -109,8 +108,7 @@ public class YamlMetaTypeProvider {
 
       return null;
     }
-    if (typed instanceof YAMLKeyValue) {
-      YAMLKeyValue keyValue = (YAMLKeyValue)typed;
+    if (typed instanceof YAMLKeyValue keyValue) {
       Field keyValueType = computeMetaType(keyValue);
       if (keyValueType == null) {
         return null;

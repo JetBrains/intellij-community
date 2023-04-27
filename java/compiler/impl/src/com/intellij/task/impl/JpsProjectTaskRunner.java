@@ -178,25 +178,8 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     }
   }
 
-  private static class ModulesBuildSettings {
-    final boolean isIncrementalBuild;
-    final boolean includeDependentModules;
-    final boolean includeRuntimeDependencies;
-    final boolean includeTests;
-    final Collection<? extends Module> modules;
-
-    ModulesBuildSettings(boolean isIncrementalBuild,
-                         boolean includeDependentModules,
-                         boolean includeRuntimeDependencies,
-                         boolean includeTests,
-                         Collection<? extends Module> modules) {
-      this.isIncrementalBuild = isIncrementalBuild;
-      this.includeDependentModules = includeDependentModules;
-      this.includeRuntimeDependencies = includeRuntimeDependencies;
-      this.includeTests = includeTests;
-      this.modules = modules;
-    }
-
+  private record ModulesBuildSettings(boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies,
+                                      boolean includeTests, Collection<? extends Module> modules) {
     boolean isRebuild() {
       if (!isIncrementalBuild && !modules.isEmpty()) {
         final Module someModule = modules.iterator().next();

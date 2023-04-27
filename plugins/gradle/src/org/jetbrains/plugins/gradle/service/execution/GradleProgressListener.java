@@ -143,8 +143,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         com.intellij.openapi.externalSystem.model.task.event.OperationResult operationResult = null;
         if (gradleResult instanceof TestSuccessResult) {
           operationResult = new SuccessResultImpl(gradleResult.getStartTime(), gradleResult.getEndTime(), true);
-        } else if (gradleResult instanceof TestFailureResult) {
-          TestFailureResult gradleFailure = (TestFailureResult)gradleResult;
+        } else if (gradleResult instanceof TestFailureResult gradleFailure) {
           operationResult = new FailureResultImpl(gradleFailure.getStartTime(), gradleFailure.getEndTime(), ContainerUtil.map(gradleFailure.getFailures(), this::convert));
         } else  if (gradleResult instanceof TestSkippedResult) {
           operationResult = new SkippedResultImpl(gradleResult.getStartTime(), gradleResult.getEndTime());
@@ -251,8 +250,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         }
       }
     }
-    else if (progressEvent instanceof FinishEvent) {
-      FinishEvent finishEvent = (FinishEvent)progressEvent;
+    else if (progressEvent instanceof FinishEvent finishEvent) {
       StatusEvent statusEvent = myDownloadStatusEventIds.remove(operationName);
       if (statusEvent != null) {
         OperationResult operationResult = finishEvent.getResult();

@@ -26,8 +26,7 @@ public class TableLinkMouseListener extends AbstractBaseTagMouseListener {
     if (cellRenderer instanceof TableCellRendererWrapper) {
       cellRenderer = ((TableCellRendererWrapper)cellRenderer).getBaseRenderer();
     }
-    if (cellRenderer instanceof ColoredTableCellRenderer) {
-      final ColoredTableCellRenderer renderer = (ColoredTableCellRenderer)cellRenderer;
+    if (cellRenderer instanceof ColoredTableCellRenderer renderer) {
       tag = forColoredRenderer(e, table, row, column, renderer);
     }
     else {

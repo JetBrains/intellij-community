@@ -54,8 +54,7 @@ public class JqlAnnotator implements Annotator {
         }
         boolean operandIsListLiteral = operand instanceof JqlList;
         boolean operandIsListFunction = false;
-        if (operand instanceof JqlFunctionCall) {
-          JqlFunctionCall functionCall = (JqlFunctionCall)operand;
+        if (operand instanceof JqlFunctionCall functionCall) {
           JqlStandardFunction standardFunction = JqlStandardFunction.byName(functionCall.getFunctionName().getText());
           operandIsListFunction = standardFunction != null && standardFunction.hasMultipleResults();
         }

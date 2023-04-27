@@ -129,8 +129,7 @@ public class XPath2ExpressionTest extends TestBase {
     // all these cases must be green
     myFixture.checkHighlighting();
 
-    if (symmetric && expression instanceof XPathBinaryExpression) {
-      final XPathBinaryExpression expr = (XPathBinaryExpression)expression;
+    if (symmetric && expression instanceof XPathBinaryExpression expr) {
       if (expr.getLOperand().getType() != expr.getROperand().getType()) {
         myFixture.configureByText(XPathFileType.XPATH2,
                                   expr.getROperand().getText() + " " + expr.getOperationSign() + " " + expr.getLOperand().getText());

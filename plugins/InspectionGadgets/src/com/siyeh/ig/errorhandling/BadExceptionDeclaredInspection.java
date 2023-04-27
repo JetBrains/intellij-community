@@ -107,10 +107,9 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
       final PsiJavaCodeReferenceElement[] references = throwsList.getReferenceElements();
       for (PsiJavaCodeReferenceElement reference : references) {
         final PsiElement element = reference.resolve();
-        if (!(element instanceof PsiClass)) {
+        if (!(element instanceof PsiClass thrownClass)) {
           continue;
         }
-        final PsiClass thrownClass = (PsiClass)element;
         final String qualifiedName = thrownClass.getQualifiedName();
         if (qualifiedName != null && exceptions.contains(qualifiedName)) {
           registerError(reference, reference);

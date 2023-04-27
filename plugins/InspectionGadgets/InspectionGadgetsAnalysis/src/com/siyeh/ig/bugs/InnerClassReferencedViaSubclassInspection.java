@@ -78,20 +78,17 @@ public class InnerClassReferencedViaSubclassInspection extends BaseInspection im
     public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement qualifier = reference.getQualifier();
-      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement qualifierReference)) {
         return;
       }
-      final PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
       final PsiElement qualifierTarget = qualifierReference.resolve();
-      if (!(qualifierTarget instanceof PsiClass)) {
+      if (!(qualifierTarget instanceof PsiClass qualifierClass)) {
         return;
       }
-      final PsiClass qualifierClass = (PsiClass)qualifierTarget;
       final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass == null) {
         return;

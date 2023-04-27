@@ -312,7 +312,7 @@ public final class GuessManagerImpl extends GuessManager {
       PsiReferenceExpression methodExpr = callExpr.getMethodExpression();
       String methodName = methodExpr.getReferenceName();
       MethodPattern pattern = myMethodPatternMap.findPattern(methodName, callExpr.getArgumentList().getExpressionCount());
-      if (pattern != null && pattern.parameterIndex < 0/* return value */){
+      if (pattern != null && pattern.parameterIndex() < 0/* return value */){
         PsiExpression qualifier = methodExpr.getQualifierExpression();
         if (qualifier != null) {
           PsiType[] types = guessContainerElementType(qualifier, null);
@@ -404,14 +404,14 @@ public final class GuessManagerImpl extends GuessManager {
       PsiExpression[] args = methodCall.getArgumentList().getExpressions();
       MethodPattern pattern = methodPatternMap.findPattern(methodName, args.length);
       if (pattern != null) {
-        if (pattern.parameterIndex < 0) { // return value
+        if (pattern.parameterIndex() < 0) { // return value
           if (methodCall.getParent() instanceof PsiTypeCastExpression cast &&
               (rangeToIgnore == null || !rangeToIgnore.contains(methodCall.getTextRange()))) {
             return cast.getType();
           }
         }
         else {
-          return args[pattern.parameterIndex].getType();
+          return args[pattern.parameterIndex()].getType();
         }
       }
     }

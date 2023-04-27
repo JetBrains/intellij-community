@@ -26,7 +26,7 @@ public class TestAllInPackage2 extends TestSuite {
   public TestAllInPackage2(JUnit3IdeaTestRunner runner, final String name, String[] classMethodNames) {
     super(name);
     int testClassCount = 0;
-    final Set<String> allNames = new HashSet<String>(Arrays.asList(classMethodNames));
+    final Set<String> allNames = new HashSet<>(Arrays.asList(classMethodNames));
     for (String classMethodName : classMethodNames) {
       Test suite = TestRunnerUtil.createClassOrMethodSuite(runner, classMethodName);
       if (suite != null) {

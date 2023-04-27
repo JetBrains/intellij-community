@@ -114,8 +114,7 @@ public interface TestIndexingModeSupporter {
         if (handler.shouldIgnore(declaredMethod)) continue;
         TestIndexingModeSupporter aCase = constructor.newInstance();
         aCase.setIndexingMode(handler.getIndexingMode());
-        if (aCase instanceof TestCase) {
-          TestCase testCase = (TestCase)aCase;
+        if (aCase instanceof TestCase testCase) {
           testCase.setName(methodName);
           if (UsefulTestCase.IS_UNDER_TEAMCITY) {
             Test wrapper = IndexingModeTestHandler.wrapForTeamCity(testCase, handler.getIndexingMode());

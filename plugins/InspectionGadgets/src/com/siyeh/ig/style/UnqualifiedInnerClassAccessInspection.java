@@ -65,15 +65,13 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiJavaCodeReferenceElement)) {
+      if (!(element instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
       final PsiElement target = referenceElement.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass innerClass)) {
         return;
       }
-      final PsiClass innerClass = (PsiClass)target;
       final PsiClass containingClass = innerClass.getContainingClass();
       if (containingClass == null) {
         return;
@@ -83,10 +81,9 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
         return;
       }
       final PsiFile containingFile = referenceElement.getContainingFile();
-      if (!(containingFile instanceof PsiJavaFile)) {
+      if (!(containingFile instanceof PsiJavaFile javaFile)) {
         return;
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
       final String innerClassName = innerClass.getQualifiedName();
       if (innerClassName == null) {
         return;
@@ -224,10 +221,9 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
         return;
       }
       final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       if (!onDemand) {
         final String qualifiedName = aClass.getQualifiedName();
         if (name.equals(qualifiedName)) {
@@ -264,10 +260,9 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
         return;
       }
       final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       if (!aClass.hasModifierProperty(PsiModifier.STATIC) && reference.getParent() instanceof PsiNewExpression) {
           return;
       }

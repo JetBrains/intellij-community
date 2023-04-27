@@ -90,11 +90,9 @@ public final class TodoPattern implements Cloneable {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof TodoPattern)) {
+    if (!(obj instanceof TodoPattern pattern)) {
       return false;
     }
-
-    TodoPattern pattern = (TodoPattern)obj;
 
     if (!indexPattern.equals(pattern.indexPattern)) {
       return false;

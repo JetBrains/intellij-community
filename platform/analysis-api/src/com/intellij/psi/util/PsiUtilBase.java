@@ -208,8 +208,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
   @Nullable
   public static VirtualFile asVirtualFile(@Nullable PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      PsiFileSystemItem psiFileSystemItem = (PsiFileSystemItem)element;
+    if (element instanceof PsiFileSystemItem psiFileSystemItem) {
       return psiFileSystemItem.isValid() ? psiFileSystemItem.getVirtualFile() : null;
     }
     return null;

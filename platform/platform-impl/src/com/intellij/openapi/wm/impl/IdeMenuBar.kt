@@ -626,7 +626,7 @@ private fun updateAppMenu() {
   }
 
   // 1. rename with localized
-  Menu.renameAppMenuItems(DynamicBundle("messages.MacAppMenuBundle"))
+  Menu.renameAppMenuItems(DynamicBundle(IdeMenuBar::class.java, "messages.MacAppMenuBundle"))
 
   //
   // 2. add custom new items in AppMenu

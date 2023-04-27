@@ -25,6 +25,7 @@ class GHPullRequest(id: String,
                     @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>,
                     @JsonProperty("reviewThreads") reviewThreads: GraphQLNodesDTO<ReviewThreadDetails>,
                     @JsonProperty("reviews") reviews: GraphQLNodesDTO<GHPullRequestReview>,
+                    val reviewDecision: GHPullRequestReviewDecision?,
                     mergeable: GHPullRequestMergeableState,
                     viewerCanUpdate: Boolean,
                     viewerDidAuthor: Boolean,
@@ -43,7 +44,7 @@ class GHPullRequest(id: String,
 
   open class Repository(val owner: Owner, val isFork: Boolean)
 
-  class HeadRepository(owner: Owner, isFork: Boolean, val url: String, val sshUrl: String) : Repository(owner, isFork)
+  class HeadRepository(owner: Owner, isFork: Boolean, val url: @NlsSafe String, val sshUrl: @NlsSafe String) : Repository(owner, isFork)
 
   class Owner(val login: String)
 }

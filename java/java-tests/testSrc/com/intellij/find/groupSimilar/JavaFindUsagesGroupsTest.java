@@ -78,4 +78,14 @@ public class JavaFindUsagesGroupsTest extends JavaPsiTestCase {
   }
 
   public void testArrayAccess() { doTest(getMethod("Market", "getGoods")); }
+
+  public void testField() {
+    try {
+      Registry.get("similarity.find.usages.add.features.for.fields").setValue(true);
+      doTest(getMethod("Test", "test"));
+    }
+    finally {
+      Registry.get("similarity.find.usages.add.features.for.fields").resetToDefault();
+    }
+  }
 }

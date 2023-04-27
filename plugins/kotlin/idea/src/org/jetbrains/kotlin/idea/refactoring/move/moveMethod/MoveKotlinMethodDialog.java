@@ -159,9 +159,8 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
                     boolean cellHasFocus
             ) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof KtNamedDeclaration) {
-                    KtNamedDeclaration variable = (KtNamedDeclaration) value;
-                    setIcon(KotlinIconProvider.Companion.getBaseIcon(variable));
+                if (value instanceof KtNamedDeclaration variable) {
+                  setIcon(KotlinIconProvider.Companion.getBaseIcon(variable));
                     setText(variable.getName());
                     KotlinType type = MoveKotlinMethodProcessorKt.type(variable);
                     if (type != null) {

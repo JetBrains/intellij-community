@@ -518,8 +518,7 @@ public final class PyPackageUtil {
     final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
     final PyExpression generated = PyElementGenerator.getInstance(setupPy.getProject()).createExpressionFromText(languageLevel, text);
 
-    if (generated instanceof PyCallExpression) {
-      final PyCallExpression callExpression = (PyCallExpression)generated;
+    if (generated instanceof PyCallExpression callExpression) {
 
       return Stream
         .of(callExpression.getArguments())

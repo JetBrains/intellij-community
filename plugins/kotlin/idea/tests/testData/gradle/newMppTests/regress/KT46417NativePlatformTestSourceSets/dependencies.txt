@@ -51,6 +51,6 @@ project.p2.linuxX64Test
 
 
 Test configuration:
-- showing only source modules matching .*p2\.(iosTest|iosX64Test|iosArm64Test|linuxX64Test|linuxArm64Test).*
+- showing only modules matching .*p2\.(iosTest|iosX64Test|iosArm64Test|linuxX64Test|linuxArm64Test).*
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
 - dependencies order is not checked

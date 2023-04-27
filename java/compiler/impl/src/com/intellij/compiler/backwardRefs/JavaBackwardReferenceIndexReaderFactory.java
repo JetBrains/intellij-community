@@ -43,9 +43,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
   public BackwardReferenceReader create(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
 
-    if (buildDir == null
-        || !CompilerReferenceIndex.exists(buildDir)
-        || CompilerReferenceIndex.versionDiffers(buildDir, expectedIndexVersion())) {
+    if (!CompilerReferenceIndex.exists(buildDir) || CompilerReferenceIndex.versionDiffers(buildDir, expectedIndexVersion())) {
       return null;
     }
 

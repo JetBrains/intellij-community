@@ -64,10 +64,8 @@ public final class EarConfigurationModelData extends AbstractExternalEntityData 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EarConfigurationModelData)) return false;
+    if (!(o instanceof EarConfigurationModelData data)) return false;
     if (!super.equals(o)) return false;
-
-    EarConfigurationModelData data = (EarConfigurationModelData)o;
 
     if (!ears.equals(data.ears)) return false;
 

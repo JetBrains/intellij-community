@@ -19,8 +19,7 @@ public class HtmlHttpEquivEncodingReferenceProvider extends XmlEncodingReference
     LOG.assertTrue(element instanceof XmlAttributeValue);
     XmlAttributeValue value = (XmlAttributeValue)element;
     PsiElement parent = value.getParent();
-    if (parent instanceof XmlAttribute) {
-      XmlAttribute attribute = (XmlAttribute)parent;
+    if (parent instanceof XmlAttribute attribute) {
       XmlTag tag = attribute.getParent();
       @NonNls String name = attribute.getLocalName();
       if (tag != null && "meta".equals(tag.getLocalName()) && tag.getAttribute("http-equiv") != null && name.equals("content")) {

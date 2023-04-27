@@ -93,8 +93,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     ArrayList<String> actions = new ArrayList<>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
-      if (node instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode defNode = (DefaultMutableTreeNode)node;
+      if (node instanceof DefaultMutableTreeNode defNode) {
         Object userObject = defNode.getUserObject();
         if (userObject instanceof String) {
           actions.add((String)userObject);

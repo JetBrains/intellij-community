@@ -52,9 +52,7 @@ public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
     List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(candidate);
     for (BeforeRunTask<?> task : tasks) {
-      if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
-        RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask
-          = (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
+      if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask) {
         RunnerAndConfigurationSettings settings = runTask.getSettings();
         if (settings != null) {
          if (!canBeAdded(settings.getConfiguration(), root)) return false;

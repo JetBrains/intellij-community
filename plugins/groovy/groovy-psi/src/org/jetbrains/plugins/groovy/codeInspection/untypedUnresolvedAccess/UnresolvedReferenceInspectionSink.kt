@@ -17,14 +17,14 @@ internal class UnresolvedReferenceInspectionSink(private val problemsHolder: Pro
   override fun registerProblem(highlightElement: PsiElement,
                                highlightType: ProblemHighlightType,
                                message: String,
-                               vararg fixes: LocalQuickFix?) {
+                               vararg fixes: LocalQuickFix) {
     if (problemsHolder.isOnTheFly && highlightType === LIKE_UNKNOWN_SYMBOL && handleSpecial(highlightElement, message, *fixes)) {
       return
     }
     problemsHolder.registerProblem(highlightElement, message, highlightType, *fixes)
   }
 
-  private fun handleSpecial(element: PsiElement, @InspectionMessage message: String, vararg fixes: LocalQuickFix?): Boolean {
+  private fun handleSpecial(element: PsiElement, @InspectionMessage message: String, vararg fixes: LocalQuickFix): Boolean {
     // at this point we register the problem with LIKE_UNKNOWN_SYMBOL type.
     when (GrUnresolvedAccessInspection.getHighlightDisplayLevel(element)) {
       HighlightDisplayLevel.ERROR -> {

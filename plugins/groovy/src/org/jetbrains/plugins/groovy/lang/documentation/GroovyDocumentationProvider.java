@@ -121,9 +121,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       }
       return buffer.toString();
     }
-    else if (element instanceof PsiMethod) {
+    else if (element instanceof PsiMethod method) {
       @Nls StringBuilder buffer = new StringBuilder();
-      PsiMethod method = (PsiMethod)element;
       if (method instanceof GrGdkMethod) {
         appendStyledSpan(buffer, "[" + GroovyBundle.message("documentation.gdk.label") + "]", "color: #909090");
       }
@@ -179,9 +178,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     else if (element instanceof GrTypeDefinition) {
       return generateClassInfo((GrTypeDefinition)element);
     }
-    else if (element instanceof GroovyMapProperty) {
+    else if (element instanceof GroovyMapProperty mapProperty) {
       @Nls StringBuilder buffer = new StringBuilder();
-      GroovyMapProperty mapProperty = (GroovyMapProperty)element;
       appendStyledSpan(buffer, "Map property\n");
       PsiType inferredType = mapProperty.getPropertyType();
       String typeLabel = inferredType != null
@@ -575,8 +573,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
 
     StringBuilder builder = new StringBuilder();
-    if (owner instanceof GrMethod) {
-      final GrMethod method = (GrMethod)owner;
+    if (owner instanceof GrMethod method) {
       JavaDocumentationProvider.generateParametersTakingDocFromSuperMethods(builder, commenter, method);
 
       final PsiType returnType = method.getInferredReturnType();
@@ -604,10 +601,9 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Override
   public void collectDocComments(@NotNull PsiFile file,
                                  @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
-    if (!(file instanceof GroovyFile)) {
+    if (!(file instanceof GroovyFile groovyFile)) {
       return;
     }
-    var groovyFile = (GroovyFile)file;
     List<GrDocCommentOwner> owners = PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocCommentOwner.class);
     List<GrDocComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocComment.class);
     processDocComments(owners, comments, sink);

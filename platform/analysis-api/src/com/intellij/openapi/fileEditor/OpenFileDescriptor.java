@@ -130,7 +130,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     TextRange range = getRangeToUnfoldOnNavigation(editor);
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       for (FoldRegion region : allRegions) {
-        if (!region.isExpanded() && range.intersects(TextRange.create(region))) {
+        if (!region.isExpanded() && range.intersects(region)) {
           region.setExpanded(true);
         }
       }

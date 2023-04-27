@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
@@ -1652,6 +1653,18 @@ public class Py3TypeTest extends PyTestCase {
 
              foo = Foo(1, 2)
              expr = dc.replace(foo, x=3)""");
+  }
+
+  // PY-53612
+  public void testLiteralStringValidLocations() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("str",
+                   """
+                     from typing_extensions import LiteralString
+                     def my_function(literal_string: LiteralString) -> LiteralString: ...
+                     expr = my_function("42")""")
+    );
   }
 
   private void doTest(final String expectedType, final String text) {

@@ -192,8 +192,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   }
 
   public static boolean isConvertibleLambdaExpression(PsiElement parent) {
-    if (parent instanceof PsiLambdaExpression) {
-      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)parent;
+    if (parent instanceof PsiLambdaExpression lambdaExpression) {
       final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
       if (thisClass == null || thisClass instanceof PsiAnonymousClass) {
         final PsiElement body = lambdaExpression.getBody();

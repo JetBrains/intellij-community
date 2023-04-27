@@ -122,9 +122,8 @@ class PositionHelper implements PropertyChangeListener {
             Container p = table.getParent();
             if (p instanceof JViewport) {
                 Container gp = p.getParent();
-                if (gp instanceof JScrollPane) {
-                    JScrollPane scrollPane = (JScrollPane) gp;
-                    JViewport viewport = scrollPane.getViewport();
+                if (gp instanceof JScrollPane scrollPane) {
+                  JViewport viewport = scrollPane.getViewport();
                     if ((viewport != null) && (viewport.getView() == table)) {
                         setUp(scrollPane);
                         previousTableViewport = p;
@@ -195,9 +194,8 @@ class PositionHelper implements PropertyChangeListener {
             currentViewport.remove(filterHeader);
 
             Container parent = currentViewport.getParent();
-            if (parent instanceof JScrollPane) {
-                JScrollPane scrollPane = (JScrollPane) parent;
-                if (scrollPane.getColumnHeader() == currentViewport) {
+            if (parent instanceof JScrollPane scrollPane) {
+              if (scrollPane.getColumnHeader() == currentViewport) {
                     Component tableHeader = getTableHeader();
                     JViewport newView = (tableHeader == null) ? null : createCleanViewport(tableHeader);
                     scrollPane.setColumnHeader(newView);

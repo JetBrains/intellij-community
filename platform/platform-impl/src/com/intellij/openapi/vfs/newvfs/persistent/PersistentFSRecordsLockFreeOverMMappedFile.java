@@ -27,8 +27,7 @@ import static java.nio.file.StandardOpenOption.*;
  * Implementation uses memory-mapped file (real one, not our emulation of it via {@link com.intellij.util.io.FilePageCache}).
  */
 @ApiStatus.Internal
-public class PersistentFSRecordsLockFreeOverMMappedFile extends PersistentFSRecordsStorage
-  implements IPersistentFSRecordsStorage {
+public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
   //FIXME RC: check is id=0 valid for FSRecords? Better to use 0, as all other storages use NULL_ID=0
   //          seems like id=0 is valid, but not used by PersistentFSRecordsStorage, because legacy implementations

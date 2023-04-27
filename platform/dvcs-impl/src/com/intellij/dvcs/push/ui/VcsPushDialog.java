@@ -292,8 +292,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
       @Override
       public void onThrowable(@NotNull Throwable error) {
-        if (error instanceof PushController.HandlerException) {
-          PushController.HandlerException handlerException = (PushController.HandlerException)error;
+        if (error instanceof PushController.HandlerException handlerException) {
           Throwable cause = handlerException.getCause();
 
           String failedHandler = handlerException.getFailedHandlerName();
@@ -417,6 +416,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       myProject = project;
       myDialog = dialog;
       myRealAction = realAction;
+      putValue(Action.NAME, myRealAction.getText(myDialog, true));
       putValue(OptionAction.AN_ACTION, realAction);
     }
 

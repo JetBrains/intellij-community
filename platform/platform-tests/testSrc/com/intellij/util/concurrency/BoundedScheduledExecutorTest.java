@@ -268,8 +268,7 @@ public class BoundedScheduledExecutorTest extends CatchLogErrorsInAllThreadsTest
   }
 
   static void checkEveryPossibleSubmitThrows(ExecutorService executor) {
-    if (executor instanceof ScheduledExecutorService) {
-      ScheduledExecutorService s = (ScheduledExecutorService)executor;
+    if (executor instanceof ScheduledExecutorService s) {
       UsefulTestCase.assertThrows(RejectedExecutionException.class, () -> s.schedule(EmptyRunnable.getInstance(), 10, TimeUnit.SECONDS));
       UsefulTestCase.assertThrows(RejectedExecutionException.class, () -> s.schedule(()->null, 10, TimeUnit.SECONDS));
       UsefulTestCase.assertThrows(IncorrectOperationException.class, "bad for hibernation", () -> s.scheduleAtFixedRate(()->{}, 10, 1, TimeUnit.SECONDS));

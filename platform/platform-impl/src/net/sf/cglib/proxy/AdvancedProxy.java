@@ -124,8 +124,7 @@ public final class AdvancedProxy {
     }
     catch (CodeGenerationException e) {
       final Throwable throwable = e.getCause();
-      if (throwable instanceof InvocationTargetException) {
-        final InvocationTargetException targetException = (InvocationTargetException)throwable;
+      if (throwable instanceof InvocationTargetException targetException) {
         final Throwable cause = targetException.getCause();
         ExceptionUtil.rethrowUnchecked(cause);
       }

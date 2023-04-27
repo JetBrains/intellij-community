@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.popup.BalloonBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -306,7 +305,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
     stepNumber?.let { step ->
       iconOrStepLabel = JLabel(step.toString().padStart(2, '0')).apply {
-        foreground = JBUI.CurrentTheme.GotItTooltip.stepForeground()
+        foreground = JBUI.CurrentTheme.GotItTooltip.stepForeground(useContrastColors)
         font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
       }
       panel.add(iconOrStepLabel!!, gc.nextLine().next().anchor(GridBagConstraints.BASELINE))
@@ -362,11 +361,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         foreground = JBUI.CurrentTheme.GotItTooltip.buttonForeground()
         putClientProperty("gotItButton", true)
         if (useContrastColors) {
-          border = JBUI.Borders.emptyBottom(5)
-          background = Color(0, true)
-          putClientProperty("JButton.backgroundColor", JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast())
-          putClientProperty("ActionToolbar.smallVariant", true) // remove shadow in darcula
-
+          putClientProperty("gotItButton.contrast", true)
           foreground = JBUI.CurrentTheme.GotItTooltip.buttonForegroundContrast()
         }
       }
@@ -477,7 +472,7 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
     val styleSheet = StyleSheet()
     val linkStyles = "a { color: #${ColorUtil.toHex(JBUI.CurrentTheme.GotItTooltip.linkForeground())} }"
     val shortcutStyles = ShortcutExtension.getStyles(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors),
-                                                     JBUI.CurrentTheme.GotItTooltip.shortcutBackground())
+                                                     JBUI.CurrentTheme.GotItTooltip.shortcutBackground(useContrastColors))
     StringReader(linkStyles + shortcutStyles).use { styleSheet.loadRules(it, null) }
 
     val iconsExtension = ExtendableHTMLViewFactory.Extensions.icons { iconKey ->

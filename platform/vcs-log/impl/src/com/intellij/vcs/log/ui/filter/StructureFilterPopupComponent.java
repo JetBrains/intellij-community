@@ -26,12 +26,12 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.ui.RootIcon;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -43,11 +43,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
@@ -291,7 +289,7 @@ public class StructureFilterPopupComponent
   }
 
   private final class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
-    final CheckboxColorIcon myIcon;
+    final RootIcon.CheckboxColorIcon myIcon;
     final VirtualFile myRoot;
     final List<SelectVisibleRootAction> myAllActions;
 
@@ -300,8 +298,7 @@ public class StructureFilterPopupComponent
       getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
       myAllActions = allActions;
-      myIcon = JBUIScale.scaleIcon(new CheckboxColorIcon(
-        CHECKBOX_ICON_SIZE, VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager)));
+      myIcon = RootIcon.createAndScaleCheckbox(VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager));
       getTemplatePresentation().setIcon(JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 
@@ -356,34 +353,6 @@ public class StructureFilterPopupComponent
 
     private boolean isEnabled() {
       return getStructureFilter(myFilterModel.getFilter()) == null;
-    }
-  }
-
-  private static class CheckboxColorIcon extends ColorIcon {
-    private boolean mySelected;
-    private SizedIcon mySizedIcon;
-
-    CheckboxColorIcon(int size, @NotNull Color color) {
-      super(size, color);
-      mySizedIcon = new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, size, size);
-    }
-
-    public void prepare(boolean selected) {
-      mySelected = selected;
-    }
-
-    @Override
-    public @NotNull CheckboxColorIcon withIconPreScaled(boolean preScaled) {
-      mySizedIcon = (SizedIcon)mySizedIcon.withIconPreScaled(preScaled);
-      return (CheckboxColorIcon)super.withIconPreScaled(preScaled);
-    }
-
-    @Override
-    public void paintIcon(Component component, Graphics g, int i, int j) {
-      super.paintIcon(component, g, i, j);
-      if (mySelected) {
-        mySizedIcon.paintIcon(component, g, i, j);
-      }
     }
   }
 

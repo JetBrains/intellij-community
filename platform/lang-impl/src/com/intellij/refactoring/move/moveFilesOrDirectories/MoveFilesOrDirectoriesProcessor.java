@@ -202,8 +202,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
             processDirectoryFiles(movedFiles, oldToNewMap, psiElement);
           }
         }
-        else if (element instanceof PsiFile) {
-          final PsiFile movedFile = (PsiFile)element;
+        else if (element instanceof PsiFile movedFile) {
           MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, newParent, oldToNewMap);
 
           PsiFile moving = newParent.findFile(movedFile.getName());
@@ -342,8 +341,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   private static void processDirectoryFiles(@NotNull List<? super SmartPsiElementPointer<PsiFile>> movedFiles, @NotNull Map<PsiElement, PsiElement> oldToNewMap, @NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiFile) {
-      final PsiFile movedFile = (PsiFile)psiElement;
+    if (psiElement instanceof PsiFile movedFile) {
       movedFiles.add(SmartPointerManager.createPointer(movedFile));
       MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, movedFile.getParent(), oldToNewMap);
     }
@@ -356,8 +354,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   protected void retargetUsages(UsageInfo @NotNull [] usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     for (UsageInfo usageInfo : usages) {
-      if (usageInfo instanceof MyUsageInfo) {
-        final MyUsageInfo info = (MyUsageInfo)usageInfo;
+      if (usageInfo instanceof MyUsageInfo info) {
         PsiElement element = info.myTarget;
 
         if (info.getReference() instanceof FileReference || info.getReference() instanceof PsiDynaReference) {

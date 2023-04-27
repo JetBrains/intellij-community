@@ -1,0 +1,7 @@
+<idea-plugin>
+  <id>com.intellij.example</id>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection implementationClass="MyInspection"/>
+  </extensions>
+</idea-plugin>

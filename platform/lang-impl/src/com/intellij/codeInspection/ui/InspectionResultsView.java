@@ -390,8 +390,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
           if (pathSelected != null) {
             final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
-            if (node instanceof ProblemDescriptionNode) {
-              final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+            if (node instanceof ProblemDescriptionNode problemNode) {
               showInRightPanel(problemNode.getElement());
             }
             else if (node instanceof InspectionPackageNode ||
@@ -738,8 +737,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       return null;
     }
 
-    if (selectedNode instanceof RefElementNode) {
-      final RefElementNode refElementNode = (RefElementNode)selectedNode;
+    if (selectedNode instanceof RefElementNode refElementNode) {
       RefEntity refElement = refElementNode.getElement();
       if (refElement == null || !refElement.isValid()) return null;
       final RefEntity item = refElement.getRefManager().getRefinedElement(refElement);

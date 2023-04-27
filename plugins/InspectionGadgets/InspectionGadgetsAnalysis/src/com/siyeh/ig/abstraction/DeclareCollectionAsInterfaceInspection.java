@@ -99,11 +99,10 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+      if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;
       }
       final StringBuilder newElementText = new StringBuilder(typeString);
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
       final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
       if (parameterList != null) {
         newElementText.append(parameterList.getText());
@@ -139,8 +138,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
           }
         }
       }
-      if (variable instanceof PsiParameter) {
-        final PsiParameter parameter = (PsiParameter)variable;
+      if (variable instanceof PsiParameter parameter) {
         final PsiElement scope = parameter.getDeclarationScope();
         if (scope instanceof PsiMethod) {
           if (ignorePrivateMethodsAndFields) {

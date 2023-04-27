@@ -79,10 +79,9 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField lockedField)) {
         return;
       }
-      final PsiField lockedField = (PsiField)target;
       if (!lockedField.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtils.isConstant(lockedField)) {
         return;
       }
@@ -124,11 +123,9 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
           break;
         }
         final PsiExpression lockExpression = synchronizedStatement.getLockExpression();
-        if (lockExpression instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression reference = (PsiReferenceExpression)lockExpression;
+        if (lockExpression instanceof PsiReferenceExpression reference) {
           final PsiElement lockTarget = reference.resolve();
-          if (lockTarget instanceof PsiField) {
-            final PsiField lockField = (PsiField)lockTarget;
+          if (lockTarget instanceof PsiField lockField) {
             if (lockField.hasModifierProperty(PsiModifier.STATIC)) {
               isLockedOnClass = true;
             }

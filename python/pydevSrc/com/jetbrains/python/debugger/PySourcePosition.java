@@ -36,9 +36,7 @@ public abstract class PySourcePosition {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PySourcePosition)) return false;
-
-    PySourcePosition that = (PySourcePosition)o;
+    if (!(o instanceof PySourcePosition that)) return false;
 
     if (line != that.line) return false;
     if (file != null ? !file.equals(that.file) : that.file != null) return false;

@@ -81,8 +81,7 @@ public class OldReferencesResolver {
     myProject = myContext.getProject();
     myManager = myContext.getManager();
 
-    if (myContext instanceof GrMethodCallExpression) {
-      final GrMethodCallExpression methodCall = (GrMethodCallExpression)myContext;
+    if (myContext instanceof GrMethodCallExpression methodCall) {
       final GrExpression methodExpression = methodCall.getInvokedExpression();
       if (methodExpression instanceof GrReferenceExpression) {
         myInstanceRef = ((GrReferenceExpression)methodExpression).getQualifierExpression();
@@ -133,7 +132,7 @@ public class OldReferencesResolver {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
     PsiElement newExpr = expr;  // references continue being resolved in the children of newExpr
 
-    if (oldExpr instanceof GrReferenceExpression) {
+    if (oldExpr instanceof GrReferenceExpression oldRef) {
       if (isThisReferenceToContainingClass(oldExpr) || isSimpleSuperReference(oldExpr)) {
         if (myInstanceRef != null) {
           newExpr.replace(getInstanceRef(factory));
@@ -141,7 +140,6 @@ public class OldReferencesResolver {
         return;
       }
 
-      final GrReferenceExpression oldRef = (GrReferenceExpression)oldExpr;
       newExpr = newExpr.replace(decodeReferenceExpression((GrReferenceExpression)newExpr, oldRef));
       //newExpr = ((GrReferenceExpression)newExpr).getReferenceNameElement();
       final GroovyResolveResult adv = oldRef.advancedResolve();
@@ -290,8 +288,7 @@ public class OldReferencesResolver {
   }
 
   private static boolean isSimpleSuperReference(PsiElement oldExpr) {
-    if (oldExpr instanceof GrReferenceExpression) {
-      GrReferenceExpression ref = (GrReferenceExpression)oldExpr;
+    if (oldExpr instanceof GrReferenceExpression ref) {
       if (ref.getQualifier() == null) {
         PsiElement nameElement = ref.getReferenceNameElement();
         if (nameElement != null) {
@@ -474,8 +471,7 @@ public class OldReferencesResolver {
 
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(refExpr.getProject());
 
-      if (refExpr.getParent() instanceof GrMethodCallExpression) {
-        GrMethodCallExpression methodCall = (GrMethodCallExpression)refExpr.getParent();
+      if (refExpr.getParent() instanceof GrMethodCallExpression methodCall) {
         GrMethodCallExpression newMethodCall =
           (GrMethodCallExpression)factory.createExpressionFromText(refExpr.getReferenceName() + "()", refExpr);
         newMethodCall.getArgumentList().replace(methodCall.getArgumentList());

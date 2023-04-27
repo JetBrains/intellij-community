@@ -336,8 +336,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       if (base != null) {
         TypeDescriptor descriptor = info.documentDescriptor.findTypeDescriptor(base);
 
-        if (descriptor instanceof ComplexTypeDescriptor) {
-          ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
+        if (descriptor instanceof ComplexTypeDescriptor complexTypeDescriptor) {
           if (complexTypeDescriptor._canContainTag(localName, namespace, complexTypeDescriptor.myTag, context, visited,
                                                    getContextInfo(info, base), restriction || XmlNSDescriptorImpl.equalsToSchemaName(tag,
                                                                                                                       RESTRICTION_TAG_NAME))) {
@@ -447,8 +446,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         visited.add(base);
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(base);
 
-        if (descriptor instanceof ComplexTypeDescriptor) {
-          ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
+        if (descriptor instanceof ComplexTypeDescriptor complexTypeDescriptor) {
           if (dependencies != null) {
             XmlTag declaration = complexTypeDescriptor.getDeclaration();
             dependencies.add(declaration.getContainingFile());

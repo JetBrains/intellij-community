@@ -27,8 +27,7 @@ final class GppExpectedTypesContributor extends GroovyExpectedTypesContributor {
   @Override
   public List<TypeConstraint> calculateTypeConstraints(@NotNull GrExpression expression) {
     final PsiElement parent = expression.getParent();
-    if (parent instanceof GrListOrMap) {
-      final GrListOrMap list = (GrListOrMap)parent;
+    if (parent instanceof GrListOrMap list) {
       if (!list.isMap()) {
         final PsiType listType = list.getType();
         if (!(listType instanceof GrTupleType)) {

@@ -277,8 +277,7 @@ public class LookupElementPresentation {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof TextFragment)) return false;
-      TextFragment fragment = (TextFragment)o;
+      if (!(o instanceof TextFragment fragment)) return false;
       return myGrayed == fragment.myGrayed &&
              myItalic == fragment.myItalic &&
              Objects.equals(text, fragment.text) &&

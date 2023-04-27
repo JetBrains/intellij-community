@@ -538,7 +538,7 @@
     <registryKey key="git.enable.stash.toolwindow" defaultValue="false"
                  description="Show toolwindow tab with stashes and shelves together"/>
     <registryKey key="git.can.use.restore.command" defaultValue="true"
-                 description="Use 'git restore --staged --worktree --source=HEAD -- paths' instead of 'git reset --hard' to speedup worktree cleanup."/>
+                 description="Use 'git restore --staged --worktree --source=HEAD -- paths' instead of 'git reset --hard' to speed up worktree cleanup."/>
     <registryKey key="git.stage.separate.undo.stack" defaultValue="true"
                  description="Do not record stage operations in the undo stack of the document"/>
     <registryKey key="git.stage.navigate.to.index.file" defaultValue="false"

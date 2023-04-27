@@ -93,17 +93,15 @@ public final class DomReflectionUtil {
   }
 
   public static @Nullable Type extractCollectionElementType(Type returnType) {
-    if (!(returnType instanceof ParameterizedType)) {
+    if (!(returnType instanceof ParameterizedType parameterizedType)) {
       return null;
     }
 
-    ParameterizedType parameterizedType = (ParameterizedType)returnType;
     Type rawType = parameterizedType.getRawType();
-    if (!(rawType instanceof Class)) {
+    if (!(rawType instanceof Class<?> rawClass)) {
       return null;
     }
 
-    Class<?> rawClass = (Class<?>)rawType;
     if (!List.class.equals(rawClass) && !Collection.class.equals(rawClass)) {
       return null;
     }

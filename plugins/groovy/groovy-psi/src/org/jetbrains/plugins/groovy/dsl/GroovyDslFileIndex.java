@@ -135,15 +135,12 @@ public final class GroovyDslFileIndex {
       final Collection infos = staticInfo.get("scriptSuperClass");
 
       for (Object info : infos) {
-        if (info instanceof Map) {
-          @NonNls final Map map = (Map)info;
+        if (info instanceof @NonNls Map map) {
 
           final Object _pattern = map.get("pattern");
           final Object _superClass = map.get("superClass");
 
-          if (_pattern instanceof String && _superClass instanceof String) {
-            final String pattern = (String)_pattern;
-            final String superClass = (String)_superClass;
+          if (_pattern instanceof String pattern && _superClass instanceof String superClass) {
 
             try {
               if (Pattern.matches(".*" + pattern, filePath)) {

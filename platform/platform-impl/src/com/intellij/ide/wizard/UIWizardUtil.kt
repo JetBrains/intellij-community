@@ -3,12 +3,14 @@
 
 package com.intellij.ide.wizard
 
+import com.intellij.ide.util.projectWizard.ProjectBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
@@ -120,3 +122,13 @@ fun whenProjectCreated(project: Project, action: () -> Unit) {
     }
   }
 }
+
+/**
+ * This is a workaround for https://youtrack.jetbrains.com/issue/IDEA-286690
+ */
+@ApiStatus.Internal
+fun NewProjectWizardStep.setupProjectFromBuilder(project: Project, builder: ProjectBuilder): Module? {
+  val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
+  return builder.commit(project, model).firstOrNull()
+}
+

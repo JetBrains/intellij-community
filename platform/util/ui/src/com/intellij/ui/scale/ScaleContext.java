@@ -168,10 +168,9 @@ public class ScaleContext extends UserScaleContext {
   @Override
   protected <T extends UserScaleContext> boolean updateAll(@NotNull T scaleContext) {
     boolean updated = super.updateAll(scaleContext);
-    if (!(scaleContext instanceof ScaleContext)) {
+    if (!(scaleContext instanceof ScaleContext context)) {
       return updated;
     }
-    ScaleContext context = (ScaleContext)scaleContext;
 
     if (compRef != null) {
       compRef.clear();
@@ -183,8 +182,7 @@ public class ScaleContext extends UserScaleContext {
 
   @Override
   public boolean equals(Object obj) {
-    if (super.equals(obj) && obj instanceof ScaleContext) {
-      ScaleContext that = (ScaleContext)obj;
+    if (super.equals(obj) && obj instanceof ScaleContext that) {
       return that.sysScale.value == sysScale.value;
     }
     return false;

@@ -484,28 +484,7 @@ public abstract class StubIndexEx extends StubIndex {
     return ((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
   }
 
-  private static final class KeyAndFileId<K> {
-    @NotNull
-    private final K key;
-    private final int fileId;
-
-    private KeyAndFileId(@NotNull K key, int fileId) {
-      this.key = key;
-      this.fileId = fileId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      KeyAndFileId<?> key1 = (KeyAndFileId<?>)o;
-      return fileId == key1.fileId && Objects.equals(key, key1.key);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(key, fileId);
-    }
+  private record KeyAndFileId<K>(@NotNull K key, int fileId) {
   }
 
   @TestOnly

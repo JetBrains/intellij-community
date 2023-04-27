@@ -42,10 +42,9 @@ public class StringEqualsCharSequenceInspection extends BaseInspection {
       return false;
     }
     final PsiElement target = expression.resolve();
-    if (!(target instanceof PsiMethod)) {
+    if (!(target instanceof PsiMethod method)) {
       return false;
     }
-    final PsiMethod method = (PsiMethod)target;
     final PsiClass aClass = method.getContainingClass();
     return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
   }

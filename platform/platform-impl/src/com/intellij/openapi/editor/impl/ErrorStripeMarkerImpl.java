@@ -48,8 +48,7 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
       }
       else if (intervalStart() != myHighlighter.getStartOffset() || intervalEnd() != myHighlighter.getEndOffset()) {
         String extendedHighlighterInfo = "";
-        if (myHighlighter instanceof PersistentRangeHighlighterImpl) {
-          PersistentRangeHighlighterImpl h = (PersistentRangeHighlighterImpl)myHighlighter;
+        if (myHighlighter instanceof PersistentRangeHighlighterImpl h) {
           extendedHighlighterInfo = "(prev state: " + h.prevStartOffset + "-" + h.prevEndOffset + ", stamps match: " +
                                     (h.modificationStamp == (byte)e.getDocument().getModificationStamp()) + ")";
         }

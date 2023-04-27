@@ -75,8 +75,7 @@ public class ConvertStringToMultilineIntention extends Intention {
     assert element instanceof GrExpression;
     List<GrExpression> result = new ArrayList<>();
     result.add((GrExpression)element);
-    while (element.getParent() instanceof GrBinaryExpression) {
-      final GrBinaryExpression binary = (GrBinaryExpression)element.getParent();
+    while (element.getParent() instanceof GrBinaryExpression binary) {
       if (!isAppropriateBinary(binary, element)) break;
 
       result.add(binary);

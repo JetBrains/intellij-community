@@ -117,8 +117,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
         return;
       }
       final PsiElement resolvedExpression = expression.resolve();
-      if (resolvedExpression instanceof PsiField) {
-        final PsiField field = (PsiField)resolvedExpression;
+      if (resolvedExpression instanceof PsiField field) {
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
           return;
         }
@@ -151,8 +150,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
           final PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(def.getParent());
           if (assignment != null && assignment.getLExpression() == def) {
             final PsiExpression rhs = PsiUtil.deparenthesizeExpression(assignment.getRExpression());
-            if (rhs instanceof PsiConditionalExpression) {
-              final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)rhs;
+            if (rhs instanceof PsiConditionalExpression conditionalExpression) {
               final PsiExpression thenExpression = conditionalExpression.getThenExpression();
               final PsiExpression elseExpression = conditionalExpression.getElseExpression();
               visitPropertyKeyAnnotationParameter(expression, computeStringValue(thenExpression), thenExpression);
@@ -185,8 +183,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
           appendPropertyKeyNotFoundProblem(bundleName, key, highlightedExpression, myManager, myProblems, onTheFly);
         }
       }
-      else if (expression.getParent() instanceof PsiNameValuePair) {
-        PsiNameValuePair nvp = (PsiNameValuePair)expression.getParent();
+      else if (expression.getParent() instanceof PsiNameValuePair nvp) {
         if (Objects.equals(nvp.getName(), AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER)) {
           PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(expression.getProject());
           Module module = ModuleUtilCore.findModuleForPsiElement(expression);
@@ -203,7 +200,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
           }
         }
       }
-      else if (expression.getParent() instanceof PsiExpressionList && expression.getParent().getParent() instanceof PsiMethodCallExpression) {
+      else if (expression.getParent() instanceof PsiExpressionList expressions && expression.getParent().getParent() instanceof PsiMethodCallExpression) {
         if (!JavaI18nUtil.mustBePropertyKey(expression, null)) return;
 
         final SortedSet<Integer> paramsCount = JavaI18nUtil.getPropertyValueParamsCount(highlightedExpression, resourceBundleName.get());
@@ -213,7 +210,6 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
 
         final int maxParamCount = paramsCount.last();
 
-        final PsiExpressionList expressions = (PsiExpressionList)expression.getParent();
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expressions.getParent();
         final PsiMethod method = methodCall.resolveMethod();
         final PsiExpression[] args = expressions.getExpressions();

@@ -73,13 +73,11 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (parent instanceof PsiTypeParameter) {
-        final PsiTypeParameter typeParameter = (PsiTypeParameter)parent;
+      if (parent instanceof PsiTypeParameter typeParameter) {
         replaceTypeParameterUsagesWithType(typeParameter);
         new CommentTracker().deleteAndRestoreComments(typeParameter);
       }
-      else if (parent instanceof PsiTypeElement) {
-        final PsiTypeElement typeElement = (PsiTypeElement)parent;
+      else if (parent instanceof PsiTypeElement typeElement) {
         final PsiElement lastChild = typeElement.getLastChild();
         if (lastChild == null) {
           return;
@@ -139,15 +137,13 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       super.visitTypeElement(typeElement);
       final PsiType type = typeElement.getType();
-      if (!(type instanceof PsiWildcardType)) {
+      if (!(type instanceof PsiWildcardType wildcardType)) {
         return;
       }
-      final PsiWildcardType wildcardType = (PsiWildcardType)type;
       final PsiType extendsBound = wildcardType.getExtendsBound();
-      if (!(extendsBound instanceof PsiClassType)) {
+      if (!(extendsBound instanceof PsiClassType classType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)extendsBound;
       for (PsiType typeParameter : classType.getParameters()) {
         if (typeParameter instanceof PsiWildcardType) {
           // if nested type has wildcard type parameter too, leave it
@@ -202,8 +198,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
           return isWildcardRequired(typeElement, deconstructionPattern.getTypeElement(), type);
         }
       }
-      else if (ancestor instanceof PsiParameter) {
-        final PsiParameter parameter = (PsiParameter)ancestor;
+      else if (ancestor instanceof PsiParameter parameter) {
         final PsiElement scope = parameter.getDeclarationScope();
         if (scope instanceof PsiMethod method) {
           if (MethodUtils.hasSuper(method)) {

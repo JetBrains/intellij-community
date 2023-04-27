@@ -11,12 +11,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabDiscussionResolveViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.comment.GitLabDiscussionResolveViewModelImpl
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModelImpl
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModelImpl
+import org.jetbrains.plugins.gitlab.ui.comment.*
 import java.util.*
 
 interface GitLabMergeRequestTimelineDiscussionViewModel {
@@ -29,7 +24,7 @@ interface GitLabMergeRequestTimelineDiscussionViewModel {
   val collapsed: Flow<Boolean>
 
   val resolveVm: GitLabDiscussionResolveViewModel?
-  val newNoteVm: NewGitLabNoteViewModel?
+  val replyVm: GitLabDiscussionReplyViewModel?
 
   fun setRepliesFolded(folded: Boolean)
 
@@ -49,7 +44,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(this, it) }
+    .mapScoped { GitLabNoteViewModelImpl(this, it, resolveVm) }
     .modelFlow(cs, LOG)
 
   override val date: Date = discussion.createdAt
@@ -62,7 +57,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.drop(1) }
     .mapCaching(
       GitLabNote::id,
-      { GitLabNoteViewModelImpl(cs, it) },
+      { cs, note -> GitLabNoteViewModelImpl(cs, note) },
       GitLabNoteViewModelImpl::destroy
     )
     .modelFlow(cs, LOG)
@@ -70,8 +65,8 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val resolveVm: GitLabDiscussionResolveViewModel? =
     if (discussion.canResolve) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
 
-  override val newNoteVm: NewGitLabNoteViewModel? =
-    if(discussion.canAddNotes) NewGitLabNoteViewModelImpl(cs, currentUser, discussion) else null
+  override val replyVm: GitLabDiscussionReplyViewModel? =
+    if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
 
   override fun setRepliesFolded(folded: Boolean) {
     _repliesFolded.value = folded

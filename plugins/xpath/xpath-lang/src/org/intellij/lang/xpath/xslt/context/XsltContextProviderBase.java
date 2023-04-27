@@ -86,8 +86,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   private static void fillFromSchema(PsiFile file, ElementNames names) {
-    if (!(file instanceof XmlFile)) return;
-    final XmlFile f = (XmlFile)file;
+    if (!(file instanceof XmlFile f)) return;
     final XmlDocument d = f.getDocument();
     if (d == null) return;
     final XmlTag rootTag = d.getRootTag();

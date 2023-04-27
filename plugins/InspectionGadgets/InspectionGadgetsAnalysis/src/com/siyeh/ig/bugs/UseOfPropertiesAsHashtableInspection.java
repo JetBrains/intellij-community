@@ -92,10 +92,9 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection impleme
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       CommentTracker commentTracker = new CommentTracker();
       @NonNls final StringBuilder newExpression = new StringBuilder();

@@ -16,14 +16,19 @@
 package com.jetbrains.python.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyNoneType
 import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.Nls
 
 object PyDocumentationLink {
 
@@ -34,44 +39,44 @@ object PyDocumentationLink {
   private const val LINK_TYPE_MODULE = "#module#"
 
   @JvmStatic
-  fun toContainingClass(content: String?): String {
-    return "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_CLASS\">$content</a>"
+  fun toContainingClass(@NlsSafe content: String): HtmlChunk {
+    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_CLASS", content)
   }
 
   @JvmStatic
-  fun toParameterPossibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): String {
+  fun toParameterPossibleClass(@NlsSafe type: String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk {
     return when (PyTypeParser.getTypeByName(anchor, type, context)) {
-      is PyClassType -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_PARAM\">$type</a>"
-      else -> type
+      is PyClassType -> HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_PARAM", type)
+      else -> HtmlChunk.text(type)
     }
   }
 
   @JvmStatic
-  fun toPossibleClass(type: String, anchor: PsiElement, context: TypeEvalContext): String = toPossibleClass(type, type, anchor, context)
+  fun toPossibleClass(typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk =
+    when (val type = PyTypeParser.getTypeByName(anchor, typeName, context)) {
+      is PyClassType -> styledReference(toClass(type.pyClass, typeName), type.pyClass)
+      is PyNoneType -> styledSpan(typeName, PyHighlighter.PY_KEYWORD)
+      else -> HtmlChunk.text(typeName)
+    }
 
   @JvmStatic
-  fun toPossibleClass(content: String, qualifiedName: String, anchor: PsiElement, context: TypeEvalContext): String {
-    return when (PyTypeParser.getTypeByName(anchor, qualifiedName, context)) {
-      is PyClassType -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$qualifiedName\">$content</a>"
-      else -> content
-    }
+  fun toClass(pyClass: PyClass, linkText: @Nls String): HtmlChunk {
+    val qualifiedName = pyClass.qualifiedName
+    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$qualifiedName", linkText)
   }
 
   @JvmStatic
-  fun toFunction(func: PyFunction): String = toFunction(func.qualifiedName ?: func.name.orEmpty(), func)
-
-  @JvmStatic
-  fun toFunction(content: String, func: PyFunction): String {
+  fun toFunction(@NlsSafe content: String, func: PyFunction): HtmlChunk {
     val qualifiedName = func.qualifiedName
     return when {
-      qualifiedName != null -> "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_FUNC$qualifiedName\">$content</a>"
-      else -> content
+      qualifiedName != null -> HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_FUNC$qualifiedName", content)
+      else -> HtmlChunk.text(content)
     }
   }
 
   @JvmStatic
-  fun toModule(content: String, qualifiedName: String): String {
-    return "<a href=\"${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_MODULE$qualifiedName\">$content</a>"
+  fun toModule(@NlsSafe content: String, qualifiedName: String): HtmlChunk {
+    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_MODULE$qualifiedName", content)
   }
 
   @JvmStatic

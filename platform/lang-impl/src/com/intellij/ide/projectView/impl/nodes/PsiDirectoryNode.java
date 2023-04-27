@@ -234,8 +234,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
    */
   @Nullable
   private static VirtualFile getVirtualFile(Object element) {
-    if (element instanceof PsiDirectory) {
-      PsiDirectory directory = (PsiDirectory)element;
+    if (element instanceof PsiDirectory directory) {
       return directory.getVirtualFile();
     }
     return element instanceof VirtualFile ? (VirtualFile)element : null;

@@ -57,10 +57,9 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
             return XPathType.fromString(attr.getValue());
         }
         final XPathExpression value = getValue();
-        if (value instanceof XPathVariableReference) {
+        if (value instanceof XPathVariableReference reference) {
             // recursive reference <xsl:variable name="foo" select="$foo" />
-            final XPathVariableReference reference = (XPathVariableReference)value;
-            if (reference.resolve() == this) {
+          if (reference.resolve() == this) {
                 return XPathType.UNKNOWN;
             }
         }

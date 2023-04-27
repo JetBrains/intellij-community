@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -91,12 +92,15 @@ public class InvokeTemplateAction extends DefaultActionGroup {
   public void perform() {
     final Document document = myEditor.getDocument();
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null && ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles()) {
+    if (file != null &&
+        !IntentionPreviewUtils.isIntentionPreviewActive() &&
+        ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles()) {
       return;
     }
 
     CommandProcessor.getInstance().executeCommand(myProject, this::performInCommand,
-                                                  CodeInsightBundle.message("command.wrap.with.template"), "Wrap with template " + myTemplate.getKey());
+                                                  CodeInsightBundle.message("command.wrap.with.template"),
+                                                  "Wrap with template " + myTemplate.getKey());
   }
 
   public void performInCommand() {

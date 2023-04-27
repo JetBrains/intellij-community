@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,19 @@ public abstract class MavenServerConnector implements Disposable {
 
   MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     synchronized (embedderLock) {
-      return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
+      try {
+        return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken);
+      }
+      catch (Exception e) {
+        MavenCoreInitializationException cause = ExceptionUtil.findCause(e, MavenCoreInitializationException.class);
+        if (cause != null) {
+          return new MisconfiguredPlexusDummyEmbedder(myProject, cause.getMessage(),
+                                                      myMultimoduleDirectories,
+                                                      getMavenDistribution().getVersion(),
+                                                      cause.getUnresolvedExtensionId());
+        }
+        throw e;
+      }
     }
   }
 
@@ -136,6 +149,8 @@ public abstract class MavenServerConnector implements Disposable {
     return myJdk;
   }
 
+
+  @NotNull
   public MavenDistribution getMavenDistribution() {
     return myDistribution;
   }

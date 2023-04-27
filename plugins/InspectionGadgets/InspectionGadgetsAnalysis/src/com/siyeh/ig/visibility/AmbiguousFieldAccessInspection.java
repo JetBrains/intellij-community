@@ -51,10 +51,9 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
       if (target == null) {
         return;
       }
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)target;
       final PsiClass fieldClass = field.getContainingClass();
       if (fieldClass == null) {
         return;
@@ -112,10 +111,9 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiReferenceExpression)) {
+      if (!(element instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
       final String newExpressionText = "super." + referenceExpression.getText();
       PsiReplacementUtil.replaceExpression(referenceExpression, newExpressionText);
     }

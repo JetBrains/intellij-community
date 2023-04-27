@@ -351,11 +351,10 @@ public final class XsltSupport {
 
     @Override
     public CachedValueProvider.Result<XsltChecker.LanguageLevel> compute(PsiFile psiFile) {
-      if (!(psiFile instanceof XmlFile)) {
+      if (!(psiFile instanceof XmlFile xmlFile)) {
         return CachedValueProvider.Result.create(XsltChecker.LanguageLevel.NONE, PsiModificationTracker.MODIFICATION_COUNT);
       }
 
-      final XmlFile xmlFile = (XmlFile)psiFile;
       if (psiFile instanceof PsiFileEx) {
         if (((PsiFileEx)psiFile).isContentsLoaded()) {
           final XmlDocument doc = xmlFile.getDocument();

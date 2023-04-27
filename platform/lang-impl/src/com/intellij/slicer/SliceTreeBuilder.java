@@ -17,11 +17,9 @@ public class SliceTreeBuilder {
   public volatile boolean analysisInProgress;
 
   public static final Comparator<NodeDescriptor<?>> SLICE_NODE_COMPARATOR = (o1, o2) -> {
-    if (!(o1 instanceof SliceNode) || !(o2 instanceof SliceNode)) {
+    if (!(o1 instanceof SliceNode node1) || !(o2 instanceof SliceNode node2)) {
       return AlphaComparator.INSTANCE.compare(o1, o2);
     }
-    SliceNode node1 = (SliceNode)o1;
-    SliceNode node2 = (SliceNode)o2;
     SliceUsage usage1 = node1.getValue();
     SliceUsage usage2 = node2.getValue();
 

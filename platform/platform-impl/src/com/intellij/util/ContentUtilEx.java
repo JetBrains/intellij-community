@@ -180,8 +180,7 @@ public final class ContentUtilEx extends ContentsUtil {
    */
   public static boolean closeContentTab(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
     for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
-        TabbedContent tabbedContent = (TabbedContent)content;
+      if (content instanceof TabbedContent tabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
         JComponent component = findContentComponent(tabbedContent, condition);
         if (component != null) {
           tabbedContent.removeContent(component);

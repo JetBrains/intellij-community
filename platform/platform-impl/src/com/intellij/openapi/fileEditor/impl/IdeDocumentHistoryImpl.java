@@ -126,9 +126,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         Document document = e.getDocument();
         final VirtualFile file = getFileDocumentManager().getFile(document);
         if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
-          if (!ApplicationManager.getApplication().isDispatchThread()) {
-            LOG.error("Document update for physical file not in EDT: " + file);
-          }
+          ApplicationManager.getApplication().assertIsDispatchThread();
           myCurrentCommandHasChanges = true;
           myChangedFilesInCurrentCommand.add(file);
         }

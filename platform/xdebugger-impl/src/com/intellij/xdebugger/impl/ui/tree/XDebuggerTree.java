@@ -80,10 +80,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {
     @Override
     protected Transferable createTransferable(JComponent c) {
-      if (!(c instanceof XDebuggerTree)) {
+      if (!(c instanceof XDebuggerTree tree)) {
         return null;
       }
-      XDebuggerTree tree = (XDebuggerTree)c;
       TreePath[] selectedPaths = tree.getSelectionPaths();
       if (selectedPaths == null || selectedPaths.length == 0) {
         return null;

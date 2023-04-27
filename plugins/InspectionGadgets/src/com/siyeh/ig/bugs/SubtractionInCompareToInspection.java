@@ -18,8 +18,8 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -32,14 +32,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.Arrays;
 
 /**
  * @author Bas Leijdekkers
@@ -57,18 +51,14 @@ public class SubtractionInCompareToInspection extends BaseInspection {
       .finishDefault();
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final ListTable table = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(methodMatcher.getClassNames(), methodMatcher.getMethodNamePatterns()),
-                                 InspectionGadgetsBundle.message("class.name"),
-                                 InspectionGadgetsBundle.message("method.name.regex")));
-    final JPanel tablePanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.class"));
-    panel.add(tablePanel, BorderLayout.CENTER);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(methodMatcher.getTable(""));
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return methodMatcher.getOptionController();
   }
 
   @Override
@@ -162,8 +152,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
 
     private boolean isSafeOperand(PsiExpression operand) {
       operand = PsiUtil.skipParenthesizedExprDown(operand);
-      if (operand instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
+      if (operand instanceof PsiMethodCallExpression methodCallExpression) {
         return methodMatcher.matches(methodCallExpression);
       }
       return ExpressionUtils.getArrayFromLengthExpression(operand) != null;

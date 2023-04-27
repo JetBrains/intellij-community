@@ -5,7 +5,7 @@
   <category>Version Controls</category>
   <description>
     <![CDATA[
-      Provides integration with <a href="http://github.com/">GitHub</a>.
+      Provides integration with <a href="https://github.com/">GitHub</a>.
         <ul>
         <li>Specify your GitHub account to access all of your repositories from the IDE.</li>
         <li>Clone repositories, create and review pull requests, create gists, and much more.</li>
@@ -37,7 +37,6 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader"/>
 
-    <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
@@ -140,7 +139,7 @@
               class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestTimelineAction"/>
       <reference id="Github.Open.In.Browser"/>
       <action id="Github.PullRequest.Branch.Create"
-              class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreateBranchAction"/>
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRCheckoutRemoteBranchAction"/>
       <action id="Github.PullRequest.Branch.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateBranchAction"/>
       <action id="Github.PullRequest.Details.Reload"

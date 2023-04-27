@@ -54,7 +54,7 @@ public final class Comparing {
   @Deprecated
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
-    return arg1 == null ? arg2 == null : arg1.equals(arg2);
+    return Objects.equals(arg1, arg2);
   }
 
   @Contract(value = "null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true", pure = true)
@@ -77,7 +77,7 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(a);
+    Set<T> aSet = new HashSet<>(a);
     for (T t : b) {
       if (!aSet.contains(t)) {
         return false;
@@ -97,7 +97,7 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(Arrays.asList(a));
+    Set<T> aSet = new HashSet<>(Arrays.asList(a));
     for (T t : b) {
       if (!aSet.contains(t)) {
         return false;
@@ -129,22 +129,42 @@ public final class Comparing {
     return h;
   }
 
+  /**
+   * @deprecated use {@link Byte#compare(byte, byte)} instead
+   */
+  @Deprecated
   public static int compare(byte o1, byte o2) {
     return Byte.compare(o1, o2);
   }
 
+  /**
+   * @deprecated use {@link Boolean#compare(boolean, boolean)} instead
+   */
+  @Deprecated
   public static int compare(boolean o1, boolean o2) {
-    return o1 == o2 ? 0 : o1 ? 1 : -1;
+    return Boolean.compare(o1, o2);
   }
 
+  /**
+   * @deprecated use {@link Integer#compare(int, int)} instead
+   */
+  @Deprecated
   public static int compare(int o1, int o2) {
     return Integer.compare(o1, o2);
   }
 
+  /**
+   * @deprecated use {@link Long#compare(long, long)} instead
+   */
+  @Deprecated
   public static int compare(long o1, long o2) {
     return Long.compare(o1, o2);
   }
 
+  /**
+   * @deprecated use {@link Double#compare(double, double)} instead
+   */
+  @Deprecated
   public static int compare(double o1, double o2) {
     return Double.compare(o1, o2);
   }
@@ -173,6 +193,11 @@ public final class Comparing {
     return o1.compareTo(o2);
   }
 
+  /**
+   * Performs null-safe comparison delegating to {@code notNullComparator} for not-null values. 
+   * Consider using {@code Comparator.nullsFirst} instead.
+   */
+  @ApiStatus.Obsolete
   public static <T> int compare(@Nullable T o1, @Nullable T o2, @NotNull Comparator<? super T> notNullComparator) {
     if (o1 == o2) return 0;
     if (o1 == null) return -1;

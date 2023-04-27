@@ -80,8 +80,7 @@ public class RestRoleInspection extends RestInspection {
       if (config == null) return;
 
       PsiFile configFile = PsiManager.getInstance(project).findFile(config);
-      if (configFile instanceof PyFile) {
-        PyFile file = (PyFile)configFile;
+      if (configFile instanceof PyFile file) {
         List<PyFunction> functions = file.getTopLevelFunctions();
         for (PyFunction function : functions) {
           if (!"setup".equals(function.getName())) continue;

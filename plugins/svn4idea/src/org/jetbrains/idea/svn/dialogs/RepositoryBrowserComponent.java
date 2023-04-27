@@ -152,8 +152,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       return null;
     }
     Object element = selection.getLastPathComponent();
-    if (element instanceof RepositoryTreeNode) {
-      RepositoryTreeNode node = (RepositoryTreeNode)element;
+    if (element instanceof RepositoryTreeNode node) {
       return node.getSVNDirEntry();
     }
     return null;
@@ -172,8 +171,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       return null;
     }
     Object element = selection.getLastPathComponent();
-    if (element instanceof RepositoryTreeNode) {
-      RepositoryTreeNode node = (RepositoryTreeNode)element;
+    if (element instanceof RepositoryTreeNode node) {
       return node.getURL();
     }
     return null;

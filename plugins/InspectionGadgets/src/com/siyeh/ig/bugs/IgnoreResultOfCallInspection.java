@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,8 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.java.JavaBundle;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
@@ -38,17 +36,16 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import com.siyeh.ig.ui.UiUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER;
 
 public class IgnoreResultOfCallInspection extends BaseInspection {
@@ -153,16 +150,17 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final ListTable table = new ListTable(new ListWrappingTableModel(
-      Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, JavaBundle.message("dialog.title.choose.class"));
-    panel.addGrowing(tablePanel);
-    panel.addCheckbox(InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"), "m_reportAllNonLibraryCalls");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      myMethodMatcher.getTable("").prefix("myMethodMatcher"),
+      checkbox("m_reportAllNonLibraryCalls", InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"))
+    );
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onPrefix("myMethodMatcher", myMethodMatcher.getOptionController());
   }
 
   @Pattern(VALID_ID_PATTERN)
@@ -263,10 +261,16 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
 
-      final PsiAnnotation annotation = findCheckReturnValueAnnotation(method);
-      if (!myMethodMatcher.matches(method) && annotation == null) return false;
       if (isHardcodedException(call)) return false;
-      PsiElement stop = annotation == null ? null : (PsiElement)annotation.getOwner();
+      PsiElement stop;
+      if (!myMethodMatcher.matches(method)) {
+        final PsiAnnotation annotation = findCheckReturnValueAnnotation(method);
+        if (annotation == null) return false;
+        stop = (PsiElement)annotation.getOwner();
+      }
+      else {
+        stop = null;
+      }
       return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, stop);
     }
 
@@ -330,8 +334,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     }
 
     private static boolean isHardcodedException(PsiExpression expression) {
-      if (!(expression instanceof PsiMethodCallExpression)) return false;
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (!(expression instanceof PsiMethodCallExpression call)) return false;
       if (STREAM_COLLECT.test(call)) {
         PsiMethodCallExpression collector =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiMethodCallExpression.class);

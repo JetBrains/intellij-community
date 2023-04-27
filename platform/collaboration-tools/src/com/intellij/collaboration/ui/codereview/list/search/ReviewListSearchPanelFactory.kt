@@ -72,7 +72,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
     }
 
     val searchPanel = JPanel(BorderLayout()).apply {
-      border = JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.BOTTOM), JBUI.Borders.empty(8, 10, 0, 10))
+      border = JBUI.Borders.empty(8, 10, 0, 10)
       add(searchField, BorderLayout.CENTER)
       add(filterPanel, BorderLayout.SOUTH)
     }

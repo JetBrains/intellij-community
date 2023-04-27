@@ -140,6 +140,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
         return;
       }
 
+      
       ContextType contextType = isContextNonBlockingFor(element, myNonBlockingContextCheckers, mySettings);
       if (contextType instanceof ContextType.Blocking) {
         return;

@@ -86,8 +86,7 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
       }
     }
     for (DetectedFrameworkDescription framework : allDetectedFrameworks) {
-      if (framework instanceof FacetBasedDetectedFrameworkDescription<?, ?>) {
-        final FacetBasedDetectedFrameworkDescription<?, ?> description = (FacetBasedDetectedFrameworkDescription<?, ?>)framework;
+      if (framework instanceof FacetBasedDetectedFrameworkDescription<?, ?> description) {
         if (underlyingId.equals(description.myFacetType.getId()) &&
             myDetector.isSuitableUnderlyingFacetConfiguration(description.getConfiguration(), myConfiguration, myRelatedFiles)) {
           return true;
@@ -130,10 +129,9 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof FacetBasedDetectedFrameworkDescription)) {
+    if (!(obj instanceof FacetBasedDetectedFrameworkDescription other)) {
       return false;
     }
-    final FacetBasedDetectedFrameworkDescription other = (FacetBasedDetectedFrameworkDescription)obj;
     return getModuleName().equals(other.getModuleName()) && myFacetType.equals(other.myFacetType) && myRelatedFiles.equals(other.myRelatedFiles);
   }
 

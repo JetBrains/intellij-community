@@ -132,8 +132,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       return hasMultiplication(((PsiPrefixExpression)expression).getOperand());
     }
 
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyExpr = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyExpr) {
       final IElementType tokenType = polyExpr.getOperationTokenType();
 
       if (tokenType == JavaTokenType.ASTERISK) {
@@ -143,8 +142,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       return hasInnerMultiplication(polyExpr);
     }
 
-    if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression ternary = (PsiConditionalExpression)expression;
+    if (expression instanceof PsiConditionalExpression ternary) {
       return hasMultiplication(ternary.getThenExpression()) || hasMultiplication(ternary.getElseExpression());
     }
 
@@ -314,8 +312,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     private PsiExpression getContainingExpression(
       PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiPolyadicExpression && TypeConversionUtil.isNumericType(((PsiPolyadicExpression)parent).getType())) {
-        final PsiPolyadicExpression polyParent = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression polyParent && TypeConversionUtil.isNumericType(((PsiPolyadicExpression)parent).getType())) {
         final IElementType tokenType = polyParent.getOperationTokenType();
         if (!isShiftToken(tokenType) || expression == polyParent.getOperands()[0]) {
           return getContainingExpression((PsiExpression)parent);

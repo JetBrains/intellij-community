@@ -78,8 +78,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ProjectExternalDependency> list, ProjectExternalDependency dependency,
                                            int index, boolean selected, boolean hasFocus) {
-        if (dependency instanceof DependencyOnPlugin) {
-          DependencyOnPlugin value = (DependencyOnPlugin)dependency;
+        if (dependency instanceof DependencyOnPlugin value) {
           append(getPluginNameById(value.getPluginId()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           String minVersion = value.getMinVersion();
           String maxVersion = value.getMaxVersion();

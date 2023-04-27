@@ -23,13 +23,13 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.util.containers.TreeNodeProcessingResult
-import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
@@ -39,22 +39,21 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   @Volatile
-  private var indexData: WorkspaceFileIndexData? = null 
+  override var indexData: WorkspaceFileIndexData = UninitializedWorkspaceFileIndexData 
 
   init {
     project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
-        val data = indexData
-        if (data != null && DirectoryIndexImpl.shouldResetOnEvents(events)) {
-          data.clearPackageDirectoryCache()
+        if (DirectoryIndexImpl.shouldResetOnEvents(events)) {
+          indexData.clearPackageDirectoryCache()
           if (events.any(DirectoryIndexImpl::isIgnoredFileCreated)) {
-            data.resetFileCache()
+            indexData.resetFileCache()
           }
         }
       }
     })
-    LowMemoryWatcher.register({ indexData?.onLowMemory() }, project)
-    val clearData = Runnable { indexData = null }
+    LowMemoryWatcher.register({ indexData.onLowMemory() }, project)
+    val clearData = Runnable { indexData = UninitializedWorkspaceFileIndexData }
     EP_NAME.addChangeListener(clearData, this)
     CustomEntityProjectModelInfoProvider.EP.addChangeListener(clearData, this)
   }
@@ -220,8 +219,8 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   private fun getOrCreateMainIndexData(): WorkspaceFileIndexData {
     var data = indexData
-    if (data == null) {
-      data = WorkspaceFileIndexData(contributors, project, RootFileSupplier.INSTANCE)
+    if (data === UninitializedWorkspaceFileIndexData) {
+      data = WorkspaceFileIndexDataImpl(contributors, project, RootFileSupplier.INSTANCE)
       indexData = data
     }
     return data
@@ -234,34 +233,14 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     var pair = branch.getUserData(BRANCH_INDEX_DATA_KEY)
     val modCount = branch.branchedVfsStructureModificationCount
     if (pair == null || pair.first != modCount) {
-      pair = Pair(modCount, WorkspaceFileIndexData(contributors, branch.project, RootFileSupplier.forBranch(branch)))
+      pair = Pair(modCount, WorkspaceFileIndexDataImpl(contributors, branch.project, RootFileSupplier.forBranch(branch)))
       branch.putUserData(BRANCH_INDEX_DATA_KEY, pair)
     }
     return pair.second
   }
 
-  override fun resetCustomContributors() {
-    indexData?.resetCustomContributors()
-  }
-
   override fun reset() {
-    indexData = null
-  }
-
-  override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) {
-    indexData?.markDirty(entityReferences, filesToInvalidate)
-  }
-
-  override fun updateDirtyEntities() {
-    indexData?.updateDirtyEntities()
-  }
-
-  override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? {
-    return indexData?.analyzeVfsChanges(events)
-  }
-
-  fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) {
-    indexData?.onEntitiesChanged(event, storageKind)
+    indexData = UninitializedWorkspaceFileIndexData
   }
 }
 

@@ -307,12 +307,10 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiTypeElement typeElement;
-      if (parent instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)parent;
+      if (parent instanceof PsiVariable variable) {
         typeElement = variable.getTypeElement();
       }
-      else if (parent instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)parent;
+      else if (parent instanceof PsiMethod method) {
         typeElement = method.getReturnTypeElement();
       }
       else {
@@ -327,17 +325,15 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         return;
       }
       final PsiType oldType = typeElement.getType();
-      if (!(oldType instanceof PsiClassType)) {
+      if (!(oldType instanceof PsiClassType oldClassType)) {
         return;
       }
-      final PsiClassType oldClassType = (PsiClassType)oldType;
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = facade.getElementFactory();
       final PsiType type = factory.createTypeFromText(fqClassName, element);
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return;
       }
-      PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();
       if (aClass != null) {
         final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
@@ -392,8 +388,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
-      if (variable instanceof PsiParameter) {
-        final PsiParameter parameter = (PsiParameter)variable;
+      if (variable instanceof PsiParameter parameter) {
         if (parameter instanceof PsiPatternVariable) return;
         final PsiElement declarationScope = parameter.getDeclarationScope();
         if (declarationScope instanceof PsiCatchSection) {
@@ -404,8 +399,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
           //no need to check inferred lambda params
           return;
         }
-        if (declarationScope instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)declarationScope;
+        if (declarationScope instanceof PsiMethod method) {
           final PsiClass containingClass = method.getContainingClass();
           if (containingClass == null || containingClass.isInterface()) {
             return;
@@ -442,8 +436,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       if (useRighthandTypeAsWeakestTypeInAssignments) {
         if (variable instanceof PsiParameter) {
           final PsiElement parent = variable.getParent();
-          if (parent instanceof PsiForeachStatement) {
-            final PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
+          if (parent instanceof PsiForeachStatement foreachStatement) {
             final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
             if (!(iteratedValue instanceof PsiNewExpression) && !(iteratedValue instanceof PsiTypeCastExpression)) {
               return;

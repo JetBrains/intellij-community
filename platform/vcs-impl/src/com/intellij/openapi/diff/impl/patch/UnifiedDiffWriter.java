@@ -81,8 +81,7 @@ public final class UnifiedDiffWriter {
     // because GitPatchReader is not ready for mixed style patches
     List<FilePatch> noContentPatches = new ArrayList<>();
     for (FilePatch filePatch : patches) {
-      if (!(filePatch instanceof TextFilePatch)) continue;
-      TextFilePatch patch = (TextFilePatch)filePatch;
+      if (!(filePatch instanceof TextFilePatch patch)) continue;
       if (patch.hasNoModifiedContent()) {
         noContentPatches.add(patch);
         continue;

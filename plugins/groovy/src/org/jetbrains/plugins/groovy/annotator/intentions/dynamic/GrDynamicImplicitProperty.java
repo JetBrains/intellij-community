@@ -91,9 +91,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
 
       Object root = model.getRoot();
 
-      if (!(root instanceof DefaultMutableTreeNode)) return;
+      if (!(root instanceof DefaultMutableTreeNode treeRoot)) return;
 
-      DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
       final PsiClass psiClass = getContainingClassElement();
       if (psiClass == null) return;
 

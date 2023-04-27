@@ -86,9 +86,8 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       });
       return result.get();
     }
-    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor) {
+    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor) {
       ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
-      AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor();
       return forwardIndexAccessor.convertToInputDataMap(fileId, serializedInputData);
     }
     getLogger().error("Can't fetch indexed data for index " + myIndexId.getName());

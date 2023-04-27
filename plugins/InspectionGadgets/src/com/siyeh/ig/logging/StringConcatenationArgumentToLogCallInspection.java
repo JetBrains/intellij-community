@@ -109,10 +109,9 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
@@ -267,10 +266,9 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     }
 
     public static boolean isAvailable(PsiExpression expression) {
-      if (!(expression instanceof PsiPolyadicExpression)) {
+      if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
         return false;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       for (PsiExpression operand : operands) {
         if (!ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
@@ -329,12 +327,10 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     }
 
     private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
-      if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         return containsNonConstantConcatenation(parenthesizedExpression.getExpression());
       }
-      else if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         if (!ExpressionUtils.hasStringType(polyadicExpression)) {
           return false;
         }

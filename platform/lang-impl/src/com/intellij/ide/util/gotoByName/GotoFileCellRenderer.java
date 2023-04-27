@@ -102,9 +102,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
                                                              JList list,
                                                              Object value,
                                                              TextAttributes attributes) {
-    if (!(value instanceof NavigationItem)) return false;
-
-    NavigationItem item = (NavigationItem)value;
+    if (!(value instanceof NavigationItem item)) return false;
 
     SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 

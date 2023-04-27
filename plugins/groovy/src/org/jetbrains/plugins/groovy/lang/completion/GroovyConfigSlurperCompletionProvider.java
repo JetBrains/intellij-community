@@ -62,9 +62,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
                                 @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
-    if (!(file instanceof GroovyFile)) return;
-
-    GroovyFile groovyFile = (GroovyFile)file;
+    if (!(file instanceof GroovyFile groovyFile)) return;
 
     if (!groovyFile.isScript()) return;
 
@@ -101,8 +99,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
           variants.remove(s);
         }
       }
-      else if (e instanceof GrMethodCall) {
-        GrMethodCall call = (GrMethodCall)e;
+      else if (e instanceof GrMethodCall call) {
         if (isPropertyCall(call)) {
           String name = extractPropertyName(call);
           if (name == null) continue;
@@ -183,9 +180,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     GrExpression qualifier = ref.getQualifierExpression();
 
     while (qualifier != null) {
-      if (!(qualifier instanceof GrReferenceExpression)) return null;
-
-      GrReferenceExpression r = (GrReferenceExpression)qualifier;
+      if (!(qualifier instanceof GrReferenceExpression r)) return null;
 
       String name = r.getReferenceName();
       if (name == null) return null;
@@ -197,8 +192,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
 
     PsiElement e = ref.getParent();
 
-    if (e instanceof GrAssignmentExpression) {
-      GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)e;
+    if (e instanceof GrAssignmentExpression assignmentExpression) {
       if (assignmentExpression.getLValue() != ref) return null;
       e = assignmentExpression.getParent();
     }
@@ -206,9 +200,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     while (!(e instanceof PsiFile)) {
       if (e instanceof GrClosableBlock) {
         PsiElement eCall = e.getParent();
-        if (!(eCall instanceof GrMethodCall)) return null;
-
-        GrMethodCall call = (GrMethodCall)eCall;
+        if (!(eCall instanceof GrMethodCall call)) return null;
 
         if (!isPropertyCall(call)) return null;
 
@@ -236,8 +228,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
   private static String extractPropertyName(GrMethodCall call) {
     GrExpression ie = call.getInvokedExpression();
 
-    if (ie instanceof GrReferenceExpression) {
-      GrReferenceExpression r = (GrReferenceExpression)ie;
+    if (ie instanceof GrReferenceExpression r) {
       if (r.isQualified()) return null;
 
       return r.getReferenceName();

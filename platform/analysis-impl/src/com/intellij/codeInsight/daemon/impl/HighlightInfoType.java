@@ -152,9 +152,7 @@ public interface HighlightInfoType {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof HighlightInfoTypeImpl)) return false;
-
-      HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
+      if (!(o instanceof HighlightInfoTypeImpl that)) return false;
 
       if (!Comparing.equal(myAttributesKey, that.myAttributesKey)) return false;
       if (!mySeverity.equals(that.mySeverity)) return false;

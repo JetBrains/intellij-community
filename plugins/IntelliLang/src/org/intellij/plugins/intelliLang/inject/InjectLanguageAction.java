@@ -129,6 +129,13 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
                                                               @NotNull PsiFile file) {
     if (editor instanceof EditorWindow) return null;
     int offset = editor.getCaretModel().getOffset();
+
+    PsiLanguageInjectionHost fileLanguageHost = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
+
+    if (fileLanguageHost != null && fileLanguageHost.isValidHost()) {
+      return fileLanguageHost;
+    }
+
     FileViewProvider vp = file.getViewProvider();
     for (Language language : vp.getLanguages()) {
       PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(vp.findElementAt(offset, language), PsiLanguageInjectionHost.class, false);

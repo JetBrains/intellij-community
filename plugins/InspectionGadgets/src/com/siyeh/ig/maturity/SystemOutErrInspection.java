@@ -69,10 +69,9 @@ public class SystemOutErrInspection extends BaseInspection {
         return;
       }
       final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)referent;
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) {
         return;

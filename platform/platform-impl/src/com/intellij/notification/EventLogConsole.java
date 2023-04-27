@@ -314,7 +314,7 @@ public final class EventLogConsole {
                               : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 
     int msgStart = document.getTextLength();
-    append(document, pair.message);
+    append(document, pair.message());
 
     int layer = HighlighterLayer.CARET_ROW + 1;
     RangeHighlighter highlighter = editor.getMarkupModel()
@@ -322,7 +322,7 @@ public final class EventLogConsole {
     GROUP_ID.set(highlighter, notification.getGroupId());
     NOTIFICATION_ID.set(highlighter, notification.id);
 
-    for (Pair<TextRange, HyperlinkInfo> link : pair.links) {
+    for (Pair<TextRange, HyperlinkInfo> link : pair.links()) {
       final RangeHighlighter rangeHighlighter = myHyperlinkSupport.getValue()
         .createHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, link.second);
       if (link.second instanceof EventLog.ShowBalloon) {
@@ -338,7 +338,7 @@ public final class EventLogConsole {
     }
 
     if (notification.isImportant()) {
-      highlightNotification(notification, pair.status, startLine, document.getLineCount() - 1, titleStartOffset, pair.titleLength);
+      highlightNotification(notification, pair.status(), startLine, document.getLineCount() - 1, titleStartOffset, pair.titleLength());
     }
   }
 

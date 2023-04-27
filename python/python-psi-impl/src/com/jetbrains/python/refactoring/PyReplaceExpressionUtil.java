@@ -75,8 +75,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     if (parentPriority > newPriority) {
       return true;
     }
-    else if (parentPriority == newPriority && parentPriority != 0 && parentExpr instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpression = (PyBinaryExpression)parentExpr;
+    else if (parentPriority == newPriority && parentPriority != 0 && parentExpr instanceof PyBinaryExpression binaryExpression) {
       if (isNotAssociative(binaryExpression) && oldExpr == getLeastPrioritySide(binaryExpression)) {
         return true;
       }

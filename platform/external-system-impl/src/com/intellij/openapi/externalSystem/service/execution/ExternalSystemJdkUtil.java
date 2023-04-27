@@ -152,8 +152,7 @@ public final class ExternalSystemJdkUtil {
   private static Sdk findReferencedJdk(Sdk projectSdk) {
     if (projectSdk != null
         && projectSdk.getSdkType() instanceof DependentSdkType
-        && projectSdk.getSdkType() instanceof JavaSdkType) {
-      final JavaSdkType sdkType = (JavaSdkType)projectSdk.getSdkType();
+        && projectSdk.getSdkType() instanceof JavaSdkType sdkType) {
       String sdkBinPath = sdkType.getBinPath(projectSdk);
       if (sdkBinPath == null) {
         return null;

@@ -91,9 +91,8 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   private void checkHover() {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
-    PsiElement referenceElement = originalElement.getParent(); // ident -> expr
-    final PsiElement docOwner = ((PyReferenceExpression)referenceElement).getReference().resolve();
-    checkByHTML(myProvider.getQuickNavigateInfo(docOwner, referenceElement));
+    final PsiElement docOwner = ((PyReferenceExpression)originalElement.getParent()).getReference().resolve();
+    checkByHTML(myProvider.getQuickNavigateInfo(docOwner, originalElement));
   }
 
   public void testDirectFunc() {

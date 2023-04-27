@@ -122,8 +122,7 @@ public final class DependencyUtils {
 
   private static void tabulateDependentClasses(RefElement element, Set<? super RefClass> dependents) {
     addOwnerClassesToSet(element.getInReferences(), dependents);
-    if (element instanceof RefClass) {
-      final RefClass refClass = (RefClass)element;
+    if (element instanceof RefClass refClass) {
       addOwnerClassesToSet(refClass.getInTypeReferences(), dependents);
     }
     final List<RefEntity> children = element.getChildren();
@@ -181,8 +180,7 @@ public final class DependencyUtils {
   }
 
   private static void tabulateDependencyPackages(RefEntity entity, Set<? super RefPackage> dependencies) {
-    if (entity instanceof RefElement) {
-      final RefElement element = (RefElement)entity;
+    if (entity instanceof RefElement element) {
       final Collection<RefElement> references = element.getOutReferences();
       for (RefElement reference : references) {
         final RefPackage refPackage = RefJavaUtil.getPackage(reference);
@@ -214,8 +212,7 @@ public final class DependencyUtils {
   }
 
   private static void tabulateDependentPackages(RefEntity entity, Set<? super RefPackage> dependents) {
-    if (entity instanceof RefElement) {
-      final RefElement element = (RefElement)entity;
+    if (entity instanceof RefElement element) {
       final Collection<RefElement> references = element.getInReferences();
       for (RefElement reference : references) {
         final RefPackage refPackage = RefJavaUtil.getPackage(reference);

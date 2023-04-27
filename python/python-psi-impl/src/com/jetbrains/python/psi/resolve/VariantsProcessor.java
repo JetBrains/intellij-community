@@ -57,15 +57,13 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
     if (myNodeFilter != null && !myNodeFilter.value(element)) return true; // skip whatever the filter rejects
-    if (element instanceof PsiNamedElement) {
-      final PsiNamedElement namedElement = (PsiNamedElement)element;
+    if (element instanceof PsiNamedElement namedElement) {
       final String name = PyUtil.getElementNameWithoutExtension(namedElement);
       if (nameIsAcceptable(name)) {
         addElement(name, namedElement);
       }
     }
-    else if (element instanceof PyReferenceExpression) {
-      final PyReferenceExpression referenceExpression = (PyReferenceExpression)element;
+    else if (element instanceof PyReferenceExpression referenceExpression) {
       final String name = referenceExpression.getReferencedName();
       if (nameIsAcceptable(name)) {
         addElement(name, referenceExpression);

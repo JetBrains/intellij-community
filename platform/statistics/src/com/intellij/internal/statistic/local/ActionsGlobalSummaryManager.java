@@ -102,21 +102,6 @@ public final class ActionsGlobalSummaryManager {
     return res;
   }
 
-  public static class ActionsGlobalTotalSummary {
-    private final long maxUsageCount;
-    private final long minUsageCount;
-
-    public ActionsGlobalTotalSummary(long maxUsageCount, long minUsageCount) {
-      this.maxUsageCount = maxUsageCount;
-      this.minUsageCount = minUsageCount;
-    }
-
-    public long getMaxUsageCount() {
-      return maxUsageCount;
-    }
-
-    public long getMinUsageCount() {
-      return minUsageCount;
-    }
+  public record ActionsGlobalTotalSummary(long maxUsageCount, long minUsageCount) {
   }
 }

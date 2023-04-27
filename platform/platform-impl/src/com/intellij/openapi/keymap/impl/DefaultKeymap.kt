@@ -69,8 +69,7 @@ open class DefaultKeymap {
         loadKeymap(getKeymapName(bean), object : SchemeDataHolder<KeymapImpl> {
           override fun read(): Element {
             val effectiveFile = getEffectiveFile(bean)
-            // java plugin defines keymap that located in a core plugin - so, we must check parents
-            val data = ResourceUtil.getResourceAsBytes(effectiveFile, pluginDescriptor.classLoader, true)
+            val data = ResourceUtil.getResourceAsBytes(effectiveFile, pluginDescriptor.classLoader)
             if (data == null) {
               throw PluginException("Cannot find $effectiveFile", pluginDescriptor.pluginId)
             }

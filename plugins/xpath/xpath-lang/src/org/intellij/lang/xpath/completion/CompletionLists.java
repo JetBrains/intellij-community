@@ -291,8 +291,7 @@ public final class CompletionLists {
       xpathFile.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(@NotNull PsiElement e) {
-          if (e instanceof XPathNodeTest) {
-            final XPathNodeTest nodeTest = (XPathNodeTest)e;
+          if (e instanceof XPathNodeTest nodeTest) {
 
             final XPathNodeTest.PrincipalType _principalType = nodeTest.getPrincipalType();
             if (_principalType == principalType) {

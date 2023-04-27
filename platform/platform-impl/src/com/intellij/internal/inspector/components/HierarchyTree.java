@@ -299,8 +299,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
       Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : null;
       boolean isRenderer = false;
-      if (value instanceof ComponentNode) {
-        ComponentNode componentNode = (ComponentNode)value;
+      if (value instanceof ComponentNode componentNode) {
         isRenderer = componentNode.getUserObject() instanceof List<?>;
         Component component = componentNode.getComponent();
 

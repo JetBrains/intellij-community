@@ -99,8 +99,7 @@ final class ClassicPainter implements Control.Painter {
   }
 
   private static void paintLine(@NotNull Graphics g, int x, int y, int width, int height) {
-    if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
+    if (g instanceof Graphics2D g2d) {
       double dx = x + width / 2.0 - PaintUtil.devPixel(g2d);
       LinePainter2D.paint(g2d, dx, y, dx, y + height, LinePainter2D.StrokeType.CENTERED, 1, RenderingHints.VALUE_ANTIALIAS_ON);
     }

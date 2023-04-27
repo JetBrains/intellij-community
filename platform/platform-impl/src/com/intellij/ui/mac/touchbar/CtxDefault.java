@@ -125,7 +125,7 @@ final class CtxDefault {
       return;
     }
 
-    if (!(runButtons instanceof DefaultActionGroup)) {
+    if (!(runButtons instanceof DefaultActionGroup group)) {
       LOG.debug("RunnersGroup for touchbar isn't a group");
       return;
     }
@@ -135,7 +135,6 @@ final class CtxDefault {
       return;
     }
 
-    DefaultActionGroup group = (DefaultActionGroup)runButtons;
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
       if (executor.getId().equals(ToolWindowId.RUN) || executor.getId().equals(ToolWindowId.DEBUG)) {
         group.add(actionManager.getAction(executor.getId()), actionManager);

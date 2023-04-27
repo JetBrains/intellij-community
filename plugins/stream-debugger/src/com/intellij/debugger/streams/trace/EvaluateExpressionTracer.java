@@ -62,8 +62,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
 
             if (reference instanceof ObjectReference) {
               final ReferenceType type = ((ObjectReference)reference).referenceType();
-              if (type instanceof ClassType) {
-                ClassType classType = (ClassType)type;
+              if (type instanceof ClassType classType) {
                 while (classType != null && !CommonClassNames.JAVA_LANG_THROWABLE.equals(classType.name())) {
                   classType = classType.superclass();
                 }

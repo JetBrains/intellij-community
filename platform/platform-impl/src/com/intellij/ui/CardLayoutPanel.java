@@ -104,8 +104,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
       for (Component component : getComponents()) {
         component.setVisible(component == value);
       }
-      if (value instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)value;
+      if (value instanceof JScrollPane pane) {
         JViewport viewport = pane.getViewport();
         if (viewport != null) {
           Component view = viewport.getView();

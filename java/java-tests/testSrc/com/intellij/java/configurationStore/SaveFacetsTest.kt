@@ -8,6 +8,9 @@ import com.intellij.facet.mock.registerFacetType
 import com.intellij.facet.mock.runWithRegisteredFacetTypes
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
+import com.intellij.platform.workspaceModel.jps.CustomModuleEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
@@ -67,7 +70,8 @@ class SaveFacetsTest {
   fun `facet in module with custom storage`() {
     class SampleCustomModuleSource(override val internalSource: JpsFileEntitySource) : EntitySource, CustomModuleEntitySource
     val moduleDir = projectModel.baseProjectDir.virtualFileRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
-    val source = SampleCustomModuleSource(JpsFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))
+    val source = SampleCustomModuleSource(
+      JpsProjectFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         val moduleEntity = it.addModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source, null)

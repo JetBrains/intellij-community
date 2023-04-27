@@ -15,7 +15,10 @@
  */
 package com.intellij.ui.components;
 
-import javax.accessibility.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 
 public class JBMenu extends JMenu implements Accessible {

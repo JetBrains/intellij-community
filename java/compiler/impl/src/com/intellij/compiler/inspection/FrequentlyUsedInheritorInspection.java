@@ -211,22 +211,11 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
     return index.isInContent(file);
   }
 
-  private static final class ClassAndInheritorCount implements Comparable<ClassAndInheritorCount> {
-    private final PsiClass psi;
-    private final CompilerRef.CompilerClassHierarchyElementDef descriptor;
-    private final int number;
-
-    private ClassAndInheritorCount(PsiClass psi,
-                                   CompilerRef.CompilerClassHierarchyElementDef descriptor,
-                                   int number) {
-      this.psi = psi;
-      this.descriptor = descriptor;
-      this.number = number;
-    }
-
+  private record ClassAndInheritorCount(PsiClass psi, CompilerRef.CompilerClassHierarchyElementDef descriptor, int number)
+    implements Comparable<ClassAndInheritorCount> {
     @Override
     public int compareTo(@NotNull ClassAndInheritorCount o) {
-      return - number + o.number;
+      return -number + o.number;
     }
   }
 }

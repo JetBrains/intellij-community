@@ -673,7 +673,7 @@ public class ExpectedHighlightingData {
         if (byStarts != 0) return byStarts;
       }
       else {
-        int byEOL = Comparing.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
+        int byEOL = Boolean.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
         if (byEOL != 0) return byEOL;
       }
 

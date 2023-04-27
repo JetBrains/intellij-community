@@ -132,8 +132,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   public boolean canRepresent(Object element, PsiDirectory directory) {
-    if (element instanceof VirtualFile) {
-      VirtualFile vFile = (VirtualFile) element;
+    if (element instanceof VirtualFile vFile) {
       return Comparing.equal(directory.getVirtualFile(), vFile);
     }
     return false;

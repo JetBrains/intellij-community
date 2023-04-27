@@ -260,6 +260,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
   public @NotNull OptPane getOptionsPane() {
     return pane(
       OptPane.stringList("MODULES_SETS_LOADED_TOGETHER", InspectionGadgetsBundle.message("groups.of.modules.loaded.together.label"))
+        .description(InspectionGadgetsBundle.message("groups.of.modules.loaded.together.description"))
     );
   }
 

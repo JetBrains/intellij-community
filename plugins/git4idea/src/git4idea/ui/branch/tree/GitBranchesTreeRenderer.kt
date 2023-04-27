@@ -183,23 +183,22 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     .addToRight(incomingOutgoingLabel)
     .andTransparent()
 
-  private val textPanel = JBUI.Panels.simplePanel()
-    .addToCenter(JPanel(GridBagLayout()).apply {
+  private val textPanel =
+    JPanel(GridBagLayout()).apply {
       isOpaque = false
 
       add(branchInfoPanel,
           GridBagConstraints().apply {
             anchor = GridBagConstraints.LINE_START
-            weightx = 1.0
+            weightx = 0.0
           })
 
       add(secondaryLabel,
           GridBagConstraints().apply {
             anchor = GridBagConstraints.LINE_END
-            weightx = 2.0
+            weightx = 0.75
           })
-    })
-    .andTransparent()
+    }
 
   private inner class MyMainPanel : BorderLayoutPanel() {
     init {
@@ -287,7 +286,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       }
     }
 
-    if (tree != null && value != null) {
+    if (tree != null && value != null && userObject !is PopupFactoryImpl.ActionItem) {
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
     }
 

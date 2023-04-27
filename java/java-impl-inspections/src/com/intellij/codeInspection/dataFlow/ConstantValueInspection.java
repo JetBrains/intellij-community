@@ -94,7 +94,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
         if (BoolUtils.isBooleanLiteral(condition)) {
           LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
           holder.registerProblem(condition, JavaAnalysisBundle
-            .message("dataflow.message.constant.no.ref", condition.textMatches(PsiKeyword.TRUE) ? 1 : 0), fix);
+            .message("dataflow.message.constant.no.ref", condition.textMatches(PsiKeyword.TRUE) ? 1 : 0), LocalQuickFix.notNullElements(fix));
         }
       }
 
@@ -103,7 +103,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
           holder.registerProblem(condition, JavaAnalysisBundle.message("dataflow.message.constant.no.ref", 0),
-                                 createSimplifyBooleanExpressionFix(condition, false));
+                                 LocalQuickFix.notNullElements(createSimplifyBooleanExpressionFix(condition, false)));
         }
       }
     };
@@ -525,8 +525,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     return EqualsToEqualityFix.buildFix(call, negated);
   }
 
-  private static LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue,
-                                                                  PsiAssignmentExpression assignment,
+  private static LocalQuickFix @NotNull [] createConditionalAssignmentFixes(boolean evaluatesToTrue,
+                                                                  @NotNull PsiAssignmentExpression assignment,
                                                                   final boolean onTheFly) {
     IElementType op = assignment.getOperationTokenType();
     boolean toRemove = op == JavaTokenType.ANDEQ && !evaluatesToTrue || op == JavaTokenType.OREQ && evaluatesToTrue;

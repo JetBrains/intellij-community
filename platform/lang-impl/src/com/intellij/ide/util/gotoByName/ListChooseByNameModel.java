@@ -95,8 +95,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         final Color bg = isSelected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground();
         panel.setBackground(bg);
 
-        if (value instanceof ChooseByNameItem) {
-          final ChooseByNameItem item = (ChooseByNameItem) value;
+        if (value instanceof ChooseByNameItem item) {
 
           final Color fg;
           fg = isSelected ? NamedColorUtil.getListSelectionForeground(true) : UIUtil.getListForeground();

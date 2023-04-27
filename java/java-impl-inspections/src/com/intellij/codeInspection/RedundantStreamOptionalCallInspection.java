@@ -187,7 +187,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                                    ? JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted.parallel",
                                                         furtherCallName)
                                    : JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted", furtherCallName);
-                register(call, message, additionalFix);
+                register(call, message, LocalQuickFix.notNullElements(additionalFix));
               }
             }
           }
@@ -278,7 +278,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private void register(PsiMethodCallExpression call, @Nls String explanation, LocalQuickFix... additionalFixes) {
+      private void register(PsiMethodCallExpression call, @Nls String explanation, @NotNull LocalQuickFix @NotNull ... additionalFixes) {
         String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
         String message = explanation != null
                          ? JavaBundle.message("inspection.redundant.stream.optional.call.message.with.explanation", methodName, explanation)

@@ -15,7 +15,7 @@ public final class ClassSetProjectImportModelProvider implements ProjectImportMo
   @NotNull private final Set<Class<?>> classSet;
 
   public ClassSetProjectImportModelProvider(@NotNull Collection<Class<?>> classes) {
-    classSet = new LinkedHashSet<Class<?>>(classes);
+    classSet = new LinkedHashSet<>(classes);
   }
 
   @Override

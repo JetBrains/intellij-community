@@ -15,13 +15,13 @@
  */
 package org.intellij.plugins.intelliLang.pattern;
 
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
-import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
@@ -35,28 +35,29 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      final Pair<String, ? extends Set<String>> annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getPatternAnnotationPair();
+      final Pair<String, ? extends Set<String>> annotationName =
+        Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getPatternAnnotationPair();
 
       @Override
       public void visitMethod(@NotNull PsiMethod method) {
-        final PsiIdentifier psiIdentifier = method.getNameIdentifier();
+        PsiIdentifier psiIdentifier = method.getNameIdentifier();
         if (psiIdentifier == null || !PsiUtilEx.isLanguageAnnotationTarget(method)) {
           return;
         }
 
-        final PsiAnnotation[] annotationFrom = AnnotationUtilEx.getAnnotationFrom(method, annotationName, true, false);
+        PsiAnnotation[] annotationFrom = AnnotationUtilEx.getAnnotationFrom(method, annotationName, true, false);
         if (annotationFrom.length == 0) {
-          final PsiAnnotation[] annotationFromHierarchy = AnnotationUtilEx.getAnnotationFrom(method, annotationName, true, true);
+          PsiAnnotation[] annotationFromHierarchy = AnnotationUtilEx.getAnnotationFrom(method, annotationName, true, true);
           if (annotationFromHierarchy.length > 0) {
-            final String annotationClassname = annotationFromHierarchy[annotationFromHierarchy.length - 1].getQualifiedName();
-            final String argList = annotationFromHierarchy[annotationFromHierarchy.length - 1].getParameterList().getText();
+            PsiAnnotation annotation = annotationFromHierarchy[annotationFromHierarchy.length - 1];
+            String annotationClassname = annotation.getQualifiedName();
+            PsiNameValuePair[] argList = annotation.getParameterList().getAttributes();
             holder.registerProblem(psiIdentifier,
                                    IntelliLangBundle.message("inspection.pattern.overridden.by.non.annotated.method.description"),
-                                   AnnotateFix.create(method, Objects.requireNonNull(annotationClassname), argList));
+                                   new AddAnnotationFix(Objects.requireNonNull(annotationClassname), method, argList));
           }
         }
       }
     };
   }
-
 }

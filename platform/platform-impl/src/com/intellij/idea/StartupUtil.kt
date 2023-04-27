@@ -343,7 +343,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferr
 
   launch {
     if (CommandLineArgs.isSplashNeeded(args)) {
-      scheduleShowSplash(initUiDeferred, appInfoDeferred)
+      showSplashIfNeeded(initUiDeferred = initUiDeferred, appInfoDeferred = appInfoDeferred)
     }
   }
 }

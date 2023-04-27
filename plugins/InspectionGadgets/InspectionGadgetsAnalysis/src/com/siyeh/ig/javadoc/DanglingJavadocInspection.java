@@ -67,8 +67,7 @@ public class DanglingJavadocInspection extends BaseInspection {
       final PsiElement docComment = element.getParent();
       final StringBuilder newCommentText = new StringBuilder();
       for (PsiElement child = docComment.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiDocToken) {
-          final PsiDocToken docToken = (PsiDocToken)child;
+        if (child instanceof PsiDocToken docToken) {
           final IElementType tokenType = docToken.getTokenType();
           if (JavaDocTokenType.DOC_COMMENT_START.equals(tokenType)) {
             newCommentText.append("/*");

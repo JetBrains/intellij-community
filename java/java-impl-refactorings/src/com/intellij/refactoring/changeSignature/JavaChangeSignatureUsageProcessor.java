@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -1477,30 +1477,16 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     private static boolean hasCompatibleVisibility(PsiMethod method, boolean isSuper, final String modifier) {
-      if (modifier.equals(PsiModifier.PRIVATE)) {
-        return false;
-      }
-      else if (modifier.equals(PsiModifier.PACKAGE_LOCAL)) {
-        if (isSuper) {
-          return !(method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.PROTECTED));
-        }
-        return true;
-      }
-      else if (modifier.equals(PsiModifier.PROTECTED)) {
-        if (isSuper) {
-          return !method.hasModifierProperty(PsiModifier.PUBLIC);
-        }
-        else {
-          return method.hasModifierProperty(PsiModifier.PROTECTED) || method.hasModifierProperty(PsiModifier.PUBLIC);
-        }
-      }
-      else if (modifier.equals(PsiModifier.PUBLIC)) {
-        if (!isSuper) {
-          return method.hasModifierProperty(PsiModifier.PUBLIC);
-        }
-        return true;
-      }
-      throw new AssertionError();
+      return switch (modifier) {
+        case PsiModifier.PRIVATE -> false;
+        case PsiModifier.PACKAGE_LOCAL ->
+          !isSuper || !(method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.PROTECTED));
+        case PsiModifier.PROTECTED -> isSuper ? !method.hasModifierProperty(PsiModifier.PUBLIC)
+                                              : method.hasModifierProperty(PsiModifier.PROTECTED) ||
+                                                method.hasModifierProperty(PsiModifier.PUBLIC);
+        case PsiModifier.PUBLIC -> isSuper || method.hasModifierProperty(PsiModifier.PUBLIC);
+        default -> throw new IllegalStateException("Unexpected value: " + modifier);
+      };
     }
 
     private static boolean isVisibleFromOverridingMethod(PsiMethod method, PsiMethod overridingMethod, final String modifier) {

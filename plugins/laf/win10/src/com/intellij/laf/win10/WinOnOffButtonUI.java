@@ -47,9 +47,8 @@ public final class WinOnOffButtonUI extends BasicToggleButtonUI {
   @SuppressWarnings("UseJBColor")
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (!(c instanceof OnOffButton)) return;
+    if (!(c instanceof OnOffButton b)) return;
 
-    OnOffButton b = (OnOffButton)c;
     Graphics2D g2 = (Graphics2D)g.create();
 
     try {

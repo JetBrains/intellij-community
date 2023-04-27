@@ -4,7 +4,7 @@ package com.intellij.codeInspection.inspectionProfile
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 
-private const val PROVIDER_PREFIX = "ijseverity:"
+private const val PROVIDER_PREFIX = "severity:"
 
 class DefaultSeverityGroupProvider : InspectionGroupProvider {
 

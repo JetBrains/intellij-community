@@ -323,8 +323,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   private void checkFinalParameterAccess(GrReferenceExpression ref) {
     final PsiElement resolved = ref.resolve();
 
-    if (resolved instanceof GrParameter) {
-      final GrParameter parameter = (GrParameter)resolved;
+    if (resolved instanceof GrParameter parameter) {
       if (parameter.isPhysical() && parameter.hasModifierProperty(PsiModifier.FINAL) && PsiUtil.isLValue(ref)) {
         if (parameter.getDeclarationScope() instanceof PsiMethod) {
           myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("cannot.assign.a.value.to.final.parameter.0", parameter.getName())).create();
@@ -336,8 +335,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   private void checkFinalFieldAccess(@NotNull GrReferenceExpression ref) {
     final PsiElement resolved = ref.resolve();
 
-    if (resolved instanceof GrField && resolved.isPhysical() && ((GrField)resolved).hasModifierProperty(PsiModifier.FINAL) && PsiUtil.isLValue(ref)) {
-      final GrField field = (GrField)resolved;
+    if (resolved instanceof GrField field && resolved.isPhysical() && ((GrField)resolved).hasModifierProperty(PsiModifier.FINAL) && PsiUtil.isLValue(ref)) {
 
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, ref, true)) {
@@ -600,8 +598,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
     PsiElement blockParent = block.getParent();
-    if (blockParent instanceof GrMethod) {
-      final GrMethod method = (GrMethod)blockParent;
+    if (blockParent instanceof GrMethod method) {
       if (GrTraitUtil.isMethodAbstract(method)) {
         String message = GroovyBundle.message("abstract.methods.must.not.have.body");
         AnnotationBuilder builder =
@@ -880,8 +877,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       final PsiType type = value.getType();
       if (type != null) {
         final GrParameterListOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrParameterListOwner.class);
-        if (owner instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)owner;
+        if (owner instanceof PsiMethod method) {
           if (method.isConstructor()) {
             myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("cannot.return.from.constructor")).range(value).create();
           }
@@ -991,8 +987,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     if (parent instanceof GrMethod) {
       checkMethodDefinitionModifiers(myHolder, (GrMethod)parent);
     }
-    else if (parent instanceof GrVariableDeclaration) {
-      GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
+    else if (parent instanceof GrVariableDeclaration declaration) {
       if (isFieldDeclaration(declaration)) {
         checkFieldModifiers(myHolder, declaration);
       }
@@ -1243,8 +1238,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     if (refElement == null) return;
 
     final PsiElement element = refElement.resolve();
-    if (element instanceof PsiClass) {
-      PsiClass clazz = (PsiClass)element;
+    if (element instanceof PsiClass clazz) {
       if (clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
         if (newExpression.getAnonymousClassDefinition() == null) {
           String message = clazz.isInterface()
@@ -1823,8 +1817,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       checkModifierIsNotAllowed(modifiersList, PsiModifier.NATIVE, GroovyBundle.message("script.cannot.have.modifier.native"), holder);
     }
     //type definition methods
-    else if (method.getParent() != null && method.getParent().getParent() instanceof GrTypeDefinition) {
-      GrTypeDefinition containingTypeDef = ((GrTypeDefinition)method.getParent().getParent());
+    else if (method.getParent() != null && method.getParent().getParent() instanceof GrTypeDefinition containingTypeDef) {
 
       if (containingTypeDef.isTrait()) {
         checkModifierIsNotAllowed(modifiersList, PsiModifier.PROTECTED, GroovyBundle.message("trait.method.cannot.be.protected"), holder);

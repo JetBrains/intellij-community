@@ -108,8 +108,7 @@ public class ForeachStatementInspection extends BaseInspection {
         newStatement.append(typeText).append(' ').append(iterationParameter.getName()).append(" = ").append(iterator).append(".next();");
       }
       final PsiStatement body = statement.getBody();
-      if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+      if (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock block = blockStatement.getCodeBlock();
         final PsiElement[] children = block.getChildren();
         for (int i = 1; i < children.length - 1; i++) {

@@ -89,12 +89,12 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
                 .take(2)
                 .firstOrNull { function -> function.nameIdentifier != null }
                 ?.hasModifier(KtTokens.SUSPEND_KEYWORD) ?: false
-            return if (isInSuspendFunctionBody) NonBlocking.INSTANCE else Blocking
+            return if (isInSuspendFunctionBody) Unsure else Blocking
         }
         val containingPropertyOrFunction: KtCallableDeclaration? =
             containingLambda.getParentOfTypes(true, KtProperty::class.java, KtNamedFunction::class.java)
-        if (containingPropertyOrFunction?.typeReference?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) return NonBlocking.INSTANCE
-        return if (containingPropertyOrFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) NonBlocking.INSTANCE else Blocking
+        if (containingPropertyOrFunction?.typeReference?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) return Unsure
+        return if (containingPropertyOrFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) Unsure else Blocking
     }
 
     private fun checkBlockingFriendlyDispatcherUsed(

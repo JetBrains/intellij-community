@@ -136,8 +136,7 @@ public final class ParenthesesUtils {
     if (expr instanceof GrInstanceOfExpression) return INSTANCEOF_PRECEDENCE;
     if (expr instanceof GrNewExpression) return NEW_EXPR_PRECEDENCE;
     if (expr instanceof GrParenthesizedExpression) return PARENTHESIZED_PRECEDENCE;
-    if (expr instanceof GrReferenceExpression) {
-      final GrReferenceExpression referenceExpression = (GrReferenceExpression)expr;
+    if (expr instanceof GrReferenceExpression referenceExpression) {
       return referenceExpression.getQualifierExpression() == null ? LITERAL_PRECEDENCE : METHOD_CALL_PRECEDENCE;
     }
     if (expr instanceof GrBinaryExpression) {
@@ -197,10 +196,8 @@ public final class ParenthesesUtils {
     if (parent instanceof GrArgumentList) {
       parent = parent.getParent();
     }
-    if (!(parent instanceof GrExpression)) return false;
-    GrExpression oldParent = (GrExpression) parent;
-    if (oldParent instanceof GrBinaryExpression) {
-      GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
+    if (!(parent instanceof GrExpression oldParent)) return false;
+    if (oldParent instanceof GrBinaryExpression binaryExpression) {
       GrExpression rightOperand = binaryExpression.getRightOperand();
       return checkPrecedenceForBinaryOps(precedence, binaryExpression.getOperationTokenType(), oldExpr.equals(rightOperand));
     } else {

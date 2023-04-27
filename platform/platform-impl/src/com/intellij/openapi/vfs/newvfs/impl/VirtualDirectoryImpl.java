@@ -544,8 +544,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   // optimisation: works faster than added.forEach(this::addChild)
   @ApiStatus.Internal
-  public void createAndAddChildren(@NotNull List<ChildInfo> added, boolean markAllChildrenLoaded, @NotNull BiConsumer<VirtualFile, ChildInfo> callback) {
+  public void createAndAddChildren(@NotNull List<ChildInfo> added, boolean markAllChildrenLoaded, @NotNull BiConsumer<? super VirtualFile, ? super ChildInfo> callback) {
     if (added.size() <= 1) {
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
         assert info.getId() > 0 : info;
@@ -646,7 +647,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // optimization: faster than forEach(this::removeChild)
-  public void removeChildren(@NotNull IntSet idsToRemove, @NotNull List<CharSequence> namesToRemove) {
+  public void removeChildren(@NotNull IntSet idsToRemove, @NotNull List<? extends CharSequence> namesToRemove) {
     boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
       // remove from the array by merging two sorted lists

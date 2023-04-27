@@ -168,8 +168,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
       Int2ObjectMap<String> entities = new Int2ObjectOpenHashMap<>();
       Pattern pattern = Pattern.compile("&#(\\d+);");
       XmlUtil.processXmlElements(file, element -> {
-        if (element instanceof XmlEntityDecl) {
-          XmlEntityDecl entity = (XmlEntityDecl)element;
+        if (element instanceof XmlEntityDecl entity) {
           Matcher m = pattern.matcher(entity.getValueElement().getValue());
           if (m.matches()) {
             char i = (char)Integer.parseInt(m.group(1));

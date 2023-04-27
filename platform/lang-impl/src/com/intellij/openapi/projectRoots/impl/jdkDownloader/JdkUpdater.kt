@@ -184,10 +184,9 @@ internal class JdkUpdatesCollector(
       val comparison = VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion)
       if (comparison < 0) continue
       else if (comparison == 0) {
-        if (feedItem.jdkVendorVersion != null && actualItem.jdkVendorVersion != null) {
-          if (VersionComparatorUtil.compare(feedItem.jdkVendorVersion, actualItem.jdkVendorVersion) <= 0) continue
-          else { showVendor = true }
-        }
+        if (feedItem.jdkVendorVersion == null || actualItem.jdkVendorVersion == null) continue
+        if (VersionComparatorUtil.compare(feedItem.jdkVendorVersion, actualItem.jdkVendorVersion) <= 0) continue
+        showVendor = true
       }
 
       notifications.showNotification(jdk, actualItem, feedItem, showVendor)

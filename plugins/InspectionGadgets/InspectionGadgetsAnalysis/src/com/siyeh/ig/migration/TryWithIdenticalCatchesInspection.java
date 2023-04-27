@@ -65,8 +65,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
-    if (element instanceof PsiCatchSection) {
-      final PsiCatchSection catchSection = (PsiCatchSection)element;
+    if (element instanceof PsiCatchSection catchSection) {
       final PsiParameter parameter = catchSection.getParameter();
       if (parameter != null && super.isSuppressedFor(parameter)) {
         return true;

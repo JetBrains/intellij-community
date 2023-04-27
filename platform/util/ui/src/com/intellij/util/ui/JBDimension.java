@@ -212,9 +212,8 @@ public class JBDimension extends Dimension {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof JBDimension)) return false;
+    if (!(obj instanceof JBDimension that)) return false;
 
-    JBDimension that = (JBDimension)obj;
     return size2D.equals(that.size2D);
   }
 }

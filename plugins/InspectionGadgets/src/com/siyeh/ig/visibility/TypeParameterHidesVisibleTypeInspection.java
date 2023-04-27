@@ -81,8 +81,7 @@ public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
           return;
         }
         final PsiClass aClass = resolveHelper.resolveReferencedClass(unqualifiedClassName, context);
-        if (aClass instanceof PsiTypeParameter) {
-          final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+        if (aClass instanceof PsiTypeParameter typeParameter) {
           final PsiTypeParameterListOwner owner = typeParameter.getOwner();
           if (owner == null) {
             return;

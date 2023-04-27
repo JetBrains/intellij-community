@@ -501,6 +501,10 @@ Android Studio: don't register IntelliJ fork -->
     <projectService serviceInterface="com.intellij.externalDependencies.ExternalDependenciesManager"
                     serviceImplementation="com.intellij.externalDependencies.impl.ExternalDependenciesManagerImpl"/>
 
+    <projectService serviceInterface="com.intellij.codeInsight.actions.ReaderModeSettings"
+                    serviceImplementation="com.intellij.codeInsight.actions.ReaderModeSettingsImpl"
+                    client="local"/>
+
     <applicationService serviceInterface="com.intellij.ide.PlatformIdeService"
                         serviceImplementation="com.intellij.ide.PlatformIdeServiceImpl"/>
 
@@ -523,13 +527,15 @@ Android Studio: don't register IntelliJ fork -->
                                 implementation="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenDefaultCustomization"/>
 
     <themeProvider id="JetBrainsLightTheme" path="/themes/Light.theme.json" order="first"/>
-    <themeProvider id="ExperimentalLight" path="/themes/expUI/expUI_light.theme.json"/>
-    <themeProvider id="ExperimentalDark" path="/themes/expUI/expUI_dark.theme.json"/>
+    <themeProvider id="ExperimentalLight" path="/themes/expUI/expUI_light.theme.json" targetUi="new"/>
+    <themeProvider id="ExperimentalDark" path="/themes/expUI/expUI_dark.theme.json"  targetUi="new"/>
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <iconMapper mappingFile="PlatformIconMappings.json"/>
 
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
+
+    <startPagePromoter id="NewUiPromoter" implementation="com.intellij.openapi.wm.impl.welcomeScreen.NewUiPromoter"/>
 
     <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization" preload="notHeadless"/>
 
@@ -836,6 +842,7 @@ Android Studio: don't register IntelliJ fork -->
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.ReaderModeStatsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.IdeErrorDialogUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.projectWizard.NewProjectWizardCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ui.experimental.ExperimentalUiCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.projectWizard.NewProjectWizardCollector$GeneratorValidationRule"/>
 
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
@@ -911,7 +918,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
-    <projectService serviceImplementation="com.intellij.openapi.fileEditor.impl.HTMLEditorProviderManager"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.BidiContentNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
@@ -1367,7 +1373,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="start.run.configurations.pinned" default="false" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="max.recent.run.configurations" default="5" groupKey="group.advanced.settings.run"/>
-    <advancedSetting id="contrast.run.widget" default="false" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="se.text.search" default="false" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>

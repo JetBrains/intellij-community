@@ -32,8 +32,7 @@ public class GroovyVariableValidator extends GrIntroduceValidatorEngine implemen
     super(context, new ConflictReporter() {
       @Override
       public void check(PsiElement element, MultiMap<PsiElement, String> conflicts, String varName) {
-        if (!(element instanceof GrVariable)) return;
-        final GrVariable var = (GrVariable)element;
+        if (!(element instanceof GrVariable var)) return;
 
         if (var instanceof GrField) return;
 

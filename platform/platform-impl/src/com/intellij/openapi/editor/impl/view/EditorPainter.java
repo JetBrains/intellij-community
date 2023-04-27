@@ -1811,14 +1811,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private static final class LineExtensionData {
-    private final LineExtensionInfo info;
-    private final LineLayout layout;
-
-    private LineExtensionData(LineExtensionInfo info, LineLayout layout) {
-      this.info = info;
-      this.layout = layout;
-    }
+  private record LineExtensionData(LineExtensionInfo info, LineLayout layout) {
   }
 
   private static final class MarginPositions {

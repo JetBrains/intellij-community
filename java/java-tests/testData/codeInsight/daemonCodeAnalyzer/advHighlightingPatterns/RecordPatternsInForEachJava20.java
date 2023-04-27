@@ -68,7 +68,7 @@ class Main {
   }
 
   <T> void test6(Set<Pair<String, String>> pairs) {
-    for (<error descr="'Main.Pair<java.lang.String,java.lang.String>' cannot be safely cast to 'Main.Pair<T,java.lang.String>'">Pair<T, String>(var t, var u)</error> : pairs) {}
+    for (<error descr="'Pair<String, String>' cannot be safely cast to 'Pair<T, String>'">Pair<T, String>(var t, var u)</error> : pairs) {}
   }
 
   void notExhaustive(Rec[] recs) {

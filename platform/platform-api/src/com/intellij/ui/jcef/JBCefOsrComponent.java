@@ -131,6 +131,9 @@ class JBCefOsrComponent extends JPanel {
   @Override
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     super.processMouseWheelEvent(e);
+    if (e.isConsumed()) {
+      return;
+    }
 
     double val = e.getPreciseWheelRotation() *
                  RegistryManager.getInstance().intValue("ide.browser.jcef.osr.wheelRotation.factor");

@@ -72,19 +72,6 @@ public final class HTMLControls {
 
   public enum TagState {REQUIRED, OPTIONAL, FORBIDDEN}
 
-  public static class Control {
-    public final String name;
-    public final TagState startTag;
-    public final TagState endTag;
-    public final boolean emptyAllowed;
-    public final Set<String> autoClosedBy;
-
-    public Control(String name, TagState startTag, TagState endTag, boolean emptyAllowed, Set<String> autoClosedBy) {
-      this.name = name;
-      this.endTag = endTag;
-      this.startTag = startTag;
-      this.emptyAllowed = emptyAllowed;
-      this.autoClosedBy = autoClosedBy;
-    }
+  public record Control(String name, TagState startTag, TagState endTag, boolean emptyAllowed, Set<String> autoClosedBy) {
   }
 }

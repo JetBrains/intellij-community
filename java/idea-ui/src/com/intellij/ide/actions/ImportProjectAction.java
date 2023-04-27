@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ImportProjectAction extends ImportModuleAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ImportModuleAction.Companion.doImport(null);
+    ImportModuleAction.doImport(null);
   }
 
   @Override

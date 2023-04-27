@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -143,18 +143,16 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
           TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
           if (range != null && range.containsOffset(offset)) {
             QuickFix[] fixes = problemDescriptor.getFixes();
-            if (fixes != null) {
-              for (int k = 0; k < fixes.length; k++) {
-                IntentionAction intentionAction = QuickFixWrapper.wrap(problemDescriptor, k);
-                HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-                String displayName = displayNames.get(shortName);
-                HighlightInfo.IntentionActionDescriptor actionDescriptor =
-                  new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
-                                                              key, null, HighlightSeverity.INFORMATION);
-                (problemDescriptor.getHighlightType() == ProblemHighlightType.ERROR
-                 ? outIntentions.errorFixesToShow
-                 : outIntentions.intentionsToShow).add(actionDescriptor);
-              }
+            for (int k = 0; k < fixes.length; k++) {
+              IntentionAction intentionAction = QuickFixWrapper.wrap(problemDescriptor, k);
+              HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+              String displayName = displayNames.get(shortName);
+              HighlightInfo.IntentionActionDescriptor actionDescriptor =
+                new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
+                                                            key, null, HighlightSeverity.INFORMATION);
+              (problemDescriptor.getHighlightType() == ProblemHighlightType.ERROR
+               ? outIntentions.errorFixesToShow
+               : outIntentions.intentionsToShow).add(actionDescriptor);
             }
           }
         }

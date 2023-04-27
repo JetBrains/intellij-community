@@ -27,12 +27,10 @@ public class GradlePropertyReferencesSearcher extends QueryExecutorBase<PsiRefer
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement element = queryParameters.getElementToSearch();
-    if (element instanceof Property
+    if (element instanceof Property property
         && isContainingFileGradlePropertyFile(element.getContainingFile())
         && queryParameters.getEffectiveSearchScope() instanceof GlobalSearchScope
     ) {
-
-      final Property property = (Property)element;
 
       if (property.getName() == null) {
         return;

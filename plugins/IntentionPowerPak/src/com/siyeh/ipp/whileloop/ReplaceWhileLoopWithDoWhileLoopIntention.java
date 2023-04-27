@@ -50,9 +50,8 @@ public class ReplaceWhileLoopWithDoWhileLoopIntention extends Intention {
       }
       doWhileStatementText.append(") {\n");
     }
-    if (body instanceof PsiBlockStatement) {
+    if (body instanceof PsiBlockStatement blockStatement) {
       doWhileStatementText.append("do {");
-      final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       final PsiElement[] children = codeBlock.getChildren();
       if (children.length > 2) {

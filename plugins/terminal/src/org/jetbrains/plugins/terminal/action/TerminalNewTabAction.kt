@@ -23,7 +23,7 @@ open class TerminalNewTabAction : DumbAwareAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    TerminalToolWindowManager.getInstance(project).createLocalShellWidget(null, null)
+    TerminalToolWindowManager.getInstance(project).createNewSession()
   }
 
   companion object {

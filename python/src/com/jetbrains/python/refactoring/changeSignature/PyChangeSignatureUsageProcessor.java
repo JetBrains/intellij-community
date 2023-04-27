@@ -100,8 +100,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
     if (element == null) return false;
 
-    if (element.getParent() instanceof PyCallExpression) {
-      final PyCallExpression call = (PyCallExpression)element.getParent();
+    if (element.getParent() instanceof PyCallExpression call) {
       // Don't modify the call that was the cause of Change Signature invocation
       if (call.getUserData(PyChangeSignatureQuickFix.CHANGE_SIGNATURE_ORIGINAL_CALL) != null) {
         return true;
@@ -278,8 +277,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @Override
   public boolean processPrimaryMethod(ChangeInfo changeInfo) {
-    if (changeInfo instanceof PyChangeInfo && changeInfo.getLanguage().is(PythonLanguage.getInstance())) {
-      final PyChangeInfo pyChangeInfo = (PyChangeInfo)changeInfo;
+    if (changeInfo instanceof PyChangeInfo pyChangeInfo && changeInfo.getLanguage().is(PythonLanguage.getInstance())) {
       processFunctionDeclaration(pyChangeInfo, pyChangeInfo.getMethod());
       return true;
     }

@@ -314,8 +314,7 @@ public final class GradleBuildSrcProjectsResolver {
             addSourcePaths(buildSrcRuntimeSourcesPaths, depModuleNode);
           }
         }
-        else if (childData instanceof LibraryDependencyData) {
-          LibraryDependencyData dependencyData = (LibraryDependencyData)childData;
+        else if (childData instanceof LibraryDependencyData dependencyData) {
           // exclude generated gradle-api jar the gradle api classes/sources handled separately by BuildClasspathModuleGradleDataService
           if (dependencyData.getExternalName().startsWith("gradle-api-")) {
             continue;

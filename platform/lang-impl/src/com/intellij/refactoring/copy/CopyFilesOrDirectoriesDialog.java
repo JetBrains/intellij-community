@@ -111,8 +111,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
 
     if (elements.length == 1) {
       String text;
-      if (elements[0] instanceof PsiFile) {
-        PsiFile file = (PsiFile)elements[0];
+      if (elements[0] instanceof PsiFile file) {
         VirtualFile vFile = file.getVirtualFile();
         text = RefactoringBundle.message(doClone ? "copy.files.clone.file.0" : "copy.files.copy.file.0", shortenPath(vFile));
         String fileName = vFile.isInLocalFileSystem() ? vFile.getName() : PathUtil.suggestFileName(file.getName(), true, true);

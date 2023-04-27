@@ -1769,7 +1769,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WEAK WARNING"
+                     level="WARNING"
                      language="kotlin"
                      key="inspection.lift.return.or.assignment.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1777,7 +1777,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WEAK WARNING"
+                     level="WARNING"
                      language="kotlin"
                      key="inspection.cascade.if.display.name" bundle="messages.KotlinBundle"/>
 
@@ -1785,7 +1785,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
-                     level="WEAK WARNING"
+                     level="WARNING"
                      language="kotlin"
                      key="inspection.null.checks.to.safe.call.display.name" bundle="messages.KotlinBundle"/>
 

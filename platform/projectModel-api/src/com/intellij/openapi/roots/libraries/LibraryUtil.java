@@ -104,8 +104,7 @@ public final class LibraryUtil {
             }
             ContainerUtil.addAll(roots, files);
           }
-        } else if (includeJdk && entry instanceof JdkOrderEntry) {
-          JdkOrderEntry jdkEntry = (JdkOrderEntry)entry;
+        } else if (includeJdk && entry instanceof JdkOrderEntry jdkEntry) {
           VirtualFile[] files = includeSourceFiles ? jdkEntry.getRootFiles(OrderRootType.SOURCES) : null;
           if (files == null || files.length == 0) {
             files = jdkEntry.getRootFiles(OrderRootType.CLASSES);

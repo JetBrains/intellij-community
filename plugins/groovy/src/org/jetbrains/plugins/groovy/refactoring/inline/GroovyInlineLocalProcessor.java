@@ -121,9 +121,8 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
         if (((ReadWriteVariableInstruction)instruction).isWrite()) continue;
 
         if (element instanceof GrVariable && element != variable) continue;
-        if (!(element instanceof GrReferenceExpression)) continue;
+        if (!(element instanceof GrReferenceExpression ref)) continue;
 
-        final GrReferenceExpression ref = (GrReferenceExpression)element;
         if (ref.isQualified() || ref.resolve() != variable) continue;
 
         final BitSet prev = writes.get(instruction.num());

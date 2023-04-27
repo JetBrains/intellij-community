@@ -7,8 +7,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,11 +37,11 @@ public class LabelPainter {
   public static final JBValue LEFT_PADDING = JBVG.value(4);
   public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(2);
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
+  public static final JBValue ICON_TEXT_PADDING = JBVG.value(1);
   public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
   private static final String TWO_DOTS = "..";
   private static final String SEPARATOR = "/";
-  private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
 
   private final @NotNull JComponent myComponent;
   private final @NotNull LabelIconCache myIconCache;
@@ -75,11 +74,11 @@ public class LabelPainter {
                                int availableWidth,
                                @NotNull List<? extends RefGroup> refGroups) {
     myBackground = background;
-    myForeground = isSelected ? foreground : TEXT_COLOR;
+    myForeground = foreground;
 
     updateHeight();
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
-    myGreyBackground = calculateGreyBackground(refGroups, background, isSelected, myCompact);
+    myGreyBackground = ExperimentalUI.isNewUI() ? null : calculateGreyBackground(refGroups, background, isSelected, myCompact);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
       calculatePresentation(refGroups, metrics, myGreyBackground != null ? myGreyBackground : myBackground,
                             availableWidth, myCompact);
@@ -119,6 +118,7 @@ public class LabelPainter {
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
       newWidth += fontMetrics.stringWidth(text);
+      newWidth += getIconTextPadding();
 
       labels.add(Pair.create(text, labelIcon));
       width = newWidth;
@@ -152,6 +152,7 @@ public class LabelPainter {
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
       newWidth += fontMetrics.stringWidth(text);
+      newWidth += getIconTextPadding();
 
       if (availableWidth - newWidth - doNotFitWidth < 0) {
         LabelIcon lastIcon = getIcon(height, background, getColors(refGroups.subList(i, refGroups.size())));
@@ -299,13 +300,17 @@ public class LabelPainter {
 
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);
       x += icon.getIconWidth();
-
+      x += getIconTextPadding();
       g2.setColor(myForeground);
       g2.drawString(text, x, y + baseLine);
       x += fontMetrics.stringWidth(text) + (myCompact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get());
     }
 
     config.restore();
+  }
+
+  private static int getIconTextPadding() {
+    return ExperimentalUI.isNewUI() ? ICON_TEXT_PADDING.get() : 0;
   }
 
   private Object getTextAntiAliasingValue() {

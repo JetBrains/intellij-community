@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
@@ -317,7 +318,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         val kotlinFacet = module.getOrCreateFacet(
             modifiableModelsProvider,
             false,
-            ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
+            SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
         )
 
         // TODO There should be a way to figure out the correct platform version

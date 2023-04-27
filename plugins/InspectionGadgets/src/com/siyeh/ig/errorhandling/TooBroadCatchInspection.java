@@ -121,10 +121,9 @@ public class TooBroadCatchInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiTypeElement)) {
+      if (!(element instanceof PsiTypeElement typeElement)) {
         return;
       }
-      final PsiTypeElement typeElement = (PsiTypeElement)element;
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       final PsiClassType type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION);
       final PsiTypeElement newTypeElement = factory.createTypeElement(type);
@@ -169,10 +168,9 @@ public class TooBroadCatchInspection extends BaseInspection {
         return;
       }
       final PsiElement catchBlock = ((PsiParameter)catchParameter).getDeclarationScope();
-      if (!(catchBlock instanceof PsiCatchSection)) {
+      if (!(catchBlock instanceof PsiCatchSection myBeforeCatchSection)) {
         return;
       }
-      final PsiCatchSection myBeforeCatchSection = (PsiCatchSection)catchBlock;
       final PsiTryStatement myTryStatement = myBeforeCatchSection.getTryStatement();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final String name = codeStyleManager.suggestUniqueVariableName("e", myTryStatement.getTryBlock(), false);

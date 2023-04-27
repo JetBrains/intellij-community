@@ -359,8 +359,7 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     super.configureEditor();
 
     installEditorKeyListener(comboBox.getEditor());
-    if (editor instanceof JComponent) {
-      JComponent jEditor = (JComponent)editor;
+    if (editor instanceof JComponent jEditor) {
       jEditor.setBorder(DEFAULT_EDITOR_BORDER);
 
       editorHoverListener = new MouseHoverPropertyTrigger(comboBox, HOVER_PROPERTY);

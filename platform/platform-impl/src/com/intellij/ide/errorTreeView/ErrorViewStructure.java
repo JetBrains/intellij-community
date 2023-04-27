@@ -467,8 +467,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     if (element == myRoot) {
       return;
     }
-    if (element instanceof GroupingElement) {
-      GroupingElement groupingElement = (GroupingElement)element;
+    if (element instanceof GroupingElement groupingElement) {
       removeGroup(groupingElement.getName());
       final VirtualFile virtualFile = groupingElement.getFile();
       if (virtualFile != null) {
@@ -480,8 +479,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         });
       }
     }
-    else if (element instanceof NavigatableMessageElement){
-      final NavigatableMessageElement navElement = (NavigatableMessageElement)element;
+    else if (element instanceof NavigatableMessageElement navElement){
       final GroupingElement parent = navElement.getParent();
       if (parent != null) {
         synchronized (myLock) {

@@ -109,8 +109,7 @@ public class PaletteGroupComponent extends JCheckBox {
         Component next = myMoveDown
                          ? policy.getComponentAfter(container, PaletteGroupComponent.this)
                          : policy.getComponentBefore(container, PaletteGroupComponent.this);
-        if (next instanceof PaletteItemsComponent) {
-          PaletteItemsComponent list = (PaletteItemsComponent)next;
+        if (next instanceof PaletteItemsComponent list) {
           if (list.getModel().getSize() != 0) {
             list.takeFocusFrom(list == myItemsComponent ? 0 : -1);
             return;

@@ -41,8 +41,7 @@ class OperatorAssignmentPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiAssignmentExpression)) return false;
-    PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+    if (!(element instanceof PsiAssignmentExpression assignmentExpression)) return false;
     IElementType tokenType = assignmentExpression.getOperationTokenType();
     return Lazy.OPERATOR_ASSIGNMENT_TOKENS.contains(tokenType);
   }

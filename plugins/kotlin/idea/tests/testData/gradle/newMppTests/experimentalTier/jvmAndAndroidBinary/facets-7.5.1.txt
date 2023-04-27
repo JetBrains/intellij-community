@@ -130,9 +130,3 @@ project.producer.unitTest
     mppVersion = M3
     dependsOnModuleNames = :producer:commonTest
     targetPlatform = JVM (1.8)
-
-
-Test configuration:
-- hiding following roots: resources, android-specific roots, generated
-- hiding following standard dependencies: sdk, self
-- dependencies order is not checked

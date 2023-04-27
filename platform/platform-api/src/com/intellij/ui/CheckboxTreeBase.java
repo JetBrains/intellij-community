@@ -139,8 +139,7 @@ public class CheckboxTreeBase extends Tree {
     @Override
     public final Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       invalidate();
-      if (value instanceof CheckedTreeNode) {
-        CheckedTreeNode node = (CheckedTreeNode)value;
+      if (value instanceof CheckedTreeNode node) {
 
         State state = getNodeStatus(node);
         myCheckbox.setVisible(true);

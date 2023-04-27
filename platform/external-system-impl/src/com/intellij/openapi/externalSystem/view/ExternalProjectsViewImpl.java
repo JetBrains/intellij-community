@@ -585,8 +585,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     for (ExternalSystemNode node : selectedNodes) {
       final Object data = node.getData();
-      if (data instanceof TaskData) {
-        final TaskData taskData = (TaskData)data;
+      if (data instanceof TaskData taskData) {
         if (projectPath == null) {
           projectPath = taskData.getLinkedExternalProjectPath();
         }

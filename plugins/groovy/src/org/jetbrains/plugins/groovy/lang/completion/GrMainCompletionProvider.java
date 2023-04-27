@@ -74,8 +74,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   private static void suggestVariableNames(PsiElement context, GroovyCompletionConsumer result) {
     final PsiElement parent = context.getParent();
     if (GroovyCompletionUtil.isWildcardCompletion(context)) return;
-    if (parent instanceof GrVariable) {
-      final GrVariable variable = (GrVariable) parent;
+    if (parent instanceof GrVariable variable) {
       if (context.equals(variable.getNameIdentifierGroovy())) {
         final PsiType type = variable.getTypeGroovy();
         if (type != null) {

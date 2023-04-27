@@ -50,8 +50,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
           if (ExpressionUtils.isReferenceTo(expression, parameter)) {
             handleFunctionIdentity(lambda, (PsiClassType)type);
           }
-          if (expression instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+          if (expression instanceof PsiMethodCallExpression call) {
             PsiClass aClass = ((PsiClassType)type).resolve();
             if (aClass != null && CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE.equals(aClass.getQualifiedName())) {
               handlePredicateIsEqual(lambda, parameter, call);

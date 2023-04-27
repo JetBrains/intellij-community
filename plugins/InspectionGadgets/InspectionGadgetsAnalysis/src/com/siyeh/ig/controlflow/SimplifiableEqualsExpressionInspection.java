@@ -85,28 +85,25 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(element);
-      if (!(parent instanceof PsiPolyadicExpression)) {
+      if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
         return;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       if (operands.length != 2) {
         return;
       }
       PsiExpression operand = PsiUtil.skipParenthesizedExprDown(operands[1]);
       @NonNls final StringBuilder newExpressionText = new StringBuilder();
-      if (operand instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)operand;
+      if (operand instanceof PsiPrefixExpression prefixExpression) {
         if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
           return;
         }
         newExpressionText.append('!');
         operand = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
       }
-      if (!(operand instanceof PsiMethodCallExpression)) {
+      if (!(operand instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -196,10 +193,9 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
           return;
         }
         final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(operands[1]);
-        if (!(rhs instanceof PsiPrefixExpression)) {
+        if (!(rhs instanceof PsiPrefixExpression prefixExpression)) {
           return;
         }
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)rhs;
         if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
           return;
         }
@@ -217,10 +213,9 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
     }
 
     private boolean isEqualsConstant(PsiExpression expression, PsiVariable variable) {
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.EQUALS.equals(methodName) && !HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(methodName)) {

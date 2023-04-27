@@ -162,13 +162,6 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  static class Arguments {
-    final PsiExpression[] expressions;
-    final boolean varargAsArray;
-
-    Arguments(PsiExpression[] expressions, boolean varargAsArray) {
-      this.expressions = expressions;
-      this.varargAsArray = varargAsArray;
-    }
+  record Arguments(PsiExpression[] expressions, boolean varargAsArray) {
   }
 }

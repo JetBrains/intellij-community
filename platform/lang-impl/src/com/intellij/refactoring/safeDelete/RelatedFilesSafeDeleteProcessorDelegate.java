@@ -63,7 +63,7 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
 
     final Collection<PsiElement> psiFiles = new ArrayList<>(relatedFileInfos.size());
     for (NestingTreeStructureProvider.ChildFileInfo info : relatedFileInfos) {
-      final PsiFile psiFile = element.getManager().findFile(info.file);
+      final PsiFile psiFile = element.getManager().findFile(info.file());
       if (psiFile != null && !allElementsToDelete.contains(psiFile)) {
         psiFiles.add(psiFile);
       }

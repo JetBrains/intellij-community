@@ -375,8 +375,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
           description.getValues(getProxy()).get(0).ensureXmlElementExists();
         }
       }
-      else if (description instanceof DomFixedChildDescription) {
-        final DomFixedChildDescription childDescription = (DomFixedChildDescription)description;
+      else if (description instanceof DomFixedChildDescription childDescription) {
         List<? extends DomElement> values = null;
         final int count = childDescription.getCount();
         for (int i = 0; i < count; i++) {

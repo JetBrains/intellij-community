@@ -78,9 +78,7 @@ public class ConvertSimpleGetterToPropertyIntention extends Intention {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
         PsiElement parent = element.getParent();
-        if (!(parent instanceof GrMethod) || ((GrMethod)parent).getNameIdentifierGroovy() != element) return false;
-
-        GrMethod method = (GrMethod)parent;
+        if (!(parent instanceof GrMethod method) || ((GrMethod)parent).getNameIdentifierGroovy() != element) return false;
 
         GrOpenBlock block = method.getBlock();
         if (block == null) return false;

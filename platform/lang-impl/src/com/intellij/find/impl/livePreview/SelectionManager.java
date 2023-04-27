@@ -6,7 +6,6 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,7 +46,7 @@ public class SelectionManager {
           myRegionsToRestore.clear();
           for (FoldRegion region : allRegions) {
             if (!region.isValid()) continue;
-            if (cursor.intersects(TextRange.create(region))) {
+            if (cursor.intersects(region)) {
               if (!region.isExpanded()) {
                 region.setExpanded(true);
                 myRegionsToRestore.add(region);

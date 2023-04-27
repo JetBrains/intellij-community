@@ -67,10 +67,9 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiElement parent = methodName.getParent();
-      if (!(parent instanceof PsiMethod)) {
+      if (!(parent instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)parent;
       final PsiCodeBlock body = method.getBody();
       final PsiElementFactory factory =
         JavaPsiFacade.getElementFactory(project);
@@ -129,11 +128,9 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     }
 
     private boolean isConstructorCall(PsiStatement statement) {
-      if (!(statement instanceof PsiExpressionStatement)) {
+      if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }
-      final PsiExpressionStatement expressionStatement =
-        (PsiExpressionStatement)statement;
       final PsiExpression expression =
         expressionStatement.getExpression();
       return JavaPsiConstructorUtil.isConstructorCall(expression);

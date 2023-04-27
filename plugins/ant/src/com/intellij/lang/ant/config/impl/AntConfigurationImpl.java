@@ -845,10 +845,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return null;
     }
     final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(context);
-    if (!(psiFile instanceof XmlFile)) {
+    if (!(psiFile instanceof XmlFile xmlFile)) {
       return null;
     }
-    final XmlFile xmlFile = (XmlFile)psiFile;
     return AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
   }
 

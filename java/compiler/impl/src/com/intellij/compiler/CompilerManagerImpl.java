@@ -518,9 +518,6 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   public @Nullable File getJavacCompilerWorkingDir() {
     final File projectBuildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
-    if (projectBuildDir == null) {
-      return null;
-    }
     projectBuildDir.mkdirs();
     return projectBuildDir;
   }

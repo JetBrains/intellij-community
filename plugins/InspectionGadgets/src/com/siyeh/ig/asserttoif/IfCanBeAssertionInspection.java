@@ -57,8 +57,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
         return getThrownNewException(statements[0]);
       }
     }
-    else if (element instanceof PsiThrowStatement) {
-      final PsiThrowStatement throwStatement = (PsiThrowStatement)element;
+    else if (element instanceof PsiThrowStatement throwStatement) {
       final PsiExpression exception = PsiUtil.skipParenthesizedExprDown(throwStatement.getException());
       if (exception instanceof PsiNewExpression) {
         return (PsiNewExpression)exception;
@@ -109,8 +108,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myIsIfStatement) {
         final PsiElement parent = descriptor.getPsiElement().getParent();
-        if (!(parent instanceof PsiIfStatement)) return;
-        final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+        if (!(parent instanceof PsiIfStatement ifStatement)) return;
         final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
         if (!(condition instanceof PsiBinaryExpression)) return;
         PsiExpression nullComparedExpression = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
@@ -171,10 +169,9 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement parent = descriptor.getPsiElement().getParent();
-      if (!(parent instanceof PsiIfStatement)) {
+      if (!(parent instanceof PsiIfStatement ifStatement)) {
         return;
       }
-      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
       @NonNls final StringBuilder newStatementText = new StringBuilder("assert ");
       CommentTracker tracker = new CommentTracker();
       newStatementText.append(BoolUtils.getNegatedExpressionText(ifStatement.getCondition(), tracker));

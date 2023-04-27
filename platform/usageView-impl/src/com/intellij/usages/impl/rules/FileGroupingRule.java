@@ -87,9 +87,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
 
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof FileUsageGroup)) return false;
-
-      final FileUsageGroup fileUsageGroup = (FileUsageGroup)o;
+      if (!(o instanceof FileUsageGroup fileUsageGroup)) return false;
 
       return myFile.equals(fileUsageGroup.myFile);
     }

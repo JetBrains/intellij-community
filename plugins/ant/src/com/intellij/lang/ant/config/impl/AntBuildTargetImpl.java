@@ -69,10 +69,9 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof AntBuildTargetImpl)) {
+    if (!(obj instanceof AntBuildTargetImpl that)) {
       return false;
     }
-    final AntBuildTargetImpl that = (AntBuildTargetImpl)obj;
     return Objects.equals(myName, that.myName) && Comparing.equal(myFile, that.myFile);
   }
 

@@ -55,8 +55,7 @@ final class TopAnomaliesAction extends ActionGroup {
         top.clear();
         Window[] windows = Window.getWindows();
         for (Window window : windows) {
-          if (window.isVisible() && (window instanceof JFrame)) {
-            JFrame f = (JFrame)window;
+          if (window.isVisible() && (window instanceof JFrame f)) {
             checkParents((JComponent)f.getContentPane(), top, LIMIT);
           }
         }
@@ -103,8 +102,7 @@ final class TopAnomaliesAction extends ActionGroup {
         top.clear();
         Window[] windows = Window.getWindows();
         for (Window window : windows) {
-          if (window.isVisible() && (window instanceof JFrame)) {
-            JFrame f = (JFrame)window;
+          if (window.isVisible() && (window instanceof JFrame f)) {
             checkClientProperties((JComponent)f.getContentPane(), top, LIMIT);
           }
         }

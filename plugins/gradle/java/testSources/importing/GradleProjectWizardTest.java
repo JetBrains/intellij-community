@@ -29,7 +29,8 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory;
 import org.jetbrains.plugins.gradle.testFramework.util.GradleFileTestUtil;
 import org.jetbrains.plugins.gradle.util.GradleImportingTestUtil;
@@ -160,15 +161,15 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
     var settingsFile = GradleFileTestUtil.getSettingsFile(root, ".", true);
     assertEquals(
-      new GradleSettingScriptBuilderImpl()
+      GradleSettingScriptBuilder.create(true)
         .setProjectName(projectName)
-        .generate(true),
+        .generate(),
       StringUtil.convertLineSeparators(VfsUtilCore.loadText(settingsFile)).trim()
     );
 
     var buildFile = GradleFileTestUtil.getBuildFile(root, ".", true);
     assertEquals(
-      KotlinDslGradleBuildScriptBuilder.create(GradleVersion.current())
+      GradleBuildScriptBuilder.create(GradleVersion.current(), true)
         .withJavaPlugin()
         .withJUnit()
         .addGroup("org.example")
@@ -197,10 +198,10 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     assertEquals("childModule", childModule.getName());
 
     assertEquals(
-      new GradleSettingScriptBuilderImpl()
+      GradleSettingScriptBuilder.create(true)
         .setProjectName(projectName)
         .include(childModule.getName())
-        .generate(true),
+        .generate(),
       StringUtil.convertLineSeparators(VfsUtilCore.loadText(settingsFile)).trim()
     );
   }

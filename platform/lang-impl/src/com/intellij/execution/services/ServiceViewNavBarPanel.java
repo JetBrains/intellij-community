@@ -70,6 +70,14 @@ final class ServiceViewNavBarPanel extends NavBarPanel {
     hideHint(true);
   }
 
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (NAV_BAR_ACTION_HANDLER.is(dataId)) {
+      return this;
+    }
+    return super.getData(dataId);
+  }
+
   void hidePopup() {
     hideHint(false);
   }
@@ -101,8 +109,7 @@ final class ServiceViewNavBarPanel extends NavBarPanel {
     @Override
     public void updateModel(Object object) {
       List<Object> path = new ArrayList<>();
-      if (object instanceof ServiceViewItem) {
-        ServiceViewItem item = (ServiceViewItem)object;
+      if (object instanceof ServiceViewItem item) {
         List<? extends ServiceViewItem> roots = myViewModel.getVisibleRoots();
 
         do {
@@ -127,8 +134,7 @@ final class ServiceViewNavBarPanel extends NavBarPanel {
         return new ArrayList<>(myViewModel.getVisibleRoots());
       }
       if (object instanceof ServiceViewItem) {
-        if (object instanceof ServiceNode) {
-          ServiceNode service = (ServiceNode)object;
+        if (object instanceof ServiceNode service) {
           if (service.getProvidingContributor() != null && !service.isChildrenInitialized()) {
             myViewModel.getInvoker().invoke(() -> {
               service.getChildren(); // initialize children on background thread

@@ -31,7 +31,7 @@ public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
   @NotNull
   HighlightSeverity getHighlightSeverity();
   @Override
-  LocalQuickFix @NotNull [] getFixes();
+  @NotNull LocalQuickFix @Nullable [] getFixes();
 
   void highlightWholeElement();
 

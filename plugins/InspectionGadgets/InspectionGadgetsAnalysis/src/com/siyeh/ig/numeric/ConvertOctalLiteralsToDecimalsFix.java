@@ -43,16 +43,14 @@ class ConvertOctalLiteralsToDecimalsFix extends InspectionGadgetsFix {
   @Override
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiArrayInitializerExpression)) {
+    if (!(element instanceof PsiArrayInitializerExpression arrayInitializerExpression)) {
       return;
     }
-    final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
     for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);
-      if (!(initializer instanceof PsiLiteralExpression)) {
+      if (!(initializer instanceof PsiLiteralExpression literal)) {
         continue;
       }
-      final PsiLiteralExpression literal = (PsiLiteralExpression)initializer;
       if (!ExpressionUtils.isOctalLiteral(literal)) {
         continue;
       }

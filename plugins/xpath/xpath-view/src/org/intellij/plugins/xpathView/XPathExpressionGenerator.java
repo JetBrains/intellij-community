@@ -270,13 +270,11 @@ public final class XPathExpressionGenerator {
             try {
                 final XPath xPath = xpathSupport.createXPath(file, uniquePath, Namespace.fromMap(usedPrefixes));
                 final Object o = xPath.evaluate(file.getDocument());
-                if (o instanceof List) {
+                if (o instanceof List list) {
                     //noinspection RawUseOfParameterizedType
-                    final List list = (List)o;
-                    if (list.size() > 1) {
-                        if (what instanceof XmlTag) {
-                            final XmlTag tag = (XmlTag)what;
-                            final XmlAttribute[] attributes = tag.getAttributes();
+                  if (list.size() > 1) {
+                        if (what instanceof XmlTag tag) {
+                          final XmlAttribute[] attributes = tag.getAttributes();
                             for (XmlAttribute attribute : attributes) {
                                 final String name = attribute.getName();
                                 final XmlAttributeDescriptor descriptor = attribute.getDescriptor();

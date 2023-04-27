@@ -68,11 +68,10 @@ final class TestDataFilesReferencesContributor extends PsiReferenceContributor {
   private static String getTestDataDirectory(@NotNull UExpression expression,
                                              @NotNull UCallExpression methodCallExpression) {
     Object value = expression.evaluate();
-    if (!(value instanceof String)) {
+    if (!(value instanceof String relativePath)) {
       return null;
     }
 
-    String relativePath = (String)value;
     PsiMethod testMethod = UElementKt.getAsJavaPsiElement(UastUtils.getParentOfType(methodCallExpression, UMethod.class), PsiMethod.class);
     if (testMethod == null) {
       return null;

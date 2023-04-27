@@ -26,7 +26,7 @@ public final class CommandTestHelper {
     }
 
     try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(out), ENC)) {
-      if (mode == ENV) {
+      if (mode.equals(ENV)) {
         for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
           writer.write(format(entry));
           writer.write('\n');

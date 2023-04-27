@@ -70,10 +70,9 @@ final class DomStubBuilder implements BinaryFileStubBuilder.CompositeBinaryFileS
   public @Nullable Stub buildStubTree(@NotNull FileContent fileContent, @Nullable DomFileMetaData meta) {
     if (meta == null) return null;
     PsiFile psiFile = fileContent.getPsiFile();
-    if (!(psiFile instanceof XmlFile)) return null;
+    if (!(psiFile instanceof XmlFile xmlFile)) return null;
 
     Project project = fileContent.getProject();
-    XmlFile xmlFile = (XmlFile)psiFile;
     try {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.TRUE);
       DomFileElement<? extends DomElement> fileElement = DomManager.getDomManager(project).getFileElement(xmlFile);

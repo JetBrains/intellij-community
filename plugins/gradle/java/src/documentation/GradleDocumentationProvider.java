@@ -65,16 +65,13 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   @Nullable
   private static @NlsSafe String findDoc(@Nullable PsiElement element, Object argValue) {
     String result = null;
-    if (element instanceof GrLiteral) {
-      GrLiteral grLiteral = (GrLiteral)element;
+    if (element instanceof GrLiteral grLiteral) {
       PsiElement stmt = PsiTreeUtil.findFirstParent(grLiteral, psiElement -> psiElement instanceof GrCall);
-      if (stmt instanceof GrCall) {
-        GrCall grCall = (GrCall)stmt;
+      if (stmt instanceof GrCall grCall) {
         PsiMethod psiMethod = grCall.resolveMethod();
         if (psiMethod != null && psiMethod.getContainingClass() != null) {
           String qualifiedName = psiMethod.getContainingClass().getQualifiedName();
-          if (grLiteral.getParent() instanceof GrNamedArgument) {
-            GrNamedArgument namedArgument = (GrNamedArgument)grLiteral.getParent();
+          if (grLiteral.getParent() instanceof GrNamedArgument namedArgument) {
             String key = StringUtil.join(new String[]{
               "gradle.documentation",
               qualifiedName,

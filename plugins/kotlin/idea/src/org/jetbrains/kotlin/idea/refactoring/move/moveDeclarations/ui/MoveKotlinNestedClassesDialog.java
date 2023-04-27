@@ -201,9 +201,8 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
             return !((KtObjectDeclaration) classOrObject).isObjectLiteral();
         }
 
-        if (classOrObject instanceof KtClass) {
-            KtClass ktClass = (KtClass) classOrObject;
-            return !(ktClass.isInner() || ktClass.isAnnotation());
+        if (classOrObject instanceof KtClass ktClass) {
+          return !(ktClass.isInner() || ktClass.isAnnotation());
         }
 
         return false;
@@ -213,10 +212,9 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
         List<KotlinMemberInfo> memberInfos = CollectionsKt.mapNotNull(
                 originalClass.getDeclarations(),
                 declaration -> {
-                    if (!(declaration instanceof KtClassOrObject)) return null;
-                    KtClassOrObject classOrObject = (KtClassOrObject) declaration;
+                    if (!(declaration instanceof KtClassOrObject classOrObject)) return null;
 
-                    if (classOrObject instanceof KtClass && ((KtClass) classOrObject).isInner()) return null;
+                  if (classOrObject instanceof KtClass && ((KtClass) classOrObject).isInner()) return null;
                     if (classOrObject instanceof KtObjectDeclaration && ((KtObjectDeclaration) classOrObject).isCompanion()) {
                         return null;
                     }

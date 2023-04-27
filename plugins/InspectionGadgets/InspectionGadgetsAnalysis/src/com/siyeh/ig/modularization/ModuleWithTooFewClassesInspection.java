@@ -52,14 +52,13 @@ public class ModuleWithTooFewClassesInspection extends BaseGlobalInspection {
                                                            @NotNull AnalysisScope analysisScope,
                                                            @NotNull InspectionManager inspectionManager,
                                                            @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefModule)) {
+    if (!(refEntity instanceof RefModule refModule)) {
       return null;
     }
     final Project project = inspectionManager.getProject();
     if (ModuleManager.getInstance(project).getModules().length == 1) {
       return null;
     }
-    final RefModule refModule = (RefModule)refEntity;
     final ModuleFileIndex index = ModuleRootManager.getInstance(refModule.getModule()).getFileIndex();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final int[] count = {0};

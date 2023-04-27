@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import com.intellij.collaboration.ui.SingleValueModel
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JLabel

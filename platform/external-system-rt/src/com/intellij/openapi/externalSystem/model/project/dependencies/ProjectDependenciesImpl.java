@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectDependenciesImpl implements ProjectDependencies, Serializable {
-  private final List<ComponentDependencies> dependencies = new ArrayList<ComponentDependencies>(0);
+  private final List<ComponentDependencies> dependencies = new ArrayList<>(0);
 
   @NotNull
   @Override

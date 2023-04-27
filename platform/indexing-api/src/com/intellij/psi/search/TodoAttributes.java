@@ -92,9 +92,7 @@ public final class TodoAttributes implements Cloneable {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TodoAttributes)) return false;
-
-    final TodoAttributes attributes = (TodoAttributes)o;
+    if (!(o instanceof TodoAttributes attributes)) return false;
 
     return myIcon == attributes.myIcon &&
            !(myTextAttributes != null ? !myTextAttributes.equals(attributes.myTextAttributes) : attributes.myTextAttributes != null) &&

@@ -21,6 +21,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.TestDataProvider
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
@@ -83,14 +84,19 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         val javaFiles = arrayListOf<File>()
         val kotlinFiles = arrayListOf<File>()
+        val kotlinScriptFiles = arrayListOf<File>()
         val baseDir = File(testDataPath, dirName)
         baseDir.walk().forEach {
             if (it.isFile) {
-                if (it.extension == "java") javaFiles.add(it)
-                if (it.extension == "kt") kotlinFiles.add(it)
+                when (it.extension) {
+                    "java" -> javaFiles.add(it)
+                    "kt" -> kotlinFiles.add(it)
+                    "kts" -> kotlinScriptFiles.add(it)
+                }
             }
         }
 
+        val options = mutableListOf<String>()
         val testDataPathFile = File(myFixture.testDataPath)
         javaFiles.forEach {
             myFixture.copyFileToProject(
@@ -105,6 +111,13 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
             )
         }
 
+        (kotlinFiles + kotlinScriptFiles).forEach {
+            val fileText = FileUtil.loadFile(it, true)
+            InTextDirectivesUtils.findListWithPrefixes(
+                fileText, "// ${CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE} "
+            ).firstOrNull()?.let { options += it }
+        }
+
         val outputDir = FileUtil.createTempDirectory(dirName, "")
 
         KotlinCompilerStandalone(
@@ -113,7 +126,8 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
             classpath = listOf(
                 TestKotlinArtifacts.kotlinScriptRuntime,
                 TestKotlinArtifacts.jetbrainsAnnotations
-            )
+            ),
+            options = options
         ).compile()
 
         PsiTestUtil.setCompilerOutputPath(myFixture.module, outputDir.path, false)

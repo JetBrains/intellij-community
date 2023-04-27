@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -51,10 +51,10 @@ public final class DependentGroovycRunner {
     config.setOutput(new PrintWriter(err));
     config.setWarningLevel(WarningMessage.PARANOIA);
 
-    final List<GroovyCompilerMessage> compilerMessages = new ArrayList<GroovyCompilerMessage>();
-    final List<CompilationUnitPatcher> patchers = new ArrayList<CompilationUnitPatcher>();
-    final List<File> srcFiles = new ArrayList<File>();
-    final Map<String, File> class2File = new HashMap<String, File>();
+    final List<GroovyCompilerMessage> compilerMessages = new ArrayList<>();
+    final List<CompilationUnitPatcher> patchers = new ArrayList<>();
+    final List<File> srcFiles = new ArrayList<>();
+    final Map<String, File> class2File = new HashMap<>();
 
     final String[] finalOutputRef = new String[1];
     fillFromArgsFile(argsFile, config, patchers, compilerMessages, srcFiles, class2File, finalOutputRef, err);
@@ -63,7 +63,7 @@ public final class DependentGroovycRunner {
     String[] finalOutputs = finalOutputRef[0].split(File.pathSeparator);
 
     if (forStubs) {
-      Map<String, Object> options = new HashMap<String, Object>();
+      Map<String, Object> options = new HashMap<>();
       options.put(STUB_DIR, config.getTargetDirectory());
       options.put("keepStubs", Boolean.TRUE);
       config.setJointCompilationOptions(options);
@@ -208,7 +208,7 @@ public final class DependentGroovycRunner {
       //noinspection IOResourceOpenedButNotSafelyClosed
       stream = new FileInputStream(argsFile);
       //noinspection IOResourceOpenedButNotSafelyClosed
-      reader = new BufferedReader(new InputStreamReader(stream, Charset.forName("UTF-8")));
+      reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
 
       reader.readLine(); // skip classpath
 
@@ -237,13 +237,7 @@ public final class DependentGroovycRunner {
               final CompilationUnitPatcher patcher = (CompilationUnitPatcher)patcherClass.newInstance();
               patchers.add(patcher);
             }
-            catch (InstantiationException e) {
-              addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
-            }
-            catch (IllegalAccessException e) {
-              addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
-            }
-            catch (ClassNotFoundException e) {
+            catch (InstantiationException | ClassNotFoundException | IllegalAccessException e) {
               addExceptionInfo(compilerMessages, e, "Couldn't instantiate " + s);
             }
           }
@@ -260,9 +254,6 @@ public final class DependentGroovycRunner {
 
         line = reader.readLine();
       }
-    }
-    catch (FileNotFoundException e) {
-      e.printStackTrace(err);
     }
     catch (IOException e) {
       e.printStackTrace(err);
@@ -507,7 +498,7 @@ public final class DependentGroovycRunner {
   }
 
   private static void pauseAndWaitForJavac(Queue<? super Object> mailbox) {
-    LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<String>();
+    LinkedBlockingQueue<String> fromJps = new LinkedBlockingQueue<>();
     mailbox.offer(fromJps); // signal that stubs are generated
     while (true) {
       try {

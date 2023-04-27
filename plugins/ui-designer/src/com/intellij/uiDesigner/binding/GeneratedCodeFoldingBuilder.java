@@ -39,11 +39,10 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     if (body.getStatementCount() != 1) return false;
     PsiStatement statement = body.getStatements()[0];
     if (!(statement instanceof PsiExpressionStatement) ||
-        !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression)) {
+        !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression call)) {
       return false;
     }
 
-    PsiMethodCallExpression call = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression();
     return AsmCodeGenerator.SETUP_METHOD_NAME.equals(call.getMethodExpression().getReferenceName());
   }
 

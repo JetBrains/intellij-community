@@ -57,9 +57,7 @@ public class PsiSearchRequest {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PsiSearchRequest)) return false;
-
-    PsiSearchRequest that = (PsiSearchRequest)o;
+    if (!(o instanceof PsiSearchRequest that)) return false;
 
     if (caseSensitive != that.caseSensitive) return false;
     if (searchContext != that.searchContext) return false;

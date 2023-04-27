@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -65,11 +65,11 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
         boolean restoreStickySelection = editor instanceof EditorEx && ((EditorEx)editor).isStickySelection();
         selectionModel.removeSelection();
         editor.getDocument().replaceString(selectionStart, selectionEnd, newText);
-        
+
         int startOffset = caretOffset + 1;
         int endOffset = caretOffset + newText.length() - 1;
         int length = editor.getDocument().getTextLength();
-        
+
         // selection is removed here
         if (endOffset <= length) {
           if (restoreStickySelection) {

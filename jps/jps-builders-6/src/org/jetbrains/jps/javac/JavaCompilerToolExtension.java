@@ -37,7 +37,7 @@ public abstract class JavaCompilerToolExtension {
   public void beforeCompileTaskExecution(@NotNull JavaCompilingTool compilingTool, @NotNull JavaCompiler.CompilationTask task, @NotNull Iterable<String> options, @NotNull DiagnosticOutputConsumer diagnosticConsumer) {
   }
 
-  private static final ExtensionsSupport<JavaCompilerToolExtension> ourExtSupport = new ExtensionsSupport<JavaCompilerToolExtension>(JavaCompilerToolExtension.class);
+  private static final ExtensionsSupport<JavaCompilerToolExtension> ourExtSupport = new ExtensionsSupport<>(JavaCompilerToolExtension.class);
   @NotNull
   public static Collection<JavaCompilerToolExtension> getExtensions() {
     return ourExtSupport.getExtensions();

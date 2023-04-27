@@ -153,9 +153,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof DomFileElementImpl)) return false;
-
-    final DomFileElementImpl that = (DomFileElementImpl)o;
+    if (!(o instanceof DomFileElementImpl that)) return false;
 
     if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
     if (myRootElementClass != null ? !myRootElementClass.equals(that.myRootElementClass) : that.myRootElementClass != null) return false;

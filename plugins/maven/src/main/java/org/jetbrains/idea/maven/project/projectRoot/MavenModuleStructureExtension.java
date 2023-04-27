@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.ide.highlighter.ModuleFileType.DOT_DEFAULT_EXTENSION;
-import static org.jetbrains.idea.maven.model.MavenConstants.SLASH_POM_XML;
+import static org.jetbrains.idea.maven.model.MavenConstants.POM_XML;
 
 public class MavenModuleStructureExtension extends ModuleStructureExtension {
   private final Set<Module> myModulesToRemove = new HashSet<>();
@@ -46,7 +46,7 @@ public class MavenModuleStructureExtension extends ModuleStructureExtension {
         // To prevent it, we try to add its pom to ignore list
         var imlPath = moduleToRemove.getModuleFilePath();
         if (imlPath.endsWith(DOT_DEFAULT_EXTENSION)) {
-          var pomPath = imlPath.substring(0, imlPath.length() - DOT_DEFAULT_EXTENSION.length()) + SLASH_POM_XML;
+          var pomPath = imlPath.substring(0, imlPath.length() - DOT_DEFAULT_EXTENSION.length()) + "/" + POM_XML;
           if (Files.exists(Path.of(pomPath))) {
             myPomsToIgnore.add(pomPath);
           }

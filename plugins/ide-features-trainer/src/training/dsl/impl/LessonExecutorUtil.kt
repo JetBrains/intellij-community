@@ -74,6 +74,7 @@ internal object LessonExecutorUtil {
       .showButton(balloonConfig.gotItCallBack != null)
       .onButtonClick { balloonConfig.gotItCallBack?.invoke() }
       .requestFocus(balloonConfig.gotItCallBack != null)
+      .withContrastColors(true)
       .build(actionsRecorder) {
         setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
         setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)

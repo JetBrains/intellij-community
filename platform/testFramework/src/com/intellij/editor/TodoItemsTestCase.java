@@ -114,7 +114,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
   private static List<TextRange> getActualTodoRanges(List<? extends HighlightInfo> highlightInfos) {
     return highlightInfos.stream()
       .filter(info -> info.type == HighlightInfoType.TODO)
-      .map(info -> TextRange.create(info.getHighlighter()))
+      .map(info -> info.getHighlighter().getTextRange())
       .sorted(Segment.BY_START_OFFSET_THEN_END_OFFSET)
       .collect(Collectors.toList());
   }

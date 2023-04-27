@@ -35,8 +35,7 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
   protected String buildErrorString(Object... infos) {
     final PsiElement classOrLambda = (PsiElement)infos[0];
     final PsiType type = (PsiType)infos[1];
-    if (classOrLambda instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)classOrLambda;
+    if (classOrLambda instanceof PsiClass aClass) {
       if (aClass instanceof PsiAnonymousClass) {
         return InspectionGadgetsBundle.message("serializable.anonymous.class.stores.non.serializable.problem.descriptor",
                                                type.getPresentableText());

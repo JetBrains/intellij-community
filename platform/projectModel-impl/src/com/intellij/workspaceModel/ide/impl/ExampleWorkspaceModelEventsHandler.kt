@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -55,8 +54,7 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
 
   private fun handleExcludesChanged(event: VersionedStorageChange) {
     event.getChanges(ExcludeUrlEntity::class.java).forEach { change ->
-      val (entity, snapshot) = getEntityAndStorage(event, change)
-      entity.contentRoot?.let { contentRoot -> if (contentRoot.module.isModuleUnloaded(snapshot)) return@forEach }
+      val (entity, _) = getEntityAndStorage(event, change)
       entity.library?.let { library -> if (!libraryIsDependency(library, project)) return@forEach }
 
       val (addedUrls, removedUrls) = calculateChangedUrls(change, listOf({ url }))
@@ -78,7 +76,6 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
 
   private fun handleContentRootChanged(event: VersionedStorageChange) {
     event.getChanges(ContentRootEntity::class.java).forEach { change ->
-      if (isInUnloadedModule(event, change){ module }) return@forEach
       // We also process exclude entities in [handleExcludesChanged]
       val (addedUrls, removedUrls) = calculateChangedUrls(change, listOf({url}), listOf({ excludedUrls.map { it.url } }))
       updateCache(addedUrls.urls, removedUrls.urls)
@@ -87,7 +84,6 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
 
   private fun handleSourceRootChanged(event: VersionedStorageChange) {
     event.getChanges(SourceRootEntity::class.java).forEach { change ->
-      if (isInUnloadedModule(event, change){ contentRoot.module }) return@forEach
       val (addedUrls, removedUrls) = calculateChangedUrls(change, listOf({url}))
       updateCache(addedUrls.urls, removedUrls.urls)
     }
@@ -95,7 +91,6 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
 
   private fun handleJavaModuleSettingsChanged(event: VersionedStorageChange) {
     event.getChanges(JavaModuleSettingsEntity::class.java).forEach { change ->
-      if (isInUnloadedModule(event, change){ module }) return@forEach
       val (addedUrls, removedUrls) = calculateChangedUrls(change, listOf({compilerOutput}, {compilerOutputForTests}))
       updateCache(addedUrls.urls, removedUrls.urls)
     }
@@ -103,28 +98,24 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
 
   private fun handleModuleChanged(event: VersionedStorageChange) {
     event.getChanges(ModuleEntity::class.java).forEach { change ->
-      if (isInUnloadedModule(event, change){ this }) return@forEach
       updateCache()
     }
   }
 
   private fun handleModuleGroupPathChanged(event: VersionedStorageChange) {
     event.getChanges(ModuleGroupPathEntity::class.java).forEach { change ->
-      if (isInUnloadedModule(event, change){ module }) return@forEach
       updateCache()
     }
   }
 
   private fun handleModuleCustomImlDataChanged(event: VersionedStorageChange) {
     event.getChanges(ModuleCustomImlDataEntity::class.java).forEach { change ->
-      if (isInUnloadedModule(event, change){ module }) return@forEach
       updateCache()
     }
   }
 
   private fun handleJavaSourceRootChanged(event: VersionedStorageChange) {
     event.getChanges(JavaSourceRootPropertiesEntity::class.java).forEach { change ->
-      if (isInUnloadedModule(event, change){ sourceRoot.contentRoot.module }) return@forEach
       updateCache()
     }
   }
@@ -135,14 +126,12 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
    */
   private fun handleJavaResourceRootChanged(event: VersionedStorageChange) {
     event.getChanges(JavaResourceRootPropertiesEntity::class.java).forEach { change ->
-      if (isInUnloadedModule(event, change) { sourceRoot.contentRoot.module }) return@forEach
       updateCache()
     }
   }
 
   private fun handleCustomSourceRootPropertiesChanged(event: VersionedStorageChange) {
     event.getChanges(CustomSourceRootPropertiesEntity::class.java).forEach { change ->
-      if (isInUnloadedModule(event, change) { sourceRoot.contentRoot.module }) return@forEach
       updateCache()
     }
   }
@@ -153,11 +142,6 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
       is EntityChange.Removed -> change.entity to event.storageBefore
       is EntityChange.Replaced -> change.newEntity to event.storageAfter
     }
-  }
-
-  private fun <T: WorkspaceEntity> isInUnloadedModule(event: VersionedStorageChange, change: EntityChange<T>, moduleAssessor: T.() -> ModuleEntity): Boolean {
-    val (entity, storage) = getEntityAndStorage(event, change)
-    return entity.moduleAssessor().isModuleUnloaded(storage)
   }
 
   /**

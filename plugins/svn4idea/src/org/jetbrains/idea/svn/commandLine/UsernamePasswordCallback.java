@@ -60,8 +60,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
 
   @Override
   public void updateParameters(@NotNull Command command) {
-    if (myAuthentication instanceof PasswordAuthenticationData) {
-      PasswordAuthenticationData auth = (PasswordAuthenticationData)myAuthentication;
+    if (myAuthentication instanceof PasswordAuthenticationData auth) {
 
       command.put("--username");
       command.put(auth.getUserName());

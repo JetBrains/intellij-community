@@ -177,10 +177,9 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
           .sorted((r1, r2) -> PsiUtilCore.compareElementsByPosition(r2, r1))
           .forEach(reference -> {
             final PsiElement parent = reference.getParent();
-            if (!(parent instanceof PsiNewExpression)) {
+            if (!(parent instanceof PsiNewExpression newExpression)) {
               return;
             }
-            final PsiNewExpression newExpression = (PsiNewExpression)parent;
             final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
             if (classReference == null) {
               return;

@@ -104,9 +104,9 @@ IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
 :: ---------------------------------------------------------------------
 "%JAVA_EXE%" ^
   -cp "%CLASS_PATH%" ^
-  %ACC% ^
   "-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" ^
   "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" ^
+  %ACC% ^
   %IDE_PROPERTIES_PROPERTY% ^
   @@ide_jvm_args@@ ^
   @@main_class_name@@ ^

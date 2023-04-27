@@ -58,29 +58,20 @@ public final class ForkedDebuggerHelper {
 
   private static void send(String debuggerId, String processName, String processParameters, int dispatchPort) throws IOException {
     String dispatchAddr = getAddrFromProperty();
-    Socket socket = new Socket(dispatchAddr, dispatchPort);
-    try {
-      DataOutputStream stream = new DataOutputStream(socket.getOutputStream());
-      try {
+    try (Socket socket = new Socket(dispatchAddr, dispatchPort)) {
+      try (DataOutputStream stream = new DataOutputStream(socket.getOutputStream())) {
         stream.writeUTF(debuggerId);
         stream.writeUTF(processName);
         stream.writeUTF(processParameters);
         // wait for the signal handling
         int read = socket.getInputStream().read();
       }
-      finally {
-        stream.close();
-      }
-    }
-    finally {
-      socket.close();
     }
   }
 
   // copied from NetUtils
   private static int findAvailableSocketPort() throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(0);
-    try {
+    try (ServerSocket serverSocket = new ServerSocket(0)) {
       int port = serverSocket.getLocalPort();
       // workaround for linux : calling close() immediately after opening socket
       // may result that socket is not closed
@@ -100,9 +91,6 @@ public final class ForkedDebuggerHelper {
       }
 
       return port;
-    }
-    finally {
-      serverSocket.close();
     }
   }
 

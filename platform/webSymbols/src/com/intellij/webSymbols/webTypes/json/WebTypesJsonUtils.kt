@@ -206,6 +206,7 @@ internal fun Reference.codeCompletion(name: String,
 internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules =
   WebSymbolsContextKindRules.EnablementRules(
     nodePackages,
+    projectTools,
     fileExtensions,
     ideLibraries,
     fileNamePatterns.mapNotNull { it.toRegex() },

@@ -1,14 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes
 
-import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 
-sealed class GitChangeDiffData(val commitSha: String, val filePath: String,
-                               private val patch: TextFilePatch,
-                               protected val fileHistory: GitFileHistory) {
+sealed class GitChangeDiffData(val patch: TextFilePatch, protected val fileHistory: GitFileHistory) {
 
   val diffRanges: List<Range> by lazy(LazyThreadSafetyMode.NONE) {
     patch.hunks.map(PatchHunkUtil::getRange)
@@ -21,27 +20,26 @@ sealed class GitChangeDiffData(val commitSha: String, val filePath: String,
     return fileHistory.contains(commitSha, filePath)
   }
 
-  class Commit(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GitFileHistory)
-    : GitChangeDiffData(commitSha, filePath, patch, fileHistory) {
+  class Commit(patch: TextFilePatch, fileHistory: GitFileHistory) : GitChangeDiffData(patch, fileHistory) {
 
     fun mapPosition(fromCommitSha: String,
-                    side: Side, line: Int): Pair<Side, Int>? {
+                    side: Side, line: Int): DiffLineLocation? {
 
-      val comparison = fileHistory.compare(fromCommitSha, commitSha)
-      if (comparison == 0) return side to line
+      val comparison = fileHistory.compare(fromCommitSha, patch.afterVersionId!!)
+      if (comparison == 0) return DiffLineLocation(side, line)
       if (comparison < 0) {
-        val patches = fileHistory.getPatches(fromCommitSha, commitSha, false, true)
+        val patches = fileHistory.getPatches(fromCommitSha, patch.afterVersionId!!, false, true)
         return transferLine(patches, side, line, false)
       }
       else {
-        val patches = fileHistory.getPatches(commitSha, fromCommitSha, true, false)
+        val patches = fileHistory.getPatches(patch.afterVersionId!!, fromCommitSha, true, false)
         return transferLine(patches, side, line, true)
       }
     }
 
-    private fun transferLine(patchChain: List<TextFilePatch>, side: Side, line: Int, rightToLeft: Boolean): Pair<Side, Int>? {
+    private fun transferLine(patchChain: List<TextFilePatch>, side: Side, line: Int, rightToLeft: Boolean): DiffLineLocation? {
       // points to the same patch
-      if (patchChain.isEmpty()) return side to line
+      if (patchChain.isEmpty()) return DiffLineLocation(side, line)
 
       val patches = if (rightToLeft) patchChain.asReversed() else patchChain
       val transferFrom = if (rightToLeft) Side.RIGHT else Side.LEFT
@@ -73,12 +71,11 @@ sealed class GitChangeDiffData(val commitSha: String, val filePath: String,
           currentSide = transferFrom
         }
       }
-      return currentSide to currentLine
+      return DiffLineLocation(currentSide, currentLine)
     }
 
     private fun reverseRange(range: Range) = Range(range.start2, range.end2, range.start1, range.end1)
   }
 
-  class Cumulative(commitSha: String, filePath: String, patch: TextFilePatch, fileHistory: GitFileHistory)
-    : GitChangeDiffData(commitSha, filePath, patch, fileHistory)
+  class Cumulative(patch: TextFilePatch, fileHistory: GitFileHistory) : GitChangeDiffData(patch, fileHistory)
 }

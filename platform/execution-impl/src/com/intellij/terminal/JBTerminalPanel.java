@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.actions.TerminalActionWrapper;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,13 +33,11 @@ import com.jediterm.terminal.TerminalCopyPasteHandler;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
-import com.jediterm.terminal.model.hyperlinks.LinkInfo;
 import com.jediterm.terminal.ui.TerminalAction;
+import com.jediterm.terminal.ui.TerminalActionMenuBuilder;
 import com.jediterm.terminal.ui.TerminalActionProvider;
 import com.jediterm.terminal.ui.TerminalPanel;
-import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx;
 import com.pty4j.windows.conpty.WinConPtyProcess;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,67 +218,26 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   }
 
   @Override
-  protected @NotNull JPopupMenu createPopupMenu(@Nullable LinkInfo linkInfo, @NotNull MouseEvent e) {
-    if (ExperimentalUI.isNewUI()) {
-      return ActionManager.getInstance().createActionPopupMenu(
-        ActionPlaces.TOOLWINDOW_POPUP,
-        wrapTerminalActions(getTerminalActionProvider(linkInfo, e))
-      ).getComponent();
-    } else {
-      return super.createPopupMenu(linkInfo, e);
-    }
+  protected @NotNull JPopupMenu createPopupMenu(@NotNull TerminalActionProvider actionProvider) {
+    return ActionManager.getInstance().createActionPopupMenu(
+      ActionPlaces.TOOLWINDOW_POPUP,
+      wrapTerminalActions(actionProvider)
+    ).getComponent();
   }
 
-  private TerminalActionProvider getTerminalActionProvider(@Nullable LinkInfo linkInfo, @NotNull MouseEvent e) {
-    // copied from super.createPopupMenu() and adjusted to our needs:
-    TerminalActionProvider provider;
-    LinkInfoEx.PopupMenuGroupProvider popupMenuGroupProvider = LinkInfoEx.getPopupMenuGroupProvider(linkInfo);
-    if (popupMenuGroupProvider != null) {
-      provider = new TerminalActionProvider() {
-        @Override
-        public List<TerminalAction> getActions() {
-          return popupMenuGroupProvider.getPopupMenuGroup(e);
-        }
-
-        @Override
-        public TerminalActionProvider getNextProvider() {
-          return JBTerminalPanel.this;
-        }
-
-        @Override
-        public void setNextProvider(TerminalActionProvider provider) {
-        }
-      };
-    }
-    else {
-      provider = this;
-    }
-    return provider;
-  }
-
-  @NotNull
-  public ActionGroup wrapTerminalActions(@NotNull TerminalActionProvider provider) {
+  private static @NotNull ActionGroup wrapTerminalActions(@NotNull TerminalActionProvider provider) {
     var result = new DefaultActionGroup();
-    var providers = new ArrayList<TerminalActionProvider>();
-    for (var p = provider; p != null; p = p.getNextProvider()) {
-      providers.add(0, p);
-    }
-    var canAddSeparator = false;
-    for (TerminalActionProvider p : providers) {
-      var shouldAddSeparator = true;
-      for (TerminalAction a : p.getActions()) {
-        if (a.isHidden()) {
-          continue;
-        }
-        shouldAddSeparator = shouldAddSeparator || a.isSeparated();
-        if (shouldAddSeparator && canAddSeparator) {
-          result.addSeparator();
-        }
-        result.add(new TerminalActionWrapper(a, this));
-        canAddSeparator = true;
-        shouldAddSeparator = false;
+    TerminalAction.buildMenu(provider, new TerminalActionMenuBuilder() {
+      @Override
+      public void addAction(@NotNull TerminalAction action) {
+        result.add(new TerminalActionWrapper(action));
       }
-    }
+
+      @Override
+      public void addSeparator() {
+        result.addSeparator();
+      }
+    });
     return result;
   }
 
@@ -370,7 +326,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   }
 
   @Override
-  protected Font getFontToDisplay(char c, TextStyle style) {
+  protected @NotNull Font getFontToDisplay(char[] text, int start, int end, @NotNull TextStyle style) {
     int fontStyle = Font.PLAIN;
     if (style.hasOption(TextStyle.Option.BOLD)) {
       fontStyle |= Font.BOLD;
@@ -378,12 +334,11 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     if (style.hasOption(TextStyle.Option.ITALIC)) {
       fontStyle |= Font.ITALIC;
     }
-    FontInfo fontInfo = fontForChar(c, fontStyle);
+    FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(
+      text, start, end, fontStyle,
+      mySettingsProvider.getColorsScheme().getConsoleFontPreferences(),
+      null);
     return fontInfo.getFont().deriveFont((float)mySettingsProvider.getUiSettingsManager().getFontSize());
-  }
-
-  private @NotNull FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorsScheme().getConsoleFontPreferences(), null);
   }
 
   public void fontChanged() {

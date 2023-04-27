@@ -274,6 +274,6 @@ public class MultiThreadSearchTest extends BasePlatformTestCase {
     }
 
     @Override
-    public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) { }
+    public void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) { }
   }
 }

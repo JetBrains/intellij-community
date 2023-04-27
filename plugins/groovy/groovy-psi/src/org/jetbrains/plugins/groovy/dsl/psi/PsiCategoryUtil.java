@@ -9,8 +9,7 @@ public final class PsiCategoryUtil {
 
   @Nullable
   public static PsiClass getClassType(PsiType type, PsiElement place) {
-    if (type instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType)type;
+    if (type instanceof PsiClassType classType) {
       return classType.resolve();
     } else if (type instanceof PsiPrimitiveType) {
       final PsiClassType boxed = ((PsiPrimitiveType)type).getBoxedType(place);

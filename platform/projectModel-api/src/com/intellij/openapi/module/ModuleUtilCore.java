@@ -174,8 +174,7 @@ public class ModuleUtilCore {
     for (Module dependentModule : dependentModules) {
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(dependentModule).getOrderEntries();
       for (OrderEntry o : orderEntries) {
-        if (o instanceof ModuleOrderEntry) {
-          ModuleOrderEntry orderEntry = (ModuleOrderEntry)o;
+        if (o instanceof ModuleOrderEntry orderEntry) {
           if (orderEntry.getModule() == module) {
             if (orderEntry.isExported()) {
               collectModulesDependsOn(dependentModule, result);

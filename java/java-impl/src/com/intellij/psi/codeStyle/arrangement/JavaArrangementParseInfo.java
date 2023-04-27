@@ -207,13 +207,6 @@ public class JavaArrangementParseInfo {
     return myFields.values();
   }
 
-  private static final class OverriddenMethodPair {
-    final @NotNull PsiMethod overridden;
-    final @NotNull PsiMethod overriding;
-
-    private OverriddenMethodPair(@NotNull PsiMethod overridden, @NotNull PsiMethod overriding) {
-      this.overridden = overridden;
-      this.overriding = overriding;
-    }
+  private record OverriddenMethodPair(@NotNull PsiMethod overridden, @NotNull PsiMethod overriding) {
   }
 }

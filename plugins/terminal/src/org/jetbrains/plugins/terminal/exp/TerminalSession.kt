@@ -37,7 +37,7 @@ class TerminalSession(private val project: Project,
     textBuffer = TerminalTextBuffer(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
     controller = TerminalController(model, settings)
-    commandManager = ShellCommandManager(model)
+    commandManager = ShellCommandManager(controller)
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
     typeAheadManager = TerminalTypeAheadManager(typeAheadTerminalModel)
@@ -53,9 +53,6 @@ class TerminalSession(private val project: Project,
   }
 
   fun executeCommand(command: String) {
-    commandManager.rememberPromptText()
-    commandManager.onEnterPressed()
-
     val enterCode = terminalStarter.getCode(KeyEvent.VK_ENTER, 0)
     terminalStarter.sendString(command, false)
     terminalStarter.sendBytes(enterCode, false)

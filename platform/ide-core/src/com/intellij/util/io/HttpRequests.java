@@ -215,8 +215,7 @@ public final class HttpRequests {
       if (includeHeaders) {
         builder.append("\n, headers: ").append(connection.getHeaderFields());
       }
-      if (connection instanceof HttpURLConnection) {
-        HttpURLConnection httpConnection = (HttpURLConnection)connection;
+      if (connection instanceof HttpURLConnection httpConnection) {
         builder.append("\n, response: ").append(httpConnection.getResponseCode()).append(' ').append(httpConnection.getResponseMessage());
       }
     }
@@ -598,7 +597,7 @@ public final class HttpRequests {
 
       checkRequestHeadersForNulBytes(connection);
 
-      if (!(connection instanceof HttpURLConnection)) {
+      if (!(connection instanceof HttpURLConnection httpURLConnection)) {
         return connection;
       }
 
@@ -606,7 +605,6 @@ public final class HttpRequests {
         return connection;
       }
 
-      HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
       String method = httpURLConnection.getRequestMethod();
 
       LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),

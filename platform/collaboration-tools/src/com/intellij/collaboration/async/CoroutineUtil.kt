@@ -5,7 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.childScope
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
@@ -154,44 +157,82 @@ suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev
 fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
   catch { log.error(it) }.shareIn(cs, SharingStarted.Lazily, 1)
 
-fun <ID : Any, T, R> Flow<List<T>>.mapCaching(sourceIdentifier: (T) -> ID,
-                                              mapper: suspend (T) -> R,
-                                              destroy: suspend R.() -> Unit,
-                                              update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> {
-  var initial = true
-  val result = LinkedHashMap<ID, R>()
-  return transform { items ->
-    var hasStructureChanges = false
-    val itemsById = items.associateBy(sourceIdentifier)
+fun <ID : Any, T, R> Flow<Iterable<T>>.associateBy(sourceIdentifier: (T) -> ID,
+                                                   mapper: (CoroutineScope, T) -> R,
+                                                   destroy: suspend R.() -> Unit,
+                                                   update: (suspend R.(T) -> Unit)? = null,
+                                                   customHashingStrategy: HashingStrategy<ID>? = null)
+  : Flow<Map<ID, R>> = associateIndexedBy(sourceIdentifier, { cs, item, _ -> mapper(cs, item) }, destroy, update, customHashingStrategy)
 
-    // remove missing
-    val iter = result.iterator()
-    while (iter.hasNext()) {
-      val (key, exisingResult) = iter.next()
-      if (!itemsById.containsKey(key)) {
-        iter.remove()
-        hasStructureChanges = true
-        exisingResult.destroy()
-      }
+fun <ID : Any, T, R> Flow<Iterable<T>>.associateIndexedBy(
+  sourceIdentifier: (T) -> ID,
+  mapper: (CoroutineScope, item: T, index: Int) -> R,
+  destroy: suspend R.() -> Unit,
+  update: (suspend R.(T) -> Unit)? = null,
+  customHashingStrategy: HashingStrategy<ID>? = null
+): Flow<Map<ID, R>> =
+  channelFlow {
+    val cs = this
+    var initial = true
+    val result = if (customHashingStrategy == null) {
+      mutableMapOf<ID, R>()
+    }
+    else {
+      CollectionFactory.createCustomHashingStrategyMap(customHashingStrategy)
     }
 
-    // add new or update existing
-    for (item in items) {
-      val id = sourceIdentifier(item)
-
-      val existing = result[id]
-      if (existing != null && update != null) {
-        existing.update(item)
+    collect { items ->
+      var hasStructureChanges = false
+      val newItemsIdSet = if (customHashingStrategy == null) {
+        items.mapTo(mutableSetOf(), sourceIdentifier)
       }
       else {
-        result[id] = mapper(item)
-        hasStructureChanges = true
+        CollectionFactory.createCustomHashingStrategySet(customHashingStrategy).let {
+          items.mapTo(it, sourceIdentifier)
+        }
+      }
+
+      // remove missing
+      val iter = result.iterator()
+      while (iter.hasNext()) {
+        val (key, exisingResult) = iter.next()
+        if (!newItemsIdSet.contains(key)) {
+          iter.remove()
+          hasStructureChanges = true
+          exisingResult.destroy()
+        }
+      }
+
+      // add new or update existing
+      for ((index, item) in items.withIndex()) {
+        val id = sourceIdentifier(item)
+
+        val existing = result[id]
+        if (existing != null && update != null) {
+          existing.update(item)
+        }
+        else {
+          result[id] = mapper(cs, item, index)
+          hasStructureChanges = true
+        }
+      }
+
+      if (hasStructureChanges || initial) {
+        initial = false
+        send(result)
       }
     }
-
-    if (hasStructureChanges || initial) {
-      initial = false
-      emit(result.values.toList())
-    }
+    awaitClose()
   }
-}
+
+fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
+                                                  mapper: (CoroutineScope, T) -> R,
+                                                  destroy: suspend R.() -> Unit,
+                                                  update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
+  associateBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
+
+fun <ID : Any, T, R> Flow<Iterable<T>>.mapCachingIndexed(sourceIdentifier: (T) -> ID,
+                                                         mapper: (CoroutineScope, T, index: Int) -> R,
+                                                         destroy: suspend R.() -> Unit,
+                                                         update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
+  associateIndexedBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }

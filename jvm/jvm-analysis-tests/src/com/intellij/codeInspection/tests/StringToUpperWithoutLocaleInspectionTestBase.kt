@@ -10,7 +10,7 @@ import com.intellij.util.PathUtil
 import org.jetbrains.annotations.NonNls
 import java.io.File
 
-abstract class StringToUpperWithoutLocaleInspectionTestBase : UastInspectionTestBase() {
+abstract class StringToUpperWithoutLocaleInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = StringToUpperWithoutLocale2Inspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(sdkLevel) {

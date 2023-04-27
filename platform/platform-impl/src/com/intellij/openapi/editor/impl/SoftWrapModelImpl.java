@@ -508,7 +508,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
     // We delay processing of changed fold regions till the invocation of onFoldProcessingEnd(), as
     // FoldingModel can return inconsistent data before that moment.
-    myDeferredFoldRegions.add(TextRange.create(region)); // copy because region can become invalid later
+    myDeferredFoldRegions.add(region.getTextRange()); // copy because region can become invalid later
   }
 
   @Override

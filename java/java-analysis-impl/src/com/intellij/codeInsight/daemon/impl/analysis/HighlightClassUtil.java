@@ -1141,8 +1141,10 @@ public final class HighlightClassUtil {
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .descriptionAndTooltip(JavaErrorBundle.message("not.allowed.in.sealed.hierarchy", aClass.getName()))
         .range(elementToHighlight);
-      IntentionAction action = QUICK_FIX_FACTORY.createAddToPermitsListFix(aClass, superClass);
-      info.registerFix(action, null, null, null, null);
+      if (!(superClass instanceof PsiCompiledElement)) {
+        IntentionAction action = QUICK_FIX_FACTORY.createAddToPermitsListFix(aClass, superClass);
+        info.registerFix(action, null, null, null, null);
+      }
       return info;
     }
     return null;

@@ -12,17 +12,12 @@ import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.toUElementOfType
 
 class KotlinTestDiffProvider : JvmTestDiffProvider() {
-    override fun isCompiled(file: PsiFile): Boolean {
-        return file.safeAs<KtFile>()?.isCompiled == true
-    }
-
     override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiElement? {
         val failedCalls = findElementsOfClassInRange(file, startOffset, endOffset, KtCallExpression::class.java)
             .map { it as KtCallExpression }
@@ -36,7 +31,7 @@ class KotlinTestDiffProvider : JvmTestDiffProvider() {
         if (call !is KtCallExpression) return null
         val expr = if (param == null) {
             val uCallElement = call.toUElementOfType<UCallExpression>() ?: return null
-            val assertHint = UAssertHint.createAssertEqualsUHint(uCallElement) ?: return null
+            val assertHint = UAssertHint.createAssertEqualsHint(uCallElement) ?: return null
             if (assertHint.expected.getExpressionType() != PsiType.getJavaLangString(call.manager, call.resolveScope)) return null
             if (assertHint.actual.getExpressionType() != PsiType.getJavaLangString(call.manager, call.resolveScope)) return null
             assertHint.expected.sourcePsi ?: return null

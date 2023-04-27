@@ -789,8 +789,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     else {
       boolean syncLoading = true;
       IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
-      if (descriptor instanceof PluginNode) {
-        PluginNode node = (PluginNode)descriptor;
+      if (descriptor instanceof PluginNode node) {
         if (!node.detailsLoaded()) {
           syncLoading = false;
           doLoad(component, () -> {
@@ -890,7 +889,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
     }
 
-    mySuggestedIdeBanner.suggestIde(suggestedCommercialIde);
+    mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, myPlugin.getPluginId());
   }
 
   private enum EmptyState {
@@ -966,8 +965,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       String rating = null;
       String downloads = null;
       String size = null;
-      if (myPlugin instanceof PluginNode) {
-        PluginNode pluginNode = (PluginNode)myPlugin;
+      if (myPlugin instanceof PluginNode pluginNode) {
         rating = pluginNode.getPresentableRating();
         downloads = pluginNode.getPresentableDownloads();
         size = pluginNode.getPresentableSize();

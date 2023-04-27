@@ -34,11 +34,10 @@ abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
     }
     final Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     final Presentation presentation = e.getPresentation();
-    if (!(component instanceof JTree) || !exclusionProcessor.isActionEnabled(myIsExclude)) {
+    if (!(component instanceof JTree tree) || !exclusionProcessor.isActionEnabled(myIsExclude)) {
       presentation.setEnabledAndVisible(false);
       return;
     }
-    JTree tree = (JTree) component;
     List<TreePath> selection = TreePathRoots.collect(tree.getSelectionPaths());
     if (selection.isEmpty()) {
       presentation.setEnabledAndVisible(false);

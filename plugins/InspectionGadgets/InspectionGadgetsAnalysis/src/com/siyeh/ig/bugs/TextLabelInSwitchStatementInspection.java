@@ -55,10 +55,9 @@ public class TextLabelInSwitchStatementInspection extends BaseInspection {
         return;
       }
       for (PsiStatement statement : body.getStatements()) {
-        if (!(statement instanceof PsiLabeledStatement)) {
+        if (!(statement instanceof PsiLabeledStatement labeledStatement)) {
           continue;
         }
-        final PsiLabeledStatement labeledStatement = (PsiLabeledStatement)statement;
         registerError(labeledStatement.getLabelIdentifier(), block);
       }
     }

@@ -49,16 +49,6 @@ public class NewProjectWizard extends AbstractProjectWizard {
     init(modulesProvider);
   }
 
-  public NewProjectWizard(@NotNull Project project, @NotNull ModulesProvider modulesProvider) {
-    super(IdeCoreBundle.message("title.add.module"), project);
-    setDefaultModuleName("untitled");
-    init(modulesProvider);
-  }
-
-  public void setDefaultModuleName(String moduleName) {
-    myWizardContext.setDefaultModuleName(moduleName);
-  }
-
   protected void init(@NotNull ModulesProvider modulesProvider) {
     if (isNewWizard()) {
       JRootPane pane = getRootPane();

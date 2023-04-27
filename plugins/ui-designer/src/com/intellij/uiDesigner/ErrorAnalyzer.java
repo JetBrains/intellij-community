@@ -147,13 +147,11 @@ public final class ErrorAnalyzer {
           // Clear previous error (if any)
           component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, null);
 
-          if (!(component instanceof IContainer)) {
+          if (!(component instanceof IContainer container)) {
             return true;
           }
 
-          final IContainer container = (IContainer)component;
-          if (container instanceof IRootContainer) {
-            final IRootContainer rootContainer = (IRootContainer)container;
+          if (container instanceof IRootContainer rootContainer) {
             if (rootContainer.getComponentCount() > 1) {
               // TODO[vova] implement
               putError(component, new ErrorInfo(

@@ -89,8 +89,7 @@ public class PyStringFormatInspection extends PyInspection {
         if (PsiTreeUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (s != null) {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
-            if (rightType instanceof PyTupleType) {
-              final PyTupleType tupleType = (PyTupleType)rightType;
+            if (rightType instanceof PyTupleType tupleType) {
               matchEntireTupleTypes(problemTarget, tupleType);
               return tupleType.getElementCount();
             }
@@ -665,9 +664,8 @@ public class PyStringFormatInspection extends PyInspection {
 
     @Override
     public void visitPyBinaryExpression(final @NotNull PyBinaryExpression node) {
-      if (node.getLeftExpression() instanceof PyStringLiteralExpression && node.isOperator("%")) {
+      if (node.getLeftExpression() instanceof PyStringLiteralExpression literalExpression && node.isOperator("%")) {
         final Inspection inspection = new Inspection(this, myTypeEvalContext);
-        final PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
         inspection.inspectPercentFormat(literalExpression);
         if (inspection.isProblem()) {
           return;

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.util.containers.Interner
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
@@ -27,7 +28,6 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
-import java.nio.file.Paths
 
 class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
                                     private val dependencyModuleNames: List<String>,

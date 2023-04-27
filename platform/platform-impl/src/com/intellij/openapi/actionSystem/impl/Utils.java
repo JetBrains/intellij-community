@@ -97,8 +97,7 @@ public final class Utils {
       Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       return newPreCachedDataContext(component);
     }
-    else if (dataContext instanceof CustomizedDataContext) {
-      CustomizedDataContext context = (CustomizedDataContext)dataContext;
+    else if (dataContext instanceof CustomizedDataContext context) {
       DataContext delegate = wrapToAsyncDataContext(context.getParent());
       if (delegate == DataContext.EMPTY_CONTEXT) {
         return new PreCachedDataContext(null).prependProvider(context.getCustomDataProvider());

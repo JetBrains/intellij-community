@@ -57,8 +57,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     @Override
     public void actionPerformed(ActionEvent event) {
       Object source = event.getSource();
-      if (source instanceof JTree) {
-        JTree tree = (JTree)source;
+      if (source instanceof JTree tree) {
         TreePath path = tree.getLeadSelectionPath();
         if (path != null) {
           if (tree.isExpanded(path) || tree.getModel().isLeaf(path.getLastPathComponent())) {
@@ -81,8 +80,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     @Override
     public void actionPerformed(ActionEvent event) {
       Object source = event.getSource();
-      if (source instanceof JTree) {
-        JTree tree = (JTree)source;
+      if (source instanceof JTree tree) {
         TreePath path = tree.getLeadSelectionPath();
         if (path != null) {
           if (tree.isExpanded(path)) {

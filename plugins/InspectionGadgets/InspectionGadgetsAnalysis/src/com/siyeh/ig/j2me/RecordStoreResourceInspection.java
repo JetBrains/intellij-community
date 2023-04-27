@@ -36,10 +36,9 @@ public class RecordStoreResourceInspection extends ResourceInspection {
 
   @Override
   protected boolean isResourceCreation(PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     return MethodCallUtils.isCallToMethod(methodCallExpression, "javax.microedition.rms.RecordStore", null, "openRecordStore", (PsiType[])null);
   }
 

@@ -73,8 +73,7 @@ public final class PluginDescriptorStructureUtil {
         return actionId;
       }
     }
-    else if (element instanceof ExtensionPoint) {
-      ExtensionPoint epElement = (ExtensionPoint)element;
+    else if (element instanceof ExtensionPoint epElement) {
       String epName = epElement.getName().getStringValue();
       if (StringUtil.isNotEmpty(epName)) {
         return epName;
@@ -251,8 +250,7 @@ public final class PluginDescriptorStructureUtil {
   }
 
   private static @Nullable String getTopLevelNodeLocation(GenericDomValue<?> element) {
-    if (element instanceof Dependency) {
-      Dependency dependency = (Dependency)element;
+    if (element instanceof Dependency dependency) {
       @NonNls String result = dependency.getRawText();
 
       Boolean optional = dependency.getOptional().getValue();

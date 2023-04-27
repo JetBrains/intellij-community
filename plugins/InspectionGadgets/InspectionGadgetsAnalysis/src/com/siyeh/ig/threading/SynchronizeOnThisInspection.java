@@ -74,10 +74,9 @@ public class SynchronizeOnThisInspection extends BaseInspection {
         return false;
       }
       final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return false;
       }
-      final PsiClassType classType = (PsiClassType)type;
       final PsiClassType javaLangClassType = TypeUtils.getType(CommonClassNames.JAVA_LANG_CLASS, expression);
       if (!javaLangClassType.isAssignableFrom(classType)) {
         return false;
@@ -93,10 +92,9 @@ public class SynchronizeOnThisInspection extends BaseInspection {
       if (isNonPrivateClassType(parameterType)) {
         return true;
       }
-      if (!(parameterType instanceof PsiCapturedWildcardType)) {
+      if (!(parameterType instanceof PsiCapturedWildcardType capturedWildcardType)) {
         return false;
       }
-      final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)parameterType;
       final PsiWildcardType wildcardType = capturedWildcardType.getWildcard();
       final PsiType extendsBoundType = wildcardType.getExtendsBound();
       return isNonPrivateClassType(extendsBoundType);

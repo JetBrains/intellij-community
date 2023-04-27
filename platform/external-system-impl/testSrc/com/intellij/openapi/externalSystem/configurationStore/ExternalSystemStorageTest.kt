@@ -55,6 +55,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.junit.Assert.*
 import org.junit.Assume.assumeFalse
 import org.junit.Before
@@ -65,7 +66,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 
 class ExternalSystemStorageTest {
   companion object {
@@ -304,7 +304,7 @@ class ExternalSystemStorageTest {
   fun `save imported facet in imported module`() = saveProjectInExternalStorageAndCheckResult("importedFacetInImportedModule") { project, projectDir ->
     val imported = ModuleManager.getInstance(project).newModule(projectDir.resolve("imported.iml").systemIndependentPath, ModuleTypeId.JAVA_MODULE)
     val facetRoot = VfsUtilCore.pathToUrl(projectDir.resolve("facet").systemIndependentPath)
-    addFacet(imported, ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID, "imported", listOf(facetRoot))
+    addFacet(imported, SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID, "imported", listOf(facetRoot))
     ExternalSystemModulePropertyManager.getInstance(imported).setMavenized(true)
   }
 
@@ -374,7 +374,8 @@ class ExternalSystemStorageTest {
     assertThat(ExternalSystemModulePropertyManager.getInstance(module).isMavenized()).isTrue()
     val facet = FacetManager.getInstance(module).allFacets.single() as MockFacet
     assertThat(facet.name).isEqualTo("imported")
-    assertThat(facet.externalSource!!.id).isEqualTo(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID)
+    assertThat(facet.externalSource!!.id).isEqualTo(
+      SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID)
     val facetRoot = VfsUtil.pathToUrl(project.basePath!!) + "/facet"
     assertThat(facet.configuration.rootUrls).containsExactly(facetRoot)
   }

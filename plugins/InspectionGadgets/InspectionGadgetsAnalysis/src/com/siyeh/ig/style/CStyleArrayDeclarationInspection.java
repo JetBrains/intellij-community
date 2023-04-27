@@ -115,8 +115,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
         PsiJavaToken first = null;
         PsiJavaToken last = null;
         while (!(child instanceof PsiCodeBlock)) {
-          if (child instanceof PsiJavaToken) {
-            final PsiJavaToken token = (PsiJavaToken)child;
+          if (child instanceof PsiJavaToken token) {
             final IElementType tokenType = token.getTokenType();
             if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
               if (first == null) first = token;

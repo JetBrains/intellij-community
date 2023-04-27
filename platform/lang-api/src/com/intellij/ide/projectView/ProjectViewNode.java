@@ -159,8 +159,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     if (value instanceof VirtualFile) {
       return Collections.singleton((VirtualFile)value);
     }
-    if (value instanceof PsiFileSystemItem) {
-      PsiFileSystemItem item = (PsiFileSystemItem)value;
+    if (value instanceof PsiFileSystemItem item) {
       return getDefaultRootsFor(item.getVirtualFile());
     }
     return Collections.emptySet();

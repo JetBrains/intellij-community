@@ -779,7 +779,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           //    (See e.g. IDEA-244174 for what could go wrong otherwise)
 
           for (int attempt = 0; attempt < maxAttemptsPerIndex; attempt++) {
-            final Lock indexReadLock = index.getLock().readLock();
+            final ReadWriteLock rwLock = index.getLock();
+            final Lock indexReadLock = rwLock.readLock();
             final boolean lockSucceeded = indexReadLock.tryLock();
             if (lockSucceeded) {
               try {

@@ -177,8 +177,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
           toImport.remove(existing);
         }
       }
-      else if (entry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+      else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
         String libraryName = libraryOrderEntry.getLibraryName();
         LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName + libraryOrderEntry.getScope().name());
         if (existing != null) {
@@ -226,8 +225,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
                                                          @NotNull DependencyScope scope) {
     LibraryOrderEntry candidate = null;
     for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+      if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
         if (library == libraryOrderEntry.getLibrary()) {
           return libraryOrderEntry;
         }

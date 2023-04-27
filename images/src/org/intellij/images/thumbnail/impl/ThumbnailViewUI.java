@@ -339,9 +339,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         public Component getListCellRendererComponent(
                 JList list, Object value, int index, boolean isSelected, boolean cellHasFocus
         ) {
-            if (value instanceof VirtualFile) {
-                VirtualFile file = (VirtualFile) value;
-                setFileName(file.getName());
+            if (value instanceof VirtualFile file) {
+              setFileName(file.getName());
                 String toolTipText = IfsUtil.getReferencePath(thumbnailView.getProject(), file);
                 if (!isFileSizeVisible()) {
                     String description = getImageComponent().getDescription();

@@ -969,14 +969,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return OPTIONAL_OF_NULLABLE;
     }
 
-    static class Context {
-      final PsiExpression wrappingArgument;
-      final PsiMethodCallExpression outerCall;
-
-      Context(PsiExpression wrappingArgument, PsiMethodCallExpression outerCall) {
-        this.wrappingArgument = wrappingArgument;
-        this.outerCall = outerCall;
-      }
+    record Context(PsiExpression wrappingArgument, PsiMethodCallExpression outerCall) {
     }
   }
 
@@ -1017,14 +1010,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return OPTIONAL_OF_NULLABLE;
     }
 
-    static class Context {
-      final PsiExpression argument;
-      final PsiMethodCallExpression orElseCall;
-
-      Context(PsiExpression argument, PsiMethodCallExpression orElseCall) {
-        this.argument = argument;
-        this.orElseCall = orElseCall;
-      }
+    record Context(PsiExpression argument, PsiMethodCallExpression orElseCall) {
     }
   }
 }

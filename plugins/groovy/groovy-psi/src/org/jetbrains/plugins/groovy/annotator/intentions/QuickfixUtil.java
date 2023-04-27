@@ -56,9 +56,8 @@ public final class QuickfixUtil {
     //todo: look more carefully
     GrExpression qualifierExpression = refExpr.getQualifierExpression();
 
-    if (!(qualifierExpression instanceof GrReferenceExpression)) return false;
+    if (!(qualifierExpression instanceof GrReferenceExpression referenceExpression)) return false;
 
-    GrReferenceExpression referenceExpression = (GrReferenceExpression)qualifierExpression;
     GroovyPsiElement resolvedElement = ResolveUtil.resolveProperty(referenceExpression, referenceExpression.getReferenceName());
 
     if (resolvedElement == null) return false;

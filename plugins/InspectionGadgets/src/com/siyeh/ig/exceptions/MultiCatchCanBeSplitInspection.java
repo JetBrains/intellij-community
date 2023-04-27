@@ -51,10 +51,9 @@ public class MultiCatchCanBeSplitInspection extends BaseInspection {
 
   private static void doFixImpl(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiCatchSection)) {
+    if (!(parent instanceof PsiCatchSection catchSection)) {
       return;
     }
-    final PsiCatchSection catchSection = (PsiCatchSection)parent;
     final PsiElement grandParent = catchSection.getParent();
     if (!(grandParent instanceof PsiTryStatement)) {
       return;

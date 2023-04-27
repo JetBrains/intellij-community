@@ -138,8 +138,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private @NotNull <Result> CompletableFuture<Result> onValidThread(@NotNull TreePath path,
                                                                     @NotNull Function<? super Node, ? extends Result> function) {
     Object component = path.getLastPathComponent();
-    if (component instanceof Node) {
-      Node node = (Node)component;
+    if (component instanceof Node node) {
       return onValidThread(__ -> disposed || isNodeRemoved(node) ? null : function.apply(node));
     }
 
@@ -318,8 +317,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   }
 
   private Node getNode(Object object, boolean validateChildren) {
-    if (disposed || !(object instanceof Node) || !isValidThread()) return null;
-    Node node = (Node)object;
+    if (disposed || !(object instanceof Node node) || !isValidThread()) return null;
     if (isNodeRemoved(node)) return null;
     if (validateChildren) validateChildren(node);
     return node;

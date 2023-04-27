@@ -23,13 +23,19 @@ abstract class LinuxDistributionCustomizer {
   var extraExecutables: PersistentList<String> = persistentListOf()
 
   open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
-    var patterns = persistentListOf("bin/*.sh", "plugins/**/*.sh", "bin/*.py", "bin/fsnotifier*")
-      .addAll(extraExecutables)
+    var executableFilePatterns = persistentListOf(
+      "bin/*.sh",
+      "plugins/**/*.sh",
+      "bin/fsnotifier*",
+      "bin/*.py"
+    )
+    executableFilePatterns.addAll(RepairUtilityBuilder.executableFilesPatterns(context))
     if (includeRuntime) {
-      patterns = patterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context))
+      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution))
     }
-    patterns.addAll(RepairUtilityBuilder.executableFilesPatterns(context))
-    return patterns.addAll(context.getExtraExecutablePattern(OsFamily.LINUX))
+    return executableFilePatterns
+      .addAll(extraExecutables)
+      .addAll(context.getExtraExecutablePattern(OsFamily.LINUX))
   }
 
   /**

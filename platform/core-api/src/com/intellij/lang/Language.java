@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
@@ -24,9 +24,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * The base class for all programming language support implementations.
- * Specific language implementations should inherit from this class
- * and its registered instance wrapped with {@link LanguageFileType} via {@code com.intellij.fileType} extension point.
+ * A language represents a programming language such as Java,
+ * a document format such as HTML or Markdown,
+ * or other structured data formats such as HTTP cookies or regular expressions.
+ * <p>
+ * An implementation for a specific language should inherit from this class
+ * and wrap its registered instance with {@link LanguageFileType}
+ * via the {@code com.intellij.fileType} extension point.
+ * <p>
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
  * <p>

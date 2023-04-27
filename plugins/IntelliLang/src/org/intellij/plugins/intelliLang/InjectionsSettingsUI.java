@@ -862,16 +862,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     }
   }
 
-  private static final class InjInfo {
-    final BaseInjection injection;
-    final CfgInfo cfgInfo;
-    final boolean bundled;
-
-    private InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
-      this.injection = injection;
-      this.cfgInfo = cfgInfo;
-      this.bundled = bundled;
-    }
+  private record InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
   }
 
   private static List<InjInfo> getInjInfoList(final CfgInfo[] infos) {

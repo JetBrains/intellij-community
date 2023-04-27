@@ -79,8 +79,7 @@ public final class MethodOrClosureScopeChooser {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
         final String text;
-        if (value instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)value;
+        if (value instanceof PsiMethod method) {
           text = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
                                             PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                             PsiFormatUtilBase.SHOW_NAME |
@@ -128,8 +127,7 @@ public final class MethodOrClosureScopeChooser {
 
 
           final PsiElement toSearchFor;
-          if (ToSearchIn instanceof GrMethod) {
-            final GrMethod method = (GrMethod)ToSearchIn;
+          if (ToSearchIn instanceof GrMethod method) {
             toSearchFor = superMethod.isEnabled() && superMethod.isSelected() ? method.findDeepestSuperMethod() : method;
           }
           else {

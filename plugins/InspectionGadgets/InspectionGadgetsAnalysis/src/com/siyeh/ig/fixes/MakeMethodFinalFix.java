@@ -73,8 +73,7 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
       return (PsiMethod)element;
     }
     final PsiElement parent = element.getParent();
-    if (parent instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
+    if (parent instanceof PsiMethodCallExpression methodCall) {
       final PsiMethod method = methodCall.resolveMethod();
       if (method == null || (element.isPhysical() && !FileModificationService.getInstance().preparePsiElementsForWrite(method))) {
         return null;

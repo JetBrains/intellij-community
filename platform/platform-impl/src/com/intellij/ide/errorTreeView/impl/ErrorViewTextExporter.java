@@ -70,13 +70,12 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
     final String newline = System.lineSeparator();
     Object[] children = myStructure.getChildElements(element);
     for (final Object child : children) {
-      if (!(child instanceof ErrorTreeElement)) {
+      if (!(child instanceof ErrorTreeElement childElement)) {
         continue;
       }
       if (!withUsages && child instanceof NavigatableMessageElement) {
         continue;
       }
-      final ErrorTreeElement childElement = (ErrorTreeElement)child;
       if (buffer.length() > 0) {
         buffer.append(newline);
       }

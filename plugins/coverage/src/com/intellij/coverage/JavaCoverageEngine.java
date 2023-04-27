@@ -267,8 +267,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            @NotNull final String name,
                                            @NotNull final CoverageFileProvider coverageDataFileProvider,
                                            @NotNull final CoverageEnabledConfiguration config) {
-    if (config instanceof JavaCoverageEnabledConfiguration) {
-      final JavaCoverageEnabledConfiguration javaConfig = (JavaCoverageEnabledConfiguration)config;
+    if (config instanceof JavaCoverageEnabledConfiguration javaConfig) {
       return createSuite(covRunner, name, coverageDataFileProvider,
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
@@ -627,8 +626,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Nullable
   public String getTestMethodName(@NotNull final PsiElement element,
                                   @NotNull final AbstractTestProxy testProxy) {
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
         String qualifiedName = ClassUtil.getJVMClassName(aClass);

@@ -408,7 +408,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
           new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lastLineNumber));
         for (Iterator<RangeHighlighter> it = rangeHighlighters.iterator(); it.hasNext(); ) {
           final RangeHighlighter highlighter = it.next();
-          if (!highlighter.isValid() || TextRange.create(highlighter).intersects(changeRange)) {
+          if (!highlighter.isValid() || highlighter.getTextRange().intersects(changeRange)) {
             highlighter.dispose();
             it.remove();
           }

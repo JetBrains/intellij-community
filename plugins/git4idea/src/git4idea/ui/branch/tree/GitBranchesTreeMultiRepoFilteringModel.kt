@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
@@ -12,7 +12,6 @@ import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.popup.GitBranchesTreePopup
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
@@ -22,8 +21,6 @@ class GitBranchesTreeMultiRepoFilteringModel(
   private val repositories: List<GitRepository>,
   private val topLevelActions: List<Any> = emptyList()
 ) : AbstractTreeModel(), GitBranchesTreeModel {
-
-  private val branchesSubtreeSeparator = GitBranchesTreePopup.createTreeSeparator()
 
   private val branchManager = project.service<GitBranchManager>()
 
@@ -87,8 +84,14 @@ class GitBranchesTreeMultiRepoFilteringModel(
       }
       is GitRepository -> {
         branchesTreeCache.getOrPut(parent) {
-          listOf(BranchTypeUnderRepository(parent, GitBranchType.LOCAL),
-                 BranchTypeUnderRepository(parent, GitBranchType.REMOTE))
+          mutableListOf<BranchTypeUnderRepository>().apply {
+            if (!repositoriesTree.isLocalBranchesEmpty(parent)) {
+              add(BranchTypeUnderRepository(parent, GitBranchType.LOCAL))
+            }
+            if (!repositoriesTree.isRemoteBranchesEmpty(parent)) {
+              add(BranchTypeUnderRepository(parent, GitBranchType.REMOTE))
+            }
+          }
         }
       }
       else -> emptyList()
@@ -96,9 +99,10 @@ class GitBranchesTreeMultiRepoFilteringModel(
   }
 
   private fun getTopLevelNodes(): List<Any> {
-    val repositoriesExpanded = listOf(branchesSubtreeSeparator) + repositories
+    val localAndRemoteNodes = getLocalAndRemoteTopLevelNodes(commonLocalBranchesTree, commonRemoteBranchesTree)
+    val notEmptyRepositories = repositoriesTree.getNotEmptyRepositories()
 
-    return topLevelActions + GitBranchType.LOCAL + GitBranchType.REMOTE + repositoriesExpanded
+    return topLevelActions + localAndRemoteNodes + notEmptyRepositories
   }
 
   private fun getBranchTreeNodes(branchType: GitBranchType, path: List<String>, repository: GitRepository? = null): List<Any> {
@@ -115,8 +119,17 @@ class GitBranchesTreeMultiRepoFilteringModel(
 
   override fun getPreferredSelection(): TreePath? = getPreferredBranch()?.let { createTreePathFor(this, it) }
 
-  private fun getPreferredBranch(): GitBranch? =
+  private fun getPreferredBranch(): Any? =
     getPreferredBranch(project, repositories, branchNameMatcher, commonLocalBranchesTree, commonRemoteBranchesTree)
+    ?: getPreferredBranchUnderFirstNonEmptyRepo()
+
+  private fun getPreferredBranchUnderFirstNonEmptyRepo(): BranchUnderRepository? {
+    val nonEmptyRepo = repositories.firstOrNull(repositoriesTree::isNotEmpty) ?: return null
+
+    return repositoriesTree[nonEmptyRepo]
+      .let { getPreferredBranch(project, listOf(nonEmptyRepo), branchNameMatcher, it.localBranches, it.remoteBranches) }
+      ?.let { BranchUnderRepository(nonEmptyRepo, it) }
+  }
 
   override fun filterBranches(matcher: MinusculeMatcher?) {
     branchNameMatcher = matcher
@@ -129,8 +142,8 @@ class GitBranchesTreeMultiRepoFilteringModel(
   private inner class LazyRepositoryBranchesHolder {
 
     private val tree by lazy {
-      if (repositories.size > 1) mutableMapOf(*repositories.map { it to LazyRepositoryBranchesSubtreeHolder(it) }.toTypedArray())
-      else mutableMapOf()
+      if (repositories.size > 1) hashMapOf(*repositories.map { it to LazyRepositoryBranchesSubtreeHolder(it) }.toTypedArray())
+      else hashMapOf()
     }
 
     operator fun get(repository: GitRepository) = tree.getOrPut(repository) { LazyRepositoryBranchesSubtreeHolder(repository) }
@@ -139,6 +152,8 @@ class GitBranchesTreeMultiRepoFilteringModel(
     fun isLocalBranchesEmpty(repository: GitRepository) = tree[repository]?.localBranches?.isEmpty() ?: true
     fun isRemoteBranchesEmpty() = tree.values.all { it.remoteBranches.isEmpty() }
     fun isRemoteBranchesEmpty(repository: GitRepository) = tree[repository]?.remoteBranches?.isEmpty() ?: true
+    fun isNotEmpty(repository: GitRepository) = !isLocalBranchesEmpty(repository) || !isRemoteBranchesEmpty(repository)
+    fun getNotEmptyRepositories(): List<GitRepository> = repositories.filter(::isNotEmpty)
   }
 
   private inner class LazyRepositoryBranchesSubtreeHolder(repository: GitRepository) {

@@ -346,8 +346,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
                                                                                    @NotNull Change change,
                                                                                    @NotNull ContentDiffRequest request) {
     if (project == null) return null;
-    if (!(change instanceof ChangeListChange)) return null;
-    ChangeListChange changeListChange = (ChangeListChange)change;
+    if (!(change instanceof ChangeListChange changeListChange)) return null;
 
     List<DiffContent> contents = request.getContents();
     if (contents.size() != 2) return null;

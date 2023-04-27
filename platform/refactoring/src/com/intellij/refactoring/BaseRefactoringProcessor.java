@@ -361,8 +361,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     Set<PsiFile> dynamicUsagesCodeFiles = new HashSet<>();
 
     for (Usage usage : usages) {
-      if (usage instanceof PsiElementUsage) {
-        final PsiElementUsage elementUsage = (PsiElementUsage)usage;
+      if (usage instanceof PsiElementUsage elementUsage) {
         final PsiElement element = elementUsage.getElement();
         if (element == null) continue;
         final PsiFile containingFile = element.getContainingFile();

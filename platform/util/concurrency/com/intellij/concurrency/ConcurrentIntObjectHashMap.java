@@ -156,8 +156,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     @Override
     public final boolean equals(Object o) {
-      if (!(o instanceof Entry)) return false;
-      Entry<?> e = (Entry<?>)o;
+      if (!(o instanceof Entry<?> e)) return false;
       if (e.getKey() != key) return false;
       Object v = e.getValue();
       Object u = val;
@@ -621,9 +620,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                 }
               }
             }
-            else if (f instanceof TreeBin) {
+            else if (f instanceof TreeBin<V> t) {
               validated = true;
-              TreeBin<V> t = (TreeBin<V>)f;
               TreeNode<V> r, p;
               if ((r = t.root) != null &&
                   (p = r.findTreeNode(hash, key)) != null) {
@@ -1269,8 +1267,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               setTabAt(tab, i, fwd);
               advance = true;
             }
-            else if (f instanceof TreeBin) {
-              TreeBin<V> t = (TreeBin<V>)f;
+            else if (f instanceof TreeBin<V> t) {
               TreeNode<V> lo = null, loTail = null;
               TreeNode<V> hi = null, hiTail = null;
               int lc = 0, hc = 0;

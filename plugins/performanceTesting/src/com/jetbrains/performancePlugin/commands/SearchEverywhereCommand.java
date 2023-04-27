@@ -65,42 +65,45 @@ public class SearchEverywhereCommand extends AbstractCommand {
     }
 
     Ref<Future<List<Object>>> result = new Ref<>();
-    Ref<Span> spanRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
-      Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner();
-      DataContext dataContext = DataManager.getInstance().getDataContext(focusedComponent);
-      IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-      AnActionEvent actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, dataContext);
-      TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_show", span ->{
-        SearchEverywhereManager.getInstance(project).show(tabId.get(), "", actionEvent);
-      });
-      Span span = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_" + tab).startSpan();
-      spanRef.set(span);
-      try (Scope ignored = span.makeCurrent()) {
-        @SuppressWarnings("TestOnlyProblems") Future<List<Object>> resultList = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().findElementsForPattern(text);
-        result.set(resultList);
-      }
-    }));
-    try {
-      result.get().get();
-      if (myOptions.close) {
-        ApplicationManager.getApplication()
-          .invokeAndWait(() -> SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().closePopup());
-      }
-      if (myOptions.selectFirst) {
-        WriteAction.runAndWait(() -> {
-          ApplicationManager.getApplication()
-            .invokeAndWait(() -> SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().selectFirst());
+    Ref<Span> itemsLoadedSpanRef = new Ref<>();
+    TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere", globalSpan ->{
+      ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
+        Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner();
+        DataContext dataContext = DataManager.getInstance().getDataContext(focusedComponent);
+        IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+        AnActionEvent actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, dataContext);
+        TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_dialog_shown", span ->{
+          SearchEverywhereManager.getInstance(project).show(tabId.get(), "", actionEvent);
         });
+        Span span = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan();
+        itemsLoadedSpanRef.set(span);
+        try (Scope ignored = span.makeCurrent()) {
+          @SuppressWarnings("TestOnlyProblems") Future<List<Object>> resultList = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().findElementsForPattern(text);
+          result.set(resultList);
+        }
+      }));
+      try {
+        result.get().get();
+        if (myOptions.close) {
+          ApplicationManager.getApplication()
+            .invokeAndWait(() -> SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().closePopup());
+        }
+        if (myOptions.selectFirst) {
+          WriteAction.runAndWait(() -> {
+            ApplicationManager.getApplication()
+              .invokeAndWait(() -> SearchEverywhereManager.getInstance(project).getCurrentlyShownUI().selectFirst());
+          });
+        }
       }
-    }
-    catch (InterruptedException | ExecutionException e) {
-      LOG.error(e);
-    }
-    finally {
-      spanRef.get().end();
-      actionCallback.setDone();
-    }
+      catch (InterruptedException | ExecutionException e) {
+        LOG.error(e);
+      }
+      finally {
+        itemsLoadedSpanRef.get().end();
+        actionCallback.setDone();
+      }
+    });
+
     return Promises.toPromise(actionCallback);
   }
 

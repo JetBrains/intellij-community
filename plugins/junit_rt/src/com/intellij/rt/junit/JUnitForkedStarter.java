@@ -9,7 +9,7 @@ import java.util.List;
 public final class JUnitForkedStarter {
 
   public static void main(String[] args) throws Exception {
-    List<String> argList = new ArrayList<String>();
+    List<String> argList = new ArrayList<>();
     for (String arg : args) {
       final int count = RepeatCount.getCount(arg);
       if (count != 0) {
@@ -21,7 +21,7 @@ public final class JUnitForkedStarter {
     args = argList.toArray(new String[0]);
     final String[] childTestDescription = {args[0]};
     final String argentName = args[1];
-    final ArrayList<String> listeners = new ArrayList<String>();
+    final ArrayList<String> listeners = new ArrayList<>();
     for (int i = 2, argsLength = args.length; i < argsLength; i++) {
       listeners.add(args[i]);
     }

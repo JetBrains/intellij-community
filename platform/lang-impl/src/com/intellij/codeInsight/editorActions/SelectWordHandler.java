@@ -216,8 +216,7 @@ public class SelectWordHandler extends EditorActionHandler.ForEachCaret {
 
   private static boolean isLanguageExtension(@NotNull final PsiFile file, @NotNull final PsiElement elementAt) {
     final Language elementLanguage = elementAt.getLanguage();
-    if (file.getLanguage() instanceof CompositeLanguage) {
-      CompositeLanguage compositeLanguage = (CompositeLanguage) file.getLanguage();
+    if (file.getLanguage() instanceof CompositeLanguage compositeLanguage) {
       final Language[] extensions = compositeLanguage.getLanguageExtensionsForFile(file);
       return ArrayUtil.contains(elementLanguage, extensions);
     }

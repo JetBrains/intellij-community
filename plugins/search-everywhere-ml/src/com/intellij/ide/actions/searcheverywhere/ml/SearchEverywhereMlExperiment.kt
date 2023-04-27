@@ -33,6 +33,7 @@ internal class SearchEverywhereMlExperiment {
     ),
 
     SearchEverywhereTabWithMl.FILES to Experiment(
+      2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
       3 to ExperimentType.NO_ML
     ),
 

@@ -48,7 +48,7 @@ public class EditFoldingOptionsAction implements IntentionAction, LowPriorityAct
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ShowSettingsUtil.getInstance().editConfigurable(project, new CodeFoldingConfigurable());
+    ShowSettingsUtil.getInstance().showSettingsDialog(project, CodeFoldingConfigurable.class);
   }
 
   @Override

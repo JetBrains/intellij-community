@@ -479,9 +479,8 @@ public class SceneBuilderImpl implements SceneBuilder {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SelectionNode)) return false;
+      if (!(o instanceof SelectionNode node)) return false;
 
-      SelectionNode node = (SelectionNode)o;
       return indexInParent == node.indexInParent && Objects.equals(qualifiedName, node.qualifiedName);
     }
 

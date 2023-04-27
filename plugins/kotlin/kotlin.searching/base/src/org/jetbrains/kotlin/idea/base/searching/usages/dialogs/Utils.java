@@ -28,9 +28,8 @@ final class Utils {
 
     static boolean renameCheckbox(@NotNull JPanel panel, @NotNull String srcText, @Nls @NotNull String destText) {
         for (Component component : panel.getComponents()) {
-            if (component instanceof JCheckBox) {
-                JCheckBox checkBox = (JCheckBox) component;
-                if (checkBox.getText().equals(srcText)) {
+            if (component instanceof JCheckBox checkBox) {
+              if (checkBox.getText().equals(srcText)) {
                     checkBox.setText(destText);
                     return true;
                 }
@@ -42,9 +41,8 @@ final class Utils {
 
     static void removeCheckbox(@NotNull JPanel panel, @NotNull String srcText) {
         for (Component component : panel.getComponents()) {
-            if (component instanceof JCheckBox) {
-                JCheckBox checkBox = (JCheckBox) component;
-                if (checkBox.getText().equals(srcText)) {
+            if (component instanceof JCheckBox checkBox) {
+              if (checkBox.getText().equals(srcText)) {
                     panel.remove(checkBox);
                     return;
                 }

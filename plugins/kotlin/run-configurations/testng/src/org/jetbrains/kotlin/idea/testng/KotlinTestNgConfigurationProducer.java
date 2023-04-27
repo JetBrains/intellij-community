@@ -67,13 +67,11 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
             return false;
         }
 
-        if (!(leaf.getContainingFile() instanceof KtFile)) {
+        if (!(leaf.getContainingFile() instanceof KtFile ktFile)) {
             return false;
         }
 
-        KtFile ktFile = (KtFile) leaf.getContainingFile();
-
-        if (!JvmPlatformKt.isJvm(TargetPlatformDetectorUtils.getPlatform(ktFile))) {
+      if (!JvmPlatformKt.isJvm(TargetPlatformDetectorUtils.getPlatform(ktFile))) {
             return false;
         }
 

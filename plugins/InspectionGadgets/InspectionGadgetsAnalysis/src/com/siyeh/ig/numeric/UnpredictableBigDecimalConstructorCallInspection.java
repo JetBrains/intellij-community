@@ -176,11 +176,10 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
           return false;
         }
       }
-      else if (expression instanceof PsiPolyadicExpression) {
+      else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         if (ignoreComplexLiterals) {
           return false;
         }
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         for (PsiExpression operand : polyadicExpression.getOperands()) {
           if (!checkExpression(operand)) {
             return false;

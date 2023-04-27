@@ -89,7 +89,7 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
         final boolean useTabs =
           CodeStyle.getSettings(psiFile).useTabCharacter(psiFile.getFileType());
         CharFilter NOT_INDENT_FILTER = ch -> useTabs ? ch != '\t' : ch != ' ';
-        String pastedText = document.getText(TextRange.create(bounds));
+        String pastedText = document.getText(bounds.getTextRange());
 
         int startLine = document.getLineNumber(bounds.getStartOffset());
         int endLine = document.getLineNumber(bounds.getEndOffset());

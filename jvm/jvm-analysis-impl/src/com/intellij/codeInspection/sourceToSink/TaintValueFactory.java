@@ -46,8 +46,7 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     if (info != TaintValue.UNKNOWN) return info;
     info = fromExternalAnnotations(owner);
     if (info != TaintValue.UNKNOWN) return info;
-    if (owner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)owner;
+    if (owner instanceof PsiParameter parameter) {
       info = of(parameter);
       if (info != TaintValue.UNKNOWN) return info;
       if (parameter.isVarArgs() && type instanceof PsiEllipsisType) {

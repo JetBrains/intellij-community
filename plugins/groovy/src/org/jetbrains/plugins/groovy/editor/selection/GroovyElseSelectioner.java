@@ -38,9 +38,8 @@ public class GroovyElseSelectioner extends ExtendWordSelectionHandlerBase {
   @Nullable
   @Override
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
-    if (!(e instanceof GrIfStatement)) return null;
+    if (!(e instanceof GrIfStatement ifSt)) return null;
 
-    GrIfStatement ifSt = (GrIfStatement)e;
     GrStatement branch = ifSt.getElseBranch();
     PsiElement elseKeyword = ifSt.getElseKeyword();
     if (branch == null || elseKeyword == null) return null;

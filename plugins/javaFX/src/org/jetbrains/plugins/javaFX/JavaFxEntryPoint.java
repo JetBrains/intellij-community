@@ -32,8 +32,7 @@ public final class JavaFxEntryPoint extends EntryPoint {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)psiElement;
+    if (psiElement instanceof PsiMethod method) {
       final int paramsCount = method.getParameterList().getParametersCount();
       final String methodName = method.getName();
       final PsiClass containingClass = method.getContainingClass();

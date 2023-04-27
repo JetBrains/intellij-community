@@ -87,8 +87,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       if (element instanceof PyFunction) {
         cls = ((PyFunction)element).getContainingClass();
       }
-      else if (element instanceof PyTargetExpression) {
-        final PyTargetExpression expr = (PyTargetExpression)element;
+      else if (element instanceof PyTargetExpression expr) {
         if (expr.isQualified() || ScopeUtil.getScopeOwner(expr) instanceof PyClass) {
           cls = expr.getContainingClass();
         }

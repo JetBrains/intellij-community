@@ -214,8 +214,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(owner);
     final AnalysisResult result = new AnalysisResult();
     for (Instruction instruction : controlFlow.getInstructions()) {
-      if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         final PsiElement element = readWriteInstruction.getElement();
         if (element == null) {
           continue;

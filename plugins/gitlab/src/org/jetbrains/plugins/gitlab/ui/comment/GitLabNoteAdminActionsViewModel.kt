@@ -30,8 +30,11 @@ class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val 
   override val editVm: Flow<GitLabNoteEditingViewModel?> = isEditing.transformLatest { editing ->
     if (editing) {
       coroutineScope {
-        val editVm = EditGitLabNoteViewModel(this, note) {
-          stopEditing()
+        val cs = this@coroutineScope
+        val editVm = DelegatingGitLabNoteEditingViewModel(cs, note.body.value, note::setBody).apply {
+          onDoneIn(cs) {
+            stopEditing()
+          }
         }
         emit(editVm)
         awaitCancellation()

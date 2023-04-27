@@ -46,7 +46,6 @@ public class StaticPathReferenceProvider extends PathReferenceProviderBase {
                                   final String text,
                                   final @NotNull List<? super PsiReference> references,
                                   final boolean soft) {
-
     FileReferenceSet set = new FileReferenceSet(text, psiElement, offset, null, true, myEndingSlashNotAllowed, mySuitableFileTypes) {
       @Override
       protected boolean isUrlEncoded() {

@@ -86,8 +86,7 @@ public class RecentProjectPanel extends JPanel {
     myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator);
     Collection<String> pathsToCheck = new HashSet<>();
     for (AnAction action : recentProjectActions) {
-      if (action instanceof ReopenProjectAction) {
-        ReopenProjectAction item = (ReopenProjectAction)action;
+      if (action instanceof ReopenProjectAction item) {
         myPathShortener.addPath(item, item.getProjectPath());
         pathsToCheck.add(item.getProjectPath());
       }
@@ -483,13 +482,11 @@ public class RecentProjectPanel extends JPanel {
 
       setBackground(back);
 
-      if (value instanceof ReopenProjectAction) {
-        ReopenProjectAction item = (ReopenProjectAction)value;
+      if (value instanceof ReopenProjectAction item) {
         myName.setText(item.getTemplatePresentation().getText());
         myPath.setText(getTitle2Text(item, myPath, JBUIScale.scale(40)));
       }
-      else if (value instanceof ProjectGroupActionGroup) {
-        final ProjectGroupActionGroup group = (ProjectGroupActionGroup)value;
+      else if (value instanceof ProjectGroupActionGroup group) {
         myName.setText(group.getGroup().getName());
         myPath.setText("");
       }

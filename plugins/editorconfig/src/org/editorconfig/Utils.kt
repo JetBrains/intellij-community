@@ -218,8 +218,7 @@ object Utils {
           else currRoot.parentFile
         }
       }
-      .map { currRoot -> containsEditorConfig(currRoot) }
-      .any()
+      .any { dir -> containsEditorConfig(dir) }
   }
 
   private fun containsEditorConfig(dir: File): Boolean =

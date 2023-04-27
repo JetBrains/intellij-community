@@ -520,8 +520,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
   @Nullable
   private DefaultMutableTreeNode getFirstNodeToEdit() {
     // start edit last selected component if editable
-    if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode) {
-      RepositoryNode selectedNode = ((RepositoryNode)myTree.getLastSelectedPathComponent());
+    if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode selectedNode) {
       if (selectedNode.isEditableNow()) return selectedNode;
     }
     List<RepositoryNode> repositoryNodes = getChildNodesByType((DefaultMutableTreeNode)myTree.getModel().getRoot(),
@@ -633,9 +632,8 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
       // null border works as expected always.
       ColoredTreeCellRenderer renderer = getTextRenderer();
       renderer.setIpad(JBInsets.emptyInsets());
-      if (value instanceof RepositoryNode) {
+      if (value instanceof RepositoryNode valueNode) {
         //todo simplify, remove instance of
-        RepositoryNode valueNode = (RepositoryNode)value;
         boolean isCheckboxVisible = valueNode.isCheckboxVisible();
         myCheckbox.setVisible(isCheckboxVisible);
         if (!isCheckboxVisible) {
@@ -679,8 +677,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
     @Override
     public boolean isCellEditable(EventObject anEvent) {
-      if (anEvent instanceof MouseEvent) {
-        MouseEvent me = ((MouseEvent)anEvent);
+      if (anEvent instanceof MouseEvent me) {
         final TreePath path = myTree.getClosestPathForLocation(me.getX(), me.getY());
         final int row = myTree.getRowForLocation(me.getX(), me.getY());
         myTree.getCellRenderer().getTreeCellRendererComponent(myTree, path.getLastPathComponent(), false, false, true, row, true);

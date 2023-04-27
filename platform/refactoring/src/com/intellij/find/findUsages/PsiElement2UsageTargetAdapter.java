@@ -252,16 +252,13 @@ public class PsiElement2UsageTargetAdapter
       myPresentableText = presentation == null ? UsageViewUtil.createNodeText(element) : presentation.getPresentableText();
       myLocationText = presentation == null ? null : StringUtil.nullize(presentation.getLocationString());
       if (myIcon == null) {
-        if (element instanceof PsiMetaOwner) {
-          final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
+        if (element instanceof PsiMetaOwner psiMetaOwner) {
           final PsiMetaData metaData = psiMetaOwner.getMetaData();
-          if (metaData instanceof PsiPresentableMetaData) {
-            final PsiPresentableMetaData psiPresentableMetaData = (PsiPresentableMetaData)metaData;
+          if (metaData instanceof PsiPresentableMetaData psiPresentableMetaData) {
             if (myIcon == null) myIcon = psiPresentableMetaData.getIcon();
           }
         }
-        else if (element instanceof PsiFile) {
-          final PsiFile psiFile = (PsiFile)element;
+        else if (element instanceof PsiFile psiFile) {
           final VirtualFile virtualFile = psiFile.getVirtualFile();
           if (virtualFile != null) {
             myIcon = VirtualFilePresentation.getIcon(virtualFile);

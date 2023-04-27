@@ -182,8 +182,7 @@ final class FocusDebuggerAction extends AnAction implements DumbAware {
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      if (event instanceof FocusEvent) {
-        FocusEvent focusEvent = (FocusEvent)event;
+      if (event instanceof FocusEvent focusEvent) {
         Component fromComponent = focusEvent.getComponent();
         Component oppositeComponent = focusEvent.getOppositeComponent();
 

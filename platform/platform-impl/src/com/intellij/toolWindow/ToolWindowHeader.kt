@@ -254,6 +254,8 @@ abstract class ToolWindowHeader internal constructor(
 
   fun getToolbar() = toolbar
 
+  fun getToolbarWest() = toolbarWest
+
   fun getToolbarActions() = actionGroup
 
   fun getToolbarWestActions() = actionGroupWest

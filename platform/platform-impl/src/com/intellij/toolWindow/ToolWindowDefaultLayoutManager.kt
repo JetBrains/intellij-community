@@ -15,7 +15,10 @@ import kotlinx.serialization.Serializable
 import java.awt.Rectangle
 
 @Service(Service.Level.APP)
-@State(name = "ToolWindowLayout", storages = [Storage(value = "window.layouts.xml")])
+@State(name = "ToolWindowLayout", storages = [
+  Storage(value = "window.layouts.xml"),
+  Storage(value = "window.state.xml", deprecated = true, roamingType = RoamingType.DISABLED),
+])
 class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   : PersistentStateComponentWithModificationTracker<ToolWindowDefaultLayoutManager.ToolWindowLayoutStorageManagerState> {
   companion object {
@@ -78,12 +81,18 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   }
 
   override fun loadState(state: ToolWindowLayoutStorageManagerState) {
-    this.state = state
-    val activeLayout = state.getActiveLayoutCopy(isNewUi)
+    val newState = if (state.layouts.isEmpty() && (state.v1.isNotEmpty() || state.v2.isNotEmpty())) { // migrating from 2022.3
+      ToolWindowLayoutStorageManagerState(layouts = mapOf(DEFAULT_LAYOUT_NAME to LayoutDescriptor(v1 = state.v1, v2 = state.v2)))
+    }
+    else {
+      state
+    }
+    this.state = newState
+    val activeLayout = newState.getActiveLayoutCopy(isNewUi)
     if (activeLayout == null) {
       loadDefaultLayout(isNewUi)
     } else {
-      setLayout(state.activeLayoutName, activeLayout)
+      setLayout(newState.activeLayoutName, activeLayout)
     }
   }
 
@@ -100,6 +109,8 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   data class ToolWindowLayoutStorageManagerState(
     val activeLayoutName: String = DEFAULT_LAYOUT_NAME,
     val layouts: Map<String, LayoutDescriptor> = emptyMap(),
+    val v1: List<ToolWindowDescriptor> = emptyList(),
+    val v2: List<ToolWindowDescriptor> = emptyList(),
   ) {
 
     fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout? {

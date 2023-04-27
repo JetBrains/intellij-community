@@ -49,9 +49,8 @@ public class EarResource implements Serializable {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EarResource)) return false;
+    if (!(o instanceof EarResource resource)) return false;
 
-    EarResource resource = (EarResource)o;
     if (!file.getPath().equals(resource.file.getPath())) return false;
     if (!earDirectory.equals(resource.earDirectory)) return false;
     if (!relativePath.equals(resource.relativePath)) return false;

@@ -565,8 +565,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   public final ColumnInfo TITLE = new ColumnInfo("TITLE") {
     @Override
     public Object valueOf(Object o) {
-      if (o instanceof MyTreeNode) {
-        MyTreeNode node = (MyTreeNode)o;
+      if (o instanceof MyTreeNode node) {
         return node.getText();
       }
       return o.toString();
@@ -584,8 +583,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
     @Override
     public Object valueOf(Object o) {
-      if (o instanceof MyTreeNode) {
-        MyTreeNode node = (MyTreeNode)o;
+      if (o instanceof MyTreeNode node) {
         return node.getValue();
       }
 
@@ -844,16 +842,14 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         getPathForRow(row).getLastPathComponent();
       myCurrentEditor = null;
       myCurrentNode = null;
-      if (defaultNode instanceof MyTreeNode) {
-        MyTreeNode node = (MyTreeNode)defaultNode;
+      if (defaultNode instanceof MyTreeNode node) {
         myCurrentNode = node;
         if (node.getKey() instanceof BooleanOption) {
           myCurrentEditor = myBooleanEditor;
           myBooleanEditor.setSelected(node.getValue() == Boolean.TRUE);
           myBooleanEditor.setEnabled(node.isEnabled());
         }
-        else if (node.getKey() instanceof IntOption) {
-          IntOption intOption = (IntOption)node.getKey();
+        else if (node.getKey() instanceof IntOption intOption) {
           myCurrentEditor = myIntOptionsEditor;
           myIntOptionsEditor.setCanBeEmpty(true);
           myIntOptionsEditor.setMinValue(intOption.getMinValue());
@@ -969,8 +965,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                                       boolean hasFocus) {
       SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
       String text;
-      if (value instanceof MyTreeNode) {
-        MyTreeNode node = (MyTreeNode)value;
+      if (value instanceof MyTreeNode node) {
         if (node.getKey().groupName == null) {
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         }

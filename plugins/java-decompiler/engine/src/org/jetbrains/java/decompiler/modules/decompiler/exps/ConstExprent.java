@@ -322,9 +322,8 @@ public class ConstExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof ConstExprent)) return false;
+    if (!(o instanceof ConstExprent cn)) return false;
 
-    ConstExprent cn = (ConstExprent)o;
     return Objects.equals(constType, cn.getConstType()) &&
            Objects.equals(value, cn.getValue());
   }

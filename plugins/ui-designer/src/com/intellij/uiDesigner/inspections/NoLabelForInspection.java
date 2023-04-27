@@ -48,9 +48,8 @@ public class NoLabelForInspection extends BaseFormInspection {
             found.set(Boolean.TRUE);
             return false;
           }
-          else if (component instanceof RadComponent &&
+          else if (component instanceof RadComponent radComponent &&
                    (prop == null || StringUtil.isEmpty((String)prop.getPropertyValue(c2)))) {
-            RadComponent radComponent = (RadComponent) component;
             final RadComponent radComponent2 = (RadComponent)c2;
             allLabels.add(radComponent2);
             if (radComponent.getParent() == radComponent2.getParent() && radComponent.getParent().getLayoutManager().isGrid()) {
@@ -101,8 +100,7 @@ public class NoLabelForInspection extends BaseFormInspection {
         IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel);
         boolean modified = false;
         for(IntrospectedProperty prop: props) {
-          if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty) {
-            IntroComponentProperty icp = (IntroComponentProperty) prop;
+          if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty icp) {
             icp.setValueEx(myLabel, myComponent.getId());
             modified = true;
             break;

@@ -57,9 +57,7 @@ public class LibraryNode extends PackageDependenciesNode {
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof LibraryNode)) return false;
-
-    final LibraryNode libraryNode = (LibraryNode)o;
+    if (!(o instanceof LibraryNode libraryNode)) return false;
 
     if (!myLibraryOrJdk.equals(libraryNode.myLibraryOrJdk)) return false;
 

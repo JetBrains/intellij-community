@@ -60,10 +60,10 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
 
     suspend fun loadAndOpenProject(path: Path, parent: Disposable): Project {
-      check(!ApplicationManager.getApplication().isDispatchThread)
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       val project = getInstanceEx().openProjectAsync(path, OpenProjectTask {})!!
       Disposer.register(parent) {
-        check(!ApplicationManager.getApplication().isDispatchThread)
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
         runBlocking {
           getInstanceEx().forceCloseProjectAsync(project)
         }

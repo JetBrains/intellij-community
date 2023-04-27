@@ -5,22 +5,39 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.popup.PopupState
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
+import java.awt.Component
 import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.ListCellRenderer
 
 // TODO: implement scenario with multiple reviewers
 internal class GitLabMergeRequestRequestReviewAction(
   private val scope: CoroutineScope,
   private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-) : GitLabMergeRequestAction(CollaborationToolsBundle.message("review.details.action.request"), scope, reviewFlowVm) {
+) : AbstractAction(CollaborationToolsBundle.message("review.details.action.request")) {
+  init {
+    scope.launch {
+      reviewFlowVm.isBusy.collect { isBusy ->
+        isEnabled = !isBusy
+      }
+    }
+  }
+
   override fun actionPerformed(event: ActionEvent) {
     val popupState: PopupState<JBPopup> = PopupState.forPopup()
     val parentComponent = event.source as? JComponent ?: return
@@ -28,19 +45,65 @@ internal class GitLabMergeRequestRequestReviewAction(
     scope.launch {
       val users = reviewFlowVm.getPotentialReviewers()
 
-      val selectedUser = ChooserPopupUtil.showChooserPopup(point, popupState, users) { user ->
-        ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.username, icon = avatarIconsProvider.getIcon(user, AVATAR_SIZE))
-      }
+      val selectedUser = ChooserPopupUtil.showChooserPopup(
+        point,
+        popupState,
+        users,
+        filteringMapper = { user ->
+          user.username
+        },
+        renderer = ReviewerRenderer(reviewFlowVm, avatarIconsProvider)
+      )
 
-      // TODO: implement unselect
+      // TODO: replace on CollectionDelta
       if (selectedUser != null) {
-        reviewFlowVm.setReviewers(listOf(selectedUser))
+        val reviewers = reviewFlowVm.reviewers.value
+        if (selectedUser in reviewers) {
+          reviewFlowVm.removeReviewer(selectedUser)
+        }
+        else {
+          reviewFlowVm.setReviewers(listOf(selectedUser))
+        }
       }
     }
   }
 
-  override fun enableCondition(): Boolean {
-    return true // TODO: add condition
+  private class ReviewerRenderer(
+    private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
+    private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+  ) : ListCellRenderer<GitLabUserDTO> {
+    private val checkBox: JBCheckBox = JBCheckBox().apply {
+      isOpaque = false
+    }
+    private val label: SimpleColoredComponent = SimpleColoredComponent()
+    private val panel = BorderLayoutPanel(10, 5).apply {
+      addToLeft(checkBox)
+      addToCenter(label)
+      border = JBUI.Borders.empty(5)
+    }
+
+    override fun getListCellRendererComponent(list: JList<out GitLabUserDTO>,
+                                              value: GitLabUserDTO,
+                                              index: Int,
+                                              isSelected: Boolean,
+                                              cellHasFocus: Boolean): Component {
+      checkBox.apply {
+        this.isSelected = value in reviewFlowVm.reviewers.value
+        this.isFocusPainted = cellHasFocus
+        this.isFocusable = cellHasFocus
+      }
+
+      label.apply {
+        clear()
+        append(value.username)
+        icon = avatarIconsProvider.getIcon(value, AVATAR_SIZE)
+        foreground = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
+      }
+
+      UIUtil.setBackgroundRecursively(panel, ListUiUtil.WithTallRow.background(list, isSelected, true))
+
+      return panel
+    }
   }
 
   companion object {

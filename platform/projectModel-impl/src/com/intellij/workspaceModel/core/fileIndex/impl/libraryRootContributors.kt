@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.util.asSafely
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
@@ -85,15 +86,25 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
       }
     })
   }
+
+  companion object {
+    internal fun getProjectLibraryId(data: WorkspaceFileSetData): LibraryId? {
+      return data.asSafely<LibraryRootFileSetData>()?.projectLibraryId
+    }
+
+    fun getModuleLibraryId(fileSet: WorkspaceFileSet, storage: EntityStorage): LibraryId? {
+      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityReference?.resolve(storage).asSafely<LibraryEntity>()?.symbolicId
+    }
+  }
 }
 
 internal class LibrarySourceRootFileSetData(projectLibraryId: LibraryId?, packagePrefix: String) 
   : LibraryRootFileSetData(projectLibraryId, packagePrefix), ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal
 
-internal open class LibraryRootFileSetData(private val projectLibraryId: LibraryId?,
+internal open class LibraryRootFileSetData(internal val projectLibraryId: LibraryId?,
                                            override val packagePrefix: String) : UnloadableFileSetData, JvmPackageRootDataInternal {
   override fun isUnloaded(project: Project): Boolean {
-    return projectLibraryId != null && !ModuleDependencyIndex.getInstance(project).hasDependencyOn(projectLibraryId) 
+    return projectLibraryId != null && !ModuleDependencyIndex.getInstance(project).hasDependencyOn(projectLibraryId)
   }
 }
 

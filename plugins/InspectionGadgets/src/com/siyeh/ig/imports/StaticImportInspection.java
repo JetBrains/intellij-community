@@ -128,8 +128,7 @@ public class StaticImportInspection extends BaseInspection {
         final PsiElement target = reference.resolve();
         if (target instanceof PsiEnumConstant &&
             reference instanceof PsiExpression && PsiImplUtil.getSwitchLabel((PsiExpression)reference) != null) continue;
-        if (target instanceof PsiMember) {
-          final PsiMember member = (PsiMember)target;
+        if (target instanceof PsiMember member) {
           referenceTargetMap.put(reference, member);
         }
       }
@@ -253,10 +252,9 @@ public class StaticImportInspection extends BaseInspection {
           return false;
         }
         final PsiElement target = reference.resolve();
-        if (!(target instanceof PsiClass)) {
+        if (!(target instanceof PsiClass aClass)) {
           return false;
         }
-        final PsiClass aClass = (PsiClass)target;
         final String fqName = aClass.getQualifiedName();
         if (fqName == null) {
           return false;

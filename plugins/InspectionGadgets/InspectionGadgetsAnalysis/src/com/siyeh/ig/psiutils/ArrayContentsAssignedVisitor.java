@@ -38,11 +38,9 @@ class ArrayContentsAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
     super.visitAssignmentExpression(assignment);
     final PsiExpression lhs = assignment.getLExpression();
     final PsiExpression arrayExpression = getDeepArrayExpression(lhs);
-    if (!(arrayExpression instanceof PsiReferenceExpression)) {
+    if (!(arrayExpression instanceof PsiReferenceExpression referenceExpression)) {
       return;
     }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)arrayExpression;
     final PsiElement referent = referenceExpression.resolve();
     if (referent == null) {
       return;
@@ -66,11 +64,9 @@ class ArrayContentsAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     final PsiExpression operand = expression.getOperand();
     final PsiExpression arrayExpression = getDeepArrayExpression(operand);
-    if (!(arrayExpression instanceof PsiReferenceExpression)) {
+    if (!(arrayExpression instanceof PsiReferenceExpression referenceExpression)) {
       return;
     }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)arrayExpression;
     final PsiElement referent = referenceExpression.resolve();
     if (referent == null) {
       return;
@@ -88,9 +84,7 @@ class ArrayContentsAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     PsiExpression arrayExpression =
       ((PsiArrayAccessExpression)expression).getArrayExpression();
-    while (arrayExpression instanceof PsiArrayAccessExpression) {
-      final PsiArrayAccessExpression arrayAccessExpression =
-        (PsiArrayAccessExpression)arrayExpression;
+    while (arrayExpression instanceof PsiArrayAccessExpression arrayAccessExpression) {
       arrayExpression = arrayAccessExpression.getArrayExpression();
     }
     return arrayExpression;

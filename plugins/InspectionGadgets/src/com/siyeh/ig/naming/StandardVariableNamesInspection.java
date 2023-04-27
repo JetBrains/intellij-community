@@ -143,16 +143,14 @@ public class StandardVariableNamesInspection extends BaseInspection {
     }
 
     private boolean isVariableNamedSameAsSuper(PsiVariable variable) {
-      if (!(variable instanceof PsiParameter)) {
+      if (!(variable instanceof PsiParameter parameter)) {
         return false;
       }
-      final PsiParameter parameter = (PsiParameter)variable;
       final PsiElement scope = parameter.getDeclarationScope();
-      if (!(scope instanceof PsiMethod)) {
+      if (!(scope instanceof PsiMethod method)) {
         return false;
       }
       final String variableName = variable.getName();
-      final PsiMethod method = (PsiMethod)scope;
       final int index =
         method.getParameterList().getParameterIndex(parameter);
       final PsiMethod[] superMethods = method.findSuperMethods();

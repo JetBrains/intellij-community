@@ -129,8 +129,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       }
 
       final int id = e.getID();
-      if (e instanceof MouseEvent) {
-        final MouseEvent me = (MouseEvent)e;
+      if (e instanceof MouseEvent me) {
         final boolean insideBalloon = isInsideBalloon(me);
 
         boolean forcedExit = id == MouseEvent.MOUSE_EXITED && me.getButton() != MouseEvent.NOBUTTON && !myBlockClicks;
@@ -188,8 +187,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         }
       }
 
-      if ((myHideOnKey || myHideListener != null) && e instanceof KeyEvent && id == KeyEvent.KEY_PRESSED) {
-        final KeyEvent ke = (KeyEvent)e;
+      if ((myHideOnKey || myHideListener != null) && e instanceof KeyEvent ke && id == KeyEvent.KEY_PRESSED) {
         if (myHideListener != null) {
           if (ke.getKeyCode() == KeyEvent.VK_ESCAPE) {
             myHideListener.run();
@@ -387,15 +385,13 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
     if (!myDialogMode) {
       for (Component component : UIUtil.uiTraverser(myContent)) {
-        if (component instanceof JLabel) {
-          JLabel label = (JLabel)component;
+        if (component instanceof JLabel label) {
           if (label.getDisplayedMnemonic() != '\0' || label.getDisplayedMnemonicIndex() >= 0) {
             myDialogMode = true;
             break;
           }
         }
-        else if (component instanceof JCheckBox) {
-          JCheckBox checkBox = (JCheckBox)component;
+        else if (component instanceof JCheckBox checkBox) {
           if (checkBox.getMnemonic() >= 0 || checkBox.getDisplayedMnemonicIndex() >= 0) {
             myDialogMode = true;
             break;

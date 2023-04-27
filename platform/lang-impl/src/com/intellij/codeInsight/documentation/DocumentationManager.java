@@ -1414,9 +1414,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       boolean processed = false;
       if (provider instanceof CompositeDocumentationProvider) {
         for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
-          if (!(p instanceof ExternalDocumentationHandler)) continue;
+          if (!(p instanceof ExternalDocumentationHandler externalHandler)) continue;
 
-          ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
           if (externalHandler.canFetchDocumentationLink(url)) {
             String ref = externalHandler.extractRefFromLink(url);
             cancelAndFetchDocInfoByLink(component, new DocumentationCollector(psiElement, url, ref, p, false) {
@@ -1794,7 +1793,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       )
     );
     var result = !withUrl
-                 ? content
+                 ? List.of(CONTENT_ELEMENT.children(content))
                  : List.of(
                    DEFINITION_ELEMENT.children(HtmlChunk.tag("pre").addText(file.getPresentableUrl())),
                    CONTENT_ELEMENT.children(content)

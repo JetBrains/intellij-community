@@ -30,8 +30,7 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
       CardLayout layout = (CardLayout) component.getLayout();
       return layout.getHgap();
     }
-    if (component.getLayout() instanceof AbstractLayout) {
-      final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
+    if (component.getLayout() instanceof AbstractLayout layoutManager) {
       return layoutManager.getHGap();
     }
     return null;

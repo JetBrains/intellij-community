@@ -228,8 +228,7 @@ class MethodsManager extends MembersManager<PyFunction> {
         final PsiReference calleeRef = callee.getReference();
         if (calleeRef != null) {
           final PsiElement calleeDeclaration = calleeRef.resolve();
-          if (calleeDeclaration instanceof PyFunction) {
-            final PyFunction calleeFunction = (PyFunction)calleeDeclaration;
+          if (calleeDeclaration instanceof PyFunction calleeFunction) {
             final PyClass clazz = calleeFunction.getContainingClass();
             if (clazz != null) {
               if (PyUtil.isInitMethod(calleeFunction)) {

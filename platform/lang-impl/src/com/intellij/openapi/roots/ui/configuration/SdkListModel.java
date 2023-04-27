@@ -114,8 +114,7 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
   public @Nullable SdkItem findSdkItem(@Nullable Sdk value) {
     if (value == null) return null;
     for (SdkListItem item : myItems) {
-      if (!(item instanceof SdkItem)) continue;
-      SdkItem sdkItem = (SdkItem)item;
+      if (!(item instanceof SdkItem sdkItem)) continue;
       if (sdkItem.hasSameSdk(value)) {
         return sdkItem;
       }
@@ -126,8 +125,7 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
   public @Nullable SdkItem findSdkItem(@Nullable String sdkName) {
     if (sdkName == null) return null;
     for (SdkListItem item : myItems) {
-      if (!(item instanceof SdkItem)) continue;
-      SdkItem sdkItem = (SdkItem)item;
+      if (!(item instanceof SdkItem sdkItem)) continue;
       Sdk sdk = sdkItem.sdk;
       if (sdkName.equals(sdk.getName())) {
         return sdkItem;

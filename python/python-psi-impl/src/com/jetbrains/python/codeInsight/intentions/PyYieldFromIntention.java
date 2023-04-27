@@ -103,8 +103,7 @@ public class PyYieldFromIntention extends PyBaseIntentionAction {
         final PyStatement firstStmt = statements[0];
         if (firstStmt instanceof PyExpressionStatement) {
           final PyExpression firstExpr = ((PyExpressionStatement)firstStmt).getExpression();
-          if (firstExpr instanceof PyYieldExpression) {
-            final PyYieldExpression yieldExpr = (PyYieldExpression)firstExpr;
+          if (firstExpr instanceof PyYieldExpression yieldExpr) {
             final PyExpression yieldValue = yieldExpr.getExpression();
             if (yieldValue instanceof PyReferenceExpression) {
               return (PyReferenceExpression)yieldValue;

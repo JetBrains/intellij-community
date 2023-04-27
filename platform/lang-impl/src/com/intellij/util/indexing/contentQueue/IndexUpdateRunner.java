@@ -422,14 +422,7 @@ public final class IndexUpdateRunner {
     }
   }
 
-  private static final class ContentLoadingResult {
-    final @NotNull CachedFileContent cachedFileContent;
-    final long fileLength;
-
-    private ContentLoadingResult(@NotNull CachedFileContent cachedFileContent, long fileLength) {
-      this.cachedFileContent = cachedFileContent;
-      this.fileLength = fileLength;
-    }
+  private record ContentLoadingResult(@NotNull CachedFileContent cachedFileContent, long fileLength) {
   }
 
   private static void waitForFreeMemoryToLoadFileContent(@NotNull ProgressIndicator indicator,
@@ -517,14 +510,7 @@ public final class IndexUpdateRunner {
     return indicator;
   }
 
-  private static class FileIndexingJob {
-    final VirtualFile file;
-    final FileSet fileSet;
-
-    private FileIndexingJob(VirtualFile file, FileSet fileSet) {
-      this.file = file;
-      this.fileSet = fileSet;
-    }
+  private record FileIndexingJob(VirtualFile file, FileSet fileSet) {
   }
 
   private static class IndexingJob {
