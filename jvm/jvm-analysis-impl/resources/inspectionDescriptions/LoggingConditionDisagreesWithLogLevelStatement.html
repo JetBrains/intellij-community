@@ -4,7 +4,7 @@ Reports <em>is log enabled for</em> conditions of <code>if</code> statements tha
 do not match the log level of the contained logging call.
 <p>
 For example:
-<pre><code>
+<pre><code lang="java">
   if (LOG.isTraceEnabled()) {
     // debug level logged, but checked for trace level
     LOG.debug("some log message");

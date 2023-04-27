@@ -10,7 +10,7 @@ Reports cases when non-safe string is passed to a method with parameter marked w
 <p>
 Example:
 <pre>
-<code>
+<code lang="java">
   void doSmth(boolean b) {
     String s = safe();
     String s1 = "other";
@@ -24,7 +24,7 @@ Example:
 <p>
 Here we do not have non-safe string assignments to <code>s</code> so warning is not produced. On the other hand:
 <pre>
-<code>
+<code lang="java">
   void doSmth(boolean b) {
     String s = safe();
     String s1 = "other";

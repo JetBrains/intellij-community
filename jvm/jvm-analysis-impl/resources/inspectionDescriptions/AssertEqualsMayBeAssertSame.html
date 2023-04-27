@@ -5,7 +5,7 @@ This is possible when the arguments are instances of a <code>final</code> class 
 method and makes it explicit that the object identity is compared.
 <p>Suggests replacing <code>assertEquals()</code> with <code>assertSame()</code>.</p>
 <p><b>Example:</b></p>
-<pre><code>
+<pre><code lang="java">
   @Test
   public void testObjectType() {
     Object o = getObject();

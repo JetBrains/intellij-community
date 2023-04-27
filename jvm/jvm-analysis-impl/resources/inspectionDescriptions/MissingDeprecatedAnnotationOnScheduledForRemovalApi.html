@@ -2,15 +2,15 @@
 <body>
 Reports declarations marked with <code>@ApiStatus.ScheduledForRemoval</code> without <code>@Deprecated</code>.
 <p>Example:</p>
-<pre>
+<pre><code lang="java">
   @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
   public void myLegacyMethod() { }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied the result looks like:</p>
-<pre>
+<pre><code lang="java">
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
   public void myLegacyMethod() { }
-</pre>
+</code></pre>
 </body>
 </html>
