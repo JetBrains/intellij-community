@@ -535,7 +535,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class RemoveRemoteAction : RemoteActionBase() {
+  class RemoveRemoteAction : RemoteActionBase(messagePointer("action.Git.Log.Remove.Remote.text", 0)) {
 
     override fun update(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
       e.presentation.text = message("action.Git.Log.Remove.Remote.text", selectedRemotes.size)
@@ -562,7 +562,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  abstract class RemoteActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
+  abstract class RemoteActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String,
                                   private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
                                   icon: Icon? = null) :
     DumbAwareAction(text, description, icon) {
