@@ -37,4 +37,7 @@ class UpdateOptions : BaseState() {
 
   @get:OptionTag("THIRD_PARTY_PLUGINS_ALLOWED")
   var isThirdPartyPluginsAllowed by property(false)
+
+  @get:OptionTag("OBSOLETE_CUSTOM_REPOSITORIES_CLEAN_NEEDED")
+  var isObsoleteCustomRepositoriesCleanNeeded by property(true)
 }
