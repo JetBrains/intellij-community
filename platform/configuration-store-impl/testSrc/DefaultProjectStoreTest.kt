@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -10,6 +11,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -18,7 +20,9 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
 import com.intellij.testFramework.useProject
 import com.intellij.util.io.getDirectoryTree
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -60,6 +64,10 @@ internal class DefaultProjectStoreTest {
   @Test
   fun `save default project configuration changes`() {
     runBlocking {
+      withContext(Dispatchers.EDT) {
+        (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
+      }
+
       val defaultProject = ProjectManager.getInstance().defaultProject
       val defaultTestComponent = defaultProject.service<TestComponentCustom>()
       ApplicationManager.getApplication().stateStore.save()
