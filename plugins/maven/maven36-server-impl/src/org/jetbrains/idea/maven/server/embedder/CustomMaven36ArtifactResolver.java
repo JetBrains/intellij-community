@@ -7,7 +7,7 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.server.utils.MavenServerParallelRunner;
+import org.jetbrains.idea.maven.server.MavenServerParallelRunner;
 
 import java.util.ArrayList;
 import java.util.Collection;

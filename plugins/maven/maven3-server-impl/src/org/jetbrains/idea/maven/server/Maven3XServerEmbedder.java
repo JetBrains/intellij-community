@@ -77,7 +77,6 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
-import org.jetbrains.idea.maven.server.utils.MavenServerParallelRunner;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
