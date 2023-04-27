@@ -28,6 +28,7 @@ def get_column_types(table):
 
 # used by pydevd
 def get_data(table, max_cols, start_index=None, end_index=None):
+    # type: (pd.DataFrame, int, int, int) -> str
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
 
@@ -41,13 +42,13 @@ def get_data(table, max_cols, start_index=None, end_index=None):
     return data
 
 
-# used by DSTableCommands
 def __get_data_slice(table, start, end):
     return table.iloc[start:end]
 
 
 # used by DSTableCommands
 def display_data(table, max_cols, max_colwidth, start, end):
+    # type: (pd.DataFrame, int, int, int, int) -> None
     from IPython.display import display
 
     _jb_max_cols = pd.get_option('display.max_columns')
