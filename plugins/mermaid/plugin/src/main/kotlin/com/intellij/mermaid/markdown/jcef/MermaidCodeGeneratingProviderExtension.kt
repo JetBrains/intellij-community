@@ -38,7 +38,7 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
 
     while (lexer.tokenType in MermaidTokenTypeSets.WHITE_SPACES || lexer.tokenType == MermaidTokens.OPEN_DIRECTIVE) {
       if (lexer.tokenType == MermaidTokens.OPEN_DIRECTIVE) {
-        while (lexer.tokenType != MermaidTokens.CLOSE_DIRECTIVE) {
+        while (lexer.tokenType != null && lexer.tokenType != MermaidTokens.CLOSE_DIRECTIVE) {
           lexer.advance()
         }
       }
