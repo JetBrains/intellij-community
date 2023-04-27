@@ -16,7 +16,6 @@ import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.visible.VisiblePack
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
-import io.opentelemetry.context.Context
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 
