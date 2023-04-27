@@ -395,7 +395,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       config.setBuildStartTime(new Date());
 
       Properties userProperties = new Properties();
-      userProperties.putAll(getMavenAndJvmConfigProperties(basedir));
+      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(basedir));
       config.setUserProperties(userProperties);
 
       result = interpolator.interpolate(result, basedir, config, false);
@@ -846,7 +846,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         userProperties.putAll(myUserProperties);
       }
       if (file != null) {
-        userProperties.putAll(getMavenAndJvmConfigProperties(file.getParentFile()));
+        userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(file.getParentFile()));
       }
       result.setUserProperties(userProperties);
 

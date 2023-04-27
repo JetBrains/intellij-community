@@ -958,7 +958,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         userProperties.putAll(myUserProperties);
       }
       if (file != null) {
-        userProperties.putAll(getMavenAndJvmConfigProperties(file.getParentFile()));
+        userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(file.getParentFile()));
       }
       result.setUserProperties(userProperties);
 

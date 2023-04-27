@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
@@ -48,14 +46,11 @@ import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.apache.maven.archetype.source.CatalogArchetypeDataSource.ARCHETYPE_CATALOG_PROPERTY;
 import static org.apache.maven.archetype.source.RemoteCatalogArchetypeDataSource.REPOSITORY_PROPERTY;
@@ -67,7 +62,6 @@ import static org.jetbrains.idea.maven.server.MavenModelConverter.convertRemoteR
 public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
-  private static final Pattern PROPERTY_PATTERN = Pattern.compile("\"-D([\\S&&[^=]]+)(?:=([^\"]+))?\"|-D([\\S&&[^=]]+)(?:=(\\S+))?");
   protected final MavenServerSettings myServerSettings;
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
@@ -265,43 +259,6 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   public MavenModel readModel(File file, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     return null;
-  }
-
-  public static Map<String, String> getMavenAndJvmConfigProperties(File workingDir) {
-    if (workingDir == null) {
-      return Collections.emptyMap();
-    }
-    File baseDir = MavenServerUtil.findMavenBasedir(workingDir);
-
-    Map<String, String> result = new HashMap<>();
-    readConfigFiles(baseDir, result);
-    return result.isEmpty() ? Collections.emptyMap() : result;
-  }
-
-  static void readConfigFiles(File baseDir, Map<String, String> result) {
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result, "");
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result, "true");
-  }
-
-  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
-    File configFile = new File(baseDir, relativePath);
-
-    if (configFile.exists() && configFile.isFile()) {
-      try {
-        String text = FileUtilRt.loadFile(configFile, "UTF-8");
-        Matcher matcher = PROPERTY_PATTERN.matcher(text);
-        while (matcher.find()) {
-          if (matcher.group(1) != null) {
-            result.put(matcher.group(1), StringUtilRt.notNullize(matcher.group(2), valueIfMissing));
-          }
-          else {
-            result.put(matcher.group(3), StringUtilRt.notNullize(matcher.group(4), valueIfMissing));
-          }
-        }
-      }
-      catch (IOException ignore) {
-      }
-    }
   }
 
   @NotNull
