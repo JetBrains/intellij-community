@@ -15,6 +15,14 @@ project.androidApp.unitTest
     kmmLib.commonMain (TEST)
     kmmLib.main (TEST)
 
+project.androidTest
+    main (friend, TEST)
+
+project.main
+
+project.unitTest
+    main (friend, TEST)
+
 
 Test configuration:
 - hiding source modules matching .*kmmLib.*
