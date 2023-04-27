@@ -51,7 +51,7 @@ class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBa
       return
     }
 
-    val spanBuilder = PerformanceTestSpan.TRACER.spanBuilder(DebugStepCommand.SPAN_NAME).setParent(PerformanceTestSpan.getContext())
+    val spanBuilder = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
     val spanRef = Ref<Span>()
     val scopeRef = Ref<Scope>()
 
