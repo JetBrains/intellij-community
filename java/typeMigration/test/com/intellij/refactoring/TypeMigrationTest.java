@@ -60,6 +60,14 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFirstParamType("doSomething", new PsiEllipsisType(myFactory.createTypeFromText("java.lang.CharSequence", null)));
   }
 
+  public void testInt2Array() {
+    doTestReturnType("x", "int[][]");
+  }
+
+  public void testArray2Int() {
+    doTestFirstParamType("y", myFactory.createTypeFromText("int", null));
+  }
+
   public void testT07() {
     doTestFieldType("f",
                     myFactory.createTypeFromText("java.lang.Integer", null).createArrayType());
@@ -898,7 +906,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
 
-  private void doTestReturnType(final String methodName, final String migrationType) {
+  private void doTestReturnType(String methodName, String migrationType) {
     start(new RulesProvider() {
       @Override
       public PsiType migrationType(PsiElement context) {
