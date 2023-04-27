@@ -2950,11 +2950,12 @@ public class StringUtil extends StringUtilRt {
     public @NotNull CharSequence subSequence(int start, int end) {
       check();
       CharSequence subSequence = delegate.subSequence(start, end);
-      return new ChildBombedCharSequence(subSequence, this);
+      BombedCharSequence bombedParent = this instanceof ChildBombedCharSequence ? ((ChildBombedCharSequence)this).myBombedParent : this;
+      return new ChildBombedCharSequence(subSequence, bombedParent);
     }
   }
 
-  private static class ChildBombedCharSequence extends BombedCharSequence {
+  private static final class ChildBombedCharSequence extends BombedCharSequence {
     private final BombedCharSequence myBombedParent;
 
     ChildBombedCharSequence(@NotNull CharSequence sequence,
