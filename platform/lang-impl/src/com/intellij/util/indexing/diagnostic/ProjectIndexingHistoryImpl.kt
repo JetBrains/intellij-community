@@ -2,10 +2,8 @@
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
@@ -341,53 +339,23 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     fun startDumbModeBeginningTracking(project: Project,
                                        scanningHistory: ProjectScanningHistoryImpl,
                                        oldHistory: ProjectIndexingHistoryImpl): Runnable {
-      logInTests("startDumbModeBeginningTracking")
       val now = ZonedDateTime.now(ZoneOffset.UTC)
       val callback = Runnable {
         scanningHistory.createScanningDumbModeCallBack().andThen(oldHistory.createScanningDumbModeCallback()).accept(now)
       }
-      doInReadActionWithLogging {
+      ReadAction.run<RuntimeException> {
         if (!project.isDisposed) {
           project.getService(DumbModeFromScanningTrackerService::class.java).setScanningDumbModeStartCallback(callback)
-        }
-        else {
-          logInTests("startDumbModeBeginningTracking didn't work: project disposed")
         }
       }
       return callback
     }
 
-    fun finishDumbModeBeginningTracking(project: Project,
-                                        callback: Runnable) {
-      logInTests("finishDumbModeBeginningTracking")
-      doInReadActionWithLogging {
+    fun finishDumbModeBeginningTracking(project: Project) {
+      ReadAction.run<RuntimeException> {
         if (!project.isDisposed) {
-          project.getService(DumbModeFromScanningTrackerService::class.java).cleanScanningDumbModeStartCallback(callback)
+          project.getService(DumbModeFromScanningTrackerService::class.java).cleanScanningDumbModeStartCallback()
         }
-        else {
-          logInTests("finishDumbModeBeginningTracking didn't work: project disposed")
-        }
-      }
-    }
-
-    private fun doInReadActionWithLogging(action: ThrowableRunnable<RuntimeException>) {
-      if (ApplicationManagerEx.isInIntegrationTest()) {
-        try {
-          ReadAction.run(action)
-        }
-        catch (e: Throwable) {
-          thisLogger().info("RunAction returned exception $e")
-          throw e
-        }
-      }
-      else {
-        ReadAction.run(action)
-      }
-    }
-
-    private fun logInTests(message: String) {
-      if (ApplicationManagerEx.isInIntegrationTest()) {
-        thisLogger().info(message)
       }
     }
   }

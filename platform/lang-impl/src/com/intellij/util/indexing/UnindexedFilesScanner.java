@@ -5,7 +5,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -558,10 +557,8 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     Ref<StatusMark> markRef = new Ref<>();
-    Runnable dumbModeTracker = null;
     try {
-      dumbModeTracker =
-        ProjectScanningHistoryImpl.Companion.startDumbModeBeginningTracking(myProject, scanningHistory, projectIndexingHistory);
+      ProjectScanningHistoryImpl.Companion.startDumbModeBeginningTracking(myProject, scanningHistory, projectIndexingHistory);
       ((GistManagerImpl)GistManager.getInstance()).
         runWithMergingDependentCacheInvalidations(() -> scanAndUpdateUnindexedFiles(projectIndexingHistory, scanningHistory,
                                                                                     indicator, markRef));
@@ -571,22 +568,11 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       scanningHistory.setWasInterrupted();
       if (e instanceof ControlFlowException) {
         LOG.info("Cancelled indexing of " + myProject.getName());
-        if(ApplicationManagerEx.isInIntegrationTest()) {
-          LOG.info("Began finalization of scanning in catch");
-        }
       }
       throw e;
     }
     finally {
-      if(ApplicationManagerEx.isInIntegrationTest()) {
-        LOG.info("Began finalization of scanning in finally");
-      }
-      if (dumbModeTracker != null) {
-        ProjectScanningHistoryImpl.Companion.finishDumbModeBeginningTracking(myProject, dumbModeTracker);
-      }
-      else if (ApplicationManagerEx.isInIntegrationTest()) {
-        LOG.info("Tracker was not initialized");
-      }
+      ProjectScanningHistoryImpl.Companion.finishDumbModeBeginningTracking(myProject);
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.finishTotalUpdatingTime();
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
