@@ -10,7 +10,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.util.containers.MultiMap
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.ConfigEncodingManager
-import org.editorconfig.configmanagement.LineEndingsManager
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind
@@ -48,7 +47,7 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
     }
     val lineSeparator = Utils.getLineSeparatorString(mySettings.lineSeparator)
     if (lineSeparator != null) {
-      target[LineEndingsManager.lineEndingsKey] = lineSeparator
+      target["end_of_line"] = lineSeparator
     }
     target[StandardEditorConfigProperties.INSERT_FINAL_NEWLINE] = EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF.toString()
     val trimSpaces = Utils.getTrimTrailingSpaces()

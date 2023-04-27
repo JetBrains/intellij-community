@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
@@ -105,11 +106,14 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       }
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
+      VirtualFile virtualFile = getFile(document);
       if (project == null) {
-        VirtualFile virtualFile = getFile(document);
         project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
       }
-      String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
+      CodeStyleSettings settings = project != null && virtualFile != null
+                                   ? CodeStyle.getSettings(project, virtualFile)
+                                   : CodeStyle.getProjectOrDefaultSettings(project);
+      String lineSeparator = settings.getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 
       // avoid documents piling up during batch processing
@@ -476,7 +480,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file == null ? null : file.getDetectedLineSeparator();
     if (lineSeparator == null) {
-      lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
+      CodeStyleSettings settings =
+        project != null && file != null ? CodeStyle.getSettings(project, file) : CodeStyle.getProjectOrDefaultSettings(project);
+      lineSeparator = settings.getLineSeparator();
     }
     return lineSeparator;
   }

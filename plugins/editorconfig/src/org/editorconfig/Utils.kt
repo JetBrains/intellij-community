@@ -24,7 +24,6 @@ import com.intellij.util.LineSeparator
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.configmanagement.ConfigEncodingManager
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider
-import org.editorconfig.configmanagement.LineEndingsManager
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.plugincomponents.SettingsProviderComponent
@@ -105,7 +104,7 @@ object Utils {
     addIndentOptions(result,
                      "*",
                      commonIndentOptions,
-                     getEncodingLine(project) + getLineEndings(project) + getTrailingSpacesLine() + getEndOfFileLine())
+                     getEncodingLine(project) + getLineEndings(settings) + getTrailingSpacesLine() + getEndOfFileLine())
     FileTypeManager.getInstance().registeredFileTypes.asSequence()
       .filter { FileTypeIndex.containsFileOfType(it, GlobalSearchScope.allScope(project)) }
       .forEach { fileType ->
@@ -151,10 +150,10 @@ object Utils {
       else -> null
     }
 
-  private fun getLineEndings(project: Project): String {
-    val separator = CodeStyle.getSettings(project).lineSeparator
+  private fun getLineEndings(settings: CodeStyleSettings): String {
+    val separator = settings.lineSeparator
     return getLineSeparatorString(separator)?.let {
-      "${LineEndingsManager.lineEndingsKey}=$it\n"
+      "end_of_line=$it\n"
     } ?: ""
   }
 

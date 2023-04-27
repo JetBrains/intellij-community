@@ -62,10 +62,6 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     return CodeStyle.getLineIndent(editor, language, offset, allowDocCommit);
   }
 
-  @Override
-  public String getLineSeparator() {
-    return CodeStyle.getProjectOrDefaultSettings(myProject).getLineSeparator();
-  }
 
   @Override
   public boolean useTabCharacter(final FileType fileType) {
