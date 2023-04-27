@@ -8,7 +8,7 @@ Reports usages of <code>java.awt.Insets</code> and <code>JBUI.insetsXyz()</code>
   Quick fix performs replacement with <code>JBUI.insets()</code> or simplifies the expression.
 </p>
 <p>Example:</p>
-<pre>
+<pre><code lang="java">
 // bad:
 Insets insets1 = new Insets(1, 2, 3, 4);
 Insets insets2 = new Insets(1, 2, 1, 2);
@@ -18,6 +18,6 @@ Insets insets3 = new Insets(1, 0, 0, 0);
 Insets insets1 = JBUI.insets(1, 2, 3, 4);
 Insets insets2 = JBUI.insets(1, 2);
 Insets insets3 = JBUI.insetsTop(1);
-</pre>
+</code></pre>
 </body>
 </html>

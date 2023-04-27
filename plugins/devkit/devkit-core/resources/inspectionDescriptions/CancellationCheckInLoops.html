@@ -3,7 +3,7 @@
 Reports <code>forEach</code> loops with missing cancellation checks.
 <p>Runs only within the methods with <code>com.intellij.util.concurrency.annotations.RequiresReadLock</code> annotation.</p>
 <p><b>Example:</b></p>
-<pre><code>
+<pre><code lang="kotlin">
     for (item in items) {
         ProgressManager.checkCanceled() // should be present in the first line
         ...
@@ -12,7 +12,7 @@ Reports <code>forEach</code> loops with missing cancellation checks.
 <p>
     In case of nested loops with nothing in between:
 </p>
-<pre><code>
+<pre><code lang="kotlin">
     for (item in items) {
         // nothing in between
         for (inner in item.inners) {

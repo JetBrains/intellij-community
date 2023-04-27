@@ -8,17 +8,17 @@ Reports assignments of application services to static final fields/properties.
   The only exception is an explicit constructor call to store dummy/default instances.
 </p>
 <p><b>Example:</b></p>
-<pre><code>
+<pre><code lang="java">
   // Incorrect way
   private static final ManagingFS ourInstance = ApplicationManager.getApplication().getService(ManagingFS.class);
 </code></pre>
-<pre><code>
+<pre><code lang="java">
   // Correct way
   private static final Supplier&lt;ManagingFS&gt; ourInstance = CachedSingletonsRegistry.lazy(() -> {
     return ApplicationManager.getApplication().getService(ManagingFS.class);
   });
 </code></pre>
-<pre><code>
+<pre><code lang="java">
   // Exception
   private static final UniqueVFilePathBuilder DUMMY_BUILDER = new UniqueVFilePathBuilder()
 </code></pre>
