@@ -5,7 +5,6 @@ import com.intellij.CommonBundle
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
@@ -20,6 +19,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
@@ -78,7 +78,7 @@ object StoreUtil {
   fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
     runInAutoSaveDisabledMode {
       FileDocumentManager.getInstance().saveAllDocuments()
-      runBlockingUnderModalProgress {
+      runBlockingModal(ModalTaskOwner.guess(), "") {
         saveProjectsAndApp(forceSavingAllSettings)
       }
     }
@@ -242,5 +242,15 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
   }
   finally {
     app.isSaveAllowed = !isSaveAllowed
+  }
+}
+
+@RequiresEdt
+@Internal
+fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, forceSavingAllSettings: Boolean = false) {
+  runInAutoSaveDisabledMode {
+    runBlockingModal(project, CommonBundle.message("title.save.project")) {
+      saveSettings(project)
+    }
   }
 }

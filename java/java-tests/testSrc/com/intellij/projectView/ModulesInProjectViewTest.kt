@@ -2,11 +2,11 @@
 package com.intellij.projectView
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.projectView.impl.PackageViewPane
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.ui.Queryable
 import com.intellij.project.stateStore
 import com.intellij.testFramework.PsiTestUtil
@@ -72,7 +72,7 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    runUnderModalProgressIfIsEdt {
+    runBlockingModal(myProject, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
     }
     if (!WorkspaceFileIndexEx.IS_ENABLED) {
@@ -115,7 +115,7 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    runUnderModalProgressIfIsEdt {
+    runBlockingModal(myProject, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
     }
     assertStructureEqual(expected)

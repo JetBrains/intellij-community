@@ -5,7 +5,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.diagnostic.ThreadDumper;
@@ -78,6 +77,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
+
+import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
 
 public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
   private static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
@@ -703,7 +704,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (!project.isDisposed()) {
         if (Boolean.getBoolean("inspect.save.project.settings")) {
-          StoreUtil.saveSettings(project, true);
+          forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project, true);
         }
         ProjectManagerEx.getInstanceEx().forceCloseProject(project);
       }

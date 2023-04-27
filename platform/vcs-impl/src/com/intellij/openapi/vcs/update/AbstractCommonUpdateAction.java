@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.configurationStore.StoreReloadManager;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -46,6 +45,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
 import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
@@ -117,7 +117,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         // Also, there is a chance that save during update can break it -
         // we do disable auto saving during update, but still, there is a chance that save will occur.
         FileDocumentManager.getInstance().saveAllDocuments();
-        StoreUtil.saveSettings(project);
+        forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project, false);
       }
 
       Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText()) {
