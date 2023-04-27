@@ -501,7 +501,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   fun updateTabsVisibility(settings: UISettings = UISettings.getInstance()) {
     tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && this.tabCount == 1 && shouldHideTabs(selectedComposite)) ||
-                                              settings.editorTabPlacement == UISettings.TABS_NONE || settings.presentationMode
+                                              settings.editorTabPlacement == UISettings.TABS_NONE ||
+                                              (settings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
   }
 
   fun closeAllExcept(selectedFile: VirtualFile?) {
