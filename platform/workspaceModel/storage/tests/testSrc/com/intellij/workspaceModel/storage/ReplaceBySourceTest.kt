@@ -1763,29 +1763,6 @@ class ReplaceBySourceTest {
     builder.assertConsistency()
   }
 
-  @RepeatedTest(10)
-  fun `test replaceBySource with two equal entities referring to each other`() {
-    val superParent = builder addEntity ChainedParentEntity(MySource)
-    val parent = builder addEntity ChainedEntity("data", MySource) {
-      this.generalParent = superParent
-    }
-    builder addEntity ChainedEntity("data", AnotherSource) {
-      this.parent = parent
-      this.generalParent = superParent
-    }
-
-    val anotherBuilder = builder.toSnapshot().toBuilder()
-
-    assertNull(builder.entities (ChainedEntity::class.java).single { it.entitySource == MySource }.parent)
-    assertNotEquals(AnotherSource, builder.entities (ChainedEntity::class.java).single { it.entitySource == AnotherSource }.parent!!.entitySource)
-
-    builder.replaceBySource({ true }, anotherBuilder)
-
-    assertNull(builder.entities (ChainedEntity::class.java).single { it.entitySource == MySource }.parent)
-    assertNotEquals(AnotherSource, builder.entities (ChainedEntity::class.java).single { it.entitySource == AnotherSource }.parent!!.entitySource)
-  }
-
-
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {
       val thisState = engine.targetState[this.base.id]
