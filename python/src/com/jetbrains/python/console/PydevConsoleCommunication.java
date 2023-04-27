@@ -347,7 +347,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       return executeBackgroundTask(
         () -> {
           try {
-            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name());
+            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name(), "", "");
           }
           catch (PythonTableException e) {
             throw new PyDebuggerException(e.message);
