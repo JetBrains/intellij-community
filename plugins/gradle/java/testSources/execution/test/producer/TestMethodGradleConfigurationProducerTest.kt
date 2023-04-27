@@ -8,7 +8,6 @@ import org.junit.Test
 class TestMethodGradleConfigurationProducerTest : GradleConfigurationProducerTestCase() {
 
   @Test
-  @Throws(Exception::class)
   fun `test junit parameterized tests`() {
     createProjectSubFile("src/test/java/package1/T1Test.java", """
       package package1;
@@ -48,7 +47,7 @@ class TestMethodGradleConfigurationProducerTest : GradleConfigurationProducerTes
     createProjectSubFile("settings.gradle", "")
     importProject {
       withJavaPlugin()
-      addTestImplementationDependency("junit:junit:4.11")
+      withJUnit4()
     }
     assertModules("project", "project.main", "project.test")
 
@@ -57,9 +56,13 @@ class TestMethodGradleConfigurationProducerTest : GradleConfigurationProducerTes
     assertTestFilter("package1.T1Test", "testFoo", ":test --tests \"package1.T1Test.testFoo[*]\"")
     assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "param1", ":test --tests \"package1.T1Test.testFoo[*param1*]\"")
     assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "param2", ":test --tests \"package1.T1Test.testFoo[*param2*]\"")
+    assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "[1]", ":test --tests \"package1.T1Test.testFoo[1]\"")
+    assertParameterizedLocationTestFilter("package1.T1Test", "testFoo", "[2]", ":test --tests \"package1.T1Test.testFoo[2]\"")
     assertTestFilter("package1.T2Test", null, ":test --tests \"package1.T2Test\"")
     assertTestFilter("package1.T2Test", "testFoo2", ":test --tests \"package1.T2Test.testFoo2[*]\"")
     assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "param1", ":test --tests \"package1.T2Test.testFoo2[*param1*]\"")
     assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "param2", ":test --tests \"package1.T2Test.testFoo2[*param2*]\"")
+    assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "[1]", ":test --tests \"package1.T2Test.testFoo2[1]\"")
+    assertParameterizedLocationTestFilter("package1.T2Test", "testFoo2", "[2]", ":test --tests \"package1.T2Test.testFoo2[2]\"")
   }
 }
