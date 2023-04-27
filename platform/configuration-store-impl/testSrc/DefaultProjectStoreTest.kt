@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -61,7 +62,7 @@ internal class DefaultProjectStoreTest {
     runBlocking {
       val defaultProject = ProjectManager.getInstance().defaultProject
       val defaultTestComponent = defaultProject.service<TestComponentCustom>()
-      saveSettings(ApplicationManager.getApplication())
+      ApplicationManager.getApplication().stateStore.save()
       assertThat(defaultTestComponent.saved).isTrue
     }
   }

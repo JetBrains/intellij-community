@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics.PROJECT_ROOTS
-import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -147,7 +147,8 @@ class ModuleBridgesTest {
         }
       }
 
-      saveSettings(project)
+      project.stateStore.save()
+      project.stateStore.save()
 
       assertTrue(oldNameFile.exists())
       assertTrue(modulesXmlFile.readText().contains(oldNameFile.name))
@@ -179,7 +180,7 @@ class ModuleBridgesTest {
       assertEquals(newNameFile, File(moduleFilePath!!))
       assertTrue(module.getModuleNioFile().toString().endsWith(newNameFile.name))
 
-      saveSettings(project)
+      project.stateStore.save()
 
       assertFalse(modulesXmlFile.readText().contains(oldNameFile.name))
       assertFalse(oldNameFile.exists())
@@ -219,7 +220,7 @@ class ModuleBridgesTest {
     ModuleRootModificationUtil.addDependency(mavenModule, antModule)
     checkModuleDependency(mavenModuleName, antModuleName)
 
-    saveSettings(project)
+    project.stateStore.save()
     var fileText = modulesFile.readText()
     assertEquals(2, listOf(antModuleName, mavenModuleName).filter { fileText.contains(it) }.size)
 
@@ -230,7 +231,7 @@ class ModuleBridgesTest {
     projectModel.renameModule(antModule, gradleModuleName)
     checkModuleDependency(mavenModuleName, gradleModuleName)
 
-    saveSettings(project)
+    project.stateStore.save()
     fileText = modulesFile.readText()
     assertEquals(2, listOf(mavenModuleName, gradleModuleName).filter { fileText.contains(it) }.size)
 
@@ -401,13 +402,13 @@ class ModuleBridgesTest {
     val moduleManager = ModuleManager.getInstance(project)
     val module = runWriteActionAndWait { moduleManager.newModule(moduleFile.path, ModuleTypeId.JAVA_MODULE) }
 
-    saveSettings(project)
+    project.stateStore.save()
 
     assertNull(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX"))
 
     TestModuleComponent.getInstance(module).testString = "My String"
 
-    saveSettings(project, forceSavingAllSettings = true)
+    project.stateStore.save(forceSavingAllSettings = true)
 
     assertEquals(
       """  
@@ -632,7 +633,7 @@ class ModuleBridgesTest {
       }
     }
 
-    saveSettings(project)
+    project.stateStore.save()
 
     val rootManagerComponent = JDomSerializationUtil.findComponent(JDOMUtil.load(moduleImlFile), "NewModuleRootManager")!!
     assertEquals("""
@@ -672,7 +673,7 @@ class ModuleBridgesTest {
       }
     }
 
-    saveSettings(project)
+    project.stateStore.save()
 
     withContext(Dispatchers.EDT) {
       assertTrue(moduleFile.readText().contains(antLibraryFolder))
