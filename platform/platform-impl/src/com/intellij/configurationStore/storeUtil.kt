@@ -250,7 +250,7 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
 fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, forceSavingAllSettings: Boolean = false) {
   runInAutoSaveDisabledMode {
     runBlockingModal(project, CommonBundle.message("title.save.project")) {
-      saveSettings(project)
+      saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
     }
   }
 }
