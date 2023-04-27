@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
-import com.intellij.workspaceModel.storage.entities.unknowntypes.test.api.UnknownFieldEntity
+import com.intellij.workspaceModel.storage.entities.test.api.UnknownFieldEntity
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals

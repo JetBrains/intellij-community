@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.storage.entities.unknowntypes.test.api
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -14,11 +13,14 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import java.util.*
 import java.util.Date
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class UnknownFieldEntityImpl : UnknownFieldEntity, WorkspaceEntityBase() {
+open class UnknownFieldEntityImpl(val dataSource: UnknownFieldEntityData) : UnknownFieldEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -28,19 +30,18 @@ open class UnknownFieldEntityImpl : UnknownFieldEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: Date? = null
   override val data: Date
-    get() = _data!!
+    get() = dataSource.data
+
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  override val entitySource: EntitySource
-    get() = TODO("Not yet implemented")
-
-  class Builder(result: UnknownFieldEntityData?) : ModifiableWorkspaceEntityBase<UnknownFieldEntity, UnknownFieldEntityData>(result), UnknownFieldEntity.Builder {
+  class Builder(result: UnknownFieldEntityData?) : ModifiableWorkspaceEntityBase<UnknownFieldEntity, UnknownFieldEntityData>(
+    result), UnknownFieldEntity.Builder {
     constructor() : this(UnknownFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,6 +59,9 @@ open class UnknownFieldEntityImpl : UnknownFieldEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -66,11 +70,11 @@ open class UnknownFieldEntityImpl : UnknownFieldEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field UnknownFieldEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field UnknownFieldEntity#entitySource should be initialized")
       }
     }
 
@@ -81,28 +85,27 @@ open class UnknownFieldEntityImpl : UnknownFieldEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as UnknownFieldEntity
-      this.data = dataSource.data
-      this.entitySource = dataSource.entitySource
-      if (parents != null) {
-      }
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      updateChildToParentReferences(parents)
     }
 
-
-    override var data: Date
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
+
+      }
+
+    override var data: Date
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).data = value
+        changedProperty.add("data")
 
       }
 
@@ -117,22 +120,19 @@ class UnknownFieldEntityData : WorkspaceEntityData<UnknownFieldEntity>() {
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<UnknownFieldEntity> {
     val modifiable = UnknownFieldEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
   override fun createEntity(snapshot: EntityStorage): UnknownFieldEntity {
-    val entity = UnknownFieldEntityImpl()
-    entity._data = data
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = UnknownFieldEntityImpl(this)
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -157,18 +157,18 @@ class UnknownFieldEntityData : WorkspaceEntityData<UnknownFieldEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as UnknownFieldEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as UnknownFieldEntityData
 
@@ -189,7 +189,7 @@ class UnknownFieldEntityData : WorkspaceEntityData<UnknownFieldEntity>() {
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(Date::class.java)
+    this.data?.let { collector.addDataToInspect(it) }
     collector.sameForAllEntities = true
   }
 }
