@@ -11,8 +11,9 @@ import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import java.util.regex.Matcher
-
+import kotlin.io.path.createDirectories
 
 const val MAIN_INIT_SCRIPT_NAME = "ijInit"
 const val MAPPER_INIT_SCRIPT_NAME = "ijMapper"
@@ -142,11 +143,12 @@ private fun loadInitScript(aClass: Class<*>, resourcePath: String): String {
 }
 
 fun createInitScript(prefix: String, content: String): File {
-  val tempDirectory = File(FileUtil.getTempDirectory())
-  val contentBytes = content.toByteArray(StandardCharsets.UTF_8)
-  return FileUtil.findSequentFile(tempDirectory, prefix, GradleConstants.EXTENSION) { file ->
+  val contentBytes = content.encodeToByteArray()
+  val tempDirectory = Path.of(FileUtil.getTempDirectory())
+  tempDirectory.createDirectories()
+  return FileUtil.findSequentFile(tempDirectory.toFile(), prefix, GradleConstants.EXTENSION) { file ->
     try {
-      if (!file.exists()) {
+      if (file.createNewFile()) {
         file.writeBytes(contentBytes)
         file.deleteOnExit()
         return@findSequentFile true
