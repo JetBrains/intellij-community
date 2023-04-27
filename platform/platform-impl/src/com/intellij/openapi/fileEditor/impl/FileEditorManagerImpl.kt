@@ -120,7 +120,7 @@ import javax.swing.KeyStroke
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@State(name = "FileEditorManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
+@State(name = "FileEditorManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
 open class FileEditorManagerImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
