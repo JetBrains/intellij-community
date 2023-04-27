@@ -27,7 +27,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
@@ -37,24 +36,16 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stor
  */
 object StoreUtil {
   /**
-   * Do not use this method in tests, instead directly save using state store.
+   * Don't use this method in tests, instead directly save using state store.
    */
   @JvmOverloads
   @JvmStatic
   @CalledInAny
   fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
-    saveComponentManagerSettings(componentManager, forceSavingAllSettings)
-  }
-
-  /**
-   * Do not use this method in tests, instead directly save using state store.
-   */
-  @JvmOverloads
-  @JvmStatic
-  @CalledInAny
-  fun saveComponentManagerSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean = runInAutoSaveDisabledMode {
-    runUnderModalProgressIfIsEdt {
-      com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
+    runInAutoSaveDisabledMode {
+      runUnderModalProgressIfIsEdt {
+        com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
+      }
     }
   }
 
@@ -92,14 +83,13 @@ object StoreUtil {
   }
 }
 
-@CalledInAny
 suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean {
+  val storeReloadManager = if (componentManager is Project) StoreReloadManager.getInstance(componentManager) else null
+  storeReloadManager?.reloadChangedStorageFiles()
+  storeReloadManager?.blockReloadingProjectOnExternalChanges()
   try {
     componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
     return true
-  }
-  catch (e: CancellationException) {
-    return false
   }
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
@@ -132,6 +122,9 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
                                NotificationType.ERROR)
     }
     notification.notify(componentManager as? Project)
+  }
+  finally {
+    storeReloadManager?.unblockReloadingProjectOnExternalChanges()
   }
   return false
 }
@@ -207,36 +200,19 @@ fun getPerOsSettingsStorageFolderName(): String {
   }
 }
 
-private suspend inline fun reloadChangedStorageFilesAndRun(project: Project, task: () -> Unit) {
-  val storeReloadManager = StoreReloadManager.getInstance(project)
-  storeReloadManager.reloadChangedStorageFiles()
-  storeReloadManager.blockReloadingProjectOnExternalChanges()
-  try {
-    task()
-  }
-  finally {
-    storeReloadManager.unblockReloadingProjectOnExternalChanges()
-  }
-}
-
 /**
  * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
  */
-@CalledInAny
 suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
   val start = System.currentTimeMillis()
-  saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
+  saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = forceSavingAllSettings)
   if (onlyProject == null) {
     processOpenedProjects { project ->
-      reloadChangedStorageFilesAndRun(project) {
-        saveSettings(project, forceSavingAllSettings)
-      }
+      saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
     }
   }
   else {
-    reloadChangedStorageFilesAndRun(onlyProject) {
-      saveSettings(onlyProject, forceSavingAllSettings = true)
-    }
+    saveSettings(onlyProject, forceSavingAllSettings = true)
   }
 
   val duration = System.currentTimeMillis() - start

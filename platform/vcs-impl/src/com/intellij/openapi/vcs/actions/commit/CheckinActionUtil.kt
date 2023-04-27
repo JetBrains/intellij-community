@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions.commit
 
-import com.intellij.configurationStore.StoreUtil
+import com.intellij.CommonBundle
+import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.FilePath
@@ -80,7 +83,10 @@ object CheckinActionUtil {
                                 pathsToCommit: List<FilePath>,
                                 executor: CommitExecutor?,
                                 forceUpdateCommitStateFromContext: Boolean) {
-    StoreUtil.saveDocumentsAndProjectSettings(project)
+    FileDocumentManager.getInstance().saveAllDocuments()
+    runBlockingModal(project, CommonBundle.message("title.save.project")) {
+      saveSettings(project)
+    }
 
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {

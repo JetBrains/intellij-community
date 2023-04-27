@@ -2,8 +2,17 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runBlockingModal
 
-internal class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
-  override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean =
-    StoreUtil.saveComponentManagerSettings(componentManager, true)
+private class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
+  override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
+    runInAutoSaveDisabledMode {
+      runBlockingModal(ModalTaskOwner.guess(), "") {
+        componentManager.stateStore.save(forceSavingAllSettings = true)
+      }
+    }
+    return true
+  }
 }

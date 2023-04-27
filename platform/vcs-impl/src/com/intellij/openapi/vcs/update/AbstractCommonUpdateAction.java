@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -111,11 +112,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
       if (ApplicationManager.getApplication().isDispatchThread()) {
         // Not only documents, but also project settings should be saved,
-        // to ensure that if as result of Update some project settings will be changed,
+        // to ensure that if as a result of Update some project settings will be changed,
         // all local changes are saved in prior and do not overwrite remote changes.
         // Also, there is a chance that save during update can break it -
         // we do disable auto saving during update, but still, there is a chance that save will occur.
-        StoreUtil.saveDocumentsAndProjectSettings(project);
+        FileDocumentManager.getInstance().saveAllDocuments();
+        StoreUtil.saveSettings(project);
       }
 
       Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText()) {
