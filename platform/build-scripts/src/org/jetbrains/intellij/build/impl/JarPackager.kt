@@ -88,6 +88,7 @@ private val predefinedMergeRules = persistentMapOf<String, (String) -> Boolean>(
   map.put("rd.jar") { it.startsWith("rd-") }
   // all grpc garbage into one jar
   map.put("grpc.jar") { it.startsWith("grpc-") }
+  map.put("bouncy-castle.jar") { it.startsWith("bouncy-castle-") }
   map.put(PRODUCT_JAR) { it.startsWith("License") }
   // see ClassPathUtil.getUtilClassPath
   map.put(UTIL_8_JAR) {
@@ -97,7 +98,7 @@ private val predefinedMergeRules = persistentMapOf<String, (String) -> Boolean>(
   }
 
   // used in external process - see ConsoleProcessListFetcher.getConsoleProcessCount
-  map.put(UTIL_JAR) { it == "pty4j" }
+  map.put(UTIL_JAR) { it == "pty4j" || it == "jvm-native-trusted-roots" }
 }
 
 internal fun getLibraryFileName(library: JpsLibrary): String {
