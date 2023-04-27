@@ -72,13 +72,3 @@ class TerminalEscapeHandler(private val originalHandler: EditorActionHandler) : 
     return editor.getUserData(TerminalPromptPanel.KEY) != null || originalHandler.isEnabled(editor, caret, dataContext)
   }
 }
-
-class TerminalCommandHistoryCharFilter : CharFilter() {
-  override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup?): Result? {
-    return if (lookup is UserDataHolder && lookup.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true) {
-      // Close command history lookup on any char typed
-      Result.HIDE_LOOKUP
-    }
-    else null
-  }
-}

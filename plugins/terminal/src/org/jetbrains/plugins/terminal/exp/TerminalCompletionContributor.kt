@@ -233,6 +233,6 @@ class TerminalCompletionContributor : CompletionContributor() {
   companion object {
     private val SPLIT_REGEX: Regex = Regex("""(?<!\\) +""")
 
-    private fun isSingleCharParameter(value: String): Boolean = value.length == 2 && value[0] == '-'
+    fun isSingleCharParameter(value: String): Boolean = value.length == 2 && value[0] == '-'
   }
 }
