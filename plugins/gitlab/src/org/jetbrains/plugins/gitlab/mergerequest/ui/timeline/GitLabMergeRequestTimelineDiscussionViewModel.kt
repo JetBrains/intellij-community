@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussionChangeMapping
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNotePositionMapping
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import java.util.*
@@ -39,6 +39,7 @@ interface GitLabMergeRequestTimelineDiscussionViewModel : CollapsibleTimelineIte
 
 private val LOG = logger<GitLabMergeRequestTimelineDiscussionViewModel>()
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
@@ -51,16 +52,8 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(this, it, getDiscussionState(discussion)) }
+    .mapScoped { GitLabNoteViewModelImpl(this, it, flowOf(true)) }
     .modelFlow(cs, LOG)
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private fun getDiscussionState(discussion: GitLabDiscussion): Flow<GitLabDiscussionStateContainer> {
-    val resolved = discussion.resolved
-    val outdated = diffVm.flatMapLatest { it?.mapping ?: flowOf(null) }
-      .mapLatest { it != null && it !is GitLabMergeRequestDiscussionChangeMapping.Actual }
-    return flowOf(GitLabDiscussionStateContainer(resolved, outdated))
-  }
 
   override val id: String = discussion.id
   override val date: Date = discussion.createdAt
@@ -73,7 +66,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.drop(1) }
     .mapCaching(
       GitLabNote::id,
-      { cs, note -> GitLabNoteViewModelImpl(cs, note, flowOf(GitLabDiscussionStateContainer.DEFAULT)) },
+      { cs, note -> GitLabNoteViewModelImpl(cs, note, flowOf(false)) },
       GitLabNoteViewModelImpl::destroy
     )
     .modelFlow(cs, LOG)
@@ -90,7 +83,9 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
-    discussion.position.map { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) } }
+    discussion.notes
+      .flatMapLatest { it.first().position }
+      .mapScoped { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(this, mr, it) } }
       .modelFlow(cs, LOG)
 
   init {

@@ -7,17 +7,17 @@ import com.intellij.openapi.vcs.changes.Change
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.findCumulativeChange
 
-interface GitLabMergeRequestDiscussionChangeMapping {
-  class Actual(val change: Change, val location: DiffLineLocation? = null) : GitLabMergeRequestDiscussionChangeMapping
-  class Outdated(val change: Change, val originalLocation: DiffLineLocation? = null) : GitLabMergeRequestDiscussionChangeMapping
-  object Obsolete : GitLabMergeRequestDiscussionChangeMapping
-  class Error(val error: Throwable) : GitLabMergeRequestDiscussionChangeMapping
+interface GitLabMergeRequestNotePositionMapping {
+  class Actual(val change: Change, val location: DiffLineLocation? = null) : GitLabMergeRequestNotePositionMapping
+  class Outdated(val change: Change, val originalLocation: DiffLineLocation? = null) : GitLabMergeRequestNotePositionMapping
+  object Obsolete : GitLabMergeRequestNotePositionMapping
+  class Error(val error: Throwable) : GitLabMergeRequestNotePositionMapping
 
   companion object {
-    private val LOG = logger<GitLabMergeRequestDiscussionChangeMapping>()
+    private val LOG = logger<GitLabMergeRequestNotePositionMapping>()
 
-    fun map(mrChanges: GitBranchComparisonResult, position: GitLabDiscussionPosition): GitLabMergeRequestDiscussionChangeMapping {
-      val textLocation = (position as? GitLabDiscussionPosition.Text)?.location
+    fun map(mrChanges: GitBranchComparisonResult, position: GitLabNotePosition): GitLabMergeRequestNotePositionMapping {
+      val textLocation = (position as? GitLabNotePosition.Text)?.location
 
       val changes = if (position.parentSha == mrChanges.mergeBaseSha) {
         // first commit

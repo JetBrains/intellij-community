@@ -19,8 +19,9 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -62,16 +63,17 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
     }.modelFlow(cs, LOG)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun Flow<Collection<GitLabDiscussion>>.mapToDiff(): Flow<List<DiffMappedValue<GitLabDiscussion>>> =
+  private fun Flow<Collection<GitLabMergeRequestDiscussion>>.mapToDiff(): Flow<List<DiffMappedValue<GitLabMergeRequestDiscussion>>> =
     mapLatest { discussions ->
       discussions.mapNotNull {
-        val position = it.position.first() as? GitLabDiscussionPosition.Text ?: return@mapNotNull null
+        //FIXME: mutable position
+        val position = it.notes.first().first().position.value as? GitLabNotePosition.Text ?: return@mapNotNull null
         mapDiscussionToDiff(position, it)
       }
     }
 
-  private fun mapDiscussionToDiff(position: GitLabDiscussionPosition.Text, discussion: GitLabDiscussion)
-    : DiffMappedValue<GitLabDiscussion>? {
+  private fun mapDiscussionToDiff(position: GitLabNotePosition.Text, discussion: GitLabMergeRequestDiscussion)
+    : DiffMappedValue<GitLabMergeRequestDiscussion>? {
 
     if ((position.filePathBefore != null && !diffData.contains(position.parentSha, position.filePathBefore)) &&
         (position.filePathAfter != null && !diffData.contains(position.sha, position.filePathAfter))) return null

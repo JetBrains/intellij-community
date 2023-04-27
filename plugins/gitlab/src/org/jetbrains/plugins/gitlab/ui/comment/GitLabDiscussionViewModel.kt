@@ -63,7 +63,7 @@ class GitLabDiscussionViewModelImpl(
     }
   }.mapCaching(
     GitLabNote::id,
-    { cs, note -> GitLabNoteViewModelImpl(cs, note, getDiscussionState(discussion, note)) },
+    { cs, note -> GitLabNoteViewModelImpl(cs, note, discussion.notes.map { it.firstOrNull()?.id == note.id }) },
     GitLabNoteViewModelImpl::destroy
   ).combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
@@ -77,13 +77,6 @@ class GitLabDiscussionViewModelImpl(
       )
     }
   }.modelFlow(cs, LOG)
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private fun getDiscussionState(discussion: GitLabDiscussion, note: GitLabNote): Flow<GitLabDiscussionStateContainer> =
-    discussion.notes.map { it.firstOrNull()?.id == note.id }.mapLatest {
-      if (it) GitLabDiscussionStateContainer(discussion.resolved, flowOf(false))
-      else GitLabDiscussionStateContainer.DEFAULT
-    }
 
   override suspend fun destroy() {
     try {

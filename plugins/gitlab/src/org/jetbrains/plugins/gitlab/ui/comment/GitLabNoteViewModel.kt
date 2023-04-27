@@ -3,13 +3,18 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.asSafely
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNotePositionMapping
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import java.util.*
 
@@ -31,7 +36,7 @@ private val LOG = logger<GitLabNoteViewModel>()
 class GitLabNoteViewModelImpl(
   parentCs: CoroutineScope,
   note: GitLabNote,
-  override val discussionState: Flow<GitLabDiscussionStateContainer>
+  isMainNote: Flow<Boolean>
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
@@ -41,10 +46,22 @@ class GitLabNoteViewModelImpl(
   override val createdAt: Date = note.createdAt
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
-    if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, note) else null
+    if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, note) else null
 
   override val body: Flow<String> = note.body
   override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(it) }.modelFlow(cs, LOG)
+
+  override val discussionState: Flow<GitLabDiscussionStateContainer> = isMainNote.map {
+    if (it) {
+      val outdated = note.asSafely<GitLabMergeRequestNote>()?.positionMapping?.map { mapping ->
+        mapping is GitLabMergeRequestNotePositionMapping.Outdated || mapping is GitLabMergeRequestNotePositionMapping.Obsolete
+      } ?: flowOf(false)
+      GitLabDiscussionStateContainer(note.resolved, outdated)
+    }
+    else {
+      GitLabDiscussionStateContainer.DEFAULT
+    }
+  }
 
   suspend fun destroy() {
     try {

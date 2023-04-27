@@ -5,6 +5,7 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
 interface GitLabNoteAdminActionsViewModel {
@@ -19,7 +20,7 @@ interface GitLabNoteAdminActionsViewModel {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val note: GitLabNote)
+class GitLabNoteAdminActionsViewModelImpl(parentCs: CoroutineScope, private val note: MutableGitLabNote)
   : GitLabNoteAdminActionsViewModel {
 
   private val cs = parentCs.childScope()
