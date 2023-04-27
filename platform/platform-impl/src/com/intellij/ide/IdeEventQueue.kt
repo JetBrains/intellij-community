@@ -211,12 +211,14 @@ class IdeEventQueue private constructor() : EventQueue() {
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use IdleFlow and coroutines")
   fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
+    @Suppress("DEPRECATION")
     IdleTracker.getInstance().addIdleListener(runnable = runnable, timeoutMillis = timeoutMillis)
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use IdleFlow and coroutines")
   fun removeIdleListener(runnable: Runnable) {
+    @Suppress("DEPRECATION")
     IdleTracker.getInstance().removeIdleListener(runnable)
   }
 
@@ -486,7 +488,7 @@ class IdeEventQueue private constructor() : EventQueue() {
    * @param e event to be patched
    * @return new 'patched' event if you need, otherwise null
    *
-   * Note: As side effect this method tracks a special flag for 'Windows' key state that is valuable on itself
+   * Note: As a side effect, this method tracks a special flag for 'Windows' key state that is valuable in itself
    */
   private fun mapMetaState(e: AWTEvent): AWTEvent? {
     if (winMetaPressed) {
@@ -728,7 +730,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val isReady: Boolean
     get() = !keyboardBusy && keyEventDispatcher.isReady
 
-  fun maybeReady() {
+  internal fun maybeReady() {
     if (ready.isNotEmpty() && isReady) {
       invokeReadyHandlers()
     }
@@ -898,6 +900,7 @@ typealias PostEventHook = (event: AWTEvent) -> Boolean
 
 private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
 
+@Suppress("ConstPropertyName")
 private const val defaultEventWithWrite = true
 
 private val isSkipMetaPressOnLinux = java.lang.Boolean.getBoolean("keymap.skip.meta.press.on.linux")
