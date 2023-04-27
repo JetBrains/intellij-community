@@ -339,7 +339,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             component is SerializablePersistentStateComponent<*> -> {
               component.state
             }
-            stateSpec.getStateRequiresEdt || true -> {
+            stateSpec.getStateRequiresEdt -> {
               withContext(Dispatchers.EDT) {
                 (component as PersistentStateComponent<*>).state
               }
