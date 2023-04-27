@@ -1399,8 +1399,8 @@ class InternalTableCommand(InternalThreadCommand):
             dbg.writer.add_command(cmd)
 
     def exec_command(self, frame):
-        return exec_table_command(self.init_command, self.command_type, frame.f_globals,
-                                  frame.f_locals)
+        return exec_table_command(self.init_command, self.command_type, None, None,
+                                  frame.f_globals, frame.f_locals)
 
 
 #=======================================================================================================================

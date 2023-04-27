@@ -24,7 +24,8 @@ def is_error_on_eval(val):
     return is_exception_on_eval
 
 
-def exec_table_command(init_command, command_type, f_globals, f_locals):
+def exec_table_command(init_command, command_type, start_index, end_index, f_globals, f_locals):
+    # type: (str, str, [int, None], [int, None], dict, dict) -> (bool, str)
     table = pydevd_vars.eval_in_context(init_command, f_globals, f_locals)
     is_exception_on_eval = is_error_on_eval(table)
     if is_exception_on_eval:
@@ -45,7 +46,7 @@ def exec_table_command(init_command, command_type, f_globals, f_locals):
         res.append(table_provider.get_column_types(table))
 
     elif command_type == TableCommandType.SLICE:
-        res.append(table_provider.get_data(table, MAX_COLS))
+        res.append(table_provider.get_data(table, MAX_COLS, start_index, end_index))
 
     return True, ''.join(res)
 
