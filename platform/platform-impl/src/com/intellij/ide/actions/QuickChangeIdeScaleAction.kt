@@ -54,7 +54,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
         if (anAction is ChangeScaleAction) {
           switchAlarm.cancelAllRequests()
           switchAlarm.addRequest(Runnable {
-            applyUserScale(anAction.scale, false)
+            applyUserScale(anAction.scale, true)
             if (!popup.isDisposed) {
               popup.pack(true, true)
             }
@@ -67,7 +67,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
       override fun onClosed(event: LightweightWindowEvent) {
         switchAlarm.cancelAllRequests()
         if (!event.isOk) {
-          applyUserScale(initialScale, true)
+          applyUserScale(initialScale, false)
           logSwitcherClosed(false)
         }
       }
