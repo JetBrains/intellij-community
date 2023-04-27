@@ -500,6 +500,7 @@ private suspend fun buildMacZip(macDistributionBuilder: MacDistributionBuilder,
                   zipOutStream.entry("$zipRoot/Resources/$relativePath", sourceFile)
                   false
                 }
+                sourceFile.fileName.toString() == ".DS_Store" -> false
                 isContentDir && sourceFile.fileName.toString() != "Info.plist" -> {
                   error("Only Info.plist file is allowed in $zipRoot directory but found $zipRoot/$relativePath")
                 }
