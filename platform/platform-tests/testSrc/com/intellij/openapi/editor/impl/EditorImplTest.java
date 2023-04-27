@@ -354,6 +354,48 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("<selection>abc\ndef\nghi</selection>");
   }
 
+  public void testDefaultVerticalScrolling() {
+    initText("<caret>" + StringUtil.repeat("abc\n", 100));
+
+    int lineHeight = getEditor().getLineHeight();
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 10, 10);
+
+    // test for bottom scroll offset
+    for (int i = 0; i < 49; ++i) {
+      down();
+    }
+    assertEquals(41 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+
+    // test for top scroll offset
+    for (int i = 0; i < 20; ++i) {
+      up();
+    }
+    assertEquals(28 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+  }
+
+  public void testOverridingDefaultVerticalScrolling() {
+    initText("<caret>" + StringUtil.repeat("abc\n", 100));
+    int scrollOffBefore = getEditor().getSettings().getVerticalScrollOffset();
+    getEditor().getSettings().setVerticalScrollOffset(3);
+
+    int lineHeight = getEditor().getLineHeight();
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 10, 10);
+
+    // test for bottom scroll offset
+    for (int i = 0; i < 49; ++i) {
+      down();
+    }
+    assertEquals(43 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+
+    // test for top scroll offset
+    for (int i = 0; i < 20; ++i) {
+      up();
+    }
+    assertEquals(26 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+
+    getEditor().getSettings().setVerticalScrollOffset(scrollOffBefore);
+  }
+
   public void testScrollingInEditorOfSmallHeight() {
     initText("abc\n<caret>");
     int lineHeight = getEditor().getLineHeight();
@@ -366,6 +408,103 @@ public class EditorImplTest extends AbstractEditorTest {
     assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, getEditor().getScrollingModel().getVerticalScrollOffset());
     type('b');
     assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, getEditor().getScrollingModel().getVerticalScrollOffset());
+  }
+
+  public void testVerticalScrollJump() {
+    initText("<caret>" + StringUtil.repeat("abc\n", 100));
+    int scrollJumpBefore = getEditor().getSettings().getVerticalScrollJump();
+    getEditor().getSettings().setVerticalScrollJump(7);
+
+    int lineHeight = getEditor().getLineHeight();
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 10, 10);
+
+    for (int i = 0; i < 9 - getEditor().getSettings().getVerticalScrollOffset(); ++i) {
+      down();
+    }
+    assertEquals(0, getEditor().getScrollingModel().getVerticalScrollOffset());
+
+    down();
+    assertEquals(7 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+
+    getEditor().getSettings().setVerticalScrollJump(scrollJumpBefore);
+  }
+
+  public void testDefaultHorizontalScrolling() {
+    initText("<caret>" + StringUtil.repeat("abc", 100));
+    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, getEditor());
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 15, 2);
+
+    // test for right scroll offset
+    for (int i = 0; i < 49; ++i) {
+      right();
+    }
+    assertEquals(37 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+
+    // test for left scroll offset
+    for (int i = 0; i < 20; ++i) {
+      left();
+    } // caret offset is 30 now
+    assertEquals(26 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+  }
+
+  public void testOverridingDefaultHorizontalScrolling() {
+    initText("<caret>" + StringUtil.repeat("abc", 100));
+    int scrollOffBefore = getEditor().getSettings().getHorizontalScrollOffset();
+    getEditor().getSettings().setHorizontalScrollOffset(5);
+
+    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, getEditor());
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 15, 2);
+
+    // test for right scroll offset
+    for (int i = 0; i < 49; ++i) {
+      right();
+    }
+    assertEquals(39 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+
+    // test for left scroll offset
+    for (int i = 0; i < 20; ++i) {
+      left();
+    }
+    assertEquals(24 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+
+    getEditor().getSettings().setHorizontalScrollOffset(scrollOffBefore);
+  }
+
+  public void testScrollingInEditorOfSmallWidth() {
+    initText("<caret>" + StringUtil.repeat("abc", 100));
+    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, getEditor());
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 3, 2);
+
+    // test for right scroll offset
+    for (int i = 0; i < 49; ++i) {
+      right();
+    }
+    assertEquals((int) (47.5 * spaceWidth), getEditor().getScrollingModel().getHorizontalScrollOffset());
+
+    // test for left scroll offset
+    for (int i = 0; i < 20; ++i) {
+      left();
+    }
+    assertEquals((int) (27.5 * spaceWidth), getEditor().getScrollingModel().getHorizontalScrollOffset());
+  }
+
+  public void testHorizontalScrollJump() {
+    initText("<caret>" + StringUtil.repeat("abc", 100));
+    int scrollJumpBefore = getEditor().getSettings().getHorizontalScrollJump();
+    getEditor().getSettings().setHorizontalScrollJump(10);
+
+    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, getEditor());
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 15, 2);
+
+    for (int i = 0; i < 15 - getEditor().getSettings().getHorizontalScrollOffset(); ++i) {
+      right();
+    }
+    assertEquals(0, getEditor().getScrollingModel().getHorizontalScrollOffset());
+
+    right();
+    assertEquals(10 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+
+    getEditor().getSettings().setHorizontalScrollJump(scrollJumpBefore);
   }
 
   public void testEditorWithSoftWrapsBecomesVisibleAfterDocumentTextRemoval() {
