@@ -159,8 +159,12 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     executionConsoleFixture.assertTestTreeViewIsEmpty()
   }
 
-  fun TreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(className: String, methodName: String? = null) {
-    executionConsoleFixture.assertPsiLocation(this, className, methodName)
+  fun TreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(
+    className: String,
+    methodName: String? = null,
+    parameterName: String? = null
+  ) {
+    executionConsoleFixture.assertPsiLocation(this, className, methodName, parameterName)
   }
 
   fun assertTestEventsContain(className: String, methodName: String? = null) {

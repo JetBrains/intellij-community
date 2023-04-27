@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.execution.test.events.fixture
 
 import com.intellij.build.BuildTreeConsoleView
 import com.intellij.build.BuildView
+import com.intellij.execution.Location
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter
@@ -10,7 +12,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PlatformTestUtil
@@ -130,24 +131,44 @@ class GradleExecutionViewFixture(
     assertTestTreeView {}
   }
 
-  fun assertPsiLocation(testAssertion: TreeAssertion.Node<AbstractTestProxy>, className: String, methodName: String?) {
+  fun assertPsiLocation(
+    testAssertion: TreeAssertion.Node<AbstractTestProxy>,
+    className: String,
+    methodName: String?,
+    parameterName: String?
+  ) {
     testAssertion.assertValue { testProxy ->
+      val location = testProxy.getLocation()
       if (methodName == null) {
-        val psiClass = testProxy.getPsiElement<PsiClass>()
+        val psiClass = location.psiElement as PsiClass
         Assertions.assertEquals(className, psiClass.name)
       }
       else {
-        val psiMethod = testProxy.getPsiElement<PsiMethod>()
+        val psiMethod = location.psiElement as PsiMethod
         Assertions.assertEquals(methodName, psiMethod.name)
         Assertions.assertEquals(className, psiMethod.containingClass?.name)
+      }
+      if (parameterName == null) {
+        Assertions.assertTrue(location !is PsiMemberParameterizedLocation) {
+          "Test location is parameterized but shouldn't"
+        }
+      }
+      else {
+        Assertions.assertTrue(location is PsiMemberParameterizedLocation) {
+          "Test location isn't parameterized but should"
+        }
+      }
+      if (parameterName != null) {
+        location as PsiMemberParameterizedLocation
+        Assertions.assertEquals(parameterName, location.paramSetName)
       }
     }
   }
 
-  private inline fun <reified T : PsiElement> AbstractTestProxy.getPsiElement(): T {
+  private fun AbstractTestProxy.getLocation(): Location<*> {
     val location = getLocation(project, GlobalSearchScope.allScope(project))
     Assertions.assertNotNull(location) { "Cannot resolve location for $locationUrl" }
-    return location.psiElement as T
+    return location
   }
 
   private fun assertContains(expectedTextSample: String, actualText: String) {

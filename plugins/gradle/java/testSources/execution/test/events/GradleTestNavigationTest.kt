@@ -29,16 +29,16 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             assertPsiLocation("TestCase", "ugly_test")
           }
           assertNode("parametrized_test [1] 1, first") {
-            assertPsiLocation("TestCase", "parametrized_test")
+            assertPsiLocation("TestCase", "parametrized_test", "[1]")
           }
           assertNode("parametrized_test [2] 2, second") {
-            assertPsiLocation("TestCase", "parametrized_test")
+            assertPsiLocation("TestCase", "parametrized_test", "[2]")
           }
           assertNode("ugly_parametrized_test [1] 3, third") {
-            assertPsiLocation("TestCase", "ugly_parametrized_test")
+            assertPsiLocation("TestCase", "ugly_parametrized_test", "[1]")
           }
           assertNode("ugly_parametrized_test [2] 4, fourth") {
-            assertPsiLocation("TestCase", "ugly_parametrized_test")
+            assertPsiLocation("TestCase", "ugly_parametrized_test", "[2]")
           }
         }
       }
@@ -71,10 +71,10 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
               assertPsiLocation("TestCase", "parametrized_test")
             }
             assertNode("[1] 1, first") {
-              assertPsiLocation("TestCase", "parametrized_test")
+              assertPsiLocation("TestCase", "parametrized_test", "[1]")
             }
             assertNode("[2] 2, second") {
-              assertPsiLocation("TestCase", "parametrized_test")
+              assertPsiLocation("TestCase", "parametrized_test", "[2]")
             }
           }
           assertNode("pretty parametrized test") {
@@ -83,10 +83,10 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
               assertPsiLocation("TestCase", "ugly_parametrized_test")
             }
             assertNode("[1] 3, third") {
-              assertPsiLocation("TestCase", "ugly_parametrized_test")
+              assertPsiLocation("TestCase", "ugly_parametrized_test", "[1]")
             }
             assertNode("[2] 4, fourth") {
-              assertPsiLocation("TestCase", "ugly_parametrized_test")
+              assertPsiLocation("TestCase", "ugly_parametrized_test", "[2]")
             }
           }
         }
@@ -115,13 +115,13 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
         assertNode("ParametrizedTestCase") {
           assertPsiLocation("ParametrizedTestCase")
           assertNode("parametrized_test[0]") {
-            assertPsiLocation("ParametrizedTestCase", "parametrized_test")
+            assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[0]")
           }
           assertNode("parametrized_test[1]") {
-            assertPsiLocation("ParametrizedTestCase", "parametrized_test")
+            assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[1]")
           }
           assertNode("parametrized_test[2]") {
-            assertPsiLocation("ParametrizedTestCase", "parametrized_test")
+            assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[2]")
           }
         }
       }
@@ -151,13 +151,13 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             assertNode("ParametrizedTestCase", flattenIf = isGradleOlderThan("5.0")) {
               assertPsiLocation("ParametrizedTestCase")
               assertNode("parametrized_test[0](1, first)") {
-                assertPsiLocation("ParametrizedTestCase", "parametrized_test")
+                assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[0]")
               }
               assertNode("parametrized_test[1](2, second)") {
-                assertPsiLocation("ParametrizedTestCase", "parametrized_test")
+                assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[1]")
               }
               assertNode("parametrized_test[2](3, third)") {
-                assertPsiLocation("ParametrizedTestCase", "parametrized_test")
+                assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[2]")
               }
             }
           }

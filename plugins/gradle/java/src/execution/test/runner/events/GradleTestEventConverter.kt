@@ -55,7 +55,7 @@ internal class GradleTestEventConverter(
   }
 
   private val isJunit5ParametrizedTestMethod: Boolean by lazy {
-    isTestMethod && extractName(methodName, JUNIT5_PARAMETRIZED_METHOD_DISPLAY_NAME_EXTRACTOR) != null
+    isTestMethod && extractName(methodName, JUNIT5_PARAMETRIZED_METHOD_NAME_EXTRACTOR) != null
   }
 
   private val isOldJunit5ParametrizedTestMethod: Boolean by lazy {
@@ -109,10 +109,23 @@ internal class GradleTestEventConverter(
         ?: methodName
       isTestMethod ->
         extractName(methodName, JUNIT5_PARAMETRIZED_METHOD_NAME_EXTRACTOR)
+        ?: extractName(methodName, JUNIT4_PARAMETRIZED_METHOD_NAME_EXTRACTOR)
+        ?: extractName(methodName, TESTNG_PARAMETRIZED_METHOD_NAME_EXTRACTOR)
         ?: extractName(methodName, JUNIT5_METHOD_NAME_EXTRACTOR)
         ?: methodName
       else ->
         methodName
+    }
+  }
+
+  val convertedParameterName: String? by lazy {
+    when {
+      isTestMethod ->
+        extractName(methodName, JUNIT5_PARAMETER_NAME_EXTRACTOR)
+        ?: extractName(methodName, JUNIT4_PARAMETER_NAME_EXTRACTOR)
+        ?: extractName(methodName, TESTNG_PARAMETER_NAME_EXTRACTOR)
+      else ->
+        null
     }
   }
 
@@ -127,10 +140,7 @@ internal class GradleTestEventConverter(
         extractName(displayName, JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR)
         ?: displayName
       isOldJunit5ParametrizedTestMethod -> {
-        val displayMethodName =
-          extractName(convertedMethodName, JUNIT5_METHOD_DISPLAY_NAME_EXTRACTOR)
-          ?: convertedMethodName
-        "$displayMethodName $displayName"
+        "$convertedMethodName $displayName"
       }
       isTestMethod ->
         extractName(displayName, TESTNG_TEST_LAUNCHER_METHOD_DISPLAY_NAME_EXTRACTOR)
@@ -152,15 +162,19 @@ internal class GradleTestEventConverter(
   companion object {
     private val JUNIT5_TEST_LAUNCHER_SUITE_DISPLAY_NAME_EXTRACTOR = "Test suite '(.+)\\(.+\\)'".toRegex()
     private val JUNIT5_TEST_LAUNCHER_METHOD_DISPLAY_NAME_EXTRACTOR = "Test (.+)\\(\\)\\(.+\\)".toRegex()
+    private val JUNIT5_PARAMETER_NAME_EXTRACTOR = ".+\\(.*\\)(\\[\\d+])".toRegex()
     private val JUNIT5_PARAMETRIZED_METHOD_NAME_EXTRACTOR = "(.+)\\(.*\\)\\[\\d+]".toRegex()
     private val JUNIT5_PARAMETRIZED_SUITE_NAME_EXTRACTOR = "(.+)\\(.*\\)\\[\\d+]".toRegex()
     private val JUNIT5_PARAMETRIZED_SUITE_DISPLAY_NAME_EXTRACTOR = "(.+?)\\s?\\(.+\\)".toRegex()
-    private val JUNIT5_PARAMETRIZED_METHOD_DISPLAY_NAME_EXTRACTOR = "(.+)\\(.*\\)\\[\\d+]".toRegex()
     private val JUNIT5_METHOD_NAME_EXTRACTOR = "(.+)\\(.*\\)".toRegex()
     private val JUNIT5_METHOD_DISPLAY_NAME_EXTRACTOR = "(.+)\\(\\)".toRegex()
     private val JUNIT4_TEST_LAUNCHER_SUITE_DISPLAY_NAME_EXTRACTOR = "Test suite '(.+)'".toRegex()
     private val JUNIT4_TEST_LAUNCHER_METHOD_DISPLAY_NAME_EXTRACTOR = "Test (.+)\\(.+\\)".toRegex()
     private val JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR = ".*\\.([^.]+)".toRegex()
+    private val JUNIT4_PARAMETER_NAME_EXTRACTOR = ".+(\\[\\d+])".toRegex()
+    private val JUNIT4_PARAMETRIZED_METHOD_NAME_EXTRACTOR = "(.+)\\[\\d+]".toRegex()
     private val TESTNG_TEST_LAUNCHER_METHOD_DISPLAY_NAME_EXTRACTOR = "Test method (.+)\\(.+\\)".toRegex()
+    private val TESTNG_PARAMETER_NAME_EXTRACTOR = ".+(\\[\\d+])\\(.+\\)".toRegex()
+    private val TESTNG_PARAMETRIZED_METHOD_NAME_EXTRACTOR = "(.+)\\[\\d+]\\(.+\\)".toRegex()
   }
 }

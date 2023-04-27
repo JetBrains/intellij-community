@@ -163,15 +163,28 @@ public class JavaTestLocator implements SMTestLocator {
                              : new PsiLocation<>(aClass.getProject(), aClass);
   }
 
-  public static @NotNull String createLocationUrl(@NotNull String protocol, @NotNull String fqClassName) {
-    return createLocationUrl(protocol, fqClassName, null);
+  public static @NotNull String createLocationUrl(@NotNull String protocol, @NotNull String className) {
+    return createLocationUrl(protocol, className, null);
   }
 
-  public static @NotNull String createLocationUrl(@NotNull String protocol, @NotNull String fqClassName, @Nullable String methodName) {
+  public static @NotNull String createLocationUrl(@NotNull String protocol, @NotNull String className, @Nullable String methodName) {
+    return createLocationUrl(protocol, className, methodName, null);
+  }
+
+  public static @NotNull String createLocationUrl(
+    @NotNull String protocol,
+    @NotNull String className,
+    @Nullable String methodName,
+    @Nullable String paramName
+  ) {
     var baseUrl = protocol + URLUtil.SCHEME_SEPARATOR;
     if (methodName == null) {
-      return baseUrl + fqClassName;
+      return baseUrl + className;
     }
-    return baseUrl + fqClassName + "/" + StringUtil.trimEnd(methodName, "()");
+    methodName = StringUtil.trimEnd(methodName, "()");
+    if (paramName == null) {
+      return baseUrl + className + "/" + methodName;
+    }
+    return baseUrl + className + "/" + methodName + paramName;
   }
 }

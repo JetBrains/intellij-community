@@ -80,9 +80,10 @@ public abstract class AbstractTestEventProcessor implements TestEventProcessor {
     var eventConverter = new GradleTestEventConverter(project, parentTestProxy, isSuite, suiteName, className, methodName, displayName);
     var aClassName = eventConverter.getConvertedClassName();
     var aMethodName = eventConverter.getConvertedMethodName();
+    var aParamName = eventConverter.getConvertedParameterName();
     var aDisplayName = eventConverter.getConvertedDisplayName();
     var locationProtocol = isSuite ? JavaTestLocator.SUITE_PROTOCOL : JavaTestLocator.TEST_PROTOCOL;
-    var locationUrl = JavaTestLocator.createLocationUrl(locationProtocol, aClassName, aMethodName);
+    var locationUrl = JavaTestLocator.createLocationUrl(locationProtocol, aClassName, aMethodName, aParamName);
     var testProxy = new GradleSMTestProxy(aDisplayName, isSuite, locationUrl);
     testProxy.setLocator(getExecutionConsole().getUrlProvider());
     testProxy.setParentId(parentTestId);

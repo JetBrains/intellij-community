@@ -29,16 +29,16 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                         assertPsiLocation("TestCase", "ugly test")
                     }
                     assertNode("parametrized test [1] 1, first") {
-                        assertPsiLocation("TestCase", "parametrized test")
+                        assertPsiLocation("TestCase", "parametrized test", "[1]")
                     }
                     assertNode("parametrized test [2] 2, second") {
-                        assertPsiLocation("TestCase", "parametrized test")
+                        assertPsiLocation("TestCase", "parametrized test", "[2]")
                     }
                     assertNode("ugly parametrized test [1] 3, third") {
-                        assertPsiLocation("TestCase", "ugly parametrized test")
+                        assertPsiLocation("TestCase", "ugly parametrized test", "[1]")
                     }
                     assertNode("ugly parametrized test [2] 4, fourth") {
-                        assertPsiLocation("TestCase", "ugly parametrized test")
+                        assertPsiLocation("TestCase", "ugly parametrized test", "[2]")
                     }
                 }
             }
@@ -71,10 +71,10 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                             assertPsiLocation("TestCase", "parametrized test")
                         }
                         assertNode("[1] 1, first") {
-                            assertPsiLocation("TestCase", "parametrized test")
+                            assertPsiLocation("TestCase", "parametrized test", "[1]")
                         }
                         assertNode("[2] 2, second") {
-                            assertPsiLocation("TestCase", "parametrized test")
+                            assertPsiLocation("TestCase", "parametrized test", "[2]")
                         }
                     }
                     assertNode("pretty parametrized test") {
@@ -83,10 +83,10 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                             assertPsiLocation("TestCase", "ugly parametrized test")
                         }
                         assertNode("[1] 3, third") {
-                            assertPsiLocation("TestCase", "ugly parametrized test")
+                            assertPsiLocation("TestCase", "ugly parametrized test", "[1]")
                         }
                         assertNode("[2] 4, fourth") {
-                            assertPsiLocation("TestCase", "ugly parametrized test")
+                            assertPsiLocation("TestCase", "ugly parametrized test", "[2]")
                         }
                     }
                 }
@@ -116,13 +116,13 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                 assertNode("ParametrizedTestCase") {
                     assertPsiLocation("ParametrizedTestCase")
                     assertNode("parametrized test[0]") {
-                        assertPsiLocation("ParametrizedTestCase", "parametrized test")
+                        assertPsiLocation("ParametrizedTestCase", "parametrized test", "[0]")
                     }
                     assertNode("parametrized test[1]") {
-                        assertPsiLocation("ParametrizedTestCase", "parametrized test")
+                        assertPsiLocation("ParametrizedTestCase", "parametrized test", "[1]")
                     }
                     assertNode("parametrized test[2]") {
-                        assertPsiLocation("ParametrizedTestCase", "parametrized test")
+                        assertPsiLocation("ParametrizedTestCase", "parametrized test", "[2]")
                     }
                 }
             }
@@ -153,13 +153,13 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                         assertNode("ParametrizedTestCase") {
                             assertPsiLocation("ParametrizedTestCase")
                             assertNode("parametrized test[0](1, first)") {
-                                assertPsiLocation("ParametrizedTestCase", "parametrized test")
+                                assertPsiLocation("ParametrizedTestCase", "parametrized test", "[0]")
                             }
                             assertNode("parametrized test[1](2, second)") {
-                                assertPsiLocation("ParametrizedTestCase", "parametrized test")
+                                assertPsiLocation("ParametrizedTestCase", "parametrized test", "[1]")
                             }
                             assertNode("parametrized test[2](3, third)") {
-                                assertPsiLocation("ParametrizedTestCase", "parametrized test")
+                                assertPsiLocation("ParametrizedTestCase", "parametrized test", "[2]")
                             }
                         }
                     }
