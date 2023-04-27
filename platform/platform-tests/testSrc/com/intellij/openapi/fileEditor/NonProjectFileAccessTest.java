@@ -74,8 +74,9 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       addSuppressedException(e);
     }
     finally {
+      StoreReloadManager.Companion.getInstance(getProject()).unblockReloadingProjectOnExternalChanges();
+
       super.tearDown();
-      StoreReloadManager.Companion.getInstance(getProject()).unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed;
     }
   }
 
