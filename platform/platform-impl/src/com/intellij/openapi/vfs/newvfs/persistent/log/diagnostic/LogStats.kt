@@ -5,7 +5,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
-import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEach
+import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
@@ -160,7 +160,7 @@ private fun vFileEventIterCheck(log: VfsLog) {
         }
         is ReadResult.VFileEventRange -> {
           vfileEvents++
-          rec.forEach {
+          rec.forEachContainedOperation {
             vfileEventContentOps++
           }
         }

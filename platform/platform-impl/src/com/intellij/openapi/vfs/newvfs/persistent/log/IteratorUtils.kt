@@ -9,11 +9,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 
 object IteratorUtils {
   /**
-   * [VFileEventBasedIterator] provides more convenient API for working with VFileEvent kind of records:
+   * [VFileEventBasedIterator] provides a more convenient API for working with VFileEvent kind of records:
    * it automatically marks up ranges of VFileEvent-related operations.
    *
    * If [VfsOperation.VFileEventOperation.EventStart] was encountered, but there is no matching [VfsOperation.VFileEventOperation.EventEnd]
-   * in the storage yet (or if it's corrupted), then [ReadResult.Invalid] is returned with [PartialVFileEventException] as a cause.
+   * in the storage yet, then [ReadResult.Invalid] is returned with [PartialVFileEventException] as a cause.
    *
    * Iterator should not be used after [ReadResult.Invalid] was read.
    *
@@ -139,7 +139,11 @@ object IteratorUtils {
                                           val direction: OperationLogStorage.TraverseDirection) : Exception()
   }
 
-  fun ReadResult.VFileEventRange.forEach(body: (OperationReadResult) -> Unit) {
+  /**
+   * Traverses the operations inside the range (i.e. without EventStart/EventEnd operations) in advancing manner and
+   * invokes [body] on read results.
+   */
+  fun ReadResult.VFileEventRange.forEachContainedOperation(body: (OperationReadResult) -> Unit) {
     val start = begin.copy()
     val end = end.copy()
     start.skipNext()
