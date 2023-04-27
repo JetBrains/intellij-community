@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.actions.ShowCommitOptionsAction
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -102,9 +101,6 @@ abstract class NonModalCommitPanel(
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
   override fun getData(dataId: String): Any? {
-    if (VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId)) {
-      return this
-    }
     return getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
   }
 

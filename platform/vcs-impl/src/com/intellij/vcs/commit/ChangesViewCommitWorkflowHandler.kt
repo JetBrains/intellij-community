@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
@@ -83,9 +83,15 @@ internal class ChangesViewCommitWorkflowHandler(
   override fun createDataProvider(): DataProvider = object : DataProvider {
     private val superProvider = super@ChangesViewCommitWorkflowHandler.createDataProvider()
 
-    override fun getData(dataId: String): Any? =
-      if (COMMIT_WORKFLOW_HANDLER.`is`(dataId)) this@ChangesViewCommitWorkflowHandler.takeIf { it.isActive }
-      else superProvider.getData(dataId)
+    override fun getData(dataId: String): Any? {
+      if (VcsDataKeys.COMMIT_WORKFLOW_HANDLER.`is`(dataId)) {
+        return if (isActive) this@ChangesViewCommitWorkflowHandler else null
+      }
+      if (VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId)) {
+        return if (isActive) ui else null
+      }
+      return superProvider.getData(dataId)
+    }
   }
 
   override fun commitOptionsCreated() {

@@ -19,7 +19,10 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsActions;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
@@ -681,9 +684,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (VcsDataKeys.COMMIT_WORKFLOW_UI.is(dataId)) {
-      return this;
-    }
     return StreamEx.of(myDataProviders)
       .map(provider -> provider.getData(dataId))
       .nonNull()
