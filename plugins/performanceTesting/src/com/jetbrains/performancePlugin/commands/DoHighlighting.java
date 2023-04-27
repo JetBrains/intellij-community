@@ -29,6 +29,11 @@ import java.util.concurrent.Callable;
 
 import static com.intellij.psi.PsiManager.getInstance;
 
+/**
+ * Command runs highlighting pass.
+ * Runs all highlighting passes. Can't be invoked multiple times in a row since it drops caches before run.
+ * Example: %doHighlighting
+ */
 public final class DoHighlighting extends PerformanceCommand {
   public static final String NAME = "doHighlight";
   public static final String PREFIX = CMD_PREFIX + NAME;

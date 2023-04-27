@@ -24,6 +24,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Command takes screenshot.
+ * Takes JPG screenshot of current screen to specified file.
+ * <p>
+ * Syntax: %takeScreenshot <fullPathToFile>
+ * Example: %takeScreenshot ./myScreenshot.jpg
+ */
 public class TakeScreenshotCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "takeScreenshot";
   private static final Logger LOG = Logger.getInstance(TakeScreenshotCommand.class);
@@ -73,32 +80,34 @@ public class TakeScreenshotCommand extends AbstractCommand {
 
   public static void takeScreenshotOfFrame(String fileName) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for(Project project: projects){
+    for (Project project : projects) {
       CompletableFuture<Boolean> result = new CompletableFuture<>();
-      ApplicationManager.getApplication().invokeLater(()->{
+      ApplicationManager.getApplication().invokeLater(() -> {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
-        if(frame != null) {
+        if (frame != null) {
           JComponent component = frame.getComponent();
           BufferedImage img = ImageUtil.createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
           component.printAll(img.createGraphics());
           String prefix = projects.length == 1 ? "" : project.getName() + "_";
-          ApplicationManager.getApplication().executeOnPooledThread(() ->{
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
             try {
-              result.complete(ImageIO.write(img, "png", new File(prefix+fileName)));
+              result.complete(ImageIO.write(img, "png", new File(prefix + fileName)));
             }
             catch (IOException e) {
               LOG.info(e);
             }
           });
-        } else {
+        }
+        else {
           LOG.info("Frame was empty when takeScreenshot was called");
         }
       });
       try {
         Boolean fileCreated = result.get(30, TimeUnit.SECONDS);
-        if(fileCreated){
+        if (fileCreated) {
           LOG.info("Screenshot is saved at: " + fileName);
-        } else {
+        }
+        else {
           LOG.info("No writers are found for screenshot");
         }
       }

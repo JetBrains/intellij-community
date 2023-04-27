@@ -12,6 +12,9 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Command dumps memory
+ */
 public final class MemoryDumpCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "memoryDump";
 

@@ -19,6 +19,17 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.asCompletableFuture
 import java.io.IOException
 
+/**
+ *   Command to set breakpoint in file.
+ *   Line number get from parameters.
+ *   If filePath does not provide in parameters - set breakpoint in current opened editor.
+ *   Support lambda and line breakpoint types. Line is a default type.
+ * <p>
+ *   Example: %setBreakpoint 33
+ *   Example: %setBreakpoint 33, fileName.java
+ *   Example: %setBreakpoint 33, lambda-type
+ *   Example: %setBreakpoint 33, fileName.java, lambda-type
+ */
 class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
     val project = context.project

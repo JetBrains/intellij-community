@@ -13,7 +13,10 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.context.Scope
 import org.jetbrains.annotations.NonNls
 
-
+/**
+ * Command to debug step OVER/IN/INTO in debug process.
+ * Example: %debugStep OVER
+ */
 class DebugStepCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
     val debugStepType: DebugStepTypes

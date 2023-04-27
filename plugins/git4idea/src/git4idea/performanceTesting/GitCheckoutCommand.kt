@@ -12,6 +12,12 @@ import git4idea.branch.GitBrancher
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 
+/**
+ *   Command switches to another branch.
+ *   Call from the project dir git checkout command in command line.
+ *   Syntax: %gitCheckout <branch>
+ *   Example: %gitCheckout master
+ */
 class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, true) {
   companion object {
     const val PREFIX = "${CMD_PREFIX}gitCheckout"

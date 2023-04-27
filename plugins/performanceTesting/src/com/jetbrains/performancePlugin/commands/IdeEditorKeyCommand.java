@@ -24,6 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+/**
+ * Command simulates pressing a keyboard key.
+ * Only defined set of key is supported for now: "ENTER", "BACKSPACE", "TAB" and "ESCAPE"
+ * <p>
+ * Syntax: %pressKey <KEY>
+ * Example: %pressKey ENTER
+ */
 public class IdeEditorKeyCommand extends KeyCodeTypeCommand {
 
   public static final String PREFIX = CMD_PREFIX + "pressKey";

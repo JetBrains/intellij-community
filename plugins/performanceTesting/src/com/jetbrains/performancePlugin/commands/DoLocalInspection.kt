@@ -22,6 +22,10 @@ import kotlinx.coroutines.withContext
 import java.awt.KeyboardFocusManager
 import kotlin.coroutines.resume
 
+/**
+ * Command runs local inspection.
+ * Runs local inspection using DaemonCodeAnalyzer.
+ */
 class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: String = CMD_PREFIX + "doLocalInspection"

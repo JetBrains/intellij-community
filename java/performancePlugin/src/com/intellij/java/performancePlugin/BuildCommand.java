@@ -20,6 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+/**
+ * Command builds all modules in a project. There are two modes: BUILD and REBUILD
+ * Syntax: %buildProject [mode]
+ */
 public class BuildCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "buildProject";
   private static final String REBUILD = "REBUILD";

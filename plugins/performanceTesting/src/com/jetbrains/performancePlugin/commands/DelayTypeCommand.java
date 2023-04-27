@@ -21,6 +21,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Command types text with some delay between typing.
+ * Text and delay are being set as parameters.
+ * Syntax: %delayType <delay in ms>|<Text to type>
+ * Example: %delayType 150|Sample text for typing scenario
+ */
 public class DelayTypeCommand extends KeyCodeTypeCommand {
 
   public static final String PREFIX = CMD_PREFIX + "delayType";

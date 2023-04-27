@@ -26,6 +26,12 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.TimeUnit
 
+/**
+ *   Command debug specified configuration if configuration exists and list of breakpoint is not empty.
+ *   Command finished when debug process stopped on first breakpoint or by timeout if timeout was set.
+ *   Example: %runConfiguration IDEA
+ *   Example: %runConfiguration IDEA, 60
+ */
 class DebugRunConfigurationCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
 
   override fun execute(callback: ActionCallback, context: PlaybackContext) {

@@ -37,6 +37,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 
+/**
+ * Command simulate calling search everywhere action with a given text and specified tab.
+ * Syntax: %searchEverywhere [-tab tab] [-close true][-selectFirst][-type text_to_type]|[text]
+ * Example: %searchEverywhere -tab symbol -close|EditorIm
+ * Example: %searchEverywhere -tab symbol -type pl -close|EditorIm
+ * Example: %searchEverywhere -tab symbol -selectFirst|EditorIm
+ */
 public class SearchEverywhereCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "searchEverywhere";
   private static final Logger LOG = Logger.getInstance(SearchEverywhereCommand.class);
@@ -166,7 +173,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
           try {
             char currentChar = typingText.charAt(index);
             oneLetterSpan.set(
-              PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan().setAttribute("text", String.valueOf(currentChar)));
+              PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan()
+                .setAttribute("text", String.valueOf(currentChar)));
             document.insertString(document.getLength(), String.valueOf(currentChar), null);
             if (index == typingText.length() - 1) {
               isTypingFinished.set(true);

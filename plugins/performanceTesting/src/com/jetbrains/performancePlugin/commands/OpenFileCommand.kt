@@ -23,6 +23,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 
+/**
+ * Command opens file.
+ * Example: %openFile MyClass.php
+ */
 class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "openFile"

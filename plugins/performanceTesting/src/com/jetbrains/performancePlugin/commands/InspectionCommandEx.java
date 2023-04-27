@@ -58,6 +58,12 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 
+/**
+ * Command runs code inspection using custom tool.
+ * <p>
+ * Syntax: %InspectCodeEx [parameters]
+ * Example: %InspectCodeEx -directory app -toolShortName RubyResolve
+ */
 public class InspectionCommandEx extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "InspectCodeEx";
   private static final Logger LOGGER = Logger.getInstance(InspectionCommandEx.class);
@@ -79,7 +85,8 @@ public class InspectionCommandEx extends AbstractCommand {
     if (StringUtil.isNotEmpty(myOptions.downloadFileUrl)) {
       if (StringUtil.isEmpty(myOptions.toolShortName)) {
         LOGGER.error("myOptions.toolShortName cannot be null if you want to download file for test");
-      } else {
+      }
+      else {
         downloadTestRequiredFile(myOptions.toolShortName, myOptions.downloadFileUrl);
       }
     }
@@ -166,7 +173,7 @@ public class InspectionCommandEx extends AbstractCommand {
                   Path path = file.toPath();
                   context.message(path.toString(), getLine());
                   long warningCount;
-                  try(Stream<String> lines = Files.lines(path).filter(line -> line.contains("<problem>"))) {
+                  try (Stream<String> lines = Files.lines(path).filter(line -> line.contains("<problem>"))) {
                     warningCount = lines.count();
                   }
                   if (ApplicationManagerEx.isInIntegrationTest()) {
@@ -267,9 +274,9 @@ public class InspectionCommandEx extends AbstractCommand {
                                         @NotNull Project project) {
 
     return Stream.of(project.getName(),
-                       StringUtil.trimExtensions(inspectionResultFilename),
-                       ArrayUtil.isEmpty(inspectionTrueFields) ? null : StringUtil.join(inspectionTrueFields, "-"),
-                       "warning-count")
+                     StringUtil.trimExtensions(inspectionResultFilename),
+                     ArrayUtil.isEmpty(inspectionTrueFields) ? null : StringUtil.join(inspectionTrueFields, "-"),
+                     "warning-count")
       .filter(nonNull())
       .collect(Collectors.joining("-"));
   }
