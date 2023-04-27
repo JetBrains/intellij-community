@@ -103,7 +103,7 @@ fun <T : Any> buildGradleModel(
             Unit::class.java
         )
         val initScript = createMainInitScript(false, toolingExtensionClasses + kotlinToolingExtensionClasses)
-        executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.absolutePath)
+        executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString())
 
         val buildActionExecutor = gradleConnection.action(projectImportAction)
         buildActionExecutor.withArguments(executionSettings.arguments)

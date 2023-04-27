@@ -47,7 +47,6 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -298,9 +297,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   private static void writeAndAppendScript(@NotNull GradleExecutionSettings effectiveSettings,
                                            @NotNull String initScript,
                                            @NotNull String initScriptPrefix) {
-    String initScriptPrefixName = FileUtil.sanitizeFileName(initScriptPrefix);
-    File tempFile = GradleInitScriptUtil.createInitScript(initScriptPrefixName, initScript);
-    effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+    var initScriptPrefixName = FileUtil.sanitizeFileName(initScriptPrefix);
+    var initScriptPath = GradleInitScriptUtil.createInitScript(initScriptPrefixName, initScript);
+    effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
   }
 
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {

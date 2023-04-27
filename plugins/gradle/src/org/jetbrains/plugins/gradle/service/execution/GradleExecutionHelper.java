@@ -306,7 +306,7 @@ public class GradleExecutionHelper {
     File fileWithPathToProperties = new File(wrapperFilesLocation, "path.tmp");
 
     var initScriptFile = GradleInitScriptUtil.createWrapperInitScript(gradleVersion, jarFile, scriptFile, fileWithPathToProperties);
-    settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
+    settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.toString());
 
     return () -> FileUtil.loadFileOrNull(fileWithPathToProperties);
   }
@@ -511,7 +511,7 @@ public class GradleExecutionHelper {
     buildLauncher.withArguments(commandLine.getOptions().getTokens());
     if (isRunAsTest) {
       var initScript = GradleInitScriptUtil.createTestInitScript(commandLine.getTasks());
-      buildLauncher.addArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
+      buildLauncher.addArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
     }
   }
 
@@ -699,7 +699,7 @@ public class GradleExecutionHelper {
   @ApiStatus.Internal
   public static void attachTargetPathMapperInitScript(@NotNull GradleExecutionSettings executionSettings) {
     var initScriptFile = GradleInitScriptUtil.createTargetPathMapperInitScript();
-    executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
+    executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.toString());
   }
 
   @ApiStatus.Experimental

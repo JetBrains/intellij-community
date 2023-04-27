@@ -54,6 +54,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -154,8 +155,8 @@ public abstract class AbstractModelBuilderTest {
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       GradleExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
       GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
-      File initScript = GradleInitScriptUtil.createMainInitScript(false, getToolingExtensionClasses());
-      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
+      Path initScript = GradleInitScriptUtil.createMainInitScript(false, getToolingExtensionClasses());
+      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
 
       buildActionExecutor.withArguments(executionSettings.getArguments());
       String jdkHome = IdeaTestUtil.requireRealJdkHome();
