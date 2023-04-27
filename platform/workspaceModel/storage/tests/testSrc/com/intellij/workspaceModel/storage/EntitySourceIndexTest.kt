@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.test.addSourceEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.workspaceModel.storage.impl.assertConsistency
@@ -16,7 +15,7 @@ class EntitySourceIndexTest {
     val oldSource = SampleEntitySource("oldSource")
     val newSource = SampleEntitySource("newSource")
     val builder = createEmptyBuilder()
-    val entity = builder.addSourceEntity("hello", oldSource)
+    val entity = builder addEntity SourceEntity("hello", oldSource) 
     assertEquals((entity as SourceEntityImpl.Builder).id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
     builder.modifyEntity(entity) {
@@ -35,14 +34,14 @@ class EntitySourceIndexTest {
     val oldSource = SampleEntitySource("oldSource")
     val newSource = SampleEntitySource("newSource")
     val builder = createEmptyBuilder()
-    val firstEntity = builder.addSourceEntity("one", oldSource)
+    val firstEntity = builder addEntity SourceEntity("one", oldSource)
     assertEquals((firstEntity as SourceEntityImpl.Builder).id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
     val diff = createBuilderFrom(builder.toSnapshot())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
     assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
-    val secondEntity = diff.addSourceEntity("two", newSource)
+    val secondEntity = diff addEntity SourceEntity("two", newSource)
     assertEquals((secondEntity as SourceEntityImpl.Builder).id, diff.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
     assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
@@ -56,7 +55,7 @@ class EntitySourceIndexTest {
   fun `remove from diff test`() {
     val oldSource = SampleEntitySource("oldSource")
     val builder = createEmptyBuilder()
-    val firstEntity = builder.addSourceEntity("one", oldSource)
+    val firstEntity = builder addEntity SourceEntity("one", oldSource)
     assertEquals((firstEntity as SourceEntityImpl.Builder).id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
     val diff = createBuilderFrom(builder.toSnapshot())
@@ -75,7 +74,7 @@ class EntitySourceIndexTest {
     val oldSource = SampleEntitySource("oldSource")
     val newSource = SampleEntitySource("newSource")
     val builder = createEmptyBuilder()
-    val firstEntity = builder.addSourceEntity("one", oldSource)
+    val firstEntity = builder addEntity SourceEntity("one", oldSource)
     assertEquals((firstEntity as SourceEntityImpl.Builder).id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
     val diff = createBuilderFrom(builder.toSnapshot())
@@ -98,7 +97,7 @@ class EntitySourceIndexTest {
   fun `remove entity with child`() {
     val entitySource = SampleEntitySource("oldSource")
     val builder = createEmptyBuilder()
-    val firstEntity = builder.addSourceEntity("one", entitySource)
+    val firstEntity = builder addEntity SourceEntity("one", entitySource)
     val entity = ChildSourceEntity("firstChild", entitySource) {
       this.parentEntity = firstEntity
     }
@@ -117,7 +116,7 @@ class EntitySourceIndexTest {
   fun `test incorrect index`() {
     val oldSource = SampleEntitySource("oldSource")
     val builder = createEmptyBuilder()
-    builder.addSourceEntity("hello", oldSource)
+    builder addEntity SourceEntity("hello", oldSource)
 
     builder.indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.INSTANCE.getInt(SourceEntity::class.java)), oldSource)
 
@@ -128,7 +127,7 @@ class EntitySourceIndexTest {
   fun `add and change source`() {
     val oldSource = SampleEntitySource("oldSource")
     val builder = createEmptyBuilder()
-    val entity = builder.addSourceEntity("one", oldSource)
+    val entity = builder addEntity SourceEntity("one", oldSource)
     builder.modifyEntity(entity) {
       this.entitySource = SampleEntitySource("newSource")
     }

@@ -9,6 +9,8 @@ import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.util.*
@@ -18,6 +20,8 @@ import kotlin.test.assertTrue
 class DiffBuilderTest {
   private lateinit var target: MutableEntityStorageImpl
   private var shaker = -1L
+
+  private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 
   private fun MutableEntityStorage.applyDiff(anotherBuilder: MutableEntityStorage): EntityStorage {
     val builder = createBuilderFrom(this)
@@ -30,6 +34,7 @@ class DiffBuilderTest {
 
   @BeforeEach
   internal fun setUp(info: RepetitionInfo) {
+    virtualFileUrlManager = VirtualFileUrlManagerImpl()
     target = createEmptyBuilder()
     // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
     shaker = Random(info.currentRepetition.toLong()).nextLong()
@@ -39,16 +44,20 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `add entity`() {
     val source = createEmptyBuilder()
-    source.addSampleEntity("first")
-    target.addSampleEntity("second")
+    source addEntity SampleEntity(false, "first", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                  SampleEntitySource("test"))
+    target addEntity SampleEntity(false, "second", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                  SampleEntitySource("test"))
     val storage = target.applyDiff(source)
     assertEquals(setOf("first", "second"), storage.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
   }
 
   @RepeatedTest(10)
   fun `remove entity`() {
-    val entity = target.addSampleEntity("hello")
-    val entity2 = target.addSampleEntity("hello")
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                               SampleEntitySource("test"))
+    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                                SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     source.removeEntity(entity.from(source))
     val storage = target.applyDiff(source)
@@ -57,7 +66,8 @@ class DiffBuilderTest {
 
   @RepeatedTest(10)
   fun `modify entity`() {
-    val entity = target.addSampleEntity("hello")
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                               SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     source.modifyEntity(entity.from(source)) {
       stringProperty = "changed"
@@ -68,8 +78,10 @@ class DiffBuilderTest {
 
   @RepeatedTest(10)
   fun `remove removed entity`() {
-    val entity = target.addSampleEntity("hello")
-    val entity2 = target.addSampleEntity("hello")
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                               SampleEntitySource("test"))
+    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                                SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     target.removeEntity(entity)
     target.assertConsistency()
@@ -81,7 +93,8 @@ class DiffBuilderTest {
 
   @RepeatedTest(10)
   fun `modify removed entity`() {
-    val entity = target.addSampleEntity("hello")
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                               SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     target.removeEntity(entity)
     source.assertConsistency()
@@ -94,8 +107,10 @@ class DiffBuilderTest {
 
   @RepeatedTest(10)
   fun `modify removed child entity`() {
-    val parent = target.addParentEntity("parent")
-    val child = target.addChildEntity(parent, "child")
+    val parent = target addEntity XParentEntity("parent", MySource)
+    val child = target addEntity XChildEntity("child", MySource) {
+      parentEntity = parent
+    }
     val source = createBuilderFrom(target)
     target.removeEntity(child)
     source.modifyEntity(parent.from(source)) {
@@ -114,7 +129,8 @@ class DiffBuilderTest {
 
   @RepeatedTest(10)
   fun `remove modified entity`() {
-    val entity = target.addSampleEntity("hello")
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                               SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     target.modifyEntity(entity) {
       stringProperty = "changed"
@@ -128,9 +144,13 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `add entity with refs at the same slot`() {
     val source = createEmptyBuilder()
-    source.addSampleEntity("Another entity")
-    val parentEntity = target.addSampleEntity("hello")
-    target.addChildSampleEntity("data", parentEntity)
+    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                  SampleEntitySource("test"))
+    val parentEntity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                                     virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
+    target addEntity ChildSampleEntity("data", SampleEntitySource("test")) {
+      this@ChildSampleEntity.parentEntity = parentEntity
+    }
 
     source.addDiff(target)
     source.assertConsistency()
@@ -139,17 +159,24 @@ class DiffBuilderTest {
     assertEquals(2, resultingStorage.entities(SampleEntity::class.java).toList().size)
     assertEquals(1, resultingStorage.entities(ChildSampleEntity::class.java).toList().size)
 
-    assertEquals(resultingStorage.entities(SampleEntity::class.java).last(), resultingStorage.entities(ChildSampleEntity::class.java).single().parentEntity)
+    assertEquals(resultingStorage.entities(SampleEntity::class.java).last(),
+                 resultingStorage.entities(ChildSampleEntity::class.java).single().parentEntity)
   }
 
   @RepeatedTest(10)
   fun `add remove and add with refs`() {
     val source = createEmptyBuilder()
-    val parent = source.addSampleEntity("Another entity")
-    source.addChildSampleEntity("String", parent)
+    val parent = source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(),
+                                               virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
+    source addEntity ChildSampleEntity("String", SampleEntitySource("test")) {
+      parentEntity = parent
+    }
 
-    val parentEntity = target.addSampleEntity("hello")
-    target.addChildSampleEntity("data", parentEntity)
+    val parentEntity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                                     virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
+    target addEntity ChildSampleEntity("data", SampleEntitySource("test")) {
+      this@ChildSampleEntity.parentEntity = parentEntity
+    }
 
     source.addDiff(target)
     source.assertConsistency()
@@ -161,15 +188,18 @@ class DiffBuilderTest {
     assertNotNull(resultingStorage.entities(ChildSampleEntity::class.java).first().parentEntity)
     assertNotNull(resultingStorage.entities(ChildSampleEntity::class.java).last().parentEntity)
 
-    assertEquals(resultingStorage.entities(SampleEntity::class.java).first(), resultingStorage.entities(ChildSampleEntity::class.java).first().parentEntity)
-    assertEquals(resultingStorage.entities(SampleEntity::class.java).last(), resultingStorage.entities(ChildSampleEntity::class.java).last().parentEntity)
+    assertEquals(resultingStorage.entities(SampleEntity::class.java).first(),
+                 resultingStorage.entities(ChildSampleEntity::class.java).first().parentEntity)
+    assertEquals(resultingStorage.entities(SampleEntity::class.java).last(),
+                 resultingStorage.entities(ChildSampleEntity::class.java).last().parentEntity)
   }
 
   @RepeatedTest(10)
   fun `add dependency without changing entities`() {
     val source = createEmptyBuilder()
-    source.addSampleEntity("Another entity")
-    source.addChildSampleEntity("String", null)
+    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                  SampleEntitySource("test"))
+    source addEntity ChildSampleEntity("String", SampleEntitySource("test"))
 
     val target = createBuilderFrom(source)
     val pchild = target.entities(ChildSampleEntity::class.java).single()
@@ -185,16 +215,19 @@ class DiffBuilderTest {
     assertEquals(1, resultingStorage.entities(SampleEntity::class.java).toList().size)
     assertEquals(1, resultingStorage.entities(ChildSampleEntity::class.java).toList().size)
 
-    assertEquals(resultingStorage.entities(SampleEntity::class.java).single(), resultingStorage.entities(ChildSampleEntity::class.java).single().parentEntity)
+    assertEquals(resultingStorage.entities(SampleEntity::class.java).single(),
+                 resultingStorage.entities(ChildSampleEntity::class.java).single().parentEntity)
   }
 
   @RepeatedTest(10)
   fun `dependency to removed parent`() {
     val source = createEmptyBuilder()
-    val parent = source.addParentEntity()
+    val parent = source addEntity XParentEntity("parent", MySource)
 
     val target = createBuilderFrom(source)
-    target.addChildWithOptionalParentEntity(parent)
+    target addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = parent
+    }
     source.removeEntity(parent)
 
     source.applyDiff(target)
@@ -203,14 +236,18 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `modify child and parent`() {
     val source = createEmptyBuilder()
-    val parent = source.addParentEntity()
-    source.addChildEntity(parent)
+    val parent = source addEntity XParentEntity("parent", MySource)
+    source addEntity XChildEntity("child", MySource) {
+      parentEntity = parent
+    }
 
     val target = createBuilderFrom(source)
     target.modifyEntity(parent.from(target)) {
       this.parentProperty = "anotherValue"
     }
-    source.addChildEntity(parent)
+    source addEntity XChildEntity("child", MySource) {
+      parentEntity = parent
+    }
 
     source.applyDiff(target)
   }
@@ -218,10 +255,12 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `remove parent in both difs with dependency`() {
     val source = createEmptyBuilder()
-    val parent = source.addParentEntity()
+    val parent = source addEntity XParentEntity("parent", MySource)
 
     val target = createBuilderFrom(source)
-    target.addChildWithOptionalParentEntity(parent)
+    target addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = parent
+    }
     target.removeEntity(parent.from(target))
     source.removeEntity(parent)
 
@@ -231,8 +270,8 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `remove parent in both diffs`() {
     val source = createEmptyBuilder()
-    val parent = source.addParentEntity()
-    val optionalChild = source.addChildWithOptionalParentEntity(null)
+    val parent = source addEntity XParentEntity("parent", MySource)
+    val optionalChild = source addEntity XChildWithOptionalParentEntity("child", MySource)
 
     val target = createBuilderFrom(source)
     target.modifyEntity(optionalChild.from(target)) {
@@ -279,10 +318,12 @@ class DiffBuilderTest {
   fun `checking external mapping`() {
     val target = createEmptyBuilder()
 
-    target.addSampleEntity("Entity at index 0")
+    target addEntity SampleEntity(false, "Entity at index 0", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                  SampleEntitySource("test"))
 
     val source = createEmptyBuilder()
-    val sourceSample = source.addSampleEntity("Entity at index 1")
+    val sourceSample = source addEntity SampleEntity(false, "Entity at index 1", ArrayList(), HashMap(),
+                                                     virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
     val mutableExternalMapping = source.getMutableExternalMapping<Any>("test.checking.external.mapping")
     val anyObj = Any()
     mutableExternalMapping.addMapping(sourceSample, anyObj)
@@ -295,7 +336,8 @@ class DiffBuilderTest {
 
   @RepeatedTest(10)
   fun `change source in diff`() {
-    val sampleEntity = target.addSampleEntity("Prop", MySource)
+    val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
+                                                     virtualFileUrlManager.fromUrl("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
     source.modifyEntity(sampleEntity.from(source)) {
@@ -313,7 +355,8 @@ class DiffBuilderTest {
 
   @RepeatedTest(10)
   fun `change source and data in diff`() {
-    val sampleEntity = target.addSampleEntity("Prop", MySource)
+    val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
+                                                     virtualFileUrlManager.fromUrl("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
     source.modifyEntity(sampleEntity.from(source)) {
@@ -338,7 +381,8 @@ class DiffBuilderTest {
 
   @RepeatedTest(10)
   fun `change source in target`() {
-    val sampleEntity = target.addSampleEntity("Prop", MySource)
+    val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
+                                                     virtualFileUrlManager.fromUrl("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
     target.modifyEntity(sampleEntity) {
@@ -361,11 +405,13 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `adding parent with child and shifting`() {
     val parentAndChildProperty = "Bound"
-    target.addChildWithOptionalParentEntity(null, "Existing")
+    target addEntity XChildWithOptionalParentEntity("Existing", MySource)
 
     val source = createEmptyBuilder()
-    val parent = source.addParentEntity(parentAndChildProperty)
-    source.addChildWithOptionalParentEntity(parent, parentAndChildProperty)
+    val parent = source addEntity XParentEntity(parentAndChildProperty, MySource)
+    source addEntity XChildWithOptionalParentEntity(parentAndChildProperty, MySource) {
+      optionalParent = parent
+    }
 
     target.addDiff(source)
 
@@ -377,11 +423,11 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `adding parent with child and shifting and later connecting`() {
     val parentAndChildProperty = "Bound"
-    target.addChildWithOptionalParentEntity(null, "Existing")
+    target addEntity XChildWithOptionalParentEntity("Existing", MySource)
 
     val source = createEmptyBuilder()
-    val child = source.addChildWithOptionalParentEntity(null, parentAndChildProperty)
-    val parent = source.addParentEntity(parentAndChildProperty)
+    val child = source addEntity XChildWithOptionalParentEntity(parentAndChildProperty, MySource)
+    val parent = source addEntity XParentEntity(parentAndChildProperty, MySource)
     source.modifyEntity(parent) {
       this.optionalChildren = this.optionalChildren + child
     }
@@ -396,11 +442,11 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `adding parent with child and shifting and later child connecting`() {
     val parentAndChildProperty = "Bound"
-    target.addChildWithOptionalParentEntity(null, "Existing")
+    target addEntity XChildWithOptionalParentEntity("Existing", MySource)
 
     val source = createEmptyBuilder()
-    val child = source.addChildWithOptionalParentEntity(null, parentAndChildProperty)
-    val parent = source.addParentEntity(parentAndChildProperty)
+    val child = source addEntity XChildWithOptionalParentEntity(parentAndChildProperty, MySource)
+    val parent = source addEntity XParentEntity(parentAndChildProperty, MySource)
     source.modifyEntity(child) {
       this.optionalParent = parent
     }
@@ -415,7 +461,8 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `removing non-existing entity while adding the new one`() {
     val initial = createEmptyBuilder()
-    val toBeRemoved = initial.addSampleEntity("En1")
+    val toBeRemoved = initial addEntity SampleEntity(false, "En1", ArrayList(), HashMap(),
+                                                     virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
 
     val source = createBuilderFrom(initial)
 
@@ -423,7 +470,8 @@ class DiffBuilderTest {
     val target = createBuilderFrom(initial.toSnapshot())
 
     // In the incorrect implementation remove event will remove added entity
-    source.addSampleEntity("En2")
+    source addEntity SampleEntity(false, "En2", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+                                  SampleEntitySource("test"))
     source.removeEntity(toBeRemoved.from(source))
 
     target.addDiff(source)
@@ -434,8 +482,10 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `remove entity and reference`() {
     val initial = createEmptyBuilder()
-    val parentEntity = initial.addParentEntity()
-    val childEntity = initial.addChildWithOptionalParentEntity(parentEntity)
+    val parentEntity = initial addEntity XParentEntity("parent", MySource)
+    val childEntity = initial addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = parentEntity
+    }
 
     val source = createBuilderFrom(initial)
 
@@ -459,11 +509,15 @@ class DiffBuilderTest {
   @RepeatedTest(10)
   fun `remove reference to created entity`() {
     val initial = createEmptyBuilder()
-    val parentEntity = initial.addParentEntity()
-    initial.addChildWithOptionalParentEntity(parentEntity)
+    val parentEntity = initial addEntity XParentEntity("parent", MySource)
+    initial addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = parentEntity
+    }
     val source = createBuilderFrom(initial)
 
-    source.addChildWithOptionalParentEntity(parentEntity)
+    source addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = parentEntity
+    }
 
     source.modifyEntity(parentEntity.from(source)) {
       this.optionalChildren = emptyList()

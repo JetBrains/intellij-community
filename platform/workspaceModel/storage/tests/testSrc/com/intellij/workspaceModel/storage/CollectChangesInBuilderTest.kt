@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.test.addChildEntity
-import com.intellij.workspaceModel.storage.entities.test.addParentEntity
-import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -19,7 +17,12 @@ class CollectChangesInBuilderTest {
   @Before
   fun setUp() {
     initialStorage = createEmptyBuilder().apply {
-      addSampleEntity("initial")
+      this addEntity SampleEntity(false,
+                                  "initial",
+                                  ArrayList(),
+                                  HashMap(),
+                                  VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                  SampleEntitySource("test"))
       addEntity(SecondSampleEntity(1, SampleEntitySource("test")))
     }.toSnapshot()
     builder = createBuilderFrom(initialStorage)
@@ -27,7 +30,12 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `add remove entity`() {
-    builder.addSampleEntity("added")
+    builder addEntity SampleEntity(false,
+                                   "added",
+                                   ArrayList(),
+                                   HashMap(),
+                                   VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                   SampleEntitySource("test"))
     builder.addEntity(SecondSampleEntity(2, SampleEntitySource("test")))
     builder.removeEntity(initialStorage.singleSampleEntity())
     builder.removeEntity(initialStorage.entities(SecondSampleEntity::class.java).single())
@@ -78,7 +86,12 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove added entity`() {
-    val added = builder.addSampleEntity("added")
+    val added = builder addEntity SampleEntity(false,
+                                               "added",
+                                               ArrayList(),
+                                               HashMap(),
+                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                               SampleEntitySource("test"))
     builder.removeEntity(added)
     assertChangelogSize(0)
     assertTrue(collectSampleEntityChanges().isEmpty())
@@ -86,7 +99,12 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `modify added entity`() {
-    val added = builder.addSampleEntity("added")
+    val added = builder addEntity SampleEntity(false,
+                                               "added",
+                                               ArrayList(),
+                                               HashMap(),
+                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                               SampleEntitySource("test"))
     builder.modifyEntity(added) {
       stringProperty = "changed"
     }
@@ -96,7 +114,12 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `removed modified added entity`() {
-    val added = builder.addSampleEntity("added")
+    val added = builder addEntity SampleEntity(false,
+                                               "added",
+                                               ArrayList(),
+                                               HashMap(),
+                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                               SampleEntitySource("test"))
     val modified = builder.modifyEntity(added) {
       stringProperty = "changed"
     }
@@ -107,8 +130,10 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `add parent with child`() {
-    val parent = builder.addParentEntity("added")
-    builder.addChildEntity(parent, "added")
+    val parent = builder addEntity XParentEntity("added", MySource)
+    builder addEntity XChildEntity("added", MySource) {
+      parentEntity = parent
+    }
     val changes = assertChangelogSize(2)
     val childChange = changes.getValue(XChildEntity::class.java).single() as EntityChange.Added<XChildEntity>
     val parentChange = changes.getValue(XParentEntity::class.java).single() as EntityChange.Added<XParentEntity>
@@ -118,8 +143,10 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove parent with child`() {
-    val parent = builder.addParentEntity("to remove")
-    builder.addChildEntity(parent, "to remove")
+    val parent = builder addEntity XParentEntity("to remove", MySource)
+    builder addEntity XChildEntity("to remove", MySource) {
+      parentEntity = parent
+    }
     val storage = builder.toSnapshot()
     val newBuilder = createBuilderFrom(storage)
     newBuilder.removeEntity(parent.from(newBuilder))
@@ -132,8 +159,10 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove child by modifying parent`() {
-    val parent = builder.addParentEntity()
-    builder.addChildEntity(parent, "to remove")
+    val parent = builder addEntity XParentEntity("parent", MySource)
+    builder addEntity XChildEntity("to remove", MySource) {
+      parentEntity = parent
+    }
     val snapshot = builder.toSnapshot()
     val newBuilder = createBuilderFrom(snapshot)
     newBuilder.modifyEntity(snapshot.entities(XParentEntity::class.java).single()) {
@@ -146,9 +175,11 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `move child between parents`() {
-    val parent = builder.addParentEntity("One")
-    val parent2 = builder.addParentEntity("Two")
-    val child = builder.addChildEntity(parent, "Child")
+    val parent = builder addEntity XParentEntity("One", MySource)
+    val parent2 = builder addEntity XParentEntity("Two", MySource)
+    val child = builder addEntity XChildEntity("Child", MySource) {
+      parentEntity = parent
+    }
     (builder as MutableEntityStorageImpl).changeLog.clear()
     val snapshot = builder.toSnapshot()
 
@@ -168,9 +199,11 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `move child between parents from child`() {
-    val parent = builder.addParentEntity("One")
-    val parent2 = builder.addParentEntity("Two")
-    val child = builder.addChildEntity(parent, "Child")
+    val parent = builder addEntity XParentEntity("One", MySource)
+    val parent2 = builder addEntity XParentEntity("Two", MySource)
+    val child = builder addEntity XChildEntity("Child", MySource) {
+      parentEntity = parent
+    }
     (builder as MutableEntityStorageImpl).changeLog.clear()
     val snapshot = builder.toSnapshot()
 

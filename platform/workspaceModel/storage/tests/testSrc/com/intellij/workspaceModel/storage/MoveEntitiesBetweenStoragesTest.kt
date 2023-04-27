@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.test.*
-import com.intellij.workspaceModel.storage.entities.test.api.XParentEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -10,7 +10,8 @@ class MoveEntitiesBetweenStoragesTest {
   @Test
   fun `move entity`() {
     val snapshot = createEmptyBuilder().also {
-      it.addSampleEntity("to copy")
+      it addEntity SampleEntity(false, "to copy", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                SampleEntitySource("test"))
     }.toSnapshot()
     
     val target = createEmptyBuilder().also {
@@ -23,9 +24,13 @@ class MoveEntitiesBetweenStoragesTest {
   @Test
   fun `move entity with child`() {
     val snapshot = createEmptyBuilder().also {
-      val parent = it.addParentEntity()
-      it.addChildEntity(parent)
-      it.addChildWithOptionalParentEntity(parent)
+      val parent = it addEntity XParentEntity("parent", MySource)
+      it addEntity XChildEntity("child", MySource) {
+        parentEntity = parent
+      }
+      it addEntity XChildWithOptionalParentEntity("child", MySource) {
+        optionalParent = parent
+      }
     }.toSnapshot()
     
     val target = createEmptyBuilder().also {
@@ -40,9 +45,14 @@ class MoveEntitiesBetweenStoragesTest {
   @Test
   fun `move entity with child and grand child`() {
     val snapshot = createEmptyBuilder().also {
-      val parentEntity = it.addParentEntity()
-      val childEntity = it.addChildEntity(parentEntity)
-      it.addChildChildEntity(parentEntity, childEntity)
+      val parentEntity = it addEntity XParentEntity("parent", MySource)
+      val childEntity = it addEntity XChildEntity("child", MySource) {
+        this@XChildEntity.parentEntity = parentEntity
+      }
+      it addEntity XChildChildEntity(MySource) {
+        parent1 = parentEntity
+        parent2 = childEntity
+      }
     }.toSnapshot()
     
     val target = createEmptyBuilder().also {

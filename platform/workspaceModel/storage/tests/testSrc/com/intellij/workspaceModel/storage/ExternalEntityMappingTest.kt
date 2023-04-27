@@ -2,13 +2,13 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.test.addSourceEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
+import com.intellij.workspaceModel.storage.entities.test.api.SourceEntity
 import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -23,7 +23,7 @@ class ExternalEntityMappingTest {
     val builder = createEmptyBuilder()
 
     val mapping = builder.getMutableExternalMapping<Int>(INDEX_ID)
-    val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
+    val entity = builder addEntity SourceEntity("hello", SampleEntitySource("source")) 
     mapping.addMapping(entity, 1)
     mapping.addMapping(entity, 2)
     assertEquals(2, mapping.getDataByEntity(entity))
@@ -47,7 +47,7 @@ class ExternalEntityMappingTest {
     val builder = createEmptyBuilder()
 
     val mapping = builder.getMutableExternalMapping<Int>(INDEX_ID)
-    val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
+    val entity = builder addEntity SourceEntity("hello", SampleEntitySource("source")) 
     mapping.addMapping(entity, 1)
     assertEquals(1, mapping.getDataByEntity(entity))
 
@@ -73,7 +73,7 @@ class ExternalEntityMappingTest {
     val builder = createEmptyBuilder()
 
     val mapping = builder.getMutableExternalMapping<Int>(INDEX_ID)
-    val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
+    val entity = builder addEntity SourceEntity("hello", SampleEntitySource("source"))
     mapping.addMapping(entity, 1)
     assertEquals(1, mapping.getDataByEntity(entity))
 
@@ -100,12 +100,12 @@ class ExternalEntityMappingTest {
     val builder = createEmptyBuilder()
 
     val mapping = builder.getMutableExternalMapping<Int>(INDEX_ID)
-    val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
+    val entity = builder addEntity SourceEntity("hello", SampleEntitySource("source"))
     mapping.addMapping(entity, 1)
     assertEquals(1, mapping.getDataByEntity(entity))
 
     val diff = createBuilderFrom(builder.toSnapshot())
-    val newEntity = builder.addSourceEntity("world", SampleEntitySource("source"))
+    val newEntity = builder addEntity SourceEntity("world", SampleEntitySource("source"))
     val diffMapping = diff.getMutableExternalMapping<Int>(INDEX_ID)
     assertNotEquals(mapping, diffMapping)
     assertEquals(1, diffMapping.getDataByEntity(entity))
@@ -132,7 +132,7 @@ class ExternalEntityMappingTest {
     val builder = createEmptyBuilder()
 
     val mapping = builder.getMutableExternalMapping<Int>(INDEX_ID)
-    val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
+    val entity = builder addEntity SourceEntity("hello", SampleEntitySource("source"))
     mapping.addMapping(entity, 1)
     assertEquals(1, mapping.getDataByEntity(entity))
 
@@ -153,7 +153,7 @@ class ExternalEntityMappingTest {
   fun `add mapping to diff test`() {
     val builder = createEmptyBuilder()
 
-    val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
+    val entity = builder addEntity SourceEntity("hello", SampleEntitySource("source"))
     assertNull(builder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
 
     val diff = createBuilderFrom(builder.toSnapshot())
@@ -177,16 +177,19 @@ class ExternalEntityMappingTest {
   @Test
   fun `remove mapping if entity is removed`() {
     val initialBuilder = createEmptyBuilder()
-    val entity1 = initialBuilder.addSampleEntity("1")
+    val entity1 = initialBuilder addEntity SampleEntity(false, "1", ArrayList(), HashMap(),
+                                                        VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test")) 
     initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity1, 1)
-    val entity2 = initialBuilder.addSampleEntity("2")
+    val entity2 = initialBuilder addEntity SampleEntity(false, "2", ArrayList(), HashMap(),
+                                                        VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test")) 
     initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity2, 2)
     val storage = initialBuilder.toSnapshot()
     assertEquals(1, storage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity1))
     assertEquals(2, storage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity2))
 
     val builder = createBuilderFrom(storage)
-    val entity3 = builder.addSampleEntity("3")
+    val entity3 = builder addEntity SampleEntity(false, "3", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                                 SampleEntitySource("test")) 
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity3, 3)
     builder.removeEntity(entity1.from(builder))
     val diff = MutableEntityStorage.from(storage)
@@ -210,16 +213,19 @@ class ExternalEntityMappingTest {
   @Test
   fun `keep mapping if entity is modified`() {
     val initialBuilder = createEmptyBuilder()
-    val entity1 = initialBuilder.addSampleEntity("1")
+    val entity1 = initialBuilder addEntity SampleEntity(false, "1", ArrayList(), HashMap(),
+                                                        VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test")) 
     initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity1, 1)
-    val entity2 = initialBuilder.addSampleEntity("2")
+    val entity2 = initialBuilder addEntity SampleEntity(false, "2", ArrayList(), HashMap(),
+                                                        VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test")) 
     initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity2, 2)
     val storage = initialBuilder.toSnapshot()
     assertEquals(1, storage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity1))
     assertEquals(2, storage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity2))
 
     val builder = createBuilderFrom(storage)
-    val entity3 = builder.addSampleEntity("3")
+    val entity3 = builder addEntity SampleEntity(false, "3", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                                 SampleEntitySource("test"))
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity3, 3)
     val entity1a = builder.modifyEntity(entity1.from(builder)) {
       stringProperty = "1a"
@@ -251,9 +257,11 @@ class ExternalEntityMappingTest {
   fun `update mapping when id changes on adding via diff`() {
     val builder = createEmptyBuilder()
     val diff = MutableEntityStorage.from(builder.toSnapshot())
-    val entity1 = builder.addSampleEntity("1")
+    val entity1 = builder addEntity SampleEntity(false, "1", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                                 SampleEntitySource("test"))
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity1, 1)
-    val entity2 = diff.addSampleEntity("2")
+    val entity2 = diff addEntity SampleEntity(false, "2", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                              SampleEntitySource("test"))
     diff.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity2, 2)
     builder.addDiff(diff)
     val builderMapping = builder.getExternalMapping<Int>(INDEX_ID)
@@ -271,10 +279,12 @@ class ExternalEntityMappingTest {
   @Test
   fun `merge mapping added after builder was created`() {
     val initialBuilder = createEmptyBuilder()
-    initialBuilder.addSampleEntity("foo")
+    initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                          SampleEntitySource("test"))
     val initialStorage = initialBuilder.toSnapshot()
     val diff1 = MutableEntityStorage.from(initialStorage)
-    diff1.addSampleEntity("bar")
+    diff1 addEntity SampleEntity(false, "bar", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                 SampleEntitySource("test"))
 
     val diff2 = MutableEntityStorage.from(initialStorage)
     diff2.getMutableExternalMapping<Int>(INDEX_ID).addMapping(initialStorage.singleSampleEntity(), 1)
@@ -296,7 +306,8 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source add new mapping`() {
     val initialBuilder = createEmptyBuilder()
-    initialBuilder.addSampleEntity("foo")
+    initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                          SampleEntitySource("test"))
 
     val replacement = createBuilderFrom(initialBuilder)
     val entity = initialBuilder.singleSampleEntity()
@@ -308,10 +319,12 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source add new mapping with new entity`() {
     val initialBuilder = createEmptyBuilder()
-    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
 
     val replacement = createBuilderFrom(initialBuilder)
-    val barEntity = replacement.addSampleEntity("bar")
+    val barEntity = replacement addEntity SampleEntity(false, "bar", ArrayList(), HashMap(),
+                                                       VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     var externalMapping = replacement.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
     externalMapping = replacement.getMutableExternalMapping<Int>(ANOTHER_INDEX_ID)
@@ -326,7 +339,8 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source update mapping for old entity`() {
     val initialBuilder = createEmptyBuilder()
-    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
 
@@ -341,12 +355,14 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source update mapping for new entity`() {
     val initialBuilder = createEmptyBuilder()
-    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
 
     val replacement = createBuilderFrom(initialBuilder)
-    val barEntity = replacement.addSampleEntity("bar")
+    val barEntity = replacement addEntity SampleEntity(false, "bar", ArrayList(), HashMap(),
+                                                       VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     externalMapping = replacement.getMutableExternalMapping(INDEX_ID)
     externalMapping.addMapping(barEntity, 2)
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
@@ -358,12 +374,14 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source remove from mapping`() {
     val initialBuilder = createEmptyBuilder()
-    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
 
     val replacement = createBuilderFrom(initialBuilder)
-    val barEntity = replacement.addSampleEntity("bar")
+    val barEntity = replacement addEntity SampleEntity(false, "bar", ArrayList(), HashMap(),
+                                                       VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     externalMapping = replacement.getMutableExternalMapping(INDEX_ID)
     externalMapping.addMapping(barEntity, 2)
     externalMapping.removeMapping(barEntity)
@@ -377,7 +395,8 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source cleanup mapping by entity remove`() {
     val initialBuilder = createEmptyBuilder()
-    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     val externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
 
@@ -392,12 +411,14 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source replace one mapping to another`() {
     val initialBuilder = createEmptyBuilder()
-    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
 
     val replacement = createEmptyBuilder()
-    var barEntity = replacement.addSampleEntity("bar")
+    var barEntity = replacement addEntity SampleEntity(false, "bar", ArrayList(), HashMap(),
+                                                       VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     externalMapping = replacement.getMutableExternalMapping<Int>(ANOTHER_INDEX_ID)
     externalMapping.addMapping(barEntity, 2)
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
@@ -411,12 +432,14 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source replace mappings`() {
     val initialBuilder = createEmptyBuilder()
-    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     var externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
 
     val replacement = createEmptyBuilder()
-    var barEntity = replacement.addSampleEntity("bar")
+    var barEntity = replacement addEntity SampleEntity(false, "bar", ArrayList(), HashMap(),
+                                                       VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     externalMapping = replacement.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(barEntity, 2)
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
@@ -431,12 +454,15 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source update mapping content and type`() {
     val initialBuilder = createEmptyBuilder()
-    var fooEntity = initialBuilder.addSampleEntity("foo")
+    var fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     val externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
 
     val replacement = createEmptyBuilder()
-    val secondFooEntity = replacement.addSampleEntity("foo")
+    val secondFooEntity = replacement addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                             VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                                             SampleEntitySource("test"))
     val newExternalMapping = replacement.getMutableExternalMapping<String>(INDEX_ID)
     newExternalMapping.addMapping(secondFooEntity, "test")
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
@@ -450,7 +476,8 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source empty mapping`() {
     val initialBuilder = createEmptyBuilder()
-    val fooEntity = initialBuilder.addSampleEntity("foo")
+    val fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     val externalMapping = initialBuilder.getMutableExternalMapping<Int>(INDEX_ID)
     externalMapping.addMapping(fooEntity, 1)
 
@@ -464,14 +491,19 @@ class ExternalEntityMappingTest {
   @Test
   fun `replace by source update id in the mapping`() {
     val initialBuilder = createEmptyBuilder()
-    val fooEntity = initialBuilder.addSampleEntity("foo")
-    initialBuilder.addSampleEntity("baz")
-    val barEntity = initialBuilder.addSampleEntity("bar")
+    val fooEntity = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
+    initialBuilder addEntity SampleEntity(false, "baz", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                          SampleEntitySource("test"))
+    val barEntity = initialBuilder addEntity SampleEntity(false, "bar", ArrayList(), HashMap(),
+                                                          VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
 
     val replacement = createEmptyBuilder()
     val externalMapping = replacement.getMutableExternalMapping<Int>(INDEX_ID)
-    val fooEntity1 = replacement.addSampleEntity("foo")
-    val barEntity1 = replacement.addSampleEntity("bar")
+    val fooEntity1 = replacement addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                        VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
+    val barEntity1 = replacement addEntity SampleEntity(false, "bar", ArrayList(), HashMap(),
+                                                        VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     externalMapping.addMapping(fooEntity1, 1)
     externalMapping.addMapping(barEntity1, 2)
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
@@ -491,12 +523,14 @@ class ExternalEntityMappingTest {
     val commonBuilder = createEmptyBuilder()
 
     val diff1 = createEmptyBuilder()
-    val foo1 = diff1.addSampleEntity("foo1")
+    val foo1 = diff1 addEntity SampleEntity(false, "foo1", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                            SampleEntitySource("test"))
     diff1.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo1, 1)
     commonBuilder.addDiff(diff1)
 
     val diff2 = createEmptyBuilder()
-    val foo2 = diff2.addSampleEntity("foo2")
+    val foo2 = diff2 addEntity SampleEntity(false, "foo2", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                            SampleEntitySource("test"))
     diff2.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo2, 2)
     diff2.removeEntity(foo2)
     commonBuilder.addDiff(diff2)
@@ -510,7 +544,8 @@ class ExternalEntityMappingTest {
   @Test
   fun `remove mapping for removed entity after merge`() {
     val initialBuilder = createEmptyBuilder()
-    val foo = initialBuilder.addSampleEntity("foo")
+    val foo = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                    VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 1)
     val initialStorage = initialBuilder.toSnapshot()
 
@@ -528,7 +563,8 @@ class ExternalEntityMappingTest {
   @Test
   fun `check double mapping adding`() {
     val initialBuilder = createEmptyBuilder()
-    val foo = initialBuilder.addSampleEntity("foo")
+    val foo = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                    VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 1)
     initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 2)
     assertEquals(2, (((initialBuilder.getMutableExternalMapping<Int>(INDEX_ID) as MutableExternalEntityMappingImpl)

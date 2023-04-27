@@ -5,7 +5,6 @@ import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
@@ -1027,8 +1026,10 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `non persistent id root`() {
-    val targetEntity = builder.addSampleEntity("data", MySource)
-    val replaceWithEntity = replacement.addSampleEntity("data", MySource)
+    val targetEntity = builder addEntity SampleEntity(false, "data", ArrayList(), HashMap(),
+                                                      VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), MySource)
+    val replaceWithEntity = replacement addEntity SampleEntity(false, "data", ArrayList(), HashMap(),
+                                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), MySource)
 
     rbsMySources()
 

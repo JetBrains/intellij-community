@@ -3,9 +3,6 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.workspaceModel.storage.createEmptyBuilder
-import com.intellij.workspaceModel.storage.entities.test.addChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.test.addParentEntity
-import com.intellij.workspaceModel.storage.entities.test.addSourceEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import org.junit.After
 import org.junit.Before
@@ -41,7 +38,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `add plus modify`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.modifyEntity(entity) {
       this.parentProperty = "Another Parent"
     }
@@ -55,7 +52,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `add plus change source`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.modifyEntity(entity) {
       this.entitySource = AnotherSource
     }
@@ -69,7 +66,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `add plus change source and modify`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.modifyEntity(entity) {
       this.entitySource = AnotherSource
     }
@@ -87,7 +84,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `modify plus change source`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.changeLog.clear()
     builder.modifyEntity(entity) {
       this.parentProperty = "Another Parent"
@@ -107,7 +104,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `modify plus remove`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.changeLog.clear()
     builder.modifyEntity(entity) {
       this.parentProperty = "Another Parent"
@@ -122,7 +119,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `change source plus modify`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.changeLog.clear()
     builder.modifyEntity(entity) {
       this.entitySource = AnotherSource
@@ -142,7 +139,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `change source plus remove`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.changeLog.clear()
     builder.modifyEntity(entity) {
       this.entitySource = AnotherSource
@@ -157,7 +154,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `change source and modify plus remove`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.changeLog.clear()
     builder.modifyEntity(entity) {
       this.entitySource = AnotherSource
@@ -175,7 +172,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `change source and modify plus change source`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.changeLog.clear()
     builder.modifyEntity(entity) {
       this.entitySource = AnotherSource
@@ -198,7 +195,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `change source and modify plus modify`() {
-    val entity = builder.addParentEntity("Parent")
+    val entity = builder addEntity XParentEntity("Parent", MySource)
     builder.changeLog.clear()
     builder.modifyEntity(entity) {
       entitySource = AnotherSource
@@ -221,9 +218,9 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `modify add children`() {
-    val entity = builder.addParentEntity("Parent")
-    val firstChild = builder.addChildWithOptionalParentEntity(null)
-    val secondChild = builder.addChildWithOptionalParentEntity(null)
+    val entity = builder addEntity XParentEntity("Parent", MySource)
+    val firstChild = builder addEntity XChildWithOptionalParentEntity("child", MySource)
+    val secondChild = builder addEntity XChildWithOptionalParentEntity("child", MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -242,9 +239,13 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `modify remove children`() {
-    val entity = builder.addParentEntity("Parent")
-    builder.addChildWithOptionalParentEntity(entity)
-    builder.addChildWithOptionalParentEntity(entity)
+    val entity = builder addEntity XParentEntity("Parent", MySource)
+    builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = entity
+    }
+    builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = entity
+    }
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -263,9 +264,11 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `modify add and remove children`() {
-    val entity = builder.addParentEntity("Parent")
-    val child = builder.addChildWithOptionalParentEntity(null)
-    builder.addChildWithOptionalParentEntity(entity)
+    val entity = builder addEntity XParentEntity("Parent", MySource)
+    val child = builder addEntity XChildWithOptionalParentEntity("child", MySource)
+    builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = entity
+    }
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -284,9 +287,9 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `modify twice add and remove children`() {
-    val entity = builder.addParentEntity("Parent")
-    val firstChild = builder.addChildWithOptionalParentEntity(null)
-    val secondChild = builder.addChildWithOptionalParentEntity(null)
+    val entity = builder addEntity XParentEntity("Parent", MySource)
+    val firstChild = builder addEntity XChildWithOptionalParentEntity("child", MySource)
+    val secondChild = builder addEntity XChildWithOptionalParentEntity("child", MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -303,9 +306,13 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `modify twice remove and add children`() {
-    val entity = builder.addParentEntity("Parent")
-    val firstChild = builder.addChildWithOptionalParentEntity(entity)
-    val secondChild = builder.addChildWithOptionalParentEntity(entity)
+    val entity = builder addEntity XParentEntity("Parent", MySource)
+    val firstChild = builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = entity
+    }
+    val secondChild = builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = entity
+    }
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -322,9 +329,13 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `modify twice remove and remove children`() {
-    val entity = builder.addParentEntity("Parent")
-    val firstChild = builder.addChildWithOptionalParentEntity(entity)
-    builder.addChildWithOptionalParentEntity(entity)
+    val entity = builder addEntity XParentEntity("Parent", MySource)
+    val firstChild = builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = entity
+    }
+    builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = entity
+    }
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -347,9 +358,9 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `modify twice add and add children`() {
-    val entity = builder.addParentEntity("Parent")
-    val firstChild = builder.addChildWithOptionalParentEntity(null)
-    val secondChild = builder.addChildWithOptionalParentEntity(null)
+    val entity = builder addEntity XParentEntity("Parent", MySource)
+    val firstChild = builder addEntity XChildWithOptionalParentEntity("child", MySource)
+    val secondChild = builder addEntity XChildWithOptionalParentEntity("child", MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -420,10 +431,16 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify with children refs`() {
-    val parent = builder.addParentEntity()
-    val child1 = builder.addChildWithOptionalParentEntity(parent)
-    val child2 = builder.addChildWithOptionalParentEntity(parent)
-    val child3 = builder.addChildWithOptionalParentEntity(parent)
+    val parent = builder addEntity XParentEntity("parent", MySource)
+    val child1 = builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = parent
+    }
+    val child2 = builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = parent
+    }
+    val child3 = builder addEntity XChildWithOptionalParentEntity("child", MySource) {
+      optionalParent = parent
+    }
     builder.changeLog.clear()
 
     builder.modifyEntity(parent) {
@@ -474,7 +491,7 @@ class WorkspaceBuilderChangeLogTest {
 
     val log = builder.changeLog.changeLog
     assertEquals(1, log.size)
-    assertInstanceOf<ChangeEntry.ChangeEntitySource>(log.entries.single ().value)
+    assertInstanceOf<ChangeEntry.ChangeEntitySource>(log.entries.single().value)
   }
 
   @Test
@@ -553,7 +570,7 @@ class WorkspaceBuilderChangeLogTest {
   @Test
   fun `add and change source`() {
     val oldSource = SampleEntitySource("oldSource")
-    val entity = builder.addSourceEntity("one", oldSource)
+    val entity = builder addEntity SourceEntity("one", oldSource)
     builder.modifyEntity(entity) {
       this.entitySource = SampleEntitySource("newSource")
     }
@@ -564,11 +581,11 @@ class WorkspaceBuilderChangeLogTest {
   @Test
   fun `join remove plus add`() {
     val oldSource = SampleEntitySource("oldSource")
-    val entity = builder.addSourceEntity("one", oldSource)
+    val entity = builder addEntity SourceEntity("one", oldSource)
     builder.changeLog.clear()
     val original = builder.toSnapshot()
     builder.removeEntity(entity)
-    builder.addSourceEntity("one", oldSource)
+    builder addEntity SourceEntity("one", oldSource)
     assertTrue(builder.hasSameEntities(original as AbstractEntityStorage))
   }
 

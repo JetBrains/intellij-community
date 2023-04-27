@@ -3,14 +3,11 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entities.test.addChildEntity
-import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import org.hamcrest.CoreMatchers
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -78,8 +75,10 @@ class EntityWithSymbolicIdInPStorageTest {
 
   @Test
   fun `remove child entity with parent entity`() {
-    val parent = builder.addParentEntity("parent")
-    builder.addChildEntity(parent)
+    val parent = builder addEntity XParentEntity("parent", MySource)
+    builder addEntity XChildEntity("child", MySource) {
+      parentEntity = parent
+    }
     builder.assertConsistency()
     builder.removeEntity(parent)
     builder.assertConsistency()

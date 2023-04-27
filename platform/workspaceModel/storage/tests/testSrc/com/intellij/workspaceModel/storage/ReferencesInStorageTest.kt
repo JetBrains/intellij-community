@@ -1,17 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.test.addChildChildEntity
-import com.intellij.workspaceModel.storage.entities.test.addChildEntity
-import com.intellij.workspaceModel.storage.entities.test.addParentEntity
-import com.intellij.workspaceModel.storage.entities.test.api.DataClassX
-import com.intellij.workspaceModel.storage.entities.test.api.MySource
-import com.intellij.workspaceModel.storage.entities.test.api.XChildEntity
-import com.intellij.workspaceModel.storage.entities.test.api.XParentEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -22,6 +15,7 @@ private fun EntityStorage.singleChild() = entities(XChildEntity::class.java).sin
 
 class ReferencesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
+
   @Before
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
@@ -112,9 +106,11 @@ class ReferencesInStorageTest {
   @Test
   fun `remove child entity`() {
     val builder = createEmptyBuilder()
-    val parent = builder.addParentEntity()
+    val parent = builder addEntity XParentEntity("parent", MySource)
     builder.assertConsistency()
-    val child = builder.addChildEntity(parent)
+    val child = builder addEntity XChildEntity("child", MySource) {
+      parentEntity = parent
+    }
     builder.assertConsistency()
     builder.removeEntity(child)
     builder.assertConsistency()
@@ -126,7 +122,9 @@ class ReferencesInStorageTest {
   @Test
   fun `remove parent entity`() {
     val builder = createEmptyBuilder()
-    val child = builder.addChildEntity(builder.addParentEntity())
+    val child = builder addEntity XChildEntity("child", MySource) {
+      parentEntity = builder addEntity XParentEntity("parent", MySource)
+    }
     builder.removeEntity(child.parentEntity)
     builder.assertConsistency()
     assertEquals(emptyList<XChildEntity>(), builder.entities(XChildEntity::class.java).toList())
@@ -136,11 +134,15 @@ class ReferencesInStorageTest {
   @Test
   fun `remove parent entity via diff`() {
     val builder = createEmptyBuilder()
-    val oldParent = builder.addParentEntity("oldParent")
-    val oldChild = builder.addChildEntity(oldParent, "oldChild")
+    val oldParent = builder addEntity XParentEntity("oldParent", MySource)
+    val oldChild = builder addEntity XChildEntity("oldChild", MySource) {
+      parentEntity = oldParent
+    }
     val diff = createEmptyBuilder()
-    val parent = diff.addParentEntity("newParent")
-    diff.addChildEntity(parent, "newChild")
+    val parent = diff addEntity XParentEntity("newParent", MySource)
+    diff addEntity XChildEntity("newChild", MySource) {
+      parentEntity = parent
+    }
     diff.removeEntity(parent)
     diff.assertConsistency()
     builder.addDiff(diff)
@@ -152,8 +154,14 @@ class ReferencesInStorageTest {
   @Test
   fun `remove parent entity with two children`() {
     val builder = createEmptyBuilder()
-    val child1 = builder.addChildEntity(builder.addParentEntity())
-    builder.addChildEntity(parentEntity = child1.parentEntity)
+    val child1 = builder addEntity XChildEntity("child", MySource) {
+      parentEntity = builder addEntity XParentEntity("parent", MySource)
+      dataClass = null
+      childChild = emptyList<XChildChildEntity>()
+    }
+    builder addEntity XChildEntity("child", MySource) {
+      parentEntity = child1.parentEntity
+    }
     builder.removeEntity(child1.parentEntity)
     builder.assertConsistency()
     assertEquals(emptyList<XChildEntity>(), builder.entities(XChildEntity::class.java).toList())
@@ -163,9 +171,14 @@ class ReferencesInStorageTest {
   @Test
   fun `remove parent entity in DAG`() {
     val builder = createEmptyBuilder()
-    val parent = builder.addParentEntity()
-    val child = builder.addChildEntity(parentEntity = parent)
-    builder.addChildChildEntity(parent, child)
+    val parent = builder addEntity XParentEntity("parent", MySource)
+    val child = builder addEntity XChildEntity("child", MySource) {
+      parentEntity = parent
+    }
+    builder addEntity XChildChildEntity(MySource) {
+      parent1 = parent
+      parent2 = child
+    }
     builder.removeEntity(parent)
     builder.assertConsistency()
     assertEquals(emptyList<XChildEntity>(), builder.entities(XChildEntity::class.java).toList())
@@ -173,7 +186,7 @@ class ReferencesInStorageTest {
   }
 
   // UNSUPPORTED
-/*
+  /*
   @Test
   fun `remove parent entity referenced via data class`() {
     val builder = PEntityStorageBuilder.create()

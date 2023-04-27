@@ -3,10 +3,6 @@ package com.intellij.workspaceModel.storage.propertyBased
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.entities.test.addChildEntity
-import com.intellij.workspaceModel.storage.entities.test.addChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.test.addParentEntity
-import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
@@ -259,7 +255,9 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
           EntityIdOfFamilyGenerator.create(storage, classId)
         ), null)
         val parentEntity = parentId?.let { storage.entityDataByIdOrDie(it).createEntity(storage) as XParentEntity }
-        return storage.addChildWithOptionalParentEntity(parentEntity, someProperty, source) to "Select parent for child: $parentId"
+        return storage addEntity XChildWithOptionalParentEntity(someProperty, source) {
+          optionalParent = parentEntity
+        } to "Select parent for child: $parentId"
       }
     }
   }
@@ -456,7 +454,9 @@ private object ChildEntityManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parent = selectParent(storage, env) ?: return null to "Cannot select parent"
-        return storage.addChildEntity(parent, someProperty, null, source) to "Selected parent: $parent"
+        return storage addEntity XChildEntity(someProperty, source) {
+          parentEntity = parent
+        } to "Selected parent: $parent"
       }
     }
   }
@@ -485,7 +485,7 @@ private object ParentEntityManipulation : EntityManipulation {
       override fun makeEntity(source: EntitySource,
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-        return storage.addParentEntity(someProperty, source) to "parentProperty: $someProperty"
+        return storage addEntity XParentEntity(someProperty, source)  to "parentProperty: $someProperty"
       }
     }
   }
@@ -509,7 +509,9 @@ private object SampleEntityManipulation : EntityManipulation {
       override fun makeEntity(source: EntitySource,
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-        return storage.addSampleEntity(someProperty, source) to "property: $someProperty"
+        return storage addEntity SampleEntity(false, someProperty, ArrayList(), HashMap(),
+                                              VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                              source) to "property: $someProperty"
       }
     }
   }
