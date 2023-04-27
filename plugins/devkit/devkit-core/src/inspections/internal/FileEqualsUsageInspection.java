@@ -11,12 +11,18 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UIdentifier;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
+
+import java.util.List;
 
 public class FileEqualsUsageInspection extends DevKitUastInspectionBase {
 
   private static final String[] METHOD_NAMES = new String[]{"equals", "compareTo", "hashCode"};
+
+  @SuppressWarnings("unchecked")
+  private static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class};
 
   @Override
   @NotNull
@@ -29,11 +35,11 @@ public class FileEqualsUsageInspection extends DevKitUastInspectionBase {
 
         return true;
       }
-    }, new Class[]{UCallExpression.class});
+    }, HINTS);
   }
 
   private static void inspectCallExpression(@NotNull UCallExpression node, @NotNull ProblemsHolder holder) {
-    if (!hasMethodIdentifierEqualTo(node, METHOD_NAMES)) return;
+    if (!node.isMethodNameOneOf(List.of(METHOD_NAMES))) return;
     final PsiMethod psiMethod = node.resolve();
     if (psiMethod == null) return;
     final PsiClass containingClass = psiMethod.getContainingClass();

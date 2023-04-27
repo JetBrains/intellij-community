@@ -6,11 +6,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UIdentifier;
 
 /**
  * Base class for UAST-based (source-level) DevKit inspections.
@@ -61,12 +58,5 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
       return new ProblemsHolder(manager, sourcePsi.getContainingFile(), isOnTheFly);
     }
     throw new IllegalStateException("Could not create problems holder");
-  }
-
-  protected static boolean hasMethodIdentifierEqualTo(@NotNull UCallExpression expression, String @NotNull ... methodNames) {
-    UIdentifier identifier = expression.getMethodIdentifier();
-    if (identifier == null) return false;
-    String methodName = identifier.getName();
-    return ArrayUtil.contains(methodName, methodNames);
   }
 }
