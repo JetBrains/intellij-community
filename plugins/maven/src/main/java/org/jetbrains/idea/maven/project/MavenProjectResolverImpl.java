@@ -62,6 +62,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
           MavenLog.LOG.warn("Cannot parse maven config", cause);
         }
         else {
+          MavenLog.LOG.warn("Error in maven config parsing", t);
           throw t;
         }
       }
