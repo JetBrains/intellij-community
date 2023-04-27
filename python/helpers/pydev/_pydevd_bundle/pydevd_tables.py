@@ -55,8 +55,10 @@ def __get_table_provider(output: str):
     output_type = type(output)
 
     table_provider = None
-    if '{}.{}'.format(output_type.__module__,
-                      output_type.__name__) == 'pandas.core.frame.DataFrame':
+    type_qualified_name = '{}.{}'.format(output_type.__module__, output_type.__name__)
+    if type_qualified_name == 'pandas.core.frame.DataFrame':
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
+    if type_qualified_name == 'polars.internals.dataframe.frame.DataFrame':
+        import _pydevd_bundle.tables.pydevd_polars as table_provider
 
     return table_provider
