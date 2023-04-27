@@ -42,30 +42,30 @@ public interface MavenServerEmbedder extends Remote {
                                                         @NotNull Collection<File> files,
                                                         @NotNull Collection<String> activeProfiles,
                                                         @NotNull Collection<String> inactiveProfiles, MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException;
+    throws RemoteException;
 
   @Nullable
   String evaluateEffectivePom(@NotNull File file,
                               @NotNull List<String> activeProfiles,
                               @NotNull List<String> inactiveProfiles, MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException;
+    throws RemoteException;
 
   @NotNull
   List<MavenArtifact> resolve(@NotNull String longRunningTaskId,
                               @NotNull Collection<MavenArtifactResolutionRequest> requests,
                               MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException;
+    throws RemoteException;
 
   List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
                                                 MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException;
+    throws RemoteException;
 
   @NotNull
   List<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
                                              @NotNull Collection<MavenGoalExecutionRequest> requests,
                                              @NotNull String goal,
                                              MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException;
+    throws RemoteException;
 
   void reset(MavenToken token) throws RemoteException;
 

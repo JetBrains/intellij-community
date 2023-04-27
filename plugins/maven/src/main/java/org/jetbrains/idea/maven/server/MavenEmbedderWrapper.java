@@ -226,9 +226,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       handleRemoteError(e);
       return ContainerUtil.map(mavenPluginRequests, request -> new PluginResolutionResponse(request.first, false, List.of()));
     }
-    catch (MavenServerProcessCanceledException e) {
-      throw new MavenProcessCanceledException();
-    }
   }
 
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
