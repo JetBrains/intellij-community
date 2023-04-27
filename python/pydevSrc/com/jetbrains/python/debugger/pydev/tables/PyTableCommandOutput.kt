@@ -7,3 +7,4 @@ enum class CommandOutputType {
 
 interface TableCommandParameters {}
 
+class PyDevCommandParameters(val start: Int, val end: Int) : TableCommandParameters

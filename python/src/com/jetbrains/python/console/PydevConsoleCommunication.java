@@ -32,6 +32,7 @@ import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.PyDevCommandParameters;
 import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
@@ -346,8 +347,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     if (!isCommunicationClosed()) {
       return executeBackgroundTask(
         () -> {
+          String startIndex = "";
+          String endIndex = "";
           try {
-            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name(), "", "");
+            if (tableCommandParameters instanceof PyDevCommandParameters) {
+              startIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getStart());
+              endIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getEnd());
+            }
+            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name(), startIndex, endIndex);
           }
           catch (PythonTableException e) {
             throw new PyDebuggerException(e.message);

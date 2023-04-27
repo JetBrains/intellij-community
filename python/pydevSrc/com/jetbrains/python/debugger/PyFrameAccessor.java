@@ -99,7 +99,7 @@ public interface PyFrameAccessor {
   }
 
   @Nullable
-  String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException;
+  String execTableCommand(String command, TableCommandType commandType, @Nullable TableCommandParameters tableCommandParameters) throws PyDebuggerException;
 
   @Nullable
   default XCompositeNode getCurrentRootNode() {
