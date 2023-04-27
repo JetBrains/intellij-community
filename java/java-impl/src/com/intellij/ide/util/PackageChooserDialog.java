@@ -84,40 +84,36 @@ public class PackageChooserDialog extends PackageChooser {
     myModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     createTreeModel();
     myTree = new Tree(myModel);
-    myTree.setCellRenderer(
-      new DefaultTreeCellRenderer() {
-        @Override
-        public Component getTreeCellRendererComponent(
-          JTree tree, Object value,
-          boolean sel,
-          boolean expanded,
-          boolean leaf, int row,
-          boolean hasFocus
-        ) {
-          super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-          setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Package));
+    myTree.setCellRenderer(new ColoredTreeCellRenderer() {
+      @Override
+      public void customizeCellRenderer(@NotNull JTree tree,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        boolean leaf,
+                                        int row,
+                                        boolean hasFocus) {
+        setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Package));
 
-          if (value instanceof DefaultMutableTreeNode node) {
-            Object object = node.getUserObject();
-            if (object instanceof PsiPackage pkg) {
-              String name = pkg.getName();
-              if (name != null && name.length() > 0) {
-                setText(name);
-              }
-              else {
-                setText(IdeCoreBundle.message("node.default"));
-              }
+        if (value instanceof DefaultMutableTreeNode node) {
+          Object object = node.getUserObject();
+          if (object instanceof PsiPackage pkg) {
+            String name = pkg.getName();
+            if (name != null && !name.isEmpty()) {
+              append(name);
+            }
+            else {
+              append(IdeCoreBundle.message("node.default"));
             }
           }
-          return this;
         }
       }
-    );
+    });
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));
 
-    TreeSpeedSearch.installOn(myTree, false, path -> {
+    TreeSpeedSearch.installOn(myTree, canExpandInSpeedSearch(), path -> {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object object = node.getUserObject();
       if (object instanceof PsiPackage) return ((PsiPackage)object).getName();
@@ -149,6 +145,10 @@ public class PackageChooserDialog extends PackageChooser {
     northPanel.add(toolBar.getComponent(), BorderLayout.WEST);
     setupPathComponent(northPanel);
     return panel;
+  }
+
+  protected boolean canExpandInSpeedSearch() {
+    return false;
   }
 
   private void setupPathComponent(final JPanel northPanel) {
