@@ -15,10 +15,14 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class SslTrustStore extends DelegateKeyStore {
+  private static final Logger LOG = Logger.getLogger(SslTrustStore.class.getCanonicalName());
   private static final String NAME = "idea-trust-store";
   static {
     ourProvider.setProperty("KeyStore." + NAME, SslTrustStore.class.getName());
@@ -58,32 +62,49 @@ public final class SslTrustStore extends DelegateKeyStore {
     }
   }
 
-  public static void appendUserCert(@NotNull String alias, @NotNull String path) {
+  public static int appendUserCert(@NotNull String alias, @NotNull String path) {
     try {
       List<X509Certificate> certs = SslUtil.loadCertificates(path);
-      for (int i = 0; i < certs.size(); i++) {
-        ourAdded.add(Pair.create(i == 0 ? alias : alias + "-" + i, certs.get(i)));
-      }
+      appendCertificates(alias, certs);
+      return certs.size();
     }
     catch (Exception e) {
       throw new IllegalStateException(e);
     }
   }
 
-  public static void appendUserTrustStore(@NotNull String path, char[] password) {
+  public static void appendCertificates(@NotNull String alias, @NotNull Collection<? extends Certificate> certificates) {
+    int i = 0;
+    for (Certificate certificate : certificates) {
+      appendCertificate(i == 0 ? alias : alias + "-" + i, certificate);
+      ++i;
+    }
+  }
+
+  public static void appendCertificate(@NotNull String alias, @NotNull Certificate certificate) {
+    ourAdded.add(Pair.create(alias, certificate));
+    if (LOG.isLoggable(Level.FINE)) {
+      LOG.fine("Added certificate: " + alias + "\n" + certificate);
+    }
+  }
+
+  public static int appendUserTrustStore(@NotNull String path, char[] password) {
     try {
       File file = new File(path);
-      if (!file.exists()) return;
+      if (!file.exists()) return 0;
       KeyStore tmpStore = KeyStore.getInstance(KeyStore.getDefaultType());
       try (InputStream stream = new FileInputStream(file)) {
         tmpStore.load(stream, password);
       }
+      int cnt = 0;
       for (Enumeration<String> aliases = tmpStore.aliases(); aliases.hasMoreElements(); ) {
         String alias = aliases.nextElement();
         Certificate certificate = tmpStore.getCertificate(alias);
         if (certificate == null) continue;
-        ourAdded.add(Pair.create(alias, certificate));;
+        ourAdded.add(Pair.create(alias, certificate));
+        ++cnt;
       }
+      return cnt;
     }
     catch (Exception e) {
       throw new IllegalStateException(e);
