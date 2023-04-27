@@ -451,7 +451,7 @@ internal class ReplaceBySourceAsTree {
      * In [exceptTargetIds] you can define a set of ids where fill be filtered while searching.
      */
     @Suppress("MoveVariableDeclarationIntoWhen")
-    fun findSameEntityInTargetStore(replaceWithTrack: TrackToParents, exceptTargetIds: Set<EntityId>): ParentsRef? {
+    fun findSameEntityInTargetStore(replaceWithTrack: TrackToParents, exceptTargetIds: Set<EntityId> = emptySet()): ParentsRef? {
 
       // Check if this entity was already processed
       val replaceWithCurrentState = replaceWithState[replaceWithTrack.entity]
@@ -468,7 +468,7 @@ internal class ReplaceBySourceAsTree {
         return findAndReplaceRootEntityInTargetStore(replaceWithEntityData.createEntity(replaceWithStorage) as WorkspaceEntityBase)
       }
       else {
-        val parentsAssociation = replaceWithTrack.parents.associateWith { findSameEntityInTargetStore(it, emptySet()) }
+        val parentsAssociation = replaceWithTrack.parents.associateWith { findSameEntityInTargetStore(it) }
         val entriesList = parentsAssociation.entries.toList()
 
         var isNewParent = false
@@ -513,11 +513,11 @@ internal class ReplaceBySourceAsTree {
         val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(childEntityId.id)
         if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
         val trackToParents = TrackToParents(childEntityId.id, replaceWithStorage)
-        val sameEntity = findSameEntityInTargetStore(trackToParents, emptySet())
+        val sameEntity = findSameEntityInTargetStore(trackToParents)
         if (sameEntity is ParentsRef.TargetRef) {
           return@forEach
         }
-        val otherParents = trackToParents.parents.mapNotNull { findSameEntityInTargetStore(it, emptySet()) }
+        val otherParents = trackToParents.parents.mapNotNull { findSameEntityInTargetStore(it) }
         addSubtree((otherParents + ParentsRef.AddedElement(replaceWithEntityId)).toSet(), childEntityId.id)
       }
     }
@@ -805,9 +805,9 @@ internal class ReplaceBySourceAsTree {
     return entityDataListWithSameHash.removeFirst { it.createEntityId() !in exceptTargetIds }
   }
 
-  private fun <T> MutableList<T>.removeFirst(thatFits: (T) -> Boolean): T? {
+  private fun <T> MutableList<T>.removeFirst(predicate: (T) -> Boolean): T? {
     if (isEmpty()) return null
-    val index = indexOfFirst { thatFits(it) }
+    val index = indexOfFirst { predicate(it) }
     if (index == -1) return null
     return removeAt(index)
   }
