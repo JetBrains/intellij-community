@@ -65,11 +65,6 @@ import static org.jetbrains.idea.maven.server.MavenModelConverter.convertRemoteR
  * @author Vladislav.Soroka
  */
 public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
-
-  public interface RunnableThrownRemote {
-    void run() throws RemoteException;
-  }
-
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
   private static final Pattern PROPERTY_PATTERN = Pattern.compile("\"-D([\\S&&[^=]]+)(?:=([^\"]+))?\"|-D([\\S&&[^=]]+)(?:=(\\S+))?");
@@ -337,17 +332,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
   public abstract <T> T getComponent(Class<T> clazz);
 
-  protected void executeWithMavenSession(MavenExecutionRequest request, final Runnable runnable) throws RemoteException {
-    executeWithMavenSession(request, new RunnableThrownRemote() {
-      @Override
-      public void run() throws RemoteException {
-        runnable.run();
-      }
-    });
-  }
-
-  protected void executeWithMavenSession(MavenExecutionRequest request, RunnableThrownRemote runnable) throws RemoteException {
-
+  protected void executeWithMavenSession(MavenExecutionRequest request, final Runnable runnable) {
     if (VersionComparatorUtil.compare(getMavenVersion(), "3.2.5") >= 0) {
       executeWithSessionScope(request, runnable);
     }
@@ -356,17 +341,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     }
   }
 
-  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, final Runnable runnable) throws RemoteException {
-    executeWithMavenSessionLegacy(request, new RunnableThrownRemote() {
-      @Override
-      public void run() throws RemoteException {
-        runnable.run();
-      }
-    });
-  }
-
-
-  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, RunnableThrownRemote runnable) throws RemoteException {
+  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     MavenSession mavenSession = createMavenSession(request, maven);
     LegacySupport legacySupport = getComponent(LegacySupport.class);
@@ -401,7 +376,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   }
 
 
-  protected void executeWithSessionScope(MavenExecutionRequest request, RunnableThrownRemote runnable) throws RemoteException {
+  protected void executeWithSessionScope(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     SessionScope sessionScope = getComponent(SessionScope.class);
     sessionScope.enter();
@@ -501,7 +476,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
       final Map<String, String> result = new HashMap<>();
       final AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
-      executeWithMavenSession(request, (Runnable)() -> {
+      executeWithMavenSession(request, () -> {
         MavenArtifactRepository artifactRepository = null;
         if (url != null) {
           artifactRepository = new MavenArtifactRepository();
