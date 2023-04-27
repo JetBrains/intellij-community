@@ -2,14 +2,14 @@
 <body>
 <p>Reports incompatible signatures of the <code>__new__</code> and <code>__init__</code> methods.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 class MyClass(object):
     def __new__(cls, arg1):
         return super().__new__(cls)
 
     def __init__(self):
         pass
-</pre>
+</code></pre>
 <p>If the <code>__new__</code> and <code>__init__</code> have different arguments, then the <code>MyClass</code>
   cannot be instantiated.</p>
 <p>As a fix, the IDE offers to apply the Change Signature refactoring.</p>

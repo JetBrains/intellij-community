@@ -7,7 +7,7 @@
   <li><code>B</code> a subclass of <code>A</code></li>
 </ul>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 class Figure:
     def color(self):
         pass
@@ -21,7 +21,7 @@ class Rectangle(Figure):
 class Square(Figure):
     def color(self):
         return super(Rectangle, self).color() # Square is not an instance or subclass of Rectangle
-</pre>
+</code></pre>
 <p>As a fix, you can make the <code>Square</code> an instance of the <code>Rectangle</code> class.</p>
 </body>
 </html>

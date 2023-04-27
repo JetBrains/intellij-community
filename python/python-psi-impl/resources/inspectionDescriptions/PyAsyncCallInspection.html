@@ -3,22 +3,22 @@
 <p>Reports coroutines that were called
   without using the <code>await</code> syntax.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 async def bar():
     pass
 
 
 async def foo():
     bar()
-</pre>
+</code></pre>
 <p>After the quick-fix is applied, the code changes to:</p>
-<pre style="font-family: monospace">
+<pre><code>
 async def bar():
     pass
 
 
 async def foo():
     await bar()
-</pre>
+</code></pre>
 </body>
 </html>

@@ -7,7 +7,7 @@ Reports cases when properties are accessed inappropriately:
   <li>Non-deletable properties are deleted</li>
 </ul>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 class MyClass:
     @property
     def read_only(self): return None
@@ -21,6 +21,6 @@ a = MyClass()
 a.read_only = 10 # property cannot be set
 del a.read_only # property cannot be deleted
 print(a.write_only) # property cannot be read
-</pre>
+</code></pre>
 </body>
 </html>
