@@ -184,7 +184,7 @@ public final class MavenArtifactDownloader {
       }
     }
 
-    var artifacts = embedder.resolve(requests, myProgress);
+    var artifacts = embedder.resolveArtifacts(requests, myProgress);
     for (var artifact : artifacts) {
       File file = artifact.getFile();
       if (file.exists()) {

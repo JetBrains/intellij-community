@@ -587,10 +587,10 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public Collection<MavenServerExecutionResult> resolveProject(@NotNull String longRunningTaskId,
-                                                               @NotNull Collection<File> files,
-                                                               @NotNull Collection<String> activeProfiles,
-                                                               @NotNull Collection<String> inactiveProfiles, MavenToken token)
+  public Collection<MavenServerExecutionResult> resolveProjects(@NotNull String longRunningTaskId,
+                                                                @NotNull Collection<File> files,
+                                                                @NotNull Collection<String> activeProfiles,
+                                                                @NotNull Collection<String> inactiveProfiles, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = new LongRunningTask(longRunningTaskId, files.size())) {
@@ -1011,9 +1011,9 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public MavenArtifactResolveResult resolveArtifactTransitively(@NotNull List<MavenArtifactInfo> artifacts,
-                                                                @NotNull List<MavenRemoteRepository> remoteRepositories,
-                                                                MavenToken token) throws RemoteException {
+  public MavenArtifactResolveResult resolveArtifactsTransitively(@NotNull List<MavenArtifactInfo> artifacts,
+                                                                 @NotNull List<MavenRemoteRepository> remoteRepositories,
+                                                                 MavenToken token) throws RemoteException {
     return new MavenArtifactResolveResult(resolveTransitively(artifacts, remoteRepositories, token), null);
   }
 
@@ -1080,7 +1080,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public List<MavenArtifact> resolve(@NotNull String longRunningTaskId, @NotNull Collection<MavenArtifactResolutionRequest> requests, MavenToken token)
+  public List<MavenArtifact> resolveArtifacts(@NotNull String longRunningTaskId, @NotNull Collection<MavenArtifactResolutionRequest> requests, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {

@@ -39,15 +39,15 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return null
   }
 
-  override fun resolve(longRunningTaskId: String,
-                       requests: Collection<MavenArtifactResolutionRequest>,
-                       token: MavenToken?): List<MavenArtifact> {
+  override fun resolveArtifacts(longRunningTaskId: String,
+                                requests: Collection<MavenArtifactResolutionRequest>,
+                                token: MavenToken?): List<MavenArtifact> {
     return listOf()
   }
 
-  override fun resolveArtifactTransitively(artifacts: MutableList<MavenArtifactInfo>,
-                                           remoteRepositories: MutableList<MavenRemoteRepository>,
-                                           token: MavenToken?): MavenArtifactResolveResult {
+  override fun resolveArtifactsTransitively(artifacts: MutableList<MavenArtifactInfo>,
+                                            remoteRepositories: MutableList<MavenRemoteRepository>,
+                                            token: MavenToken?): MavenArtifactResolveResult {
     return MavenArtifactResolveResult(emptyList(), null)
   }
 
@@ -97,11 +97,11 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
 }
 
 class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
-  override fun resolveProject(longRunningTaskId: String,
-                              files: Collection<File>,
-                              activeProfiles: Collection<String>,
-                              inactiveProfiles: Collection<String>,
-                              token: MavenToken?): Collection<MavenServerExecutionResult> {
+  override fun resolveProjects(longRunningTaskId: String,
+                               files: Collection<File>,
+                               activeProfiles: Collection<String>,
+                               inactiveProfiles: Collection<String>,
+                               token: MavenToken?): Collection<MavenServerExecutionResult> {
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       object : BuildIssue {
         override val title = SyncBundle.message("maven.sync.not.trusted.title")
@@ -123,11 +123,11 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
                                        private val myMultimoduleDirectories: MutableSet<String>,
                                        private val myMavenVersion: String?,
                                        private val myUnresolvedId: MavenId?) : DummyEmbedder(myProject) {
-  override fun resolveProject(longRunningTaskId: String,
-                              files: Collection<File>,
-                              activeProfiles: Collection<String>,
-                              inactiveProfiles: Collection<String>,
-                              token: MavenToken?): Collection<MavenServerExecutionResult> {
+  override fun resolveProjects(longRunningTaskId: String,
+                               files: Collection<File>,
+                               activeProfiles: Collection<String>,
+                               inactiveProfiles: Collection<String>,
+                               token: MavenToken?): Collection<MavenServerExecutionResult> {
 
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       MavenCoreInitializationFailureIssue(myExceptionMessage,

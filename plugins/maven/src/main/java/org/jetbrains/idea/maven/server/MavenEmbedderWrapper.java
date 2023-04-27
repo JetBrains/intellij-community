@@ -139,7 +139,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
 
     var results = runLongRunningTask(
       (embedder, longRunningTaskId) ->
-        embedder.resolveProject(
+        embedder.resolveProjects(
           longRunningTaskId,
           ioFiles,
           explicitProfiles.getEnabledProfiles(),
@@ -172,16 +172,22 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       .evaluateEffectivePom(file, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), ourToken));
   }
 
+  /**
+   * @deprecated use {@link MavenEmbedderWrapper#resolveArtifacts()}
+   */
+  @Deprecated
   @NotNull
   public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                                @NotNull List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    return resolve(List.of(new MavenArtifactResolutionRequest(info, remoteRepositories)), null).get(0);
+    return resolveArtifacts(List.of(new MavenArtifactResolutionRequest(info, remoteRepositories)), null).get(0);
   }
 
   @NotNull
-  public List<MavenArtifact> resolve(@NotNull Collection<MavenArtifactResolutionRequest> requests,
-                                     @Nullable MavenProgressIndicator progressIndicator) throws MavenProcessCanceledException {
-    return runLongRunningTask((embedder, longRunningTaskId) -> embedder.resolve(longRunningTaskId, requests, ourToken), progressIndicator);
+  public List<MavenArtifact> resolveArtifacts(@NotNull Collection<MavenArtifactResolutionRequest> requests,
+                                              @Nullable MavenProgressIndicator progressIndicator) throws MavenProcessCanceledException {
+    return runLongRunningTask(
+      (embedder, longRunningTaskId) -> embedder.resolveArtifacts(longRunningTaskId, requests, ourToken), progressIndicator
+    );
   }
 
   /**
@@ -193,14 +199,15 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     @NotNull final List<MavenArtifactInfo> artifacts,
     @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
 
-    return performCancelable(() -> getOrCreateWrappee().resolveArtifactTransitively(artifacts, remoteRepositories, ourToken)).mavenResolvedArtifacts;
+    return performCancelable(
+      () -> getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken)).mavenResolvedArtifacts;
   }
 
   @NotNull
   public MavenArtifactResolveResult resolveArtifactTransitively(
     @NotNull final List<MavenArtifactInfo> artifacts,
     @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    return performCancelable(() -> getOrCreateWrappee().resolveArtifactTransitively(artifacts, remoteRepositories, ourToken));
+    return performCancelable(() -> getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken));
   }
 
   public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests)
