@@ -2,9 +2,7 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.TestRunnerBundle;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.progress.util.ColorProgressBar;
@@ -21,6 +19,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 
 public class TestStatusLine extends NonOpaquePanel {
@@ -137,14 +136,13 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setIndeterminate(flag);
   }
 
-  public void onTestsDone(@Nullable TestStateInfo.Magnitude info) {
+  public void onTestsDone(@Nullable Supplier<? extends Icon> toolbarIconSupplier) {
     EdtInvocationManager.getInstance().invokeLater(() -> {
       myProgressPanel.remove(myProgressBar);
-      if (info != null) {
-        myState.setIcon(TestIconMapper.getToolbarIcon(info));
+      if (toolbarIconSupplier != null) {
+        myState.setIcon(toolbarIconSupplier.get());
       }
     });
-    
   }
 
   public void setStatusColor(Color color) {
@@ -179,7 +177,7 @@ public class TestStatusLine extends NonOpaquePanel {
     });
   }
 
-  @TestOnly
+  @NlsSafe
   @NotNull
   public String getStateText() {
     return myState.toString();

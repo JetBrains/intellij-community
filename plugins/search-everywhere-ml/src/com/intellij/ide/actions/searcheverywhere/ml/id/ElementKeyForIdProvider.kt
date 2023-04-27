@@ -7,7 +7,7 @@ internal abstract class ElementKeyForIdProvider {
     private val EP_NAME = ExtensionPointName.create<ElementKeyForIdProvider>("com.intellij.searcheverywhere.ml.elementKeyForIdProvider")
 
     /**
-     * Returns key that will be used by [SearchEverywhereMlItemIdProvider].
+     * Returns key that will be used by [SearchEverywhereMlOrderedItemIdProvider].
      * The method returns an element key or null if element isn't supported yet.
      * @return Key for ID
      */
@@ -24,7 +24,7 @@ internal abstract class ElementKeyForIdProvider {
   }
 
   /**
-   * Returns a unique key that will be used by [SearchEverywhereMlItemIdProvider] to obtain
+   * Returns a unique key that will be used by [SearchEverywhereMlOrderedItemIdProvider] to obtain
    * an id of the element.
    *
    * If the element type is not supported by the provider, it will return null.

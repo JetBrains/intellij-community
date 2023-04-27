@@ -13,6 +13,7 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
@@ -209,6 +210,14 @@ open class ArtifactBridge(
     }
     val oldRootElement = entity.rootElement!!
     if (oldRootElement != rootEntity) {
+      // As we replace old root element with the new one, we should kick builder from old root element
+      if (originalArtifact != null) {
+        diff.elements.getDataByEntity(oldRootElement)?.let { oldRootBridge ->
+          oldRootBridge.forThisAndFullTree {
+            it.updateStorage(originalArtifact.entityStorage)
+          }
+        }
+      }
       diff.modifyEntity(entity) {
         this.rootElement = rootEntity
       }

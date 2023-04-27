@@ -87,7 +87,7 @@ class PyAddCondaPanelModelTest {
     model.newEnvNameRwProperty.set(condaName)
 
     val mockSink = MockSink()
-    val sdk = model.onCondaCreateSdkClicked(coroutineContext, mockSink).getOrThrow()
+    val sdk = model.onCondaCreateSdkClicked(coroutineContext, mockSink, targetConfiguration = null).getOrThrow()
     val newName = ((sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.envIdentity as PyCondaEnvIdentity.NamedEnv).envName
     Assert.assertEquals("Wrong conda name", condaName, newName)
     Assert.assertTrue("No output provided for sink", mockSink.out.toString().isNotEmpty())
@@ -112,7 +112,6 @@ class PyAddCondaPanelModelTest {
     model.newEnvNameRwProperty.set(name)
     Assert.assertEquals("Name duplicate should lead to error", PyBundle.message("python.sdk.conda.problem.env.name.used"),
                         model.getValidationError())
-
   }
 
   @Test
@@ -123,7 +122,7 @@ class PyAddCondaPanelModelTest {
     model.condaActionUseExistingEnvRadioRwProp.set(true)
     model.condaActionCreateNewEnvRadioRwProp.set(false)
     model.condaEnvModel.selectedItem = model.condaEnvModel.getElementAt(0)
-    val sdk = model.onCondaCreateSdkClicked(coroutineContext, null).getOrThrow()
+    val sdk = model.onCondaCreateSdkClicked(coroutineContext, null, targetConfiguration = null).getOrThrow()
     Assert.assertTrue(getPythonVersion(sdk, LocalTargetEnvironmentRequest())!!.isNotBlank())
     Assert.assertTrue(Path.of(sdk.homePath!!).exists())
   }

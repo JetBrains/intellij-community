@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -25,7 +26,7 @@ private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun getAuthData(project: Project, url: String, login: String): AuthData? {
     if (!match(DEFAULT_SERVER.toURI(), url)) return null
 
-    return runBlocking {
+    return runBlockingMaybeCancellable {
       getAuthDataOrCancel(project, url, login)
     }
   }
@@ -34,7 +35,7 @@ private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun getAuthData(project: Project, url: String): AuthData? {
     if (!match(DEFAULT_SERVER.toURI(), url)) return null
 
-    return runBlocking {
+    return runBlockingMaybeCancellable {
       getAuthDataOrCancel(project, url, null)
     }
   }

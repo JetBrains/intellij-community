@@ -3,9 +3,9 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.storage.EntityStorageSnapshot
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.*
+import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -19,6 +19,13 @@ interface WorkspaceModel {
   val currentSnapshot: EntityStorageSnapshot
   
   val entityStorage: VersionedEntityStorage
+
+  /**
+   * Flow of changes from workspace model. It has to be used for asynchronous event handling. To start receiving
+   * emitted events, you need to call one of the terminal operations on it.
+   */
+  @get:ApiStatus.Experimental
+  val changesEventFlow: Flow<VersionedStorageChange>
 
   /**
    * Returns a snapshot of the storage containing unloaded entities. 
@@ -41,6 +48,14 @@ interface WorkspaceModel {
    * @param description describes the reason for the change, used for logging purposes only.
    */
   fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
+
+  /**
+   * **Asynchronous** modification of the current model by calling [updater] and applying it to the storage.
+   *
+   * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
+   */
+  @ApiStatus.Experimental
+  suspend fun updateProjectModelAsync(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
    * Get builder that can be updated in background and applied later and a project model.

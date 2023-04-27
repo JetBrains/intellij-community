@@ -8,21 +8,27 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.openapi.wm.impl.UnifiedToolWindowWeights
+import com.intellij.openapi.wm.impl.WindowInfoImpl
+import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable
 import java.awt.Rectangle
 
 @Service(Service.Level.APP)
-@State(name = "ToolWindowLayout", storages = [Storage(value = "window.layouts.xml")])
+@State(name = "ToolWindowLayout", storages = [
+  Storage(value = "window.layouts.xml"),
+  Storage(value = "window.state.xml", deprecated = true, roamingType = RoamingType.DISABLED),
+])
 class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   : PersistentStateComponentWithModificationTracker<ToolWindowDefaultLayoutManager.ToolWindowLayoutStorageManagerState> {
   companion object {
     @JvmStatic
     fun getInstance(): ToolWindowDefaultLayoutManager = service()
 
-    const val DEFAULT_LAYOUT_NAME = "Default"
+    const val INITIAL_LAYOUT_NAME = "Custom"
   }
 
   @Volatile
@@ -41,7 +47,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun getLayoutNames(): Set<String> = state.layouts.keys
 
-  fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi) ?: DesktopLayout()
+  fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi)
 
   fun setLayout(layout: DesktopLayout) = setLayout(activeLayoutName, layout)
 
@@ -50,6 +56,11 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     val list = layout.getSortedList().map(::convertWindowStateToDescriptor)
     val weights = convertUnifiedWeightsToDescriptor(layout.unifiedWeights)
     state = state.withUpdatedLayout(name, list, isNewUi, weights)
+  }
+
+  fun renameLayout(oldName: String, newName: String) {
+    tracker.incModificationCount()
+    state = state.withRenamedLayout(oldName, newName)
   }
 
   fun deleteLayout(name: String) {
@@ -64,7 +75,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   override fun noStateLoaded() {
     if (!isNewUi) {
       (WindowManager.getInstance() as? WindowManagerImpl)?.oldLayout?.let {
-        setLayout(DEFAULT_LAYOUT_NAME, it)
+        setLayout(INITIAL_LAYOUT_NAME, it)
         return
       }
     }
@@ -72,19 +83,18 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   }
 
   private fun loadDefaultLayout(isNewUi: Boolean) {
-    val provider = service<DefaultToolWindowLayoutProvider>()
-    val list = if (isNewUi) provider.createV2Layout() else provider.createV1Layout()
-    state = state.withUpdatedLayout(DEFAULT_LAYOUT_NAME, list, isNewUi)
+    state = state.withUpdatedLayout(INITIAL_LAYOUT_NAME, getDefaultLayoutToolWindowDescriptors(isNewUi), isNewUi)
   }
 
   override fun loadState(state: ToolWindowLayoutStorageManagerState) {
-    this.state = state
-    val activeLayout = state.getActiveLayoutCopy(isNewUi)
-    if (activeLayout == null) {
-      loadDefaultLayout(isNewUi)
-    } else {
-      setLayout(state.activeLayoutName, activeLayout)
+    val newState = if (state.layouts.isEmpty() && (state.v1.isNotEmpty() || state.v2.isNotEmpty())) { // migrating from 2022.3
+      ToolWindowLayoutStorageManagerState(layouts = mapOf(INITIAL_LAYOUT_NAME to LayoutDescriptor(v1 = state.v1, v2 = state.v2)))
     }
+    else {
+      state
+    }
+    this.state = newState
+    setLayout(newState.activeLayoutName, newState.getActiveLayoutCopy(isNewUi))
   }
 
   /**
@@ -98,26 +108,31 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   @Serializable
   data class ToolWindowLayoutStorageManagerState(
-    val activeLayoutName: String = DEFAULT_LAYOUT_NAME,
+    val activeLayoutName: String = INITIAL_LAYOUT_NAME,
     val layouts: Map<String, LayoutDescriptor> = emptyMap(),
+    val v1: List<ToolWindowDescriptor> = emptyList(),
+    val v2: List<ToolWindowDescriptor> = emptyList(),
   ) {
 
-    fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout? {
-      val activeLayoutDescriptors = getDescriptors(isNewUi)
-      if (activeLayoutDescriptors.isEmpty()) {
-        return null
-      }
+    fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout {
       return DesktopLayout(
-        convertWindowDescriptorsToWindowInfos(activeLayoutDescriptors),
+        convertWindowDescriptorsToWindowInfos(getDescriptors(isNewUi)),
         convertUnifiedWeightsDescriptorToUnifiedWeights(getUnifiedWeights())
       )
     }
 
     private fun getDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> =
-        layouts[activeLayoutName]?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList()
+      (layouts[activeLayoutName]?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList())
+        .ifEmpty { getDefaultLayoutToolWindowDescriptors(isNewUi) }
 
     private fun getUnifiedWeights(): Map<String, Float> =
         layouts[activeLayoutName]?.unifiedWeights ?: DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR
+
+    fun withRenamedLayout(oldName: String, newName: String): ToolWindowLayoutStorageManagerState =
+      copy(
+        activeLayoutName = if (oldName == activeLayoutName) newName else activeLayoutName,
+        layouts = layouts - oldName + (newName to layouts.getValue(oldName))
+      )
 
     fun withUpdatedLayout(
       name: String,
@@ -148,6 +163,19 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
       if (isNewUi) copy(v2 = layout, unifiedWeights = weights) else copy(v1 = layout, unifiedWeights = weights)
   }
 
+}
+
+private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> {
+  val builder = DefaultToolWindowLayoutBuilderImpl()
+  for (layoutExtension in DefaultToolWindowLayoutExtension.EP_NAME.extensionList) {
+    if (isNewUi) {
+      layoutExtension.buildV2Layout(builder)
+    }
+    else {
+      layoutExtension.buildV1Layout(builder)
+    }
+  }
+  return builder.build()
 }
 
 private val DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR: Map<String, Float> = ToolWindowAnchor.VALUES.associate { it.toString() to WindowInfoImpl.DEFAULT_WEIGHT }

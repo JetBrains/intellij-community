@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
 import org.jetbrains.idea.devkit.util.PsiUtil
-import java.util.*
 
 internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   @Suppress("SpellCheckingInspection")
@@ -46,11 +45,13 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       return
     }
 
+    vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false")
+
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
       vmParameters.add("-Xmx2g")
     }
     if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
-      vmParameters.add("-XX:ReservedCodeCacheSize=240m")
+      vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
     vmParameters.addAll(
       "-XX:+UseG1GC",
@@ -73,6 +74,9 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.addProperty("idea.system.path",
                                FileUtilRt.toSystemIndependentName("${configuration.workingDirectory}/out/dev-data/$productClassifier/system"))
     }
+
+    vmParameters.addProperty("idea.vendor.name", "JetBrains")
+    vmParameters.addProperty("idea.use.dev.build.server", "true")
 
     vmParameters.addProperty("sun.io.useCanonCaches", "false")
     vmParameters.addProperty("sun.awt.disablegrab", "true")

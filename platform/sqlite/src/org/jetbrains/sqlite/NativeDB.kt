@@ -19,7 +19,6 @@ package org.jetbrains.sqlite
 
 import java.io.IOException
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
 
 /** This class provides a thin JNI layer over the SQLite3 C API.  */
 internal class NativeDB : SqliteDb() {
@@ -46,8 +45,8 @@ internal class NativeDB : SqliteDb() {
   external override fun _close()
 
   @Synchronized
-  override fun _exec(sql: String): Int {
-    return _exec_utf8(stringToUtf8ByteArray(sql))
+  override fun _exec(sql: ByteArray): Int {
+    return _exec_utf8(sql)
   }
 
   @Synchronized
@@ -65,8 +64,8 @@ internal class NativeDB : SqliteDb() {
   external override fun busy_handler(busyHandler: BusyHandler?)
 
   @Synchronized
-  override fun prepare(sql: String): SafeStatementPointer {
-    return SafeStatementPointer(db = this, pointer = prepare_utf8(stringToUtf8ByteArray(sql)))
+  override fun prepare(sql: ByteArray): SafeStatementPointer {
+    return SafeStatementPointer(db = this, pointer = prepare_utf8(sql))
   }
 
   // byte[] instead of string is actually more performant
@@ -350,7 +349,7 @@ internal class NativeDB : SqliteDb() {
     // called from native code (only to convert exception text on calling function)
     @JvmStatic
     fun stringToUtf8ByteArray(str: String?): ByteArray {
-      return str!!.toByteArray(StandardCharsets.UTF_8)
+      return str!!.encodeToByteArray()
     }
 
     fun utf8ByteBufferToString(buffer: ByteBuffer): String {

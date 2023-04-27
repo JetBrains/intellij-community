@@ -250,9 +250,4 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     }
     return false
   }
-
-  fun testStringUtilsSpecialVariableWorksAndHasRemoveAndHumpMethod() {
-    val template = addTestTemplate("my_class", "prefix \${StringUtils.removeAndHump(\"foo_barBar\")} suffix")
-    assertThat(template.getText(emptyMap<Any?, Any>())).isEqualTo("prefix FooBarBar suffix")
-  }
 }

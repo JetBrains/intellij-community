@@ -2,6 +2,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
@@ -72,8 +73,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.intellij.openapi.application.ActionsKt.runReadAction;
 
 final class FindInProjectTask {
   private static final Logger LOG = Logger.getInstance(FindInProjectTask.class);
@@ -240,7 +239,7 @@ final class FindInProjectTask {
     Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
     if (pair == null) return true;
 
-    Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ContainerUtil.newConcurrentSet());
+    Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ConcurrentCollectionFactory.createConcurrentSet());
     PsiFile psiFile = pair.first;
     VirtualFile sourceVirtualFile = pair.second;
 
@@ -315,8 +314,8 @@ final class FindInProjectTask {
                              && !Registry.is("find.search.in.excluded.dirs")
                              && !ReadAction.compute(() -> myProjectFileIndex.isExcluded(myDirectory));
     boolean withSubdirs = myDirectory != null && myFindModel.isWithSubdirectories();
-    boolean locateClassSources = myDirectory != null && runReadAction(() -> myProjectFileIndex.getClassRootForFile(myDirectory)) != null;
-    boolean searchInLibs = globalCustomScope != null && globalCustomScope.isSearchInLibraries();
+    boolean locateClassSources = myDirectory != null && ReadAction.compute(() -> myProjectFileIndex.getClassRootForFile(myDirectory)) != null;
+    boolean searchInLibs = globalCustomScope != null && ReadAction.compute(() -> globalCustomScope.isSearchInLibraries());
 
     ConcurrentLinkedDeque<Object> deque = new ConcurrentLinkedDeque<>();
     if (customScope instanceof LocalSearchScope) {

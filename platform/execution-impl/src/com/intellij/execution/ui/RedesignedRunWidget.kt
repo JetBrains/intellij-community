@@ -9,28 +9,36 @@ import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
+import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.*
-import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.ui.BadgeRectProvider
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.TextHoledIcon
+import com.intellij.ui.icons.TextIcon
+import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.IconUtil
-import com.intellij.util.TextIcon
 import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.InputEvent
@@ -41,7 +49,9 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-val isContrastRunWidget: Boolean get() = AdvancedSettings.getBoolean("contrast.run.widget")
+const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH = 25
+
+val isContrastRunWidget: Boolean get() = Registry.`is`("ide.experimental.ui.contrast.run.widget")
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   val toolbarId = if (isContrastRunWidget) "ContrastRunToolbarMainActionGroup" else "RunToolbarMainActionGroup"
@@ -201,8 +211,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     val g2 = g.create() as Graphics2D
 
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
+      GraphicsUtil.setupAAPainting(g2)
       g2.color = color
       val arc = buttonArc.float
       val width = rect.width
@@ -233,15 +242,20 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
 
   override fun getDisabledIcon(icon: Icon): Icon {
     if (!isContrastRunWidget) {
-      return super.getDisabledIcon(icon)
+      return IconLoader.getDisabledIcon(icon, lightThemeDarkHeaderDisableFilter)
     }
     return PreparedIcon(icon.iconWidth, icon.iconHeight) {
-      IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
+      toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND)
     }
   }
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
+      return
+    }
+
+    if (!isContrastRunWidget && actionButton is ActionButton && actionButton.action is RedesignedRunConfigurationSelector) {
+      super.paintIcon(g, actionButton, icon, x, y)
       return
     }
 
@@ -270,7 +284,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       else {
         JBUI.CurrentTheme.RunWidget.FOREGROUND
       }
-      resultIcon = IconUtil.toStrokeIcon(resultIcon, resultColor)
+      resultIcon = toStrokeIcon(resultIcon, resultColor)
     }
 
     super.paintIcon(g, actionButton, resultIcon, x, y)
@@ -300,7 +314,6 @@ private abstract class TogglePopupAction : ToggleAction {
     val actionGroup = getActionGroup(e) ?: return
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
     val popup = createPopup(actionGroup, e, disposeCallback)
-    PopupImplUtil.setPopupToggleButton(popup, e.inputEvent.component)
     popup.setMinimumSize(JBDimension(MINIMAL_POPUP_WIDTH, 0))
     popup.showUnderneathOf(component)
   }
@@ -335,7 +348,7 @@ private class MoreRunToolbarActions : TogglePopupAction(
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
     val result = createOtherRunnersSubgroup(selectedConfiguration, project)
-    addAdditionalActionsToRunConfigurationOptions(project, selectedConfiguration, result, true)
+    addAdditionalActionsToRunConfigurationOptions(project, e, selectedConfiguration, result, true)
     return result
   }
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -357,18 +370,19 @@ private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationS
 }
 
 internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
+                                                           e: AnActionEvent,
                                                            selectedConfiguration: RunnerAndConfigurationSettings?,
                                                            targetGroup: DefaultActionGroup,
                                                            isWidget: Boolean) {
   val additionalActions = AdditionalRunningOptions.getInstance(project).getAdditionalActions(selectedConfiguration, isWidget)
-  for (action in additionalActions.getChildren(null).reversed()) {
+  for (action in additionalActions.getChildren(e).reversed()) {
     targetGroup.add(action, Constraints.FIRST)
   }
 }
 
 private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    if (e.inputEvent.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
+    if (e.inputEvent!!.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
       ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(e)
       return
     }
@@ -377,7 +391,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
-    return createRunConfigurationsActionGroup(project)
+    return createRunConfigurationsActionGroup(project, e)
   }
 
   override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup =
@@ -391,15 +405,17 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     if (!isContrastRunWidget) {
       val icon = e.presentation.icon
       if (icon != null) {
-        e.presentation.icon = PreparedIcon(if (icon is InvalidRunConfigurationIcon) {
-          InvalidRunConfigurationIcon(IconUtil.toStrokeIcon(icon.mainIcon, JBUI.CurrentTheme.RunWidget.FOREGROUND))
-        }
-                                           else {
-          IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
-        })
+        e.presentation.icon = adjustIconForHeader(icon)
       }
     }
-    e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
+    val configurationName = e.project?.let { RunManager.getInstance(it) }?.selectedConfiguration?.name
+    if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
+      e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",
+                                                                   configurationName))
+    }
+    else {
+      e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
+    }
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -416,9 +432,10 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     }) {
 
       override fun getMargins(): Insets = JBInsets.create(0, 8)
-      override fun iconTextSpace(): Int = JBUI.scale(6)
+      override fun iconTextSpace(): Int = ToolbarComboWidgetUiSizes.gapAfterLeftIcons
       override fun shallPaintDownArrow() = true
-      override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
+      override fun getInactiveTextColor() = if (isContrastRunWidget) JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
+      else super.getInactiveTextColor()
       override fun getDownArrowIcon(): Icon = PreparedIcon(super.getDownArrowIcon())
 
       override fun updateUI() {

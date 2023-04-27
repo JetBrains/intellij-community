@@ -21,7 +21,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
 
 internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(
-  LangBundle.message("configurable.reader.mode"), "editor.reader.mode") {
+  LangBundle.message("configurable.reader.mode"), "settings.reader.mode", "editor.reader.mode") {
   private val settings get() = ReaderModeSettings.getInstance(project)
 
   private val cdVisualFormatting

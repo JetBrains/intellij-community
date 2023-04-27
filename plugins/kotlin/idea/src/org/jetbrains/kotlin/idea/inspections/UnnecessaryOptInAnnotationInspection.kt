@@ -9,10 +9,8 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -249,6 +247,18 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
     }
 
     /**
+     * Collect experimental markers for property delegate and add them to [foundMarkers].
+     *
+     * @param delegate the property delegate to process
+     */
+    fun collectMarkers(delegate: KtPropertyDelegate) {
+        val moduleApiVersion = delegate.languageVersionSettings.apiVersion
+        delegate.resolveMainReferenceToDescriptors().forEach { descriptor ->
+            descriptor.collectMarkers(moduleApiVersion)
+        }
+    }
+
+    /**
      * Collect markers from a declaration descriptor corresponding to a Kotlin type.
      *
      * @receiver the type to collect markers
@@ -272,6 +282,14 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
      * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
      */
     private fun DeclarationDescriptor.collectMarkers(moduleApiVersion: ApiVersion) {
+        annotations.collectMarkers(moduleApiVersion, module)
+        if (isCompanionObject()) {
+            containingDeclaration?.let { it.annotations.collectMarkers(moduleApiVersion, it.module) }
+        }
+    }
+
+    private fun Annotations.collectMarkers(moduleApiVersion: ApiVersion, module: ModuleDescriptor) {
+        val annotations = this
         for (ann in annotations) {
             val annotationFqName = ann.fqName ?: continue
             val annotationClass = ann.annotationClass ?: continue
@@ -344,6 +362,11 @@ private class OptInMarkerVisitor : KtTreeVisitor<MarkerCollector>() {
     override fun visitClassOrObject(expression: KtClassOrObject, markerCollector: MarkerCollector): Void? {
         markerCollector.collectMarkers(expression)
         return super.visitClassOrObject(expression, markerCollector)
+    }
+
+    override fun visitPropertyDelegate(delegate: KtPropertyDelegate, markerCollector: MarkerCollector): Void? {
+        markerCollector.collectMarkers(delegate)
+        return super.visitPropertyDelegate(delegate, markerCollector)
     }
 }
 

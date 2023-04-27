@@ -14,13 +14,15 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.nullability
 
 fun <TCallable : CallableDescriptor> TCallable.substituteExtensionIfCallable(
     receiverTypes: Collection<KotlinType>,
-    callType: CallType<*>
+    callType: CallType<*>,
+    ignoreTypeParameters: Boolean = false,
 ): Collection<TCallable> {
     if (!callType.descriptorKindFilter.accepts(this)) return listOf()
 
@@ -31,7 +33,14 @@ fun <TCallable : CallableDescriptor> TCallable.substituteExtensionIfCallable(
 
     val extensionReceiverType = fuzzyExtensionReceiverType()!!
     val substitutors = types.mapNotNull {
+        // NOTE: this creates a fuzzy type for `it` without type parameters
         var substitutor = extensionReceiverType.checkIsSuperTypeOf(it)
+
+        // If enabled, we can ignore type parameters in the receiver type, and only check whether the constructors match
+        if (ignoreTypeParameters && substitutor == null && it.constructor == extensionReceiverType.type.constructor) {
+            substitutor = TypeSubstitutor.EMPTY
+        }
+
         // check if we may fail due to receiver expression being nullable
         if (substitutor == null && it.nullability() == TypeNullability.NULLABLE && extensionReceiverType.nullability() == TypeNullability.NOT_NULL) {
             substitutor = extensionReceiverType.checkIsSuperTypeOf(it.makeNotNullable())

@@ -11,9 +11,11 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
@@ -21,12 +23,17 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import io.opentelemetry.api.metrics.Meter
+import java.util.concurrent.atomic.AtomicLong
 
 class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 
   override fun initializeLibraryBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+    val start = System.currentTimeMillis()
+
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
+
     @Suppress("UNCHECKED_CAST")
     val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
     val addChanges = libraryChanges.filterGlobalLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
@@ -43,9 +50,13 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         )
       }
     }
+    initializeLibraryBridgesTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
-  override fun initializeLibraryBridgesAfterLoading(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage): () -> Unit {
+  override fun initializeLibraryBridgesAfterLoading(mutableStorage: MutableEntityStorage,
+                                                    initialEntityStorage: VersionedEntityStorage): () -> Unit {
+    val start = System.currentTimeMillis()
+
     val libraries = mutableStorage
       .entities(LibraryEntity::class.java)
       .filter { it.tableId is LibraryTableId.GlobalLibraryTableId }
@@ -69,14 +80,15 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       mutableStorage.mutableLibraryMap.addIfAbsent(entity, library)
     }
 
-    return {
+    val action: () -> Unit = {
       // TODO:: Check should we fire this event
       val application = ApplicationManager.getApplication()
       if (application.isWriteAccessAllowed) {
         for ((_, library) in libraries) {
           dispatcher.multicaster.afterLibraryAdded(library)
         }
-      } else {
+      }
+      else {
         application.invokeLater {
           runWriteAction {
             for ((_, library) in libraries) {
@@ -86,11 +98,16 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         }
       }
     }
+
+    initializeLibraryBridgesAfterLoadingTimeMs.addAndGet(System.currentTimeMillis() - start)
+    return action
   }
 
   override fun handleBeforeChangeEvents(event: VersionedStorageChange) {
+    val start = System.currentTimeMillis()
+
     val removeChanges = event.getChanges(LibraryEntity::class.java).filterGlobalLibraryChanges()
-                                                                   .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
+      .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
     if (removeChanges.isEmpty()) return
 
     for (change in removeChanges) {
@@ -100,9 +117,12 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         dispatcher.multicaster.beforeLibraryRemoved(library)
       }
     }
+    handleBeforeChangeEventsTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
   override fun handleChangedEvents(event: VersionedStorageChange) {
+    val start = System.currentTimeMillis()
+
     val changes = event.getChanges(LibraryEntity::class.java).filterGlobalLibraryChanges()
     if (changes.isEmpty()) return
 
@@ -141,6 +161,8 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         }
       }
     }
+
+    handleChangedEventsTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
   fun fireRootSetChanged(libraryEntity: LibraryEntity, entityStorage: EntityStorage) {
@@ -148,13 +170,18 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   }
 
   override fun getLibraries(): Array<Library> {
+    val start = System.currentTimeMillis()
+
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
     val storage = entityStorage.current
     val libraryEntitySequence = storage.entities(
       LibraryEntity::class.java).filter { it.tableId::class == LibraryTableId.GlobalLibraryTableId::class }.toList()
-    return libraryEntitySequence
+    val libs: Array<Library> = libraryEntitySequence
       .mapNotNull { storage.libraryMap.getDataByEntity(it) }
       .toList().toTypedArray()
+
+    getLibrariesTimeMs.addAndGet(System.currentTimeMillis() - start)
+    return libs
   }
 
   override fun createLibrary(): Library {
@@ -162,6 +189,8 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   }
 
   override fun createLibrary(name: String?): Library {
+    val start = System.currentTimeMillis()
+
     if (name == null) error("Creating unnamed global libraries is unsupported")
 
     if (getLibraryByName(name) != null) {
@@ -177,6 +206,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       error("Library $name was not created")
     }
 
+    createLibraryTimeMs.addAndGet(System.currentTimeMillis() - start)
     return newLibrary
   }
 
@@ -186,16 +216,21 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
     modifiableModel.commit()
   }
 
-  override fun getLibraryIterator(): Iterator<Library>  {
+  override fun getLibraryIterator(): Iterator<Library> {
     return libraries.iterator()
   }
 
   override fun getLibraryByName(name: String): Library? {
+    val start = System.currentTimeMillis()
+
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
     val libraryId = LibraryId(name, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))
-    return entityStorage.current.resolve(libraryId)?.let { entity ->
+    val library = entityStorage.current.resolve(libraryId)?.let { entity ->
       entityStorage.current.libraryMap.getDataByEntity(entity)
     }
+
+    getLibraryByNameTimeMs.addAndGet(System.currentTimeMillis() - start)
+    return library
   }
 
   override fun getTableLevel(): String = LibraryTablesRegistrar.APPLICATION_LEVEL
@@ -237,6 +272,56 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         return ProjectModelBundle.message("library.configure.global.title")
       }
     }
+
     private val LOG = logger<GlobalLibraryTableBridgeImpl>()
+
+    private val initializeLibraryBridgesTimeMs: AtomicLong = AtomicLong()
+    private val initializeLibraryBridgesAfterLoadingTimeMs: AtomicLong = AtomicLong()
+    private val handleBeforeChangeEventsTimeMs: AtomicLong = AtomicLong()
+    private val handleChangedEventsTimeMs: AtomicLong = AtomicLong()
+    private val getLibrariesTimeMs: AtomicLong = AtomicLong()
+    private val createLibraryTimeMs: AtomicLong = AtomicLong()
+    private val getLibraryByNameTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val initializeLibraryBridgesTimeGauge = meter.gaugeBuilder("jps.global.initialize.library.bridges.ms")
+        .ofLongs().setDescription("How many time spent in method").buildObserver()
+
+      val initializeLibraryBridgesAfterLoadingTimeGauge = meter.gaugeBuilder("jps.global.initialize.library.bridges.after.loading.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val handleBeforeChangeEventsTimeGauge = meter.gaugeBuilder("jps.global.handle.before.change.events.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val handleChangedEventsTimeGauge = meter.gaugeBuilder("jps.global.handle.changed.events.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val getLibrariesTimeGauge = meter.gaugeBuilder("jps.global.get.libraries.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val createLibraryTimeGauge = meter.gaugeBuilder("jps.global.get.library.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val getLibraryByNameTimeGauge = meter.gaugeBuilder("jps.global.get.library.by.name.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          initializeLibraryBridgesTimeGauge.record(initializeLibraryBridgesTimeMs.get())
+          initializeLibraryBridgesAfterLoadingTimeGauge.record(initializeLibraryBridgesAfterLoadingTimeMs.get())
+          handleBeforeChangeEventsTimeGauge.record(handleBeforeChangeEventsTimeMs.get())
+          handleChangedEventsTimeGauge.record(handleChangedEventsTimeMs.get())
+          getLibrariesTimeGauge.record(getLibrariesTimeMs.get())
+          createLibraryTimeGauge.record(createLibraryTimeMs.get())
+          getLibraryByNameTimeGauge.record(getLibraryByNameTimeMs.get())
+        },
+        initializeLibraryBridgesTimeGauge, initializeLibraryBridgesAfterLoadingTimeGauge, handleBeforeChangeEventsTimeGauge,
+        handleChangedEventsTimeGauge, getLibrariesTimeGauge, createLibraryTimeGauge, getLibraryByNameTimeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 }

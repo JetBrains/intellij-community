@@ -103,9 +103,16 @@ public final class Switcher extends BaseSwitcherAction {
     final JBList<SwitcherListItem> toolWindows;
     final JBList<SwitcherVirtualFile> files;
     final JCheckBox cbShowOnlyEditedFiles;
-    final JLabel pathLabel = createAdComponent(" ", JBUI.Borders.compound(
-      JBUI.Borders.customLineTop(JBUI.CurrentTheme.Advertiser.borderColor()),
-      JBUI.CurrentTheme.Advertiser.border()), SwingConstants.LEFT);
+    final JLabel pathLabel = createAdComponent(
+      " ",
+      ExperimentalUI.isNewUI()
+      ? JBUI.CurrentTheme.Advertiser.border()
+      : JBUI.Borders.compound(
+        JBUI.Borders.customLineTop(JBUI.CurrentTheme.Advertiser.borderColor()),
+        JBUI.CurrentTheme.Advertiser.border()
+      ),
+      SwingConstants.LEFT
+    );
     final Project project;
     final boolean recent; // false - Switcher, true - Recent files / Recently changed files
     final boolean pinned; // false - auto closeable on modifier key release, true - default popup
@@ -163,7 +170,7 @@ public final class Switcher extends BaseSwitcherAction {
       pinned = !onKeyRelease.isEnabled();
       boolean onlyEdited = Boolean.TRUE.equals(onlyEditedFiles);
       myTitle = title;
-      mySpeedSearch = recent && is("ide.recent.files.speed.search") ? new SwitcherSpeedSearch(this) : null;
+      mySpeedSearch = recent && is("ide.recent.files.speed.search") ? SwitcherSpeedSearch.Companion.installOn(this) : null;
       cbShowOnlyEditedFiles = !recent || !Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together")
                                       ? null : new JCheckBox(IdeBundle.message("recent.files.checkbox.label"));
 
@@ -808,7 +815,7 @@ public final class Switcher extends BaseSwitcherAction {
 
     @TestOnly
     static List<VirtualFile> getFilesToShowForTest(@NotNull Project project) {
-      return ContainerUtil.map2List(getFilesToShow(project, false, 10, true), SwitcherVirtualFile::getFile);
+      return ContainerUtil.map(getFilesToShow(project, false, 10, true), SwitcherVirtualFile::getFile);
     }
 
     @TestOnly

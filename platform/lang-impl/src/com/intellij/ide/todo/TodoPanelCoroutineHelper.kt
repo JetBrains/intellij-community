@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -25,7 +27,7 @@ private class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposabl
   }
 
   fun schedulePreviewPanelLayoutUpdate() {
-    scope.launch(Dispatchers.EDT) {
+    scope.launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
       if (!panel.usagePreviewPanel.isVisible) return@launch
 
       val lastUserObject = TreeUtil.getLastUserObject(panel.tree.selectionPath)

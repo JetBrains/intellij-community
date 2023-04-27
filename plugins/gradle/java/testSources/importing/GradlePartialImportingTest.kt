@@ -13,11 +13,12 @@ import org.assertj.core.api.Condition
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.model.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.project.*
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -88,11 +89,10 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
   fun `test composite project partial re-import`() {
     createAndImportTestCompositeProject()
 
-    // since Gradle 6.8, included (of the "main" build) builds became visible for `buildSrc` project
-    // there are separate TAPI request per `buildSrc` project in a composite
+    // since Gradle 6.8, included (of the "main" build) builds became visible for `buildSrc` project.
+    // Before Gradle 8.0 there are separate TAPI requests per `buildSrc` project in a composite
     // and hence included build models can be handled more than once
-    // should be fixed with https://github.com/gradle/gradle/issues/14563
-    val includedBuildModelsReceivedQuantity = if (isGradleOlderThan("6.8")) 1 else 2
+    val includedBuildModelsReceivedQuantity = if (isGradleOlderThan("6.8") || isGradleNewerOrSameAs("8.0")) 1 else 2
 
     assertReceivedModels(
       projectPath, "project",
@@ -185,11 +185,11 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
   }
 
   private fun createAndImportTestCompositeProject() {
-    createProjectSubFile("buildSrc/build.gradle", buildscript {
+    createBuildFile("buildSrc") {
       withGroovyPlugin()
       addImplementationDependency(code("gradleApi()"))
       addImplementationDependency(code("localGroovy()"))
-    })
+    }
     createProjectSubFile(
       "gradle.properties",
       "prop_loaded_1=val1\n" +
@@ -197,11 +197,11 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
     )
     createProjectSubFile("includedBuild/settings.gradle", "include 'subProject'")
     createProjectSubDir("includedBuild/subProject")
-    createProjectSubFile("includedBuild/buildSrc/build.gradle", buildscript {
+    createBuildFile("includedBuild/buildSrc") {
       withGroovyPlugin()
       addImplementationDependency(code("gradleApi()"))
       addImplementationDependency(code("localGroovy()"))
-    })
+    }
     createSettingsFile("includeBuild 'includedBuild'")
     createProjectSubFile(
       "includedBuild/gradle.properties",
@@ -278,7 +278,9 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       "prop_finished_2=val2\n"
     )
 
-    importProject(buildscript { withJavaPlugin() })
+    importProject {
+      withJavaPlugin()
+    }
   }
 
   private fun assertReceivedModels(

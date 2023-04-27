@@ -476,7 +476,7 @@ class PyTypeHintsInspection : PyInspection() {
                                   PyPsiBundle.message("INSP.type.hints.parameterized.generics.cannot.be.used.with.instance.class.checks"),
                                   ProblemHighlightType.GENERIC_ERROR,
                                   null,
-                                  if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
+                                  *(if (base is PySubscriptionExpression) arrayOf(RemoveGenericParametersQuickFix()) else LocalQuickFix.EMPTY_ARRAY))
                   return@forEach
                 }
               }
@@ -490,7 +490,7 @@ class PyTypeHintsInspection : PyInspection() {
                                 PyPsiBundle.message("INSP.type.hints.parameterized.generics.cannot.be.used.with.instance.class.checks"),
                                 ProblemHighlightType.GENERIC_ERROR,
                                 null,
-                                if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
+                                *(if (base is PySubscriptionExpression) arrayOf(RemoveGenericParametersQuickFix()) else LocalQuickFix.EMPTY_ARRAY))
               }
             }
           }

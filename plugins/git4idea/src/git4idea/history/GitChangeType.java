@@ -30,7 +30,7 @@ public enum GitChangeType {
    */
   @NotNull
   static GitChangeType fromString(@NotNull String statusString) {
-    assert statusString.length() > 0;
+    assert !statusString.isEmpty();
     char c = statusString.charAt(0);
     for (GitChangeType changeType : values()) {
       if (changeType.myChar == c) {

@@ -64,7 +64,7 @@ internal class SchemeFileTracker<T: Scheme, M:T>(private val schemeManager: Sche
     }
 
     if (list.isNotEmpty()) {
-      (StoreReloadManager.getInstance() as StoreReloadManagerImpl).registerChangedSchemes(list, applicator, project)
+      (StoreReloadManager.getInstance(project) as StoreReloadManagerImpl).registerChangedSchemes(list, applicator)
     }
   }
 

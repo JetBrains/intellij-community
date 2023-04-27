@@ -6,7 +6,6 @@ import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
@@ -15,7 +14,7 @@ import java.util.Set;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public final class ChainSearchTarget {
-  private static final Set<String> EXCLUDED_PACKAGES = ContainerUtil.set("java.lang", "java.util.function");
+  private static final Set<String> EXCLUDED_PACKAGES = Set.of("java.lang", "java.util.function");
 
   private final String myClassQName;
   private final byte[] myAcceptedArrayKinds;

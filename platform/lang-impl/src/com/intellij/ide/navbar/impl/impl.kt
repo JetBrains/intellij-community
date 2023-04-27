@@ -3,6 +3,7 @@ package com.intellij.ide.navbar.impl
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
+import com.intellij.ide.navbar.ide.LOG
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ModuleRootManager
@@ -16,10 +17,19 @@ internal fun NavBarItem.pathToItem(): List<NavBarItem> {
   }.toList().asReversed()
 }
 
-private fun NavBarItem.findParent(): NavBarItem? =
-  NavBarItemProvider.EP_NAME
-    .extensionList
-    .firstNotNullOfOrNull { ext -> ext.findParent(this) }
+private fun NavBarItem.findParent(): NavBarItem? {
+  for (ext in NavBarItemProvider.EP_NAME.extensionList) {
+    val parentCandidate = ext.findParent(this) ?: continue
+
+    if (parentCandidate is PsiNavBarItem && !parentCandidate.data.isValid) {
+      LOG.warn("Extension [${ext::class.java}] returned invalid parent candidate of type [${(parentCandidate.data)::class.java}]")
+      continue
+    }
+
+    return parentCandidate
+  }
+  return null
+}
 
 internal fun NavBarItem.children(): List<NavBarItem> {
   ApplicationManager.getApplication().assertReadAccessAllowed()
@@ -34,18 +44,6 @@ private fun NavBarItem.iterateAllChildren(): Iterable<NavBarItem> =
 private val weightComparator = compareBy<NavBarItem> { -it.weight() }
 private val nameComparator = compareBy<NavBarItem, String>(NaturalComparator.INSTANCE) { it.presentation().text }
 private val siblingsComparator = weightComparator.then(nameComparator)
-
-private fun NavBarItem.weight() = when (this) {
-  is ModuleNavBarItem -> 5
-  is PsiNavBarItem -> when (data) {
-    is PsiDirectoryContainer -> 4
-    is PsiDirectory -> 4
-    is PsiFile -> 2
-    is PsiNamedElement -> 3
-    else -> Int.MAX_VALUE
-  }
-  else -> Int.MAX_VALUE
-}
 
 internal fun NavBarItem.isModuleContentRoot(): Boolean {
   ApplicationManager.getApplication().assertReadAccessAllowed()

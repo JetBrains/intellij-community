@@ -1,11 +1,12 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.agent.impl;
 
 import com.intellij.remoteServer.agent.RemoteAgentProxyFactory;
 import com.intellij.remoteServer.agent.impl.util.UrlCollector;
+import com.intellij.util.ReflectionUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.List;
 
@@ -25,9 +26,7 @@ public abstract class RemoteAgentProxyFactoryBase implements RemoteAgentProxyFac
     ClassLoader callerClassLoader = myCallerClassLoaderProvider.getCallerClassLoader(agentInterface);
     ClassLoader agentClassLoader = createAgentClassLoader(libraries);
     Object agentImpl = agentClassLoader.loadClass(agentClassName).getDeclaredConstructor().newInstance();
-    return agentInterface.cast(Proxy.newProxyInstance(agentInterface.getClassLoader(),
-                                                      new Class[]{agentInterface},
-                                                      createInvocationHandler(agentImpl, agentClassLoader, callerClassLoader)));
+    return ReflectionUtil.proxy(agentInterface, createInvocationHandler(agentImpl, agentClassLoader, callerClassLoader));
   }
 
   protected ClassLoader createAgentClassLoader(List<File> libraries) throws Exception {

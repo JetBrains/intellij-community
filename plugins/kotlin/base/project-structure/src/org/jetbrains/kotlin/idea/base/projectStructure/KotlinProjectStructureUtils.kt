@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -25,6 +26,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.*
@@ -149,7 +151,7 @@ fun IdeaModuleInfo.findJvmStdlibAcrossDependencies(): LibraryInfo? {
 }
 
 fun IdeaModuleInfo.supportsFeature(project: Project, feature: LanguageFeature): Boolean {
-    return IDELanguageSettingsProvider
+    return project.service<LanguageSettingsProvider>()
         .getLanguageVersionSettings(this, project)
         .supportsFeature(feature)
 }

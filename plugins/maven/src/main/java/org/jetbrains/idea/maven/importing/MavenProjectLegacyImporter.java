@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.impl.ModulePathKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -22,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -399,7 +399,7 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     Module existingModule = myMavenProjectToModule.get(project);
     if (existingModule != null && existingModule != myPreviewModule) return false;
     final String path = myMavenProjectToModulePath.get(project);
-    String moduleName = ModulePathKt.getModuleNameByFilePath(path);
+    String moduleName = ModulePath.Companion.getModuleNameByFilePath(path);
 
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.

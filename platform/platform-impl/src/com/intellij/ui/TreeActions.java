@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,18 +8,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class TreeActions extends SwingActionDelegate {
   private TreeActions(String actionId) {
     super(actionId);
   }
 
-  @Nullable
   @Override
-  protected JTree getComponent(AnActionEvent event) {
-    JTree tree = tryCast(super.getComponent(event), JTree.class);
-    return tree == null || getSupply(tree) != null ? null : tree;
+  protected @Nullable JTree getComponent(AnActionEvent event) {
+    var component = super.getComponent(event);
+    return component instanceof JTree tree && getSupply(component) == null ? tree : null;
   }
 
   public static final class Home extends TreeActions {

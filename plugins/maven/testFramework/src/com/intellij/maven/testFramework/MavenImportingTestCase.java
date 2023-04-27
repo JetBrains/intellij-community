@@ -83,12 +83,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenSourcesGeneratedContext mySourcesGeneratedContext;
   protected MavenPluginResolvedContext myPluginResolvedContext;
 
-  private final Set<String> FAILED_IN_MASTER =
-    ContainerUtil.set("MavenProjectsManagerTest.testUpdatingProjectsWhenMovingModuleFile",
-                      "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
-                      "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
-                      "MavenProjectsManagerWatcherTest.testChangeConfigInOurProjectShouldCallUpdatePomFile",
-                      "MavenProjectsManagerWatcherTest.testIncrementalAutoReload");
+  private static final Set<String> FAILED_IN_MASTER =
+    Set.of("MavenProjectsManagerTest.testUpdatingProjectsWhenMovingModuleFile",
+           "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
+           "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
+           "MavenProjectsManagerWatcherTest.testChangeConfigInOurProjectShouldCallUpdatePomFile",
+           "MavenProjectsManagerWatcherTest.testIncrementalAutoReload");
 
   @Override
   protected void setUp() throws Exception {
@@ -709,7 +709,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void initProjectsManager(boolean enableEventHandling) {
     myProjectsManager.initForTests();
-    myProjectResolver = new MavenProjectResolver(myProjectsManager.getProjectsTree());
+    myProjectResolver = MavenProjectResolver.getInstance(myProject);
     if (enableEventHandling) {
       myProjectsManager.enableAutoImportInTests();
     }
@@ -815,8 +815,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     AsyncPromise<MavenArtifactDownloader.DownloadResult> promise = new AsyncPromise<>();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        promise.setResult(new MavenImportFlow().downloadSpecificArtifacts(myProject, projects, artifacts, true, true,
-                                                                          new MavenProgressIndicator(myProject, null)));
+        promise.setResult(new MavenImportFlow().downloadSpecificArtifacts(
+          myProject,
+          myProjectsManager.getProjectsTree(),
+          projects,
+          artifacts,
+          true,
+          true,
+          new MavenProgressIndicator(myProject, null)));
       }
       catch (Throwable e) {
         promise.setError(e);

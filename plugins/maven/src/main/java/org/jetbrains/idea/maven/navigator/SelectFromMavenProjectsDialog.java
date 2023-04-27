@@ -25,6 +25,7 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -40,13 +41,13 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
 
   public SelectFromMavenProjectsDialog(Project project,
                                        @NlsContexts.DialogTitle String title,
-                                       final Class<? extends MavenProjectsStructure.MavenSimpleNode> nodeClass) {
-    this(project, title, nodeClass, null);
+                                       MavenProjectsStructure.MavenStructureDisplayMode displayMode) {
+    this(project, title, displayMode, null);
   }
 
   public SelectFromMavenProjectsDialog(Project project,
                                        @NlsContexts.DialogTitle String title,
-                                       final Class<? extends MavenProjectsStructure.MavenSimpleNode> nodeClass,
+                                       MavenProjectsStructure.MavenStructureDisplayMode displayMode,
                                        @Nullable NodeSelector selector) {
     super(project, false);
     mySelector = selector;
@@ -56,27 +57,12 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     MavenProjectsStructure treeStructure = new MavenProjectsStructure(project,
+                                                                      displayMode,
                                                                       MavenProjectsManager.getInstance(project),
                                                                       MavenTasksManager.getInstance(project),
                                                                       MavenShortcutsManager.getInstance(project),
                                                                       MavenProjectsNavigator.getInstance(project),
-                                                                      myTree) {
-      @Override
-      protected Class<? extends MavenSimpleNode>[] getVisibleNodesClasses() {
-        //noinspection unchecked
-        return new Class[]{nodeClass};
-      }
-
-      @Override
-      protected boolean showDescriptions() {
-        return false;
-      }
-
-      @Override
-      protected boolean showOnlyBasicPhases() {
-        return false;
-      }
-    };
+                                                                      myTree);
     treeStructure.update();
 
     if (mySelector != null) {

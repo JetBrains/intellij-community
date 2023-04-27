@@ -82,7 +82,9 @@ public final class IdempotenceChecker {
                                         @Nullable T fresh,
                                         @NotNull Class<?> providerClass,
                                         @Nullable Computable<? extends T> recomputeValue, String msg) {
-    boolean shouldReport = ApplicationManager.getApplication().isUnitTestMode() || ourReportedValueClasses.add(providerClass);
+    boolean shouldReport = (ApplicationManager.getApplication().isUnitTestMode()
+                           || ourReportedValueClasses.add(providerClass))
+                           &&  !("true".equals(System.getProperty("idea.disable.idempotence.checker", "false")));
     if (shouldReport) {
       if (recomputeValue != null) {
         msg += recomputeWithLogging(existing, fresh, recomputeValue);

@@ -1,14 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util
 
-import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-fun <R> FileTestFixture.withSuppressedErrors(action: () -> R): R {
-  suppressErrors(true)
-  try {
-    return action()
+
+suspend fun VirtualFile.refreshAndAwait() {
+  writeAction {
+    refresh(false, true)
   }
-  finally {
-    suppressErrors(false)
+  withContext(Dispatchers.EDT) {
+    // executing means that all invocation events are pumped
   }
 }

@@ -1,5 +1,5 @@
 class Instance {
     void main() {
-        new MainClass.Name.T();
+        Object n = MainClass.Name;
     }
 }

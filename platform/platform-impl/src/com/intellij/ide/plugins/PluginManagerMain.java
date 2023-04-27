@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -54,7 +54,7 @@ public final class PluginManagerMain {
 
   /**
    * @deprecated Please migrate to either {@link #downloadPluginsAndCleanup(List, Collection, Runnable, com.intellij.ide.plugins.PluginEnabler, ModalityState, Runnable)}
-   * or {@link #downloadPlugins(List, Collection, boolean, Runnable, com.intellij.ide.plugins.PluginEnabler, Consumer)}.
+   * or {@link #downloadPlugins(List, Collection, boolean, Runnable, com.intellij.ide.plugins.PluginEnabler, ModalityState, Consumer)}.
    */
   @Deprecated(since = "2020.2", forRemoval = true)
   public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
@@ -62,7 +62,8 @@ public final class PluginManagerMain {
                                         @Nullable Runnable onSuccess,
                                         @NotNull PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
-    return downloadPluginsAndCleanup(plugins, ContainerUtil.filterIsInstance(customPlugins, PluginNode.class), onSuccess, pluginEnabler, ModalityState.any(), cleanup);
+    var filteredCustomPlugins = ContainerUtil.filterIsInstance(customPlugins, PluginNode.class);
+    return downloadPluginsAndCleanup(plugins, filteredCustomPlugins, onSuccess, pluginEnabler, ModalityState.any(), cleanup);
   }
 
   public static boolean downloadPluginsAndCleanup(@NotNull List<PluginNode> plugins,
@@ -74,69 +75,34 @@ public final class PluginManagerMain {
     return downloadPlugins(plugins, customPlugins, false, onSuccess, pluginEnabler, modalityState, cleanup != null ? __ -> cleanup.run() : null);
   }
 
-  /**
-   * @deprecated Please use the overload with explicitly passed modality state
-   */
-  @Deprecated
   public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
                                         @NotNull Collection<PluginNode> customPlugins,
                                         boolean allowInstallWithoutRestart,
                                         @Nullable Runnable onSuccess,
                                         @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-                                        @Nullable Consumer<? super Boolean> function) throws IOException {
-    return downloadPlugins(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, ModalityState.any(), function);
+                                        @NotNull final ModalityState modalityState,
+                                        @Nullable Consumer<Boolean> function) throws IOException {
+    return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, true);
   }
 
-  public static boolean downloadPlugins(
-    @NotNull List<PluginNode> plugins,
-    @NotNull Collection<PluginNode> customPlugins,
-    boolean allowInstallWithoutRestart,
-    @Nullable Runnable onSuccess,
-    @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-    @NotNull final ModalityState modalityState,
-    @Nullable Consumer<? super Boolean> function) throws IOException {
-    return downloadPluginsImpl(
-      plugins,
-      customPlugins,
-      allowInstallWithoutRestart,
-      onSuccess,
-      pluginEnabler,
-      function,
-      modalityState,
-      true
-    );
+  public static boolean downloadPluginsModal(@NotNull List<PluginNode> plugins,
+                                             @NotNull Collection<PluginNode> customPlugins,
+                                             boolean allowInstallWithoutRestart,
+                                             @Nullable Runnable onSuccess,
+                                             @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                             @NotNull ModalityState modalityState,
+                                             @Nullable Consumer<Boolean> function) throws IOException {
+    return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, false);
   }
 
-  public static boolean downloadPluginsModal(
-    @NotNull List<PluginNode> plugins,
-    @NotNull Collection<PluginNode> customPlugins,
-    boolean allowInstallWithoutRestart,
-    @Nullable Runnable onSuccess,
-    @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-    @NotNull final ModalityState modalityState,
-    @Nullable Consumer<? super Boolean> function) throws IOException {
-    return downloadPluginsImpl(
-      plugins,
-      customPlugins,
-      allowInstallWithoutRestart,
-      onSuccess,
-      pluginEnabler,
-      function,
-      modalityState,
-      false
-    );
-  }
-
-  private static boolean downloadPluginsImpl(
-    @NotNull List<PluginNode> plugins,
-    @NotNull Collection<PluginNode> customPlugins,
-    boolean allowInstallWithoutRestart,
-    @Nullable Runnable onSuccess,
-    @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-    @Nullable Consumer<? super Boolean> function,
-    @NotNull final ModalityState modalityState,
-    boolean inBackground) throws IOException {
-
+  private static boolean downloadPluginsImpl(List<PluginNode> plugins,
+                                             Collection<PluginNode> customPlugins,
+                                             boolean allowInstallWithoutRestart,
+                                             @Nullable Runnable onSuccess,
+                                             com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                             @Nullable Consumer<Boolean> function,
+                                             ModalityState modalityState,
+                                             boolean inBackground) throws IOException {
     try {
       boolean[] result = new boolean[1];
 
@@ -185,6 +151,7 @@ public final class PluginManagerMain {
 
   private static Task createTask(Consumer<ProgressIndicator> f, boolean inBackground) {
     if (inBackground) {
+      //noinspection DialogTitleCapitalization
       return new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -376,12 +343,12 @@ public final class PluginManagerMain {
   }
 
   public static boolean checkThirdPartyPluginsAllowed(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    @SuppressWarnings("SSBasedInspection") Collection<? extends IdeaPluginDescriptor> aliens = descriptors.stream()
+    @SuppressWarnings("SSBasedInspection") var aliens = descriptors.stream()
       .filter(descriptor -> !(descriptor.isBundled() || PluginManagerCore.isDevelopedByJetBrains(descriptor)))
       .collect(Collectors.toList());
     if (aliens.isEmpty()) return true;
 
-    UpdateSettings updateSettings = UpdateSettings.getInstance();
+    var updateSettings = UpdateSettings.getInstance();
     if (updateSettings.isThirdPartyPluginsAllowed()) {
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);
       return true;
@@ -393,12 +360,13 @@ public final class PluginManagerMain {
       return true;
     }
 
-    String title = CoreBundle.message("third.party.plugins.privacy.note.title");
-    String pluginList = aliens.stream()
-      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + descriptor.getName() + " (" + descriptor.getVendor() + ')')
+    var title = CoreBundle.message("third.party.plugins.privacy.note.title");
+    var pluginList = aliens.stream()
+      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + PluginManagerCore.getPluginNameAndVendor(descriptor))
       .collect(Collectors.joining("<br>"));
-    String message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
-    String yesText = CoreBundle.message("third.party.plugins.privacy.note.accept"), noText = CommonBundle.getCancelButtonText();
+    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
+    var yesText = CoreBundle.message("third.party.plugins.privacy.note.accept");
+    var noText = CommonBundle.getCancelButtonText();
     if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
       updateSettings.setThirdPartyPluginsAllowed(true);
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);

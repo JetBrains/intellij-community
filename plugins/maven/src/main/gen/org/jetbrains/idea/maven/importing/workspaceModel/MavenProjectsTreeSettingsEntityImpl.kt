@@ -97,8 +97,7 @@ open class MavenProjectsTreeSettingsEntityImpl(val dataSource: MavenProjectsTree
       dataSource as MavenProjectsTreeSettingsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.importedFilePaths != dataSource.importedFilePaths) this.importedFilePaths = dataSource.importedFilePaths.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

@@ -17,6 +17,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,12 +40,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -65,13 +68,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final Document myDocument;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;
-  private final Object2IntMap<HighlightSeverity> errorCount = new Object2IntOpenHashMap<>();
+  private final Object2IntMap<HighlightSeverity> errorCount = Object2IntMaps.synchronize(new Object2IntOpenHashMap<>());
   private final @NotNull UIController myUIController;
   private final boolean inLibrary; // true if getPsiFile() is in library sources
   private final boolean shouldHighlight;
   private int[] cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
   private final Map<Language, FileHighlightingSetting> myFileHighlightingSettings; // each root language -> its highlighting level
-  private final long myHighlightingSettingsModificationCount;
+  private volatile long myHighlightingSettingsModificationCount;
 
   public TrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
     this(project, document, null);
@@ -129,7 +132,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         incErrorCount(highlighter, -1);
       }
     });
@@ -181,7 +184,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     HighlightSeverity infoSeverity = info.getSeverity();
     if (infoSeverity.myVal <= HighlightSeverity.TEXT_ATTRIBUTES.myVal) return;
 
-    errorCount.put(infoSeverity, errorCount.getInt(infoSeverity) + delta);
+    errorCount.mergeInt(infoSeverity, delta, Integer::sum);
   }
 
   /**
@@ -189,9 +192,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
    * @see ErrorStripeUpdateManager#setOrRefreshErrorStripeRenderer(EditorMarkupModel, PsiFile)
    */
   public boolean isValid() {
-    PsiFile psiFile = getPsiFile();
-    return psiFile != null
-           && HighlightingSettingsPerFile.getInstance(psiFile.getProject()).getModificationCount() == myHighlightingSettingsModificationCount;
+    PsiFile psiFile;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-301732, EA-829415")) {
+      psiFile = getPsiFile();
+      if (psiFile == null) return false;
+    }
+    HighlightingSettingsPerFile settings = HighlightingSettingsPerFile.getInstance(psiFile.getProject());
+    return settings.getModificationCount() == myHighlightingSettingsModificationCount;
   }
 
   @ApiStatus.Internal
@@ -229,10 +236,15 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   @ApiStatus.Internal
   public @NotNull DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     return getDaemonCodeAnalyzerStatus(mySeverityRegistrar);
   }
 
   protected @NotNull DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
+    // this method is rather expensive and PSI-related, need to execute in BGT and cache the result to show in EDT later
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
     status.errorAnalyzingFinished = true;
     PsiFile psiFile = getPsiFile();
@@ -278,16 +290,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       return status;
     }
 
-    if (HeavyProcessLatch.INSTANCE.isRunning()) {
-      HeavyProcessLatch.Operation op = ContainerUtil.find(HeavyProcessLatch.INSTANCE.getRunningOperations(), o -> o.getType() != HeavyProcessLatch.Type.Syncing);
-      if (op == null) {
-        status.reasonWhySuspended = DaemonBundle.message("process.title.heavy.operation.is.running");
-        status.heavyProcessType = HeavyProcessLatch.Type.Processing;
-      }
-      else {
-        status.reasonWhySuspended = op.getDisplayName();
-        status.heavyProcessType = op.getType();
-      }
+    HeavyProcessLatch.Operation heavyOperation = HeavyProcessLatch.INSTANCE.findRunningExcept(HeavyProcessLatch.Type.Syncing);
+    if (heavyOperation != null) {
+      status.reasonWhySuspended = heavyOperation.getDisplayName();
+      status.heavyProcessType = heavyOperation.getType();
       return status;
     }
 
@@ -313,6 +319,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   @Override
   public @NotNull AnalyzerStatus getStatus() {
+    // this method is rather expensive and PSI-related, need to execute in BGT and cache the result to show in EDT later
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (PowerSaveMode.isEnabled()) {
       return new AnalyzerStatus(AllIcons.General.InspectionsPowerSaveMode,
                                 InspectionsBundle.message("code.analysis.is.disabled.in.power.save.mode"),
@@ -601,5 +610,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   protected @NotNull UIController getUIController() {
     return myUIController;
+  }
+
+  void invalidate() {
+    myHighlightingSettingsModificationCount = -1;
   }
 }

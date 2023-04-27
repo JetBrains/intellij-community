@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.EditableComponentFactory
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SimpleHtmlPane
@@ -11,19 +12,17 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.Compone
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindDisabled
-import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil
 import javax.swing.JComponent
 
 object GitLabNoteComponentFactory {
@@ -49,7 +48,33 @@ object GitLabNoteComponentFactory {
     return CodeReviewChatItemUIUtil.build(componentType,
                                           { avatarIconsProvider.getIcon(vm.author, it) },
                                           contentPanel) {
-      withHeader(createTitleTextPane(vm.author, vm.createdAt), actionsPanel)
+      withHeader(createTitle(cs, vm), actionsPanel)
+    }
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun createTitle(cs: CoroutineScope, vm: GitLabNoteViewModel): JComponent {
+    return HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
+      add(GitLabMergeRequestTimelineUIUtil.createTitleTextPane(vm.author, vm.createdAt))
+
+      val resolvedFlow = vm.discussionState.flatMapLatest { it.resolved }
+      bindChildIn(cs, resolvedFlow) { resolved ->
+        if (resolved) {
+          CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
+        }
+        else {
+          null
+        }
+      }
+      val outdatedFlow = vm.discussionState.flatMapLatest { it.outdated }
+      bindChildIn(cs, outdatedFlow) { resolved ->
+        if (resolved) {
+          CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.outdated.tag"))
+        }
+        else {
+          null
+        }
+      }
     }
   }
 
@@ -60,10 +85,10 @@ object GitLabNoteComponentFactory {
           removeAll()
           coroutineScope {
             CodeReviewCommentUIUtil.createEditButton { _ -> it.startEditing() }.apply {
-              bindDisabled(this@coroutineScope, it.busy)
+              bindDisabledIn(this@coroutineScope, it.busy)
             }.also(::add)
             CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ -> it.delete() }.apply {
-              bindDisabled(this@coroutineScope, it.busy)
+              bindDisabledIn(this@coroutineScope, it.busy)
             }.also(::add)
             repaint()
             revalidate()
@@ -78,7 +103,7 @@ object GitLabNoteComponentFactory {
   fun createTextPanel(cs: CoroutineScope, textFlow: Flow<@Nls String>): JComponent =
     SimpleHtmlPane().apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-      bindText(cs, textFlow)
+      bindTextIn(cs, textFlow)
     }
 
   fun createEditActionsConfig(actionsVm: GitLabNoteAdminActionsViewModel,

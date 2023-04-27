@@ -150,7 +150,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Clearabl
     val fix = if (modulePluginXmlFile != null) MoveRegistrationQuickFix(pluginXmlModule, modulePluginXmlFile.name) else null
     annotationHolder.createProblem(element, ProblemHighlightType.WARNING,
                                    DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.element.registered.wrong.module", definingModule.name, psiClass.qualifiedName), null,
-                                   fix)
+                                   *LocalQuickFix.notNullElements(fix))
     return true
   }
 

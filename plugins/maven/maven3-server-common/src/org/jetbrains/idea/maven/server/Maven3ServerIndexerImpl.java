@@ -35,7 +35,7 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
+public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware implements MavenServerIndexer {
 
   private final Maven3ServerEmbedder myEmbedder;
   private final NexusIndexer myIndexer;
@@ -90,7 +90,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       return IndexReader.indexExists(dir);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return false;
   }
@@ -243,26 +243,31 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public IndexedMavenId addArtifact(MavenIndexId indexId, File artifactFile, MavenToken token) throws MavenServerIndexerException {
+  public @NotNull List<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId, @NotNull Collection<File> artifactFiles, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext index = getIndex(indexId);
+      List<AddArtifactResponse> results = new ArrayList<>();
       synchronized (index) {
-        ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
-        if (artifactContext == null) return null;
-
-        addArtifact(myIndexer, index, artifactContext);
-
-        ArtifactInfo a = artifactContext.getArtifactInfo();
-        return new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
+        for (File artifactFile : artifactFiles) {
+          ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
+          IndexedMavenId id = null;
+          if (artifactContext != null) {
+            addArtifact(myIndexer, index, artifactContext);
+            ArtifactInfo a = artifactContext.getArtifactInfo();
+            id = new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
+          }
+          results.add(new AddArtifactResponse(artifactFile, id));
+        }
       }
+      return results;
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));
     }
   }
 
-  public static void addArtifact(NexusIndexer indexer, IndexingContext index, ArtifactContext artifactContext)
+  private static void addArtifact(NexusIndexer indexer, IndexingContext index, ArtifactContext artifactContext)
     throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     indexer.addArtifactToIndex(artifactContext, index);
     // this hack is necessary to invalidate searcher's and reader's cache (may not be required then lucene or nexus library change
@@ -331,7 +336,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       }
     }
     catch (ArchetypeDataSourceException e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
   }
 

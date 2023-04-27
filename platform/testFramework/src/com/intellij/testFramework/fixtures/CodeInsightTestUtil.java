@@ -25,6 +25,7 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -44,6 +45,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.EdtTestUtil;
@@ -53,7 +55,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ComponentPopupBuilderImpl;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.Functions;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +65,7 @@ import org.junit.Assert;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static junit.framework.Assert.assertTrue;
@@ -222,13 +224,17 @@ public final class CodeInsightTestUtil {
    * @return true if the refactoring was performed, false otherwise
    */
   @TestOnly
-  public static boolean tryInlineRename(VariableInplaceRenameHandler handler, final String newName, @NotNull Editor editor, PsiElement elementAtCaret) {
+  public static boolean tryInlineRename(VariableInplaceRenameHandler handler,
+                                        final String newName,
+                                        @NotNull Editor editor,
+                                        @NotNull PsiElement elementAtCaret) {
     Project project = editor.getProject();
     Disposable disposable = Disposer.newDisposable();
     try {
       TemplateManagerImpl.setTemplateTesting(disposable);
+      DataContext context = DataManager.getInstance().getDataContext(editor.getComponent());
       InplaceRefactoring renamer =
-        handler.doRename(elementAtCaret, editor, DataManager.getInstance().getDataContext(editor.getComponent()));
+        handler.doRename(Objects.requireNonNullElse(PsiElementRenameHandler.getElement(context), elementAtCaret), editor, context);
       if (editor instanceof EditorWindow) {
         editor = ((EditorWindow)editor).getDelegate();
       }
@@ -318,7 +324,7 @@ public final class CodeInsightTestUtil {
     AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(psiFile), false);
     ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
     annotationHolder.assertAllAnnotationsCreated();
-    return ContainerUtil.immutableList(annotationHolder);
+    return List.copyOf(annotationHolder);
   }
 
   /**
@@ -332,6 +338,6 @@ public final class CodeInsightTestUtil {
       annotationHolder.runAnnotatorWithContext(element, annotator);
     }
     annotationHolder.assertAllAnnotationsCreated();
-    return ContainerUtil.immutableList(annotationHolder);
+    return List.copyOf(annotationHolder);
   }
 }

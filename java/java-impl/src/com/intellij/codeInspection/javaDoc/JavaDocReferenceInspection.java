@@ -4,6 +4,9 @@ package com.intellij.codeInspection.javaDoc;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
+import com.intellij.codeInsight.daemon.quickFix.CreateFilePathFix;
+import com.intellij.codeInsight.daemon.quickFix.NewFileLocation;
+import com.intellij.codeInsight.daemon.quickFix.TargetDirectory;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -14,6 +17,8 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.model.Symbol;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -22,11 +27,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,23 +111,47 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     if (comment == null) return;
 
     JavadocManager javadocManager = JavadocManager.getInstance(holder.getProject());
-    comment.accept(new JavaElementVisitor() {
+    comment.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         visitRefElement(reference, context, isOnTheFly, holder);
       }
 
       @Override
-      public void visitDocTag(@NotNull PsiDocTag tag) {
-        super.visitDocTag(tag);
-        visitRefInDocTag(tag, javadocManager, context, holder, isOnTheFly);
+      public void visitSnippetAttributeValue(@NotNull PsiSnippetAttributeValue attributeValue) {
+        PsiReference ref = attributeValue.getReference();
+        if (ref instanceof PsiFileReference fileRef) {
+          PsiElement resolved = fileRef.resolve();
+          if (resolved == null) {
+            CreateFilePathFix fix = null;
+            String path = fileRef.getCanonicalText();
+            PsiDirectory parent = comment.getContainingFile().getParent();
+            if (parent != null) {
+              String[] components = path.split("/");
+              if (components.length > 0) {
+                TargetDirectory directory = new TargetDirectory(parent, Arrays.copyOf(components, components.length - 1));
+                NewFileLocation location = new NewFileLocation(Collections.singletonList(directory), components[components.length - 1]);
+                fix = new CreateFilePathFix(attributeValue, location);
+              }
+            }
+            holder.registerProblem(attributeValue, 
+                                   JavaBundle.message("inspection.message.snippet.file.not.found", path),
+                                   LocalQuickFix.notNullElements(fix));
+          }
+        }
+        PsiSymbolReference symRef = ContainerUtil.getOnlyItem(attributeValue.getOwnReferences());
+        if (symRef != null) {
+          Collection<? extends Symbol> target = symRef.resolveReference();
+          if (target.isEmpty()) {
+            holder.registerProblem(attributeValue, JavaBundle.message("inspection.message.snippet.region.not.found"));
+          }
+        }
       }
 
       @Override
-      public void visitElement(@NotNull PsiElement element) {
-        for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-          child.accept(this);
-        }
+      public void visitDocTag(@NotNull PsiDocTag tag) {
+        super.visitDocTag(tag);
+        visitRefInDocTag(tag, javadocManager, context, holder, isOnTheFly);
       }
     });
   }

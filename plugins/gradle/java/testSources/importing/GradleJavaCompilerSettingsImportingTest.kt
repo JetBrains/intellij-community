@@ -5,7 +5,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.SystemProperties
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.isSupported
 import org.junit.Assume
@@ -152,22 +152,51 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
   fun `simple toolchain support`() {
     VfsRootAccess.allowRootAccess(testRootDisposable, SystemProperties.getUserHome() + "/.gradle/jdks")
     allowAccessToDirsIfExists()
-    importProject(buildscript {
+    importProject {
       withJavaPlugin()
       addPrefix("""
-        java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(15))
         compileJava {
             javaCompiler = javaToolchains.compilerFor {
                 languageVersion = JavaLanguageVersion.of(13)
             }
         }
       """.trimIndent())
-    })
+    }
     assertModules("project", "project.main", "project.test")
     assertModuleLanguageLevel("project.main", LanguageLevel.JDK_13)
-    assertModuleLanguageLevel("project.test", LanguageLevel.JDK_17)
+    assertModuleLanguageLevel("project.test", LanguageLevel.JDK_15)
     assertModuleSdk("project.main", JavaSdkVersion.JDK_13)
-    assertModuleSdk("project.test", JavaSdkVersion.JDK_17)
+    assertModuleSdk("project.test", JavaSdkVersion.JDK_15)
+  }
+
+
+  @Test
+  @Ignore // the test is too slow: it downloads two JDKs. Proper stubs are TBD with Gradle.
+  @TargetVersions("6.7+")
+  fun `update toolchain in build script should update it in IDEA`() {
+    VfsRootAccess.allowRootAccess(testRootDisposable, SystemProperties.getUserHome() + "/.gradle/jdks")
+    allowAccessToDirsIfExists()
+    importProject {
+      withJavaPlugin()
+      addPrefix("""
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(13))
+      """.trimIndent())
+    }
+    assertModules("project", "project.main", "project.test")
+    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_13)
+    assertModuleSdk("project.main", JavaSdkVersion.JDK_13)
+
+    importProject {
+      withJavaPlugin()
+      addPrefix("""
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(15))
+      """.trimIndent())
+    }
+
+    assertModules("project", "project.main", "project.test")
+    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_15)
+    assertModuleSdk("project.main", JavaSdkVersion.JDK_15)
   }
 
 }

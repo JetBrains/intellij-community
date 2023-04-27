@@ -4,7 +4,6 @@ package com.intellij.ide.ui
 import com.intellij.openapi.components.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Property
@@ -30,6 +29,12 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
     else state.presentationModeIdeScale = presentationModeFontSize.toFloat() / state.fontSize
   }
 
+  internal fun migrateOverrideLafFonts(overrideLafFonts: Boolean) {
+    if (state.overrideLafFontsWasMigrated) return
+    state.overrideLafFontsWasMigrated = true
+    state.overrideLafFonts = overrideLafFonts
+  }
+
   internal fun fixFontSettings() {
     val state = state
 
@@ -48,7 +53,7 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
       // 2. If all preferred fonts are not valid in current environment
       // we have to find first valid font (if any)
       if (!fontIsValid) {
-        val fontNames = UIUtil.getValidFontNames(false)
+        val fontNames = FontUtil.getValidFontNames(false)
         if (fontNames.isNotEmpty()) {
           state.fontFace = fontNames[0]
         }
@@ -75,9 +80,14 @@ class NotRoamableUiOptions : BaseState() {
   @get:Property(filter = FontFilter::class)
   var fontScale by property(0f)
 
+  @get:ReportValue
   var ideScale by property(1f)
 
+  @get:ReportValue
   var presentationModeIdeScale by property(0f)
+
+  var overrideLafFonts by property(false)
+  var overrideLafFontsWasMigrated by property(false)
 
   init {
     val fontData = JBUIScale.getSystemFontData(null)

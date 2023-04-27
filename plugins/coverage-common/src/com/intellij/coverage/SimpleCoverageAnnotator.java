@@ -49,7 +49,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                                                @NotNull final CoverageSuitesBundle currentSuite) {
     final VirtualFile dir = directory.getVirtualFile();
 
-    final boolean isInTestContent = TestSourcesFilter.isTestSources(dir, directory.getProject());
+    final boolean isInTestContent = ReadAction.compute(() -> TestSourcesFilter.isTestSources(dir, directory.getProject()));
     if (!currentSuite.isTrackTestFolders() && isInTestContent) {
       return null;
     }
@@ -194,7 +194,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
     visitedDirs.add(dir);
 
-    final boolean isInTestSrcContent = TestSourcesFilter.isTestSources(dir, getProject());
+    final boolean isInTestSrcContent = ReadAction.compute(() -> TestSourcesFilter.isTestSources(dir, getProject()));
 
     // Don't count coverage for tests folders if track test folders is switched off
     if (!trackTestFolders && isInTestSrcContent) {

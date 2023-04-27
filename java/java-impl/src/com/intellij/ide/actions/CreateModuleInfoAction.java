@@ -19,13 +19,13 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
@@ -61,7 +61,7 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
       PsiDirectory psiDir = directories[0];
       VirtualFile vDir = psiDir.getVirtualFile();
       ProjectFileIndex index = ProjectRootManager.getInstance(psiDir.getProject()).getFileIndex();
-      if (index.isUnderSourceRootOfType(vDir, ContainerUtil.set(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE))) {
+      if (index.isUnderSourceRootOfType(vDir, Set.of(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE))) {
         VirtualFile root = index.getSourceRootForFile(vDir);
         if (root != null) {
           return psiDir.getManager().findDirectory(root);

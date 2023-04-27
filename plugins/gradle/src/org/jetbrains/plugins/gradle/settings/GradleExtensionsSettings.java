@@ -25,12 +25,14 @@ import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
 import org.jetbrains.plugins.gradle.model.GradleProperty;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull;
+import static org.jetbrains.plugins.gradle.util.GradleModuleDataKt.getGradleIdentityPath;
 
 /**
  * @author Vladislav.Soroka
@@ -87,7 +89,7 @@ public class GradleExtensionsSettings {
         DataNode<?> parent = node.getParent();
         if (parent == null) continue;
         if (!(parent.getData() instanceof ModuleData)) continue;
-        String gradlePath = GradleProjectResolverUtil.getGradlePath((ModuleData)parent.getData());
+        String gradlePath = getGradleIdentityPath((ModuleData)parent.getData());
         extensionMap.put(gradlePath, node.getData());
       }
 
@@ -179,7 +181,7 @@ public class GradleExtensionsSettings {
     public GradleExtensionsData getExtensionsFor(@Nullable Module module) {
       if (module == null) return null;
       return getExtensionsFor(ExternalSystemApiUtil.getExternalRootProjectPath(module),
-                              GradleProjectResolverUtil.getGradlePath(module));
+                              getGradleIdentityPathOrNull(module));
     }
 
     /**

@@ -52,7 +52,7 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
   protected static void registerProblemOnAttributeName(@NotNull XmlAttribute attribute,
                                                        @InspectionMessage String message,
                                                        @NotNull ProblemsHolder holder,
-                                                       LocalQuickFix... quickfixes) {
+                                                       @NotNull LocalQuickFix @NotNull ... quickfixes) {
     final ASTNode node = attribute.getNode();
     assert node != null;
     final ASTNode nameNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node);

@@ -223,7 +223,7 @@ public class TestCaseLoader {
 
   private static boolean matchesBucketViaNastradamus(@NotNull String testIdentifier) {
     try {
-      return nastradamusClient.isClassInBucket(testIdentifier);
+      return nastradamusClient.isClassInBucket(testIdentifier, (testClassName) -> matchesCurrentBucketViaHashing(testClassName));
     }
     catch (Exception e) {
       // if fails, just fallback to consistent hashing
@@ -312,7 +312,7 @@ public class TestCaseLoader {
 
     try {
       var testRunRequest = nastradamusClient.collectTestRunResults();
-      nastradamusClient.sendTestRunResults(testRunRequest);
+      nastradamusClient.sendTestRunResults(testRunRequest, IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED);
     }
     catch (Exception e) {
       System.err.println("Unexpected error happened during sending test results to Nastradamus");

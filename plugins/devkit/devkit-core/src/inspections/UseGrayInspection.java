@@ -8,7 +8,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
@@ -39,16 +42,14 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
-        if (expression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-          if (isAwtRgbColorConstructor(expression)) {
-            Integer grayValue = getGrayValue(expression);
-            if (grayValue != null) {
-              PsiElement sourcePsi = expression.getSourcePsi();
-              if (sourcePsi != null && grayClassAccessible(sourcePsi)) {
-                holder.registerProblem(sourcePsi,
-                                       DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
-                                       new ConvertToGrayQuickFix(grayValue));
-              }
+        if (isAwtRgbColorConstructor(expression)) {
+          Integer grayValue = getGrayValue(expression);
+          if (grayValue != null) {
+            PsiElement sourcePsi = expression.getSourcePsi();
+            if (sourcePsi != null && DevKitInspectionUtil.isClassAvailable(holder, GRAY_CLASS_NAME)) {
+              holder.registerProblem(sourcePsi,
+                                     DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
+                                     new ConvertToGrayQuickFix(grayValue));
             }
           }
         }
@@ -57,11 +58,11 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
     }, HINTS);
   }
 
-  private static boolean isAwtRgbColorConstructor(@NotNull UCallExpression constructorCall) {
-    List<UExpression> constructorParams = constructorCall.getValueArguments();
-    if (constructorParams.size() != 3) return false;
-    PsiMethod constructor = constructorCall.resolve();
-    if (constructor == null) return false;
+  private static boolean isAwtRgbColorConstructor(@NotNull UCallExpression call) {
+    List<UExpression> callParams = call.getValueArguments();
+    if (callParams.size() != 3) return false;
+    PsiMethod constructor = call.resolve();
+    if (constructor == null || !constructor.isConstructor()) return false;
     PsiClass constructorClass = constructor.getContainingClass();
     if (constructorClass == null) return false;
     return AWT_COLOR_CLASS_NAME.equals(constructorClass.getQualifiedName());
@@ -87,9 +88,6 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
     return null;
   }
 
-  private static boolean grayClassAccessible(@NotNull PsiElement checkedPlace) {
-    return JavaPsiFacade.getInstance(checkedPlace.getProject()).findClass(GRAY_CLASS_NAME, checkedPlace.getResolveScope()) != null;
-  }
 
   @NotNull
   @Override

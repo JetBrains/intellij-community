@@ -15,6 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -524,24 +525,21 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
-  void updateParameterValues(List<UExpression> args, @Nullable PsiElement elementPlace) {
+  void updateParameterValues(@NotNull UCallExpression call, @Nullable PsiElement elementPlace) {
     LOG.assertTrue(isInitialized());
+    if (call.getValueArguments().isEmpty()) return;
     if (isExternalOverride()) return;
 
     if (!getSuperMethods().isEmpty()) {
       for (RefMethod refSuper : getSuperMethods()) {
         refSuper.initializeIfNeeded();
-        ((RefMethodImpl)refSuper).updateParameterValues(args, null);
+        ((RefMethodImpl)refSuper).updateParameterValues(call, null);
       }
     }
     else {
       final RefParameter[] params = getParameters();
-      for (int i = 0; i < Math.min(params.length, args.size()); i++) {
-        ((RefParameterImpl)params[i]).updateTemplateValue(args.get(i), elementPlace);
-      }
-
-      if (params.length != args.size() && params.length != 0) {
-        ((RefParameterImpl)params[params.length - 1]).clearTemplateValue();
+      for (int i = 0; i < params.length; i++) {
+        ((RefParameterImpl)params[i]).updateTemplateValue(call.getArgumentForParameter(i), elementPlace);
       }
     }
   }
@@ -672,17 +670,29 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return parentRef;
   }
 
-  public static @Nullable String createReturnValueTemplate(UExpression expression) {
+  /**
+   * Returns the string representation of the {@code UExpression} argument if the
+   * expression is either a {@code ULiteralExpression} or a {@code UResolvable}
+   * that resolves to a constant.
+   *
+   * @param expression an {@code UExpression}.
+   * @return the string representation of a literal expression value if the
+   * argument is a {@code UExpression}, or the fully qualified name of a
+   * constant if the argument is a {@code UExpression} and resolves to a
+   * constant, or {@code null} in all other cases.
+   */
+  @Contract("null -> null")
+  public static @Nullable String createReturnValueTemplate(@Nullable UExpression expression) {
     return createReturnValueTemplate(expression, Predicates.alwaysTrue());
   }
 
-  public static @Nullable String createReturnValueTemplate(UExpression expression, @NotNull RefMethodImpl refMethod) {
+  private static @Nullable String createReturnValueTemplate(UExpression expression, @NotNull RefMethodImpl refMethod) {
     RefJavaUtil refUtil = RefJavaUtil.getInstance();
     return createReturnValueTemplate(expression,
-                               field -> refUtil.compareAccess(refUtil.getAccessModifier(field), refMethod.getAccessModifier()) >= 0);
+                                     field -> refUtil.compareAccess(refUtil.getAccessModifier(field), refMethod.getAccessModifier()) >= 0);
   }
 
-  private static @Nullable String createReturnValueTemplate(UExpression expression, @NotNull Predicate<PsiField> myPredicate) {
+  private static @Nullable String createReturnValueTemplate(UExpression expression, @NotNull Predicate<PsiField> predicate) {
     if (expression instanceof ULiteralExpression literalExpression) {
       return String.valueOf(literalExpression.getValue());
     }
@@ -690,7 +700,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       UElement resolved = UResolvableKt.resolveToUElement(resolvable);
       if (resolved instanceof UField uField && uField.isStatic() && uField.isFinal()) {
         PsiField psi = (PsiField)uField.getJavaPsi();
-        if (psi != null && myPredicate.test(psi)) {
+        if (psi != null && predicate.test(psi)) {
           return PsiFormatUtil.formatVariable(psi, PsiFormatUtilBase.SHOW_NAME |
                                                    PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                                    PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);

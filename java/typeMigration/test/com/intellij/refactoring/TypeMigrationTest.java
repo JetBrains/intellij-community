@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.application.options.CodeStyle;
@@ -37,6 +38,26 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     myFactory = null;
 
     super.tearDown();
+  }
+
+  public void testStringCompoundAssignment() {
+    doTestFirstParamType("x", PsiTypes.longType());
+  }
+
+  public void testForeachProblem() {
+    doTestFirstParamType("x", PsiTypes.longType());
+  }
+
+  public void testEnumConstant() {
+    doTestFirstParamType("Test", PsiTypes.byteType());
+  }
+
+  public void testVarargsAndBoxing() {
+    doTestFieldType("x", PsiTypes.longType());
+  }
+
+  public void testArray2Vararg() {
+    doTestFirstParamType("doSomething", new PsiEllipsisType(myFactory.createTypeFromText("java.lang.CharSequence", null)));
   }
 
   public void testT07() {

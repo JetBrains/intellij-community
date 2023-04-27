@@ -50,7 +50,7 @@ public final class ChangeListViewerDialog extends DialogWrapper {
                                 @NotNull LoadingCommittedChangeListPanel loadingPanel) {
     loadingPanel.hideSideBorders();
 
-    SimpleChangesBrowser changesBrowser = loadingPanel.getChangesBrowser();
+    ChangesBrowserBase changesBrowser = loadingPanel.getChangesBrowser();
     DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, changesBrowser, loadingPanel);
     changesBrowser.setShowDiffActionPreview(diffPreview);
 

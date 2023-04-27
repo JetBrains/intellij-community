@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.common
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -23,6 +23,7 @@ class CommonLocationFeatures : ContextFeatureProvider {
     val caretOffset = lookup.lookupStart
     val logicalPosition = editor.offsetToLogicalPosition(caretOffset)
     val lineStartOffset = editor.document.getLineStartOffset(logicalPosition.line)
+    val lineEndOffset = editor.document.getLineEndOffset(logicalPosition.line)
     val position = environment.parameters.position
     val prefixLength = lookup.prefix().length
     val linePrefix = editor.document.getText(TextRange(lineStartOffset, caretOffset))
@@ -35,8 +36,11 @@ class CommonLocationFeatures : ContextFeatureProvider {
       "line_num" to MLFeatureValue.float(logicalPosition.line),
       "col_num" to MLFeatureValue.float(logicalPosition.column),
       "indent_level" to MLFeatureValue.float(LocationFeaturesUtil.indentLevel(linePrefix, EditorUtil.getTabSize(editor))),
-      "is_in_line_beginning" to MLFeatureValue.binary(StringUtil.isEmptyOrSpaces(linePrefix))
+      "is_in_line_beginning" to MLFeatureValue.binary(StringUtil.isEmptyOrSpaces(linePrefix)),
+      "chars_in_line_after_caret" to MLFeatureValue.float(lineEndOffset - caretOffset)
     )
+
+    result["is_completion_performance_mode"] = MLFeatureValue.binary(false)
 
     if (DumbService.isDumb(lookup.project)) {
       result["dumb_mode"] = MLFeatureValue.binary(true)

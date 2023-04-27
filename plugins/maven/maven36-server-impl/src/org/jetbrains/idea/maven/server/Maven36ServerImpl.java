@@ -11,8 +11,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
-public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer {
-
+public class Maven36ServerImpl extends MavenWatchdogAware implements MavenServer {
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
     MavenServerUtil.checkToken(token);
@@ -52,7 +51,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
+      return Maven3XProfileUtil.interpolateAndAlignModel(model, basedir);
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
@@ -77,7 +76,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
                                                 Collection<String> alwaysOnProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+      return Maven3XProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
@@ -89,7 +88,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
   public MavenPullServerLogger createPullLogger(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      MavenServerLoggerWrapper result = Maven3ServerGlobals.getLogger();
+      MavenServerLoggerWrapper result = MavenServerGlobals.getLogger();
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
@@ -102,7 +101,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
   public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      MavenServerDownloadListenerWrapper result = Maven3ServerGlobals.getDownloadListener();
+      MavenServerDownloadListenerWrapper result = MavenServerGlobals.getDownloadListener();
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
@@ -110,6 +109,7 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       throw wrapToSerializableRuntimeException(e);
     }
   }
+
   @Override
   public synchronized void unreferenced() {
     System.exit(0);

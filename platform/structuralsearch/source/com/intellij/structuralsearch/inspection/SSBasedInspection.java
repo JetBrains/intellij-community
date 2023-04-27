@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -18,14 +18,17 @@ import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
@@ -53,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
@@ -167,7 +171,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       (mySessionProfile != null && !isOnTheFly) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
     final List<Configuration> configurations = new SmartList<>();
     for (Configuration configuration : myConfigurations) {
-      if (configuration.getFileType() != fileType) continue;
+      if (configuration.getFileType() != fileType && !configuration.getMatchOptions().isSearchInjectedCode()) continue;
       final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuid(), project);
       if (tools != null && tools.isEnabled(file)) {
         configurations.add(configuration);
@@ -242,9 +246,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   @NotNull
   public List<Configuration> getConfigurationsWithUuid(@NotNull String uuid) {
-    final List<Configuration> configurations = ContainerUtil.sorted(ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid())),
-    Comparator.comparingInt(Configuration::getOrder));
-    return configurations;
+    return ContainerUtil.sorted(ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid())),
+                                Comparator.comparingInt(Configuration::getOrder));
   }
 
   public boolean addConfiguration(@NotNull Configuration configuration) {
@@ -274,6 +277,24 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     final boolean removed = myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
     if (removed) myWriteSorted = true;
     return removed;
+  }
+
+  public InspectionMetaDataDialog createMetaDataDialog(Project project, @Nullable Configuration configuration) {
+    final List<Configuration> configurations = getConfigurations();
+    final Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {
+      for (Configuration current : configurations) {
+        if (current.getOrder() == 0 && current.getName().equals(name) &&
+            (configuration == null || !current.getUuid().equals(configuration.getUuid()))) {
+          return SSRBundle.message("inspection.with.name.exists.warning", name);
+        }
+      }
+      return null;
+    };
+    if (configuration == null) {
+      return new InspectionMetaDataDialog(project, nameValidator);
+    }
+    return new InspectionMetaDataDialog(project, nameValidator, configuration.getName(), configuration.getDescription(),
+                                        configuration.getProblemDescriptor(), configuration.getSuppressId());
   }
 
   private static class StructuralQuickFix implements LocalQuickFix {
@@ -342,7 +363,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     private void registerProblem(MatchResult matchResult, Configuration configuration, ProblemsHolder holder) {
       final PsiElement element = matchResult.getMatch();
-      if (!element.isPhysical() || holder.getFile() != element.getContainingFile()) {
+      PsiFile containingFile = element.getContainingFile();
+      PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(containingFile);
+      if (!element.isPhysical() || holder.getFile() != containingFile && holder.getFile() != templateFile) {
         return;
       }
       final LocalQuickFix fix = createQuickFix(element.getProject(), matchResult, configuration);

@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.RemoteRevisionsCache
 import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.util.SlowOperations
 import javax.swing.tree.DefaultTreeModel
 
 class AlienChangeListBrowser(project: Project, private val changeList: LocalChangeList) : CommitDialogChangesBrowser(project, false, true) {
@@ -19,8 +20,10 @@ class AlienChangeListBrowser(project: Project, private val changeList: LocalChan
   }
 
   override fun buildTreeModel(): DefaultTreeModel {
-    val decorator = RemoteRevisionsCache.getInstance(myProject).changesNodeDecorator
-    return TreeModelBuilder.buildFromChanges(myProject, grouping, changeList.changes, decorator)
+    SlowOperations.knownIssue("IDEA-307313, EA-736680").use {
+      val decorator = RemoteRevisionsCache.getInstance(myProject).changesNodeDecorator
+      return TreeModelBuilder.buildFromChanges(myProject, grouping, changeList.changes, decorator)
+    }
   }
 
   override fun getSelectedChangeList(): LocalChangeList = changeList

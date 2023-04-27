@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
@@ -22,7 +22,8 @@ import java.util.List;
 /**
  * Tool windows expose UI for specific functionality, like "Project" or "Favorites".
  *
- * @see #getContentManager() to add new tabs into the toolwindow.
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/tool-windows.html">Tool Windows in the IntelliJ Platform Plugin SDK</a>
+ * @see #getContentManager() getContentManager, to add new tabs to the toolwindow
  * @see ToolWindowEP
  */
 public interface ToolWindow extends BusyObject {

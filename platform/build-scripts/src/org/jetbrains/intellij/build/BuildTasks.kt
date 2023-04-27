@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RAW_RUN_BLOCKING")
+
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.Dispatchers
@@ -17,10 +19,6 @@ interface BuildTasks {
    * archive also includes sources of project-level libraries on which platform API modules from `modules` list depend on.
    */
   suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean)
-
-  suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path) {
-    zipSourcesOfModules(modules, targetFile, false)
-  }
 
   fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path) {
     runBlocking {
@@ -65,7 +63,7 @@ interface BuildTasks {
   /**
    * Builds updater-full.jar artifact which includes 'intellij.platform.updater' module with all its dependencies
    */
-  fun buildFullUpdaterJar()
+  suspend fun buildFullUpdaterJar()
 
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 }

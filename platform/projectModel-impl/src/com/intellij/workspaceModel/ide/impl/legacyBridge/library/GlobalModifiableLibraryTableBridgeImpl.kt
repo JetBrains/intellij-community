@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -41,7 +41,7 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
       tableId = libraryTableId,
       name = name,
       excludedRoots = emptyList(),
-      source = JpsEntitySourceFactory.createEntitySourceForGlobalLibrary()
+      source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary()
     )
 
     if (type != null) {
@@ -89,18 +89,12 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
 
   override fun getLibraryByName(name: String): Library? {
     val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))) ?: return null
-    val libraryBridge = diff.libraryMap.getDataByEntity(libraryEntity)
-    (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
-    return libraryBridge
+    return diff.libraryMap.getDataByEntity(libraryEntity)
   }
 
   override fun getLibraries(): Array<Library> {
     return diff.entities(LibraryEntity::class.java).filter { it.tableId::class == LibraryTableId.GlobalLibraryTableId::class }
-      .mapNotNull {
-        val libraryBridge = diff.libraryMap.getDataByEntity(it)
-        (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
-        libraryBridge
-      }
+      .mapNotNull { diff.libraryMap.getDataByEntity(it) }
       .toList().toTypedArray()
   }
 

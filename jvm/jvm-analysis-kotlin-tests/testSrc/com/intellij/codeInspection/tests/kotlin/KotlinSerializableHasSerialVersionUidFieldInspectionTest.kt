@@ -1,12 +1,12 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.SerializableHasSerialVersionUidFieldInspectionTestBase
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 
 class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase() {
   fun `test highlighting`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.io.Serializable
 
       class <warning descr="'Foo' does not define a 'serialVersionUID' field">Foo</warning> : Serializable { }
@@ -14,7 +14,7 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
   }
 
   fun `test quickfix`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import java.io.Serializable
       
       class Fo<caret>o : Serializable { }
@@ -30,7 +30,7 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
   }
 
   fun `test quickfix companion exists`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import java.io.Serializable
       
       class Fo<caret>o : Serializable {
@@ -52,7 +52,7 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
 
   fun `test quickfix @Serial annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_14)
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import java.io.Serializable
       
       class Fo<caret>o : Serializable { }

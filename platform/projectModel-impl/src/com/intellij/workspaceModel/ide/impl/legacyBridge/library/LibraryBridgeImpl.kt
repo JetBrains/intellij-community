@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -94,6 +95,16 @@ class LibraryBridgeImpl(
 
   override fun toString(): String {
     return "Library '$name', roots: ${librarySnapshot.libraryEntity.roots}"
+  }
+
+  /**
+   * **Please think twice before the usage.** This method was introduced to avoid redundant copying of
+   * the storage. You can use it only if you are sure that you wouldn't roll back your changes, and
+   * they will be applied by the parent modifiable model.
+   */
+  fun getModifiableModelToTargetBuilder(): LibraryEx.ModifiableModelEx {
+    val mutableEntityStorage = targetBuilder ?: error("Unexpected state. Target builder has to be not null")
+    return getModifiableModel(mutableEntityStorage)
   }
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {

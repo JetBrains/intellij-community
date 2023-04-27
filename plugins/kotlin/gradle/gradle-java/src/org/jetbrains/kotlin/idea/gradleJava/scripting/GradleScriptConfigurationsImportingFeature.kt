@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeature
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 
-object GradleScriptConfigurationsImportingFeature : ExperimentalFeature() {
+internal class GradleScriptConfigurationsImportingFeature : ExperimentalFeature() {
     override val title: String
         get() = KotlinIdeaGradleBundle.message("gradle.script.configurations.importing.feature")
 

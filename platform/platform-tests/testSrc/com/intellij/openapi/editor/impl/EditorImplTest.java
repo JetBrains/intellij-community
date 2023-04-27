@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -74,7 +73,7 @@ public class EditorImplTest extends AbstractEditorTest {
                             \t\treturn this == other;
                             \t}
                             }</selection>""");
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
     configureSoftWraps(32, false);
 
     // verify initial state
@@ -357,15 +356,16 @@ public class EditorImplTest extends AbstractEditorTest {
 
   public void testScrollingInEditorOfSmallHeight() {
     initText("abc\n<caret>");
-    int heightInPixels = (int)(getEditor().getLineHeight() * 1.5);
+    int lineHeight = getEditor().getLineHeight();
+    int heightInPixels = (int)(lineHeight * 1.5);
     EditorTestUtil.setEditorVisibleSizeInPixels(getEditor(),
                                                 1000 * EditorUtil.getSpaceWidth(Font.PLAIN, getEditor()),
                                                 heightInPixels);
     getEditor().getSettings().setAnimatedScrolling(false);
     type('a');
-    assertEquals(heightInPixels - getEditor().getLineHeight(), getEditor().getScrollingModel().getVerticalScrollOffset());
+    assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, getEditor().getScrollingModel().getVerticalScrollOffset());
     type('b');
-    assertEquals(heightInPixels - getEditor().getLineHeight(), getEditor().getScrollingModel().getVerticalScrollOffset());
+    assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, getEditor().getScrollingModel().getVerticalScrollOffset());
   }
 
   public void testEditorWithSoftWrapsBecomesVisibleAfterDocumentTextRemoval() {

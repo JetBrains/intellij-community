@@ -72,6 +72,7 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
     final PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return null;
     final TextRange expressionTextRange = expression.getTextRange();
+    if (expressionTextRange == null) return null;
     PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
     if (operand == null) return null;
     PsiType castType = expressionCastType.getType();
@@ -86,11 +87,7 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
         .toList();
     PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(method.getProject());
     for (PsiTypeCastExpression occurrence : found) {
-      ProgressIndicatorProvider.checkCanceled();
-      final TextRange occurrenceTextRange = occurrence.getTextRange();
-      if (occurrence == expression || occurrenceTextRange.getEndOffset() >= expressionTextRange.getStartOffset()) {
-        continue;
-      }
+      if (!isAtRightLocation(expression, expressionTextRange, occurrence)) continue;
 
       final PsiLocalVariable variable = getVariable(occurrence);
 
@@ -113,10 +110,56 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
       }
     }
 
-    return null;
+    List<PsiAssignmentExpression> narrowVariables =
+      SyntaxTraverser.psiTraverser(method)
+        .filter(PsiAssignmentExpression.class)
+        .filter(assignment -> EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(assignment.getLExpression(), operand))
+        .filter(assignment -> {
+          PsiExpression narrowVariable = assignment.getRExpression();
+          return narrowVariable != null && narrowVariable.getType() != null && InstanceOfUtils.typeCompatible(narrowVariable.getType(), castType, operand);
+        })
+        .toList();
+    for (PsiAssignmentExpression narrowVariable : narrowVariables) {
+      if (!isAtRightLocation(expression,  expressionTextRange, narrowVariable)) continue;
+
+      final PsiLocalVariable declaration = getVariable(narrowVariable);
+
+      if (declaration != null &&
+          resolveHelper.resolveReferencedVariable(declaration.getName(), expression) == declaration &&
+          !isChangedBetween(castedVar, methodBody, narrowVariable, expression) &&
+          !isChangedBetween(declaration, methodBody, narrowVariable, expression)) {
+        return declaration;
+      }
+    }
+
+    if (!(operand instanceof PsiReferenceExpression wideReferenceExpression)
+        || !(wideReferenceExpression.resolve() instanceof PsiLocalVariable wideVariable)) return null;
+
+    PsiExpression narrowExpression = wideVariable.getInitializer();
+    if (!(narrowExpression instanceof PsiReferenceExpression narrowReferenceExpression)
+        || !(narrowReferenceExpression.resolve() instanceof PsiVariable narrowVariable)
+        || narrowExpression.getType() == null
+        || !InstanceOfUtils.typeCompatible(narrowExpression.getType(), castType, operand)) return null;
+
+    if (!isAtRightLocation(expression, expressionTextRange, narrowExpression)) return null;
+
+    if (narrowVariable.getName() == null
+        || resolveHelper.resolveReferencedVariable(narrowVariable.getName(), expression) != narrowVariable
+        || isChangedBetween(castedVar, methodBody, narrowExpression, expression)
+        || isChangedBetween(narrowVariable, methodBody, narrowExpression, expression)) return null;
+
+    return narrowVariable;
   }
 
-  private static boolean isChangedBetween(@NotNull final PsiVariable variable,
+  private static boolean isAtRightLocation(@NotNull PsiTypeCastExpression expression,
+                                           @NotNull TextRange expressionTextRange,
+                                           @NotNull PsiExpression occurrence) {
+    ProgressIndicatorProvider.checkCanceled();
+    final TextRange occurrenceTextRange = occurrence.getTextRange();
+    return occurrence != expression && occurrenceTextRange.getEndOffset() < expressionTextRange.getStartOffset();
+  }
+
+  public static boolean isChangedBetween(@NotNull final PsiVariable variable,
                                           @NotNull final PsiElement scope,
                                           @NotNull final PsiElement start,
                                           @NotNull final PsiElement end) {
@@ -163,7 +206,7 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
   }
 
   @Nullable
-  private static PsiLocalVariable getVariable(@NotNull PsiExpression occurrence) {
+  private static PsiLocalVariable getVariable(@NotNull PsiTypeCastExpression occurrence) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(occurrence.getParent());
 
     if (parent instanceof PsiLocalVariable localVariable) {
@@ -172,6 +215,16 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
 
     if (parent instanceof PsiAssignmentExpression assignmentExpression &&
         assignmentExpression.getLExpression() instanceof PsiReferenceExpression referenceExpression &&
+        referenceExpression.resolve() instanceof PsiLocalVariable localVariable) {
+      return localVariable;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiLocalVariable getVariable(@NotNull PsiAssignmentExpression occurrence) {
+    if (PsiUtil.skipParenthesizedExprDown(occurrence.getRExpression()) instanceof PsiReferenceExpression referenceExpression &&
         referenceExpression.resolve() instanceof PsiLocalVariable localVariable) {
       return localVariable;
     }

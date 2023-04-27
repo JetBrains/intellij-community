@@ -24,8 +24,8 @@ public final class PlaybackRunnerExtended extends PlaybackRunner {
   private boolean myStopped;
   private final DynamicPluginListener myDynamicPluginListener;
 
-  public PlaybackRunnerExtended(String script, @NotNull Project project) {
-    super(script, (context, text, type) -> { }, Registry.is("performance.plugin.playback.runner.useDirectActionCall", false), false, true);
+  public PlaybackRunnerExtended(String script, StatusCallback callback, @NotNull Project project) {
+    super(script, callback, Registry.is("performance.plugin.playback.runner.useDirectActionCall", false), false, true);
     setProject(project);
     myDynamicPluginListener = new DynamicPluginListener() {
       @Override

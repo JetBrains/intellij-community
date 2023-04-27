@@ -96,9 +96,7 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
         boolean myHasAccessibilityMethodCall = false;
         
         private boolean isAccessibilityMethod(@NotNull UCallExpression call) {
-          String methodName = call.getMethodName();
-          if (methodName == null) return false;
-          if (methodName.equals("setAccessibleName") || methodName.equals("setAccessibleDescription")) {
+          if (call.isMethodNameOneOf(List.of("setAccessibleName", "setAccessibleDescription"))) {
             return true;
           }
           PsiMethod target = call.resolve();

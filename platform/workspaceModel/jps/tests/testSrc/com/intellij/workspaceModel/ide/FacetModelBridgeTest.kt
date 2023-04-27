@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
@@ -92,7 +93,7 @@ class FacetModelBridgeTest {
     val baseDir = projectModel.baseProjectDir.rootPath.resolve("test")
     val iprFile = baseDir.resolve("testProject.ipr")
     val configLocation = toConfigLocation(iprFile, virtualFileManager)
-    val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
+    val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
 
@@ -121,7 +122,7 @@ class FacetModelBridgeTest {
     val baseDir = projectModel.baseProjectDir.rootPath.resolve("test")
     val iprFile = baseDir.resolve("testProject.ipr")
     val configLocation = toConfigLocation(iprFile, virtualFileManager)
-    val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
+    val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
 

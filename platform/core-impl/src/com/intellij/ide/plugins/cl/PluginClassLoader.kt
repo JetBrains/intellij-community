@@ -540,6 +540,8 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.jvm.internal.ReflectionFactory",
     "kotlin.jvm.internal.Reflection",
     "kotlin.jvm.internal.Lambda",
+    // coroutine dump is supported by core class loader
+    "kotlin.coroutines.jvm.internal.DebugProbesKt",
   ))
   System.getProperty("idea.kotlin.classes.used.in.signatures")?.let {
     result.addAll(it.splitToSequence(',').map(String::trim))

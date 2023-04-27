@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.diagnostic.telemetry.useWithScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 
@@ -14,7 +16,9 @@ object FullUpdaterBuildTarget {
     spanBuilder("build updater artifact").useWithScope {
       val tasks = BuildTasks.create(context)
       tasks.compileModules(listOf(UPDATER_MODULE_NAME))
-      tasks.buildFullUpdaterJar()
+      runBlocking(Dispatchers.Default) {
+        tasks.buildFullUpdaterJar()
+      }
     }
 
     spanBuilder("test updater").useWithScope {

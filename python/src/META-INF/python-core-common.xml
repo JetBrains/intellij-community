@@ -23,6 +23,8 @@
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
+    <listener class="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowModuleAttachListener"
+              topic="com.intellij.platform.ModuleAttachListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -90,14 +92,6 @@
     <stripTrailingSpacesFilterFactory implementation="com.jetbrains.python.editor.PyStripTrailingSpacesFilterFactory"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>
-
-    <completion.contributor language="Python"
-                            order="first"
-                            implementationClass="com.jetbrains.python.console.completion.PythonPandasColumnNameCompletionContributor"/>
-
-    <projectService serviceInterface="com.jetbrains.python.console.completion.PandasColumnNameRetrievalService"
-                    serviceImplementation="com.jetbrains.python.console.completion.PyPandasColumnNameRetrievalService"
-                    testServiceImplementation="com.jetbrains.python.console.completion.DummyConsolePandasColumnNameRetrievalService"/>
 
     <projectService serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
 
@@ -438,6 +432,8 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
     <applicationService serviceInterface="com.jetbrains.python.refactoring.PyRefactoringUiService"
                         serviceImplementation="com.jetbrains.python.refactoring.PyRefactoringUiServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonDocumentationHighlightingService"
+                        serviceImplementation="com.jetbrains.python.PythonDocumentationHighlightingServiceImpl"/>
 
     <registryKey key="python.relative.import.depth" defaultValue="3"
                  description="Specifies default acceptable number of dots in a relative import statement"/>
@@ -461,10 +457,11 @@
     <!-- Poetry -->
     <editorFactoryListener implementation="com.jetbrains.python.sdk.poetry.PyProjectTomlWatcher"/>
     <projectService serviceImplementation="com.jetbrains.python.sdk.poetry.PoetryConfigService"/>
-    <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
 
     <!-- Targets API -->
     <registryKey key="python.use.targets.api" defaultValue="true" description="Switches Python support to Targets API."/>
+    <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle"
                        key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle"
@@ -490,6 +487,8 @@
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.PyAddNewEnvCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesDialogStatisticsCollector"/>
 
     <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
 
@@ -504,6 +503,8 @@
     <applicationService
       serviceInterface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available"
       serviceImplementation="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available$Default"/>
+
+    <registryKey key="python.new.run.config" defaultValue="true" description="Python Run configurations new UI"/>
   </extensions>
 
   <extensionPoints>
@@ -606,6 +607,10 @@
 
     <extensionPoint qualifiedName="Pythonid.pythonPackageManagerProvider"
                     interface="com.jetbrains.python.packaging.management.PythonPackageManagerProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.customProcessHandlerProvider"
+                    interface="com.jetbrains.python.run.PyCustomProcessHandlerProvider"
                     dynamic="true"/>
   </extensionPoints>
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PlaceProvider;
 import org.intellij.lang.annotations.JdkConstants;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * Container for the information necessary to execute or update an {@link AnAction}.
@@ -20,18 +23,18 @@ import java.awt.event.InputEvent;
  */
 public class AnActionEvent implements PlaceProvider {
 
-  private final InputEvent myInputEvent;
-  private final ActionManager myActionManager;
-  private final DataContext myDataContext;
-  private final String myPlace;
-  private final Presentation myPresentation;
+  private final @Nullable InputEvent myInputEvent;
+  private final @NotNull ActionManager myActionManager;
+  private final @NotNull DataContext myDataContext;
+  private final @NotNull @NonNls String myPlace;
+  private final @NotNull Presentation myPresentation;
   @JdkConstants.InputEventMask
   private final int myModifiers;
   private final boolean myIsContextMenuAction;
   private final boolean myIsActionToolbar;
 
   private boolean myWorksInInjected;
-  private UpdateSession myUpdateSession = UpdateSession.EMPTY;
+  private @NotNull UpdateSession myUpdateSession = UpdateSession.EMPTY;
 
   /**
    * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
@@ -128,12 +131,25 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   /**
-   * Returns the {@code InputEvent} which causes invocation of the action. It might be
-   * {@code KeyEvent}, {@code MouseEvent}.
+   * Returns {@code InputEvent} which causes invocation of the action. It might be
+   * {@link KeyEvent} or {@link MouseEvent} in the following user interactions:
+   * <ul>
+   * <li> Shortcut event, see {@link com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher IdeKeyEventDispatcher}
+   * <li> Menu event, see {@link com.intellij.openapi.actionSystem.impl.ActionMenuItem ActionMenuItem}
+   * <li> Standard button in toolbar, see {@link com.intellij.openapi.actionSystem.impl.ActionButton ActionButton}
+   * </ul>
    *
-   * @return the {@code InputEvent} instance.
+   * In other cases the value is null, for example:
+   * <ul>
+   * <li> Search everywhere and find actions
+   * <li> Customized toolbar components, see {@link CustomComponentAction}
+   * <li> Actions from notifications
+   * <li> Actions that invoked programmatically
+   * <li> Macros replay
+   * <li> Tests
+   * </ul>
    */
-  public InputEvent getInputEvent() {
+  public @Nullable InputEvent getInputEvent() {
     return myInputEvent;
   }
 
@@ -202,7 +218,7 @@ public class AnActionEvent implements PlaceProvider {
    * @see com.intellij.openapi.actionSystem.ActionPlaces
    */
   @Override
-  public @NotNull String getPlace() {
+  public @NotNull @NonNls String getPlace() {
     return myPlace;
   }
 

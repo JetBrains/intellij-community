@@ -26,7 +26,6 @@ import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
@@ -182,14 +181,11 @@ class MavenImportFlow {
     assertNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
-    val resolver = MavenProjectResolver(context.projectsTree)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
-    val resolveContext = ResolveContext(context.projectsTree)
     val d = Disposer.newDisposable("MavenImportFlow:resolveDependencies:treeListener")
     Disposer.register(context.initialContext.importDisposable, d)
     val projectsToImport = ConcurrentLinkedQueue(context.toResolve)
-    val nativeProjectStorage = ConcurrentLinkedQueue<kotlin.Pair<MavenProject, NativeMavenProjectHolder>>()
     context.projectsTree.addListener(object : MavenProjectsTree.Listener {
       override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
                                    nativeMavenProject: NativeMavenProjectHolder?) {
@@ -197,33 +193,39 @@ class MavenImportFlow {
           if (shouldScheduleProject(projectWithChanges.first, projectWithChanges.second)) {
             projectsToImport.add(projectWithChanges.first)
           }
-          nativeProjectStorage.add(projectWithChanges.first to nativeMavenProject)
         }
       }
     }, d)
-    resolver.resolve(context.project, context.toResolve, context.initialContext.generalSettings, embeddersManager, consoleToBeRemoved,
-                     resolveContext, context.initialContext.indicator)
+
+    val resolver = MavenProjectResolver.getInstance(context.project)
+    val resolutionResult = resolver.resolve(context.toResolve,
+                                            context.projectsTree,
+                                            context.initialContext.generalSettings,
+                                            embeddersManager,
+                                            consoleToBeRemoved,
+                                            context.initialContext.indicator)
     Disposer.dispose(d)
-    return MavenResolvedContext(context.project, resolveContext.getUserData(MavenProjectResolver.UNRESOLVED_ARTIFACTS) ?: emptySet(),
-                                projectsToImport.toList(), nativeProjectStorage.toList(), context)
+    val projectsWithUnresolvedPlugins = resolutionResult.projectsWithUnresolvedPlugins.values.flatten()
+    return MavenResolvedContext(context.project, projectsToImport.toList(), projectsWithUnresolvedPlugins, context)
   }
 
   fun resolvePlugins(context: MavenResolvedContext): MavenPluginResolvedContext {
     assertNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
-    val resolver = MavenProjectResolver(context.readContext.projectsTree)
+    val resolver = MavenPluginResolver(context.readContext.projectsTree)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
-    val unresolvedPlugins = Collections.synchronizedSet(LinkedHashSet<MavenPlugin>())
+    resolver.resolvePlugins(
+      context.projectsWithUnresolvedPlugins,
+      embeddersManager,
+      consoleToBeRemoved,
+      context.initialContext.indicator,
+      false,
+      projectManager.forceUpdateSnapshots)
 
-    context.nativeProjectHolder.foreachParallel {
-      unresolvedPlugins.addAll(
-        resolver.resolvePlugins(it.first, it.second, embeddersManager, consoleToBeRemoved, context.initialContext.indicator, false,
-                                projectManager.forceUpdateSnapshots))
-    }
-    return MavenPluginResolvedContext(context.project, unresolvedPlugins, context)
+    return MavenPluginResolvedContext(context.project, context)
   }
 
   fun downloadArtifacts(context: MavenResolvedContext, sources: Boolean, javadocs: Boolean): MavenArtifactDownloader.DownloadResult {
@@ -231,15 +233,19 @@ class MavenImportFlow {
     if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
-    val resolver = MavenProjectResolver(context.readContext.projectsTree)
+    val downloader = MavenArtifactDownloader(
+      context.project,
+      context.readContext.projectsTree,
+      null,
+      context.initialContext.indicator)
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
-    return resolver.downloadSourcesAndJavadocs(context.project, context.projectsToImport, null, sources, javadocs, embeddersManager,
-                                               consoleToBeRemoved, context.initialContext.indicator)
+    return downloader.downloadSourcesAndJavadocs(context.projectsToImport,sources, javadocs, embeddersManager, consoleToBeRemoved)
 
   }
 
   fun downloadSpecificArtifacts(project: Project,
+                                projectsTree: MavenProjectsTree,
                                 mavenProjects: Collection<MavenProject>,
                                 mavenArtifacts: Collection<MavenArtifact>?,
                                 sources: Boolean,
@@ -249,12 +255,10 @@ class MavenImportFlow {
     if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
     val projectManager = MavenProjectsManager.getInstance(project)
     val embeddersManager = projectManager.embeddersManager
-    val resolver = MavenProjectResolver(projectManager.projectsTree)
+    val downloader = MavenArtifactDownloader(project, projectsTree, mavenArtifacts, indicator)
     val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
     val consoleToBeRemoved = BTWMavenConsole(project, settings.outputLevel, settings.isPrintErrorStackTraces)
-    return resolver.downloadSourcesAndJavadocs(project, mavenProjects, mavenArtifacts, sources, javadocs, embeddersManager,
-                                               consoleToBeRemoved, indicator)
-
+    return downloader.downloadSourcesAndJavadocs(mavenProjects, sources, javadocs, embeddersManager, consoleToBeRemoved)
   }
 
   fun resolveFolders(projects: Collection<MavenProject>, project: Project, indicator: MavenProgressIndicator): Collection<MavenProject> {
@@ -262,7 +266,6 @@ class MavenImportFlow {
     val projectManager = MavenProjectsManager.getInstance(project)
     val embeddersManager = projectManager.embeddersManager
     val projectTree = loadOrCreateProjectTree(projectManager)
-    val resolver = MavenProjectResolver(loadOrCreateProjectTree(projectManager))
     val generalSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
     val importingSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getImportingSettings()
     val consoleToBeRemoved = BTWMavenConsole(project, generalSettings.outputLevel,
@@ -277,9 +280,8 @@ class MavenImportFlow {
         }
       }
     }, d)
-    projects.foreachParallel {
-      resolver.resolveFolders(it, importingSettings, embeddersManager, consoleToBeRemoved, indicator)
-    }
+    val folderResolver = MavenFolderResolver()
+    folderResolver.resolveFolders(projects, projectTree, importingSettings, embeddersManager, consoleToBeRemoved, indicator)
 
     Disposer.dispose(d)
     return projectsFoldersResolved

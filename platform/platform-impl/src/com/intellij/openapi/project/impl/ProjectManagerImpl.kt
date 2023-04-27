@@ -57,11 +57,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.FrameLoadingState
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.attachToProjectAsync
+import com.intellij.platform.jps.model.impl.diagnostic.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
@@ -70,6 +72,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -185,7 +188,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun loadProject(path: Path): Project {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val project = ProjectImpl(filePath = path, projectName = null)
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
@@ -265,7 +268,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   override fun findOpenProjectByHash(locationHash: String?): Project? = openProjectByHash.get(locationHash)
 
   override fun reloadProject(project: Project) {
-    StoreReloadManager.getInstance().reloadProject(project)
+    StoreReloadManager.getInstance(project).reloadProject()
   }
 
   override fun closeProject(project: Project): Boolean {
@@ -522,6 +525,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   final override suspend fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
+    jpsMetrics.startNewSpan("project.opening", JpsMetrics.jpsSyncSpanName)
+
     if (LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode) {
       LOG.debug("open project: $options", Exception())
     }
@@ -536,6 +541,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (!checkTrustedState(projectStoreBaseDir)) {
       LOG.info("Project is not trusted, aborting")
       activity.end()
+      if (options.showWelcomeScreen) {
+        WelcomeFrame.showIfNoProjectOpened()
+      }
       throw ProcessCanceledException()
     }
 
@@ -629,7 +637,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           throw CancellationException("project is already opened")
         }
 
-        // Project is loaded and is initialized, project services and components can be accessed.
+        // The project is loaded and is initialized, project services and components can be accessed.
         // But start-up and post start-up activities are not yet executed.
         if (!initFrameEarly) {
           rawProjectDeferred?.complete(project)
@@ -666,7 +674,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
         failedToOpenProject(frameAllocator = frameAllocator, exception = null, options = options)
       }
-      throw e
+
+      if (e.message == FrameLoadingState.PROJECT_LOADING_CANCELLED_BY_USER) {
+        return null
+      }
+      else {
+        throw e
+      }
     }
     catch (e: Throwable) {
       result?.let { project ->
@@ -709,6 +723,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     LifecycleUsageTriggerCollector.onProjectOpened(project)
 
     options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules[0])
+
+    jpsMetrics.endSpan("project.opening")
     return project
   }
 
@@ -1090,7 +1106,7 @@ private fun toCanonicalName(filePath: String): Path {
   catch (ignore: InvalidPathException) {
   }
   catch (e: IOException) {
-    // OK. File does not yet exist, so its canonical path will be equal to its original path.
+    // the file does not yet exist, so its canonical path will be equal to its original path
   }
   return file
 }
@@ -1311,7 +1327,7 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
     // this project is in recent projects => it was opened on this computer before
     // => most probably we already asked about its trusted state before
     // the only exception is: the project stayed in the UNKNOWN state in the previous version because it didn't utilize any dangerous features
-    // in this case we will ask since no UNKNOWN state is allowed, but on a later stage, when we'll be able to look into the project-wide storage
+    // in this case, we will ask since no UNKNOWN state is allowed, but on a later stage, when we'll be able to look into the project-wide storage
     return true
   }
 

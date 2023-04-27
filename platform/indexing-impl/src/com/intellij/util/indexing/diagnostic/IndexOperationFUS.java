@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -10,8 +11,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.IndexId;
+import io.opentelemetry.api.metrics.BatchCallback;
+import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +28,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationAggregatesCollector.MAX_TRACKABLE_DURATION_MS;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toSet;
@@ -52,6 +58,11 @@ public final class IndexOperationFUS {
    * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics. Default: true
    */
   private static final boolean REPORT_AGGREGATED_STATS = SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_AGGREGATED_STATS", true);
+  /**
+   * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics to OpenTelemetry. Default: true
+   */
+  private static final boolean REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY =
+    SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY", true);
 
 
   /**
@@ -277,14 +288,14 @@ public final class IndexOperationFUS {
           final long lookupFinishedAtMs = System.currentTimeMillis();
           final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
 
-          if(REPORT_DETAILED_STATS) {
+          if (REPORT_DETAILED_STATS) {
             if (lookupDurationMs > REPORT_ONLY_OPERATIONS_LONGER_THAN_MS || lookupFailed) {
               reportDetailedDataToAnalytics(lookupFinishedAtMs);
             }
           }
 
           if (REPORT_AGGREGATED_STATS) {
-            reportAggregatesDataToAnalytics(lookupFinishedAtMs);
+            reportAggregatesData(lookupFinishedAtMs);
           }
         }
         finally {
@@ -303,7 +314,7 @@ public final class IndexOperationFUS {
 
       protected abstract void reportDetailedDataToAnalytics(long lookupFinishedAtMs);
 
-      protected abstract void reportAggregatesDataToAnalytics(long lookupFinishedAtMs);
+      protected abstract void reportAggregatesData(long lookupFinishedAtMs);
 
       @Override
       public final void close() {
@@ -461,7 +472,7 @@ public final class IndexOperationFUS {
       }
 
       @Override
-      protected void reportAggregatesDataToAnalytics(final long lookupFinishedAtMs) {
+      protected void reportAggregatesData(final long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         IndexOperationAggregatesCollector.recordAllKeysLookup(indexId, lookupFailed, lookupDurationMs);
       }
@@ -540,7 +551,7 @@ public final class IndexOperationFUS {
       }
 
       @Override
-      protected void reportAggregatesDataToAnalytics(final long lookupFinishedAtMs) {
+      protected void reportAggregatesData(final long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         IndexOperationAggregatesCollector.recordEntriesByKeysLookup(indexId, lookupFailed, lookupDurationMs);
       }
@@ -634,7 +645,7 @@ public final class IndexOperationFUS {
       }
 
       @Override
-      protected void reportAggregatesDataToAnalytics(long lookupFinishedAtMs) {
+      protected void reportAggregatesData(long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         IndexOperationAggregatesCollector.recordStubEntriesByKeysLookup(indexId, lookupFailed, lookupDurationMs);
       }
@@ -708,6 +719,13 @@ public final class IndexOperationFUS {
     private static final ConcurrentHashMap<IndexId<?, ?>, Recorder> entriesLookupDurationsMsByIndexId = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<IndexId<?, ?>, Recorder> stubEntriesLookupDurationsMsByIndexId = new ConcurrentHashMap<>();
 
+    //FIXME RC: OTel reporting is implicitly guarded by REPORT_AGGREGATED_STATS, which is not obvious. Better to separate FUS and
+    //          OTel reporting to independent branches
+    @Nullable
+    private static final OTelIndexesMetricsReporter otelReporter = REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY ?
+                                                                   new OTelIndexesMetricsReporter() :
+                                                                   null;
+
 
     public IndexOperationAggregatesCollector() {
       if (!isValid()) {
@@ -732,10 +750,12 @@ public final class IndexOperationFUS {
           )
         );
 
+        final long clampedDurationMs = MathUtil.clamp(durationMs, 0, MAX_TRACKABLE_DURATION_MS);
         //Recorder allows concurrent writes:
-        recorder.recordValue(
-          Math.max(Math.min(durationMs, MAX_TRACKABLE_DURATION_MS), 0)
-        );
+        recorder.recordValue(clampedDurationMs);
+        if (otelReporter != null) {
+          otelReporter.reportAllKeysLookup(clampedDurationMs);
+        }
       }
     }
 
@@ -751,10 +771,12 @@ public final class IndexOperationFUS {
           )
         );
 
+        final long clampedDurationMs = MathUtil.clamp(durationMs, 0, MAX_TRACKABLE_DURATION_MS);
         //Recorder allows concurrent writes:
-        recorder.recordValue(
-          Math.max(Math.min(durationMs, MAX_TRACKABLE_DURATION_MS), 0)
-        );
+        recorder.recordValue(clampedDurationMs);
+        if (otelReporter != null) {
+          otelReporter.reportEntryLookup(clampedDurationMs);
+        }
       }
     }
 
@@ -770,10 +792,12 @@ public final class IndexOperationFUS {
           )
         );
 
+        final long clampedDurationMs = MathUtil.clamp(durationMs, 0, MAX_TRACKABLE_DURATION_MS);
         //Recorder allows concurrent writes:
-        recorder.recordValue(
-          Math.max(Math.min(durationMs, MAX_TRACKABLE_DURATION_MS), 0)
-        );
+        recorder.recordValue(clampedDurationMs);
+        if (otelReporter != null) {
+          otelReporter.recordStubEntryLookup(clampedDurationMs);
+        }
       }
     }
 
@@ -850,6 +874,101 @@ public final class IndexOperationFUS {
           EVENT_INDEX_ALL_KEYS_LOOKUP.metric(FIELD_INDEX_ID.with(""))
         );
       }
+    }
+  }
+
+  private static class OTelIndexesMetricsReporter implements AutoCloseable {
+
+    private static final Recorder allKeysLookupDurationMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);/* 2 digits =~ 1% accuracy */
+    private static final Recorder entriesLookupDurationsMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
+    private static final Recorder stubEntriesLookupDurationsMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
+
+
+    private final ObservableDoubleMeasurement allKeysTotalLookups;
+    private final ObservableDoubleMeasurement allKeysLookupDurationAvg;
+    private final ObservableDoubleMeasurement allKeysLookupDuration90P;
+    private final ObservableDoubleMeasurement allKeysLookupDurationMax;
+
+    private final ObservableDoubleMeasurement entriesTotalLookups;
+    private final ObservableDoubleMeasurement entriesLookupDurationAvg;
+    private final ObservableDoubleMeasurement entriesLookupDuration90P;
+    private final ObservableDoubleMeasurement entriesLookupDurationMax;
+
+    private final ObservableDoubleMeasurement stubsTotalLookups;
+    private final ObservableDoubleMeasurement stubsLookupDurationAvg;
+    private final ObservableDoubleMeasurement stubsLookupDuration90P;
+    private final ObservableDoubleMeasurement stubsLookupDurationMax;
+
+    /** Needed only to stop reporting on .close() */
+    private final BatchCallback batchCallbackHandle;
+
+    private OTelIndexesMetricsReporter() {
+      final Meter meter = TraceManager.INSTANCE.getMeter("indexes");
+
+      allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").buildObserver();
+      allKeysLookupDurationAvg = meter.gaugeBuilder("Indexes.allKeys.lookupDurationAvgMs").buildObserver();
+      allKeysLookupDuration90P = meter.gaugeBuilder("Indexes.allKeys.lookupDuration90PMs").buildObserver();
+      allKeysLookupDurationMax = meter.gaugeBuilder("Indexes.allKeys.lookupDurationMaxMs").buildObserver();
+
+      entriesTotalLookups = meter.gaugeBuilder("Indexes.entries.lookups").buildObserver();
+      entriesLookupDurationAvg = meter.gaugeBuilder("Indexes.entries.lookupDurationAvgMs").buildObserver();
+      entriesLookupDuration90P = meter.gaugeBuilder("Indexes.entries.lookupDuration90PMs").buildObserver();
+      entriesLookupDurationMax = meter.gaugeBuilder("Indexes.entries.lookupDurationMaxMs").buildObserver();
+
+      stubsTotalLookups = meter.gaugeBuilder("Indexes.stubs.lookups").buildObserver();
+      stubsLookupDurationAvg = meter.gaugeBuilder("Indexes.stubs.lookupDurationAvgMs").buildObserver();
+      stubsLookupDuration90P = meter.gaugeBuilder("Indexes.stubs.lookupDuration90PMs").buildObserver();
+      stubsLookupDurationMax = meter.gaugeBuilder("Indexes.stubs.lookupDurationMaxMs").buildObserver();
+
+      batchCallbackHandle = meter.batchCallback(
+        this::reportValues,
+        allKeysTotalLookups, allKeysLookupDurationAvg, allKeysLookupDuration90P, allKeysLookupDurationMax,
+        entriesTotalLookups, entriesLookupDurationAvg, entriesLookupDuration90P, entriesLookupDurationMax,
+        stubsTotalLookups, stubsLookupDurationAvg, stubsLookupDuration90P, stubsLookupDurationMax
+      );
+    }
+
+    //cached interval histograms:
+    private transient Histogram allKeysIntervalHisto;
+    private transient Histogram entriesIntervalHisto;
+    private transient Histogram stubsIntervalHisto;
+
+
+    private void reportValues() {
+      allKeysIntervalHisto = allKeysLookupDurationMsHisto.getIntervalHistogram(allKeysIntervalHisto);
+      allKeysTotalLookups.record(allKeysIntervalHisto.getTotalCount());
+      allKeysLookupDurationAvg.record(allKeysIntervalHisto.getMean());
+      allKeysLookupDuration90P.record(allKeysIntervalHisto.getValueAtPercentile(90));
+      allKeysLookupDurationMax.record(allKeysIntervalHisto.getMaxValue());
+
+      entriesIntervalHisto = entriesLookupDurationsMsHisto.getIntervalHistogram(entriesIntervalHisto);
+      entriesTotalLookups.record(entriesIntervalHisto.getTotalCount());
+      entriesLookupDurationAvg.record(entriesIntervalHisto.getMean());
+      entriesLookupDuration90P.record(entriesIntervalHisto.getValueAtPercentile(90));
+      entriesLookupDurationMax.record(entriesIntervalHisto.getMaxValue());
+
+      stubsIntervalHisto = stubEntriesLookupDurationsMsHisto.getIntervalHistogram(stubsIntervalHisto);
+      stubsTotalLookups.record(stubsIntervalHisto.getTotalCount());
+      stubsLookupDurationAvg.record(stubsIntervalHisto.getMean());
+      stubsLookupDuration90P.record(stubsIntervalHisto.getValueAtPercentile(90));
+      stubsLookupDurationMax.record(stubsIntervalHisto.getMaxValue());
+    }
+
+    public void reportAllKeysLookup(final long clampedDurationMs) {
+      allKeysLookupDurationMsHisto.recordValue(clampedDurationMs);
+    }
+
+    public void reportEntryLookup(final long clampedDurationMs) {
+      entriesLookupDurationsMsHisto.recordValue(clampedDurationMs);
+    }
+
+    public void recordStubEntryLookup(final long clampedDurationMs) {
+      stubEntriesLookupDurationsMsHisto.recordValue(clampedDurationMs);
+    }
+
+    @Override
+    public void close() {
+      batchCallbackHandle.close();
     }
   }
 }

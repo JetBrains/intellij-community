@@ -9,6 +9,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ProgramRunner
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
@@ -16,33 +17,41 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.components.*
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.psi.PsiFile
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.xmlb.annotations.*
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -54,7 +63,6 @@ import java.awt.geom.RoundRectangle2D
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
-import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonListener
@@ -62,6 +70,7 @@ import javax.swing.plaf.basic.BasicButtonUI
 import javax.swing.plaf.basic.BasicGraphicsUtils
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.math.max
 import kotlin.properties.Delegates
 
 private const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
@@ -69,51 +78,73 @@ private const val DEBUG: String = ToolWindowId.DEBUG
 
 private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
 
-internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
+internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEvent): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
   val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
-  actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
-  RunConfigurationStartHistory.getInstance(project).history().take(recentLimit).forEach { conf ->
-    val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project)
-    actions.add(actionGroupWithInlineActions)
-  }
-  actions.add(Separator.create())
-  if (Registry.`is`("ide.experimental.ui.redesigned.run.popup")) {
-    val allRunConfigurationsToggle = AllRunConfigurationsToggle()
-    actions.add(allRunConfigurationsToggle)
+  val recents = RunConfigurationStartHistory.getInstance(project).history().take(max(recentLimit, 0))
+  var shouldShowRecent: Boolean = recents.isNotEmpty()
 
-    val createActionFn: (RunnerAndConfigurationSettings) -> AnAction = { configuration ->
-      createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project) {
-        allRunConfigurationsToggle.selected
-      }
+  val shouldBeShown = { configuration: RunnerAndConfigurationSettings?, holdingFilter: Boolean ->
+    when {
+      !shouldShowRecent -> true
+      holdingFilter && configuration != null -> !recents.contains(configuration)
+      holdingFilter -> true
+      else -> RunConfigurationStartHistory.getInstance(project).state.allConfigurationsExpanded
     }
-    val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
-      HideableDefaultActionGroup(folderName) {
-        allRunConfigurationsToggle.selected
-      }
+  }
+
+  val createActionFn: (RunnerAndConfigurationSettings) -> AnAction = { configuration ->
+    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e) { shouldBeShown(configuration, it) }
+  }
+  val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
+    HideableDefaultActionGroup(folderName) { shouldBeShown(null, it) }
+  }
+  val filteringSubActions: (RunnerAndConfigurationSettings, String) -> AnAction = { configuration, folderName ->
+    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e) { holdingFilter ->
+      holdingFilter && !recents.contains(configuration)
+    }.also {
+      it.templatePresentation.putClientProperty(Presentation.PROP_VALUE, folderName)
     }
-    RunConfigurationsComboBoxAction.addRunConfigurations(actions, project, createActionFn, createFolderFn)
   }
-  else {
-    actions.add(DelegateAction({ ExecutionBundle.message("run.toolbar.widget.all.configurations") },
-                               ActionManager.getInstance().getAction("ChooseRunConfiguration")))
+  val allConfigurations = DefaultActionGroup()
+  val allConfigurationsNumber = RunConfigurationsComboBoxAction.addRunConfigurations(allConfigurations, project, createActionFn, createFolderFn, filteringSubActions)
+
+  if (shouldShowRecent && allConfigurationsNumber < recentLimit) {
+    shouldShowRecent = false
   }
+
+  if (shouldShowRecent) {
+    actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
+    for (conf in recents) {
+      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project, e)
+      actions.add(actionGroupWithInlineActions)
+    }
+    actions.add(Separator.create())
+  }
+  if (shouldShowRecent) {
+    actions.add(AllRunConfigurationsToggle(allConfigurationMessage(allConfigurationsNumber)))
+  }
+  actions.addAll(allConfigurations)
 
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-    actions.add(SelectCurrentFileWithInlineActions(listOf(
-      ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
-      ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))))
+    actions.add(createCurrentFileWithInlineActions(runExecutor, debugExecutor, project))
   }
   actions.add(Separator.create())
   actions.add(ActionManager.getInstance().getAction("editRunConfigurations"))
   return actions
 }
 
+private fun allConfigurationMessage(number: Int): @Nls String {
+  val textColor = ColorUtil.toHex(JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND)
+  val message = ExecutionBundle.message("run.toolbar.widget.all.configurations", """<a style="color:#$textColor;">${number}</a>""")
+  return "<html>$message</html>"
+}
+
 internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataContext: DataContext, disposeCallback: (() -> Unit)?) :
   PopupFactoryImpl.ActionGroupPopup(null, actionGroup, dataContext, false, false, true, false,
-                                    disposeCallback, 30, null, null) {
+                                    disposeCallback, 30, null, null, PresentationFactory(), false) {
 
   init {
     (list as? JBList<*>)?.setExpandableItemsEnabled(false)
@@ -127,32 +158,30 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   override fun shouldBeShowing(value: Any?): Boolean {
     if (!super.shouldBeShowing(value)) return false
-    return if (value !is PopupFactoryImpl.ActionItem) true else shouldBeShowing(value.action)
+    return if (value !is PopupFactoryImpl.ActionItem) true else shouldBeShowing(value.action, mySpeedSearch.isHoldingFilter)
   }
 
 
-  fun shouldBeShowing(action: AnAction): Boolean {
-    return if (action is HideableAction) return action.shouldBeShown() else true
+  fun shouldBeShowing(action: AnAction, holdingFilter: Boolean): Boolean {
+    return if (action is HideableAction) return action.shouldBeShown(holdingFilter) else true
   }
 }
 
 private interface HideableAction {
-  val shouldBeShown: () -> Boolean
+  val shouldBeShown: (holdingFilter: Boolean) -> Boolean
 }
 
-private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: () -> Boolean)
+private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: (holdingFilter: Boolean) -> Boolean)
   : DefaultActionGroup({ name }, true), DumbAware, HideableAction
 
-private class AllRunConfigurationsToggle : ToggleAction(
-  ExecutionBundle.message("run.toolbar.widget.all.configurations")), KeepingPopupOpenAction, DumbAware {
-  var selected = false
+private class AllRunConfigurationsToggle(@NlsActions.ActionText text: String) : ToggleAction(text), KeepingPopupOpenAction, DumbAware {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
-  override fun isSelected(e: AnActionEvent): Boolean = selected
+  override fun isSelected(e: AnActionEvent): Boolean = RunConfigurationStartHistory.getInstance(e.project!!).state.allConfigurationsExpanded
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    selected = state
+    RunConfigurationStartHistory.getInstance(e.project!!).state.allConfigurationsExpanded = state
 
     val inputEvent = e.inputEvent ?: return
     val jList = inputEvent.source as? JList<*>
@@ -164,7 +193,7 @@ private class AllRunConfigurationsToggle : ToggleAction(
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = true
-    e.presentation.icon = if (selected) AllIcons.General.ChevronDown else AllIcons.General.ChevronRight
+    e.presentation.icon = if (isSelected(e)) AllIcons.General.ChevronDown else AllIcons.General.ChevronRight
   }
 }
 
@@ -172,29 +201,92 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               debugExecutor: Executor,
                                               conf: RunnerAndConfigurationSettings,
                                               project: Project,
-                                              shouldBeShown: () -> Boolean = { true }): SelectRunConfigurationWithInlineActions {
-  val inlineActions = mutableListOf<AnAction>()
-  inlineActions.add(ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false))
-  inlineActions.add(ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false))
+                                              e: AnActionEvent,
+                                              shouldBeShown: (Boolean) -> Boolean = { true }
+): SelectRunConfigurationWithInlineActions {
+  val activeExecutor = getActiveExecutor(project, conf)
+  val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
+  val inlineActions = if (showRerunAndStopButtons)
+    listOf(
+      ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
+      StopConfigurationInlineAction(activeExecutor, conf)
+    )
+  else
+    listOf(
+      ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
+      ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
+    )
 
   val result = SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
-  addAdditionalActionsToRunConfigurationOptions(project, conf, result, false)
+  if (showRerunAndStopButtons) {
+    val extraExecutor = if (activeExecutor === runExecutor) debugExecutor else runExecutor
+    val extraAction = ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
+    result.addAction(extraAction, Constraints.FIRST)
+  }
+  addAdditionalActionsToRunConfigurationOptions(project, e, conf, result, false)
   return result
 }
 
-private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnAction) : AnActionWrapper(delegate) {
-
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.text = string.get()
+private fun createCurrentFileWithInlineActions(runExecutor: Executor,
+                                               debugExecutor: Executor,
+                                               project: Project): AnAction {
+  if (DumbService.isDumb(project)) {
+    return RunConfigurationsComboBoxAction.RunCurrentFileAction { true }
   }
+  val configs = getCurrentPsiFile(project)?.let { ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(it, false) } ?: emptyList()
+  val runRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, runExecutor, project) }
+  val debugRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, debugExecutor, project) }
+  val activeConfig = runRunningConfig ?: debugRunningConfig
+
+  if (activeConfig == null || activeConfig.configuration.isAllowRunningInParallel) {
+    return SelectCurrentFileWithInlineActions(listOf(
+        ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
+        ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
+    )
+  }
+
+  val inlineActions = mutableListOf<AnAction>()
+  when {
+    runRunningConfig != null -> {
+      inlineActions.add(ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor))
+      inlineActions.add(StopConfigurationInlineAction(runExecutor, runRunningConfig))
+    }
+    debugRunningConfig != null -> {
+      inlineActions.add(ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
+      inlineActions.add(StopConfigurationInlineAction(debugExecutor, debugRunningConfig))
+    }
+    else -> {
+      inlineActions.add(ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor))
+      inlineActions.add(ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
+    }
+  }
+
+  val res = SelectCurrentFileWithInlineActions(inlineActions)
+  if (runRunningConfig != null) res.addAction(ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor), Constraints.FIRST)
+  if (debugRunningConfig != null) res.addAction(ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor), Constraints.FIRST)
+
+  return res
+}
+
+private fun checkIfRunWithExecutor(config: RunnerAndConfigurationSettings, executor: Executor, project: Project): Boolean {
+  if (ProgramRunner.getRunner(executor.id, config.configuration) == null) return false
+  return getActiveExecutor(project, config) === executor
+}
+
+private fun getCurrentPsiFile(project: Project): PsiFile? {
+  return FileEditorManagerEx.Companion.getInstanceEx(project).currentFile?.findPsiFile(project)
+}
+
+private fun getActiveExecutor(project: Project, conf: RunnerAndConfigurationSettings): Executor? {
+  val executionManager = ExecutionManagerImpl.getInstance(project)
+  return executionManager.getRunningDescriptors { conf === it }.flatMap { executionManager.getExecutors(it) }.firstOrNull()
 }
 
 internal class SelectRunConfigurationWithInlineActions(
   private val actions: List<AnAction>,
   configuration: RunnerAndConfigurationSettings,
   project: Project,
-  override val shouldBeShown: () -> Boolean
+  override val shouldBeShown: (holdingFilter: Boolean) -> Boolean
 ) : SelectConfigAction(configuration, project, excludeRunAndDebug), InlineActionsHolder, HideableAction {
   override fun getInlineActions(): List<AnAction> = actions
 }
@@ -225,7 +317,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
     e.presentation.isEnabled = activeProcesses > 0
     // presentations should be visible because it has to take some fixed space
     //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = IconUtil.toStrokeIcon(AllIcons.Actions.Suspend, JBUI.CurrentTheme.RunWidget.FOREGROUND)
+    e.presentation.icon = toStrokeIcon(AllIcons.Actions.Suspend, JBUI.CurrentTheme.RunWidget.FOREGROUND)
     if (activeProcesses == 1) {
       val first = running.first()
       getConfigurations(manger, first)
@@ -317,6 +409,41 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
   else {
     stopCount.toString()
   }
+
+private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings) : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    getRunningDescriptor(project)?.let { ExecutionManagerImpl.stopProcess(it) }
+  }
+
+  override fun update(e: AnActionEvent) {
+    val project = e.project
+    val presentation = e.presentation
+
+    if (project == null) {
+      presentation.isEnabledAndVisible = false
+      return
+    }
+
+    presentation.text = ExecutionBundle.message("run.toolbar.widget.stop.description", settings.shortenName())
+    presentation.icon = AllIcons.Actions.Suspend
+
+    presentation.isEnabledAndVisible = getRunningDescriptor(project) != null
+  }
+
+  private fun getRunningDescriptor(project: Project): RunContentDescriptor? {
+    val executionManager = ExecutionManagerImpl.getInstance(project)
+    val runningDescriptors = executionManager.getRunningDescriptors { settings === it }
+    for (desc in runningDescriptors) {
+      if (executionManager.getExecutors(desc).contains(executor)) return desc
+    }
+
+    return null
+  }
+}
 
 private enum class RunButtonColors {
   RED {
@@ -637,12 +764,16 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     @OptionTag("element")
     var history: MutableSet<Element>
 
+    var allConfigurationsExpanded: Boolean
+
     constructor() {
       history = mutableSetOf()
+      allConfigurationsExpanded = false
     }
 
-    internal constructor(history: MutableSet<Element>) {
+    internal constructor(history: MutableSet<Element>, allConfigurationsExpanded: Boolean) {
       this.history = history
+      this.allConfigurationsExpanded = allConfigurationsExpanded
     }
   }
 
@@ -658,9 +789,9 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 
   fun register(setting: RunnerAndConfigurationSettings) {
-    _state = State(_state.history.take(recentLimit*2).toMutableList().apply {
+    _state = State(_state.history.take(max(5, recentLimit*2)).toMutableList().apply {
       add(0, Element(setting.uniqueID))
-    }.toMutableSet())
+    }.toMutableSet(), _state.allConfigurationsExpanded)
   }
 
   private var _state = State()

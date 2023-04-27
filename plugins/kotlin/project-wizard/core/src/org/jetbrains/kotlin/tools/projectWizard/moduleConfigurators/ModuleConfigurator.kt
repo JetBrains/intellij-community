@@ -27,7 +27,7 @@ import kotlin.properties.ReadOnlyProperty
 interface ModuleConfiguratorContext {
     val <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.reference: ModuleConfiguratorSettingReference<V, T>
 
-    val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyReference<T>
+    val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
 }
 
 class ModuleBasedConfiguratorContext(
@@ -37,7 +37,7 @@ class ModuleBasedConfiguratorContext(
     override val <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.reference: ModuleConfiguratorSettingReference<V, T>
         get() = ModuleBasedConfiguratorSettingReference(configurator, module, this)
 
-    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyReference<T>
+    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
         get() = ModuleConfiguratorPropertyReference<T>(configurator, module, this)
 }
 
@@ -48,7 +48,7 @@ class IdBasedConfiguratorContext(
     override val <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.reference: ModuleConfiguratorSettingReference<V, T>
         get() = IdBasedConfiguratorSettingReference(configurator, moduleId, this)
 
-    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyReference<T>
+    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
         get() = error("Should not be called as IdBasedConfiguratorContext used only for parsing settings")
 }
 

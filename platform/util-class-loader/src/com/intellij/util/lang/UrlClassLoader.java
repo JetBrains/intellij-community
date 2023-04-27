@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.util.UrlUtilRt;
@@ -29,7 +29,6 @@ import java.util.function.Predicate;
  * <p>
  * This classloader implementation is separate from {@link PathClassLoader} because it's used in runtime modules with JDK 1.8.
  */
-@SuppressWarnings("BlockingMethodInNonBlockingContext")
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
   private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
@@ -258,13 +257,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader) throws IOException {
+  public Class<?> consumeClassData(@NotNull String name, byte[] data) throws IOException {
     definePackageIfNeeded(name);
     return super.defineClass(name, data, 0, data.length, null);
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader) {
+  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data) {
     definePackageIfNeeded(name);
     return super.defineClass(name, data, null);
   }

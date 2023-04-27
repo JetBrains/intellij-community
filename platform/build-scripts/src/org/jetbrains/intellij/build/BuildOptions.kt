@@ -7,19 +7,20 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
-/**
- * Pass comma-separated names of build steps (see below) to this system property to skip them.
- */
-private const val BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
-
-class BuildOptions {
+class BuildOptions(
+  @ApiStatus.Internal
+  @JvmField
+  val jarCacheDir: Path? = null,
+  @ApiStatus.Internal
+  @JvmField
+  val compressZipFiles: Boolean = true,
+) {
   companion object {
     /**
      * Use this property to change the project compiled classes output directory.
@@ -38,9 +39,6 @@ class BuildOptions {
      * will be built.
      */
     const val OS_NONE = "none"
-
-    /** Pre-builds SVG icons for all SVG resource files to speed up icons loading at runtime  */
-    const val SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
 
     /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used.  */
     const val SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
@@ -87,7 +85,7 @@ class BuildOptions {
     const val WIN_SIGN_STEP = "windows_sign"
 
     @JvmField
-    @Internal
+    @ApiStatus.Internal
     val WIN_SIGN_OPTIONS: PersistentMap<String, String> = System.getProperty("intellij.build.win.sign.options", "")
       .splitToSequence(';')
       .filter { !it.isBlank() }
@@ -116,6 +114,8 @@ class BuildOptions {
 
     const val ARCHIVE_PLUGINS = "archivePlugins"
 
+    const val VALIDATE_PLUGINS_TO_BE_PUBLISHED = "validatePluginsToBePublished"
+
     /**
      * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
      * Comprises many small publication steps.
@@ -132,6 +132,8 @@ class BuildOptions {
      * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
      */
     const val REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
+
+    const val DOC_AUTHORING_ASSETS_STEP = "doc_authoring_assets"
 
     /**
      * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
@@ -159,29 +161,62 @@ class BuildOptions {
     const val USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
 
     /**
+     * By default, if the incremental compilation fails, a clean rebuild is attempted.
+     */
+    const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY = "intellij.build.incremental.compilation.fallback.rebuild"
+
+    /**
      * Enables module structure validation, false by default
      */
     const val VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure"
 
     /**
-     * Verify whether class files have a forbidden subpaths in them, false by default
-     */
-    const val VALIDATE_CLASSFILE_SUBPATHS_PROPERTY = "intellij.verify.classfile.subpaths"
-
-    /**
      * Max attempts of dependencies resolution on fault. "1" means no retries.
      *
-     * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies}
+     * @see [org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies]
      */
     const val RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
 
     /**
      * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000
      *
-     * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies}
+     * @see [org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies]
      */
     const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
     const val TARGET_OS_PROPERTY = "intellij.build.target.os"
+    const val TARGET_ARCH_PROPERTY = "intellij.build.target.arch"
+
+    /**
+     * If `true` the project modules will be compiled incrementally
+     */
+    const val INTELLIJ_BUILD_INCREMENTAL_COMPILATION = "intellij.build.incremental.compilation"
+
+    /**
+     * Allows override version isEap flag in ApplicationInfo.xml
+     * @see [org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl]
+     */
+    const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP = "intellij.build.override.application.version.is.eap"
+
+    /**
+     * Allows override version suffix in ApplicationInfo.xml
+     * @see [org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl]
+     */
+    const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX = "intellij.build.override.application.version.suffix"
+    /**
+     * Pass comma-separated names of build steps (see below) to this system property to skip them.
+     */
+    const val BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
+
+    /**
+     * By default, build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
+     * change the output directory.
+     */
+    const val INTELLIJ_BUILD_OUTPUT_ROOT = "intellij.build.output.root"
+
+    /**
+     * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
+     */
+    const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE = "intellij.build.compiled.classes.archive"
 
     private val currentBuildTimeInSeconds = System.currentTimeMillis() / 1000
   }
@@ -197,6 +232,11 @@ class BuildOptions {
    * Specifies for which arch distributions should be built. null means all
    */
   var targetArch: JvmArchitecture? = null
+
+  fun setTargetOsAndArchToCurrent() {
+    targetOs = persistentListOf(OsFamily.currentOs)
+    targetArch = JvmArchitecture.currentJvmArch
+  }
 
   /**
    * If `true` the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
@@ -242,7 +282,7 @@ class BuildOptions {
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
-  var pathToCompiledClassesArchive: Path? = System.getProperty("intellij.build.compiled.classes.archive")?.let { Path.of(it) }
+  var pathToCompiledClassesArchive: Path? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE)?.let { Path.of(it) }
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
@@ -253,7 +293,13 @@ class BuildOptions {
   /**
    * If `true` the project modules will be compiled incrementally
    */
-  var incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
+  var incrementalCompilation = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
+
+  /**
+   * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
+   */
+  var incrementalCompilationFallbackRebuild =
+    SystemProperties.getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
 
   /**
    * Build number without product code (e.g. '162.500.10'), if `null` '&lt;baseline&gt;.SNAPSHOT' will be used. Use [BuildContext.buildNumber] to
@@ -265,7 +311,7 @@ class BuildOptions {
    * By default, build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
    * change the output directory.
    */
-  var outputRootPath: Path? = System.getProperty("intellij.build.output.root")?.let { Path.of(it).toAbsolutePath().normalize() }
+  var outputRootPath: Path? = System.getProperty(INTELLIJ_BUILD_OUTPUT_ROOT)?.let { Path.of(it).toAbsolutePath().normalize() }
 
   var logPath: String? = System.getProperty("intellij.build.log.root")
 
@@ -287,8 +333,12 @@ class BuildOptions {
    */
   var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
 
-  @Internal
-  var printFreeSpace = true
+  @ApiStatus.Internal
+  @JvmField
+  var printFreeSpace: Boolean = true
+  @ApiStatus.Internal
+  @JvmField
+  var validateImplicitPlatformModule: Boolean = true
 
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
@@ -303,12 +353,21 @@ class BuildOptions {
    * [ProductModulesLayout.buildAllCompatiblePlugins] are built. In order to skip building all non-bundled plugins, set the property to
    * `none`.
    */
-  val nonBundledPluginDirectoriesToInclude = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
+  val nonBundledPluginDirectoriesToInclude: Set<String> = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from [org.jetbrains.intellij.build.dependencies.DependenciesProperties] will be used.
+   * If this option and [ProductProperties.supportModularLoading] are set to `true`, a file containing module descriptors will be added to 
+   * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128). 
    */
-  var bundledRuntimeBuild: String? = System.getProperty("intellij.build.bundled.jre.build")
+  @ApiStatus.Experimental
+  var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", false)
+  
+  /**
+   * If `true`, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] will be generated in the distribution.
+   * This option doesn't make sense if [useModularLoader] is set to `true`, in this case the generation is enabled automatically. 
+   */
+  @ApiStatus.Experimental
+  var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false)
 
   /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
@@ -319,22 +378,20 @@ class BuildOptions {
   /**
    * Enables fastdebug runtime
    */
-  var runtimeDebug = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
+  var runtimeDebug: Boolean = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
 
   /**
    * Specifies an algorithm to build distribution checksums.
    */
-  val hashAlgorithm = "SHA-384"
+  val hashAlgorithm: String = "SHA-384"
 
-  var validateModuleStructure = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"))
+  var validateModuleStructure: Boolean = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"))
 
-  var validateClassFileSubpaths = parseBooleanValue(System.getProperty(VALIDATE_CLASSFILE_SUBPATHS_PROPERTY, "false"))
+  @ApiStatus.Internal
+  var skipCustomResourceGenerators: Boolean = false
 
-  @Internal
-  var skipCustomResourceGenerators = false
-
-  var resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
-  var resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
+  var resolveDependenciesMaxAttempts: Int = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
+  var resolveDependenciesDelayMs: Long = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
 
   /**
    * See [GlobalOptions.BUILD_DATE_IN_SECONDS]
@@ -356,10 +413,6 @@ class BuildOptions {
 
   var randomSeedNumber: Long = 0
 
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  var compressZipFiles = true
-
   init {
     val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()
     targetOs = when {
@@ -371,6 +424,9 @@ class BuildOptions {
       targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
+    targetArch = System.getProperty(TARGET_ARCH_PROPERTY)
+      ?.takeIf { it.isNotBlank() }
+      ?.let(JvmArchitecture::valueOf)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
     randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {
       ThreadLocalRandom.current().nextLong()
@@ -384,7 +440,7 @@ class BuildOptions {
 private fun parseBooleanValue(text: String): Boolean {
   return when {
     text.toBoolean() -> true
-    text.equals(java.lang.Boolean.FALSE.toString(), ignoreCase = true) -> false
+    text.equals(false.toString(), ignoreCase = true) -> false
     else -> throw IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': $text")
   }
 }

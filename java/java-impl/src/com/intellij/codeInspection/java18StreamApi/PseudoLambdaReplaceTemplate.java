@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
@@ -415,12 +415,12 @@ public final class PseudoLambdaReplaceTemplate {
   @Nullable
   private static String findSuitableTailMethodForCollection(PsiMethod lambdaHandler) {
     final PsiType type = lambdaHandler.getReturnType();
-    if (type instanceof PsiArrayType) {
-      final PsiType arrayComponentType = ((PsiArrayType)type).getComponentType();
+    if (type instanceof PsiArrayType arrayType) {
+      final PsiType arrayComponentType = arrayType.getComponentType();
       return "toArray(" + arrayComponentType.getCanonicalText() + "[]::new)";
     }
-    else if (type instanceof PsiClassType) {
-      final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+    else if (type instanceof PsiClassType classType) {
+      final PsiClass resolvedClass = classType.resolve();
       if (resolvedClass == null) {
         return null;
       }
@@ -428,17 +428,13 @@ public final class PseudoLambdaReplaceTemplate {
       if (qName == null) {
         return null;
       }
-      if (qName.equals(CommonClassNames.JAVA_UTIL_LIST)
-          || qName.equals(CommonClassNames.JAVA_UTIL_COLLECTION)
-          || qName.equals(CommonClassNames.JAVA_LANG_ITERABLE)) {
-        return "collect(" + StreamApiConstants.JAVA_UTIL_STREAM_COLLECTORS + ".toList())";
-      }
-      else if (qName.equals(CommonClassNames.JAVA_UTIL_SET)) {
-        return "collect(" + StreamApiConstants.JAVA_UTIL_STREAM_COLLECTORS + ".toSet())";
-      }
-      else if (qName.equals(CommonClassNames.JAVA_UTIL_ITERATOR)) {
-        return "iterator()";
-      }
+      return switch (qName) {
+        case CommonClassNames.JAVA_UTIL_LIST, CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_LANG_ITERABLE ->
+          "collect(" + StreamApiConstants.JAVA_UTIL_STREAM_COLLECTORS + ".toList())";
+        case CommonClassNames.JAVA_UTIL_SET -> "collect(" + StreamApiConstants.JAVA_UTIL_STREAM_COLLECTORS + ".toSet())";
+        case CommonClassNames.JAVA_UTIL_ITERATOR -> "iterator()";
+        default -> null;
+      };
     }
     return null;
   }
@@ -450,16 +446,16 @@ public final class PseudoLambdaReplaceTemplate {
     if (expression instanceof PsiLambdaExpression) {
       return expression;
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+    if (expression instanceof PsiMethodCallExpression call) {
+      final PsiMethod method = call.resolveMethod();
       if (method == null) {
         return null;
       }
       final PsiType type = method.getReturnType();
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return null;
       }
-      final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+      final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
       final PsiClass lambdaClass = result.getElement();
       if (lambdaClass == null) {
         return null;

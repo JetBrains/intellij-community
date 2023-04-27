@@ -12,13 +12,15 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
 import okio.source
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.withTrailingSlash
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
@@ -78,9 +80,10 @@ internal class PortableCompilationCacheUploader(
   }
 
   private fun uploadToS3() {
-    spanBuilder("aws s3 sync").useWithScope {
-      context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
-      println("##teamcity[setParameter name='jps.caches.aws.sync.skip' value='true']")
+    if (remoteCache.shouldBeSyncedToS3) {
+      spanBuilder("aws s3 sync").useWithScope {
+        context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
+      }
     }
   }
 
@@ -94,14 +97,18 @@ internal class PortableCompilationCacheUploader(
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
-    moveFile(zipFile, s3Folder.resolve(cachePath))
+    if (remoteCache.shouldBeSyncedToS3) {
+      moveFile(zipFile, s3Folder.resolve(cachePath))
+    }
   }
 
   private fun uploadMetadata() {
     val metadataPath = "metadata/$commitHash"
     val sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
-    moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    if (remoteCache.shouldBeSyncedToS3) {
+      moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    }
   }
 
   private fun uploadCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>,
@@ -122,7 +129,9 @@ internal class PortableCompilationCacheUploader(
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()
         }
-        moveFile(zipFile, s3Folder.resolve(sourcePath))
+        if (remoteCache.shouldBeSyncedToS3) {
+          moveFile(zipFile, s3Folder.resolve(sourcePath))
+        }
       }
     }
   }
@@ -197,19 +206,14 @@ private class Uploader(serverUrl: String, val authHeader: String) {
     val url = pathToUrl(path)
     spanBuilder("head").setAttribute("url", url).use { span ->
       val code = retryWithExponentialBackOff {
-        httpClient.head(url, authHeader).use {
-          check(it.code == 200 || it.code == 404) {
-            "HEAD $url responded with unexpected ${it.code}"
-          }
-          it.code
-        }
+        httpClient.head(url, authHeader)
       }
       if (code == 200) {
         try {
           /**
            * FIXME dirty workaround for unreliable [serverUrl]
            */
-          httpClient.get(url, authHeader).use {
+          httpClient.get(url, authHeader) {
             it.peekBody(byteCount = 1)
           }
         }
@@ -226,7 +230,7 @@ private class Uploader(serverUrl: String, val authHeader: String) {
   }
 
   fun getAsString(path: String, authHeader: String) = retryWithExponentialBackOff {
-    httpClient.get(pathToUrl(path), authHeader).useSuccessful { it.body.string() }
+    httpClient.get(pathToUrl(path), authHeader) { it.body.string() }
   }
 
   private fun pathToUrl(path: String) = "$serverUrl${path.trimStart('/')}"

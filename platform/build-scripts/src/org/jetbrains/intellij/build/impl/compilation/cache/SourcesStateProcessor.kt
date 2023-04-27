@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
-import com.google.common.hash.Hashing
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
-import java.nio.charset.StandardCharsets
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
+import org.jetbrains.jps.builders.java.ResourcesTargetType
+import org.jetbrains.jps.cache.model.BuildTargetState
+import org.jetbrains.xxh3.Xxh3
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -17,8 +18,6 @@ class SourcesStateProcessor(dataStorageRoot: Path, private val classesOutputDire
     private const val SOURCES_STATE_FILE_NAME = "target_sources_state.json"
     private const val IDENTIFIER = "\$BUILD_DIR\$"
 
-    private val PRODUCTION_TYPES = listOf("java-production", "resources-production")
-    private val TEST_TYPES = listOf("java-test", "resources-test")
     private const val PRODUCTION = "production"
     private const val TEST = "test"
   }
@@ -35,51 +34,67 @@ class SourcesStateProcessor(dataStorageRoot: Path, private val classesOutputDire
   }
 
   private fun getProductionCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>): List<CompilationOutput> {
-    return getCompilationOutputs(PRODUCTION, PRODUCTION_TYPES[0], PRODUCTION_TYPES[1], currentSourcesState)
+    return getCompilationOutputs(
+      // production modules with both classes and resources
+      PRODUCTION,
+      // production modules with classes only
+      JavaModuleBuildTargetType.PRODUCTION,
+      // production modules with resources only
+      ResourcesTargetType.PRODUCTION,
+      currentSourcesState
+    )
   }
 
   private fun getTestsCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>): List<CompilationOutput> {
-    return getCompilationOutputs(TEST, TEST_TYPES[0], TEST_TYPES[1], currentSourcesState)
+    return getCompilationOutputs(
+      // test modules with both classes and resources
+      TEST,
+      // test modules with classes only
+      JavaModuleBuildTargetType.TEST,
+      // test modules with resources only
+      ResourcesTargetType.TEST,
+      currentSourcesState
+    )
   }
 
-  private fun getCompilationOutputs(prefix: String,
-                                    firstUploadParam: String,
-                                    secondUploadParam: String,
+  private fun getCompilationOutputs(bothClassesAndResourcesBuildTargetType: String,
+                                    classesBuildTargetType: JavaModuleBuildTargetType,
+                                    resourcesBuildTargetType: ResourcesTargetType,
                                     currentSourcesState: Map<String, Map<String, BuildTargetState>>): List<CompilationOutput> {
     val root = classesOutputDirectory.toFile()
 
-    val firstParamMap = currentSourcesState[firstUploadParam]!!
-    val secondParamMap = currentSourcesState[secondUploadParam]!!
+    val classesBuildTargetMap = currentSourcesState.getValue(classesBuildTargetType.typeId)
+    val resourcesBuildTargetMap = currentSourcesState.getValue(resourcesBuildTargetType.typeId)
 
-    val firstParamKeys = HashSet<String>(firstParamMap.keys)
-    val secondParamKeys = HashSet<String>(secondParamMap.keys)
-    val intersection = firstParamKeys.intersect(secondParamKeys)
+    val classesBuildTargetIds = HashSet<String>(classesBuildTargetMap.keys)
+    val resourcesBuildTargetIds = HashSet<String>(resourcesBuildTargetMap.keys)
+    val bothClassesAndResourcesBuildTargetIds = classesBuildTargetIds.intersect(resourcesBuildTargetIds)
 
-    val compilationOutputs = ArrayList<CompilationOutput>(firstParamKeys.size + secondParamKeys.size - intersection.size)
+    val compilationOutputs = ArrayList<CompilationOutput>(classesBuildTargetIds.size + resourcesBuildTargetIds.size - bothClassesAndResourcesBuildTargetIds.size)
 
-    intersection.forEach { buildTargetName ->
-      val firstParamState = firstParamMap[buildTargetName]!!
-      val secondParamState = secondParamMap[buildTargetName]!!
-      val outputPath = firstParamState.relativePath.replace(IDENTIFIER, root.absolutePath)
+    bothClassesAndResourcesBuildTargetIds.forEach { buildTargetId ->
+      val classesBuildTargetState = classesBuildTargetMap.getValue(buildTargetId)
+      val resourcesBuildTargetState = resourcesBuildTargetMap.getValue(buildTargetId)
+      val outputPath = classesBuildTargetState.relativePath.replace(IDENTIFIER, root.absolutePath)
 
-      val hash = calculateStringHash(firstParamState.hash + secondParamState.hash)
-      compilationOutputs.add(CompilationOutput(buildTargetName, prefix, hash, outputPath))
+      val hash = calculateStringHash(classesBuildTargetState.hash + resourcesBuildTargetState.hash)
+      compilationOutputs.add(CompilationOutput(buildTargetId, bothClassesAndResourcesBuildTargetType, hash, outputPath))
     }
 
-    firstParamKeys.removeAll(intersection)
-    firstParamKeys.forEach { buildTargetName ->
-      val firstParamState = firstParamMap[buildTargetName]!!
-      val outputPath = firstParamState.relativePath.replace(IDENTIFIER, root.absolutePath)
+    classesBuildTargetIds.removeAll(bothClassesAndResourcesBuildTargetIds)
+    classesBuildTargetIds.forEach { buildTargetId ->
+      val buildTargetState = classesBuildTargetMap.getValue(buildTargetId)
+      val outputPath = buildTargetState.relativePath.replace(IDENTIFIER, root.absolutePath)
 
-      compilationOutputs.add(CompilationOutput(buildTargetName, firstUploadParam, firstParamState.hash, outputPath))
+      compilationOutputs.add(CompilationOutput(buildTargetId, classesBuildTargetType.typeId, buildTargetState.hash, outputPath))
     }
 
-    secondParamKeys.removeAll(intersection)
-    secondParamKeys.forEach { buildTargetName ->
-      val secondParamState = secondParamMap[buildTargetName]!!
-      val outputPath = secondParamState.relativePath.replace(IDENTIFIER, root.absolutePath)
+    resourcesBuildTargetIds.removeAll(bothClassesAndResourcesBuildTargetIds)
+    resourcesBuildTargetIds.forEach { buildTargetId ->
+      val buildTargetState = resourcesBuildTargetMap.getValue(buildTargetId)
+      val outputPath = buildTargetState.relativePath.replace(IDENTIFIER, root.absolutePath)
 
-      compilationOutputs.add(CompilationOutput(buildTargetName, secondUploadParam, secondParamState.hash, outputPath))
+      compilationOutputs.add(CompilationOutput(buildTargetId, resourcesBuildTargetType.typeId, buildTargetState.hash, outputPath))
     }
 
     return compilationOutputs
@@ -88,6 +103,5 @@ class SourcesStateProcessor(dataStorageRoot: Path, private val classesOutputDire
 }
 
 private fun calculateStringHash(content: String): String {
-  val hasher = Hashing.murmur3_128().newHasher()
-  return hasher.putString(content, StandardCharsets.UTF_8).hash().toString()
+  return Xxh3.hash(content).toString()
 }

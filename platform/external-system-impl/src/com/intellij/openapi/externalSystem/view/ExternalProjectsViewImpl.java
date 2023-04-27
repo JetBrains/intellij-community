@@ -104,7 +104,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     Condition<ExternalSystemViewContributor> contributorPredicate =
       c -> ProjectSystemId.IDE.equals(c.getSystemId()) || myExternalSystemId.equals(c.getSystemId());
-    myViewContributors = ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensions(), contributorPredicate);
+    myViewContributors = new ArrayList<>(ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensions(), contributorPredicate));
     ExternalSystemViewContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ExternalSystemViewContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -144,18 +144,16 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     if (ExternalSystemDataKeys.NOTIFICATION_GROUP.is(dataId)) return myNotificationGroup;
 
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)this::getSlowData;
+      final List<ExternalSystemNode> selectedNodes = getSelectedNodes(ExternalSystemNode.class);
+      return (DataProvider)(@NotNull String dataIdParam) -> {
+        if (Location.DATA_KEY.is(dataIdParam)) {
+          return extractLocation(selectedNodes);
+        }
+        return null;
+      };
     }
 
     return super.getData(dataId);
-  }
-
-  @Nullable
-  private Object getSlowData(@NotNull @NonNls String dataId) {
-    if (Location.DATA_KEY.is(dataId)) {
-      return extractLocation();
-    }
-    return null;
   }
 
   @Override
@@ -573,8 +571,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   @Nullable
-  private ExternalSystemTaskLocation extractLocation() {
-    final List<ExternalSystemNode> selectedNodes = getSelectedNodes(ExternalSystemNode.class);
+  private ExternalSystemTaskLocation extractLocation(List<ExternalSystemNode> selectedNodes) {
     if (selectedNodes.isEmpty()) return null;
 
     List<TaskData> tasks = new SmartList<>();

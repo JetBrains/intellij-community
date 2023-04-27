@@ -89,7 +89,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         val libraryScope = LibraryScope(project, libraryInfo.library.getFiles(OrderRootType.CLASSES).toSet())
         return names.any { name ->
             DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-                FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.KEY, name, libraryScope).hasNext()
+                FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.NAME, name, libraryScope).hasNext()
             })
         }
     }
@@ -235,9 +235,9 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
                 val stdLib = moduleSourceInfo?.module?.moduleWithLibrariesScope?.let index@{ scope ->
                     val stdlibManifests = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
                         FileBasedIndex.getInstance().getContainingFiles(
-                            KotlinStdlibIndex.KEY,
-                            KotlinStdlibIndex.KOTLIN_STDLIB_NAME,
-                            scope
+                          KotlinStdlibIndex.NAME,
+                          KotlinStdlibIndex.KOTLIN_STDLIB_NAME,
+                          scope
                         )
                     })
 

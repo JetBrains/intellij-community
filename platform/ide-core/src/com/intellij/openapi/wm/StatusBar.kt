@@ -64,7 +64,7 @@ interface StatusBar : StatusBarInfo {
    *
    * For external usages use [com.intellij.openapi.wm.StatusBarWidgetFactory].
    */
-  @ApiStatus.Internal
+  @Internal
   fun addWidget(widget: StatusBarWidget, parentDisposable: Disposable)
 
   /**
@@ -72,13 +72,13 @@ interface StatusBar : StatusBarInfo {
    *
    * For external usages use [com.intellij.openapi.wm.StatusBarWidgetFactory].
    */
-  @ApiStatus.Internal
+  @Internal
   fun addWidget(widget: StatusBarWidget, anchor: @NonNls String, parentDisposable: Disposable)
 
   /**
    * For external usages use [com.intellij.openapi.wm.StatusBarWidgetFactory].
    */
-  @ApiStatus.Internal
+  @Internal
   fun removeWidget(id: @NonNls String)
 
   fun updateWidget(id: @NonNls String)
@@ -87,8 +87,8 @@ interface StatusBar : StatusBarInfo {
 
   fun fireNotificationPopup(content: JComponent, backgroundColor: Color?)
 
-  @ApiStatus.Internal
-  fun createChild(frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar?
+  @Internal
+  fun createChild(disposable: Disposable, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar?
 
   val component: JComponent?
 
@@ -130,7 +130,7 @@ interface StatusBar : StatusBarInfo {
    * if not `null`, an editor which should be used as the current one
    * by editor-based widgets installed on this status bar, otherwise should be ignored.
    */
-  @get:ApiStatus.Internal
+  @get:Internal
   @get:ApiStatus.Experimental
   val currentEditor: () -> FileEditor?
 }

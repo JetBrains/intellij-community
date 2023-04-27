@@ -163,6 +163,28 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
     }
   }
 
+  public void testReplaceShouldNotSkip() throws FindManager.MalformedReplacementStringException {
+    configureFromText("""
+                        <selection>meteor
+                        meteor
+                        meteor
+                        meteor
+                        meteor</selection>
+                        """);
+    initFind();
+
+    myFindModel.setGlobal(false); // search in selection
+    myFindModel.setStringToFind("meteor");
+    myFindModel.setStringToReplace(".");
+    myFindModel.setReplaceState(true);
+
+
+    myLivePreviewController.performReplace();
+    myLivePreviewController.performReplace();
+    myLivePreviewController.performReplace();
+    checkResults();
+  }
+
   public void testNoPreviewReplacementWithEmptyString() throws FindManager.MalformedReplacementStringException {
     RegistryValue value = Registry.get("ide.find.show.replacement.hint.for.simple.regexp");
     try {

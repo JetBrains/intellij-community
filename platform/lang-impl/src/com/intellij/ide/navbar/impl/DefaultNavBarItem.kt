@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.impl
 
 import com.intellij.icons.AllIcons
@@ -9,8 +9,6 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
-import com.intellij.navigation.NavigationRequest
-import com.intellij.navigation.NavigationService
 import com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.module.Module
@@ -27,12 +25,11 @@ import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationRequests
 import com.intellij.pom.Navigatable
 import com.intellij.problems.WolfTheProblemSolver
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiDirectoryContainer
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
+import com.intellij.psi.*
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.*
@@ -91,7 +88,7 @@ internal class ProjectNavBarItem(data: Project) : DefaultNavBarItem<Project>(dat
   override fun getIcon() = AllIcons.Nodes.Project
 
   override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
-    val problemSolver = WolfTheProblemSolver.getInstance(data)
+    val problemSolver = WolfTheProblemSolver.getInstanceIfCreated(data) ?: return REGULAR_ATTRIBUTES
     val hasProblems = ModuleManager.getInstance(data)
       .modules
       .any(problemSolver::hasProblemFilesBeneath)
@@ -107,7 +104,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
   override fun dereference(): NavBarItem? = if (data.isDisposed) null else this
 
   override fun navigationRequest(): NavigationRequest? {
-    return NavigationService.instance().rawNavigationRequest(object : Navigatable {
+    return NavigationRequests.getInstance().rawNavigationRequest(object : Navigatable {
       override fun navigate(requestFocus: Boolean) {
         val projectView = ProjectView.getInstance(data.project)
         val projectViewPane = projectView.getProjectViewPaneById(projectView.currentViewId)
@@ -129,6 +126,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
     return if (hasProblems) navBarErrorAttributes else REGULAR_ATTRIBUTES
   }
 
+  override fun weight() = 5
 }
 
 internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelExtension?) : DefaultNavBarItem<PsiElement>(
@@ -144,7 +142,7 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
   }
 
   override fun navigationRequest(): NavigationRequest? {
-    return (data as? Navigatable)?.let(NavigationService.instance()::rawNavigationRequest)
+    return (data as? Navigatable)?.let(NavigationRequests.getInstance()::rawNavigationRequest)
   }
 
   override fun getIcon(): Icon? =
@@ -195,6 +193,15 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
     return data !is PsiDirectory && data !is PsiDirectoryContainer
   }
 
+  override fun weight(): Int {
+    return when (data) {
+      is PsiDirectoryContainer -> 4
+      is PsiDirectory -> 4
+      is PsiFile -> 2
+      is PsiNamedElement -> 3
+      else -> Int.MAX_VALUE
+    }
+  }
 }
 
 internal class OrderEntryNavBarItem(data: OrderEntry) : DefaultNavBarItem<OrderEntry>(data) {

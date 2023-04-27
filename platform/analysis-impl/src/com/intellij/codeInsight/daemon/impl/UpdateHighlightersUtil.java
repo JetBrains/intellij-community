@@ -42,7 +42,7 @@ import java.util.*;
  * Must be used inside the highlighting process only (e.g., in your {@link HighlightingPass#applyInformationToEditor()})
  */
 public final class UpdateHighlightersUtil {
-  private static final Comparator<HighlightInfo> BY_START_OFFSET_NO_DUPS = (o1, o2) -> {
+  static final Comparator<HighlightInfo> BY_START_OFFSET_NO_DUPS = (o1, o2) -> {
     int d = o1.getActualStartOffset() - o2.getActualStartOffset();
     if (d != 0) return d;
     d = o1.getActualEndOffset() - o2.getActualEndOffset();
@@ -71,16 +71,17 @@ public final class UpdateHighlightersUtil {
   };
 
   private static boolean isCoveredByOffsets(@NotNull HighlightInfo info, @NotNull HighlightInfo coveredBy) {
-    return coveredBy.startOffset <= info.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
+    return coveredBy.startOffset <= info.startOffset && info.endOffset <= coveredBy.endOffset
+           && info.getGutterIconRenderer() == null;
   }
 
   static void addHighlighterToEditorIncrementally(@NotNull PsiFile file,
                                                   @NotNull Document document,
                                                   @NotNull TextRange restrictRange,
                                                   @NotNull HighlightInfo info,
-                                                  @Nullable EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                                  @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
                                                   int group,
-                                                  @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache) {
+                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = file.getProject();
     if (!HighlightInfoPostFilters.accept(project, info)) {
@@ -104,16 +105,16 @@ public final class UpdateHighlightersUtil {
                                                                 null, info.getActualStartOffset(), info.getActualEndOffset(),
                                                                 otherHighlightInTheWayProcessor);
     if (allIsClear) {
-      createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, ranges2markersCache, severityRegistrar);
+      createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, range2markerCache, severityRegistrar);
 
       clearWhiteSpaceOptimizationFlag(document);
       assertMarkupConsistent(markup, project);
     }
   }
 
-  private static class HighlightInfoPostFilters {
+  static class HighlightInfoPostFilters {
     private final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = new ExtensionPointName<>("com.intellij.highlightInfoPostFilter");
-    private static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
+    static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
       for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {
         if (!filter.accept(info))
           return false;
@@ -122,7 +123,7 @@ public final class UpdateHighlightersUtil {
       return true;
     }
     @NotNull
-    private static List<HighlightInfo> applyPostFilter(@NotNull Project project, @NotNull List<? extends HighlightInfo> highlightInfos) {
+    static List<HighlightInfo> applyPostFilter(@NotNull Project project, @NotNull List<? extends HighlightInfo> highlightInfos) {
       List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
       for (HighlightInfo info : highlightInfos) {
         if (accept(project, info)) {
@@ -193,8 +194,7 @@ public final class UpdateHighlightersUtil {
   // set highlights inside startOffset,endOffset but outside priorityRange
   static void setHighlightersOutsideRange(@NotNull Document document,
                                           @NotNull List<? extends HighlightInfo> infos,
-                                          int startOffset,
-                                          int endOffset,
+                                          @NotNull TextRange restrictedRange,
                                           @NotNull TextRange priorityRange,
                                           int group,
                                           @NotNull HighlightingSession session) {
@@ -204,7 +204,8 @@ public final class UpdateHighlightersUtil {
     List<HighlightInfo> filteredInfos = HighlightInfoPostFilters.applyPostFilter(project, infos);
 
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
-    if (startOffset == 0 && endOffset == document.getTextLength()) {
+
+    if (restrictedRange.getStartOffset() == 0 && restrictedRange.getEndOffset() == document.getTextLength()) {
       codeAnalyzer.cleanFileLevelHighlights(group, psiFile);
     }
 
@@ -221,14 +222,14 @@ public final class UpdateHighlightersUtil {
         RangeHighlighter highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();
-        if (!info.isFromInjection() && hiEnd < document.getTextLength() && (hiEnd != 0 && hiEnd <= startOffset || hiStart >= endOffset)) {
+
+        if (!info.isFromInjection() && hiEnd < document.getTextLength() && !restrictedRange.contains(highlighter) && hiEnd != 0) {
           return true; // injections are oblivious to restricting range
         }
         boolean toRemove = infoSet.contains(info) ||
                            !priorityRange.containsRange(hiStart, hiEnd) &&
                            (hiEnd != document.getTextLength() || priorityRange.getEndOffset() != document.getTextLength());
-        if (toRemove) {
-          infosToRemove.recycleHighlighter(highlighter);
+        if (toRemove && infosToRemove.recycleHighlighter(highlighter)) {
           info.setHighlighter(null);
         }
       }
@@ -236,12 +237,14 @@ public final class UpdateHighlightersUtil {
     };
     DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
 
-    Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
+    Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = proc -> ContainerUtil.process(filteredInfos, proc);
     SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
       if (!atStart) return true;
-      if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
+      if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && !restrictedRange.contains(info)) {
+        return true; // injections are oblivious to restricting range
+      }
 
       if (info.isFileLevelAnnotation()) {
         codeAnalyzer.addFileLevelHighlight(group, info, psiFile);
@@ -254,7 +257,7 @@ public final class UpdateHighlightersUtil {
       if (info.getStartOffset() < priorityRange.getStartOffset() || info.getEndOffset() > priorityRange.getEndOffset()) {
         EditorColorsScheme colorsScheme = session.getColorsScheme();
         createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, infosToRemove,
-                                      ranges2markersCache, severityRegistrar);
+                                      range2markerCache, severityRegistrar);
         changed[0] = true;
       }
       return true;
@@ -284,10 +287,9 @@ public final class UpdateHighlightersUtil {
         RangeHighlighter highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();
-        boolean willBeRemoved = hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()
-                              /*|| range.intersectsStrict(hiStart, hiEnd)*/ || range.containsRange(hiStart, hiEnd) /*|| hiStart <= range.getStartOffset() && hiEnd >= range.getEndOffset()*/;
-        if (willBeRemoved) {
-          infosToRemove.recycleHighlighter(highlighter);
+        boolean willBeRemoved = range.containsRange(hiStart, hiEnd)
+                                || hiEnd == document.getTextLength() && range.getEndOffset() == hiEnd;
+        if (willBeRemoved && infosToRemove.recycleHighlighter(highlighter)) {
           info.setHighlighter(null);
         }
       }
@@ -296,11 +298,11 @@ public final class UpdateHighlightersUtil {
 
     List<HighlightInfo> filteredInfos = HighlightInfoPostFilters.applyPostFilter(project, infos);
     ContainerUtil.quickSort(filteredInfos, BY_START_OFFSET_NO_DUPS);
-    Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
+    Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
-    SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
+    SweepProcessor.sweep(generator, (__, info, atStart, overlappingIntervals) -> {
       if (!atStart) {
         return true;
       }
@@ -309,12 +311,9 @@ public final class UpdateHighlightersUtil {
         changed[0] = true;
         return true;
       }
-      if (isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
-        return true;
-      }
-      if (info.getStartOffset() >= range.getStartOffset() && info.getEndOffset() <= range.getEndOffset()) {
-        EditorColorsScheme colorsScheme = session.getColorsScheme();
-        createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, markup, infosToRemove, ranges2markersCache, severityRegistrar);
+
+      if (range.contains(info) && !isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
+        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, infosToRemove, range2markerCache, severityRegistrar);
         changed[0] = true;
       }
       return true;
@@ -363,9 +362,9 @@ public final class UpdateHighlightersUtil {
       info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY || info.getSeverity() == HighlightSeverity.ERROR);
   }
 
-  private static boolean isWarningCoveredByError(@NotNull HighlightInfo info,
-                                                 @NotNull SeverityRegistrar severityRegistrar,
-                                                 @NotNull Collection<? extends HighlightInfo> overlappingIntervals) {
+  static boolean isWarningCoveredByError(@NotNull HighlightInfo info,
+                                         @NotNull SeverityRegistrar severityRegistrar,
+                                         @NotNull Collection<? extends HighlightInfo> overlappingIntervals) {
     if (!isSevere(info, severityRegistrar)) {
       for (HighlightInfo overlapping : overlappingIntervals) {
         if (isCovered(info, severityRegistrar, overlapping)) {
@@ -376,25 +375,25 @@ public final class UpdateHighlightersUtil {
     return false;
   }
 
-  private static boolean isCovered(@NotNull HighlightInfo warning, @NotNull SeverityRegistrar severityRegistrar, @NotNull HighlightInfo candidate) {
+  static boolean isCovered(@NotNull HighlightInfo warning, @NotNull SeverityRegistrar severityRegistrar, @NotNull HighlightInfo candidate) {
     if (!isCoveredByOffsets(warning, candidate)) return false;
     if (candidate.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY) return false; // syntax should not interfere with warnings
     return isSevere(candidate, severityRegistrar);
   }
 
-  private static boolean isSevere(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
+  static boolean isSevere(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
     HighlightSeverity severity = info.getSeverity();
     return severityRegistrar.compare(HighlightSeverity.ERROR, severity) <= 0 || severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY;
   }
 
-  private static void createOrReuseHighlighterFor(@NotNull HighlightInfo info,
+  static void createOrReuseHighlighterFor(@NotNull HighlightInfo info,
                                                   @Nullable EditorColorsScheme colorsScheme, // if null global scheme will be used
                                                   @NotNull Document document,
                                                   int group,
                                                   @NotNull PsiFile psiFile,
                                                   @NotNull MarkupModelEx markup,
                                                   @Nullable HighlightersRecycler infosToRemove,
-                                                  @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache,
+                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                                   @NotNull SeverityRegistrar severityRegistrar) {
     int infoStartOffset = info.startOffset;
     int infoEndOffset = info.endOffset;
@@ -439,8 +438,8 @@ public final class UpdateHighlightersUtil {
       GutterMark renderer = info.getGutterIconRenderer();
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
-      ranges2markersCache.put(finalInfoRange, finalHighlighter);
-      info.updateQuickFixFields(document, ranges2markersCache, finalInfoRange);
+      range2markerCache.put(finalInfoRange, finalHighlighter);
+      info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
     RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
@@ -476,7 +475,7 @@ public final class UpdateHighlightersUtil {
     }
   }
 
-  private static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
+  static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
     int hardCodedLayer = InternalLayerSuppliers.getLayerFromSuppliers(info);
     if (hardCodedLayer > 0) {
       return hardCodedLayer;
@@ -517,7 +516,7 @@ public final class UpdateHighlightersUtil {
   private static void disableWhiteSpaceOptimization(@NotNull Document document) {
     document.putUserData(TYPING_INSIDE_HIGHLIGHTER_OCCURRED, Boolean.TRUE);
   }
-  private static void clearWhiteSpaceOptimizationFlag(@NotNull Document document) {
+  static void clearWhiteSpaceOptimizationFlag(@NotNull Document document) {
     document.putUserData(TYPING_INSIDE_HIGHLIGHTER_OCCURRED, null);
   }
 
@@ -567,7 +566,7 @@ public final class UpdateHighlightersUtil {
     }
   }
 
-  private static void assertMarkupConsistent(@NotNull MarkupModel markup, @NotNull Project project) {
+  static void assertMarkupConsistent(@NotNull MarkupModel markup, @NotNull Project project) {
     if (!RedBlackTree.VERIFY) {
       return;
     }
@@ -608,4 +607,5 @@ public final class UpdateHighlightersUtil {
       }
     }
   }
+
 }

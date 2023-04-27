@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.serialization.ObjectSerializer
+import com.intellij.util.ReflectionUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.BDDAssertions.then
@@ -57,7 +58,7 @@ class DataNodeTest {
 
     val invocationHandler = InvocationHandler { _, _, _ -> 0 }
 
-    val proxyInstance = Proxy.newProxyInstance(classLoader, arrayOf(interfaceClass), invocationHandler)
+    val proxyInstance = ReflectionUtil.proxy(interfaceClass, invocationHandler)
     val deserialized = wrapAndDeserialize(proxyInstance, URLClassLoader(arrayOf(libUrl)))
     assertThat(deserialized.data.javaClass.interfaces)
       .extracting("name")

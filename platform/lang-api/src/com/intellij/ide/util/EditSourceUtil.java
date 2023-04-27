@@ -88,4 +88,12 @@ public final class EditSourceUtil {
     }
     return null;
   }
+
+  public static boolean navigateToPsiElement(@NotNull PsiElement element) {
+    Navigatable descriptor = getDescriptor(element);
+    if (descriptor != null && descriptor.canNavigate()) {
+      descriptor.navigate(true);
+    }
+    return true;
+  }
 }

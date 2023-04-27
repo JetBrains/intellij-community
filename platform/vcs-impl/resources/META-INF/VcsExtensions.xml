@@ -1,3 +1,4 @@
+<!--suppress PluginXmlDynamicPlugin -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
@@ -47,6 +48,9 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl"/>
+    <projectService serviceInterface="com.intellij.vcs.console.VcsConsoleTabService"
+                    serviceImplementation="com.intellij.vcs.console.VcsConsoleTabServiceImpl"
+                    headlessImplementation="com.intellij.vcs.console.MockVcsConsoleTabService"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsInitialization"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.impl.VcsInitialization$StartUpActivity"/>
 

@@ -3,7 +3,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.codeInsight.navigation.GotoTargetHandler;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.ide.util.PsiClassRenderingInfo;
 import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.ide.util.PsiMethodRenderingInfo;
@@ -29,11 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 public class MarkerType {
   private final GutterIconNavigationHandler<PsiElement> handler;
@@ -160,22 +159,25 @@ public class MarkerType {
   }
 
   private static void navigateToOverridingMethod(MouseEvent e, @NotNull PsiMethod method, boolean acceptSelf) {
-    PsiMethod[] superMethods = composeSuperMethods(method, acceptSelf);
-    if (superMethods.length == 0) return;
-    boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(superMethods);
-    PsiElementListNavigator.openTargets(e, superMethods,
-                                        DaemonBundle.message("navigation.title.super.method", method.getName()),
-                                        DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
-                                        new MethodCellRenderer(showMethodNames));
+    navigate(e, method, () -> Arrays.asList(composeSuperMethods(method, acceptSelf)));
   }
 
   private static void navigateToSiblingOverridingMethod(MouseEvent e, @NotNull PsiMethod method) {
     PsiMethod superMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
     if (superMethod == null) return;
-    PsiElementListNavigator.openTargets(e, new PsiMethod[]{superMethod},
-                                        DaemonBundle.message("navigation.title.super.method", method.getName()),
-                                        DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
-                                        new MethodCellRenderer(false));
+    navigate(e, method, () -> Collections.singletonList(method));
+  }
+
+  private static void navigate(MouseEvent e, @NotNull PsiMethod method, Supplier<Collection<PsiMethod>> supplier) {
+    new PsiTargetNavigator<>(supplier)
+      .tabTitle(DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()))
+      .elementsConsumer((methods, navigator) -> {
+        if (!methods.isEmpty()) {
+          boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(methods.toArray(PsiMethod.EMPTY_ARRAY));
+          navigator.presentationProvider(element -> GotoTargetHandler.computePresentation(element, showMethodNames));
+        }
+      })
+      .navigate(e, DaemonBundle.message("navigation.title.super.method", method.getName()), method.getProject());
   }
 
   private static PsiMethod @NotNull [] composeSuperMethods(@NotNull PsiMethod method, boolean acceptSelf) {

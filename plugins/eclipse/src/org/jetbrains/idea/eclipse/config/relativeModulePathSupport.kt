@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config
 
-import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsModuleListSerializer
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -18,7 +18,7 @@ class ModuleRelativePathResolver(private val moduleListSerializer: JpsModuleList
                                  private val virtualFileManager: VirtualFileUrlManager) {
   private val moduleFileUrls by lazy {
     (moduleListSerializer?.loadFileList(reader, virtualFileManager) ?: emptyList()).associateBy(
-      { getModuleNameByFilePath(JpsPathUtil.urlToPath(it.first.url)) },
+      { ModulePath.getModuleNameByFilePath(JpsPathUtil.urlToPath(it.first.url)) },
       { it.first }
     )
   }

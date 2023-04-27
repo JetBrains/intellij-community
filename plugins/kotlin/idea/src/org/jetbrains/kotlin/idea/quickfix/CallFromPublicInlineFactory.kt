@@ -25,14 +25,14 @@ object CallFromPublicInlineFactory : KotlinIntentionActionsFactory() {
                 fixes.add(ChangeVisibilityFix(containingDeclaration, containingDeclarationName, declarationVisibility))
                 fixes.add(ChangeVisibilityFix(declaration, declarationName, KtTokens.PUBLIC_KEYWORD))
                 if (!containingDeclaration.hasReifiedTypeParameter()) {
-                    fixes.add(RemoveModifierFix(containingDeclaration, KtTokens.INLINE_KEYWORD, isRedundant = false))
+                    fixes.add(RemoveModifierFixBase(containingDeclaration, KtTokens.INLINE_KEYWORD, isRedundant = false))
                 }
             }
             Errors.SUPER_CALL_FROM_PUBLIC_INLINE.warningFactory, Errors.SUPER_CALL_FROM_PUBLIC_INLINE.errorFactory -> {
                 fixes.add(ChangeVisibilityFix(containingDeclaration, containingDeclarationName, KtTokens.INTERNAL_KEYWORD))
                 fixes.add(ChangeVisibilityFix(containingDeclaration, containingDeclarationName, KtTokens.PRIVATE_KEYWORD))
                 if (!containingDeclaration.hasReifiedTypeParameter()) {
-                    fixes.add(RemoveModifierFix(containingDeclaration, KtTokens.INLINE_KEYWORD, isRedundant = false))
+                    fixes.add(RemoveModifierFixBase(containingDeclaration, KtTokens.INLINE_KEYWORD, isRedundant = false))
                 }
             }
         }
@@ -49,7 +49,7 @@ object CallFromPublicInlineFactory : KotlinIntentionActionsFactory() {
     }
 
     private fun KtExpression.referenceDeclaration(): Triple<KtDeclaration, String, KtModifierKeywordToken>? {
-        val declaration = safeAs<KtNameReferenceExpression>()?.mainReference?.resolve().safeAs<KtDeclaration>() ?: return null
+        val declaration = mainReference?.resolve().safeAs<KtDeclaration>() ?: return null
         val name = declaration.name ?: return null
         val visibility = declaration.visibilityModifierType() ?: return null
         return Triple(declaration, name, visibility)

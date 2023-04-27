@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.psi.stubs.*;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.fileClasses.JvmFileClassInfo;
@@ -34,20 +33,20 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexFile(@NotNull KotlinFileStub stub, @NotNull IndexSink sink) {
         FqName packageFqName = stub.getPackageFqName();
 
-        sink.occurrence(KotlinExactPackagesIndex.INSTANCE.getKey(), packageFqName.asString());
+        sink.occurrence(KotlinExactPackagesIndex.NAME, packageFqName.asString());
 
         if (stub.isScript()) return;
 
         FqName facadeFqName = ((KotlinFileStubImpl) stub).getFacadeFqName();
         if (facadeFqName != null) {
-            sink.occurrence(KotlinFileFacadeFqNameIndex.INSTANCE.getKey(), facadeFqName.asString());
-            sink.occurrence(KotlinFileFacadeShortNameIndex.INSTANCE.getKey(), facadeFqName.shortName().asString());
-            sink.occurrence(KotlinFileFacadeClassByPackageIndex.INSTANCE.getKey(), packageFqName.asString());
+            sink.occurrence(KotlinFileFacadeFqNameIndex.Helper.getIndexKey(), facadeFqName.asString());
+            sink.occurrence(KotlinFileFacadeShortNameIndex.Helper.getIndexKey(), facadeFqName.shortName().asString());
+            sink.occurrence(KotlinFileFacadeClassByPackageIndex.Helper.getIndexKey(), packageFqName.asString());
         }
 
         FqName partFqName = ((KotlinFileStubImpl) stub).getPartFqName();
         if (partFqName != null) {
-            sink.occurrence(KotlinFilePartClassIndex.INSTANCE.getKey(), partFqName.asString());
+            sink.occurrence(KotlinFilePartClassIndex.Helper.getIndexKey(), partFqName.asString());
         }
 
         List<String> partNames = ((KotlinFileStubImpl) stub).getFacadePartSimpleNames();
@@ -57,7 +56,7 @@ public class IdeStubIndexService extends StubIndexService {
                     continue;
                 }
                 FqName multiFileClassPartFqName = packageFqName.child(Name.identifier(partName));
-                sink.occurrence(KotlinMultiFileClassPartIndex.INSTANCE.getKey(), multiFileClassPartFqName.asString());
+                sink.occurrence(KotlinMultiFileClassPartIndex.Helper.getIndexKey(), multiFileClassPartFqName.asString());
             }
         }
     }
@@ -67,7 +66,7 @@ public class IdeStubIndexService extends StubIndexService {
         processNames(sink, stub.getName(), stub.getFqName(), stub.isTopLevel());
 
         if (stub.isInterface()) {
-            sink.occurrence(KotlinClassShortNameIndex.INSTANCE.getKey(), JvmAbi.DEFAULT_IMPLS_CLASS_NAME);
+            sink.occurrence(KotlinClassShortNameIndex.Helper.getIndexKey(), JvmAbi.DEFAULT_IMPLS_CLASS_NAME);
         }
 
         indexSuperNames(stub, sink);
@@ -100,7 +99,7 @@ public class IdeStubIndexService extends StubIndexService {
         }
 
         if (prime) {
-            sink.occurrence(KotlinPrimeSymbolNameIndex.INSTANCE.getKey(), name);
+            sink.occurrence(KotlinPrimeSymbolNameIndex.Helper.getIndexKey(), name);
         }
     }
 
@@ -114,7 +113,7 @@ public class IdeStubIndexService extends StubIndexService {
         indexPrime(stub, sink);
 
         if (shortName != null && !stub.isObjectLiteral() && !stub.getSuperNames().isEmpty()) {
-            sink.occurrence(KotlinSubclassObjectNameIndex.INSTANCE.getKey(), shortName);
+            sink.occurrence(KotlinSubclassObjectNameIndex.Helper.getIndexKey(), shortName);
         }
     }
 
@@ -124,21 +123,21 @@ public class IdeStubIndexService extends StubIndexService {
             FqName fqName,
             boolean level) {
         if (shortName != null) {
-            sink.occurrence(KotlinClassShortNameIndex.INSTANCE.getKey(), shortName);
+            sink.occurrence(KotlinClassShortNameIndex.Helper.getIndexKey(), shortName);
         }
 
         if (fqName != null) {
-            sink.occurrence(KotlinFullClassNameIndex.INSTANCE.getKey(), fqName.asString());
+            sink.occurrence(KotlinFullClassNameIndex.Helper.getIndexKey(), fqName.asString());
 
             if (level) {
-                sink.occurrence(KotlinTopLevelClassByPackageIndex.INSTANCE.getKey(), fqName.parent().asString());
+                sink.occurrence(KotlinTopLevelClassByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
             }
         }
     }
 
     private static void indexSuperNames(KotlinClassOrObjectStub<? extends KtClassOrObject> stub, IndexSink sink) {
         for (String superName : stub.getSuperNames()) {
-            sink.occurrence(KotlinSuperClassIndex.INSTANCE.getKey(), superName);
+            sink.occurrence(KotlinSuperClassIndex.Helper.getIndexKey(), superName);
         }
 
         if (!(stub instanceof KotlinClassStub)) {
@@ -149,10 +148,10 @@ public class IdeStubIndexService extends StubIndexService {
         if (modifierListStub == null) return;
 
         if (modifierListStub.hasModifier(KtTokens.ENUM_KEYWORD)) {
-            sink.occurrence(KotlinSuperClassIndex.INSTANCE.getKey(), Enum.class.getSimpleName());
+            sink.occurrence(KotlinSuperClassIndex.Helper.getIndexKey(), Enum.class.getSimpleName());
         }
         if (modifierListStub.hasModifier(KtTokens.ANNOTATION_KEYWORD)) {
-            sink.occurrence(KotlinSuperClassIndex.INSTANCE.getKey(), Annotation.class.getSimpleName());
+            sink.occurrence(KotlinSuperClassIndex.Helper.getIndexKey(), Annotation.class.getSimpleName());
         }
     }
 
@@ -165,7 +164,7 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexFunction(@NotNull KotlinFunctionStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
         if (name != null) {
-            sink.occurrence(KotlinFunctionShortNameIndex.INSTANCE.getKey(), name);
+            sink.occurrence(KotlinFunctionShortNameIndex.Helper.getIndexKey(), name);
 
             if (IndexUtilsKt.isDeclaredInObject(stub)) {
                 IndexUtilsKt.indexExtensionInObject(stub, sink);
@@ -173,11 +172,11 @@ public class IdeStubIndexService extends StubIndexService {
 
             KtTypeReference typeReference = stub.getPsi().getTypeReference();
             if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
-                sink.occurrence(KotlinProbablyNothingFunctionShortNameIndex.INSTANCE.getKey(), name);
+                sink.occurrence(KotlinProbablyNothingFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
             if (stub.mayHaveContract()) {
-                sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.INSTANCE.getKey(), name);
+                sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
             indexPrime(stub, sink);
@@ -187,8 +186,8 @@ public class IdeStubIndexService extends StubIndexService {
             // can have special fq name in case of syntactically incorrect function with no name
             FqName fqName = stub.getFqName();
             if (fqName != null) {
-                sink.occurrence(KotlinTopLevelFunctionFqnNameIndex.INSTANCE.getKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelFunctionByPackageIndex.INSTANCE.getKey(), fqName.parent().asString());
+                sink.occurrence(KotlinTopLevelFunctionFqnNameIndex.Helper.getIndexKey(), fqName.asString());
+                sink.occurrence(KotlinTopLevelFunctionByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }
         }
@@ -200,7 +199,7 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexTypeAlias(@NotNull KotlinTypeAliasStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
         if (name != null) {
-            sink.occurrence(KotlinTypeAliasShortNameIndex.INSTANCE.getKey(), name);
+            sink.occurrence(KotlinTypeAliasShortNameIndex.Helper.getIndexKey(), name);
             indexPrime(stub, sink);
         }
 
@@ -209,14 +208,14 @@ public class IdeStubIndexService extends StubIndexService {
         FqName fqName = stub.getFqName();
         if (fqName != null) {
             if (stub.isTopLevel()) {
-                sink.occurrence(KotlinTopLevelTypeAliasFqNameIndex.INSTANCE.getKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelTypeAliasByPackageIndex.INSTANCE.getKey(), fqName.parent().asString());
+                sink.occurrence(KotlinTopLevelTypeAliasFqNameIndex.Helper.getIndexKey(), fqName.asString());
+                sink.occurrence(KotlinTopLevelTypeAliasByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
             }
         }
 
         ClassId classId = stub.getClassId();
         if (classId != null && !stub.isTopLevel()) {
-            sink.occurrence(KotlinInnerTypeAliasClassIdIndex.INSTANCE.getKey(), classId.asString());
+            sink.occurrence(KotlinInnerTypeAliasClassIdIndex.Helper.getIndexKey(), classId.asString());
         }
     }
 
@@ -224,7 +223,7 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexProperty(@NotNull KotlinPropertyStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
         if (name != null) {
-            sink.occurrence(KotlinPropertyShortNameIndex.INSTANCE.getKey(), name);
+            sink.occurrence(KotlinPropertyShortNameIndex.Helper.getIndexKey(), name);
 
             if (IndexUtilsKt.isDeclaredInObject(stub)) {
                 IndexUtilsKt.indexExtensionInObject(stub, sink);
@@ -232,7 +231,7 @@ public class IdeStubIndexService extends StubIndexService {
 
             KtTypeReference typeReference = stub.getPsi().getTypeReference();
             if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
-                sink.occurrence(KotlinProbablyNothingPropertyShortNameIndex.INSTANCE.getKey(), name);
+                sink.occurrence(KotlinProbablyNothingPropertyShortNameIndex.Helper.getIndexKey(), name);
             }
             indexPrime(stub, sink);
         }
@@ -241,8 +240,8 @@ public class IdeStubIndexService extends StubIndexService {
             FqName fqName = stub.getFqName();
             // can have special fq name in case of syntactically incorrect property with no name
             if (fqName != null) {
-                sink.occurrence(KotlinTopLevelPropertyFqnNameIndex.INSTANCE.getKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelPropertyByPackageIndex.INSTANCE.getKey(), fqName.parent().asString());
+                sink.occurrence(KotlinTopLevelPropertyFqnNameIndex.Helper.getIndexKey(), fqName.asString());
+                sink.occurrence(KotlinTopLevelPropertyByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }
         }
@@ -254,7 +253,7 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexParameter(@NotNull KotlinParameterStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
         if (name != null && stub.hasValOrVar()) {
-            sink.occurrence(KotlinPropertyShortNameIndex.INSTANCE.getKey(), name);
+            sink.occurrence(KotlinPropertyShortNameIndex.Helper.getIndexKey(), name);
         }
     }
 
@@ -264,7 +263,7 @@ public class IdeStubIndexService extends StubIndexService {
         if (name == null) {
             return;
         }
-        sink.occurrence(KotlinAnnotationsIndex.INSTANCE.getKey(), name);
+        sink.occurrence(KotlinAnnotationsIndex.Helper.getIndexKey(), name);
 
         KotlinFileStub fileStub = KotlinStubUtils.getContainingKotlinFileStub(stub);
         if (fileStub != null) {
@@ -272,7 +271,7 @@ public class IdeStubIndexService extends StubIndexService {
             for (KotlinImportDirectiveStub importStub : aliasImportStubs) {
                 FqName importedFqName = importStub.getImportedFqName();
                 if (importedFqName != null) {
-                    sink.occurrence(KotlinAnnotationsIndex.INSTANCE.getKey(), importedFqName.shortName().asString());
+                    sink.occurrence(KotlinAnnotationsIndex.Helper.getIndexKey(), importedFqName.shortName().asString());
                 }
             }
         }
@@ -282,7 +281,7 @@ public class IdeStubIndexService extends StubIndexService {
 
     @Override
     public void indexScript(@NotNull KotlinScriptStub stub, @NotNull IndexSink sink) {
-        sink.occurrence(KotlinScriptFqnIndex.INSTANCE.getKey(), stub.getFqName().asString());
+        sink.occurrence(KotlinScriptFqnIndex.Helper.getIndexKey(), stub.getFqName().asString());
     }
 
     @NotNull

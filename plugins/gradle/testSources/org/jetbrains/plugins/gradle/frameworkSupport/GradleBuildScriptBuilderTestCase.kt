@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.gradle.frameworkSupport
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.*
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.buildScript
 import org.junit.jupiter.api.Assertions.assertEquals
 
 abstract class GradleBuildScriptBuilderTestCase {
@@ -13,10 +14,8 @@ abstract class GradleBuildScriptBuilderTestCase {
   ) {
     for ((gradleVersion, expectedScripts) in cases) {
       val (expectedGroovyScript, expectedKotlinScript) = expectedScripts
-      val actualGroovyScript = GroovyDslGradleBuildScriptBuilder.create(gradleVersion).apply(configure).generate()
-      val actualKotlinScript = KotlinDslGradleBuildScriptBuilder.create(gradleVersion).apply(configure).generate()
-      assertEquals(expectedGroovyScript, actualGroovyScript) { "Incorrect Groovy Gradle script for $gradleVersion" }
-      assertEquals(expectedKotlinScript, actualKotlinScript) { "Incorrect Kotlin Gradle script for $gradleVersion" }
+      assertEquals(expectedGroovyScript, buildScript(gradleVersion, useKotlinDsl = false, configure))
+      assertEquals(expectedKotlinScript, buildScript(gradleVersion, useKotlinDsl = true, configure))
     }
   }
 

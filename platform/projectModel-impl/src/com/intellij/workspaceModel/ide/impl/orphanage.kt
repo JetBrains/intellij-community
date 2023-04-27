@@ -5,9 +5,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspaceModel.jps.OrphanageWorkerEntitySource
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
-import com.intellij.workspaceModel.ide.OrphanageWorkerEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.workspaceModel
 import com.intellij.workspaceModel.storage.*
@@ -17,7 +17,9 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.system.measureTimeMillis
 
 class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
-  override val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
+  private val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
+  override val currentSnapshot: EntityStorageSnapshot
+    get() = entityStorage.current
 
   @RequiresWriteLock
   override fun update(updater: (MutableEntityStorage) -> Unit) {
@@ -35,7 +37,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
     val newStorage: EntityStorageSnapshot = builder.toSnapshot()
     entityStorage.replace(newStorage, emptyMap(), {}, {})
 
-    log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size} modules added")
+    log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size ?: 0} modules added")
   }
 
   private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
@@ -84,7 +86,7 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
         .filterIsInstance<EntityChange.Added<ModuleEntity>>()
         .map { it.entity }
 
-      val orphanage = EntitiesOrphanage.getInstance(project).entityStorage.pointer.storage
+      val orphanage = EntitiesOrphanage.getInstance(project).currentSnapshot
       val orphanModules = changedModules.mapNotNull {
         orphanage.resolve(it.symbolicId)?.let { om -> om to it }
       }

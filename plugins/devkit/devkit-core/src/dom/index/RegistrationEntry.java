@@ -1,6 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
+import com.intellij.util.xml.DomElement;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Component;
+import org.jetbrains.idea.devkit.dom.Listeners;
+
 class RegistrationEntry {
 
   private final RegistrationType myRegistrationType;
@@ -41,28 +46,56 @@ class RegistrationEntry {
 
   // update IdeaPluginRegistrationIndex.INDEX_VERSION
   enum RegistrationType {
-    ACTION(true),
+    ACTION(true, RegistrationDomType.ACTION_OR_GROUP),
 
-    APPLICATION_COMPONENT(true),
-    PROJECT_COMPONENT(true),
-    MODULE_COMPONENT(true),
-    COMPONENT_INTERFACE(true),
+    APPLICATION_COMPONENT(true, RegistrationDomType.COMPONENT),
+    PROJECT_COMPONENT(true, RegistrationDomType.COMPONENT),
+    MODULE_COMPONENT(true, RegistrationDomType.COMPONENT),
+    COMPONENT_INTERFACE(true, RegistrationDomType.COMPONENT),
 
-    ACTION_ID(false),
-    ACTION_GROUP_ID(false),
+    ACTION_ID(false, RegistrationDomType.ACTION_OR_GROUP),
+    ACTION_GROUP_ID(false, RegistrationDomType.ACTION_OR_GROUP),
 
-    APPLICATION_LISTENER(true),
-    PROJECT_LISTENER(true),
-    LISTENER_TOPIC(true);
+    APPLICATION_LISTENER(true, RegistrationDomType.LISTENER),
+    PROJECT_LISTENER(true, RegistrationDomType.LISTENER),
+    LISTENER_TOPIC(true, RegistrationDomType.LISTENER);
 
     private final boolean myIsClass;
+    private final RegistrationDomType myRegistrationDomType;
 
-    RegistrationType(boolean isClass) {
+    RegistrationType(boolean isClass, RegistrationDomType registrationDomType) {
       myIsClass = isClass;
+      myRegistrationDomType = registrationDomType;
     }
 
     boolean isClass() {
       return myIsClass;
+    }
+
+    RegistrationDomType getRegistrationDomType() {
+      return myRegistrationDomType;
+    }
+  }
+
+  enum RegistrationDomType {
+    ACTION_OR_GROUP(ActionOrGroup.class, false),
+    COMPONENT(Component.class, true),
+    LISTENER(Listeners.Listener.class, true);
+
+    private final Class<? extends DomElement> myDomClass;
+    private final boolean myUseParentDom;
+
+    RegistrationDomType(Class<? extends DomElement> domClazz, boolean useParentDom) {
+      myDomClass = domClazz;
+      myUseParentDom = useParentDom;
+    }
+
+    Class<? extends DomElement> getDomClass() {
+      return myDomClass;
+    }
+
+    boolean isUseParentDom() {
+      return myUseParentDom;
     }
   }
 }

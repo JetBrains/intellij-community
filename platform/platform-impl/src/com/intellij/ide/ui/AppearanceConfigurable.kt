@@ -10,8 +10,11 @@ import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -166,15 +169,27 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           var resetZoom: Cell<ActionLink>? = null
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
-          comboBox(model, SimpleListCellRenderer.create("") { it })
+          val zoomComboBox = comboBox(model, SimpleListCellRenderer.create("") { it })
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
+                logIdeZoomChanged(scale, false)
                 resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
                 settings.ideScale = scale
-                settings.fireUISettingsChanged()
+                invokeLater {
+                  // Invoke later to avoid NPE in JComboBox.repaint()
+                  settings.fireUISettingsChanged()
+                }
               }
             }.gap(RightGap.SMALL)
+
+          val zoomInString = KeymapUtil.getShortcutTextOrNull("ZoomInIdeAction")
+          val zoomOutString = KeymapUtil.getShortcutTextOrNull("ZoomOutIdeAction")
+          val resetScaleString = KeymapUtil.getShortcutTextOrNull("ResetIdeScaleAction")
+
+          if (zoomInString != null && zoomOutString != null && resetScaleString != null) {
+            zoomComboBox.comment(message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString))
+          }
 
           resetZoom = link(message("ide.scale.reset.link")) {
             model.selectedItem = defaultScale.percentStringValue
@@ -189,6 +204,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .gap(RightGap.SMALL)
           .bindSelected(settings::overrideLafFonts) {
             settings.overrideLafFonts = it
+            if (!it) {
+              getDefaultFont().let { defaultFont ->
+                settings.fontFace = defaultFont.family
+                settings.fontSize = defaultFont.size
+              }
+            }
           }
           .onChanged { checkbox ->
             if (!checkbox.isSelected) resetCustomFont?.invoke()
@@ -263,7 +284,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             }
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
-                .applyToComponent { isSelected = colorBlindnessProperty.get() != null }
+                .selected(colorBlindnessProperty.get() != null)
               comboBox(supportedValues)
                 .enabledIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
@@ -449,6 +470,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               if (IdeScaleTransformer.Settings.validatePresentationModePercentScaleInput(it.item) != null) return@onChanged
 
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, true)?.let { scale ->
+                logIdeZoomChanged(scale, true)
                 settings.presentationModeIdeScale = scale
                 if (settings.presentationMode) {
                   settings.fireUISettingsChanged()
@@ -531,4 +553,16 @@ private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleL
 
     text = value.presentableName
   }
+}
+
+private fun logIdeZoomChanged(value: Float, isPresentation: Boolean) {
+  val oldScale = if (isPresentation) settings.presentationModeIdeScale else settings.ideScale
+
+  IdeZoomChanged.log(
+    IdeZoomEventFields.zoomMode.with(if (value.percentValue > oldScale.percentValue) IdeZoomEventFields.ZoomMode.ZOOM_IN
+                                     else IdeZoomEventFields.ZoomMode.ZOOM_OUT),
+    IdeZoomEventFields.place.with(IdeZoomEventFields.Place.SETTINGS),
+    IdeZoomEventFields.zoomScalePercent.with(value.percentValue),
+    IdeZoomEventFields.presentationMode.with(isPresentation)
+  )
 }

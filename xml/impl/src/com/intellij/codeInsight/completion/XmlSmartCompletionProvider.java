@@ -29,8 +29,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlSmartCompletionProvider {
-
+final class XmlSmartCompletionProvider {
   public void complete(CompletionParameters parameters, final CompletionResultSet result, PsiElement element) {
     if (!XmlCompletionContributor.isXmlNameCompletion(parameters)) {
       return;
@@ -76,5 +75,4 @@ public class XmlSmartCompletionProvider {
     }
     return builder;
   }
-
 }

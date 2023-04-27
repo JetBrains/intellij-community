@@ -1,5 +1,6 @@
 package com.intellij.cce.interpreter
 
+import com.intellij.cce.actions.TextRange
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.TokenProperties
@@ -19,5 +20,5 @@ interface CompletionInvoker {
                          nodeProperties: TokenProperties,
                          offset: Int): Session
 
-  fun emulateCompletionGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session
+  fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<TextRange>, offset: Int): Session
 }

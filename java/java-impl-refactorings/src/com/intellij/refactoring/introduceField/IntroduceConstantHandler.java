@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -161,9 +161,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
         (expr == null || expr.isPhysical()) && activeIntroducer == null) {
       myInplaceIntroduceConstantPopup =
         new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurrences,
-                                          typeSelectorManager,
-                                          anchorElement, anchorElementIfAll,
-                                          expr != null ? createOccurrenceManager(expr, parentClass) : null);
+                                          typeSelectorManager, anchorElement, anchorElementIfAll);
       if (myInplaceIntroduceConstantPopup.startInplaceIntroduceTemplate()) {
         return null;
       }
@@ -259,7 +257,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
   }
 
   @Override
-  protected boolean validClass(PsiClass parentClass, Editor editor) {
+  protected boolean validClass(PsiClass parentClass, PsiExpression selectedExpr, Editor editor) {
     return true;
   }
 

@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -10,10 +9,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPresele
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -129,9 +127,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       else {
         title = JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.field");
       }
-      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
-                                        title,
-                                        new PsiElementProcessor<>() {
+      new PsiTargetNavigator<>(classes.toArray(PsiClass.EMPTY_ARRAY)).selection(selection).createPopup(project,
+                                                title,
+                                                new PsiElementProcessor<>() {
                                           @Override
                                           public boolean execute(@NotNull PsiClass aClass) {
                                             AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, myParentClass);
@@ -139,7 +137,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                             convertExpressionToField(selectedExpr, editor, file, project, tempType);
                                             return false;
                                           }
-                                        }, selection).showInBestPositionFor(editor);
+                                        }).showInBestPositionFor(editor);
     }
     return true;
   }
@@ -167,7 +165,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
     }
 
-    if (!validClass(myParentClass, editor)) {
+    if (!validClass(myParentClass, selectedExpr, editor)) {
       return true;
     }
 
@@ -211,9 +209,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
 
     final Runnable runnable =
-      new ConvertToFieldRunnable(settings.getSelectedExpr(), settings, type, settings.getOccurrences(), occurrenceManager,
-                                 anchorStatementIfAll, tempAnchorElement, editor,
-                                 myParentClass);
+      new ConvertToFieldRunnable(settings.getSelectedExpr(), settings, type, settings.getOccurrences(),
+                                 anchorStatementIfAll, tempAnchorElement, editor, myParentClass);
 
     if (IntentionPreviewUtils.isPreviewElement(myParentClass)) {
       runnable.run();
@@ -264,7 +261,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return myParentClass;
   }
 
-  protected abstract boolean validClass(PsiClass parentClass, Editor editor);
+  protected abstract boolean validClass(PsiClass parentClass, PsiExpression selectedExpr, Editor editor);
 
   private static PsiElement getNormalizedAnchor(PsiElement anchorElement) {
     PsiElement child = anchorElement;
@@ -662,7 +659,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final PsiType myType;
     private final PsiExpression[] myOccurrences;
     private final boolean myReplaceAll;
-    private final OccurrenceManager myOccurrenceManager;
     private final PsiElement myAnchorStatementIfAll;
     private final PsiElement myAnchorElementIfOne;
     private final Boolean myOutOfCodeBlockExtraction;
@@ -677,7 +673,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                   Settings settings,
                                   PsiType type,
                                   PsiExpression[] occurrences,
-                                  OccurrenceManager occurrenceManager,
                                   PsiElement anchorStatementIfAll,
                                   PsiElement anchorElementIfOne,
                                   Editor editor,
@@ -690,7 +685,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myType = type;
       myOccurrences = occurrences;
       myReplaceAll = settings.isReplaceAll();
-      myOccurrenceManager = occurrenceManager;
       myAnchorStatementIfAll = anchorStatementIfAll;
       myAnchorElementIfOne = anchorElementIfOne;
       myOutOfCodeBlockExtraction = selectedExpr.getUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK);

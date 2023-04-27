@@ -36,8 +36,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
 
         fun searchForTypeAliasesRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            KotlinTypeAliasByExpansionShortNameIndex
-                .get(typeName, project, scope)
+            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope]
                 .asSequence()
                 .mapNotNull { it.name }
                 .filter { names.add(it) }

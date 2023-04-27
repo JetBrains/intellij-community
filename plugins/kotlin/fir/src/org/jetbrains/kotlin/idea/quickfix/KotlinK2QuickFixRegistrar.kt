@@ -34,6 +34,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             RemoveModifierFixBase.removeOpenModifier
         )
         registerPsiQuickFixes(
+            KtFirDiagnostic.NonFinalMemberInObject::class,
+            RemoveModifierFixBase.removeOpenModifier
+        )
+        registerPsiQuickFixes(
             KtFirDiagnostic.PrivateSetterForOpenProperty::class,
             AddModifierFix.addFinalToProperty,
             RemoveModifierFixBase.removePrivateModifier
@@ -71,6 +75,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnFunParameter::class, RemoveValVarFromParameterFix)
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnCatchParameter::class, RemoveValVarFromParameterFix)
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnSecondaryConstructorParameter::class, RemoveValVarFromParameterFix)
+        registerApplicators(MakeSuperTypeOpenFixFactory.makeSuperTypeOpenFixFactory)
     }
 
     private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {

@@ -10,15 +10,19 @@ class PythonLanguageIntrospectable(val config: PythonLanguageRuntimeConfiguratio
   override fun introspect(subject: LanguageRuntimeType.Introspectable): CompletableFuture<PythonLanguageRuntimeConfiguration> {
     val pythonExecutable = "python3"
     val pythonExecutablePathFuture = subject
-      .promiseExecuteScript("$WHICH_BINARY $pythonExecutable")
-      .thenApply { it?.firstOutputLine()?.let { firstStdoutLine -> config.pythonInterpreterPath = firstStdoutLine } }
+      .promiseExecuteScript(listOf(WHICH_BINARY, pythonExecutable))
+      .thenApply {
+        if (it.exitCode == 0) {
+          it.stdout.firstOutputLine()?.let { firstStdoutLine -> config.pythonInterpreterPath = firstStdoutLine }
+        }
+      }
     val userHomeFuture = pythonExecutablePathFuture.thenExecute {
       subject
         .promiseEnvironmentVariable("HOME")
         .thenComposeIf(String?::isNullOrBlank) {
           subject
-            .promiseExecuteScript("pwd")
-            .thenApply { it?.firstOutputLine() }
+            .promiseExecuteScript(listOf("pwd"))
+            .thenApply { it.stdout.firstOutputLine() }
         }
         .thenApply { value ->
           if (value != null) config.userHome = value

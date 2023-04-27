@@ -47,10 +47,8 @@ public final class AppMainV2 {
       @Override
       public void run() {
         try {
-          Socket client = new Socket("127.0.0.1", portNumber);
-          try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"));
-            try {
+          try (Socket client = new Socket("127.0.0.1", portNumber)) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"))) {
               while (true) {
                 String msg = reader.readLine();
                 if (msg == null || "TERM".equals(msg)) {
@@ -66,12 +64,6 @@ public final class AppMainV2 {
                 }
               }
             }
-            finally {
-              reader.close();
-            }
-          }
-          finally {
-            client.close();
           }
         }
         catch (Exception ignored) { }

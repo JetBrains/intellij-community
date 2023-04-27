@@ -36,11 +36,11 @@
     <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreAnnotationParamSupport" interface="com.intellij.codeInspection.DefaultAnnotationParamInspection$IgnoreAnnotationParamSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javaLanguageLevelPusherCustomizer" interface="com.intellij.openapi.roots.impl.JavaLanguageLevelPusherCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.propertyAccessorDetector" interface="com.intellij.psi.util.PropertyAccessorDetector" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.virtualManifestProvider" interface="com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
-    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaTextBlockIndentPassFactory"/>
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
@@ -294,7 +294,7 @@
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
-    <workspaceModel.moduleExtensionBridgeFactory implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.LanguageLevelModuleExtensionBridge$Companion"/>
+    <workspaceModel.moduleExtensionBridgeFactory implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.LanguageLevelModuleExtensionBridge$Factory"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
                      enabledByDefault="true" level="WARNING"
@@ -315,9 +315,11 @@
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JetBrainsAnnotationSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.FindBugsAnnotationSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.AndroidAnnotationSupport"/>
+    <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JakartaAnnotationSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.Jsr305Support"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.CheckerFrameworkSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.EclipseAnnotationSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JSpecifyAnnotationSupport"/>
+    <notificationGroup id="FileSystemIssue" displayType="BALLOON" bundle="messages.JavaAnalysisBundle" key="notification.file.system.issue"/>
   </extensions>
 </idea-plugin>

@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext", "ReplacePutWithAssignment", "ReplaceGetOrSet")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "RAW_RUN_BLOCKING")
 
 package org.jetbrains.intellij.build.io
 
@@ -68,11 +68,12 @@ suspend fun runJava(mainClass: String,
 
           fun javaRunFailed(reason: String) {
             span.setAttribute("classPath", classPathStringBuilder.substring("-classpath".length))
+            span.setAttribute("processArgs", processArgs.joinToString(separator = " "))
             span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
             span.setAttribute("errorOutput",
                               runCatching { Files.readString(errorOutputFile) }.getOrNull() ?: "error output file doesn't exist")
             onError?.invoke()
-            throw RuntimeException("Cannot execute $mainClass: $reason")
+            throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}")
           }
 
           try {
@@ -147,7 +148,6 @@ private fun createProcessArgs(javaExe: Path,
                               mainClass: String,
                               args: List<String>): MutableList<String> {
   val processArgs = mutableListOf<String>()
-  // FIXME: enforce JBR
   processArgs.add(javaExe.toString())
   processArgs.add("-Djava.awt.headless=true")
   processArgs.add("-Dapple.awt.UIElement=true")
@@ -280,8 +280,6 @@ private fun appendArg(value: String, builder: StringBuilder) {
     }
   }
 }
-
-class ProcessRunTimedOut(message: String) : RuntimeException(message)
 
 internal suspend fun dumpThreads(pid: Long) {
   val jstack = System.getenv("JAVA_HOME")

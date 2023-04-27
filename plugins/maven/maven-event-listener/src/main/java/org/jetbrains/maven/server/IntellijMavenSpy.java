@@ -117,7 +117,7 @@ public class IntellijMavenSpy extends AbstractEventSpy {
     if (session != null) {
       List<MavenProject> projectsInReactor = session.getProjects();
       if (projectsInReactor == null) {
-        projectsInReactor = new ArrayList<MavenProject>();
+        projectsInReactor = new ArrayList<>();
       }
       StringBuilder builder = new StringBuilder();
       for (MavenProject project : projectsInReactor) {

@@ -58,8 +58,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder;
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.wizard.util.GradleWrapperUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -171,9 +169,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       myUseKotlinDSL
     );
 
-    buildScriptBuilder = myUseKotlinDSL
-                         ? KotlinDslGradleBuildScriptBuilder.create(gradleVersion)
-                         : GroovyDslGradleBuildScriptBuilder.create(gradleVersion);
+    buildScriptBuilder = GradleBuildScriptBuilder.create(gradleVersion, myUseKotlinDSL);
     buildScriptConfigurators.forEach(it -> it.accept(buildScriptBuilder));
 
     var scriptDataBuilder = new BuildScriptDataBuilder(buildScriptFile, buildScriptBuilder);

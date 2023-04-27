@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ExceptionUtil;
@@ -31,7 +32,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
@@ -41,7 +44,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsData.markAllFilesAsUnindexed();
   }
 
-  protected static PersistentFS getPersistence() {
+  static PersistentFS getPersistence() {
     return PersistentFS.getInstance();
   }
 
@@ -162,17 +165,17 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean isDirty() {
-    return getFlagInt(VfsDataFlags.DIRTY_FLAG) && !isOffline();
+    return getFlagInt(VfsDataFlags.DIRTY_FLAG) && !getFlagInt(VfsDataFlags.IS_OFFLINE);
   }
 
   @Override
   public boolean isOffline() {
-    if (getFlagInt(VfsDataFlags.IS_OFFLINE)) {
-      return true;
+    for (VirtualFileSystemEntry v = this; v != null; v = v.getParent()) {
+      if (v.getFlagInt(VfsDataFlags.IS_OFFLINE)) {
+        return true;
+      }
     }
-
-    VirtualDirectoryImpl parent = getParent();
-    return parent != null && parent.isOffline();
+    return false;
   }
 
   @Override
@@ -241,35 +244,51 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  protected char @NotNull [] appendPathOnFileSystem(int accumulatedPathLength, int @NotNull [] positionRef) {
-    CharSequence name = getNameSequence();
-
-    char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + name.length(), positionRef);
-    int i = positionRef[0];
-    chars[i] = '/';
-    positionRef[0] = copyString(chars, i + 1, name);
-
-    return chars;
-  }
-
-  private static int copyString(char @NotNull [] chars, int pos, @NotNull CharSequence s) {
-    int length = s.length();
-    CharArrayUtil.getChars(s, chars, 0, pos, length);
-    return pos + length;
+  private @NotNull String computePath(@NotNull String protocol, @NotNull String protoSeparator) {
+    int length = 0;
+    List<CharSequence> names = new ArrayList<>();
+    VirtualFileSystemEntry v = this;
+    for (;;) {
+      VirtualDirectoryImpl parent = v.getParent();
+      if (parent == null) {
+        break;
+      }
+      CharSequence name = v.getNameSequence();
+      if (length != 0) length++;
+      length += name.length();
+      names.add(name);
+      v = parent;
+    }
+    int protocolLength = protocol.length();
+    String rootPath = v.getPath();
+    int rootPathLength = rootPath.length();
+    length += protocolLength + protoSeparator.length() + rootPathLength;
+    char[] path = new char[length];
+    CharArrayUtil.getChars(protocol, path, 0);
+    CharArrayUtil.getChars(protoSeparator, path, protocolLength);
+    int o = protocolLength + protoSeparator.length();
+    CharArrayUtil.getChars(rootPath, path, o, rootPathLength);
+    o += rootPathLength;
+    for (int i = names.size() - 1; i >= 1; i--) {
+      CharSequence name = names.get(i);
+      int nameLength = name.length();
+      CharArrayUtil.getChars(name, path, o, nameLength);
+      o += nameLength;
+      path[o++] = '/';
+    }
+    CharSequence name = names.get(0);
+    CharArrayUtil.getChars(name, path, o);
+    return new String(path);
   }
 
   @Override
   public @NotNull String getUrl() {
-    String protocol = getFileSystem().getProtocol();
-    int prefixLen = protocol.length() + "://".length();
-    char[] chars = appendPathOnFileSystem(prefixLen, new int[]{prefixLen});
-    copyString(chars, copyString(chars, 0, protocol), "://");
-    return new String(chars);
+    return computePath(getFileSystem().getProtocol(), "://");
   }
 
   @Override
   public @NotNull String getPath() {
-    return new String(appendPathOnFileSystem(0, new int[]{0}));
+    return computePath("", "");
   }
 
   @Override
@@ -507,21 +526,21 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   /**
-   * @return true if this file is symlink
+   * @return true, if this file is symlink
    */
   private boolean isSymlink() {
     return getFlagInt(VfsDataFlags.IS_SYMLINK_FLAG);
   }
 
   /**
-   * @return true if this file is "special"
+   * @return true, if this file is "special"
    */
   private boolean isSpecial() {
     return !isDirectory() && getFlagInt(VfsDataFlags.IS_SPECIAL_FLAG);
   }
 
   /**
-   * @return true if this file is a symlink or there is a symlink parent
+   * @return true, if this file is a symlink or there is a symlink parent
    */
   @ApiStatus.Internal
   public boolean thisOrParentHaveSymlink() {

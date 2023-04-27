@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
@@ -137,7 +137,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
   @Override
   public Collection<ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet) {
-    Collection<ExternalDependency> result = new ArrayList<ExternalDependency>();
+    Collection<ExternalDependency> result = new ArrayList<>();
 
     // resolve compile dependencies
     CompileDependenciesProvider compileDependenciesProvider = new CompileDependenciesProvider(sourceSet, myProject).resolve(this);
@@ -198,7 +198,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(PROVIDED_SCOPE));
 
     // try to map to libraries
-    Collection<ExternalDependency> fileDependencies = new ArrayList<ExternalDependency>();
+    Collection<ExternalDependency> fileDependencies = new ArrayList<>();
     fileDependencies.addAll(createLibraryDependenciesForFiles(compileClasspathFiles, CompileDependenciesProvider.SCOPE));
     fileDependencies.addAll(createLibraryDependenciesForFiles(runtimeClasspathFiles, RuntimeDependenciesProvider.SCOPE));
 
@@ -221,7 +221,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   public void collectProvidedDependencies(@NotNull SourceSet sourceSet,
                                           @NotNull Collection<ExternalDependency> result) {
     Multimap<Object, ExternalDependency> filesToDependenciesMap;// handle provided dependencies
-    final Set<Configuration> providedConfigurations = new LinkedHashSet<Configuration>();
+    final Set<Configuration> providedConfigurations = new LinkedHashSet<>();
     filesToDependenciesMap = ArrayListMultimap.create();
     for (ExternalDependency dep : new DependencyTraverser(result)) {
       filesToDependenciesMap.put(getFiles(dep), dep);
@@ -296,7 +296,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   private Collection<ExternalDependency> createFileCollectionDependencies(@NotNull final Set<File> files,
                                                                           @NotNull final Map<File, Integer> classPathOrder,
                                                                           @Nullable final String scope) {
-    final List<ExternalDependency> result = new ArrayList<ExternalDependency>();
+    final List<ExternalDependency> result = new ArrayList<>();
     if (files.isEmpty()) {
       return result;
     }
@@ -350,7 +350,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   @NotNull
   public Map<File, Integer> addIterationOrder(Set<File> files) {
     int order = 0;
-    Map<File, Integer> fileToOrder = new LinkedHashMap<File, Integer>();
+    Map<File, Integer> fileToOrder = new LinkedHashMap<>();
     for (File file : files) {
       fileToOrder.put(file, order++);
     }
@@ -362,18 +362,18 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     List<String> jvmLanguages = Lists.newArrayList(languages);
     final String sourceSetCompileTaskPrefix = sourceSet.getName().equals("main") ? "" : sourceSet.getName();
 
-    List<String> compileTaskNames = new ArrayList<String>(jvmLanguages.size());
+    List<String> compileTaskNames = new ArrayList<>(jvmLanguages.size());
     for (String language : jvmLanguages) {
       compileTaskNames.add("compile" + capitalize(sourceSetCompileTaskPrefix) + language);
     }
 
-    Set<File> compileClasspathFiles = new LinkedHashSet<File>();
+    Set<File> compileClasspathFiles = new LinkedHashSet<>();
 
     for (String task : compileTaskNames) {
       Task compileTask = myProject.getTasks().findByName(task);
       if (compileTask instanceof AbstractCompile) {
         try {
-          List<File> files = new ArrayList<File>(((AbstractCompile)compileTask).getClasspath().getFiles());
+          List<File> files = new ArrayList<>(((AbstractCompile)compileTask).getClasspath().getFiles());
           // TODO is this due to ordering?
           files.removeAll(compileClasspathFiles);
           compileClasspathFiles.addAll(files);
@@ -384,7 +384,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     }
 
     try {
-      compileClasspathFiles = compileClasspathFiles.isEmpty() ? new LinkedHashSet<File>(sourceSet.getCompileClasspath().getFiles()) : compileClasspathFiles;
+      compileClasspathFiles = compileClasspathFiles.isEmpty() ? new LinkedHashSet<>(sourceSet.getCompileClasspath().getFiles()) : compileClasspathFiles;
     } catch (Exception e) {
       // ignore
     }
@@ -392,7 +392,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   }
 
   public Set<File> getRuntimeClasspathFiles(@NotNull SourceSet sourceSet) {
-    Set<File> result = new LinkedHashSet<File>();
+    Set<File> result = new LinkedHashSet<>();
     try {
       result.addAll(sourceSet.getRuntimeClasspath().getFiles());
     } catch (Exception e) {
@@ -427,7 +427,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       final Collection<File> resolvedFiles = getFiles(dep);
 
       Collection<ExternalDependency> dependencies = filesToCompileDependenciesMap.get(resolvedFiles);
-      final boolean hasCompileDependencies = dependencies != null && !dependencies.isEmpty();
+      final boolean hasCompileDependencies = !dependencies.isEmpty();
 
       if (hasCompileDependencies && dep.getDependencies().isEmpty()) {
         runtimeDependencies.remove(dep);
@@ -483,7 +483,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
   private static class DeduplicationVisitor {
 
-    private final Map<ExternalDependencyId, ExternalDependency> seenDependencies = new HashMap<ExternalDependencyId, ExternalDependency>();
+    private final Map<ExternalDependencyId, ExternalDependency> seenDependencies = new HashMap<>();
 
     public void visit(@NotNull Collection<ExternalDependency> dependencies) {
       for (Iterator<ExternalDependency> iter = dependencies.iterator(); iter.hasNext(); ) {
@@ -548,7 +548,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     @NotNull final SourceSet sourceSet,
     @NotNull final Map<File, Integer> classpathOrder,
     @Nullable final String scope) {
-    @NotNull final Collection<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
+    @NotNull final Collection<ExternalDependency> result = new LinkedHashSet<>();
     Set<File> runtimeOutputDirs = sourceSet.getOutput().getDirs().getFiles();
     for (File dir : runtimeOutputDirs) {
       DefaultFileCollectionDependency runtimeOutputDirsDependency = new DefaultFileCollectionDependency(Collections.singleton(dir));
@@ -580,7 +580,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       String filePath = file.getCanonicalPath();
 
       if (filePath.startsWith(modules2Path)) {
-        List<File> parents = new ArrayList<File>();
+        List<File> parents = new ArrayList<>();
         File parent = file.getParentFile();
         while(parent != null && !parent.getName().equals(modules2Dir.getName())) {
           parents.add(parent);
@@ -636,10 +636,10 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
   Collection<ExternalDependency> createLibraryDependenciesForFiles(@NotNull final Set<File> fileDependencies,
                                                                    @Nullable final String scope) {
-    Collection<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
+    Collection<ExternalDependency> result = new LinkedHashSet<>();
 
     File modules2Dir = new File(myProject.getGradle().getGradleUserHomeDir(), "caches/modules-2/files-2.1");
-    List<File> toRemove = new ArrayList<File>();
+    List<File> toRemove = new ArrayList<>();
     for (File file : fileDependencies) {
       ExternalLibraryDependency libraryDependency = resolveLibraryByPath(file, modules2Dir, scope);
       if (libraryDependency != null) {
@@ -698,7 +698,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   }
 
   private static Set<ExternalDependency> findAllFileDependencies(Collection<Dependency> dependencies, String scope) {
-    Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
+    Set<ExternalDependency> result = new LinkedHashSet<>();
 
     for (Dependency dep : dependencies) {
       try {
@@ -722,7 +722,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   private Set<ExternalDependency> findDependencies(@NotNull final  Configuration configuration,
                                                    @NotNull final  Collection<Dependency> dependencies,
                                                    @Nullable final String scope) {
-    Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
+    Set<ExternalDependency> result = new LinkedHashSet<>();
 
     Set<ResolvedArtifact> resolvedArtifacts = myIsPreview ? Collections.<ResolvedArtifact>emptySet() :
                                               configuration.getResolvedConfiguration().getLenientConfiguration()
@@ -746,15 +746,15 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
           projectDependency.setScope(scope);
           projectDependency.setProjectPath(project.getPath());
           projectDependency.setConfigurationName(targetConfiguration == null ? "default" : targetConfiguration.getName());
-          Set<File> artifacts = new LinkedHashSet<File>(targetConfiguration == null ? Collections.<File>emptySet() :
-                                                        targetConfiguration.getAllArtifacts().getFiles().getFiles());
+          Set<File> artifacts = new LinkedHashSet<>(targetConfiguration == null ? Collections.<File>emptySet() :
+                                                    targetConfiguration.getAllArtifacts().getFiles().getFiles());
           projectDependency.setProjectDependencyArtifacts(artifacts);
           projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(artifacts, mySourceSetFinder));
 
           result.add(projectDependency);
         } else if (it != null) {
           Collection<ResolvedArtifact> artifactsResult = artifactMap.get(toMyModuleIdentifier(it.getName(), it.getGroup()));
-          if (artifactsResult != null && !artifactsResult.isEmpty()) {
+          if (!artifactsResult.isEmpty()) {
             ResolvedArtifact artifact = artifactsResult.iterator().next();
             String packaging = artifact.getExtension();
             String classifier = artifact.getClassifier();

@@ -39,7 +39,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   }
 
   public void installSelectionWatcher() {
-    new MyNavigateButtonSelectionWatcher(myEditor);
+    new MyNavigateButtonSelectionWatcher(myEditor).setupListeners();
   }
 
   @Override

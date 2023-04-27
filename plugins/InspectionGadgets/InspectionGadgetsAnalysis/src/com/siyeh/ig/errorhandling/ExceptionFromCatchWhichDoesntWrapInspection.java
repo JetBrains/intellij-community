@@ -18,6 +18,7 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
@@ -181,9 +182,18 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
           if (!(pattern instanceof PsiTypeTestPattern)) {
             return;
           }
-          final PsiElement parent = pattern.getParent();
+          final PsiElement parent = JavaPsiPatternUtil.skipParenthesizedPatternUp(pattern.getParent());
           if (parent instanceof PsiInstanceOfExpression instanceOfExpression) {
             instanceOfExpression.getOperand().accept(this);
+          }
+          else if (parent instanceof PsiCaseLabelElementList && parent.getParent() instanceof PsiSwitchLabelStatementBase label) {
+            PsiSwitchBlock switchBlock = label.getEnclosingSwitchBlock();
+            if (switchBlock != null) {
+              PsiExpression selector = switchBlock.getExpression();
+              if (selector != null) {
+                selector.accept(this);
+              }
+            }
           }
         }
       }

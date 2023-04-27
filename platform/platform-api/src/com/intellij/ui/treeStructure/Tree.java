@@ -77,7 +77,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
-        return Tree.this.isEmpty();
+        return Tree.this.isEmptyTextVisible();
       }
     };
 
@@ -149,6 +149,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public boolean isFileColorsEnabled() {
     return false;
+  }
+
+  protected boolean isEmptyTextVisible() {
+    return isEmpty();
   }
 
   @NotNull
@@ -265,11 +269,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   private void updateBusy() {
-    if (myBusy) {
+    boolean shouldPaintBusyIcon = myBusy && shouldShowBusyIconIfNeeded();
+
+    if (shouldPaintBusyIcon) {
       if (myBusyIcon == null) {
         myBusyIcon = new AsyncProcessIcon(toString());
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
+        myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
         add(myBusyIcon);
         myBusyIcon.addMouseListener(new MouseAdapter() {
           @Override
@@ -282,26 +289,20 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           }
         });
       }
+
+      myBusyIcon.resume();
+      myBusyIcon.setVisible(true);
+      updateBusyIconLocation();
     }
 
-    if (myBusyIcon != null) {
-      if (myBusy) {
-        if (shouldShowBusyIconIfNeeded()) {
-          myBusyIcon.resume();
-          myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
+    if (!shouldPaintBusyIcon && myBusyIcon != null) {
+      myBusyIcon.suspend();
+      myBusyIcon.setVisible(false);
+      SwingUtilities.invokeLater(() -> {
+        if (myBusyIcon != null) {
+          repaint();
         }
-      }
-      else {
-        myBusyIcon.suspend();
-        myBusyIcon.setToolTipText(null);
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
-          if (myBusyIcon != null) {
-            repaint();
-          }
-        });
-      }
-      updateBusyIconLocation();
+      });
     }
   }
 
@@ -877,6 +878,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public void setHorizontalAutoScrollingEnabled(boolean enabled) {
     myHorizontalAutoScrolling = enabled ? ThreeState.YES : ThreeState.NO;
+  }
+
+  /**
+   * @see com.intellij.ui.table.JBTable#getScrollableUnitIncrement(Rectangle, int, int)
+   */
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    int increment = super.getScrollableUnitIncrement(visibleRect, orientation, direction);
+    if (increment == 0 && orientation == SwingConstants.VERTICAL && direction < 0) {
+      return visibleRect.y; // BasicTreeUI.getPathBounds includes insets, not allowing to reach 0 with mouse wheel.
+    }
+    return increment;
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeInspection.*;
@@ -54,7 +54,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
       if (model != null) {
         MavenDistribution distribution =
           MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
-        boolean maven35 = distribution == null || StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
+        boolean maven35 = StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
         List<ProblemDescriptor> problems = new ArrayList<>(3);
 
         MavenDomParent mavenParent = model.getRootElement().getMavenParent();

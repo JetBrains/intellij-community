@@ -36,6 +36,10 @@
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="/META-INF/PlatformWarmup.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <xi:include href="/META-INF/IdeCore.xml"/>
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
   <xi:include href="/META-INF/Refactoring.xml"/>
@@ -130,17 +134,17 @@
     <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
   </extensions>
 
-  <xi:include href="/META-INF/VCS.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/VCS.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/lvcs.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/collaboration-tools.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/collaboration-tools.xml">
     <xi:fallback/>
   </xi:include>
 
-  <xi:include href="/META-INF/ml.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/ml.xml">
     <xi:fallback/>
   </xi:include>
 

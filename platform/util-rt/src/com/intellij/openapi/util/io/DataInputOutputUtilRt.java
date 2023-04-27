@@ -91,7 +91,7 @@ public final class DataInputOutputUtilRt {
                                     @SuppressWarnings("BoundedWildcard")
                                     @NotNull ThrowableComputable<? extends T, IOException> readElement) throws IOException {
     int size = readINT(in);
-    List<T> result = new ArrayList<T>(size);
+    List<T> result = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       result.add(readElement.compute());
     }
@@ -122,7 +122,7 @@ public final class DataInputOutputUtilRt {
                                          @NotNull ThrowableComputable<? extends K, ? extends IOException> readKey,
                                          @NotNull ThrowableComputable<? extends V, ? extends IOException> readValue) throws IOException {
     int size = readINT(in);
-    Map<K, V> result = new HashMap<K, V>();
+    Map<K, V> result = new HashMap<>();
     for (int i = 0; i < size; i++) {
       result.put(readKey.compute(), readValue.compute());
     }

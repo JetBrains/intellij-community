@@ -121,7 +121,7 @@ class Foo {
 //end of IDEADEV-6103
 
 class IDontCompile {
-   Map<error descr="Cannot select static class 'java.util.Map.Entry' from parameterized type"><?, ?></error>.Entry map;
+   Map<error descr="Type arguments are not allowed here because class 'java.util.Map.Entry' is static"><?, ?></error>.Entry map;
 }
 
 abstract class GenericTest99<E extends Enum<E>> {

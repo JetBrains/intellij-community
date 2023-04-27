@@ -34,7 +34,7 @@ class ChangesBrowserUnversionedFilesNode(private val project: Project,
   }
 
   @Nls
-  override fun getTextPresentation(): String = getUserObject().toString()
+  override fun getTextPresentation(): String = getUserObject().toString() //NON-NLS
 
   override fun getSortWeight(): Int = UNVERSIONED_SORT_WEIGHT
 }

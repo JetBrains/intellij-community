@@ -4,13 +4,11 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
+import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -40,7 +38,7 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
     get() = { it.tableId == LibraryTableId.ProjectLibraryTableId }
 
   override fun createSerializer(fileUrl: String,
-                                entitySource: JpsFileEntitySource.FileInDirectory,
+                                entitySource: JpsProjectFileEntitySource.FileInDirectory,
                                 virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<LibraryEntity> {
     return JpsLibraryEntitiesSerializer(virtualFileManager.fromUrl(fileUrl), entitySource, LibraryTableId.ProjectLibraryTableId)
   }
@@ -67,7 +65,7 @@ private const val LIBRARY_TABLE_COMPONENT_NAME = "libraryTable"
 
 internal class JpsGlobalLibrariesFileSerializer(entitySource: JpsGlobalFileEntitySource)
   : JpsLibraryEntitiesSerializer(entitySource.file, entitySource,
-                                 LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL)),
+                                 LibraryTableId.GlobalLibraryTableId("application" /* equal to LibraryTablesRegistrar.APPLICATION_LEVEL */)),
     JpsFileEntityTypeSerializer<LibraryEntity> {
   override val isExternalStorage: Boolean
     get() = false
@@ -80,7 +78,7 @@ internal class JpsGlobalLibrariesFileSerializer(entitySource: JpsGlobalFileEntit
 }
 
 
-internal class JpsLibrariesFileSerializer(entitySource: JpsFileEntitySource.ExactFile, libraryTableId: LibraryTableId)
+internal class JpsLibrariesFileSerializer(entitySource: JpsProjectFileEntitySource.ExactFile, libraryTableId: LibraryTableId)
   : JpsLibraryEntitiesSerializer(entitySource.file, entitySource, libraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
   override val isExternalStorage: Boolean
     get() = false
@@ -92,7 +90,7 @@ internal class JpsLibrariesFileSerializer(entitySource: JpsFileEntitySource.Exac
   }
 }
 
-internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsFileEntitySource.ExactFile,
+internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsProjectFileEntitySource.ExactFile,
                                                   private val internalLibrariesDirUrl: VirtualFileUrl,
                                                   private val fileInDirectorySourceNames: FileInDirectorySourceNames)
   : JpsLibraryEntitiesSerializer(externalFile.file, externalFile, LibraryTableId.ProjectLibraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
@@ -109,7 +107,7 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsF
       logger<JpsLibrariesExternalFileSerializer>().debug{ "Reuse existing source for library: ${existingInternalSource.fileNameId}=$libraryName" }
       existingInternalSource
     } else {
-      JpsFileEntitySource.FileInDirectory(internalLibrariesDirUrl, externalFile.projectLocation)
+      JpsProjectFileEntitySource.FileInDirectory(internalLibrariesDirUrl, externalFile.projectLocation)
     }
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
   }

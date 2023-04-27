@@ -371,4 +371,18 @@ public abstract class FileBasedIndex {
 
   @ApiStatus.Internal
   public static final boolean IGNORE_PLAIN_TEXT_FILES = Boolean.getBoolean("idea.ignore.plain.text.indexing");
+
+  @ApiStatus.Internal
+  public static boolean isCompositeIndexer(@NotNull DataIndexer<?, ?, ?> indexer) {
+    return indexer instanceof CompositeDataIndexer && !USE_IN_MEMORY_INDEX;
+  }
+
+  @ApiStatus.Internal
+  public static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
+    //noinspection unchecked
+    return indexExtension instanceof FileBasedIndexExtension &&
+           ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
+           ourSnapshotMappingsEnabled &&
+           !USE_IN_MEMORY_INDEX;
+  }
 }

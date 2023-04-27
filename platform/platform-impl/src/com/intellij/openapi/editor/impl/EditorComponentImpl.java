@@ -104,7 +104,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         float size = Math.max((float)(currentSize * scale), defaultFontSize);
         myEditor.setFontSize(size);
         if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
-          myEditor.adjustGlobalFontSize(size);
+          myEditor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
         }
 
         return myEditor.visualPositionToXY(magnificationPosition);
@@ -180,6 +180,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         location = myEditor.getCaretModel().getLogicalPosition();
       }
       return EditorCoreUtil.inVirtualSpace(myEditor, location);
+    }
+    if (PlatformDataKeys.EDITOR_CLICK_OVER_TEXT.is(dataId)) {
+      Point point = myEditor.myLastMousePressedPoint;
+      if (point != null) {
+        return EditorUtil.isPointOverText(myEditor, point);
+      }
     }
     return null;
   }
@@ -855,10 +861,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     Inlay<?> inlay = myEditor.getInlayModel().getElementAt(point);
     if (inlay != null) {
       List<PropertyBean> result = new ArrayList<>();
-      result.add(new PropertyBean("Inlay Renderer", inlay.getRenderer()));
+      result.add(new PropertyBean("Inlay Renderer", inlay.getRenderer(), true));
       result.add(new PropertyBean("Inlay Renderer Class", UiInspectorUtil.getClassPresentation(inlay.getRenderer()), true));
       if (inlay.getGutterIconRenderer() != null) {
-        result.add(new PropertyBean("Inlay Gutter Renderer", inlay.getGutterIconRenderer()));
+        result.add(new PropertyBean("Inlay Gutter Renderer", inlay.getGutterIconRenderer(), true));
       }
       result.add(new PropertyBean("Inlay Properties", inlay.getProperties()));
       return new UiInspectorInfo("EditorInlay", result, null);

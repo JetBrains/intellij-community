@@ -298,7 +298,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               y = attr.ib(default=0)
               z = attr.ib(default=attr.Factory(list))
              \s
-          Weak1(1, "str", 2)
+          Weak1(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list', got 'int' instead">2</warning>)
 
 
           @attr.s
@@ -499,8 +499,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecExample() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import ParamSpec
+                   from typing import Callable, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -593,8 +592,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateAddThirdParameter() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable, Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -611,8 +609,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateAddSecondParameter() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable,  Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -629,8 +626,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateAddFirstParameter() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable,  Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -647,8 +643,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateAddFirstSeveralParameters() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable,  Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -665,8 +660,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateAddOk() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable,  Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -683,8 +677,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateRemove() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable,  Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -701,8 +694,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateRemoveOkOneBool() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable,  Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -719,8 +711,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateRemoveOkTwoBools() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable,  Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -737,8 +728,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateRemoveOkEmpty() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable,  Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -755,8 +745,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-49935
   public void testParamSpecConcatenateTransform() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import Concatenate, ParamSpec
+                   from typing import Callable,  Concatenate, ParamSpec
 
                    P = ParamSpec("P")
 
@@ -794,8 +783,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-50403
   public void testFunctionNamedParameterUnification() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import ParamSpec
+                   from typing import Callable,  ParamSpec
 
                    P = ParamSpec("P")
 

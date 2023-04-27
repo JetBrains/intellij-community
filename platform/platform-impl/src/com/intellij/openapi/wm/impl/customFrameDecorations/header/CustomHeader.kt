@@ -85,6 +85,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   init {
     isOpaque = true
     background = getHeaderBackground()
+    myActive = window.isActive
 
     fun onClose() {
       Disposer.dispose(this)

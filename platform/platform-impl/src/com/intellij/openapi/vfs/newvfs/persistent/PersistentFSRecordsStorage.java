@@ -8,6 +8,9 @@ import java.io.IOException;
 
 @ApiStatus.Internal
 public interface PersistentFSRecordsStorage {
+  int NULL_ID = FSRecords.NULL_FILE_ID;
+  int MIN_VALID_ID = NULL_ID + 1;
+
   /**
    * @return id of newly allocated record
    */
@@ -77,6 +80,10 @@ public interface PersistentFSRecordsStorage {
                   int parentId,
                   boolean overwriteAttrRef) throws IOException;
 
+  /**
+   * @throws IndexOutOfBoundsException if fileId is outside of valid range: <=0 or > max recordId
+   *                                   allocated so far
+   */
   void cleanRecord(int fileId) throws IOException;
 
   /* ======================== STORAGE HEADER ============================================================================== */
@@ -95,10 +102,18 @@ public interface PersistentFSRecordsStorage {
 
   /**
    * @return length of underlying file storage, in bytes
+   * @deprecated TODO RC: this method has very little utility: different implementation use different
+   * pagination and pre-allocation strategies -- file length is very implementation-specific. The only
+   * current usage (in checkSanity() method) is really incorrect, since it relies on specific
+   * implementation allocation strategy. Method .recordsCount() has clearer semantics and doesn't
+   * expose implementation details.
    */
   long length();
 
+  int recordsCount();
+
   boolean isDirty();
+
 
   // TODO add a synchronization or requirement to be called on the loading
   @SuppressWarnings("UnusedReturnValue")
@@ -107,6 +122,9 @@ public interface PersistentFSRecordsStorage {
   void force() throws IOException;
 
   void close() throws IOException;
+
+  /** Close the storage and remove all its data files */
+  void closeAndRemoveAllFiles() throws IOException;
 
   @FunctionalInterface
   interface FsRecordProcessor {

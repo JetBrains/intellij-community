@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
@@ -30,8 +31,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     super(project, true);
     setTitle(PyBundle.message("manage.python.packages"));
 
-    List<Sdk> sdks = PythonSdkUtil.getAllSdks();
-    sdks.sort(new PreferredSdkComparator());
+    List<Sdk> sdks = ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), new PreferredSdkComparator());
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
     sdkComboBox.setRenderer(new PySdkListCellRenderer());
 

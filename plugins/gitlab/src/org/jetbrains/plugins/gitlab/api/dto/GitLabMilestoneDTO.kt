@@ -2,16 +2,15 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 import org.jetbrains.annotations.Nls
-import java.util.*
 
 data class GitLabMilestoneDTO(
   val createdAt: String,
   val description: String?,
-  val dueDate: Date?,
+  val dueDate: String?,
   val id: Int,
   val iid: Int,
   val projectId: Int,
-  val startDate: Date?,
+  val startDate: String?,
   val state: String,
   val title: @Nls String,
   val updatedAt: String,

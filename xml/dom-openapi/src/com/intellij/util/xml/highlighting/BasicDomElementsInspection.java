@@ -39,7 +39,7 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
    * @param helper  helper object
    */
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     int oldSize = holder.getSize();
     if (element instanceof GenericDomValue<?> genericDomValue) {
       if (shouldCheckResolveProblems(genericDomValue)) {

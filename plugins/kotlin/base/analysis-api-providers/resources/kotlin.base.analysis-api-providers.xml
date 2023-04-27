@@ -14,5 +14,8 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.PackagePartProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.PackagePartProviderFactoryIdeImpl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinByModulesResolutionScopeProvider"/>
   </extensions>
 </idea-plugin>

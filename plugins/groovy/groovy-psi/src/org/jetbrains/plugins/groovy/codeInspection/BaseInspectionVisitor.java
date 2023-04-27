@@ -98,7 +98,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
 
   protected void registerError(@NotNull PsiElement location,
                                @InspectionMessage @NotNull String description,
-                               LocalQuickFix @Nullable [] fixes,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
     problemsHolder.registerProblem(location, description, highlightType, fixes);
   }
@@ -115,7 +115,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
     registerError(location, description, fix, highlightType);
   }
 
-  private LocalQuickFix @Nullable [] createFixes(@NotNull PsiElement location) {
+  private @NotNull LocalQuickFix @Nullable [] createFixes(@NotNull PsiElement location) {
     if (!onTheFly &&
         inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
       return null;

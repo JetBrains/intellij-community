@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.OpenProjectTaskBuilder
@@ -23,7 +25,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.readText
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
-import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
@@ -123,7 +125,7 @@ class DelayedProjectSynchronizerTest {
 
     //we reset 'nextId' property to emulate JVM restart; after we decouple serialization logic from IDE classes (as part of IDEA-252970),
     //it'll be possible to create a proper tests which prepares the cache in a separate JVM process
-    JpsFileEntitySource.FileInDirectory.resetId()
+    JpsProjectFileEntitySource.FileInDirectory.resetId()
 
     runBlocking {
       val project = loadProject(projectData.projectDir)
@@ -155,7 +157,7 @@ class DelayedProjectSynchronizerTest {
     val unloadedEntitiesBuilder = MutableEntityStorage.create()
     val orphanage = MutableEntityStorage.create()
     val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
-    val serializers = loadProject(configLocation, originalBuilder, orphanage, virtualFileManager, emptySet(), unloadedEntitiesBuilder,
+    val serializers = loadProject(configLocation, originalBuilder, orphanage, virtualFileManager, UnloadedModulesNameHolder.DUMMY, unloadedEntitiesBuilder,
                                   fileInDirectorySourceNames) as JpsProjectSerializersImpl
     val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), orphanage.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(),
                                               serializers,
@@ -163,17 +165,17 @@ class DelayedProjectSynchronizerTest {
     serializers.checkConsistency(configLocation, loadedProjectData.storage, loadedProjectData.unloadedEntitiesStorage, virtualFileManager)
 
     assertThat(projectData.storage.entities(ModuleEntity::class.java).map {
-      assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(it.entitySource is JpsProjectFileEntitySource.FileInDirectory)
       it.entitySource
     }.toList())
       .containsAll(loadedProjectData.storage.entities(ModuleEntity::class.java).map { it.entitySource }.toList())
     assertThat(projectData.storage.entities(LibraryEntity::class.java).map {
-      assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(it.entitySource is JpsProjectFileEntitySource.FileInDirectory)
       it.entitySource
     }.toList())
       .containsAll(loadedProjectData.storage.entities(LibraryEntity::class.java).map { it.entitySource }.toList())
     assertThat(projectData.storage.entities(FacetEntity::class.java).map {
-      assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(it.entitySource is JpsProjectFileEntitySource.FileInDirectory)
       it.entitySource
     }.toList())
       .containsAll(loadedProjectData.storage.entities(FacetEntity::class.java).map { it.entitySource }.toList())

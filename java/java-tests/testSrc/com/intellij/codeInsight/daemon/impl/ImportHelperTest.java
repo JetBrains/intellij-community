@@ -41,6 +41,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -373,18 +374,18 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(text);
     boolean isInContent = true;
-    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
 
 
     doHighlighting();
-    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
 
     type(" ");
-    assertTrue(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
+    assertTrue(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
 
     UndoManager.getInstance(getProject()).undo(TextEditorProvider.getInstance().getTextEditor(getEditor()));
 
-    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent, ThreeState.UNSURE));
   }
 
 

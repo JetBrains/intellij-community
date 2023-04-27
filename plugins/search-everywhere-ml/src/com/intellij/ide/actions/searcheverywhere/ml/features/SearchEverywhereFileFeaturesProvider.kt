@@ -52,11 +52,6 @@ class SearchEverywhereFileFeaturesProvider
 
     data.putIfValueNotNull(IS_TOP_LEVEL_DATA_KEY, isTopLevel(item))
 
-    val nameOfItem = item.virtualFile.nameWithoutExtension
-    // Remove the directory and the extension if they are present
-    val fileNameFromQuery = FileUtil.getNameWithoutExtension(PathUtil.getFileName(searchQuery))
-    data.addAll(getNameMatchingFeatures(nameOfItem, fileNameFromQuery))
-
     if (item.isDirectory) {
       // Rest of the features are only applicable to files, not directories
       return data

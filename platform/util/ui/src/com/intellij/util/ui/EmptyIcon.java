@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * A transparent icon.
+ *
  * @author max
  * @author Konstantin Bulenkov
  * @author tav
@@ -38,8 +40,8 @@ import java.util.Map;
 
   /**
    * Creates an icon of the provided size.
-   *
-   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} (JBScalableIcon)} to meet HiDPI.
+   * <p>
+   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} to meet HiDPI.
    */
   public static @NotNull EmptyIcon create(int size) {
     return create(size, size);
@@ -47,15 +49,15 @@ import java.util.Map;
 
   /**
    * Creates an icon of the provided size.
-   *
-   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} (JBScalableIcon)} to meet HiDPI.
+   * <p>
+   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} to meet HiDPI.
    */
   public static @NotNull EmptyIcon create(int width, int height) {
     return create(width, height, true);
   }
 
   /**
-   * Creates an icon of the size of the provided icon base.
+   * Creates an icon of the size of the provided base icon.
    */
   public static @NotNull EmptyIcon create(@NotNull Icon base) {
     return create(base.getIconWidth(), base.getIconHeight());

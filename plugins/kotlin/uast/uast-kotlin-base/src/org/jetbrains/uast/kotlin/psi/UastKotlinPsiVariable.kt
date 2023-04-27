@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin.psi
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightTypeElement
 import org.jetbrains.annotations.ApiStatus
@@ -81,13 +81,14 @@ class UastKotlinPsiVariable private constructor(
                 manager = declaration.manager,
                 name = declaration.name.orAnonymous("<unnamed>"),
                 typeProducer = {
-                    val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+                    val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
                     service.getType(declaration, containingElement) ?: UastErrorType
                 },
                 ktInitializer = initializerExpression,
                 psiParentProducer = { psiParent },
                 containingElement = containingElement,
-                ktElement = declaration)
+                ktElement = declaration
+            )
         }
 
         fun create(
@@ -98,7 +99,7 @@ class UastKotlinPsiVariable private constructor(
                 manager = declaration.manager,
                 name = "var" + Integer.toHexString(declaration.getHashCode()),
                 typeProducer = {
-                    val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+                    val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
                     service.getType(declaration, containingElement) ?: UastErrorType
                 },
                 ktInitializer = declaration.initializer,
@@ -116,7 +117,7 @@ class UastKotlinPsiVariable private constructor(
                 manager = initializer.manager,
                 name = "var" + Integer.toHexString(initializer.getHashCode()),
                 typeProducer = {
-                    val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+                    val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
                     service.getType(initializer, containingElement) ?: UastErrorType
                },
                 ktInitializer = initializer,
@@ -134,7 +135,7 @@ class UastKotlinPsiVariable private constructor(
                 manager = localFunction.manager,
                 name = name,
                 typeProducer = {
-                    val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+                    val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
                     service.getFunctionType(localFunction, containingElement) ?: UastErrorType
                 },
                 ktInitializer = localFunction,
@@ -150,7 +151,7 @@ private class KotlinUastPsiExpression(
     val parent: UElement
 ) : PsiElement by ktExpression, PsiExpression {
     override fun getType(): PsiType? {
-        val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+        val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
         return service.getType(ktExpression, parent)
     }
 }

@@ -6,9 +6,13 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.test.utils.withExtension
+import java.io.File
 
 abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
     override val captureExceptions: Boolean = false
@@ -23,12 +27,27 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
 
         val shortenings = executeOnPooledThreadInReadAction {
             analyze(file) {
-                collectPossibleReferenceShortenings(file, selection)
+                if (file.text.contains("// SHORTEN_AND_STAR_IMPORT")) {
+                    collectPossibleReferenceShortenings(file,
+                                                        selection,
+                                                        { ShortenOption.SHORTEN_AND_STAR_IMPORT },
+                                                        { ShortenOption.SHORTEN_AND_STAR_IMPORT })
+                } else if (file.text.contains("// SHORTEN_AND_IMPORT")) {
+                    collectPossibleReferenceShortenings(file,
+                                                        selection,
+                                                        { ShortenOption.SHORTEN_AND_IMPORT },
+                                                        { ShortenOption.SHORTEN_AND_IMPORT })
+                } else {
+                    collectPossibleReferenceShortenings(file, selection)
+                }
             }
         }
 
         project.executeWriteCommand("") {
-            shortenings.invokeShortening()
+            val shortenedElements = shortenings.invokeShortening()
+            val shorteningResultAsString = shortenedElements.joinToString(System.lineSeparator()) { it.text }
+
+            KotlinTestUtils.assertEqualsToFile(getShorteningResultFile(), shorteningResultAsString)
         }
 
         selectionModel.removeSelection()
@@ -38,11 +57,13 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
     override val runTestInWriteCommand: Boolean = false
 
     protected fun doTestWithMuting(unused: String) {
-        IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR, ".after") {
             doTest(unused)
         }
     }
 
     override val nameCountToUseStarImportDefault: Int
         get() = Integer.MAX_VALUE
+
+    private fun getShorteningResultFile(): File = dataFile().withExtension("txt")
 }

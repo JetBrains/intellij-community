@@ -109,7 +109,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   @NotNull
-  public Self oneOf(final T... values) {
+  public Self oneOf(final T @NotNull ... values) {
     final Collection<T> list;
 
     final int length = values.length;
@@ -117,7 +117,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
       list = Collections.singletonList(values[0]);
     }
     else if (length >= 11) {
-      list = ContainerUtil.set(values);
+      list = ContainerUtil.newHashSet(values);
     }
     else {
       list = Arrays.asList(values);

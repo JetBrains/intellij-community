@@ -1,23 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import com.intellij.psi.PsiMethod
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.gradle.service.resolve.GradleTaskProperty
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.junit.jupiter.params.ParameterizedTest
-import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.JAVA_PROJECT
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTasksTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task ref`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("<caret>javadoc") {
         testTask("javadoc", GRADLE_API_TASKS_JAVADOC_JAVADOC)
       }
@@ -27,7 +26,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task call`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("<caret>javadoc {}") {
         methodCallTest(PsiMethod::class.java, GRADLE_API_TASKS_JAVADOC_JAVADOC)
       }
@@ -37,7 +36,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task call delegate`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("javadoc { <caret> }") {
         closureDelegateTest(GRADLE_API_TASKS_JAVADOC_JAVADOC, 1)
       }
@@ -47,7 +46,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task container vs task ref`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("<caret>tasks") {
         referenceExpressionTest(PsiMethod::class.java, GRADLE_API_TASK_CONTAINER)
       }
@@ -57,7 +56,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task container vs task call`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("<caret>tasks {}") {
         methodCallTest(PsiMethod::class.java, GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK)
       }
@@ -67,7 +66,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task via TaskContainer`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("tasks.<caret>tasks") {
         testTask("tasks", GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK)
       }
@@ -77,7 +76,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task via Project`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("project.<caret>clean") {
         testTask("clean", GRADLE_API_TASKS_DELETE)
       }
@@ -87,7 +86,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task in allProjects`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("allProjects { <caret>clean }") {
         testTask("clean", GRADLE_API_TASKS_DELETE)
       }
@@ -97,7 +96,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task in allProjects via explicit delegate`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("allProjects { delegate.<caret>clean }") {
         resolveTest<Nothing>(null)
       }
@@ -130,7 +129,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
     "tasks.create('eid1') { <caret> }"
   """)
   fun `test task declaration configuration delegate`(gradleVersion: GradleVersion, expression: String) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript(expression) {
         closureDelegateTest(GRADLE_API_TASK, 1)
       }
@@ -151,7 +150,7 @@ class GradleTasksTest : GradleCodeInsightTestCase() {
     "tasks.create('eid1', String) { <caret> }"
   """)
   fun `test task declaration configuration delegate with explicit type`(gradleVersion: GradleVersion, expression: String) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript(expression) {
         closureDelegateTest(JAVA_LANG_STRING, 1)
       }

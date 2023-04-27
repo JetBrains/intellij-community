@@ -37,9 +37,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   var frameHelper: FrameHelper? = null
     private set
 
+  var reusedFullScreenState = false
+
   var normalBounds: Rectangle? = null
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
-  var togglingFullScreenInProgress: Boolean = true
+  var togglingFullScreenInProgress: Boolean = false
 
   override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
 
@@ -47,14 +49,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     val accessibleName: @Nls String?
     val project: Project?
     val helper: IdeFrame
-    val frameDecorator: FrameDecorator?
+    val isInFullScreen: Boolean?
 
     fun dispose()
-  }
-
-  interface FrameDecorator {
-    val isInFullScreen: Boolean
-    fun appClosing() {}
   }
 
   internal fun doSetRootPane(rootPane: JRootPane?) {
@@ -103,7 +100,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     return if (SystemInfoRt.isMac && isInFullScreen) JBInsets.emptyInsets() else super.getInsets()
   }
 
-  override fun isInFullScreen(): Boolean = frameHelper?.frameDecorator?.isInFullScreen ?: false
+  override fun isInFullScreen(): Boolean = frameHelper?.isInFullScreen ?: false
 
   override fun dispose() {
     val frameHelper = frameHelper

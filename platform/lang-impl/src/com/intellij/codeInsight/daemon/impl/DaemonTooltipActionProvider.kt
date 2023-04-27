@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.util.SlowOperations
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.event.InputEvent
 import java.util.*
@@ -25,7 +26,6 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
     val intention = extractMostPriorityFixFromHighlightInfo(info, editor, psiFile) ?: return null
     return wrapIntentionToTooltipAction(intention, info, editor)
   }
-
 }
 
 /**
@@ -33,8 +33,7 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
  * @param myFixText is a text to show in tooltip
  * @param myActionText is a text to search for in intentions' actions
  */
-class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String, @NlsContexts.Command private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
-
+private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String, @NlsContexts.Command private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
   override fun getText(): String {
     return myFixText
   }
@@ -44,7 +43,9 @@ class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String, 
 
     TooltipActionsLogger.logExecute(project, inputEvent)
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val intentions = ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1, myActualOffset)
+    val intentions = SlowOperations.knownIssue("IDEA-301732, EA-660480").use {
+      ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1, myActualOffset)
+    }
 
     for (descriptor in intentions) {
       val action = descriptor.action

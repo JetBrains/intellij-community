@@ -4,31 +4,29 @@ import com.intellij.cce.core.*
 
 class CompletionGolfEmulation(private val settings: Settings = Settings(), private val expectedLine: String) {
   fun pickBestSuggestion(currentLine: String, lookup: Lookup, session: Session): Lookup {
-    val suggestions = lookup.suggestions.ofSource(settings.source).take(settings.topN).toMutableList()
+    val suggestions = lookup.suggestions.ofSource(settings.source)
+      .let { if (settings.topN > 0) it.take(settings.topN) else it }
+      .toMutableList()
     val normalizedExpectedLine = expectedLine.drop(currentLine.length)
 
     val line = checkForPerfectLine(normalizedExpectedLine, suggestions, lookup.prefix)
     val token = checkForFirstToken(normalizedExpectedLine, suggestions, lookup.prefix)
 
-    val new = when {
+    val selectedPosition = when {
       settings.checkLine && line != null -> {
-        if (line.first.length > expectedLine.length / 2) {
+        if (line.first.length > expectedLine.trim().length / 2) {
           session.success = true
         }
         suggestions[line.second] = suggestions[line.second].withSuggestionKind(SuggestionKind.LINE)
-        line
+        line.second
       }
       settings.checkToken && token != null -> {
         suggestions[token.second] = suggestions[token.second].withSuggestionKind(SuggestionKind.TOKEN)
-        token
+        token.second
       }
-      else -> Pair(expectedLine[currentLine.length].toString(), -1)
+      else -> -1
     }
-    return Lookup(lookup.prefix, suggestions, lookup.latency, selectedPosition = new.second, isNew = lookup.isNew)
-  }
-
-  fun isSkippable(str: String): Boolean {
-    return str.isBlank()
+    return Lookup(lookup.prefix, currentLine.length, suggestions, lookup.latency, selectedPosition = selectedPosition, isNew = lookup.isNew)
   }
 
   private fun checkForPerfectLine(expectedLine: String, suggestions: List<Suggestion>, prefix: String): Pair<String, Int>? {
@@ -43,7 +41,6 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
   }
 
   private fun checkForFirstToken(expectedLine: String, suggestions: List<Suggestion>, prefix: String): Pair<String, Int>? {
-    var res: Pair<String, Int>? = null
     val expectedToken = firstToken(expectedLine)
 
     if (expectedToken.isEmpty()) {
@@ -53,14 +50,20 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
     suggestions.forEachIndexed { index, suggestion ->
       val suggestionToken = firstToken(suggestion.text.drop(prefix.length))
 
-      findResult(suggestionToken, expectedToken, index, res)?.let { res = it }
+      if (suggestionToken == expectedToken) {
+        return suggestionToken to index
+      }
     }
 
-    return res
+    return null
   }
 
   private fun findResult(suggestion: String, expected: String, index: Int, res: Pair<String, Int>?): Pair<String, Int>? {
     if (suggestion.isEmpty() || !expected.startsWith(suggestion)) {
+      return null
+    }
+    val firstExpectedToken = firstToken(expected)
+    if (firstExpectedToken.isNotEmpty() && suggestion.length < firstExpectedToken.length) {
       return null
     }
 
@@ -85,6 +88,9 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
    *  - TAB_NINE  - <a href="https://github.com/codota/tabnine-intellij">https://github.com/codota/tabnine-intellij</a>
    *  - INTELLIJ  - <a href="https://jetbrains.team/p/ccrm/code/fl-inference">https://jetbrains.team/p/ccrm/code/fl-inference</a>
    * @param topN Take only N top suggestions, applying after filtering by source
+   * @param isBenchmark Call completion once for each token.
+   * @param randomSeed Random seed for evaluation. Currently used to select token prefix in benchmark mode.
+   * @param suggestionsProvider Name of provider of suggestions (use DEFAULT for IDE completion)
    */
   data class Settings(
     val checkLine: Boolean = true,
@@ -92,13 +98,21 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
 
     val checkToken: Boolean = true,
     val source: SuggestionSource? = null,
-    var topN: Int = -1
-  )
+    var topN: Int = -1,
+
+    val isBenchmark: Boolean = false,
+    val randomSeed: Int = 0,
+    val suggestionsProvider: String = DEFAULT_PROVIDER
+  ) {
+    fun isDefaultProvider(): Boolean = suggestionsProvider == DEFAULT_PROVIDER
+  }
 
   companion object {
     fun createFromSettings(settings: Settings?, expectedLine: String): CompletionGolfEmulation {
       return CompletionGolfEmulation(settings ?: Settings(), expectedLine)
     }
+
+    private const val DEFAULT_PROVIDER: String = "DEFAULT"
   }
 }
 

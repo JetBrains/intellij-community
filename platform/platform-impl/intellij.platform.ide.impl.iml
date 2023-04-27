@@ -61,7 +61,6 @@
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
-    <orderEntry type="library" scope="RUNTIME" name="imageio-tiff" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.dependenciesToolwindow" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
@@ -84,16 +83,15 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
     <orderEntry type="module-library">
       <library name="byte-buddy-agent" type="repository">
-        <properties include-transitive-deps="false" maven-id="net.bytebuddy:byte-buddy-agent:1.12.17" />
+        <properties include-transitive-deps="false" maven-id="net.bytebuddy:byte-buddy-agent:1.14.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.17/byte-buddy-agent-1.12.17.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.0/byte-buddy-agent-1.14.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.12.17/byte-buddy-agent-1.12.17-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.0/byte-buddy-agent-1.14.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -144,5 +142,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="library" name="hash4j" level="project" />
   </component>
 </module>

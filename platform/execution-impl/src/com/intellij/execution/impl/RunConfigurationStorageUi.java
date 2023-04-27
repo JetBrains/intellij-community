@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -27,20 +28,20 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.PopupState;
-import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.UriUtil;
+import com.intellij.util.*;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -225,7 +226,10 @@ public class RunConfigurationStorageUi {
     if (file == null) return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
     if (!file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
 
-    if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, true) == null) {
+    boolean isInContent = WorkspaceFileIndexEx.IS_ENABLED
+                          ? WorkspaceFileIndex.getInstance(project).isUrlInContent(VfsUtilCore.pathToUrl(path)) != ThreeState.NO
+                          : ProjectFileIndex.getInstance(project).isInContent(file);
+    if (!isInContent) {
       if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, false) == null) {
         return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
       }
@@ -474,9 +478,9 @@ public class RunConfigurationStorageUi {
           if (file.getPath().equals(myDotIdeaStoragePath)) return true;
           return file.isDirectory() &&
                  super.isFileSelectable(file) &&
-                 ProjectFileIndex.getInstance(project).isInContent(file) &&
                  !file.getPath().endsWith("/.idea") &&
-                 !file.getPath().contains("/.idea/");
+                 !file.getPath().contains("/.idea/") &&
+                 ReadAction.compute(() -> ProjectFileIndex.getInstance(project).isInContent(file));
         }
       };
 

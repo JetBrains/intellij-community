@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package com.intellij.ui.scale
 
 import com.intellij.diagnostic.runActivity
@@ -11,6 +13,8 @@ import com.intellij.util.ui.JBScalableIcon
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
+import java.awt.geom.AffineTransform
+import java.awt.geom.Point2D
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import java.util.function.Supplier
@@ -25,7 +29,7 @@ import kotlin.math.roundToInt
 object JBUIScale {
   @JvmField
   @Internal
-  val SCALE_VERBOSE = java.lang.Boolean.getBoolean("ide.ui.scale.verbose")
+  val SCALE_VERBOSE: Boolean = java.lang.Boolean.getBoolean("ide.ui.scale.verbose")
 
   private const val USER_SCALE_FACTOR_PROPERTY = "JBUIScale.userScaleFactor"
 
@@ -87,7 +91,7 @@ object JBUIScale {
     // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     var font: Font
     if (SystemInfoRt.isMac) {
-      // see AquaFonts.getControlTextFont() - lucida13Pt is hardcoded
+      // see AquaFonts.getControlTextFont() - lucida13Pt is a hardcoded
       // text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
       font = Font(".SF NS Text", Font.PLAIN, 13)
@@ -115,14 +119,14 @@ object JBUIScale {
         var dpi = value / 1024
         if (dpi < 50) dpi = 50
         val scale = if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else discreteScale(dpi / 96f) // no scaling in JRE-HiDPI mode
-        // derive actual system base font size
+        // derive the actual system base font size
         DEF_SYSTEM_FONT_SIZE = font.size / scale
         if (isScaleVerbose) {
           log.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE))
         }
       }
       else if (!SystemInfo.isJetBrainsJvm) {
-        // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
+        // With Oracle JDK: derive a scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
         val size = DEF_SYSTEM_FONT_SIZE * screenScale
         font = font.deriveFont(size)
         if (isScaleVerbose) {
@@ -225,7 +229,8 @@ object JBUIScale {
 
   /**
    * Sets the user scale factor.
-   * The method is used by the IDE, it's not recommended to call the method directly from the client code.
+   * The IDE uses the method.
+   * It's not recommended to call the method directly from the client code.
    * For debugging purposes, the following JVM system property can be used:
    * ide.ui.scale=float
    * or the IDE registry keys (for backward compatibility):
@@ -262,14 +267,14 @@ object JBUIScale {
     scale = discreteScale(scale)
 
     // downgrading user scale below 1.0 may be uncomfortable (tiny icons),
-    // whereas some users prefer font size slightly below normal which is ok
+    // whereas some users prefer font size slightly below normal, which is ok
     if (scale < 1 && systemScaleFactor.value >= 1) {
       scale = 1f
     }
 
     // ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData
     if (SystemInfoRt.isLinux && scale == 1.25f && DEF_SYSTEM_FONT_SIZE == 12f) {
-      // Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux.
+      // The default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux.
       return 1f
     }
     else {
@@ -314,8 +319,8 @@ object JBUIScale {
    * @return 'f' scaled by the user scale factor
    */
   @JvmStatic
-  fun scale(f: Float): Float {
-    return f * userScaleFactor.value
+  fun scale(value: Float): Float {
+    return value * userScaleFactor.value
   }
 
   /**
@@ -377,14 +382,6 @@ object JBUIScale {
 
   /**
    * Returns the system scale factor, corresponding to the graphics.
-   * This is a convenience method allowing to avoid casting to `Graphics2D`
-   * on the calling side.
-   */
-  @JvmStatic
-  fun sysScale(g: Graphics?): Float = sysScale(g as? Graphics2D?)
-
-  /**
-   * Returns the system scale factor, corresponding to the graphics.
    * For BufferedImage's graphics, the scale is taken from the graphics itself.
    * In the IDE-managed HiDPI mode defaults to [.sysScale]
    */
@@ -396,12 +393,25 @@ object JBUIScale {
 
     val gc = g.deviceConfiguration
     if (gc == null || gc.device.type == GraphicsDevice.TYPE_IMAGE_BUFFER || gc.device.type == GraphicsDevice.TYPE_PRINTER) {
-      // in this case gc doesn't provide a valid scale
-      return abs(g.transform.scaleX.toFloat())
+      // in this case, gc doesn't provide a valid scale
+      return abs(getTransformScaleX(g.transform))
     }
     else {
-      return sysScale(gc)
+      return gc.defaultTransform.scaleX.toFloat()
     }
+  }
+
+  /**
+   * Get scale for an arbitrary affine transform.
+   * This should not be necessary for [GraphicsConfiguration.getDefaultTransform], as it is expected to be a translation/uniform scale only.
+   *
+   * See javadoc [AffineTransform.getScaleX], it will return an arbitrary number (inc. negative ones)
+   * after [AffineTransform.rotate] or `AffineTransform.scale(-1, 1)` transforms.
+   */
+  private fun getTransformScaleX(transform: AffineTransform): Float {
+    val p = Point2D.Double(1.0, 0.0);
+    transform.deltaTransform(p, p)
+    return p.distance(0.0, 0.0).toFloat()
   }
 
   @JvmStatic
@@ -414,8 +424,9 @@ object JBUIScale {
    */
   @JvmStatic
   fun isHiDPI(scale: Double): Boolean {
-    // Scale below 1.0 is impractical, it's rather accepted for debug purpose.
-    // Treat it as "hidpi" to correctly manage images which have different user and real size
+    // The scale below 1.0 is impractical.
+    // It's rather accepted for debug purpose.
+    // Treat it as "hidpi" to correctly manage images which have different users and real size
     // (for scale below 1.0 the real size will be smaller).
     return scale != 1.0
   }
@@ -425,5 +436,5 @@ object JBUIScale {
    */
   @JvmStatic
   val isUsrHiDPI: Boolean
-    get() = isHiDPI(scale(1f).toDouble())
+    get() = isHiDPI(scale(1f))
 }

@@ -3,16 +3,17 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
 import java.util.*
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 
 class ReplaceBySourceTest {
@@ -24,10 +25,9 @@ class ReplaceBySourceTest {
   fun setUp(info: RepetitionInfo) {
     builder = createEmptyBuilder()
     replacement = createEmptyBuilder()
-    builder.useNewRbs = true
     builder.keepLastRbsEngine = true
     // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
-    builder.upgradeEngine = { (it as ReplaceBySourceAsTree).shuffleEntities = Random(info.currentRepetition.toLong()).nextLong() }
+    builder.upgradeEngine = { it.shuffleEntities = Random(info.currentRepetition.toLong()).nextLong() }
   }
 
   @RepeatedTest(10)
@@ -1735,6 +1735,56 @@ class ReplaceBySourceTest {
     assertEquals("two", children[1].childProperty)
   }
 
+  @RepeatedTest(10)
+  fun `test rbs to itself with multiple parents and same children`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val root11 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+    val root12 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+
+    builder add ModuleEntity("MyModule", emptyList(), MySource) {
+      this.contentRoots = listOf(root11, root12)
+    }
+    builder add ProjectModelTestEntity("", Descriptor(""), MySource) {
+      this.contentRoot = root11
+    }
+
+    val root21 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+    val root22 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+    replacement add ModuleEntity("MyModule", emptyList(), MySource) {
+      this.contentRoots = listOf(root21, root22)
+    }
+    replacement add ProjectModelTestEntity("", Descriptor(""), MySource) {
+      this.contentRoot = root21
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+  }
+
+  @RepeatedTest(10)
+  fun `test replaceBySource with two equal entities referring to each other`() {
+    val superParent = builder addEntity ChainedParentEntity(MySource)
+    val parent = builder addEntity ChainedEntity("data", MySource) {
+      this.generalParent = superParent
+    }
+    builder addEntity ChainedEntity("data", AnotherSource) {
+      this.parent = parent
+      this.generalParent = superParent
+    }
+
+    val anotherBuilder = builder.toSnapshot().toBuilder()
+
+    assertNull(builder.entities (ChainedEntity::class.java).single { it.entitySource == MySource }.parent)
+    assertNotEquals(AnotherSource, builder.entities (ChainedEntity::class.java).single { it.entitySource == AnotherSource }.parent!!.entitySource)
+
+    builder.replaceBySource({ true }, anotherBuilder)
+
+    assertNull(builder.entities (ChainedEntity::class.java).single { it.entitySource == MySource }.parent)
+    assertNotEquals(AnotherSource, builder.entities (ChainedEntity::class.java).single { it.entitySource == AnotherSource }.parent!!.entitySource)
+  }
+
+
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {
       val thisState = engine.targetState[this.base.id]
@@ -1786,7 +1836,6 @@ class ReplaceBySourceTest {
 
   private fun resetChanges() {
     builder = builder.toSnapshot().toBuilder() as MutableEntityStorageImpl
-    builder.useNewRbs = true
     builder.keepLastRbsEngine = true
   }
 

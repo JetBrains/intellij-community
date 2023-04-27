@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.problems.ProblemListener
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -31,7 +32,9 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.awt.AWTEvent
 import java.awt.EventQueue
+import java.awt.Window
 import java.awt.event.MouseEvent
+import javax.swing.JComponent
 import kotlin.coroutines.resume
 
 internal val isNavbarV2Enabled: Boolean
@@ -52,7 +55,7 @@ internal fun activityFlow(project: Project): Flow<Unit> {
 
     IdeEventQueue.getInstance().addActivityListener(Runnable {
       val currentEvent = EventQueue.getCurrentEvent() ?: return@Runnable
-      if (!skipActivityEvent(currentEvent, project)) {
+      if (!skipActivityEvent(currentEvent)) {
         fire()
       }
     }, this)
@@ -62,13 +65,13 @@ internal fun activityFlow(project: Project): Flow<Unit> {
       override fun fileStatusesChanged() = fire()
       override fun fileStatusChanged(virtualFile: VirtualFile) = fire()
     })
-
     connection.subscribe(ProblemListener.TOPIC, object : ProblemListener {
       override fun problemsAppeared(file: VirtualFile) = fire()
       override fun problemsDisappeared(file: VirtualFile) = fire()
     })
-    connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener { fire() })
-
+    connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener {
+      fire()
+    })
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) = fire()
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) = fire()
@@ -81,23 +84,34 @@ internal fun activityFlow(project: Project): Flow<Unit> {
   }.buffer(Channel.CONFLATED)
 }
 
-private fun skipActivityEvent(e: AWTEvent, project: Project): Boolean {
-  val window = WindowManager.getInstance().getFrame(project)
-  if (window != null && !window.isFocused) {
-    // IDEA-307406, IDEA-304798 Skip event when a window is out of focus (user is in a popup)
-    return true
-  }
-
+private fun skipActivityEvent(e: AWTEvent): Boolean {
   return e is MouseEvent && (e.id == MouseEvent.MOUSE_PRESSED || e.id == MouseEvent.MOUSE_RELEASED)
 }
 
-// TODO move to DataManager
-internal suspend fun focusDataContext(): DataContext = suspendCancellableCoroutine {
+/**
+ * This method assumes that [window] is an ancestor of [panel].
+ *
+ * @return data context of the focused component in the [window] of the [panel],
+ * or `null` if [panel] has focus in hierarchy, or if the [window] of the [panel] is not focused
+ */
+internal suspend fun dataContext(window: Window, panel: JComponent): DataContext? = suspendCancellableCoroutine {
   IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(Runnable {
-    @Suppress("DEPRECATION")
-    val dataContextFromFocusedComponent = DataManager.getInstance().dataContext
-    val uiSnapshot = Utils.wrapToAsyncDataContext(dataContextFromFocusedComponent)
-    val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
-    it.resume(asyncDataContext)
+    it.resume(dataContextInner(window, panel))
   }, it.context.contextModality() ?: ModalityState.NON_MODAL)
+}
+
+private fun dataContextInner(window: Window, panel: JComponent): DataContext? {
+  if (!window.isFocused) {
+    // IDEA-307406, IDEA-304798 Skip event when a window is out of focus (user is in a popup)
+    return null
+  }
+  val focusedComponentInWindow = WindowManager.getInstance().getFocusedComponent(window)
+                                 ?: return null
+  if (UIUtil.isDescendingFrom(focusedComponentInWindow, panel)) {
+    // ignore updates while panel or one of its children has focus
+    return null
+  }
+  val dataContext = DataManager.getInstance().getDataContext(focusedComponentInWindow)
+  val uiSnapshot = Utils.wrapToAsyncDataContext(dataContext)
+  return AnActionEvent.getInjectedDataContext(uiSnapshot)
 }

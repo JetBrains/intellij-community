@@ -22,12 +22,15 @@ import org.assertj.swing.timing.Condition
 import org.assertj.swing.timing.Pause
 import org.assertj.swing.timing.Timeout
 import training.ui.IftTestContainerFixture
+import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.getActionById
 import training.util.invokeActionForFocusContext
 import java.awt.Component
 import java.awt.Container
+import java.awt.Point
+import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.*
@@ -43,6 +46,35 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     val duration: Int = 15, //seconds
     val skipTesting: Boolean = false
   )
+
+  class HighlightedArea internal constructor(private val fixture: IftTestContainerFixture<*>,
+                                             private val component: JComponent,
+                                             private val rectangle: Rectangle?) {
+    fun click() {
+      if (rectangle != null) {
+        fixture.robot().click(component, center(rectangle))
+      }
+      else {
+        fixture.robot().click(component)
+      }
+    }
+
+    fun hover() {
+      if (rectangle != null) {
+        fixture.robot().moveMouse(component, center(rectangle))
+      }
+      else {
+        fixture.robot().moveMouse(component)
+      }
+    }
+
+    private fun center(r: Rectangle) = Point(r.x + r.width / 2, r.y + r.height / 2)
+  }
+
+  val IftTestContainerFixture<*>.highlightedArea : HighlightedArea get() {
+    val component = LessonUtil.lastHighlightedUi() ?: error("No highlighted component")
+    return HighlightedArea(this, component, LearningUiHighlightingManager.getRectangle(component))
+  }
 
   fun type(text: String) {
     robot.waitForIdle()

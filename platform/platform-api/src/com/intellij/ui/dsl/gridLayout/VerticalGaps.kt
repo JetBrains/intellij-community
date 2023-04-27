@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.gridLayout
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.scale.JBUIScale
 
+@Deprecated("Use UnscaledGapsY instead")
 data class VerticalGaps(val top: Int = 0, val bottom: Int = 0) {
   companion object {
     @JvmField
@@ -14,11 +15,9 @@ data class VerticalGaps(val top: Int = 0, val bottom: Int = 0) {
     checkNonNegative("top", top)
     checkNonNegative("bottom", bottom)
   }
-
-  val height: Int
-    get() = top + bottom
 }
 
+@Deprecated("Use UnscaledGapsY instead", replaceWith = ReplaceWith("UnscaledGapsY(top, bottom)"))
 fun JBVerticalGaps(top: Int = 0, bottom: Int = 0): VerticalGaps {
   return VerticalGaps(JBUIScale.scale(top), JBUIScale.scale(bottom))
 }

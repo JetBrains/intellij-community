@@ -151,7 +151,7 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
   private fun createTabContent(context: C, reviewTab: T): Content = createDisposableContent { content, contentCs ->
     content.isCloseable = true
     content.displayName = reviewTab.displayName
-    content.description = "${context.projectName}: ${reviewTab.displayName}"
+    content.description = "${context.projectName}: ${reviewTab.description}"
 
     content.component = tabComponentFactory.createTabComponent(contentCs, context, reviewTab)
 

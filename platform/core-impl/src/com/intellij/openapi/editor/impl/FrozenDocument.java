@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.RangeMarker;
@@ -9,11 +9,14 @@ import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class FrozenDocument implements DocumentEx {
   private final ImmutableCharSequence myText;
@@ -30,7 +33,7 @@ public class FrozenDocument implements DocumentEx {
 
   @NotNull
   private LineSet getLineSet() {
-    LineSet lineSet = SoftReference.dereference(myLineSet);
+    LineSet lineSet = dereference(myLineSet);
     if (lineSet == null) {
       myLineSet = new SoftReference<>(lineSet = LineSet.createLineSet(myText));
     }
@@ -39,8 +42,8 @@ public class FrozenDocument implements DocumentEx {
 
   @NotNull
   public FrozenDocument applyEvent(@NotNull DocumentEvent event, int newStamp) {
-    final int offset = event.getOffset();
-    final int oldEnd = offset + event.getOldLength();
+    int offset = event.getOffset();
+    int oldEnd = offset + event.getOldLength();
     ImmutableCharSequence newText = myText.replace(offset, oldEnd, event.getNewFragment());
     LineSet newLineSet = getLineSet().update(myText, offset, oldEnd, event.getNewFragment(), event.isWholeTextReplaced());
     return new FrozenDocument(newText, newLineSet, newStamp, null);
@@ -95,7 +98,7 @@ public class FrozenDocument implements DocumentEx {
   @NotNull
   @Override
   public String getText() {
-    String s = SoftReference.dereference(myTextString);
+    String s = dereference(myTextString);
     if (s == null) {
       myTextString = new SoftReference<>(s = myText.toString());
     }

@@ -1,0 +1,3 @@
+- "com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope":StandaloneCoroutine{Active}@26ec2ffe, state: SUSPENDED [Dispatchers.Default]
+#  at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+  at kotlinx.coroutines.flow.internal.CombineKt$combineInternal$2$1.invokeSuspend(Combine.kt:34)

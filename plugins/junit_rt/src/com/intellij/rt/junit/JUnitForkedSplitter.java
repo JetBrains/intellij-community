@@ -39,7 +39,7 @@ public class JUnitForkedSplitter<T> extends ForkedSplitter<T> {
 
   @Override
   protected List<String> createChildArgs(T child) {
-    List<String> newArgs = new ArrayList<String>();
+    List<String> newArgs = new ArrayList<>();
     newArgs.add(myTestRunner.getStartDescription(child));
     newArgs.addAll(myNewArgs);
     return newArgs;
@@ -54,7 +54,7 @@ public class JUnitForkedSplitter<T> extends ForkedSplitter<T> {
     File tempFile = File.createTempFile("idea_junit", ".tmp");
     tempFile.deleteOnExit();
     JUnitStarter.printClassesList(classNames, packageName, "", filters, tempFile);
-    final List<String> childArgs = new ArrayList<String>();
+    final List<String> childArgs = new ArrayList<>();
     childArgs.add("@" + tempFile.getAbsolutePath());
     childArgs.addAll(myNewArgs);
     return childArgs;

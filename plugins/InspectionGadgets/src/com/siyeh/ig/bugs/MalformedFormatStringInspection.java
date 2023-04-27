@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInsight.options.JavaIdentifierValidator;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.options.OptPane;
@@ -12,6 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.format.FormatDecode;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +48,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
     return pane(
       stringList("classNames", InspectionGadgetsBundle.message("string.format.class.label"),
                  new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("string.format.choose.class"))),
-      stringList("methodNames", InspectionGadgetsBundle.message("string.format.class.method.label"))
+      stringList("methodNames", InspectionGadgetsBundle.message("string.format.class.method.label"), new JavaIdentifierValidator())
     );
   }
 

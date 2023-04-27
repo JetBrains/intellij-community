@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -238,9 +238,11 @@ public final class ScrollingUtil {
     }
     else {
       if ((modifiers & InputEvent.SHIFT_DOWN_MASK) == 0) {
-        selectionModel.removeSelectionInterval(selectionModel.getMinSelectionIndex(), selectionModel.getMaxSelectionIndex());
+        selectionModel.setSelectionInterval(indexToSelect, indexToSelect);
       }
-      selectionModel.addSelectionInterval(indexToSelect, indexToSelect);
+      else {
+        selectionModel.addSelectionInterval(indexToSelect, indexToSelect);
+      }
     }
   }
 

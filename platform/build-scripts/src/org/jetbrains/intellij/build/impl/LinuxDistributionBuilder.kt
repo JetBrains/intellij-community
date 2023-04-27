@@ -1,16 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext")
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -22,8 +20,8 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration.Companion.minutes
 
 class LinuxDistributionBuilder(override val context: BuildContext,
@@ -76,13 +74,14 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledRuntime) {
-        context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
-                            BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
-          val tarGzPath = buildTarGz(runtimeDir = null,
-                                     unixDistPath = osAndArchSpecificDistPath,
-                                     suffix = NO_JBR_SUFFIX + suffix,
-                                     arch = arch)
-          checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = false, arch = arch)
+        launch {
+          context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
+                              BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
+            buildTarGz(runtimeDir = null,
+                       unixDistPath = osAndArchSpecificDistPath,
+                       suffix = NO_JBR_SUFFIX + suffix,
+                       arch = arch)
+          }
         }
       }
       if (customizer.buildOnlyBareTarGz) {
@@ -91,17 +90,17 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
       val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
       val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix)
-      checkExecutablePermissions(tarGzPath, rootDirectoryName, includeRuntime = true, arch = arch)
-
-      if (arch == JvmArchitecture.x64) {
-        buildSnapPackage(runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
+      launch {
+        if (arch == JvmArchitecture.x64) {
+          buildSnapPackage(runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
+        }
+        else {
+          // TODO: Add snap for aarch64
+          Span.current().addEvent("skip building Snap packages for non-x64 arch")
+        }
       }
-      else {
-        // TODO: Add snap for aarch64
-        Span.current().addEvent("skip building Snap packages for non-x64 arch")
-      }
 
-      if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      if (!context.isStepSkipped(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
         val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
         try {
           unTar(tarGzPath, tempTar)
@@ -117,12 +116,17 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     }
   }
 
+  override fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
+    generateProductJson(targetDir, context, arch)
+  }
+
   private fun generateVMOptions(distBinDir: Path) {
     val fileName = "${context.productProperties.baseFileName}64.vmoptions"
 
     @Suppress("SpellCheckingInspection")
     val vmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties) +
-                    listOf("-Dsun.tools.attach.tmp.only=true")
+                    listOf("-Dsun.tools.attach.tmp.only=true",
+                           "-Dawt.lock.fair=true")
     VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\n")
   }
 
@@ -149,25 +153,26 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val tarRoot = rootDirectoryName
     val tarName = artifactName(context, suffix)
     val tarPath = context.paths.artifactDir.resolve(tarName)
-    val paths = mutableListOf(context.paths.distAllDir, unixDistPath)
-    var javaExecutablePath: String? = null
+    val dirs = mutableListOf(context.paths.distAllDir, unixDistPath)
+
     if (runtimeDir != null) {
-      paths.add(runtimeDir)
-      javaExecutablePath = "jbr/bin/java"
-      require(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "$javaExecutablePath was not found under $runtimeDir" }
+      dirs.add(runtimeDir)
+      val javaExecutablePath = "jbr/bin/java"
+      check(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "${javaExecutablePath} was not found under ${runtimeDir}" }
     }
 
-    val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json$suffix")
-    generateProductJson(targetDir = productJsonDir, arch = arch, javaExecutablePath = javaExecutablePath, context = context)
-    paths.add(productJsonDir)
+    val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json${suffix}")
+    generateProductJson(productJsonDir, context, arch, withRuntime = runtimeDir != null)
+    dirs.add(productJsonDir)
 
     spanBuilder("build Linux tar.gz")
       .setAttribute("runtimeDir", runtimeDir?.toString() ?: "")
       .useWithScope2 {
         val executableFileMatchers = generateExecutableFilesMatchers(runtimeDir != null, arch).keys
-        tar(tarPath, tarRoot, paths, executableFileMatchers, context.options.buildDateInSeconds)
+        tar(tarPath, tarRoot, dirs, executableFileMatchers, context.options.buildDateInSeconds)
         checkInArchive(tarPath, tarRoot, context)
         context.notifyArtifactBuilt(tarPath)
+        checkExecutablePermissions(tarPath, rootDirectoryName, includeRuntime = runtimeDir != null, arch = arch)
       }
     tarPath
   }
@@ -232,24 +237,16 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           |# </${snapcraftConfig.name}>
         """.trimMargin())
 
-        FileSet(unixSnapDistPath)
-          .include("bin/*.sh")
-          .include("bin/*.py")
-          .include("bin/fsnotifier*")
-          .enumerate().forEach(::makeFileExecutable)
-
-        FileSet(runtimeDir)
-          .include("jbr/bin/*")
-          .enumerate().forEach(::makeFileExecutable)
-
-        if (!customizer.extraExecutables.isEmpty()) {
-          for (distPath in listOf(unixSnapDistPath, context.paths.distAllDir)) {
-            val fs = FileSet(distPath)
-            customizer.extraExecutables.forEach(fs::include)
-            fs.enumerateNoAssertUnusedPatterns().forEach(::makeFileExecutable)
+        coroutineScope {
+          val executableFilesMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch).keys
+          for (distPath in listOf(unixSnapDistPath, context.paths.distAllDir, runtimeDir)) {
+            launch {
+              updateExecutablePermissions(distPath, executableFilesMatchers)
+            }
           }
         }
-        validateProductJson(jsonText = generateProductJson(unixSnapDistPath, arch = arch, "jbr/bin/java", context),
+        val jsonText = generateProductJson(unixSnapDistPath, context, arch)
+        validateProductJson(jsonText = jsonText,
                             relativePathToProductJson = "",
                             installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, runtimeDir),
                             installationArchives = listOf(),
@@ -275,8 +272,9 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           workingDir = snapDir,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
-        moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
-        context.notifyArtifactWasBuilt(context.paths.artifactDir.resolve(snapArtifact))
+        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
+        context.notifyArtifactBuilt(snapArtifactPath)
+        checkExecutablePermissions(unSquashSnap(snapArtifactPath), root = "", includeRuntime = true, arch = arch)
       }
   }
 
@@ -325,29 +323,34 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
     copyInspectScript(context, distBinDir)
   }
+
+  private suspend fun unSquashSnap(snap: Path): Path {
+    val unSquashed = context.paths.tempDir.resolve("unSquashed-${snap.nameWithoutExtension}")
+    NioFiles.deleteRecursively(unSquashed)
+    Files.createDirectories(unSquashed)
+    runProcess(listOf("unsquashfs", "$snap"), workingDir = unSquashed, inheritOut = true)
+    return unSquashed.resolve("squashfs-root")
+  }
+
 }
 
 private const val NO_JBR_SUFFIX = "-no-jbr"
 
-private fun generateProductJson(targetDir: Path, arch: JvmArchitecture, javaExecutablePath: String?, context: BuildContext): String {
-  val scriptName = context.productProperties.baseFileName
-  val file = targetDir.resolve(PRODUCT_INFO_FILE_NAME)
-  Files.createDirectories(targetDir)
-  val json = generateMultiPlatformProductJson(
+private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+  val json = generateProductInfoJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
     launch = listOf(ProductInfoLaunchData(
       os = OsFamily.LINUX.osName,
       arch = arch.dirName,
-      launcherPath = "bin/$scriptName.sh",
-      javaExecutablePath = javaExecutablePath,
-      vmOptionsFilePath = "bin/" + scriptName + "64.vmoptions",
+      launcherPath = "bin/${context.productProperties.baseFileName}.sh",
+      javaExecutablePath = if (withRuntime) "jbr/bin/java" else null,
+      vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.vmoptions",
       startupWmClass = getLinuxFrameClass(context),
       bootClassPathJarNames = context.bootClassPathJarNames,
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch))),
-    context = context
-  )
-  Files.writeString(file, json)
+    context)
+  writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
   return json
 }
 
@@ -360,12 +363,6 @@ private fun generateVersionMarker(unixDistPath: Path, context: BuildContext) {
 private fun artifactName(buildContext: BuildContext, suffix: String?): String {
   val baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
   return "$baseName$suffix.tar.gz"
-}
-
-private fun makeFileExecutable(file: Path) {
-  Span.current().addEvent("set file permission to 0755", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
-  @Suppress("SpellCheckingInspection")
-  Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
 }
 
 private fun copyScript(sourceFile: Path,
@@ -393,7 +390,7 @@ private fun copyScript(sourceFile: Path,
       Pair("ide_default_xmx", defaultXmxParameter.trim()),
       Pair("class_path", classPath),
       Pair("script_name", scriptName),
-      Pair("main_class_name", context.productProperties.mainClassName),
+      Pair("main_class_name", context.ideMainClassName),
     ),
     mustUseAllPlaceholders = false,
     convertToUnixLineEndings = true,

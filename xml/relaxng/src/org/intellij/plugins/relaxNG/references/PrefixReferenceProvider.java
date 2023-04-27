@@ -90,7 +90,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public LocalQuickFix @Nullable [] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       final PsiElement element = getElement();
       final XmlElementFactory factory = XmlElementFactory.getInstance(element.getProject());
       final String value = ((XmlAttributeValue)element).getValue();

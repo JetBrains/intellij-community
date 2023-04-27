@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -11,11 +13,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.mac.MacFullScreenControlsManager;
 import kotlin.Unit;
 import kotlinx.coroutines.CompletableDeferredKt;
 import kotlinx.coroutines.Job;
@@ -50,7 +54,13 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     log(String.format("Will tweak full screen mode for presentation=%b", inPresentation));
 
     UISettings.getInstance().setPresentationMode(inPresentation);
+    float oldScale = UISettingsUtils.getInstance().getCurrentIdeScale();
     UISettings.getInstance().fireUISettingsChanged();
+
+    // If IDE scale hasn't been changed, we need to updateUI here
+    if (oldScale == UISettingsUtils.getInstance().getCurrentIdeScale()) {
+      LafManager.getInstance().updateUI();
+    }
 
     Job callback = project == null ? CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE) : tweakFrameFullScreen(project, inPresentation);
     callback.invokeOnCompletion(__ -> {
@@ -63,6 +73,10 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(IdeFrameImpl.getActiveFrame());
     if (frame == null) {
       return CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE);
+    }
+
+    if (SystemInfo.isMac) {
+      MacFullScreenControlsManager.INSTANCE.updateForPresentationMode();
     }
 
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.preview;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -79,6 +79,36 @@ public interface IntentionPreviewInfo {
   };
 
   /**
+   * Diff preview applied to the current file when new text is not actually written.
+   * Could be used as an alternative to {@link #DIFF} when we can generate the target text
+   * without actual PSI changes.
+   */
+  class Diff implements IntentionPreviewInfo {
+    private final @NotNull String myOrigText;
+    private final @NotNull String myModifiedText;
+
+    /**
+     * @param origText old text of the current file
+     * @param modifiedText new text for the current file
+     */
+    public Diff(@NotNull String origText, @NotNull String modifiedText) {
+      myOrigText = origText;
+      myModifiedText = modifiedText;
+    }
+
+    /**
+     * @return new text for the current file
+     */
+    public @NotNull String modifiedText() {
+      return myModifiedText;
+    }
+
+    public @NotNull String originalText() {
+      return myOrigText;
+    }
+  }
+  
+  /**
    * Diff preview where original text and new text are explicitly displayed.
    * Could be used to generate custom diff previews (e.g. when changes are to be applied to another file).
    * <p>
@@ -146,7 +176,7 @@ public interface IntentionPreviewInfo {
    *   that preview for another item will be displayed. Also, preview is mostly useful for keyboard users, as it’s usually
    *   displayed as a reaction on Alt+Enter. So adding clickable links or buttons there is not a good idea.</li>
    *   <li>When possible, use generic preview methods available in {@link IntentionPreviewInfo} (e.g., {@link #rename(PsiFile, String)},
-   *   {@link #navigate(NavigatablePsiElement)}, {@link #movePsi(PsiNamedElement, PsiNamedElement)}). They provide uniform
+   *   {@link #navigate(NavigatablePsiElement)}, {@link #movePsi(PsiNamedElement, PsiNamedElement)}, {@link #moveMultiplePsi(List, PsiNamedElement)}). They provide uniform
    *   preview for common cases. Ask if you think that you need a new common method.</li>
    * </ul>
    */
@@ -197,8 +227,7 @@ public interface IntentionPreviewInfo {
     return new Html(fragment.wrapWith("p"));
   }
 
-  @NotNull
-  private static HtmlChunk getIconChunk(@Nullable Icon icon, @NotNull String id) {
+  private static @NotNull HtmlChunk getIconChunk(@Nullable Icon icon, @NotNull String id) {
     if (icon instanceof DeferredIcon) {
       icon = ((DeferredIcon)icon).evaluate();
     }
@@ -242,13 +271,66 @@ public interface IntentionPreviewInfo {
     if (targetIcon instanceof DeferredIcon) {
       targetIcon = ((DeferredIcon)targetIcon).evaluate();
     }
-    HtmlBuilder builder = new HtmlBuilder()
-      .append(getIconChunk(sourceIcon, "source"))
-      .append(Objects.requireNonNull(source.getName()))
-      .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
-      .append(getIconChunk(targetIcon, "target"))
-      .append(Objects.requireNonNull(target.getName()));
+    HtmlChunk moveFragment = getHtmlMoveFragment(sourceIcon, targetIcon, source.getName(), target.getName());
+    return new Html(moveFragment.wrapWith("p"));
+  }
+
+  /**
+   * @param sources List of PsiElements to move
+   * @param target  target PsiElement
+   * @return a presentation describing moving of source elements to the target
+   */
+  static @NotNull IntentionPreviewInfo moveMultiplePsi(
+    @NotNull List<PsiNamedElement> sources,
+    @NotNull PsiNamedElement target) {
+    return moveMultiplePsi(sources, target, null);
+  }
+
+  /**
+   * @param sources            List of PsiElements to move
+   * @param target             target PsiElement
+   * @param explicitTargetName Explicit name of the target element to be displayed; if null {@code target.getName()} will be used instead
+   * @return a presentation describing moving of source elements to the target
+   */
+  static @NotNull IntentionPreviewInfo moveMultiplePsi(
+    @NotNull List<PsiNamedElement> sources,
+    @NotNull PsiNamedElement target,
+    @Nullable @Nls String explicitTargetName) {
+
+    HtmlBuilder builder = new HtmlBuilder();
+
+    Icon targetIcon = getIcon(target);
+    builder.appendWithSeparators(
+      HtmlChunk.br(),
+      ContainerUtil.map(sources, source -> getHtmlMoveFragment(
+        getIcon(source),
+        targetIcon,
+        source.getName(),
+        explicitTargetName == null ? target.getName() : explicitTargetName)));
+
     return new Html(builder.wrapWith("p"));
+  }
+
+  private static Icon getIcon(@NotNull PsiNamedElement source) {
+    Icon icon = source.getIcon(0);
+    if (icon instanceof DeferredIcon) {
+      icon = ((DeferredIcon)icon).evaluate();
+    }
+    return icon;
+  }
+
+  @NotNull
+  private static HtmlChunk getHtmlMoveFragment(@Nullable Icon sourceIcon,
+                                               @Nullable Icon targetIcon,
+                                               @Nullable @Nls String sourceName,
+                                               @Nullable @Nls String targetName) {
+    return new HtmlBuilder()
+      .append(getIconChunk(sourceIcon, "source_" + sourceName))
+      .append(Objects.requireNonNull(sourceName))
+      .append(" ").append(HtmlChunk.htmlEntity("&rarr;")).append(" ")
+      .append(getIconChunk(targetIcon, "target_" + targetName))
+      .append(Objects.requireNonNull(targetName))
+      .toFragment();
   }
 
   /**
@@ -257,8 +339,17 @@ public interface IntentionPreviewInfo {
    */
   static @NotNull IntentionPreviewInfo navigate(@NotNull NavigatablePsiElement target) {
     PsiFile file = target.getContainingFile();
-    Icon icon = file.getIcon(0);
     int offset = target.getTextOffset();
+    return navigate(file, offset);
+  }
+
+  /**
+   * @param file file to navigate to
+   * @param offset offset within file to navigate to
+   * @return a presentation describing that the action will navigate to the specified target element
+   */
+  static @NotNull Html navigate(@NotNull PsiFile file, int offset) {
+    Icon icon = file.getIcon(0);
     Document document = file.getViewProvider().getDocument();
     HtmlBuilder builder = new HtmlBuilder();
     builder.append(HtmlChunk.htmlEntity("&rarr;")).append(" ");
@@ -291,7 +382,7 @@ public interface IntentionPreviewInfo {
    * @return a presentation describing that the action will add the specified option to the options list
    */
   static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
-                                            @NotNull @Nls String title, 
+                                            @NotNull @Nls String title,
                                             @NotNull Predicate<String> toSelect) {
     int maxToList = Math.min(7, updatedList.size() + 2);
     HtmlChunk select = HtmlChunk.tag("select").attr("multiple", "multiple").attr("size", maxToList)

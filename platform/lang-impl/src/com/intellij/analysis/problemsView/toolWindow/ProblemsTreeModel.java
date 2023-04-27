@@ -75,7 +75,7 @@ public final class ProblemsTreeModel extends BaseTreeModel<Node> implements Invo
     treeStructureChanged(path, null, null);
   }
 
-  void nodeChanged(@NotNull TreePath path) {
+  public void nodeChanged(@NotNull TreePath path) {
     treeNodesChanged(path, null, null);
   }
 }

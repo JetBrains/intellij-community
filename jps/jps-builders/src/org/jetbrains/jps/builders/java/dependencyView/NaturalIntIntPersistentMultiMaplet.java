@@ -18,7 +18,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<Integer, IntSet> myMap;
   private final SLRUCache<Integer, IntSet> myCache;
-  private static final DataExternalizer<IntSet> EXTERNALIZER = new DataExternalizer<IntSet>() {
+  private static final DataExternalizer<IntSet> EXTERNALIZER = new DataExternalizer<>() {
     @Override
     public void save(@NotNull final DataOutput out, final IntSet value) throws IOException {
       IntIterator iterator = value.iterator();
@@ -57,7 +57,7 @@ final class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
     finally {
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(prevValue);
     }
-    myCache = new SLRUCache<Integer, IntSet>(CACHE_SIZE, 2 * CACHE_SIZE) {
+    myCache = new SLRUCache<>(CACHE_SIZE, 2 * CACHE_SIZE) {
       @NotNull
       @Override
       public IntSet createValue(Integer key) {

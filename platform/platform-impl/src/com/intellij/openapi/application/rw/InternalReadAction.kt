@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
@@ -23,7 +22,7 @@ internal class InternalReadAction<T>(
 
   suspend fun runReadAction(): T {
     return if (undispatched) {
-      ApplicationManager.getApplication().assertIsNonDispatchThread();
+      ApplicationManager.getApplication().assertIsNonDispatchThread()
       if (application.isReadAccessAllowed) {
         val unsatisfiedConstraint = findUnsatisfiedConstraint()
         check(unsatisfiedConstraint == null) {
@@ -61,7 +60,7 @@ internal class InternalReadAction<T>(
       if (application.isWriteActionPending || application.isWriteActionInProgress) {
         yieldToPendingWriteActions() // Write actions are executed on the write thread => wait until write action is processed.
       }
-      when (val readResult = tryReadAction(loopJob)) {
+      when (val readResult = tryReadAction()) {
         is ReadResult.Successful -> return readResult.value
         is ReadResult.UnsatisfiedConstraint -> readResult.waitForConstraint.join()
         is ReadResult.WritePending -> Unit // retry
@@ -69,37 +68,35 @@ internal class InternalReadAction<T>(
     }
   }
 
-  private suspend fun tryReadAction(loopJob: Job): ReadResult<T> = blockingContext {
-    if (blocking) {
-      tryReadBlocking(loopJob)
+  private suspend fun tryReadAction(): ReadResult<T> {
+    return if (blocking) {
+      tryReadBlocking()
     }
     else {
-      tryReadCancellable(loopJob)
+      tryReadCancellable()
     }
   }
 
-  private fun tryReadBlocking(loopJob: Job): ReadResult<T> {
-    var result: ReadResult<T>? = null
-    application.tryRunReadAction {
-      result = insideReadAction(loopJob)
+  private suspend fun tryReadBlocking(): ReadResult<T> {
+    val loopJob = currentCoroutineContext().job
+    return blockingContext {
+      var result: ReadResult<T>? = null
+      application.tryRunReadAction {
+        result = insideReadAction(loopJob)
+      }
+      result ?: ReadResult.WritePending
     }
-    return result
-           ?: ReadResult.WritePending
   }
 
-  private fun tryReadCancellable(loopJob: Job): ReadResult<T> = try {
-    cancellableReadActionInternal(loopJob) {
+  private suspend fun tryReadCancellable(): ReadResult<T> = try {
+    val ctx = currentCoroutineContext()
+    val loopJob = ctx.job
+    cancellableReadActionInternal(ctx) {
       insideReadAction(loopJob)
     }
   }
-  catch (e: CancellationException) {
-    val cause = Cancellation.getCause(e)
-    if (cause is CannotReadException) {
-      ReadResult.WritePending
-    }
-    else {
-      throw e
-    }
+  catch (readCe: ReadCancellationException) {
+    ReadResult.WritePending
   }
 
   private fun insideReadAction(loopJob: Job): ReadResult<T> {
@@ -148,7 +145,7 @@ private suspend fun yieldUntilRun(schedule: (Runnable) -> Unit) {
   }
 }
 
-private class ResumeContinuationRunnable(continuation: CancellableContinuation<Unit>) : Runnable {
+private class ResumeContinuationRunnable(continuation: CancellableContinuation<Unit>) : ContextAwareRunnable {
 
   @Volatile
   private var myContinuation: CancellableContinuation<Unit>? = continuation

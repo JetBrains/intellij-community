@@ -161,7 +161,49 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
     assertAppRunOutput(configurationSettings, "File Content: content");
   }
 
-  private void assertAppRunOutput(RunnerAndConfigurationSettings configurationSettings, String... checks) {
+  @Test
+  public void testRunApplicationInNestedComposite() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    @Language("Java")
+    String appClass = """
+      package my;
+      import java.util.Arrays;
+
+      public class App {
+          public static void main(String[] args) {
+              System.out.println("Hello expected world");
+          }
+      }
+      """;
+    createProjectSubFile("nested/src/main/java/my/App.java", appClass);
+    createProjectSubFile("settings.gradle", "includeBuild('nested')");
+    createProjectSubFile("nested/settings.gradle", "rootProject.name='app'");
+    createProjectSubFile("nested/build.gradle",
+                         createBuildScriptBuilder()
+                           .withJavaPlugin().generate()
+);
+    createProjectSubFile("build.gradle", createBuildScriptBuilder()
+      .withGradleIdeaExtPlugin()
+      .addImport("org.jetbrains.gradle.ext.*")
+      .addPostfix(
+        "idea {",
+        "  project.settings {",
+        "    runConfigurations {",
+        "       MyApp(Application) {",
+        "           mainClass = 'my.App'",
+        "           moduleName = 'app.main'",
+        "       }",
+        "    }",
+        "  }",
+        "}")
+      .generate());
+    importProject();
+
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "Hello expected world");
+  }
+
+  private static void assertAppRunOutput(RunnerAndConfigurationSettings configurationSettings, String... checks) {
     String output = runAppAndGetOutput(configurationSettings);
     for (String check : checks) {
       assertTrue(String.format("App output should contain substring: %s, but was:\n%s", check, output), output.contains(check));

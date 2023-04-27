@@ -382,7 +382,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       if (StringUtil.isNotEmpty(text) && cc.getPreferredSize().width > maxWidth) {
         int max0 = ObjectUtils.binarySearch(7, text.length() - 1, idx -> {
           cc.setText(StringUtil.trimMiddle(text, idx));
-          return Comparing.compare(cc.getPreferredSize().width, maxWidth);
+          return Integer.compare(cc.getPreferredSize().width, maxWidth);
         });
         int max = max0 < 0 ? -max0 - 2 : max0;
         if (max > 7 && max < text.length()) {

@@ -484,8 +484,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
         }
 
         myFrameworksPanel.setProviders(new ArrayList<>(set),
-                                       ContainerUtil.set(category.getAssociatedFrameworkIds()),
-                                       ContainerUtil.set(category.getPreselectedFrameworkIds()));
+                                       Set.of(category.getAssociatedFrameworkIds()),
+                                       Set.of(category.getPreselectedFrameworkIds()));
       }
       else {
         myFrameworksPanel.setProviders(providers);

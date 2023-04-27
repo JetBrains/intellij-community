@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeInspection.*;
@@ -6,7 +6,9 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -70,6 +72,9 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    if (!Registry.is("spellchecker.inspection.enabled", true)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
 
     return new PsiElementVisitor() {
@@ -205,6 +210,8 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
 
     @Override
     public void consume(TextRange range) {
+      // Tokenization of large texts can produce a lot of tokens, but we are inside RA
+      ProgressManager.checkCanceled();
       String word = range.substring(myText);
       if (!myHolder.isOnTheFly() && myAlreadyChecked.contains(word)) {
         return;

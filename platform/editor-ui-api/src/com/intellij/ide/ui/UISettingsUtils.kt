@@ -2,7 +2,7 @@
 package com.intellij.ide.ui
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import kotlin.math.round
+import com.intellij.util.ui.JBFont
 
 
 class UISettingsUtils(private val settings: UISettings) {
@@ -46,9 +46,10 @@ class UISettingsUtils(private val settings: UISettings) {
       }
 
     @JvmStatic
-    fun scaleFontSize(fontSize: Float, scale: Float): Float =
-      if (scale == 1f) fontSize
-      else round(fontSize * scale)
+    fun scaleFontSize(fontSize: Float, scale: Float): Float = JBFont.scaleFontSize(fontSize, scale)
+
+    @JvmStatic
+    fun percentValue(value: Float) = value.percentValue
 
     fun defaultScale(isPresentation: Boolean) = if (isPresentation) 1.75f else 1f
   }

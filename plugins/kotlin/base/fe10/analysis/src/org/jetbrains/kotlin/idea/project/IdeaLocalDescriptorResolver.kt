@@ -4,12 +4,10 @@ package org.jetbrains.kotlin.idea.project
 
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactory
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.idea.stubindex.resolve.StubBasedPackageMemberDeclarationProvider
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.lazy.AbsentDescriptorHandler
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.lazy.LocalDescriptorResolver
-import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
+import org.jetbrains.kotlin.resolve.lazy.*
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactory
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -31,9 +29,22 @@ class IdeaAbsentDescriptorHandler(
 
     override fun diagnoseDescriptorNotFound(declaration: KtDeclaration): DeclarationDescriptor {
         val exceptionWithAttachments =
-            declarationProviderFactory.safeAs<PluginDeclarationProviderFactory>()?.let {
-                NoDescriptorForDeclarationException(declaration)
-                    .withAttachment("declarationProviderFactory", it.debugToString())
+            declarationProviderFactory.safeAs<PluginDeclarationProviderFactory>()?.let { factory ->
+                var declarationException = NoDescriptorForDeclarationException(declaration)
+                if (declaration is KtClassOrObject && declaration.isTopLevel()) {
+                    declaration.fqName?.let { fqName ->
+                        val parent = fqName.parent()
+                        (factory.createPackageMemberDeclarationProvider(parent) as? StubBasedPackageMemberDeclarationProvider)?.let {
+                            try {
+                                it.checkClassOrObjectDeclarations(declaration.nameAsSafeName)
+                            } catch (e: Exception) {
+                                declarationException = NoDescriptorForDeclarationException(declaration, e.message + "\n")
+                            }
+                        }
+                    }
+                }
+
+                declarationException.withAttachment("declarationProviderFactory", factory.debugToString())
             } ?: NoDescriptorForDeclarationException(declaration, declarationProviderFactory.toString())
         throw exceptionWithAttachments
             .withPsiAttachment("KtDeclaration.kt", declaration)

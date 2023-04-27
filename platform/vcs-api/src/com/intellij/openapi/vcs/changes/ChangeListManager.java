@@ -224,7 +224,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
 
   /**
-   * @deprecated use {@link LocalCommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
+   * @deprecated use {@link CommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
    */
   @Deprecated(forRemoval = true)
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);

@@ -41,7 +41,7 @@ public final class FileReferenceQuickFixProvider {
   private FileReferenceQuickFixProvider() {}
 
   @NotNull
-  public static List<? extends LocalQuickFix> registerQuickFix(@NotNull FileReference reference) {
+  public static List<? extends @NotNull LocalQuickFix> registerQuickFix(@NotNull FileReference reference) {
     final FileReferenceSet fileReferenceSet = reference.getFileReferenceSet();
     int index = reference.getIndex();
 

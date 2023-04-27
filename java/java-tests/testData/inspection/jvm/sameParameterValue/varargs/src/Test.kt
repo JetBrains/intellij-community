@@ -1,26 +1,14 @@
-class Test {
-  private fun foo(vararg args: String) {}
+class TestDifferent {
+  private fun foo(vararg args: String) { }
 
   fun bar() {
     foo("foo", "bar")
-    foo("bla")
-  }
-}
-
-object AnotherDiiferentVarargs {
-  val TEXT = "text"
-  val ANOTHER_TEXT = "another text"
-
-  fun printString(input: String, vararg attrs: String) {
-    System.out.println(input)
-    for (string in attrs) {
-      System.out.println(string)
-    }
+    foo("foobar")
   }
 }
 
 class TheSame {
-  private fun foo(vararg args: String) {}
+  private fun foo(vararg args: String) { }
 
   fun bar() {
     foo("foo")
@@ -28,9 +16,48 @@ class TheSame {
   }
 }
 
+class TheSameMultipleArgs {
+  private fun foo(vararg args: String) { }
+
+  fun bar() {
+    foo("foo", "bar")
+    foo("foo", "bar")
+  }
+}
+
+class TheSameVarargIsFirst {
+  private fun foo(vararg args: String, args1: String? = null) { }
+
+  fun bar() {
+    foo("foo", "bar")
+    foo("foo", "bar")
+    foo("foo", "bar", args1 = "foobar")
+    //foo(args1 = "foobar", args = arrayOf("foo", "bar")) // named varargs not supported because argument is array call here
+  }
+}
+
+class TheSameVarargIsLast {
+  private fun foo(args1: String, vararg args: String) { }
+
+  fun bar() {
+    foo("foo", "bar", "foobar")
+    foo("bar", "bar", "foobar")
+    foo(args1 = "bar", "bar", "foobar")
+  }
+}
+
+class TheSameVarargIsMiddle {
+  private fun foo(args1: String, vararg args: String, args2: String) { }
+
+  fun bar() {
+    foo("barfoo", "foo", "bar", args2 = "foobar")
+    foo(args1 = "foobar", "foo", "bar", args2 = "barfoo")
+  }
+}
+
 fun main(args: Array<String>) {
-  Test().bar()
-  AnotherDiiferentVarargs.printString(AnotherDiiferentVarargs.TEXT, "optional")
-  AnotherDiiferentVarargs.printString(AnotherDiiferentVarargs.ANOTHER_TEXT)
+  TestDifferent().bar()
   TheSame().bar()
+  TheSameMultipleArgs().bar()
+  TheSameVarargIsLast().bar()
 }

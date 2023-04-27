@@ -2,11 +2,11 @@
 package com.intellij.grazie.ide.msg
 
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.jlanguage.LangTool
-import com.intellij.grazie.spellcheck.GrazieSpellchecker
+import com.intellij.grazie.spellcheck.GrazieSpellcheckerLifecycle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 
@@ -23,9 +23,10 @@ class GrazieInitializerManager {
     get() = ApplicationManager.getApplication().messageBus.syncPublisher(topic)
 
   init {
-    val connection = ApplicationManager.getApplication().messageBus.connect()
+    val application = ApplicationManager.getApplication()
+    val connection = application.messageBus.connect()
     connection.subscribe(topic, LangTool)
-    connection.subscribe(topic, GrazieSpellchecker)
+    connection.subscribe(topic, application.service<GrazieSpellcheckerLifecycle>())
   }
 
   fun register(subscriber: GrazieStateLifecycle): MessageBusConnection {

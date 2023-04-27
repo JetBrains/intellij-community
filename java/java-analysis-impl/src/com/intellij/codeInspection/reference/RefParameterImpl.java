@@ -10,6 +10,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -156,7 +157,12 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   }
 
   @Nullable
-  public static Object getAccessibleExpressionValue(UExpression expression, Supplier<? extends PsiElement> accessPlace) {
+  public static Object getAccessibleExpressionValue(@Nullable UExpression expression, @NotNull Supplier<? extends PsiElement> accessPlace) {
+    if (expression == null) return null;
+    if (expression instanceof UExpressionList expressionList) {
+      List<Object> exprValues = ContainerUtil.map(expressionList.getExpressions(), expr -> getAccessibleExpressionValue(expr, accessPlace));
+      return ContainerUtil.all(exprValues, value -> value == VALUE_IS_NOT_CONST) ? VALUE_IS_NOT_CONST : exprValues;
+    }
     if (expression instanceof UReferenceExpression referenceExpression) {
       UElement resolved = UResolvableKt.resolveToUElement(referenceExpression);
       if (resolved instanceof UField uField) {

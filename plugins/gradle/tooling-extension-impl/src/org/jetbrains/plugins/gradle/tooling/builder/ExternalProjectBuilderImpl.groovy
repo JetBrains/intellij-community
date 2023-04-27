@@ -5,19 +5,25 @@ import com.google.gson.GsonBuilder
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
+import org.gradle.api.file.RegularFile
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.invocation.Gradle
+import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
+import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
@@ -28,9 +34,11 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
+import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -49,6 +57,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
   public static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
   public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
+  public static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
 
   static final DataProvider<ConcurrentMap<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<ConcurrentMap<Project, ExternalProject>>() {
     @NotNull
@@ -94,11 +103,23 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.QName = qName
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
-    def parentBuildRootProject = project.gradle.parent?.rootProject
-    def compositePrefix = parentBuildRootProject && !project.rootProject.is(parentBuildRootProject) && ":" != project.path ?
-                          (ideaPlugin?.model?.project?.name ?: project.rootProject.name) : ""
     def ideaModuleName = ideaPluginModule?.name ?: project.name
-    defaultExternalProject.id = compositePrefix + (":" == project.path ? ideaModuleName : qName)
+
+    /*
+    Right now, there is no public API available to get this identityPath
+    Agreement with Gradle: We can use ProjectInternal for now.
+    This identity path will get a public tooling API which will replace the cast.
+    Until then, this API will be kept stable as agreement between Gradle and JetBrains
+
+    Note: identityPath was introduced with Gradle 3.3:
+    https://github.com/gradle/gradle/commit/2c009b27b97c1564344f3cc93258ce5a0e18a03f
+     */
+    def projectIdentityPath = GradleVersion.current() >= GradleVersion.version("3.3") ?
+                              (project as ProjectInternal).identityPath.path : project.path
+
+    defaultExternalProject.id = projectIdentityPath == ":" ? ideaModuleName : projectIdentityPath
+    defaultExternalProject.path = project.path
+    defaultExternalProject.identityPath = projectIdentityPath
     defaultExternalProject.version = wrap(project.version)
     defaultExternalProject.description = project.description
     defaultExternalProject.buildDir = project.buildDir
@@ -246,7 +267,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def projectSourceCompatibility = getSourceCompatibility(project)
     def projectTargetCompatibility = getTargetCompatibility(project)
 
-    def result = [:] as Map<String, DefaultExternalSourceSet>
+    def result = new LinkedHashMap<String, DefaultExternalSourceSet>();
     def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSets == null) {
       return result
@@ -277,7 +298,12 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
           if (compiler.present) {
             try {
               def metadata = compiler.get().metadata
-              externalSourceSet.jdkInstallationPath = metadata.installationPath.asFile.canonicalPath
+              def configuredInstallationPath = metadata.installationPath.asFile.canonicalPath
+              boolean isFallbackToolchain = is80OrBetter && metadata instanceof JavaToolchain && ((JavaToolchain)metadata).isFallbackToolchain();
+              boolean isJavaHomeCompiler = configuredInstallationPath != null && configuredInstallationPath == System.getProperty("java.home");
+              if (!isJavaHomeCompiler && !isFallbackToolchain) {
+                externalSourceSet.jdkInstallationPath = configuredInstallationPath
+              }
             } catch (Throwable e) {
               project.logger.warn("Skipping java toolchain information for $javaCompileTask.path : $e.message")
               project.logger.info("Failed to resolve java toolchain info for $javaCompileTask.path", e)
@@ -293,10 +319,17 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         externalSourceSet.targetCompatibility = projectTargetCompatibility
       }
 
-      def jarTask = project.tasks.findByName(sourceSet.jarTaskName)
-      if (jarTask instanceof AbstractArchiveTask) {
-        externalSourceSet.artifacts = [jarTask.archivePath]
+      project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
+        def isOwnJarTask = task.name == sourceSet.jarTaskName
+        if (isOwnJarTask ||
+          (isCustomJarTask(task, sourceSets) && containsAllSourceSetOutput(task, sourceSet))
+        ) {
+          externalSourceSet.artifacts.add(is67OrBetter ?
+                                          ReflectionUtil.reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile() :
+                                          task.archivePath)
+        }
       }
+
 
       def sources = [:] as Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
@@ -703,5 +736,43 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     return ErrorMessageBuilder.create(
       project, e, "Project resolve errors"
     ).withDescription("Unable to resolve additional project configuration.")
+  }
+
+  private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
+    def outputFiles = new HashSet<>(sourceSet.output.files)
+    try {
+      final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec");
+      mainSpecGetter.setAccessible(true);
+      Object mainSpec = mainSpecGetter.invoke(archiveTask);
+
+      final List<MetaMethod> sourcePathGetters =
+        DefaultGroovyMethods.respondsTo(mainSpec, "getSourcePaths", new Object[]{});
+      if (!sourcePathGetters.isEmpty()) {
+        Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
+        if (sourcePaths != null) {
+          for (Object path : sourcePaths) {
+            def files = archiveTask.project.files(path).files
+            outputFiles.removeAll(files)
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    return outputFiles.isEmpty()
+  }
+
+  private static boolean isCustomJarTask(@NotNull AbstractArchiveTask archiveTask,
+                                         @NotNull SourceSetContainer sourceSets) {
+    for (final SourceSet sourceSet in sourceSets) {
+      if (archiveTask.name == sourceSet.jarTaskName) {
+        // there is a sourceSet that 'owns' this task
+        return false;
+      }
+    }
+    // name of this task is not associated with any source set
+    return true;
   }
 }

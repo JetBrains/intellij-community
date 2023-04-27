@@ -37,6 +37,7 @@ internal class PyIdeCommonOptionsPanel(data: PyCommonOptionsFormData, showModule
   @JvmField
   val pathMappingsComponent = PathMappingsComponent()
     .apply { remove(label) }
+  lateinit var pathMappingsRow: Row
   lateinit var addContentRootsCheckbox: JCheckBox
   lateinit var addSourceRootsCheckbox: JCheckBox
   lateinit var panel: DialogPanel
@@ -75,7 +76,7 @@ internal class PyIdeCommonOptionsPanel(data: PyCommonOptionsFormData, showModule
             .component
         }
 
-        row(PyBundle.message("runcfg.labels.path.mappings")) {
+        pathMappingsRow = row(PyBundle.message("runcfg.labels.path.mappings")) {
           cell(pathMappingsComponent)
             .align(AlignX.FILL)
         }
@@ -91,13 +92,13 @@ internal class PyIdeCommonOptionsPanel(data: PyCommonOptionsFormData, showModule
 
         row {
           addContentRootsCheckbox = checkBox(PyBundle.message("runcfg.labels.add.content.roots.to.pythonpath"))
-            .applyToComponent { isSelected = true }
+            .selected(true)
             .component
         }
 
         row {
           addSourceRootsCheckbox = checkBox(PyBundle.message("runcfg.labels.add.source.roots.to.pythonpath"))
-            .applyToComponent { isSelected = true }
+            .selected(true)
             .component
         }
       }.apply {

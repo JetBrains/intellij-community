@@ -153,6 +153,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         public void testUnused() throws Exception {
             runTest("../idea/tests/testData/highlighter/suppress/Unused.kt");
         }
+
+        @TestMetadata("WithComment.kt")
+        public void testWithComment() throws Exception {
+            runTest("../idea/tests/testData/highlighter/suppress/WithComment.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

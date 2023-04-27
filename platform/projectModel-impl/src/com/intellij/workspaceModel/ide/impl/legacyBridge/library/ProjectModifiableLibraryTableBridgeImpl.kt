@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.libraries.Library
@@ -8,7 +9,7 @@ import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -32,11 +33,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   private val librariesArrayValue = CachedValue<Array<Library>> { storage ->
     storage.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }
-      .mapNotNull { entity ->
-        val libraryBridge = storage.libraryMap.getDataByEntity(entity)
-        (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
-        libraryBridge
-      }
+      .mapNotNull { entity -> storage.libraryMap.getDataByEntity(entity) }
       .toList().toTypedArray()
   }
 
@@ -58,12 +55,19 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
     val libraryTableId = LibraryTableId.ProjectLibraryTableId
 
+    val libraryId = LibraryId(name, libraryTableId)
+    if (libraryId in diff) {
+      // We log the error, but don't break the execution as technically project model can handle this case.
+      // The existing library entity will be replaced with the new created one.
+      LOG.error("Project library with name '$name' already exists.")
+    }
+
     val libraryEntity = diff.addLibraryEntity(
       roots = emptyList(),
-      tableId = LibraryTableId.ProjectLibraryTableId,
+      tableId = libraryTableId,
       name = name,
       excludedRoots = emptyList(),
-      source = JpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
+      source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
     )
 
     if (type != null) {
@@ -77,7 +81,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     val library = LibraryBridgeImpl(
       libraryTable = libraryTable,
       project = project,
-      initialId = LibraryId(name, libraryTableId),
+      initialId = libraryId,
       initialEntityStorage = entityStorageOnDiff,
       targetBuilder = this.diff
     )
@@ -126,9 +130,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   override fun getLibraryByName(name: String): Library? {
     val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.ProjectLibraryTableId)) ?: return null
-    val libraryBridge = diff.libraryMap.getDataByEntity(libraryEntity) ?: return null
-    (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
-    return libraryBridge
+    return diff.libraryMap.getDataByEntity(libraryEntity)
   }
 
   override fun getLibraries(): Array<Library> = librariesArray
@@ -142,4 +144,8 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   }
 
   override fun isChanged(): Boolean = diff.hasChanges()
+
+  companion object {
+    val LOG = logger<ProjectModifiableLibraryTableBridgeImpl>()
+  }
 }

@@ -174,20 +174,12 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   private synchronized void doSetAccessModifier(@NotNull String am) {
-    final int access_id;
-
-    if (PsiModifier.PRIVATE.equals(am)) {
-      access_id = ACCESS_PRIVATE;
-    }
-    else if (PsiModifier.PUBLIC.equals(am)) {
-      access_id = ACCESS_PUBLIC;
-    }
-    else if (PsiModifier.PACKAGE_LOCAL.equals(am)) {
-      access_id = ACCESS_PACKAGE;
-    }
-    else {
-      access_id = ACCESS_PROTECTED;
-    }
+    final int access_id = switch (am) {
+      case PsiModifier.PRIVATE -> ACCESS_PRIVATE;
+      case PsiModifier.PUBLIC -> ACCESS_PUBLIC;
+      case PsiModifier.PACKAGE_LOCAL -> ACCESS_PACKAGE;
+      default -> ACCESS_PROTECTED;
+    };
 
     myFlags = myFlags & ~ACCESS_MODIFIER_MASK | access_id;
   }

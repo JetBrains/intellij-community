@@ -1,9 +1,9 @@
 package com.intellij.codeInspection.tests.test
 
 import com.intellij.codeInspection.test.TestOnlyInspection
-import com.intellij.codeInspection.tests.UastInspectionTestBase
+import com.intellij.codeInspection.tests.JvmInspectionTestBase
 
-abstract class TestOnlyInspectionTestBase : UastInspectionTestBase() {
+abstract class TestOnlyInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = TestOnlyInspection()
 
   override fun setUp() {

@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "RAW_RUN_BLOCKING")
 
 package com.intellij.testFramework.common
 
+import com.intellij.BundleBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
@@ -16,6 +17,7 @@ import com.intellij.idea.*
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.impl.RwLockHolder
@@ -23,6 +25,7 @@ import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -125,6 +128,11 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 
   val app = ApplicationImpl(isHeadless, rwLockHolder)
+  BundleBase.assertOnMissedKeys(true)
+  // do not crash AWT on exceptions
+  AWTExceptionHandler.register()
+  Disposer.setDebugMode(true)
+  Logger.setUnitTestMode()
 
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
@@ -233,11 +241,11 @@ fun Application.cleanApplicationStateCatching(): Throwable? {
       }
     },
     { (serviceIfCreated<DocumentReferenceManager>() as? DocumentReferenceManagerImpl)?.cleanupForNextTest() },
-    { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() },
     { UiInterceptors.clear() },
     {
       runInEdtAndWait {
         CompletionProgressIndicator.cleanupForNextTest()
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
       }
     },
   )

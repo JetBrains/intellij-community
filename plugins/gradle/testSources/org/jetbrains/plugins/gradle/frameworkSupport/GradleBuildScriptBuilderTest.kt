@@ -1,10 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport
 
-import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.*
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
 import org.junit.jupiter.api.Test
 
 class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
@@ -274,24 +273,6 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
   }
 
   @Test
-  fun `test child build script build`() {
-    assertThat(buildscript(GradleVersion.current()) {
-      withJavaPlugin()
-      allprojects {
-        withJavaPlugin()
-      }
-    }).isEqualTo("""
-        plugins {
-            id 'java'
-        }
-      
-        allprojects {
-            apply plugin: 'java'
-        }
-      """.trimIndent())
-  }
-
-  @Test
   fun `test junit dependency generation`() {
     val junit4 = getJunit4Version()
     val junit5 = getJunit5Version()
@@ -332,6 +313,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
         
         dependencies {
             testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
+            testImplementation 'org.junit.jupiter:junit-jupiter-params:$junit5'
             testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
         }
         
@@ -345,6 +327,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
         
         dependencies {
             testImplementation("org.junit.jupiter:junit-jupiter-api:$junit5")
+            testImplementation("org.junit.jupiter:junit-jupiter-params:$junit5")
             testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junit5")
         }
         

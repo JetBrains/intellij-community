@@ -325,7 +325,7 @@ private class SdkListItemContext(
 ) : ComboBoxPopup.Context<SdkListItem> {
   var myModel = SdkListModel.emptyModel()
 
-  private val myRenderer = SdkListPresenter { myModel }
+  private val myRenderer = SdkListPresenter.create<SdkListItem>(null, { myModel }, { it })
 
   override fun getProject() = myProject
   override fun getMaximumRowCount() = 30

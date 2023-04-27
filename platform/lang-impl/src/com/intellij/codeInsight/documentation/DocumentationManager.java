@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -108,7 +108,7 @@ import static com.intellij.lang.documentation.DocumentationMarkup.*;
 /**
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
   public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final String NEW_JAVADOC_LOCATION_AND_SIZE = "javadoc.popup.new";
@@ -332,7 +332,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     });
 
-    new UiNotifyConnector(component, new Activatable() {
+    UiNotifyConnector.installOn(component, new Activatable() {
       @Override
       public void showNotify() {
         restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), getAutoUpdateDefault()));
@@ -1078,14 +1078,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return new MyCollector(myProject, element, originalElement, null, onHover, false).getDocumentation();
   }
 
-  @NotNull
-  public Pair<@NlsSafe String, @Nullable DocumentationProvider> getDocumentationAndProvider(@NotNull PsiElement element,
-                                                                                            @Nullable PsiElement originalElement,
-                                                                                            boolean onHover) {
-    MyCollector collector = new MyCollector(myProject, element, originalElement, null, onHover, false);
-    return Pair.create(collector.getDocumentation(), collector.provider);
-  }
-
   @Nullable
   public JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
@@ -1820,7 +1812,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           return HtmlChunk.p().children(
             GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.scope.label")),
             HtmlChunk.nbsp(),
-            HtmlChunk.span().attr("bgcolor", ColorUtil.toHex(color)).addText(scope.getPresentableName())
+            HtmlChunk.span().attr("bgcolor", "#" + ColorUtil.toHex(color)).addText(scope.getPresentableName())
           );
         }
       }

@@ -12,7 +12,7 @@ public class Test {
             case String r && x > 0 -> {
                 return ((String) obj).length();
             }
-            case Character character -> {
+            case Character c -> {
                 return ((BigDecimal) obj).hashCode();
             }
             case null, default -> {

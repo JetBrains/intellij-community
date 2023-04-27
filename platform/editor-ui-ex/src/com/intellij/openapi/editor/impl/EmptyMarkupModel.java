@@ -142,30 +142,4 @@ public final class EmptyMarkupModel implements MarkupModelEx {
     return MarkupIterator.EMPTY;
   }
 
-  @Override
-  public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                                         int endOffset,
-                                                                         boolean onlyRenderedInGutter) {
-    return MarkupIterator.EMPTY;
-  }
-
-  @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged) {
-
-  }
-
-  @Override
-  public void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter) {
-
-  }
-
-  @Override
-  public void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
-
-  }
-
-  @Override
-  public void addRangeHighlighter(@NotNull RangeHighlighterEx marker, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-
-  }
 }

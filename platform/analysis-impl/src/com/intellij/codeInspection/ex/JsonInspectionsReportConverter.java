@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.google.gson.Gson;
@@ -63,7 +63,8 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls private static final String HIGHLIGHTED_ELEMENT = "highlighted_element";
   @NonNls public static final String DUPLICATED_CODE = "DuplicatedCode";
   @NonNls public static final String DUPLICATED_CODE_AGGREGATE = DUPLICATED_CODE + InspectionsResultUtil.AGGREGATE;
-  @NonNls public static final String PHP_VULNERABLE_PATHS_AGGREGATE = "PhpVulnerablePathsInspection" + InspectionsResultUtil.AGGREGATE;
+  @NonNls public static final String PHP_VULNERABLE_PATHS = "PhpVulnerablePathsInspection";
+  @NonNls public static final String PHP_VULNERABLE_PATHS_AGGREGATE = PHP_VULNERABLE_PATHS + InspectionsResultUtil.AGGREGATE;
   @NonNls private static final String FRAMEWORK = "framework";
 
   @Override
@@ -97,17 +98,11 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
       try (Writer writer = Files.newBufferedWriter(jsonFile.toPath(), StandardCharsets.UTF_8);
            JsonWriter jsonWriter = gson.newJsonWriter(writer)) {
         Element element = JDOMUtil.load(inspectionDataFile);
-        if (InspectionsResultUtil.DESCRIPTIONS.equals(fileNameWithoutExt)) {
-          convertDescriptions(jsonWriter, element);
-        }
-        else if (DUPLICATED_CODE_AGGREGATE.equals(fileNameWithoutExt)) {
-          convertDuplicatedCode(jsonWriter, element);
-        }
-        else if (PHP_VULNERABLE_PATHS_AGGREGATE.equals(fileNameWithoutExt)) {
-          convertPhpVulnerablePaths(jsonWriter, element);
-        }
-        else {
-          convertProblems(jsonWriter, element);
+        switch (fileNameWithoutExt) {
+          case InspectionsResultUtil.DESCRIPTIONS -> convertDescriptions(jsonWriter, element);
+          case DUPLICATED_CODE_AGGREGATE -> convertDuplicatedCode(jsonWriter, element);
+          case PHP_VULNERABLE_PATHS_AGGREGATE -> convertPhpVulnerablePaths(jsonWriter, element);
+          default -> convertProblems(jsonWriter, element);
         }
       }
       catch (IOException | JDOMException e) {

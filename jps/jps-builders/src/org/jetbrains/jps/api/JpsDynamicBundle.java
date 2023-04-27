@@ -18,7 +18,7 @@ import java.util.ResourceBundle;
  * This class provides support for "dynamic" resource bundles provided by {@link com.intellij.DynamicBundle.LanguageBundleEP} extension.
  * if JPS plugin inherits the ResourceBundle from this class, IDE's language pack's localized resources will be automatically available for the JPS process launched by the IDE.
  */
-public abstract class JpsDynamicBundle extends AbstractBundle {
+public class JpsDynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(JpsDynamicBundle.class);
 
   private static final Method SET_PARENT = getSetParentMethod();
@@ -47,6 +47,21 @@ public abstract class JpsDynamicBundle extends AbstractBundle {
     }
   }
 
+  /**
+   * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
+   * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
+   *
+   * @param bundleClass  any class from the module containing the bundle, it's used to locate the file with the messages
+   * @param pathToBundle qualified name of the file with the messages (without the extension, with slashes replaced by dots)
+   */
+  public JpsDynamicBundle(@NotNull Class<?> bundleClass, @NotNull String pathToBundle) {
+    super(bundleClass, pathToBundle);
+  }
+
+  /**
+   * Use this constructor in bundle classes which inherit from this class.
+   * Note that it's better to prefer delegation to inheritance, and use {@link #JpsDynamicBundle(Class, String)} instead.
+   */
   protected JpsDynamicBundle(@NonNls @NotNull String pathToBundle) {
     super(pathToBundle);
   }

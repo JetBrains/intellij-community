@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.importer.colors;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -68,80 +54,71 @@ public class EclipseThemeOptionHandler implements EclipseThemeReader.OptionHandl
 
   @Override
   public void handleColorOption(@NotNull String name, @NotNull TextAttributes attributes) {
-    if (BACKGROUND_TAG.equals(name)) {
-      updateAttributes(HighlighterColors.TEXT, attributes);
-      myColorsScheme.setColor(EditorColors.GUTTER_BACKGROUND, attributes.getBackgroundColor());
-      myColorsScheme.setColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, attributes.getBackgroundColor());
-    }
-    else if (FOREGROUND_TAG.equals(name)) {
-      updateAttributes(HighlighterColors.TEXT, attributes);
-      updateAttributes(DefaultLanguageHighlighterColors.IDENTIFIER, attributes);
-    }
-    else if (CURR_LINE_TAG.equals(name)) {
-      myColorsScheme.setColor(EditorColors.CARET_ROW_COLOR, attributes.getForegroundColor());
-    }
-    else if (SELECTION_BACKGROUND_TAG.equals(name)) {
-      myColorsScheme.setColor(EditorColors.SELECTION_BACKGROUND_COLOR, attributes.getBackgroundColor());
-    }
-    else if (SELECTION_FOREGROUND_TAG.equals(name)) {
-      myColorsScheme.setColor(EditorColors.SELECTION_FOREGROUND_COLOR, attributes.getForegroundColor());
-    }
-    else if (BRACKET.equals(name)) {
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.BRACES, attributes);
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.BRACKETS, attributes);
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.PARENTHESES, attributes);
-    }
-    else if (OPERATOR_TAG.equals(name)) {
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.OPERATION_SIGN, attributes);
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.COMMA, attributes);
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.SEMICOLON, attributes);
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.DOT, attributes);
-    }
-    else if (LINE_NUMBER_TAG.equals(name)) {
-      Color lineNumberColor = attributes.getForegroundColor();
-      myColorsScheme.setColor(EditorColors.LINE_NUMBERS_COLOR, lineNumberColor);
-      myColorsScheme.setColor(EditorColors.TEARLINE_COLOR, lineNumberColor);
-      myColorsScheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, lineNumberColor);
-      myColorsScheme.setColor(EditorColors.CARET_COLOR, lineNumberColor);
-    }
-    else if(LOCAL_VARIABLE_TAG.equals(name)) {
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.LOCAL_VARIABLE, attributes);
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.MARKUP_TAG, attributes);
-    }
-    else if(LOCAL_VARIABLE_DECL_TAG.equals(name)) {
-      myColorsScheme.setAttributes(XmlHighlighterColors.HTML_TAG_NAME, attributes);
-      myColorsScheme.setAttributes(XmlHighlighterColors.XML_TAG_NAME, attributes);
-    }
-    else if(FIELD_TAG.equals(name)) {
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD, attributes);
-      myColorsScheme.setAttributes(XmlHighlighterColors.XML_ATTRIBUTE_NAME, attributes);
-      myColorsScheme.setAttributes(XmlHighlighterColors.HTML_ATTRIBUTE_NAME, attributes);
-    }
-    else if(OCCURENCE_TAG.equals(name)) {
-      myColorsScheme.setAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES, toBackgroundAttributes(attributes));
-    }
-    else if (WRITE_OCCURENCE_TAG.equals(name)) {
-      myColorsScheme.setAttributes(EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES, toBackgroundAttributes(attributes));
-    }
-    else if(SEARCH_RESULT_TAG.equals(name)) {
-      myColorsScheme.setAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES, toBackgroundAttributes(attributes));
-    }
-    else if(FILTER_SEARCH_RESULT_TAG.equals(name)) {
-      myColorsScheme.setAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, toBackgroundAttributes(attributes));
-    }
-    else if (STRING_TAG.equals(name)) {
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.STRING, attributes);
-      TextAttributes validEscapeAttrs = attributes.clone();
-      validEscapeAttrs.setFontType(Font.BOLD);
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE, validEscapeAttrs);
-    }
-    else if (KEYWORD_TAG.equals(name)) {
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.KEYWORD, attributes);
-      myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.MARKUP_ENTITY, attributes);
-    }
-    else {
-      if (ECLIPSE_TO_IDEA_ATTR_MAP.containsKey(name)) {
-        myColorsScheme.setAttributes(ECLIPSE_TO_IDEA_ATTR_MAP.get(name), attributes);
+    switch (name) {
+      case BACKGROUND_TAG -> {
+        updateAttributes(HighlighterColors.TEXT, attributes);
+        myColorsScheme.setColor(EditorColors.GUTTER_BACKGROUND, attributes.getBackgroundColor());
+        myColorsScheme.setColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, attributes.getBackgroundColor());
+      }
+      case FOREGROUND_TAG -> {
+        updateAttributes(HighlighterColors.TEXT, attributes);
+        updateAttributes(DefaultLanguageHighlighterColors.IDENTIFIER, attributes);
+      }
+      case CURR_LINE_TAG -> myColorsScheme.setColor(EditorColors.CARET_ROW_COLOR, attributes.getForegroundColor());
+      case SELECTION_BACKGROUND_TAG -> myColorsScheme.setColor(EditorColors.SELECTION_BACKGROUND_COLOR, attributes.getBackgroundColor());
+      case SELECTION_FOREGROUND_TAG -> myColorsScheme.setColor(EditorColors.SELECTION_FOREGROUND_COLOR, attributes.getForegroundColor());
+      case BRACKET -> {
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.BRACES, attributes);
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.BRACKETS, attributes);
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.PARENTHESES, attributes);
+      }
+      case OPERATOR_TAG -> {
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.OPERATION_SIGN, attributes);
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.COMMA, attributes);
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.SEMICOLON, attributes);
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.DOT, attributes);
+      }
+      case LINE_NUMBER_TAG -> {
+        Color lineNumberColor = attributes.getForegroundColor();
+        myColorsScheme.setColor(EditorColors.LINE_NUMBERS_COLOR, lineNumberColor);
+        myColorsScheme.setColor(EditorColors.TEARLINE_COLOR, lineNumberColor);
+        myColorsScheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, lineNumberColor);
+        myColorsScheme.setColor(EditorColors.CARET_COLOR, lineNumberColor);
+      }
+      case LOCAL_VARIABLE_TAG -> {
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.LOCAL_VARIABLE, attributes);
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.MARKUP_TAG, attributes);
+      }
+      case LOCAL_VARIABLE_DECL_TAG -> {
+        myColorsScheme.setAttributes(XmlHighlighterColors.HTML_TAG_NAME, attributes);
+        myColorsScheme.setAttributes(XmlHighlighterColors.XML_TAG_NAME, attributes);
+      }
+      case FIELD_TAG -> {
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD, attributes);
+        myColorsScheme.setAttributes(XmlHighlighterColors.XML_ATTRIBUTE_NAME, attributes);
+        myColorsScheme.setAttributes(XmlHighlighterColors.HTML_ATTRIBUTE_NAME, attributes);
+      }
+      case OCCURENCE_TAG ->
+        myColorsScheme.setAttributes(EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES, toBackgroundAttributes(attributes));
+      case WRITE_OCCURENCE_TAG ->
+        myColorsScheme.setAttributes(EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES, toBackgroundAttributes(attributes));
+      case SEARCH_RESULT_TAG -> myColorsScheme.setAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES, toBackgroundAttributes(attributes));
+      case FILTER_SEARCH_RESULT_TAG ->
+        myColorsScheme.setAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, toBackgroundAttributes(attributes));
+      case STRING_TAG -> {
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.STRING, attributes);
+        TextAttributes validEscapeAttrs = attributes.clone();
+        validEscapeAttrs.setFontType(Font.BOLD);
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE, validEscapeAttrs);
+      }
+      case KEYWORD_TAG -> {
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.KEYWORD, attributes);
+        myColorsScheme.setAttributes(DefaultLanguageHighlighterColors.MARKUP_ENTITY, attributes);
+      }
+      default -> {
+        if (ECLIPSE_TO_IDEA_ATTR_MAP.containsKey(name)) {
+          myColorsScheme.setAttributes(ECLIPSE_TO_IDEA_ATTR_MAP.get(name), attributes);
+        }
       }
     }
   }

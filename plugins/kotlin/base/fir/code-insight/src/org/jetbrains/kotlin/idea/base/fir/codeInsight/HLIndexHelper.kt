@@ -6,14 +6,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtFile
 
+/**
+ *TODO get rid of this class, replace with [org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider]
+ */
 class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) {
     fun getTopLevelCallables(nameFilter: (Name) -> Boolean): Collection<KtCallableDeclaration> {
         val values = SmartList<KtCallableDeclaration>()
@@ -40,12 +44,12 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         )
 
     fun getPossibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
-        val index = KotlinTypeAliasByExpansionShortNameIndex
         val out = mutableSetOf<String>()
 
         fun searchRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            index[typeName, project, scope].asSequence()
+            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope]
+                .asSequence()
                 .mapNotNull { it.name }
                 .filter { out.add(it) }
                 .forEach(::searchRecursively)
@@ -67,9 +71,9 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         @OptIn(ExperimentalStdlibApi::class)
         fun createForPosition(position: PsiElement): HLIndexHelper {
             val module = position.getKtModule()
-            val allScopes = module.allDirectDependencies().mapTo(mutableSetOf()) { it.contentScope }
-            allScopes.add(module.contentScope)
-            return HLIndexHelper(position.project, GlobalSearchScope.union(allScopes))
+            val project = module.project
+            val scope = KotlinResolutionScopeProvider.getInstance(project).getResolutionScope(module)
+            return HLIndexHelper(project, scope)
         }
     }
 }

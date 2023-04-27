@@ -46,6 +46,8 @@
 
     <customizableActionGroupProvider implementation="com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider"/>
 
+    <intentionMenuContributor implementation="com.intellij.xdebugger.impl.ui.DebuggerIntentionMenuContributor"/>
+
     <xdebugger.debuggerSupport implementation="com.intellij.xdebugger.impl.XDebuggerSupport" order="first" id="XDebuggerSupport"/>
 
     <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule"/>
@@ -55,7 +57,6 @@
     <xdebugger.inlineValuePopupProvider implementation="com.intellij.xdebugger.impl.InlineTextValuePopupProvider"/>
 
     <xdebugger.configurableProvider implementation="com.intellij.xdebugger.impl.settings.XDebuggerConfigurableProvider" order="first"/>
-    <editor.linePainter implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter"/>
 
     <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run" id="debug"/>
 
@@ -112,7 +113,6 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.DebuggerUIExperimentCollector"/>
 
     <applicationService serviceInterface="com.intellij.xdebugger.attach.XAttachRecentItemsMatcher"
                         serviceImplementation="com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher"/>
@@ -124,11 +124,17 @@
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
     </group>
 
-    <group id="RunToolbarDebugMoreActionGroupName">
+    <group>
       <separator text="Debug"/>
       <group id="RunToolbarDebugMoreActionSubGroupName"/>
       <reference ref="XDebugger.AttachGroup"/>
-      <add-to-group group-id="RunToolbarMainMoreActionGroup"/>
+      <add-to-group group-id="RunToolbarMainMoreActionGroup" anchor="last"/>
+    </group>
+
+    <group>
+      <separator text="Debug"/>
+      <reference ref="XDebugger.AttachGroup"/>
+      <add-to-group group-id="AdditionalRunningOptionsGroupMain"/>
     </group>
 
     <group id="RunToolbarDebuggerAdditionalActions">

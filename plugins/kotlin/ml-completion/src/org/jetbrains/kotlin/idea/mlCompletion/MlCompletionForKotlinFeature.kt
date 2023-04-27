@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.mlCompletion
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeature
 
-object MlCompletionForKotlinFeature : ExperimentalFeature() {
+internal class MlCompletionForKotlinFeature : ExperimentalFeature() {
     override val title: String
         get() = KotlinMlCompletionBundle.message("experimental.ml.completion")
 

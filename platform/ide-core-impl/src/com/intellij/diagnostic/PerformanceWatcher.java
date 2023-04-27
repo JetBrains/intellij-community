@@ -4,15 +4,15 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.BiConsumer;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 public abstract class PerformanceWatcher implements Disposable {
@@ -37,7 +37,7 @@ public abstract class PerformanceWatcher implements Disposable {
     String getLogResponsivenessSinceCreationMessage(@NonNls @NotNull String activityName);
   }
 
-  public abstract ScheduledExecutorService getExecutor();
+  public abstract @NotNull Job scheduleWithFixedDelay(@NotNull Runnable task, long delayInMs);
 
   public static @NotNull Snapshot takeSnapshot() {
     return getInstance().newSnapshot();
@@ -45,7 +45,7 @@ public abstract class PerformanceWatcher implements Disposable {
 
   protected abstract Snapshot newSnapshot();
 
-  public abstract void processUnfinishedFreeze(@NotNull BiConsumer<? super File, ? super Integer> consumer);
+  public abstract void processUnfinishedFreeze(@NotNull ObjIntConsumer<Path> consumer);
 
   public abstract int getDumpInterval();
 
@@ -63,7 +63,22 @@ public abstract class PerformanceWatcher implements Disposable {
   @ApiStatus.Internal
   public abstract void edtEventFinished();
 
-  public abstract @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName);
+  /**
+   * @deprecated use {@link #dumpThreads(String, boolean, boolean)} instead
+   */
+  @Deprecated
+  public @Nullable Path dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName) {
+    return dumpThreads(pathPrefix, appendMillisecondsToFileName, false);
+  }
+
+  /**
+   * @param stripDump if set to true, then some information in the dump that is considered useless for debugging
+   *                  might be omitted. This should significantly reduce the size of the dump.
+   *                  <p>
+   *                  For example, some stackframes that correspond to {@code kotlinx.coroutines}
+   *                  library internals might be omitted.
+   */
+  public abstract @Nullable Path dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, boolean stripDump);
 
   public static @NotNull String printStacktrace(@NotNull String headerMsg,
                                                 @NotNull Thread thread,

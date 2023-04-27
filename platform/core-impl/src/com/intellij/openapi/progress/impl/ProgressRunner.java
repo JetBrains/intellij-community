@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -11,7 +11,6 @@ import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -54,10 +53,6 @@ public final class ProgressRunner<R> {
      * Arbitrary thread with the ability to execute read actions.
      */
     POOLED,
-    /**
-     * Use only to open project on start-up.
-     */
-    FJ
   }
 
   private static final Logger LOG = Logger.getInstance(ProgressRunner.class);
@@ -232,7 +227,6 @@ public final class ProgressRunner<R> {
     Semaphore modalityEntered = new Semaphore(forceSyncExec ? 0 : 1);
 
     Supplier<R> onThreadCallable = () -> {
-      Ref<R> result = Ref.create();
       if (isModal) {
         modalityEntered.waitFor();
       }
@@ -249,8 +243,7 @@ public final class ProgressRunner<R> {
         throw new IllegalStateException("Expected not-null progress indicator but got null from "+myProgressIndicatorFuture);
       }
 
-      ProgressManager.getInstance().runProcess(() -> result.set(myComputation.apply(progressIndicator)), progressIndicator);
-      return result.get();
+      return ProgressManager.getInstance().runProcess(() -> myComputation.apply(progressIndicator), progressIndicator);
     };
 
     CompletableFuture<R> resultFuture;
@@ -297,12 +290,12 @@ public final class ProgressRunner<R> {
     }
 
     boolean forceDirectExec = isSync && ApplicationManager.getApplication().isDispatchThread()
-                            && (ApplicationManager.getApplication().isWriteAccessAllowed() || !isModal);
+                              && (ApplicationManager.getApplication().isWriteAccessAllowed() || !isModal);
     if (forceDirectExec) {
       String reason = ApplicationManager.getApplication().isWriteAccessAllowed() ? "inside Write Action" : "not modal execution";
       @NonNls String failedConstraints = "";
       if (isModal) failedConstraints += "Use Modal execution; ";
-      if (myThreadToUse == ThreadToUse.POOLED || myThreadToUse == ThreadToUse.FJ) failedConstraints += "Use pooled thread; ";
+      if (myThreadToUse == ThreadToUse.POOLED) failedConstraints += "Use pooled thread; ";
       failedConstraints = failedConstraints.isEmpty() ? "none" : failedConstraints;
       Logger.getInstance(ProgressRunner.class)
         .warn("Forced to sync exec on EDT. Reason: " + reason + ". Failed constraints: " + failedConstraints, new Throwable());
@@ -451,39 +444,36 @@ public final class ProgressRunner<R> {
     return exception instanceof CompletionException || exception instanceof ExecutionException ? exception.getCause() : exception;
   }
 
-  @NotNull
-  private CompletableFuture<R> launchTask(@NotNull Supplier<R> callable, @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
-    CompletableFuture<R> resultFuture;
-    switch (myThreadToUse) {
-      case POOLED:
-        resultFuture = CompletableFuture.supplyAsync(callable, AppExecutorUtil.getAppExecutorService());
-        break;
-      case FJ:
-        resultFuture = CompletableFuture.supplyAsync(callable, ForkJoinPool.commonPool());
-        break;
-      case WRITE:
-        resultFuture = new CompletableFuture<>();
-        Runnable runnable = () -> {
-          try {
-            resultFuture.complete(callable.get());
-          }
-          catch (Throwable e) {
-            resultFuture.completeExceptionally(e);
-          }
-        };
-
-        progressIndicatorFuture.whenComplete((progressIndicator, throwable) -> {
-          if (throwable != null) {
-            resultFuture.completeExceptionally(throwable);
-            return;
-          }
+  private @NotNull CompletableFuture<R> launchTask(
+    @NotNull Supplier<R> callable,
+    @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
+  ) {
+    CompletableFuture<R> resultFuture = new CompletableFuture<>();
+    progressIndicatorFuture.whenComplete((progressIndicator, throwable) -> {
+      if (throwable != null) {
+        resultFuture.completeExceptionally(throwable);
+        return;
+      }
+      Runnable runnable = () -> {
+        try {
+          resultFuture.complete(callable.get());
+        }
+        catch (Throwable e) {
+          resultFuture.completeExceptionally(e);
+        }
+      };
+      switch (myThreadToUse) {
+        case POOLED:
+          AppExecutorUtil.getAppExecutorService().execute(runnable);
+          break;
+        case WRITE:
           ModalityState processModality = progressIndicator.getModalityState();
           ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, processModality);
-        });
-        break;
-      default:
-        throw new IllegalStateException("Unexpected value: " + myThreadToUse);
-    }
+          break;
+        default:
+          throw new IllegalStateException("Unexpected value: " + myThreadToUse);
+      }
+    });
     return resultFuture;
   }
 }

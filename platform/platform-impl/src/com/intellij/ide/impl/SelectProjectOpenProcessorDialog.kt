@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
+import com.intellij.ide.environment.EnvironmentService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
@@ -48,18 +50,25 @@ class SelectProjectOpenProcessorDialog(
     private var testShowAndGetChoice: (List<ProjectOpenProcessor>, VirtualFile) -> ProjectOpenProcessor? = { it, _ -> it.firstOrNull() }
 
     @TestOnly
-    fun setTestDialog(showAndGetChoice: (List<ProjectOpenProcessor>, VirtualFile) -> ProjectOpenProcessor?, parentDisposable: Disposable) {
+    fun setTestDialog(parentDisposable: Disposable, showAndGetChoice: (List<ProjectOpenProcessor>, VirtualFile) -> ProjectOpenProcessor?) {
       val prevDialog = testShowAndGetChoice
       testShowAndGetChoice = showAndGetChoice
       Disposer.register(parentDisposable, Disposable { testShowAndGetChoice = prevDialog })
     }
 
-    @JvmStatic
-    fun showAndGetChoice(processors: List<ProjectOpenProcessor>, file: VirtualFile): ProjectOpenProcessor? {
+    suspend fun showAndGetChoice(processors: List<ProjectOpenProcessor>, file: VirtualFile): ProjectOpenProcessor? {
       val app = ApplicationManager.getApplication()
       return when {
-        app != null && (app.isUnitTestMode || app.isHeadlessEnvironment) -> testShowAndGetChoice(processors, file)
-        else -> SelectProjectOpenProcessorDialog(processors, file).showAndGetChoice()
+        app != null && app.isUnitTestMode -> testShowAndGetChoice(processors, file)
+        else -> {
+          val environmentService = service<EnvironmentService>()
+          val id = environmentService.getValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, null)
+          val processor = processors.find { it.name == id }
+          if (processor != null) {
+            return processor
+          }
+          SelectProjectOpenProcessorDialog(processors, file).showAndGetChoice()
+        }
       }
     }
   }

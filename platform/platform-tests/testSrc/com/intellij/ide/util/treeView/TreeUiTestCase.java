@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -1504,7 +1504,7 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
                              final int end,
                              final @Nullable Runnable eachRunnable,
                              final @Nullable Runnable endRunnable) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       for (int i = start; i <= end; i++) {
         Node eachFile = node.addChild("File " + i);
         myAutoExpand.add(eachFile.getElement());

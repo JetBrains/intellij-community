@@ -26,7 +26,7 @@ import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
-import com.intellij.ui.ColorChooser.chooseColor
+import com.intellij.ui.ColorChooserService
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.CommonActionsPanel
 import com.intellij.ui.FileColorManager
@@ -106,7 +106,8 @@ internal class FileColorsConfigurable(project: Project) : SearchableConfigurable
 
   private val manager = FileColorManager.getInstance(project) as FileColorManagerImpl
   private val colorsTableModel = FileColorsTableModel(manager)
-  private val configurables = listOf(enabledFileColors, useInEditorTabs, useInProjectView, colorsTableModel)
+  // order matters: color changes should be applied before enabling it in the editor/project view
+  private val configurables = listOf(enabledFileColors, colorsTableModel, useInEditorTabs, useInProjectView)
 
   // UnnamedConfigurable
 
@@ -189,7 +190,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     val name = value as? String ?: return null
     if (null != manager.getColor(name)) return name
     val parent = table ?: return null
-    return chooseColor(parent, message("settings.file.colors.dialog.choose.color"), null)?.let { toHex(it) }
+    return ColorChooserService.instance.showDialog(null, parent, message("settings.file.colors.dialog.choose.color"), null)?.let { toHex(it) }
   }
 
   private fun resolveDuplicate(scopeName: String, colorName: String, toSharedList: Boolean): Boolean {

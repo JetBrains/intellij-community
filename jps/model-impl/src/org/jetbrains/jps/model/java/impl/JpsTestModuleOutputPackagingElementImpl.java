@@ -22,7 +22,7 @@ import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
-public class JpsTestModuleOutputPackagingElementImpl extends JpsModuleOutputPackagingElementBase<JpsTestModuleOutputPackagingElementImpl>
+public final class JpsTestModuleOutputPackagingElementImpl extends JpsModuleOutputPackagingElementBase<JpsTestModuleOutputPackagingElementImpl>
   implements JpsTestModuleOutputPackagingElement {
   public JpsTestModuleOutputPackagingElementImpl(JpsModuleReference moduleReference) {
     super(moduleReference);

@@ -28,6 +28,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.CopyOnWriteArrayList
 
 @VisibleForTesting
 class UnlinkedProjectStartupActivity : ProjectActivity {
@@ -122,13 +123,15 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
 
         override fun onProjectLinked(externalProjectPath: String) {
-          launch(extensionDisposable) {
+          @OptIn(DelicateCoroutinesApi::class)
+          GlobalScope.launch(extensionDisposable) {
             projectRoots.removeProjectRoot(externalProjectPath)
           }
         }
 
         override fun onProjectUnlinked(externalProjectPath: String) {
-          launch(extensionDisposable) {
+          @OptIn(DelicateCoroutinesApi::class)
+          GlobalScope.launch(extensionDisposable) {
             projectRoots.addProjectRoot(externalProjectPath)
           }
         }
@@ -241,7 +244,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private class ProjectRoots : Iterable<String> {
 
-    private val projectRoots = ArrayList<String>()
+    private val projectRoots = CopyOnWriteArrayList<String>()
     private val addListeners = DisposableWrapperList<suspend (String) -> Unit>()
     private val removeListeners = DisposableWrapperList<suspend (String) -> Unit>()
 

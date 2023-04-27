@@ -30,7 +30,6 @@
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-file" type="repository">

@@ -9,7 +9,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
-import java.nio.file.Paths
+import java.nio.file.Path
 import kotlin.properties.Delegates
 
 internal class StorageManagerTest {
@@ -25,8 +25,8 @@ internal class StorageManagerTest {
 
   @Before
   fun setUp() {
-    storageManager = StateStorageManagerImpl("foo")
-    storageManager.setMacros(listOf(Macro(MACRO, Paths.get("/temp/m1"))))
+    storageManager = StateStorageManagerImpl("foo", componentManager = null)
+    storageManager.setMacros(listOf(Macro(MACRO, Path.of("/temp/m1"))))
   }
 
   @Test
@@ -53,7 +53,7 @@ internal class StorageManagerTest {
 
   @Test
   fun `create file storage macro substituted when expansion has$`() {
-    storageManager.setMacros(listOf(Macro("\$DOLLAR_MACRO$", Paths.get("/temp/d$"))))
+    storageManager.setMacros(listOf(Macro("\$DOLLAR_MACRO$", Path.of("/temp/d$"))))
     assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml", RoamingType.DEFAULT)).isNotNull()
   }
 }

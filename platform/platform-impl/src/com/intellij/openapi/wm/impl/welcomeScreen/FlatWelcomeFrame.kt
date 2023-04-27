@@ -210,7 +210,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     UIUtil.decorateWindowHeader(getRootPane())
     title = ""
     title = welcomeFrameTitle
-    AppUIUtil.updateWindowIcon(this)
+    updateAppWindowIcon(this)
   }
 
   override fun addNotify() {
@@ -357,7 +357,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       val foreground = JBUI.CurrentTheme.DragAndDrop.Area.FOREGROUND
       g.color = foreground
 
-      val labelFont = StartupUiUtil.getLabelFont()
+      val labelFont = StartupUiUtil.labelFont
       val font = labelFont.deriveFont(labelFont.size + 5.0f)
       val drop = IdeBundle.message("welcome.screen.drop.files.to.open.text")
       g.font = font

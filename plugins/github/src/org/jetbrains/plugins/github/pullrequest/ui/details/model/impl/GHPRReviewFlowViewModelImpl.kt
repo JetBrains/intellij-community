@@ -2,9 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.ui.codereview.details.ReviewRole
-import com.intellij.collaboration.ui.codereview.details.ReviewState
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
+import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -15,6 +14,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewDecision
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
+import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataOperationsListener
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
@@ -39,24 +39,30 @@ internal class GHPRReviewFlowViewModelImpl(
   private val currentUser = securityService.currentUser
   private val ghostUser = securityService.ghostUser
 
-  private val _requestedReviewersState: MutableStateFlow<List<GHPullRequestRequestedReviewer>> = MutableStateFlow(metadataModel.reviewers)
-
   private val _isBusy: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isBusy: Flow<Boolean> = _isBusy.asStateFlow()
 
-  override val requestedReviewersState: StateFlow<List<GHPullRequestRequestedReviewer>> = _requestedReviewersState.asStateFlow()
+  private val mergeabilityState: MutableStateFlow<GHPRMergeabilityState?> = MutableStateFlow(stateModel.mergeabilityState)
+
+  private val _requestedReviewersState: MutableStateFlow<List<GHPullRequestRequestedReviewer>> = MutableStateFlow(metadataModel.reviewers)
+  override val requestedReviewers: Flow<List<GHPullRequestRequestedReviewer>> = _requestedReviewersState.asSharedFlow()
 
   private val pullRequestReviewState: MutableStateFlow<Map<GHPullRequestRequestedReviewer, GHPullRequestReviewState>> = MutableStateFlow(
     metadataModel.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state } // Collect latest review state by reviewer
   )
 
-  override val reviewerAndReviewState: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>> =
-    combineState(scope, pullRequestReviewState, requestedReviewersState) { reviews, requestedReviewers ->
+  override val reviewerReviews: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>> =
+    combineState(scope, pullRequestReviewState, _requestedReviewersState) { reviews, requestedReviewers ->
       mutableMapOf<GHPullRequestRequestedReviewer, ReviewState>().apply {
         reviews
-          .filter { (reviewer, _) -> reviewer != metadataModel.getAuthor() }
+          .filter { (reviewer, pullRequestReviewState) ->
+            reviewer != metadataModel.getAuthor() && (pullRequestReviewState == GHPullRequestReviewState.APPROVED ||
+                                                      pullRequestReviewState == GHPullRequestReviewState.CHANGES_REQUESTED)
+          }
           .forEach { (reviewer, pullRequestReviewState) ->
-            put(reviewer, convertPullRequestReviewState(pullRequestReviewState))
+            val reviewState = if (pullRequestReviewState == GHPullRequestReviewState.APPROVED) ReviewState.ACCEPTED
+            else ReviewState.WAIT_FOR_UPDATES
+            put(reviewer, reviewState)
           }
 
         requestedReviewers.forEach { requestedReviewer ->
@@ -75,29 +81,34 @@ internal class GHPRReviewFlowViewModelImpl(
     }
   }
 
-  override val roleState: StateFlow<ReviewRole> = reviewerAndReviewState.mapState(scope) {
+  override val role: Flow<ReviewRole> = reviewerReviews.map { reviewerAndReview ->
     when {
       currentUser == metadataModel.getAuthor() -> ReviewRole.AUTHOR
-      reviewerAndReviewState.value.containsKey(currentUser) -> ReviewRole.REVIEWER
+      reviewerAndReview.containsKey(currentUser) -> ReviewRole.REVIEWER
       else -> ReviewRole.GUEST
     }
   }
 
   private val _pendingCommentsState: MutableStateFlow<Int> = MutableStateFlow(0)
-  override val pendingCommentsState: StateFlow<Int> = _pendingCommentsState.asStateFlow()
+  override val pendingComments: Flow<Int> = _pendingCommentsState.asSharedFlow()
 
   override val userCanManageReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) ||
                                               stateModel.viewerDidAuthor
 
-  override val userCanMergeReview: Boolean = stateModel.mergeabilityState?.canBeMerged == true &&
-                                             securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) &&
+  override val userCanMergeReview: Boolean = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE) &&
                                              !securityService.isMergeForbiddenForProject()
 
-  override val isMergeAllowed: Boolean = securityService.isMergeAllowed()
+  override val isMergeAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
+    mergeabilityState?.canBeMerged == true && securityService.isMergeAllowed()
+  }
 
-  override val isRebaseAllowed: Boolean = stateModel.mergeabilityState?.canBeRebased == true && securityService.isRebaseMergeAllowed()
+  override val isRebaseAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
+    mergeabilityState?.canBeRebased == true && securityService.isRebaseMergeAllowed()
+  }
 
-  override val isSquashMergeAllowed: Boolean = securityService.isSquashMergeAllowed()
+  override val isSquashMergeAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
+    mergeabilityState?.canBeMerged == true && securityService.isSquashMergeAllowed()
+  }
 
   override fun mergeReview() = stateModel.submitMergeTask()
 
@@ -120,10 +131,11 @@ internal class GHPRReviewFlowViewModelImpl(
   }
 
   override fun requestReview(parentComponent: JComponent) = stateModel.submitTask {
+    val reviewers = (reviewerReviews.value.keys + metadataModel.reviewers).toList()
     GHUIUtil.showChooserPopup(
       parentComponent,
-      GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
-      metadataModel.reviewers,
+      GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
+      reviewers,
       metadataModel.loadPotentialReviewers()
     ).thenAccept { selectedReviewers ->
       metadataModel.adjustReviewers(EmptyProgressIndicator(), selectedReviewers)
@@ -131,7 +143,7 @@ internal class GHPRReviewFlowViewModelImpl(
   }
 
   override fun reRequestReview() = stateModel.submitTask {
-    val delta = CollectionDelta(metadataModel.reviewers, reviewerAndReviewState.value.keys)
+    val delta = CollectionDelta(metadataModel.reviewers, reviewerReviews.value.keys)
     metadataModel.adjustReviewers(EmptyProgressIndicator(), delta)
   }
 
@@ -154,20 +166,23 @@ internal class GHPRReviewFlowViewModelImpl(
       _isBusy.value = stateModel.isBusy
     }
 
-    with(detailsDataProvider) {
-      addDetailsLoadedListener(disposable) {
-        val pullRequest = loadedDetails!!
-        _requestedReviewersState.value = pullRequest.reviewRequests.mapNotNull { it.requestedReviewer }
-        pullRequestReviewState.value = pullRequest.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
-        reviewDecision.value = pullRequest.reviewDecision
-      }
+    stateModel.addAndInvokeMergeabilityStateLoadingResultListener {
+      mergeabilityState.value = stateModel.mergeabilityState
+    }
+
+    detailsDataProvider.addDetailsLoadedListener(disposable) {
+      val pullRequest = detailsDataProvider.loadedDetails!!
+      _requestedReviewersState.value = pullRequest.reviewRequests.mapNotNull { it.requestedReviewer }
+      pullRequestReviewState.value = pullRequest.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state }
+      reviewDecision.value = pullRequest.reviewDecision
     }
 
     reviewDataProvider.addPendingReviewListener(disposable) {
       reviewDataProvider.loadPendingReview().thenAccept { pendingComments ->
-        _pendingCommentsState.value = pendingComments?.comments?.totalCount ?: 0
+        _pendingCommentsState.value = pendingComments?.commentsCount ?: 0
       }
     }
+    reviewDataProvider.resetPendingReview()
 
     reviewDataProvider.messageBus
       .connect(scope)
@@ -176,15 +191,5 @@ internal class GHPRReviewFlowViewModelImpl(
           detailsDataProvider.reloadDetails()
         }
       })
-  }
-
-  companion object {
-    private fun convertPullRequestReviewState(pullRequestReviewState: GHPullRequestReviewState): ReviewState = when (pullRequestReviewState) {
-      GHPullRequestReviewState.APPROVED -> ReviewState.ACCEPTED
-      GHPullRequestReviewState.CHANGES_REQUESTED,
-      GHPullRequestReviewState.COMMENTED,
-      GHPullRequestReviewState.DISMISSED,
-      GHPullRequestReviewState.PENDING -> ReviewState.WAIT_FOR_UPDATES
-    }
   }
 }

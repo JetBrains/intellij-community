@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -115,7 +115,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                  new JavaClassValidator().withTitle(DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title")));
     if (ApplicationManager.getApplication().isInternal()) {
       return pane(ignoreClassList,
-                  OptPane.stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label")));
+                  stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label"))
+                    .description(DevKitBundle.message("inspections.plugin.xml.plugin.modules.description"))
+      );
     }
     return pane(ignoreClassList);
   }
@@ -149,7 +151,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     super.checkDomElement(element, holder, helper);
 
     ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
@@ -211,7 +213,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         annotateProjectComponent((Component.Project)element, holder);
       }
     }
-    else if (element instanceof Helpset) {
+    else //noinspection deprecation
+      if (element instanceof Helpset) {
       highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
     }
     else if (element instanceof Listeners) {
@@ -343,9 +346,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     if (resolveStatus == PluginPlatformInfo.PlatformResolveStatus.DEVKIT_NO_SINCE_BUILD) {
       final boolean noSinceBuildXml = !DomUtil.hasXml(platformInfo.getMainIdeaPlugin().getIdeaVersion().getSinceBuild());
+      LocalQuickFix[] fixes =
+        noSinceBuildXml ? new LocalQuickFix[]{new AddDomElementQuickFix<>(platformInfo.getMainIdeaPlugin().getIdeaVersion())} :
+        LocalQuickFix.EMPTY_ARRAY;
       holder.createProblem(listeners, ProblemHighlightType.ERROR,
                            DevKitBundle.message("inspections.plugin.xml.since.build.must.be.specified"), null,
-                           noSinceBuildXml ? new AddDomElementQuickFix<>(platformInfo.getMainIdeaPlugin().getIdeaVersion()) : null)
+                           fixes)
         .highlightWholeElement();
       return;
     }
@@ -646,8 +652,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
     @NonNls String name = nameAttrValue.getValue();
 
+    // skip some known offenders in IJ project
     if (name != null
-        && StringUtil.startsWith(name, "Pythonid.") // NON-NLS
+        && (StringUtil.startsWith(name, "Pythonid.") ||
+            StringUtil.startsWith(name, "DevKit.")) // NON-NLS
         && PsiUtil.isIdeaProject(nameAttrValue.getManager().getProject())) {
       return true;
     }
@@ -860,6 +868,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
           holder, false, false);
       }
     }
+    else if (kind == ExtensionPoint.Status.Kind.OBSOLETE) {
+      highlightObsolete(extension, holder);
+    }
     else if (kind == ExtensionPoint.Status.Kind.EXPERIMENTAL_API) {
       highlightExperimental(extension, holder);
     }
@@ -915,6 +926,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       else if (psiField.hasAnnotation(ApiStatus.Internal.class.getCanonicalName()) &&
                module != null && !PsiUtil.isIdeaProject(module.getProject())) {
         highlightInternal(attributeValue, holder);
+      }
+      else if (psiField.hasAnnotation(ApiStatus.Obsolete.class.getCanonicalName())) {
+        highlightObsolete(attributeValue, holder);
       }
     }
   }
@@ -1201,6 +1215,14 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     holder.createProblem(element, ProblemHighlightType.WARNING,
                          DevKitBundle.message("inspections.plugin.xml.usage.of.internal.api",
                                               ApiStatus.Internal.class.getCanonicalName()),
+                         null)
+      .highlightWholeElement();
+  }
+
+  private static void highlightObsolete(DomElement element, DomElementAnnotationHolder holder) {
+    holder.createProblem(element, ProblemHighlightType.LIKE_DEPRECATED,
+                         DevKitBundle.message("inspections.plugin.xml.usage.of.obsolete.api",
+                                              ApiStatus.Obsolete.class.getCanonicalName()),
                          null)
       .highlightWholeElement();
   }

@@ -7,6 +7,10 @@
     <extensionPoint name="customLibraryTable" interface="com.intellij.openapi.roots.libraries.CustomLibraryTableDescription" dynamic="true"/>
     <extensionPoint name="primaryModuleManager" interface="com.intellij.openapi.module.PrimaryModuleManager" dynamic="true"/>
     <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
+    <extensionPoint name="workspaceModel.preUpdateHandler" interface="com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceModel.cache.version" interface="com.intellij.workspaceModel.ide.WorkspaceModelCacheVersion"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

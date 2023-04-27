@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions
 
-import com.intellij.application.options.editor.CheckboxDescriptor
-import com.intellij.application.options.editor.checkBox
 import com.intellij.find.FindBundle.message
 import com.intellij.find.FindSettings
 import com.intellij.find.usages.api.UsageOptions
@@ -16,7 +14,10 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.UserActivityWatcher
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.event.ItemEvent
@@ -45,20 +46,18 @@ internal class UsageOptionsDialog(
       }
     }
 
-    titledRow(message("find.what.group")) {
+    group(message("find.what.group")) {
       row {
-        checkBox(CheckboxDescriptor(message("find.what.usages.checkbox"), ::myFindUsages))
+        checkBox(message("find.what.usages.checkbox"))
+          .bindSelected(::myFindUsages)
       }
       myTextSearch?.let {
         row {
-          checkBox(
-            text = message("find.options.search.for.text.occurrences.checkbox"),
-            getter = { it },
-            setter = { myTextSearch = it }
-          )
+          checkBox(message("find.options.search.for.text.occurrences.checkbox"))
+            .bindSelected({ it }, { myTextSearch = it })
         }
       }
-    }
+    }.topGap(TopGap.NONE)
 
     if (showScopeChooser) {
       val scopeCombo = ScopeChooserCombo(project, true, true, myScope.displayName)
@@ -68,9 +67,11 @@ internal class UsageOptionsDialog(
           myScope = scopeCombo.selectedScope ?: return@addItemListener
         }
       }
-      titledRow(message("find.scope.label")) {
+      group(message("find.scope.label")) {
         row {
-          scopeCombo().focused()
+          cell(scopeCombo)
+            .align(AlignX.FILL)
+            .focused()
         }
       }
     }

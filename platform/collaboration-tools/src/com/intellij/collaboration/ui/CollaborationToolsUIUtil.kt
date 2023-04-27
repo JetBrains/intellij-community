@@ -2,15 +2,17 @@
 package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
+import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.JComponentOverlay
-import com.intellij.ide.ui.AntialiasingType
+import com.intellij.collaboration.ui.util.bindProgressIn
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
+import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
@@ -18,26 +20,27 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SingleComponentCenteringLayout
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
-import org.intellij.lang.annotations.Language
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.awt.Color
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.DocumentEvent
-import javax.swing.text.DefaultCaret
-import javax.swing.text.html.StyleSheet
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
@@ -82,7 +85,7 @@ object CollaborationToolsUIUtil {
    */
   @Internal
   fun installValidator(component: JComponent, errorValue: SingleValueModel<@Nls String?>) {
-    UiNotifyConnector(component, ValidatorActivatable(errorValue, component), false)
+    UiNotifyConnector.installOn(component, ValidatorActivatable(errorValue, component), false)
   }
 
   private class ValidatorActivatable(
@@ -126,6 +129,16 @@ object CollaborationToolsUIUtil {
   }
 
   /**
+   * Show progress stripe above [component]
+   */
+  @Internal
+  fun wrapWithProgressStripe(scope: CoroutineScope, loadingFlow: Flow<Boolean>, component: JComponent): JComponent {
+    return ProgressStripe(component, scope.nestedDisposable(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+      bindProgressIn(scope, loadingFlow)
+    }
+  }
+
+  /**
    * Adds actions to transfer focus by tab/shift-tab key for given [component].
    *
    * May be helpful for overwriting tab symbol input for text fields
@@ -143,7 +156,7 @@ object CollaborationToolsUIUtil {
    * Add [listener] that will be invoked on each UI update
    */
   fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
-    UiNotifyConnector(component, object : Activatable {
+    UiNotifyConnector.installOn(component, object : Activatable {
       private var listenerDisposable: Disposable? by Delegates.observable(null) { _, oldValue, _ ->
         oldValue?.also { Disposer.dispose(it) }
       }
@@ -224,9 +237,17 @@ object CollaborationToolsUIUtil {
   }
 
   fun wrapWithLimitedSize(component: JComponent, maxWidth: Int? = null, maxHeight: Int? = null): JComponent {
+    val layout = SizeRestrictedSingleComponentLayout.constant(maxWidth, maxHeight)
+    return JPanel(layout).apply {
+      name = "Size limit wrapper"
+      isOpaque = false
+      add(component)
+    }
+  }
+
+  fun wrapWithLimitedSize(component: JComponent, maxSize: DimensionRestrictions): JComponent {
     val layout = SizeRestrictedSingleComponentLayout().apply {
-      this.maxWidth = maxWidth
-      this.maxHeight = maxHeight
+      this.maxSize = maxSize
     }
     return JPanel(layout).apply {
       name = "Size limit wrapper"
@@ -240,7 +261,7 @@ object CollaborationToolsUIUtil {
     return JBColor(color, ColorUtil.darker(color, 3))
   }
 
-  fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
+  fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) JBColor.WHITE else JBColor.BLACK
 
   /**
    * Use method for different sizes depending on the type of UI (old/new).
@@ -248,6 +269,13 @@ object CollaborationToolsUIUtil {
    * Must be used only as a property: `get()`
    */
   fun getSize(oldUI: Int, newUI: Int): Int = if (ExperimentalUI.isNewUI()) newUI else oldUI
+
+  /**
+   * Use method for different sizes depending on the type of UI (old/new).
+   *
+   * Must be used only as a property: `get()`
+   */
+  fun getInsets(oldUI: Insets, newUI: Insets): Insets = if (ExperimentalUI.isNewUI()) newUI else oldUI
 
   fun createTagLabel(text: @Nls String): JComponent =
     JLabel(text).apply {
@@ -265,15 +293,41 @@ object CollaborationToolsUIUtil {
 
 @Suppress("FunctionName")
 fun VerticalListPanel(gap: Int = 0): JPanel =
-  ScrollablePanel(ListLayout.vertical(gap)).apply {
+  ScrollablePanel(ListLayout.vertical(gap), SwingConstants.VERTICAL).apply {
     isOpaque = false
   }
 
 @Suppress("FunctionName")
 fun HorizontalListPanel(gap: Int = 0): JPanel =
-  ScrollablePanel(ListLayout.horizontal(gap)).apply {
+  ScrollablePanel(ListLayout.horizontal(gap), SwingConstants.HORIZONTAL).apply {
     isOpaque = false
   }
+
+private class ScrollablePanel(layout: LayoutManager?, private val orientation: Int)
+  : JPanel(layout), Scrollable {
+
+  private var verticalUnit = 1
+  private var horizontalUnit = 1
+
+  override fun addNotify() {
+    super.addNotify()
+    val fontMetrics = getFontMetrics(font)
+    verticalUnit = fontMetrics.maxAscent + fontMetrics.maxDescent
+    horizontalUnit = fontMetrics.charWidth('W')
+  }
+
+  override fun getScrollableUnitIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int =
+    if (orientation == SwingConstants.HORIZONTAL) horizontalUnit else verticalUnit
+
+  override fun getScrollableBlockIncrement(visibleRect: Rectangle, orientation: Int, direction: Int): Int =
+    if (orientation == SwingConstants.HORIZONTAL) visibleRect.width else visibleRect.height
+
+  override fun getPreferredScrollableViewportSize(): Dimension? = preferredSize
+
+  override fun getScrollableTracksViewportWidth(): Boolean = orientation == SwingConstants.VERTICAL
+
+  override fun getScrollableTracksViewportHeight(): Boolean = orientation == SwingConstants.HORIZONTAL
+}
 
 /**
  * Loading label with animated icon
@@ -292,53 +346,6 @@ fun TransparentScrollPane(content: JComponent): JScrollPane =
     isOpaque = false
     viewport.isOpaque = false
   }
-
-/**
- * Read-only editor pane intended to display simple HTML snippet
- */
-@Suppress("FunctionName")
-fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") body: @Nls String? = null): JEditorPane =
-  JEditorPane().apply {
-    editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().apply {
-      if (additionalStyleSheet != null) {
-        val defaultStyleSheet = StyleSheetUtil.getDefaultStyleSheet()
-        additionalStyleSheet.addStyleSheet(defaultStyleSheet)
-        withStyleSheet(additionalStyleSheet)
-      }
-    }.build()
-
-    isEditable = false
-    isOpaque = false
-    addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-    margin = JBInsets.emptyInsets()
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
-
-    (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
-
-    name = "Simple HTML Pane"
-
-    if (body != null) {
-      setHtmlBody(body)
-    }
-  }
-
-/**
- * Read-only editor pane intended to display simple HTML snippet
- */
-@Suppress("FunctionName")
-fun SimpleHtmlPane(@Language("HTML") body: @Nls String? = null): JEditorPane = SimpleHtmlPane(null, body)
-
-fun JEditorPane.setHtmlBody(@Language("HTML") body: @Nls String) {
-  if (body.isEmpty()) {
-    text = ""
-  }
-  else {
-    //language=HTML
-    text = "<html><body>$body</body></html>"
-  }
-  // JDK bug - need to force height recalculation (see JBR-2256)
-  setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
-}
 
 internal fun <E> ListModel<E>.findIndex(item: E): Int {
   for (i in 0 until size) {

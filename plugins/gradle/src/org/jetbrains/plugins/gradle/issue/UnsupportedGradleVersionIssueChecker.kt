@@ -13,7 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleConstants.MINIMAL_SUPPORTED_GRADLE_VERSION
+import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.GradleUtil
 
 /**
@@ -33,15 +34,12 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
     }
 
     val isOldGradleClasspathInfererIssue = causedByOldGradleClasspathInferer(gradleVersionUsed, rootCause)
-    if (!isOldGradleClasspathInfererIssue && !rootCauseText.startsWith("org.gradle.tooling.UnsupportedVersionException: ")) {
-      return null
-    }
 
     val isAncientGradleVersion =
       isOldGradleClasspathInfererIssue ||
       rootCauseText.endsWith(
         "does not support the ModelBuilder API. Support for this is available in Gradle 1.2 and all later versions.") ||
-      gradleVersionUsed?.let { it < GradleVersion.version("3.0") } == true
+      gradleVersionUsed?.let { it < GradleVersion.version(MINIMAL_SUPPORTED_GRADLE_VERSION) } == true
 
     val unsupportedVersionMessagePrefix = "org.gradle.tooling.UnsupportedVersionException: Support for builds using Gradle versions older than "
     if (!isAncientGradleVersion && !rootCauseText.startsWith(unsupportedVersionMessagePrefix)) {
@@ -49,7 +47,7 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
     }
 
     val minRequiredVersionCandidate: String
-    if (isAncientGradleVersion) minRequiredVersionCandidate = "3.0"
+    if (isAncientGradleVersion) minRequiredVersionCandidate = MINIMAL_SUPPORTED_GRADLE_VERSION
     else minRequiredVersionCandidate = rootCauseText.substringAfter(unsupportedVersionMessagePrefix).substringBefore(" ", "")
     val gradleMinimumVersionRequired = try {
       GradleVersion.version(minRequiredVersionCandidate)
@@ -58,42 +56,7 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
       GradleVersion.current()
     }
 
-    val quickFixes = mutableListOf<BuildIssueQuickFix>()
-    val issueDescription = StringBuilder()
-    val gradleVersionString = if (gradleVersionUsed != null) gradleVersionUsed.version else "version"
-
-    val appInfo = ApplicationInfoImpl.getShadowInstance()
-    val ideVersion = "${appInfo.versionName} ${appInfo.majorVersion}.${appInfo.minorVersion}"
-    issueDescription
-      .append("Unsupported Gradle. \n") // title
-      .append("The project uses Gradle $gradleVersionString which is incompatible with $ideVersion.\n")
-
-    issueDescription.append("\nPossible solution:\n")
-    val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(issueData.projectPath)
-    if (wrapperPropertiesFile == null || gradleVersionUsed != null && gradleVersionUsed.baseVersion < gradleMinimumVersionRequired) {
-      val gradleVersionFix = GradleVersionQuickFix(issueData.projectPath, gradleMinimumVersionRequired, true)
-      issueDescription.append(
-        " - <a href=\"${gradleVersionFix.id}\">Upgrade Gradle wrapper to ${gradleMinimumVersionRequired.version} version " +
-        "and re-import the project</a>\n")
-      quickFixes.add(gradleVersionFix)
-    }
-    else {
-      val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(issueData.projectPath, "distributionUrl")
-      val reimportQuickFix = ReimportQuickFix(issueData.projectPath, GradleConstants.SYSTEM_ID)
-      issueDescription.append(" - <a href=\"${wrapperSettingsOpenQuickFix.id}\">Open Gradle wrapper settings</a>, " +
-                              "upgrade version to ${gradleMinimumVersionRequired.version} or newer and <a href=\"${reimportQuickFix.id}\">reload the project</a>\n")
-      quickFixes.add(wrapperSettingsOpenQuickFix)
-      quickFixes.add(reimportQuickFix)
-    }
-
-    val description = issueDescription.toString()
-    val title = getMessageTitle(description)
-    return object : BuildIssue {
-      override val title: String = title
-      override val description: String = description
-      override val quickFixes = quickFixes
-      override fun getNavigatable(project: Project): Navigatable? = null
-    }
+    return UnsupportedGradleVersionIssue(gradleVersionUsed, issueData.projectPath, gradleMinimumVersionRequired)
   }
 
   companion object {
@@ -104,7 +67,58 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
         return rootCause.stackTrace.find { it.className == "org.gradle.tooling.internal.provider.ClasspathInferer" } != null
       }
       else
-        return (gradleVersionUsed.baseVersion ?: return true) < GradleVersion.version("3.0")
+        return (gradleVersionUsed.baseVersion ?: return true) < GradleVersion.version(MINIMAL_SUPPORTED_GRADLE_VERSION)
+    }
+  }
+}
+
+class UnsupportedGradleVersionIssue(gradleVersionUsed: GradleVersion?,
+                                    projectPath: String,
+                                    gradleMinimumVersionRequired: GradleVersion) : BuildIssue {
+
+  override val title: String
+  override val description: String
+  override val quickFixes: List<BuildIssueQuickFix>
+  init {
+    val quickFixes1 = mutableListOf<BuildIssueQuickFix>()
+    val issueDescription = StringBuilder()
+    val gradleVersionString = if (gradleVersionUsed != null) gradleVersionUsed.version else "version"
+
+    val appInfo = ApplicationInfoImpl.getShadowInstance()
+    val ideVersion = "${appInfo.versionName} ${appInfo.majorVersion}.${appInfo.minorVersion}"
+    issueDescription
+      .append("Unsupported Gradle. \n") // title
+      .append("The project uses Gradle $gradleVersionString which is incompatible with $ideVersion.\n")
+
+    issueDescription.append("\nPossible solution:\n")
+    val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath)
+    if (wrapperPropertiesFile == null || gradleVersionUsed != null && gradleVersionUsed.baseVersion < gradleMinimumVersionRequired) {
+      val gradleVersionFix = GradleVersionQuickFix(projectPath, gradleMinimumVersionRequired, true)
+      issueDescription.append(
+        " - <a href=\"${gradleVersionFix.id}\">Upgrade Gradle wrapper to ${gradleMinimumVersionRequired.version} version " +
+        "and re-import the project</a>\n")
+      quickFixes1.add(gradleVersionFix)
+    }
+    else {
+      val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(projectPath, "distributionUrl")
+      val reimportQuickFix = ReimportQuickFix(projectPath, SYSTEM_ID)
+      issueDescription.append(" - <a href=\"${wrapperSettingsOpenQuickFix.id}\">Open Gradle wrapper settings</a>, " +
+                              "upgrade version to ${gradleMinimumVersionRequired.version} or newer and <a href=\"${reimportQuickFix.id}\">reload the project</a>\n")
+      quickFixes1.add(wrapperSettingsOpenQuickFix)
+      quickFixes1.add(reimportQuickFix)
+    }
+
+    description = issueDescription.toString()
+    title = getMessageTitle(description)
+    quickFixes = quickFixes1
+  }
+  override fun getNavigatable(project: Project): Navigatable? = null
+
+  companion object {
+    private val minimalSupportedVersion: GradleVersion = GradleVersion.version(MINIMAL_SUPPORTED_GRADLE_VERSION)
+    @JvmStatic
+    fun isUnsupported(gradleVersion: GradleVersion): Boolean {
+      return gradleVersion < minimalSupportedVersion
     }
   }
 }

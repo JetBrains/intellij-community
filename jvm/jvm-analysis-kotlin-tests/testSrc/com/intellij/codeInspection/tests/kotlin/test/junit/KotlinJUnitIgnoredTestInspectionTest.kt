@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnitIgnoredTestInspectionTestBase
 
 class KotlinJUnitIgnoredTestInspectionTest : JUnitIgnoredTestInspectionTestBase() {
   fun `test JUnit 4 @Ignore`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.*
 
       @Ignore("for good reason")
@@ -22,7 +22,7 @@ class KotlinJUnitIgnoredTestInspectionTest : JUnitIgnoredTestInspectionTestBase(
   }
 
   fun `test JUnit 5 @Disabled`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.api.Disabled
       import org.junit.jupiter.api.Test
       import org.junit.Ignore

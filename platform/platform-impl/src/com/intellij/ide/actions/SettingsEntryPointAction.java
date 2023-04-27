@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,8 +24,11 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.popup.PopupState;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +45,10 @@ import java.util.List;
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
+  private static final Icon NEW_UI_ICON =
+    IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   public SettingsEntryPointAction() {
     super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
@@ -53,11 +58,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    if (myPopupState.isHidden() && !myPopupState.isRecentlyHidden()) {
-      ListPopup popup = createMainPopup(e.getDataContext());
-      myPopupState.prepareToShow(popup);
-      PopupUtil.showForActionButtonEvent(popup, e);
-    }
+    ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
+    PopupUtil.showForActionButtonEvent(popup, e);
   }
 
   @Override
@@ -79,7 +81,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   @NotNull
-  private static ListPopup createMainPopup(@NotNull DataContext context) {
+  private static ListPopup createMainPopup(@NotNull DataContext context, Component component) {
     List<AnAction> appActions = new ArrayList<>();
     List<AnAction> pluginActions = new ArrayList<>();
 
@@ -121,12 +123,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
               getDelegate().update(e);
               e.getPresentation().setText(e.getPresentation().getText() + "…");
             }
-
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-              super.actionPerformed(new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
-                                                      getDelegate().getTemplatePresentation(), e.getActionManager(), e.getModifiers()));
-            }
           };
           button.setShortcut(child.getShortcutSet());
           group.add(button);
@@ -137,15 +133,28 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }
     }
 
+    Project project = CommonDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+    }
+
+    ListPopupStep<?> step = JBPopupFactory.getInstance().createActionsStep(
+      group, context, null, false, true, null, component, true, 0, false);
     return JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+      .createListPopup(project, step, renderer -> {
+        return new SettingsPopupListElementRenderer<>(((PopupListElementRenderer<?>) renderer).getPopup());
+      });
   }
 
   private static boolean ourShowPlatformUpdateIcon;
   private static boolean ourShowPluginsUpdateIcon;
+  private static boolean ourNewUiIcon = calculateOurNewUiIcon();
 
   public static void updateState() {
     resetActionIcon();
+
+    ourNewUiIcon = calculateOurNewUiIcon();
 
     loop:
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
@@ -169,6 +178,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
   }
 
+  private static boolean calculateOurNewUiIcon() {
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+    return !ExperimentalUI.isNewUI() && !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY)
+           && ExperimentalUI.getPromotionDaysCount() < 14;
+  }
+
   private static @NotNull @Nls String getActionTooltip() {
     boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
     if (!updates) {
@@ -179,11 +194,16 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         }
       }
     }
-    return IdeBundle.message(updates ? "settings.entry.point.with.updates.tooltip" : "settings.entry.point.tooltip");
+    if (updates) {
+      return IdeBundle.message("settings.entry.point.with.updates.tooltip");
+    }
+    return IdeBundle.message(ourNewUiIcon ? "settings.entry.point.newUi.tooltip" : "settings.entry.point.tooltip");
   }
 
   private static void resetActionIcon() {
-    ourShowPlatformUpdateIcon = ourShowPluginsUpdateIcon = false;
+    ourShowPlatformUpdateIcon = false;
+    ourShowPluginsUpdateIcon = false;
+    ourNewUiIcon = false;
   }
 
   private static @NotNull Icon getActionIcon() {
@@ -197,6 +217,10 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
              ? GEAR_ICON.getInfoIcon()
              : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
+    if (ourNewUiIcon) {
+      return NEW_UI_ICON;
+    }
+
     return getCustomizedIcon(GEAR_ICON);
   }
 
@@ -293,7 +317,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static final class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
-    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
     private StatusBar myStatusBar;
 
     @Override
@@ -322,13 +345,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
 
-        if (!myPopupState.isHidden() || myPopupState.isRecentlyHidden()) {
-          return;
-        }
-
         Component component = event.getComponent();
-        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component));
-        myPopupState.prepareToShow(popup);
+        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), component);
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -377,6 +395,23 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
     public void markAsRead() {
       myNewAction = false;
+    }
+  }
+
+  private static class SettingsPopupListElementRenderer<E> extends PopupListElementRenderer<E> {
+
+    private SettingsPopupListElementRenderer(ListPopupImpl aPopup) {
+      super(aPopup);
+    }
+
+    @Override
+    protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
+      super.customizeComponent(list, value, isSelected);
+
+      myTextLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+      myTextLabel.setIconTextGap(JBUI.scale(6));
+      boolean enableNewUi = value instanceof AnActionHolder actionHolder && actionHolder.getAction() instanceof EnableNewUiAction;
+      myTextLabel.setIcon(enableNewUi ? AllIcons.General.Beta : null);
     }
   }
 }

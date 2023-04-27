@@ -123,7 +123,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
         }
       }
     });
-    new ListSpeedSearch<>(myGroupList, o -> ActionManager.getInstance().getId(o));
+    ListSpeedSearch.installOn(myGroupList, o -> ActionManager.getInstance().getId(o));
 
     myActionList.setCellRenderer(new MyActionRenderer());
     myActionList.addListSelectionListener(new ListSelectionListener() {

@@ -2,6 +2,7 @@
 
 package com.intellij.xml.util;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.lang.ASTNode;
@@ -45,7 +46,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
           holder.registerProblem(
             tag,
             XmlAnalysisBundle.message("xml.inspections.tag.empty.body"),
-            isCollapsibleTag(tag) ? new CollapseTagIntention() : null
+            LocalQuickFix.notNullElements(isCollapsibleTag(tag) ? new CollapseTagIntention() : null)
           );
         }
       }

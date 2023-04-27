@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.idea.AppMode
@@ -97,10 +97,18 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
 
   open val logger: StatisticsEventLogger
-    get() = if (isRecordEnabled()) actualLogger else emptyLogger
+    get() = if (isLoggingEnabled()) actualLogger else emptyLogger
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
+  /**
+   * Determines if logging code should be executed on logging method calls
+   * */
+  final fun isLoggingEnabled(): Boolean = isRecordEnabled() || isLoggingAlwaysActive()
+  /**
+   * Determines if logging of events should happen in code even if recording of events to file is disabled
+  * */
+  open fun isLoggingAlwaysActive(): Boolean = false
 
   fun getActiveLogFile(): EventLogFile? {
     return logger.getActiveLogFile()
@@ -128,7 +136,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     val ideMode = if(AppMode.isRemoteDevHost()) "RDH" else null
     val eventLogConfiguration = EventLogConfiguration.getInstance()
     val config = eventLogConfiguration.getOrCreate(recorderId)
-    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
+    val writer = StatisticsEventLogFileWriter(recorderId, this, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
 
     val configService = EventLogConfigOptionsService.getInstance()
     val throttledWriter = StatisticsEventLogThrottleWriter(
@@ -142,6 +150,19 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }
+}
+
+/**
+ * For internal use only.
+ *
+ * Holds default implementation of StatisticsEventLoggerProvider.isLoggingAlwaysActive
+ * to connect logger with com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
+ * */
+abstract class StatisticsEventLoggerProviderExt(recorderId: String, version: Int, sendFrequencyMs: Long,
+                                                maxFileSizeInBytes: Int, sendLogsOnIdeClose: Boolean = false) :
+  StatisticsEventLoggerProvider(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, sendLogsOnIdeClose) {
+  override fun isLoggingAlwaysActive(): Boolean =
+    StatisticsEventLogProviderUtil.getExternalEventLogSettings()?.forceLoggingAlwaysEnabled() ?: false
 }
 
 internal class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1, DEFAULT_MAX_FILE_SIZE_BYTES) {

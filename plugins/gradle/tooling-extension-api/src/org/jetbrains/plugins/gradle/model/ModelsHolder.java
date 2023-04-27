@@ -39,7 +39,7 @@ import java.util.Map;
 public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel> implements Serializable {
 
   @NotNull private final B myRootModel;
-  @NotNull private final Map<String, Object> myModelsById = new LinkedHashMap<String, Object>();
+  @NotNull private final Map<String, Object> myModelsById = new LinkedHashMap<>();
   @Nullable private ToolingSerializer mySerializer;
   @Nullable private Consumer<Object> myPathsConverter;
 

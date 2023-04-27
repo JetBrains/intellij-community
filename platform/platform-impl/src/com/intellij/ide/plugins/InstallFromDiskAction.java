@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -80,10 +81,15 @@ class InstallFromDiskAction extends DumbAwareAction {
       return;
     }
 
+    VirtualFile contextFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    VirtualFile toSelect = contextFile != null && contextFile.isInLocalFileSystem() && isPluginArchive(contextFile.getPath())
+                           ? contextFile
+                           : getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
+
     FileChooser.chooseFile(new FileChooserDescriptorImpl(),
                            project,
                            myParentComponent,
-                           getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH)),
+                           toSelect,
                            virtualFile -> {
                              File file = VfsUtilCore.virtualToIoFile(virtualFile);
                              PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH,
@@ -91,6 +97,11 @@ class InstallFromDiskAction extends DumbAwareAction {
 
                              installFromDisk(file, project);
                            });
+  }
+
+  public static boolean isPluginArchive(String filePath) {
+    return FileUtilRt.extensionEquals(filePath, "jar") ||
+           FileUtilRt.extensionEquals(filePath, "zip");
   }
 
   @RequiresEdt

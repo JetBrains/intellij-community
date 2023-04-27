@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBTextField;
@@ -22,11 +23,11 @@ import javax.swing.*;
 import java.awt.event.ActionListener;
 
 public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextField> implements TextAccessor {
-  public TextFieldWithBrowseButton(){
+  public TextFieldWithBrowseButton() {
     this((ActionListener)null);
   }
 
-  public TextFieldWithBrowseButton(JTextField field){
+  public TextFieldWithBrowseButton(JTextField field) {
     this(field, null);
   }
 
@@ -47,13 +48,13 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener, Disposable parent) {
-    this(new ExtendableTextField(10), // to prevent field to be infinitely resized in grid-box layouts
-         browseActionListener, parent);
+    this(new ExtendableTextField(10 /*to prevent infinite resize in grid-box layouts*/), browseActionListener, parent);
   }
 
   public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
                                       @Nullable @NlsContexts.Label String description,
-                                      @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
+                                      @Nullable Project project,
+                                      FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     installPathCompletion(fileChooserDescriptor);
   }
@@ -64,13 +65,12 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     installPathCompletion(listener.getFileChooserDescriptor());
   }
 
-  protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor) {
+  protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor) {
     installPathCompletion(fileChooserDescriptor, null);
   }
 
-  protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor,
-                                       @Nullable Disposable parent) {
-    final Application application = ApplicationManager.getApplication();
+  protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor, @Nullable Disposable parent) {
+    Application application = ApplicationManager.getApplication();
     if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
     FileChooserFactory instance = FileChooserFactory.getInstance();
     if (instance != null) {
@@ -84,11 +84,15 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   @Override
   public @NotNull String getText() {
-    return Strings.notNullize(getTextField().getText());
+    var text = Strings.notNullize(getTextField().getText());
+    if (!(this instanceof NoPathCompletion)) {
+      text = FileUtil.expandUserHome(text);
+    }
+    return text;
   }
 
   @Override
-  public void setText(@NlsSafe @Nullable String text){
+  public void setText(@NlsSafe @Nullable String text) {
     getTextField().setText(text);
   }
 
@@ -96,29 +100,28 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     return getTextField().isEditable();
   }
 
+  @SuppressWarnings("removal")
   public void setEditable(boolean b) {
     getTextField().setEditable(b);
     getButton().setFocusable(!b);
   }
 
   public static class NoPathCompletion extends TextFieldWithBrowseButton {
-    public NoPathCompletion() {
-    }
+    public NoPathCompletion() { }
 
-    public NoPathCompletion(final JTextField field) {
+    public NoPathCompletion(JTextField field) {
       super(field);
     }
 
-    public NoPathCompletion(final JTextField field, final ActionListener browseActionListener) {
+    public NoPathCompletion(JTextField field, ActionListener browseActionListener) {
       super(field, browseActionListener);
     }
 
-    public NoPathCompletion(final ActionListener browseActionListener) {
+    public NoPathCompletion(ActionListener browseActionListener) {
       super(browseActionListener);
     }
 
     @Override
-    protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor, @Nullable Disposable parent) {
-    }
+    protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor, @Nullable Disposable parent) { }
   }
 }

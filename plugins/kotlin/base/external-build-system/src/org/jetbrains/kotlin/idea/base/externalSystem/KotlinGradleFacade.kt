@@ -11,8 +11,8 @@ import javax.swing.Icon
 
 interface KotlinGradleFacade {
     companion object {
-        val instance: KotlinGradleFacade?
-            get() = serviceOrNull()
+        @JvmStatic
+        fun getInstance(): KotlinGradleFacade? = serviceOrNull()
     }
 
     val gradleIcon: Icon

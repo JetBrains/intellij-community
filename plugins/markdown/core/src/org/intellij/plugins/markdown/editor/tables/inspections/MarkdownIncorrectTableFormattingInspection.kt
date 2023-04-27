@@ -50,7 +50,7 @@ class MarkdownIncorrectTableFormattingInspection: LocalInspectionTool() {
     }
   }
 
-  private class ReformatTableFix: IntentionOnPsiElementWrapper(ReformatTableIntention())
+  private class ReformatTableFix: IntentionOnElementAtCaretWrapper(ReformatTableIntention())
 
-  private class FixCellAlignmentFix: IntentionOnPsiElementWrapper(FixCellAlignmentIntention())
+  private class FixCellAlignmentFix: IntentionOnElementAtCaretWrapper(FixCellAlignmentIntention())
 }

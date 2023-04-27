@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
@@ -25,6 +26,7 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 public final class PyCallableParameterImpl implements PyCallableParameter {
-  @Nullable private final String myName;
+  @Nullable private final @NlsSafe String myName;
   @Nullable private final Ref<PyType> myType;
   @Nullable private final PyExpression myDefaultValue;
   @Nullable private final PyParameter myElement;
@@ -99,7 +101,7 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
 
   @Nullable
   @Override
-  public String getName() {
+  public @Nls String getName() {
     if (myName != null) {
       return myName;
     }

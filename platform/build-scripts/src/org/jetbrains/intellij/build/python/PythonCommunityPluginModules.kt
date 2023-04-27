@@ -29,15 +29,15 @@ object PythonCommunityPluginModules {
     "intellij.jupyter.core"
   )
 
-  const val pythonCommunityName = "python-ce"
+  const val pythonCommunityName: String = "python-ce"
 
   fun pythonCommunityPluginLayout(body: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     val communityOnlyModules = persistentListOf(
-      "intellij.python.community.plugin",
       "intellij.python.community.plugin.minor",
     )
-    return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES.addAll(communityOnlyModules)) { spec ->
+    return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) { spec ->
       body?.invoke(spec)
+      spec.withProjectLibrary("XmlRPC")
     }
   }
 
@@ -50,7 +50,6 @@ object PythonCommunityPluginModules {
       spec.directoryName = name
       spec.mainJarName = "${name}.jar"
       spec.withModules(modules)
-      spec.withModule(mainModuleName)
       spec.withGeneratedResources { targetDir, context ->
         val output = targetDir.resolve("helpers")
         Files.createDirectories(output)

@@ -1,5 +1,5 @@
 <keymap version="1" name="Default for XWin" disable-mnemonics="false" parent="$default">
-  <action id="FileChooserList.Root">
+  <action id="FileChooser.GoToRoot">
     <keyboard-shortcut first-keystroke="control SLASH"/>
   </action>
   <action id="RunToCursor">
@@ -29,6 +29,15 @@
   </action>
   <action id="XDebugger.AttachToProcess">
     <keyboard-shortcut first-keystroke="control alt 5"/>
+  </action>
+  <action id="ZoomInIdeAction">
+    <keyboard-shortcut first-keystroke="shift control alt EQUALS"/>
+  </action>
+  <action id="ZoomOutIdeAction">
+    <keyboard-shortcut first-keystroke="shift control alt MINUS"/>
+  </action>
+  <action id="ResetIdeScaleAction">
+    <keyboard-shortcut first-keystroke="shift control alt 0"/>
   </action>
   <action id="ActivateUnitTestsToolWindow"/>
   <action id="ActivateNuGetToolWindow"/>

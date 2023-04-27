@@ -29,7 +29,6 @@ import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.Nls;
@@ -57,7 +56,7 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
 
     myLanguage.setModel(new DefaultComboBoxModel<>(languageIDs));
     myLanguage.setRenderer(new ColoredListCellRenderer<>() {
-      final Set<String> IDs = ContainerUtil.set(languageIDs);
+      final Set<String> IDs = Set.of(languageIDs);
 
       @Override
       protected void customizeCellRenderer(@NotNull JList list, @Nls String s, int index, boolean selected, boolean hasFocus) {

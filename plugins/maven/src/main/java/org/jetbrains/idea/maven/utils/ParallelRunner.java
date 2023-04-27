@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public final class ParallelRunner {
   @FunctionalInterface
@@ -36,7 +37,20 @@ public final class ParallelRunner {
 
 
   public static <T> void runInParallel(@NotNull Collection<T> collection, @NotNull Consumer<T> method) {
-    collection.parallelStream().forEach(method);
+    collection.parallelStream().flatMap(item -> {
+      try {
+        method.accept(item);
+        return null;
+      }
+      catch (RuntimeException ex) {
+        return Stream.of(ex);
+      }
+    }).reduce((ex1, ex2) -> {
+      ex1.addSuppressed(ex2);
+      return ex1;
+    }).ifPresent(ex -> {
+      throw ex;
+    });
   }
 
   @SuppressWarnings("RedundantThrows")

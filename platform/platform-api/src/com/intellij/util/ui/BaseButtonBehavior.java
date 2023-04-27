@@ -38,18 +38,47 @@ public abstract class BaseButtonBehavior {
 
   private int myActionTrigger;
 
-  public BaseButtonBehavior(JComponent component) {
-    this(component, TimedDeadzone.DEFAULT);
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected BaseButtonBehavior(JComponent component, Void sig) {
+    this(component, TimedDeadzone.DEFAULT, sig);
   }
 
-  public BaseButtonBehavior(JComponent component, TimedDeadzone.Length mouseDeadzoneTime) {
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected BaseButtonBehavior(JComponent component, TimedDeadzone.Length mouseDeadzoneTime, @SuppressWarnings("unused") Void sig) {
     myComponent = component;
     myMouseDeadzone = new TimedDeadzone(mouseDeadzoneTime);
+  }
+
+  public void setupListeners() {
     myComponent.addMouseListener(new MyMouseListener());
     myComponent.addMouseMotionListener(new MyMouseMotionListener());
     myComponent.addKeyListener(new PressedKeyListener());
     myComponent.addFocusListener(new ButtonFocusListener());
     setActionTrigger(MouseEvent.MOUSE_RELEASED);
+  }
+
+  /**
+   * @deprecated Please use one of the non-deprecated constructors and call explicitelly {@link BaseButtonBehavior#setupListeners()}
+   * to install the listeners on the components
+   */
+  @Deprecated
+  public BaseButtonBehavior(JComponent component) {
+    this(component, TimedDeadzone.DEFAULT);
+  }
+
+  /**
+   * @deprecated Please use one of the non-deprecated constructors and call explicitelly {@link BaseButtonBehavior#setupListeners()}
+   * to install the listeners on the components
+   */
+  @Deprecated
+  public BaseButtonBehavior(JComponent component, TimedDeadzone.Length mouseDeadzoneTime) {
+    myComponent = component;
+    myMouseDeadzone = new TimedDeadzone(mouseDeadzoneTime);
+    setupListeners();
   }
 
   public void setActionTrigger(int trigger) {

@@ -9,13 +9,13 @@ import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.extras.artifactsClasspath
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 
-
 interface KotlinProjectArtifactDependencyResolver {
     fun resolve(
-        projectNode: DataNode<ProjectData>,
+        context: KotlinMppGradleProjectResolver.Context,
         sourceSetNode: DataNode<GradleSourceSetData>,
         dependency: IdeaKotlinProjectArtifactDependency
     ): Set<IdeaKotlinSourceDependency>
@@ -38,18 +38,18 @@ fun KotlinProjectArtifactDependencyResolver(): KotlinProjectArtifactDependencyRe
 private class KotlinProjectArtifactDependencyResolverImpl : KotlinProjectArtifactDependencyResolver {
 
     override fun resolve(
-        projectNode: DataNode<ProjectData>,
+        context: KotlinMppGradleProjectResolver.Context,
         sourceSetNode: DataNode<GradleSourceSetData>,
         dependency: IdeaKotlinProjectArtifactDependency
     ): Set<IdeaKotlinSourceDependency> {
-        val resolvedByExtensions = projectNode.getUserData(KotlinProjectArtifactDependencyResolver.key).orEmpty()
+        val resolvedByExtensions = context.projectDataNode.getUserData(KotlinProjectArtifactDependencyResolver.key).orEmpty()
             .plus(KotlinMppGradleProjectResolverExtension.buildInstance().provideAdditionalProjectArtifactDependencyResolvers())
-            .flatMap { resolver -> resolver.resolve(projectNode, sourceSetNode, dependency) }
+            .flatMap { resolver -> resolver.resolve(context, sourceSetNode, dependency) }
             .toSet()
 
-        val sourceSetMap = projectNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS).orEmpty()
-        val artifactsMap = projectNode.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS).orEmpty()
-        val modulesOutputsMap = projectNode.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
+        val sourceSetMap = context.projectDataNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS).orEmpty()
+        val artifactsMap = context.projectDataNode.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS).orEmpty()
+        val modulesOutputsMap = context.projectDataNode.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
 
         return dependency.artifactsClasspath.flatMap { artifactFile ->
             val id = artifactsMap[artifactFile.path] ?: modulesOutputsMap[artifactFile.path]?.first ?: return@flatMap emptySet()

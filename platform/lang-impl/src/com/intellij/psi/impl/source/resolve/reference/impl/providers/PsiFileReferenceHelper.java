@@ -41,9 +41,8 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
     return Objects.requireNonNull(FileReferenceHelper.EP_NAME.findExtension(PsiFileReferenceHelper.class));
   }
 
-  @NotNull
   @Override
-  public List<? extends LocalQuickFix> registerFixes(@NotNull FileReference reference) {
+  public @NotNull List<? extends @NotNull LocalQuickFix> registerFixes(@NotNull FileReference reference) {
     return FileReferenceQuickFixProvider.registerQuickFix(reference);
   }
 

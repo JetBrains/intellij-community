@@ -35,9 +35,20 @@
 
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEnterHandler"
                          id="terminalEnter" order="first"/>
-    <editorActionHandler action="EditorTab" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalTabHandler"
-                         id="terminalTab"/>
+    <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretUpHandler"
+                         id="terminalUp" order="first"/>
+    <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretDownHandler"
+                         id="terminalDown" order="first"/>
+    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEscapeHandler"
+                         id="terminalEscape" order="first"/>
+    <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCommandHistoryCharFilter"
+                       id="terminal" order="first"/>
+    <completion.contributor language="TEXT" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCompletionContributor"
+                            order="first"/>
+
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
+    <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
+                        serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

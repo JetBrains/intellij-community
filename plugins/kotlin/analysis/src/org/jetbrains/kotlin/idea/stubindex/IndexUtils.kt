@@ -23,7 +23,7 @@ fun <TDeclaration : KtCallableDeclaration> indexExtensionInObject(stub: KotlinCa
     KotlinExtensionsInObjectsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
-private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeIndex.indexExtension(
+private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeStubIndexHelper.indexExtension(
     stub: KotlinCallableStubBase<TDeclaration>,
     sink: IndexSink
 ) {
@@ -33,10 +33,7 @@ private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTyp
     val callableName = declaration.name ?: return
     val containingTypeReference = declaration.receiverTypeReference!!
     containingTypeReference.typeElement?.index(declaration, containingTypeReference) { typeName ->
-        sink.occurrence(
-            key,
-            buildKey(typeName, callableName)
-        )
+        sink.occurrence(indexKey, buildKey(typeName, callableName))
     }
 }
 
@@ -45,7 +42,7 @@ fun indexTypeAliasExpansion(stub: KotlinTypeAliasStub, sink: IndexSink) {
     val typeReference = declaration.getTypeReference() ?: return
     val typeElement = typeReference.typeElement ?: return
     typeElement.index(declaration, typeReference) { typeName ->
-        sink.occurrence(KotlinTypeAliasByExpansionShortNameIndex.KEY, typeName)
+        sink.occurrence(KotlinTypeAliasByExpansionShortNameIndex.indexKey, typeName)
     }
 }
 
@@ -119,7 +116,7 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
     if (stub.isTopLevel()) return
 
     if (modifierListStub.hasModifier(KtTokens.OPEN_KEYWORD) || modifierListStub.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
-        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.key, name)
+        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.indexKey, name)
     }
 }
 
@@ -149,7 +146,7 @@ fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     val annotatedElementName = stub.parentStub.parentStub.annotatedJvmNameElementName ?: return
 
     if (annotatedElementName != jvmName) {
-        sink.occurrence(KotlinJvmNameAnnotationIndex.key, jvmName)
+        sink.occurrence(KotlinJvmNameAnnotationIndex.indexKey, jvmName)
     }
 }
 

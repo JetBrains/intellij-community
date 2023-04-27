@@ -10,11 +10,16 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 @Internal
+fun requireNoJob(context: CoroutineContext) {
+  require(context[Job] == null) {
+    "Context must not specify a Job: $context"
+  }
+}
+
+@Internal
 @Experimental
 fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext, supervisor: Boolean = true): CoroutineScope {
-  require(context[Job] == null) {
-    "Found Job in context: $context"
-  }
+  requireNoJob(context)
   val parentContext = coroutineContext
   val parentJob = parentContext.job
   val job = if (supervisor) SupervisorJob(parent = parentJob) else Job(parent = parentJob)
@@ -27,9 +32,7 @@ fun CoroutineScope.namedChildScope(
   context: CoroutineContext = EmptyCoroutineContext,
   supervisor: Boolean = true,
 ): CoroutineScope {
-  require(context[Job] == null) {
-    "Found Job in context: $context"
-  }
+  requireNoJob(context)
   // `launch` allows to see actual coroutine with its context (and name!)
   // in the coroutine dump instead of "SupervisorJobImpl{Active}@598294b2"
   // https://github.com/Kotlin/kotlinx.coroutines/issues/3428

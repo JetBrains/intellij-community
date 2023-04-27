@@ -41,19 +41,18 @@ import java.util.Map;
 public final class PluginDescriptorChooser {
 
   private static final Map<String, String> INTELLIJ_MODULES =
-    ContainerUtil.<String, String>immutableMapBuilder()
-      .put("intellij.platform.ide", "PlatformExtensions.xml")
-      .put("intellij.platform.ide.impl", "PlatformExtensions.xml")
-      .put("intellij.platform.lang", "LangExtensions.xml")
-      .put("intellij.platform.execution.impl", "LangExtensions.xml")
-      .put("intellij.platform.lang.impl", "LangExtensions.xml")
-      .put("intellij.platform.vcs", "VcsExtensions.xml")
-      .put("intellij.platform.vcs.impl", "VcsExtensions.xml")
-      .put("intellij.java", "IdeaPlugin.xml")
-      .put("intellij.java.impl", "IdeaPlugin.xml")
-      .put("intellij.java.impl.inspections", "IdeaPlugin.xml")
-      .put("intellij.java.analysis.impl", "IdeaPlugin.xml")
-      .build();
+    Map.ofEntries(
+      Map.entry("intellij.platform.ide", "PlatformExtensions.xml"),
+      Map.entry("intellij.platform.ide.impl", "PlatformExtensions.xml"),
+      Map.entry("intellij.platform.lang", "LangExtensions.xml"),
+      Map.entry("intellij.platform.execution.impl", "LangExtensions.xml"),
+      Map.entry("intellij.platform.lang.impl", "LangExtensions.xml"),
+      Map.entry("intellij.platform.vcs", "VcsExtensions.xml"),
+      Map.entry("intellij.platform.vcs.impl", "VcsExtensions.xml"),
+      Map.entry("intellij.java", "IdeaPlugin.xml"),
+      Map.entry("intellij.java.impl", "IdeaPlugin.xml"),
+      Map.entry("intellij.java.impl.inspections", "IdeaPlugin.xml"),
+      Map.entry("intellij.java.analysis.impl", "IdeaPlugin.xml"));
 
   public static void show(final Project project,
                           final Editor editor,
@@ -151,8 +150,8 @@ public final class PluginDescriptorChooser {
       }
 
       if (module1 != null && module2 != null) {
-        int groupComparison = Comparing.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),
-                                                groupMatchLevel(groupPath, grouper.getGroupPath(module1)));
+        int groupComparison = Integer.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),
+                                              groupMatchLevel(groupPath, grouper.getGroupPath(module1)));
         if (groupComparison != 0) {
           return groupComparison;
         }
@@ -194,7 +193,7 @@ public final class PluginDescriptorChooser {
     return Math.min(targetGroupPath.size(), groupPath.size());
   }
 
-  public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,
+  public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(@NotNull String moduleName,
                                                                                List<DomFileElement<IdeaPlugin>> elements) {
     String extensionsFile = INTELLIJ_MODULES.get(moduleName);
     if (extensionsFile != null) {

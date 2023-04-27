@@ -233,9 +233,10 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       }
       symlinkToTarget = symlink("symlinkDir", targetDir)
     }
+    val symlinkToTargetFile = symlinkToTarget.file // load VFS synchronously outside read action
     val contributor = object : IndexableSetContributor() {
       override fun getAdditionalRootsToIndex(): Set<VirtualFile> =
-        setOf(symlinkToTarget.file)
+        setOf(symlinkToTargetFile)
     }
     maskIndexableSetContributors(contributor)
     assertIndexableFiles(symlinkToTarget.file, symlinkToTarget.file / "TargetFile.java")
@@ -261,12 +262,13 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
     buildDirectoryContent(contributorRoot) {
       symlinkToTarget = symlink("symlinkDir", targetDir)
     }
+    val symlinkToTargetFile = symlinkToTarget.file // load VFS synchronously outside read action
     val contributor = object : IndexableSetContributor() {
       override fun getAdditionalRootsToIndex(): Set<VirtualFile> =
-        setOf(symlinkToTarget.file)
+        setOf(symlinkToTargetFile)
     }
     maskIndexableSetContributors(contributor)
-    assertIndexableFiles(symlinkToTarget.file, symlinkToTarget.file / "TargetFile.java")
+    assertIndexableFiles(symlinkToTargetFile, symlinkToTargetFile / "TargetFile.java")
   }
 
   @Test
@@ -291,12 +293,14 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       }
     }
 
+    val sourcesDirSymlinkFile = sourcesDirSymlink.file   // load VFS synchronously outside read action
+    val binariesDirSymlinkFile = binariesDirSymlink.file // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary(
           "test",
-          listOf(sourcesDirSymlink.file),
-          listOf(binariesDirSymlink.file),
+          listOf(sourcesDirSymlinkFile),
+          listOf(binariesDirSymlinkFile),
           emptySet(),
           null
         )
@@ -305,10 +309,10 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
 
     maskAdditionalLibraryRootsProviders(additionalLibraryRootsProvider)
     assertIndexableFiles(
-      sourcesDirSymlink.file,
-      sourcesDirSymlink.file / "SourceFile.java",
-      binariesDirSymlink.file,
-      binariesDirSymlink.file / "BinaryFile.java"
+      sourcesDirSymlinkFile,
+      sourcesDirSymlinkFile / "SourceFile.java",
+      binariesDirSymlinkFile,
+      binariesDirSymlinkFile / "BinaryFile.java"
     )
   }
 
@@ -337,12 +341,14 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       binariesSymlink = symlink("binaries", targetBinaries)
     }
 
+    val sourcesSymlinkFile = sourcesSymlink.file // load VFS synchronously outside read action
+    val binariesSymlinkFile = binariesSymlink.file // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary(
           "test",
-          listOf(sourcesSymlink.file),
-          listOf(binariesSymlink.file),
+          listOf(sourcesSymlinkFile),
+          listOf(binariesSymlinkFile),
           emptySet(),
           null
         )
@@ -370,12 +376,14 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       symlinkDirTwo = symlink("symlinkDirTwo", targetDir)
     }
 
+    val symlinkDirOneFile = symlinkDirOne.file // load VFS synchronously outside read action
+    val symlinkDirTwoFile = symlinkDirTwo.file // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary(
           "test",
-          listOf(symlinkDirOne.file),
-          listOf(symlinkDirTwo.file),
+          listOf(symlinkDirOneFile),
+          listOf(symlinkDirTwoFile),
           emptySet(),
           null
         )
@@ -383,10 +391,10 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
     }
     maskAdditionalLibraryRootsProviders(additionalLibraryRootsProvider)
     assertIndexableFiles(
-      symlinkDirOne.file,
-      symlinkDirOne.file / "TargetFile.java",
-      symlinkDirTwo.file,
-      symlinkDirTwo.file / "TargetFile.java"
+      symlinkDirOneFile,
+      symlinkDirOneFile / "TargetFile.java",
+      symlinkDirTwoFile,
+      symlinkDirTwoFile / "TargetFile.java"
     )
   }
 
@@ -407,9 +415,10 @@ class IndexableFilesSymlinksTest : IndexableFilesBaseTest() {
       }
     }
 
+    val sourceDirFile = sourceDir.file // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
-        SyntheticLibrary.newImmutableLibrary(listOf(sourceDir.file))
+        SyntheticLibrary.newImmutableLibrary(listOf(sourceDirFile))
       )
     }
 

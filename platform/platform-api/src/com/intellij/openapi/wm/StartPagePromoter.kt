@@ -3,14 +3,30 @@ package com.intellij.openapi.wm
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JPanel
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface StartPagePromoter {
   companion object {
     @JvmField
     val START_PAGE_PROMOTER_EP = ExtensionPointName<StartPagePromoter>("com.intellij.startPagePromoter")
+
+    @JvmField
+    val PRIORITY_LEVEL_NORMAL = 0
+
+    @JvmField
+    val PRIORITY_LEVEL_HIGH = 100
   }
 
-  fun getPromotion(isEmptyState: Boolean): JPanel?
+  /**
+   * On start page only one random banner with the highest priority is shown
+   */
+  fun getPriorityLevel(): Int = PRIORITY_LEVEL_NORMAL
+
+  /**
+   * @param isEmptyState true if there are no recent projects
+   */
+  fun canCreatePromo(isEmptyState: Boolean): Boolean = isEmptyState
+
+  fun getPromotion(isEmptyState: Boolean): JComponent
 }

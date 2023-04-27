@@ -8,7 +8,7 @@ fun main(args: Array<String>) {
 fun test1(derived: Base) =
     //Breakpoint!
     derived is Derived && derived.prop == 1
-}
+
 
 class Derived : Base() {
     val prop = 1

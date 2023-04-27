@@ -7,7 +7,9 @@ import com.intellij.ide.DataManager
 import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -34,7 +36,6 @@ import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
 import com.intellij.ui.ClickListener
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.popup.PopupState
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.IndexingBundle
@@ -66,8 +67,6 @@ abstract class EditorBasedStatusBarPopup(
 ) : EditorBasedWidget(project), Multiframe, CustomStatusBarWidget {
   @Suppress("DEPRECATION")
   constructor(project: Project, isWriteableFileRequired: Boolean) : this(project, isWriteableFileRequired, project.coroutineScope)
-
-  private val popupState = PopupState.forPopup()
 
   private val component: Lazy<JPanel> = lazy {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -207,7 +206,7 @@ abstract class EditorBasedStatusBarPopup(
   }
 
   private fun showPopup(e: MouseEvent) {
-    if (!isActionEnabled || popupState.isRecentlyHidden) {
+    if (!isActionEnabled) {
       // do not show popup
       return
     }
@@ -216,7 +215,6 @@ abstract class EditorBasedStatusBarPopup(
     val popup = createPopup(dataContext) ?: return
     val dimension = popup.content.preferredSize
     val at = Point(0, -dimension.height)
-    popupState.prepareToShow(popup)
     popup.show(RelativePoint(e.component, at))
     // destroy popup on unexpected project close
     Disposer.register(this, popup)

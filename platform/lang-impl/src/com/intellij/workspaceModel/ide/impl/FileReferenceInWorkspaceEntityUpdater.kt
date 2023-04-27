@@ -7,7 +7,6 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.io.FileUtil
@@ -16,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.workspaceModel.core.fileIndex.impl.getOldAndNewUrls
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
@@ -67,8 +67,8 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
 
   private fun updateModuleName(oldUrl: String, newUrl: String) {
     if (!oldUrl.isImlFile() || !newUrl.isImlFile()) return
-    val oldModuleName = getModuleNameByFilePath(oldUrl)
-    val newModuleName = getModuleNameByFilePath(newUrl)
+    val oldModuleName = ModulePath.getModuleNameByFilePath(oldUrl)
+    val newModuleName = ModulePath.getModuleNameByFilePath(newUrl)
     if (oldModuleName == newModuleName) return
 
     val oldModuleId = ModuleId(oldModuleName)

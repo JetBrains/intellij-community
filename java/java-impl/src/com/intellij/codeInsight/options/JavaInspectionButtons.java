@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
@@ -22,6 +22,7 @@ public class JavaInspectionButtons extends CustomComponentExtensionWithSwingRend
       case NULLABILITY_ANNOTATIONS -> NullableNotNullDialog.createConfigureAnnotationsButton(parent);
       case ENTRY_POINT_CODE_PATTERNS -> EntryPointsManagerImpl.createConfigureClassPatternsButton();
       case ENTRY_POINT_ANNOTATIONS -> EntryPointsManagerImpl.createConfigureAnnotationsButton();
+      case IMPLICIT_WRITE_ANNOTATIONS -> EntryPointsManagerImpl.createConfigureAnnotationsButton(true);
       case DEPENDENCY_CONFIGURATION -> DependencyConfigurable.getConfigureButton();
     };
   }
@@ -39,7 +40,14 @@ public class JavaInspectionButtons extends CustomComponentExtensionWithSwingRend
   public enum ButtonKind {
     NULLABILITY_ANNOTATIONS,
     ENTRY_POINT_CODE_PATTERNS,
+    /**
+     * Entry point annotations + implicit write annotations
+     */
     ENTRY_POINT_ANNOTATIONS,
+    /**
+     * Implicit write annotations only
+     */
+    IMPLICIT_WRITE_ANNOTATIONS,
     DEPENDENCY_CONFIGURATION
   }
 }

@@ -41,6 +41,12 @@ fun assertReferenced(root: Any, referenced: Any) {
   assertNotNull(foundObjects.find { it === referenced })
 }
 
+fun assertNotReferenced(root: Any, referenced: Any) {
+  LeakHunter.checkLeak(root, referenced::class.java) { potentialLeak ->
+    potentialLeak === referenced
+  }
+}
+
 /**
  * @see com.intellij.util.ui.UIUtil.pump
  */

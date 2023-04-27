@@ -51,7 +51,7 @@ public final class SslSocketFactory extends DelegateSslSocketFactory {
   @NotNull
   public static TrustManager[] createTrustManagers(@NotNull String caCertPath) throws Exception {
     List<X509Certificate> certs = loadCertificates(caCertPath);
-    List<TrustManager> result = new ArrayList<TrustManager>(certs.size());
+    List<TrustManager> result = new ArrayList<>(certs.size());
     for (X509Certificate cert : certs) {
       result.add(new MyTrustManager(cert));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
 import com.intellij.ui.ColoredTableCellRenderer
@@ -30,5 +30,7 @@ abstract class VcsLogIconCellRenderer : ColoredTableCellRenderer(), VcsLogCellRe
 
   protected abstract fun customize(table: VcsLogGraphTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int)
 
-  override fun getPreferredWidth(table: JTable): Int = EmptyIcon.ICON_16.iconWidth + PADDING.width()
+  override fun getPreferredWidth(): VcsLogCellRenderer.PreferredWidth {
+    return VcsLogCellRenderer.PreferredWidth.Fixed { EmptyIcon.ICON_16.iconWidth + PADDING.width() }
+  }
 }

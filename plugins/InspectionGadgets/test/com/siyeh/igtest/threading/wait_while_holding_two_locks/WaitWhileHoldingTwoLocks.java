@@ -24,4 +24,16 @@ public class WaitWhileHoldingTwoLocks
             lock.wait();
         }
     }
+
+  synchronized void twoLocksBug() {
+    Thread t = new Thread(()->{
+      synchronized(this) {
+        try {
+          wait(100);
+        }
+        catch (InterruptedException ignored) {
+        }
+      }
+    });
+  }
 }

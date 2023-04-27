@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.tooling.util
 
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
+import org.gradle.api.file.RegularFile
 import org.gradle.api.initialization.IncludedBuild
 import org.gradle.api.internal.GradleInternal
 import org.gradle.api.invocation.Gradle
@@ -72,7 +73,7 @@ class SourceSetCachedFinder {
   }
 
   Set<File> findSourcesByArtifact(String path) {
-    def sources = mySourcesMap[path]
+    def sources = mySourcesMap.get(path)
     if (sources == null) {
       def sourceSet = myArtifactsMap.myArtifactsMap[path]
       if (sourceSet != null) {
@@ -110,7 +111,7 @@ class SourceSetCachedFinder {
         def task = p.tasks.findByName(sourceSet.getJarTaskName())
         if (task instanceof AbstractArchiveTask) {
           AbstractArchiveTask jarTask = (AbstractArchiveTask)task
-          def archivePath = jarTask?.getArchivePath()
+          def archivePath = is51OrBetter ? ReflectionUtil.reflectiveGetProperty(jarTask, "getArchiveFile", RegularFile).asFile : jarTask?.getArchivePath()
           if (archivePath) {
             artifactsMap[archivePath.path] = sourceSet
             if (isIsNewDependencyResolutionApplicable()) {

@@ -94,7 +94,7 @@ class ImportedWeigher(private val classifier: ImportableFqNameClassifier) : Look
 }
 
 // analog of LookupElementProximityWeigher which does not work for us
-object KotlinLookupElementProximityWeigher : CompletionWeigher() {
+internal class KotlinLookupElementProximityWeigher : CompletionWeigher() {
     override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing>? {
         val psiElement = (element.`object` as? DescriptorBasedDeclarationLookupObject)?.psiElement ?: return null
         return PsiProximityComparator.getProximity({ psiElement }, location.completionParameters.position, location.processingContext)

@@ -31,6 +31,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import org.jetbrains.idea.packagesearch.SortMetric
 import org.jetbrains.idea.reposearch.statistics.TopPackageIdValidationRule
 
 private const val FUS_ENABLED = true
@@ -41,7 +42,7 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     companion object {
 
-        private const val VERSION = 11
+        private const val VERSION = 12
         private val GROUP = EventLogGroup(FUSGroupIds.GROUP_ID, VERSION)
 
         // FIELDS
@@ -63,9 +64,10 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
         internal val preferencesAutoAddRepositoriesField = EventFields.Boolean(FUSGroupIds.PREFERENCES_AUTO_ADD_REPOSITORIES)
 
         private val detailsLinkLabelField = EventFields.Enum<FUSGroupIds.DetailsLinkTypes>(FUSGroupIds.DETAILS_LINK_LABEL)
-        private val toggleTypeField = EventFields.Enum<FUSGroupIds.ToggleTypes>(FUSGroupIds.DETAILS_VISIBLE)
-        private val detailsVisibleField = EventFields.Boolean(FUSGroupIds.DETAILS_VISIBLE)
+        private val toggleTypeField = EventFields.Enum<FUSGroupIds.ToggleTypes>(FUSGroupIds.CHECKBOX_NAME)
+        private val toggleValueField = EventFields.Boolean(FUSGroupIds.CHECKBOX_STATE)
         private val searchQueryLengthField = EventFields.Int(FUSGroupIds.SEARCH_QUERY_LENGTH)
+        private val sortMetricField = EventFields.Enum<SortMetric>(FUSGroupIds.SORT_METRIC)
 
         // EVENTS
         private val packageInstalledEvent = GROUP.registerEvent(
@@ -117,11 +119,15 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val toggleDetailsEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.TOGGLE,
             eventField1 = toggleTypeField,
-            eventField2 = detailsVisibleField
+            eventField2 = toggleValueField,
         )
         private val searchRequestEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.SEARCH_REQUEST,
             eventField1 = searchQueryLengthField
+        )
+        private val sortMetricEvent = GROUP.registerEvent(
+            eventId = FUSGroupIds.SORT_METRIC_CHANGED,
+            eventField1 = sortMetricField,
         )
         private val searchQueryClearEvent = GROUP.registerEvent(FUSGroupIds.SEARCH_QUERY_CLEAR)
         private val upgradeAllEvent = GROUP.registerEvent(FUSGroupIds.UPGRADE_ALL)
@@ -206,6 +212,10 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
 
         fun logToggle(type: FUSGroupIds.ToggleTypes, state: Boolean) = runSafelyIfEnabled(toggleDetailsEvent) {
             log(type, state)
+        }
+
+        fun logSortMetric(metric: SortMetric) = runSafelyIfEnabled(sortMetricEvent) {
+            log(metric)
         }
 
         fun logSearchRequest(query: String) = runSafelyIfEnabled(searchRequestEvent) {

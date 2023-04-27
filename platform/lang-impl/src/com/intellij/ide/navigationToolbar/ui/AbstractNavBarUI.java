@@ -26,6 +26,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.ide.navbar.ui.UiKt.*;
 
@@ -35,7 +36,8 @@ import static com.intellij.ide.navbar.ui.UiKt.*;
  */
 @Deprecated
 public abstract class AbstractNavBarUI implements NavBarUI {
-  private final static Map<NavBarItem, Map<ImageType, ScaleContext.Cache<BufferedImage>>> cache = new HashMap<>();
+
+  private final static Map<NavBarItem, Map<ImageType, ScaleContext.Cache<BufferedImage>>> cache = new ConcurrentHashMap<>();
 
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
@@ -47,7 +49,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Deprecated(forRemoval = true)
   public JBInsets getElementPadding() {
     return ExperimentalUI.isNewUI()
-           ? JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(2, 0))
+           ? JBUI.CurrentTheme.StatusBar.Breadcrumbs.itemInsets()
            : JBUI.insets(3);
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
@@ -216,6 +217,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected void revalidateAndRepaint() {
+    firePropertyChange("state", null, this);
     if (myAutoInvalidate) {
       revalidate();
     }
@@ -558,7 +560,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static float getFragmentWidth(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
-    WidthKey key = new WidthKey(fragment.text, font, frc, fragment.attributes.getStyle());
+    WidthKey key = new WidthKey(fragment.text, new ImmutableFont(font), frc, fragment.attributes.getStyle(), font.getSize());
     Float result;
     synchronized (ourWidthCache) {
       result = ourWidthCache.get(key);
@@ -1523,6 +1525,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private record WidthKey(@NotNull String text,
                           Font font,
                           FontRenderContext frc,
-                          int style) {
+                          int style,
+                          int size) {
+  }
+
+  private static final class ImmutableFont extends Font {
+    public ImmutableFont(Font font) {
+      super(font);
+    }
   }
 }

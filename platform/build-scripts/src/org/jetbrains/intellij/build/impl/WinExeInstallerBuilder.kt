@@ -148,7 +148,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
   context.executeStep(spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
     context.signFiles(listOf(installerFile))
   }
-  context.notifyArtifactWasBuilt(installerFile)
+  context.notifyArtifactBuilt(installerFile)
   return installerFile
 }
 

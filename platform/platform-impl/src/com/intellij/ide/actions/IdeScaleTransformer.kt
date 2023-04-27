@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
@@ -23,19 +24,22 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.APP)
-class IdeScaleTransformer : UISettingsListener, Disposable {
+class IdeScaleTransformer : Disposable {
   private val settingsUtils get() = UISettingsUtils.instance
-  private var lastSetScale: Float = settingsUtils.currentIdeScale
+  private var lastSetScale: Float? = null
 
   init {
     Disposer.register(ApplicationManager.getApplication(), this)
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(UISettingsListener.TOPIC, this)
   }
 
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    if (lastSetScale.percentValue != settingsUtils.currentIdeScale.percentValue) {
+  internal fun uiSettingsChanged() {
+    if (lastSetScale?.percentValue != settingsUtils.currentIdeScale.percentValue) {
       scale()
     }
+  }
+
+  internal fun setupLastSetScale() {
+    if (lastSetScale == null) lastSetScale = settingsUtils.currentIdeScale
   }
 
   private fun scale() {
@@ -47,14 +51,17 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
   private fun tweakEditorFont() {
     for (editor in EditorFactory.getInstance().allEditors) {
       if (editor is EditorEx) {
+        if (editor.isDisposed) continue
+
         editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true)
-        editor.setFontSize(settingsUtils.scaledEditorFontSize)
+        editor.setFontSize(if (editor.editorKind == EditorKind.CONSOLE) settingsUtils.scaledConsoleFontSize
+                           else settingsUtils.scaledEditorFontSize)
       }
     }
   }
 
   private fun notifyAllAndUpdateUI() {
-    LafManager.getInstance().updateUI()
+    ApplicationManager.getApplication().getServiceIfCreated(LafManager::class.java)?.updateUI()
     EditorUtil.reinitSettings()
   }
 
@@ -164,11 +171,6 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
   companion object {
     @JvmStatic
     val instance: IdeScaleTransformer get() = service<IdeScaleTransformer>()
-
-    @JvmStatic
-    fun setup() {
-      instance
-    }
   }
 
   override fun dispose() {}
@@ -176,7 +178,13 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
 
 class IdeScalePostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    IdeScaleTransformer.setup()
+    IdeScaleTransformer.instance.setupLastSetScale()
     IdeScaleIndicatorManager.setup(project)
+  }
+}
+
+class IdeScaleSettingsListener : UISettingsListener {
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    IdeScaleTransformer.instance.uiSettingsChanged()
   }
 }

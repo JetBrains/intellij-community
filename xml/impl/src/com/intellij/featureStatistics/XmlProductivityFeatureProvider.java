@@ -9,7 +9,7 @@ import java.util.Collections;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlProductivityFeatureProvider extends ProductivityFeaturesProvider {
+final class XmlProductivityFeatureProvider extends ProductivityFeaturesProvider {
   @Override
   public FeatureDescriptor[] getFeatureDescriptors() {
     return new FeatureDescriptor[]{new FeatureDescriptor(XmlCompletionContributor.TAG_NAME_COMPLETION_FEATURE,

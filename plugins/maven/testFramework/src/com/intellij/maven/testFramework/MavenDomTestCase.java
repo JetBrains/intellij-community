@@ -301,20 +301,27 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   }
 
   protected Set<String> getDependencyCompletionVariants(VirtualFile f) {
+    return getDependencyCompletionVariants(f, it -> MavenDependencyCompletionUtil.getPresentableText(it));
+  }
+
+  protected Set<String> getDependencyCompletionVariants(VirtualFile f,
+                                                        Function<? super MavenRepositoryArtifactInfo, String> lookupElementStringFunction) {
     configTest(f);
     LookupElement[] variants = myFixture.completeBasic();
 
     Set<String> result = new TreeSet<>();
     for (LookupElement each : variants) {
-      if (each.getObject() instanceof MavenRepositoryArtifactInfo) {
-        result.add(MavenDependencyCompletionUtil.getPresentableText((MavenRepositoryArtifactInfo)each.getObject()));
+      var object = each.getObject();
+      if (object instanceof MavenRepositoryArtifactInfo info) {
+        result.add(lookupElementStringFunction.apply(info));
       }
     }
     return result;
   }
 
   @Nullable
-  protected List<String> getCompletionVariants(CodeInsightTestFixture fixture, Function<? super LookupElement, String> lookupElementStringFunction) {
+  protected List<String> getCompletionVariants(CodeInsightTestFixture fixture,
+                                               Function<? super LookupElement, String> lookupElementStringFunction) {
     LookupElement[] variants = fixture.getLookupElements();
     if (variants == null) return null;
 

@@ -49,7 +49,7 @@ class NotebookInlayOutput(private val editor: Editor, private val parent: Dispos
     private const val RESIZE_TIME_SPAN = 500
 
     private val monospacedFont = RelativeFont.NORMAL.family(Font.MONOSPACED)
-    private val outputFont = monospacedFont.derive(StartupUiUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)))
+    private val outputFont = monospacedFont.derive(StartupUiUtil.labelFont.deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)))
   }
 
   private var output: InlayOutput? = null

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -494,7 +494,7 @@ public class StringUtil extends StringUtilRt {
   };
 
   private static final String[] ourOtherNonCapitalizableWords = {
-    "iOS", "iPhone", "iPad", "iMac"
+    "iOS", "iPhone", "iPad", "iMac", "macOS"
   };
 
   @Contract(pure = true)
@@ -943,6 +943,11 @@ public class StringUtil extends StringUtilRt {
   @Contract(value = "null -> false", pure = true)
   public static boolean isCapitalized(@Nullable String s) {
     return Strings.isCapitalized(s);
+  }
+
+  @Contract(value = "null -> false", pure = true)
+  public static boolean canBeCapitalized(@Nullable String s) {
+    return isNotEmpty(s) && Character.isLowerCase(s.charAt(0));
   }
 
   @Contract(pure = true)
@@ -2536,15 +2541,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract("null -> false")
   public static boolean isNotNegativeNumber(@Nullable CharSequence s) {
-    if (s == null) {
-      return false;
-    }
-    for (int i = 0; i < s.length(); i++) {
-      if (!isDecimalDigit(s.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
+    return Strings.isNotNegativeNumber(s);
   }
 
   @Contract(pure = true)
@@ -2558,20 +2555,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int compare(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean ignoreCase) {
-    if (s1 == s2) return 0;
-    if (s1 == null) return -1;
-    if (s2 == null) return 1;
-
-    int length1 = s1.length();
-    int length2 = s2.length();
-    int i = 0;
-    for (; i < length1 && i < length2; i++) {
-      int diff = Strings.compare(s1.charAt(i), s2.charAt(i), ignoreCase);
-      if (diff != 0) {
-        return diff;
-      }
-    }
-    return length1 - length2;
+    return Strings.compare(s1, s2, ignoreCase);
   }
 
   @Contract(pure = true)
@@ -2829,9 +2813,14 @@ public class StringUtil extends StringUtilRt {
            trimStart(s, className) : s;
   }
 
+  /**
+   * @param sequence original CharSequence
+   * @param delayMillis max delay in milliseconds
+   * @return a wrapped CharSequence that throws {@link ProcessCanceledException} if still accessed after delay.
+   */
   @Contract(pure = true)
-  public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delay) {
-    long myTime = System.currentTimeMillis() + delay;
+  public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delayMillis) {
+    long myTime = System.currentTimeMillis() + delayMillis;
     return new BombedCharSequence(sequence) {
       @Override
       protected void checkCanceled() {
@@ -2958,9 +2947,30 @@ public class StringUtil extends StringUtilRt {
     protected abstract void checkCanceled();
 
     @Override
-    public @NotNull CharSequence subSequence(int i, int i1) {
+    public @NotNull CharSequence subSequence(int start, int end) {
       check();
-      return delegate.subSequence(i, i1);
+      CharSequence subSequence = delegate.subSequence(start, end);
+      return new ChildBombedCharSequence(subSequence, this);
+    }
+  }
+
+  private static class ChildBombedCharSequence extends BombedCharSequence {
+    private final BombedCharSequence myBombedParent;
+
+    ChildBombedCharSequence(@NotNull CharSequence sequence,
+                            @NotNull BombedCharSequence bombedParent) {
+      super(sequence);
+      myBombedParent = bombedParent;
+    }
+
+    @Override
+    protected void check() {
+      myBombedParent.check();
+    }
+
+    @Override
+    protected void checkCanceled() {
+      throw new UnsupportedOperationException();
     }
   }
 

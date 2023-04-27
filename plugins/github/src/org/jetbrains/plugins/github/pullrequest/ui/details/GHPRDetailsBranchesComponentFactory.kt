@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
-import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
@@ -15,19 +15,17 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JLabelUtil
 import com.intellij.util.ui.UIUtil
 import git4idea.repo.GitRepository
 import icons.CollaborationToolsIcons
 import icons.DvcsImplIcons
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRCheckoutRemoteBranchAction
@@ -45,7 +43,6 @@ internal object GHPRDetailsBranchesComponentFactory {
   private const val BRANCHES_GAP = 4
   private const val POPUP_OFFSET = 8
   private const val BRANCH_HOVER_BORDER = 2
-  private const val BRANCH_MIN_WIDTH = 30
 
   fun create(
     project: Project,
@@ -56,6 +53,7 @@ internal object GHPRDetailsBranchesComponentFactory {
     val arrowLabel = JLabel(AllIcons.Chooser.Left)
     val from = createLabel().apply {
       border = JBUI.Borders.empty(BRANCH_HOVER_BORDER)
+      JLabelUtil.setTrimOverflow(this, true)
       addHoverAndPressStateListener(comp = this, pressedStateCallback = { branchLabel, isPressed ->
         if (!isPressed) return@addHoverAndPressStateListener
         branchLabel as JComponent
@@ -64,7 +62,9 @@ internal object GHPRDetailsBranchesComponentFactory {
         popup.component.show(branchLabel, point.x, point.y + POPUP_OFFSET)
       })
     }
-    val to = createLabel()
+    val to = createLabel().apply {
+      JLabelUtil.setTrimOverflow(this, true)
+    }
 
     Controller(model, from, to)
     val activatableFromBranch = RoundedPanel(BorderLayout()).apply {
@@ -77,12 +77,10 @@ internal object GHPRDetailsBranchesComponentFactory {
       add(from, BorderLayout.CENTER)
     }
 
-    return NonOpaquePanel().apply {
-      layout = MigLayout(LC().emptyBorders().fillX())
-
-      add(to, CC().minWidth("$BRANCH_MIN_WIDTH"))
-      add(arrowLabel, CC().gapX("$BRANCHES_GAP", "$BRANCHES_GAP"))
-      add(activatableFromBranch, CC().minWidth("$BRANCH_MIN_WIDTH"))
+    return HorizontalListPanel(BRANCHES_GAP).apply {
+      add(to)
+      add(arrowLabel)
+      add(activatableFromBranch)
     }
   }
 

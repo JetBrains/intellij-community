@@ -6,7 +6,7 @@ import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptPane.string
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.uast.UastVisitorAdapter
+import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UAnnotated
@@ -19,19 +19,21 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
  * Reports declarations (classes, methods, fields) marked with [ApiStatus.ScheduledForRemoval] annotation
  * that must already be removed. [ApiStatus.ScheduledForRemoval.inVersion] value is compared with "current" version.
  */
-class MustAlreadyBeRemovedApiInspection : LocalInspectionTool() {
-
-  private companion object {
-    private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME = ApiStatus.ScheduledForRemoval::class.java.canonicalName
-  }
-
+class MustAlreadyBeRemovedApiInspection : AbstractBaseUastLocalInspectionTool() {
   var currentVersion: String = ""
+
+  override fun getOptionsPane(): OptPane = pane(string("currentVersion", JvmAnalysisBundle.message("current.version")))
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (currentVersion.isEmpty() || !AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME, holder.file)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
-    return UastVisitorAdapter(MustAlreadyBeRemovedApiVisitor(holder, currentVersion), true)
+    return UastHintedVisitorAdapter.create(
+      holder.file.language,
+      MustAlreadyBeRemovedApiVisitor(holder, currentVersion),
+      arrayOf(UDeclaration::class.java),
+      true
+    )
   }
 
   private class MustAlreadyBeRemovedApiVisitor(
@@ -67,6 +69,8 @@ class MustAlreadyBeRemovedApiInspection : LocalInspectionTool() {
     }
   }
 
-  override fun getOptionsPane(): OptPane = pane(string("currentVersion", JvmAnalysisBundle.message("current.version")))
+  private companion object {
+    private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME = ApiStatus.ScheduledForRemoval::class.java.canonicalName
+  }
 }
 

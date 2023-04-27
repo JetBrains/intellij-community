@@ -2,27 +2,35 @@
 
 package org.jetbrains.kotlin.idea.versions
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.util.indexing.DataIndexer
-import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.*
 import org.jetbrains.kotlin.js.JavaScript
 import org.jetbrains.kotlin.utils.JsMetadataVersion
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadata
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
 
-object KotlinJsMetadataVersionIndex : KotlinMetadataVersionIndexBase<KotlinJsMetadataVersionIndex, JsMetadataVersion>(
-    KotlinJsMetadataVersionIndex::class.java
-) {
+private val LOG = Logger.getInstance(KotlinJsMetadataVersionIndex::class.java)
+
+private const val JAVASCRIPT_DOT_FILE_EXTENSION = ".${JavaScript.EXTENSION}"
+
+class KotlinJsMetadataVersionIndex internal constructor() : KotlinMetadataVersionIndexBase<JsMetadataVersion>() {
+    companion object {
+        val NAME: ID<JsMetadataVersion, Void> = ID.create(KotlinJsMetadataVersionIndex::class.java.canonicalName)
+    }
+
+    override fun getName(): ID<JsMetadataVersion, Void> = NAME
+
     override fun createBinaryVersion(versionArray: IntArray, extraBoolean: Boolean?): JsMetadataVersion =
         JsMetadataVersion(*versionArray)
 
     override fun getIndexer() = INDEXER
 
+    override fun getLogger() = LOG
+
     override fun getInputFilter(): FileBasedIndex.InputFilter {
         return when (val fileType = FileTypeManager.getInstance().findFileTypeByName(JavaScript.NAME)) {
-            null -> FileBasedIndex.InputFilter { file -> JavaScript.EXTENSION == file.extension }
+            null -> FileBasedIndex.InputFilter { file -> file.nameSequence.endsWith(JAVASCRIPT_DOT_FILE_EXTENSION) }
             else -> DefaultFileTypeSpecificInputFilter(fileType)
         }
     }

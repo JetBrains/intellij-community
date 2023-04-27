@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,8 @@ public final class PsiUtil {
     "idea.iml", "community-main.iml", "intellij.idea.community.main.iml", "intellij.idea.ultimate.main.iml"
   };
   private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES = List.of("intellij.idea.community.main",
-                                                                               "intellij.platform.commercial");
+                                                                               "intellij.platform.commercial",
+                                                                               "intellij.android.studio.integration");
 
   private PsiUtil() { }
 
@@ -189,4 +191,12 @@ public final class PsiUtil {
     }
     return false;
   }
+
+  public static boolean isExtensionPointImplementationCandidate(PsiClass psiClass) {
+    return psiClass.getClassKind() == JvmClassKind.CLASS &&
+           !com.intellij.psi.util.PsiUtil.isInnerClass(psiClass) &&
+           !com.intellij.psi.util.PsiUtil.isLocalOrAnonymousClass(psiClass) &&
+           !com.intellij.psi.util.PsiUtil.isAbstractClass(psiClass);
+  }
+
 }

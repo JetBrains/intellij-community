@@ -256,7 +256,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
 
   override fun updateUI() {
     setUI(StripeButtonUi())
-    val font = StartupUiUtil.getLabelFont()
+    val font = StartupUiUtil.labelFont
     val relativeFont = RelativeFont.NORMAL.fromResource("StripeButton.fontSizeOffset", -2, JBUIScale.scale(11f))
     setFont(relativeFont.derive(font))
   }

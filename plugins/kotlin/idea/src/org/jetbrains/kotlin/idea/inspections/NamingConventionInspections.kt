@@ -74,12 +74,22 @@ private val NO_MIDDLE_UNDERSCORES = NamingRule(KotlinBundle.message("should.not.
     '_' in it.substring(1)
 }
 
+
+private val NO_UNDERSCORES_IN_CAMEL_CASE = NamingRule(
+    KotlinBundle.message("should.not.contain.underscores.with.camel.case")) {
+    it.contains('_') && it.any { it.isUpperCase() } && it.any { it.isLowerCase() }
+}
+
 private val NO_BAD_CHARACTERS = NamingRule(KotlinBundle.message("may.contain.only.letters.and.digits")) {
     it.any { c -> c !in 'a'..'z' && c !in 'A'..'Z' && c !in '0'..'9' }
 }
 
 private val NO_BAD_CHARACTERS_OR_UNDERSCORE = NamingRule(KotlinBundle.message("may.contain.only.letters.digits.or.underscores")) {
     it.any { c -> c !in 'a'..'z' && c !in 'A'..'Z' && c !in '0'..'9' && c != '_' }
+}
+
+private val NO_LOWER = NamingRule(KotlinBundle.message("should.not.contain.lowercase.letter")) {
+    it.any { c ->  c.isLowerCase() }
 }
 
 class NamingConventionInspectionSettings(
@@ -192,7 +202,8 @@ class EnumEntryNameInspection : NamingConventionInspection(
     KotlinBundle.message("enum.entry"),
     "[A-Z]([A-Za-z\\d]*|[A-Z_\\d]*)"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(START_UPPER, NO_BAD_CHARACTERS_OR_UNDERSCORE)
+  override fun getNamingRules(): Array<NamingRule> = arrayOf(
+      START_UPPER, NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE, NO_UNDERSCORES_IN_CAMEL_CASE)
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return enumEntryVisitor { enumEntry -> verifyName(enumEntry, holder) }
@@ -233,7 +244,7 @@ class TestFunctionNameInspection : NamingConventionInspection(
     KotlinBundle.message("test.function"),
     "[a-z][A-Za-z_\\d]*"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(START_LOWER)
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(START_LOWER, NO_BAD_CHARACTERS)
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return namedFunctionVisitor { function ->
@@ -288,11 +299,11 @@ abstract class PropertyNameInspectionBase protected constructor(
         return when {
             isLocal -> PropertyKind.LOCAL
 
+            hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
+
             private && containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_PRIVATE
 
             !private && (containingClassOrObject is KtObjectDeclaration) || isTopLevel -> PropertyKind.OBJECT_OR_TOP_LEVEL
-
-            hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
 
             private -> PropertyKind.PRIVATE
 
@@ -322,7 +333,7 @@ class ObjectPropertyNameInspection : PropertyNameInspectionBase(
     KotlinBundle.message("object.or.top.level.property"),
     "[A-Za-z][_A-Za-z\\d]*",
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE)
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE, NO_BAD_CHARACTERS)
 }
 
 class ObjectPrivatePropertyNameInspection : PropertyNameInspectionBase(
@@ -339,7 +350,7 @@ class PrivatePropertyNameInspection : PropertyNameInspectionBase(
     KotlinBundle.message("private.property"),
     "_?[a-z][A-Za-z\\d]*"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_MIDDLE_UNDERSCORES, NO_BAD_CHARACTERS_OR_UNDERSCORE)
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_MIDDLE_UNDERSCORES, NO_START_UPPER, NO_BAD_CHARACTERS_OR_UNDERSCORE)
 }
 
 class ConstPropertyNameInspection : PropertyNameInspectionBase(
@@ -347,7 +358,7 @@ class ConstPropertyNameInspection : PropertyNameInspectionBase(
     KotlinBundle.message("const.property"),
     "[A-Z][_A-Z\\d]*"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf()
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_LOWER, NO_BAD_CHARACTERS)
 }
 
 class LocalVariableNameInspection : PropertyNameInspectionBase(

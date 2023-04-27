@@ -7,7 +7,8 @@ enum class SearchWords(@NonNls val value: String) {
   ORGANIZATION("/organization:"),
   TAG("/tag:"),
   SORT_BY("/sortBy:"),
-  REPOSITORY("/repository:");
+  REPOSITORY("/repository:"),
+  SUGGESTED("/suggested");
 
   companion object {
     @JvmStatic

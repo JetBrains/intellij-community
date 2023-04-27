@@ -394,10 +394,10 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
     PsiElement leaf = getFile().findElementAt(0);
     PsiElement anchor = null;
     while (leaf != null) {
-      PsiElement candidate = refiner.matchElement(leaf);
+      ExceptionLineRefiner.RefinerMatchResult candidate = refiner.matchElement(leaf);
       if (candidate != null) {
-        if (anchor == null) {
-          anchor = candidate;
+        if (anchor == null || anchor == candidate.reason()) {
+          anchor = candidate.reason();
         }
         else {
           fail("Two candidates found: " + anchor.getText());

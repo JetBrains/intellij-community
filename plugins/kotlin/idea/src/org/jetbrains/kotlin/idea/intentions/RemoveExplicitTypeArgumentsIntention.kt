@@ -110,6 +110,10 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
                 expectedType = expectedType ?: TypeUtils.NO_EXPECTED_TYPE,
                 isStatement = contextExpression.isUsedAsStatement(bindingContext)
             )
+            val newDiagnostics = newBindingContext.diagnostics
+
+            val newCallee = newCallExpression.calleeExpression ?: return false
+            if (newDiagnostics.forElement(newCallee).any { it.factory == IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION }) return false
 
             val newCall = newCallExpression.getResolvedCall(newBindingContext) ?: return false
 
@@ -126,7 +130,7 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
 
             return args.size == newArgs.size &&
                     args.values.zip(newArgs.values).all { (argType, newArgType) -> equalTypes(argType, newArgType) } &&
-                    (newBindingContext.diagnostics.asSequence() - bindingContext.diagnostics).none {
+                    (newDiagnostics.asSequence() - bindingContext.diagnostics).none {
                         it.factory == INFERRED_INTO_DECLARED_UPPER_BOUNDS || it.factory == UNRESOLVED_REFERENCE ||
                                 it.factory == BUILDER_INFERENCE_STUB_RECEIVER ||
                                 // just for sure because its builder inference related
@@ -137,7 +141,7 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
         private fun CallableDescriptor.isInlineFunctionWithReifiedTypeParameters(): Boolean =
             this is FunctionDescriptor && isInline && typeParameters.any { it.isReified }
 
-        private fun findContextToAnalyze(expression: KtExpression, bindingContext: BindingContext): Pair<KtExpression, KotlinType?> {
+        fun findContextToAnalyze(expression: KtExpression, bindingContext: BindingContext): Pair<KtExpression, KotlinType?> {
             for (element in expression.parentsWithSelf) {
                 if (element !is KtExpression || element is KtEnumEntry) continue
 

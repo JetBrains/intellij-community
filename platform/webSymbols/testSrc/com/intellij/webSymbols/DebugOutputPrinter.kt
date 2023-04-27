@@ -14,7 +14,7 @@ open class DebugOutputPrinter {
   // KT-11488 - cannot call super when overriding StringBuilder.printValue
   protected fun StringBuilder.printValue(level: Int, value: Any?): StringBuilder =
     if (value != null && !stack.add(value))
-      printRecursiveValue(this,level, value)
+      printRecursiveValue(this, level, value)
     else try {
       printValueImpl(this, level, value)
     }
@@ -84,12 +84,18 @@ open class DebugOutputPrinter {
   private fun StringBuilder.printPsiElement(element: PsiElement): StringBuilder {
     append(element::class.java.simpleName)
       .append(" <")
-      .append(element.containingFile.virtualFile?.path)
+      .append(element.containingFile.virtualFile?.path?.removeOutputPathPrefix())
     if (element !is PsiFile) append(": " + element.textRange)
     return append(">")
   }
 
   protected fun String.ellipsis(maxLength: Int): String =
     substring(0, length.coerceAtMost(maxLength)) + if (length > maxLength) "…" else ""
+
+  private fun String.removeOutputPathPrefix(): String {
+    val index = indexOf("/classes/production/")
+    if (index < 0) return this
+    return "<build-output-directory>" + this.substring(index)
+  }
 
 }

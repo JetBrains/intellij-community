@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnit5ConverterInspectionTestBase
 
 class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
   fun `test qualified conversion`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.Test;
       import org.junit.Before;
       import org.junit.Assert;
@@ -65,7 +65,7 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
   }
 
   fun `test unqualified conversion`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.Test;
       import static org.junit.Assert.*;
       import org.junit.Assert;
@@ -117,7 +117,7 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
   }
 
   fun `test expected on test annotation`() {
-    myFixture.testQuickFixUnavailable(ULanguage.JAVA, """
+    myFixture.testQuickFixUnavailable(JvmLanguage.JAVA, """
       import org.junit.Test;
 
       import static org.junit.Assert.*;

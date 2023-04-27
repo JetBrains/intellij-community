@@ -39,7 +39,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private final ConcurrentIntObjectMap<Map<Update, Update>> myScheduledUpdates = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final Set<MergingUpdateQueue> ourQueues =
     SystemProperties.getBooleanProperty("intellij.MergingUpdateQueue.enable.global.flusher", false)
-    ? ContainerUtil.newConcurrentSet()
+    ? ConcurrentCollectionFactory.createConcurrentSet()
     : null;
 
   private final Alarm myWaiterForMerge;
@@ -122,7 +122,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     if (activationComponent != null) {
-      UiNotifyConnector connector = new UiNotifyConnector(activationComponent, this);
+      UiNotifyConnector connector = UiNotifyConnector.installOn(activationComponent, this);
       Disposer.register(this, connector);
     }
 

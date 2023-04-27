@@ -43,9 +43,9 @@ final class DefaultFileOperations implements FileOperations {
     }
   };
 
-  private final Map<File, Iterable<File>> myDirectoryCache = new HashMap<File, Iterable<File>>();
-  private final Map<File, FileOperations.Archive> myArchiveCache = new HashMap<File, FileOperations.Archive>();
-  private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
+  private final Map<File, Iterable<File>> myDirectoryCache = new HashMap<>();
+  private final Map<File, FileOperations.Archive> myArchiveCache = new HashMap<>();
+  private final Map<File, Boolean> myIsFile = new HashMap<>();
 
   @Override
   @NotNull
@@ -201,9 +201,9 @@ final class DefaultFileOperations implements FileOperations {
 
   private static class ZipArchive implements FileOperations.Archive {
     private final ZipFile myZip;
-    private final Map<String, Collection<ZipEntry>> myPaths = new HashMap<String, Collection<ZipEntry>>();
+    private final Map<String, Collection<ZipEntry>> myPaths = new HashMap<>();
     private final Function<ZipEntry, JavaFileObject> myToFileObjectConverter;
-    private static final FileObjectKindFilter<ZipEntry> ourEntryFilter = new FileObjectKindFilter<ZipEntry>(new Function<ZipEntry, String>() {
+    private static final FileObjectKindFilter<ZipEntry> ourEntryFilter = new FileObjectKindFilter<>(new Function<ZipEntry, String>() {
       @Override
       public String fun(ZipEntry zipEntry) {
         return zipEntry.getName();
@@ -219,7 +219,7 @@ final class DefaultFileOperations implements FileOperations {
           final String parent = getParentPath(entry.getName());
           Collection<ZipEntry> children = myPaths.get(parent);
           if (children == null) {
-            children = new ArrayList<ZipEntry>();
+            children = new ArrayList<>();
             myPaths.put(parent, children);
           }
           children.add(entry);

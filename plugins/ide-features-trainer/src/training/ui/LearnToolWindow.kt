@@ -9,13 +9,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.assertj.swing.timing.Timeout
 import training.actions.ChooseProgrammingLanguageForLearningAction
 import training.lang.LangManager
@@ -47,6 +48,13 @@ class LearnToolWindow internal constructor(val project: Project, private val who
       setLearnPanel()
     } else {
       setContent(modulesPanel)
+    }
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    if (parent != null) {
+      reinitViews()
     }
   }
 
@@ -106,11 +114,11 @@ private fun adjustModulesPanel(contentPanel: JPanel): JPanel {
     add(JPanel().apply {
       alignmentX = SimpleToolWindowPanel.LEFT_ALIGNMENT
       layout = BoxLayout(this, BoxLayout.X_AXIS)
-      border = MatteBorder(JBUI.scale(1), 0, JBUI.scale(1), 0, JBUI.CurrentTheme.NotificationWarning.borderColor())
+      border = MatteBorder(0, 0, JBUI.scale(1), 0, UIUtil.CONTRAST_BORDER_COLOR)
 
       add(object : JPanel() {
         // It seems the new UI toolwindows redefine background recursively, so force background
-        override fun getBackground(): Color = JBUI.CurrentTheme.NotificationWarning.backgroundColor()
+        override fun getBackground(): Color = JBUI.CurrentTheme.Validator.warningBackgroundColor()
       }.apply<JPanel> {
         layout = BoxLayout(this, BoxLayout.X_AXIS)
         border = JBUI.Borders.empty(12)
@@ -121,7 +129,7 @@ private fun adjustModulesPanel(contentPanel: JPanel): JPanel {
         })
         add(Box.createHorizontalGlue())
         add(LinkLabel<Any>(LearnBundle.message("modules.panel.switch.ui"), null) { _, _ ->
-          Registry.get("ide.experimental.ui").setValue(true)
+          ExperimentalUI.setNewUI(true)
         })
       })
     })

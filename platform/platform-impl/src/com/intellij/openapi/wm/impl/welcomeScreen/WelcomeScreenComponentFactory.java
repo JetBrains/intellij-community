@@ -11,16 +11,17 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -48,9 +49,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public final class WelcomeScreenComponentFactory {
   static @NotNull JComponent createSmallLogo() {
@@ -69,12 +69,10 @@ public final class WelcomeScreenComponentFactory {
       panel.add(logo, BorderLayout.WEST);
     }
 
-    String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
-                             ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
-                             : ApplicationNamesInfo.getInstance().getFullProductName();
+    String applicationName = getAppName();
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
-    appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
+    appName.setFont(JBFont.create(appName.getFont().deriveFont(Font.PLAIN), false));
 
     ActionLink copyAbout = new ActionLink("", EmptyIcon.ICON_16, createCopyAboutAction());
     copyAbout.setHoveringIcon(AllIcons.Actions.Copy);
@@ -125,10 +123,7 @@ public final class WelcomeScreenComponentFactory {
       panel.add(logo, BorderLayout.NORTH);
     }
 
-    String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
-                             ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
-                             : ApplicationNamesInfo.getInstance().getFullProductName();
-    JLabel appName = new JLabel(applicationName);
+    JLabel appName = new JLabel(getAppName());
     appName.setForeground(JBColor.foreground());
     appName.setFont(WelcomeScreenUIManager.getProductFont(36).deriveFont(Font.PLAIN));
     appName.setHorizontalAlignment(SwingConstants.CENTER);
@@ -279,6 +274,11 @@ public final class WelcomeScreenComponentFactory {
     return panel.getComponent();
   }
 
+  /**
+   *
+   * @deprecated use {@link NotificationEventAction} instead
+   */
+  @Deprecated
   public static @NotNull JComponent createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
     SelectablePanel selectablePanel = new SelectablePanel();
     ActionLink actionLink = new ActionLink(linkText, getNotificationIcon(Collections.emptyList(), null), new DumbAwareAction() {
@@ -323,10 +323,11 @@ public final class WelcomeScreenComponentFactory {
     return selectablePanel;
   }
 
-  private static Icon getNotificationIcon(List<NotificationType> notificationTypes, JComponent panel) {
+  private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
+
+  static Icon getNotificationIcon(List<NotificationType> notificationTypes, JComponent panel) {
     if (ExperimentalUI.isNewUI()) {
-      return IconUtil.resizeSquared(
-        notificationTypes.isEmpty() ? AllIcons.Toolwindows.Notifications : AllIcons.Toolwindows.NotificationsNew, JBUIScale.scale(16));
+      return IconUtil.resizeSquared(NOTIFICATION_ICON.getInfoIcon(!notificationTypes.isEmpty()), JBUIScale.scale(16));
     }
     else {
       if (notificationTypes.isEmpty()) {
@@ -352,36 +353,81 @@ public final class WelcomeScreenComponentFactory {
     return title;
   }
 
+  public static @NotNull JComponent createNotificationToolbar(@NotNull Disposable parentDisposable) {
+    var horizontalGap = 4;
+
+    IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
+    Disposer.register(parentDisposable, panel);
+
+    DefaultActionGroup group = new DefaultActionGroup(panel.getAction(), new NotificationEventAction(parentDisposable));
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
+      "WelcomeScreen.NotificationPanel", group, true);
+    toolbar.setMinimumButtonSize(new JBDimension(26, 26));
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setActionButtonBorder(horizontalGap, 1);
+
+    JComponent result = toolbar.getComponent();
+    toolbar.setTargetComponent(result);
+    result.setOpaque(false);
+    if (ExperimentalUI.isNewUI()) {
+      result.setBorder(JBUI.Borders.empty(9, 0, 15, 24 - horizontalGap));
+    }
+    else {
+      result.setBorder(JBUI.Borders.empty(10, 0, 5, 8));
+    }
+    return result;
+  }
+
+  /**
+   * @deprecated Use {@link #createNotificationToolbar(Disposable)} instead
+   */
+  @Deprecated
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
-    JPanel panel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
     JComponent errorsLink = createErrorsLink(parentDisposable);
     JComponent eventLink = createEventLink("", parentDisposable);
+    JPanel panel = new NonOpaquePanel();
     if (ExperimentalUI.isNewUI()) {
+      panel.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
       panel.setBorder(JBUI.Borders.empty(10, 0, 16, 24));
       errorsLink.setBorder(JBUI.Borders.empty(5, 5, 5, 13));
       eventLink.setBorder(JBUI.Borders.empty(5));
-      panel.add(errorsLink);
-      panel.add(eventLink);
     }
     else {
+      panel.setLayout(new FlowLayout(FlowLayout.RIGHT));
       panel.setBorder(JBUI.Borders.empty(10, 0, 0, 3));
-      panel.add(errorsLink);
-      panel.add(eventLink);
     }
+    panel.add(errorsLink);
+    panel.add(eventLink);
     return panel;
   }
 
-  static @Nullable JPanel getSinglePromotion(boolean isEmptyState) {
+  static @Nullable JComponent getSinglePromotion(boolean isEmptyState) {
     StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
-    JPanel result = null;
+    List<StartPagePromoter> promoters = new ArrayList<>();
+    int maxPriorityLevel = Integer.MIN_VALUE;
+
     for (StartPagePromoter promoter : extensions) {
-      JPanel content = promoter.getPromotion(isEmptyState);
-      if (content == null) continue;
-      if (result != null) {
-        Logger.getInstance(WelcomeScreenComponentFactory.class).error("Several welcome screen promotions are found.");
+      int priorityLevel = promoter.getPriorityLevel();
+      if (priorityLevel >= maxPriorityLevel && promoter.canCreatePromo(isEmptyState)) {
+        if (priorityLevel > maxPriorityLevel) {
+          maxPriorityLevel = priorityLevel;
+          promoters.clear();
+        }
+        promoters.add(promoter);
       }
-      result = content;
     }
-    return result;
+
+    if (promoters.isEmpty()) {
+      return null;
+    }
+
+    StartPagePromoter selectedPromoter = promoters.get(new Random().nextInt(promoters.size()));
+    return selectedPromoter.getPromotion(isEmptyState);
+  }
+
+  public static @NlsSafe String getAppName() {
+    return Boolean.getBoolean("ide.ui.name.with.edition")
+           ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+           : ApplicationNamesInfo.getInstance().getFullProductName();
   }
 }

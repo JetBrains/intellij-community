@@ -48,7 +48,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   override fun getProjectTypes(): List<StarterProjectType> = emptyList()
   override fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
-  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
+  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_17.toJavaVersion()
 
   override fun getLanguages(): List<StarterLanguage> {
     return listOf(KOTLIN_STARTER_LANGUAGE) // Java and Kotlin both are available out of the box
@@ -104,7 +104,9 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
                                        ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_WRAPPER_PROPERTIES)))
 
       assets.addAll(standardAssetsProvider.getGradlewAssets())
-      assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+      if (starterContext.isCreatingNewProject) {
+        assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+      }
 
       val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
       if (starterContext.language == JAVA_STARTER_LANGUAGE) {

@@ -59,10 +59,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Tracer;
 import org.jdom.Element;
 import org.jdom.Parent;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -379,18 +376,21 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @NotNull
+  @Unmodifiable
   public List<ShelvedChangeList> getShelvedChangeLists() {
     return getRecycled(false);
   }
 
+  @Unmodifiable
   private @NotNull List<ShelvedChangeList> getRecycled(boolean recycled) {
-    return ContainerUtil.newUnmodifiableList(ContainerUtil.filter(mySchemeManager.getAllSchemes(),
-                                                                  list -> recycled == list.isRecycled() && !list.isDeleted()));
+    return List.copyOf(ContainerUtil.filter(mySchemeManager.getAllSchemes(),
+                                            list -> recycled == list.isRecycled() && !list.isDeleted()));
   }
 
   @NotNull
+  @Unmodifiable
   public List<ShelvedChangeList> getAllLists() {
-    return ContainerUtil.newUnmodifiableList(mySchemeManager.getAllSchemes());
+    return List.copyOf(mySchemeManager.getAllSchemes());
   }
 
   public ShelvedChangeList shelveChanges(final Collection<? extends Change> changes, final String commitMessage, final boolean rollback)
@@ -436,6 +436,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                                    String commitMessage,
                                                    boolean markToBeDeleted,
                                                    boolean honorExcludedFromCommit) throws VcsException, IOException {
+    if (changes.isEmpty()) {
+      LOG.warn("Creating an empty shelved list", new Throwable());
+    }
     LOG.debug("Shelving of " + changes.size() + " changes...");
 
     try {
@@ -456,6 +459,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
           else {
             textChanges.add(change);
           }
+        }
+
+        if (textChanges.isEmpty() && binaryFiles.isEmpty()) {
+          LOG.warn("Created an empty shelved list, ignored changes: " + changes);
         }
 
         Path patchFile = getPatchFileInConfigDir(schemePatchDir);
@@ -903,17 +910,18 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                                      List<? super FilePatch> remainingPatches,
                                                      CommitContext commitContext)
     throws IOException, PatchSyntaxException {
-    final List<TextFilePatch> textFilePatches = loadPatches(project, changeList.path, commitContext);
+    List<TextFilePatch> textFilePatches = loadPatches(project, changeList.path, commitContext);
 
     if (changes != null) {
-      final Iterator<TextFilePatch> iterator = textFilePatches.iterator();
-      while (iterator.hasNext()) {
-        TextFilePatch patch = iterator.next();
-        if (!needUnshelve(patch, changes)) {
-          remainingPatches.add(patch);
-          iterator.remove();
+      textFilePatches = ContainerUtil.filter(textFilePatches, patch -> {
+        if (needUnshelve(patch, changes)) {
+          return true;
         }
-      }
+        else {
+          remainingPatches.add(patch);
+          return false;
+        }
+      });
     }
     return textFilePatches;
   }
@@ -1280,12 +1288,14 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @NotNull
+  @Unmodifiable
   public List<ShelvedChangeList> getRecycledShelvedChangeLists() {
     return getRecycled(true);
   }
 
+  @Unmodifiable
   public List<ShelvedChangeList> getDeletedLists() {
-    return ContainerUtil.newUnmodifiableList(ContainerUtil.filter(mySchemeManager.getAllSchemes(), ShelvedChangeList::isDeleted));
+    return List.copyOf(ContainerUtil.filter(mySchemeManager.getAllSchemes(), ShelvedChangeList::isDeleted));
   }
 
   public void clearRecycled() {

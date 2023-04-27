@@ -30,19 +30,40 @@ internal class CellValidationImpl<out T>(private val dialogPanelConfig: DialogPa
     }
   }
 
-  override fun addApplyRule(message: String, level: Level, condition: (T) -> Boolean) {
-    addApplyRule {
-      if (condition(cell)) createValidationInfo(interactiveComponent, message, level)
-      else null
-    }
+  override fun addApplyRule(message: String, level: Level, condition: () -> Boolean) {
+    registerValidation(dialogPanelConfig.validationsOnApply, interactiveComponent,
+                       DialogValidationWrapper {
+                         if (condition()) createValidationInfo(interactiveComponent, message, level)
+                         else null
+                       })
   }
 
   override fun addApplyRule(validation: () -> ValidationInfo?) {
-    registerValidation(dialogPanelConfig.validationsOnApply, validation)
+    registerValidation(dialogPanelConfig.validationsOnApply, interactiveComponent,
+                       DialogValidationWrapper {
+                         validation()
+                       })
   }
 
-  private fun registerValidation(map: LinkedHashMap<JComponent, MutableList<DialogValidation>>, validation: () -> ValidationInfo?) {
-    map.list(interactiveComponent).add(DialogValidationWrapper(validation))
+  override fun addInputRule(message: String, level: Level, condition: () -> Boolean) {
+    registerValidation(dialogPanelConfig.validationsOnInput, interactiveComponent,
+                       DialogValidationWrapper {
+                         if (condition()) createValidationInfo(interactiveComponent, message, level)
+                         else null
+                       })
+  }
+
+  override fun addInputRule(validation: () -> ValidationInfo?) {
+    registerValidation(dialogPanelConfig.validationsOnInput, interactiveComponent,
+                       DialogValidationWrapper {
+                         validation()
+                       })
+  }
+
+  private fun registerValidation(map: LinkedHashMap<JComponent, MutableList<DialogValidation>>,
+                                 component: JComponent,
+                                 dialogValidation: DialogValidationWrapper) {
+    map.list(component).add(dialogValidation)
   }
 
   private inner class DialogValidationWrapper(private val validation: DialogValidation) : DialogValidation {

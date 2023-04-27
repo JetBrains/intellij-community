@@ -4,9 +4,7 @@ package com.intellij.toolWindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToggleToolbarAction
-import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -22,13 +20,11 @@ import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.layout.migLayout.*
-import com.intellij.ui.layout.migLayout.patched.*
-import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.layout.migLayout.createLayoutConstraints
+import com.intellij.ui.layout.migLayout.patched.MigLayout
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.SingleHeightTabs
-import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -38,10 +34,8 @@ import net.miginfocom.layout.CC
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.image.BufferedImage
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
-import java.util.*
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -49,19 +43,12 @@ import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
-import javax.swing.plaf.PanelUI
 
 abstract class ToolWindowHeader internal constructor(
   private val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val gearProducer: Supplier<ActionGroup>
-) :
-  BorderLayoutPanel(),
-  UISettingsListener, DataProvider, PropertyChangeListener {
-  private var inactiveImageFlags: Array<Any>? = null
-  private var activeImageFlags: Array<Any>? = null
-  private var inactiveImage: BufferedImage? = null
-  private var activeImage: BufferedImage? = null
+) : BorderLayoutPanel(), DataProvider, PropertyChangeListener {
 
   private val actionGroup = DefaultActionGroup()
   private val actionGroupWest = DefaultActionGroup()
@@ -254,6 +241,8 @@ abstract class ToolWindowHeader internal constructor(
 
   fun getToolbar() = toolbar
 
+  fun getToolbarWest() = toolbarWest
+
   fun getToolbarActions() = actionGroup
 
   fun getToolbarWestActions() = actionGroupWest
@@ -265,10 +254,6 @@ abstract class ToolWindowHeader internal constructor(
     else {
       return null
     }
-  }
-
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    clearCaches()
   }
 
   fun setTabActions(actions: List<AnAction>) {
@@ -305,14 +290,9 @@ abstract class ToolWindowHeader internal constructor(
       return
     }
 
-    g as Graphics2D
-    val r = bounds
-    val clip = g.clip
     val type = toolWindow.type
-    val image: Image
     val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
     val isNewUi = toolWindow.toolWindowManager.isNewUi
-    val height = r.height
     val drawTopLine = type != ToolWindowType.FLOATING && !ClientProperty.isTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
     var drawBottomLine = true
 
@@ -324,45 +304,8 @@ abstract class ToolWindowHeader internal constructor(
                         || scrolled)
     }
 
-    val imageFlags = arrayOf<Any>(type, isNewUi, height, drawTopLine, drawBottomLine)
-    if (isActive) {
-      activeImage = when {
-        activeImage != null && Arrays.equals(activeImageFlags, imageFlags) -> activeImage
-        else -> drawToBuffer(g, !isNewUi, height, drawTopLine, drawBottomLine)
-      }
-      activeImageFlags = imageFlags
-      image = activeImage!!
-    }
-    else {
-      inactiveImage = when {
-        inactiveImage != null && Arrays.equals(inactiveImageFlags, imageFlags) -> inactiveImage
-        else -> drawToBuffer(g, false, height, drawTopLine, drawBottomLine)
-      }
-      inactiveImageFlags = imageFlags
-      image = inactiveImage!!
-    }
-
-    var effectiveBufferWidth = BUFFER_IMAGE_WIDTH
-    if (PaintUtil.isFractionalScale(g.transform)) {
-      effectiveBufferWidth-- // this is a simple alternative to using 'alignTxToInt' for each step.
-    }
-
-    val clipBounds = clip.bounds
-    var x = clipBounds.x
-    while (x < clipBounds.x + clipBounds.width) {
-      StartupUiUtil.drawImage(g, image, x, 0, null)
-      x += effectiveBufferWidth
-    }
-  }
-
-  override fun setUI(ui: PanelUI) {
-    clearCaches()
-    super.setUI(ui)
-  }
-
-  fun clearCaches() {
-    inactiveImage = null
-    activeImage = null
+    val active = !isNewUi && isActive
+    UIUtil.drawHeader(g, 0, width, height, active, true, drawTopLine, drawBottomLine)
   }
 
   override fun paintChildren(g: Graphics) {
@@ -370,7 +313,7 @@ abstract class ToolWindowHeader internal constructor(
     setupAntialiasing(graphics)
     super.paintChildren(graphics)
     val r = bounds
-    if (!isActive && !StartupUiUtil.isUnderDarcula()) {
+    if (!isActive && !StartupUiUtil.isUnderDarcula) {
       graphics.color = Color(255, 255, 255, 30)
       graphics.fill(r)
     }
@@ -413,7 +356,7 @@ abstract class ToolWindowHeader internal constructor(
       }
       myPopupState.prepareToShow(popupMenu.component)
       popupMenu.component.addPopupMenuListener(popupMenuListener)
-      popupMenu.component.show(inputEvent.component, x, y)
+      popupMenu.component.show(inputEvent!!.component, x, y)
     }
 
     init {
@@ -439,15 +382,4 @@ abstract class ToolWindowHeader internal constructor(
       templatePresentation.setText(UIBundle.messagePointer("tool.window.hide.action.name"))
     }
   }
-}
-
-private const val BUFFER_IMAGE_WIDTH = 150
-
-private fun drawToBuffer(g2d: Graphics2D, active: Boolean, height: Int, drawTopLine: Boolean, drawBottomLine: Boolean): BufferedImage {
-  val width = BUFFER_IMAGE_WIDTH
-  val image = ImageUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_RGB)
-  val g = image.createGraphics()
-  UIUtil.drawHeader(g, 0, width, height, active, true, drawTopLine, drawBottomLine)
-  g.dispose()
-  return image
 }

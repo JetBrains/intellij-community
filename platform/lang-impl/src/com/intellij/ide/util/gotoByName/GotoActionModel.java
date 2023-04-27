@@ -676,9 +676,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
-      int byClassHashCode = Comparing.compare(myAction.getClass().hashCode(), o.myAction.getClass().hashCode());
+      int byClassHashCode = Integer.compare(myAction.getClass().hashCode(), o.myAction.getClass().hashCode());
       if (byClassHashCode != 0) return byClassHashCode;
-      int byInstanceHashCode = Comparing.compare(myAction.hashCode(), o.myAction.hashCode());
+      int byInstanceHashCode = Integer.compare(myAction.hashCode(), o.myAction.hashCode());
       if (byInstanceHashCode != 0) return byInstanceHashCode;
       return 0;
     }
@@ -797,6 +797,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
         if (showIcon) {
           Icon icon = presentation.getIcon();
+          if (isSelected && presentation.getSelectedIcon() != null) {
+            icon = presentation.getSelectedIcon();
+          }
           panel.setIcon(createLayeredIcon(icon, disabled));
         }
 
@@ -865,7 +868,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     @ActionText
     @NotNull
-    private static String calcHit(@NotNull OptionDescription value) {
+    public static String calcHit(@NotNull OptionDescription value) {
       if (value instanceof RegistryTextOptionDescriptor) {
         return value.getHit() + " = " + value.getValue();
       }

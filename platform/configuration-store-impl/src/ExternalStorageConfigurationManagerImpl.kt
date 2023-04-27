@@ -6,10 +6,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.util.xmlb.annotations.Property
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -23,7 +24,8 @@ class ExternalStorageConfiguration : BaseState() {
  * It shouldn't be used directly, its interface [ExternalStorageConfigurationManager] should be used instead.
  */
 @State(name = "ExternalStorageConfigurationManager")
-internal class ExternalStorageConfigurationManagerImpl(private val project: Project) : SimplePersistentStateComponent<ExternalStorageConfiguration>(ExternalStorageConfiguration()), ExternalStorageConfigurationManager {
+internal class ExternalStorageConfigurationManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope)
+  : SimplePersistentStateComponent<ExternalStorageConfiguration>(ExternalStorageConfiguration()), ExternalStorageConfigurationManager {
   override fun isEnabled(): Boolean = state.enabled
 
   /**
@@ -31,7 +33,9 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
    */
   override fun setEnabled(value: Boolean) {
     state.enabled = value
-    if (project.isDefault) return
+    if (project.isDefault) {
+      return
+    }
     val app = ApplicationManager.getApplication()
     app.invokeAndWait { app.runWriteAction(::updateEntitySource) }
   }
@@ -43,7 +47,7 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
       return
     }
 
-    project.coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction(::updateEntitySource)
     }
   }

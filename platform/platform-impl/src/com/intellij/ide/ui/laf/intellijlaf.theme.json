@@ -269,7 +269,6 @@
 
     "EditorTabs": {
       "background": "panel",
-      "tabInsets": "0,8,0,8",
       "underlinedTabBackground": "white",
       "borderColor": "border",
       "hoverBackground": "#00000019",
@@ -303,7 +302,8 @@
       "borderColor": "grey05",
       "foreground": "foreground",
       "linkForeground": "linkForeground",
-      "shortcutForeground": "foreground"
+      "shortcutForeground": "foreground",
+      "codeBorderColor": "grey08"
     },
 
     "Group.disabledSeparatorColor": "border",
@@ -315,14 +315,12 @@
     },
 
     "HelpTooltip": {
-      "defaultTextBorderInsets": "8,10,10,13",
       "descriptionSizeDelta": {
         "os.linux": -2
       },
       "fontSizeDelta": {
         "os.linux": -2
-      },
-      "smallTextBorderInsets": "6,10,7,12"
+      }
     },
 
     "Hyperlink.linkColor": "#589df6",
@@ -923,13 +921,11 @@
     "MainToolbar": {
       "background": "#f2f2f2",
       "Icon": {
-        "borderInsets": "10,10,10,10",
         "background": "#f2f2f2",
         "hoverBackground": "#dfdfdf",
         "pressedBackground": "#dfdfdf"
       },
       "Dropdown": {
-        "borderInsets": "3,5,3,5",
         "background": "#f2f2f2",
         "hoverBackground": "#dfdfdf",
         "pressedBackground": "#dfdfdf"
@@ -984,10 +980,12 @@
       "PackageTagSelected.foreground": "white"
     },
     "RunWidget" : {
-      "foreground": "#ffffff",
+      "foreground": "black",
+      "runModeIconColor": "#5fad65",
       "disabledForeground": "#FFFFFF66",
       "background": "#3369d6",
       "runningBackground": "#599e5e",
+      "stopBackground": "#c94f4f",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"

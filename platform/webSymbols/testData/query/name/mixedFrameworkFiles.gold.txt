@@ -9,6 +9,9 @@
   },
   complete: true,
   priority: NORMAL,
+  properties: {
+   read-only: true,
+  },
   segments: [
    {
     name-part: "",
@@ -41,6 +44,9 @@
      origin: "web-components@1.0.0 (<none>)",
      complete: true,
      priority: NORMAL,
+     properties: {
+      read-only: true,
+     },
      segments: [
       {
        name-part: "fooBaz",

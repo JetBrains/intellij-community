@@ -6,3 +6,5 @@ enum class EnumClass {
         val v = values<caret>()
     }
 }
+
+// IGNORE_FIR

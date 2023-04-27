@@ -24,65 +24,72 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!DevKitInspectionUtil.isAllowed(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+
+    if (!DevKitInspectionUtil.isClassAvailable(holder, PsiElementFactory.class.getName())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         String methodName = call.getMethodExpression().getReferenceName();
-        if(methodName == null || !methodName.startsWith("create")) return;
+        if (methodName == null || !methodName.startsWith("create")) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();
-        if(args.length == 0) return;
+        if (args.length == 0) return;
         PsiExpression arg = args[0];
         PsiType argType = arg.getType();
-        if(argType == null || !argType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return;
+        if (argType == null || !argType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return;
         PsiMethod method = call.resolveMethod();
-        if(method == null) return;
+        if (method == null) return;
         PsiClass aClass = method.getContainingClass();
-        if(aClass == null || !PsiElementFactory.class.getName().equals(aClass.getQualifiedName())) return;
+        if (aClass == null || !PsiElementFactory.class.getName().equals(aClass.getQualifiedName())) return;
         checkOperand(arg, new HashSet<>());
       }
 
       private void checkOperand(@Nullable PsiExpression operand, Set<PsiExpression> visited) {
-        if(operand == null || !visited.add(operand)) return;
-        if(operand instanceof PsiReferenceExpression)  {
+        if (operand == null || !visited.add(operand)) return;
+        if (operand instanceof PsiReferenceExpression) {
           PsiElement element = ((PsiReferenceExpression)operand).resolve();
-          if(element instanceof PsiLocalVariable && ((PsiLocalVariable)element).getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          if (element instanceof PsiLocalVariable &&
+              ((PsiLocalVariable)element).getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
-            if(block != null) {
+            if (block != null) {
               PsiElement[] defs = DefUseUtil.getDefs(block, (PsiVariable)element, operand);
-              for(PsiElement def : defs) {
-                if(def instanceof PsiLocalVariable) {
+              for (PsiElement def : defs) {
+                if (def instanceof PsiLocalVariable) {
                   checkOperand(((PsiLocalVariable)def).getInitializer(), visited);
                 }
-                if(def instanceof PsiReferenceExpression) {
+                if (def instanceof PsiReferenceExpression) {
                   PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(def.getParent());
-                  if(assignment != null && assignment.getLExpression() == def) {
+                  if (assignment != null && assignment.getLExpression() == def) {
                     checkOperand(assignment.getRExpression(), visited);
                   }
                 }
-                if(def instanceof PsiExpression) {
+                if (def instanceof PsiExpression) {
                   checkOperand((PsiExpression)def, visited);
                 }
               }
             }
           }
         }
-        if(operand instanceof PsiMethodCallExpression call) {
+        if (operand instanceof PsiMethodCallExpression call) {
           PsiMethod method = call.resolveMethod();
-          if(MethodUtils.isToString(method)) {
+          if (MethodUtils.isToString(method)) {
             checkOperand(call.getMethodExpression().getQualifierExpression(), visited);
           }
         }
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
-        if(InheritanceUtil.isInheritor(aClass, false, PsiElement.class.getName())) {
+        if (InheritanceUtil.isInheritor(aClass, false, PsiElement.class.getName())) {
           holder.registerProblem(operand, DevKitBundle.message("inspections.psi.element.concat.psi.element"),
                                  new AddGetTextFix("getText"));
         }
-        if(InheritanceUtil.isInheritor(aClass, false, PsiType.class.getName())) {
+        if (InheritanceUtil.isInheritor(aClass, false, PsiType.class.getName())) {
           holder.registerProblem(operand, DevKitBundle.message("inspections.psi.element.concat.psi.type"),
                                  new AddGetTextFix("getCanonicalText"));
         }
-        if(operand instanceof PsiPolyadicExpression polyadic) {
-          if(JavaTokenType.PLUS.equals(polyadic.getOperationTokenType())) {
+        if (operand instanceof PsiPolyadicExpression polyadic) {
+          if (JavaTokenType.PLUS.equals(polyadic.getOperationTokenType())) {
             for (PsiExpression op : polyadic.getOperands()) {
               checkOperand(op, visited);
             }
@@ -91,6 +98,7 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
       }
     };
   }
+
 
   private static final class AddGetTextFix implements LocalQuickFix {
     private final String myMethodName;
@@ -116,12 +124,12 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if(!(element instanceof PsiExpression expression)) return;
+      if (!(element instanceof PsiExpression expression)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiExpression replacement = factory.createExpressionFromText(ParenthesesUtils.getText(expression, ParenthesesUtils.POSTFIX_PRECEDENCE)
                                                                    + "." + myMethodName + "()", expression);
       PsiElement parent = expression.getParent().getParent();
-      if(parent instanceof PsiMethodCallExpression && MethodUtils.isToString(((PsiMethodCallExpression)parent).resolveMethod())) {
+      if (parent instanceof PsiMethodCallExpression && MethodUtils.isToString(((PsiMethodCallExpression)parent).resolveMethod())) {
         element = parent;
       }
       PsiElement result = element.replace(replacement);

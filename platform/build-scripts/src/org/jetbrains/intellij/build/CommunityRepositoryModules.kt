@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -10,10 +12,8 @@ import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
-
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.BiConsumer
 
 object CommunityRepositoryModules {
   /**
@@ -42,6 +42,12 @@ object CommunityRepositoryModules {
     },
     plugin("intellij.webp") { spec ->
       spec.bundlingRestrictions.ephemeral = true
+    },
+    plugin("intellij.webp") { spec ->
+      spec.bundlingRestrictions.marketplace = true
+      spec.withResource("lib/libwebp/linux", "lib/libwebp/linux")
+      spec.withResource("lib/libwebp/mac", "lib/libwebp/mac")
+      spec.withResource("lib/libwebp/win", "lib/libwebp/win")
     },
     plugin("intellij.laf.win10") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
@@ -76,6 +82,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.tasks.compatibility")
       spec.withModule("intellij.tasks.jira")
       spec.withModule("intellij.tasks.java")
+      spec.withProjectLibrary("XmlRPC")
     },
     plugin("intellij.xslt.debugger") { spec ->
       spec.withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
@@ -132,7 +139,7 @@ object CommunityRepositoryModules {
         "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31",
         "intellij.maven.server.indexer"
       ))
-      spec.withGeneratedResources(BiConsumer { targetDir, context ->
+      spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
         val mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
@@ -140,7 +147,7 @@ object CommunityRepositoryModules {
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
-      })
+      }
     },
     plugin(listOf(
       "intellij.gradle",
@@ -179,7 +186,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
       spec.withProjectLibrary("TestNG")
     },
-    plugin(listOf("intellij.dev", "intellij.dev.psiViewer")),
+    plugin(listOf("intellij.dev", "intellij.dev.psiViewer", "intellij.platform.statistics.devkit")),
     plugin("intellij.devkit") { spec ->
       spec.withModule("intellij.devkit.core")
       spec.withModule("intellij.devkit.git")
@@ -190,11 +197,12 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.devkit.intelliLang")
       spec.withModule("intellij.devkit.uiDesigner")
       spec.withModule("intellij.devkit.workspaceModel")
-      spec.withModule("intellij.platform.workspaceModel.codegen")
       spec.withModule("intellij.java.devkit")
       spec.withModule("intellij.groovy.devkit")
       spec.withModule("intellij.kotlin.devkit")
       spec.withModule("intellij.devkit.jps")
+      spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
+      spec.withProjectLibrary("workspace-model-codegen")
     },
     plugin("intellij.eclipse") { spec ->
       spec.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
@@ -212,10 +220,11 @@ object CommunityRepositoryModules {
     },
     javaFXPlugin("intellij.javaFX.community"),
     plugin("intellij.terminal") { spec ->
-      spec.withResource("resources/zsh/.zshenv", "")
-      spec.withResource("resources/zsh/hooks.zsh", "")
-      spec.withResource("resources/jediterm-bash.in", "")
+      spec.withResource("resources/zsh/.zshenv", "zsh")
+      spec.withResource("resources/zsh/hooks.zsh", "zsh")
+      spec.withResource("resources/bash/jediterm-bash.in", "bash")
       spec.withResource("resources/fish/init.fish", "fish")
+      spec.withResource("resources/pwsh/pwsh.ps1", "pwsh")
     },
     plugin("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
@@ -270,9 +279,7 @@ object CommunityRepositoryModules {
     plugin(listOf(
       "intellij.searchEverywhereMl",
       "intellij.searchEverywhereMl.yaml",
-      "intellij.searchEverywhereMl.vcs",
-      "intellij.searchEverywhereMl.java",
-      "intellij.searchEverywhereMl.kotlin",
+      "intellij.searchEverywhereMl.vcs"
     )),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
@@ -313,15 +320,16 @@ object CommunityRepositoryModules {
 
       // modules:
       // design-tools.jar
-      spec.withModule("intellij.android.compose-designer", "design-tools.jar")
-      spec.withModule("intellij.android.design-plugin", "design-tools.jar")
+      spec.withModule("intellij.android.compose-designer")
+      if (mainModuleName != "intellij.android.design-plugin") {
+        spec.withModule("intellij.android.design-plugin")
+      }
       @Suppress("SpellCheckingInspection")
-      spec.withModule("intellij.android.designer.customview", "design-tools.jar")
-      spec.withModule("intellij.android.designer", "design-tools.jar")
-      spec.withModule("intellij.android.glance-designer", "design-tools.jar")
-      spec.withModule("intellij.android.layoutlib", "design-tools.jar")
-      spec.withModule("intellij.android.nav.editor", "design-tools.jar")
-
+      spec.withModule("intellij.android.designer.customview")
+      spec.withModule("intellij.android.designer")
+      spec.withModule("intellij.android.glance-designer")
+      spec.withModule("intellij.android.layoutlib")
+      spec.withModule("intellij.android.nav.editor")
 
       // libs:
       spec.withProjectLibrary("layoutlib")
@@ -435,7 +443,9 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.newProjectWizard", "android.jar")
       spec.withModule("intellij.android.observable.ui", "android.jar")
       spec.withModule("intellij.android.observable", "android.jar")
-      spec.withModule("intellij.android.plugin", "android.jar")
+      if (mainModuleName != "intellij.android.plugin") {
+        spec.withModule("intellij.android.plugin", "android.jar")
+      }
       spec.withModule("intellij.android.profilersAndroid", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.models", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.psd", "android.jar")
@@ -561,7 +571,6 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("moshi", "intellij.android.core", "")
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
       spec.withModuleLibrary("juniversalchardet", "android.sdktools.db-compiler", "")
-      spec.withModuleLibrary("commons-lang", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("javapoet", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("auto-common", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("jetifier-core", "android.sdktools.db-compilerCommon", "")
@@ -573,6 +582,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("android-test-plugin-host-device-info-proto")
       spec.withProjectLibrary("asm-tools")
       spec.withProjectLibrary("baksmali")
+      spec.withProjectLibrary("commons-lang")
       spec.withProjectLibrary("dexlib2")
       spec.withProjectLibrary("emulator-proto")
       //tools/adt/idea/.idea/libraries:ffmpeg <= FIXME

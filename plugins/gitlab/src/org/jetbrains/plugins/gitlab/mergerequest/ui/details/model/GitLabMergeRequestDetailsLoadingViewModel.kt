@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +31,7 @@ internal interface GitLabMergeRequestDetailsLoadingViewModel {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
+  project: Project,
   parentScope: CoroutineScope,
   currentUser: GitLabUserDTO,
   projectData: GitLabProject,
@@ -44,7 +46,7 @@ internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
     projectData.mergeRequests.getShared(mergeRequestId).collectLatest {
       coroutineScope {
         val result = try {
-          val detailsVm = GitLabMergeRequestDetailsViewModelImpl(scope, currentUser, projectData, it.getOrThrow())
+          val detailsVm = GitLabMergeRequestDetailsViewModelImpl(project, scope, currentUser, projectData, it.getOrThrow())
           LoadingState.Result(detailsVm)
         }
         catch (ce: CancellationException) {

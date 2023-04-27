@@ -40,14 +40,11 @@ import java.util.*;
 public abstract class HierarchyTree extends JTree implements TreeSelectionListener {
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
 
-  final Component myComponent;
-
   HierarchyTree(Component c) {
-    myComponent = c;
-    setModel(buildModel(c));
     setCellRenderer(new ComponentTreeCellRenderer(c));
+    setModel(buildModel(c));
     getSelectionModel().addTreeSelectionListener(this);
-    new TreeSpeedSearch(this);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(this);
     if (c instanceof JComponent && ClientProperty.get(c, UiInspectorAction.CLICK_INFO) != null) {
       SwingUtilities.invokeLater(() -> getSelectionModel().setSelectionPath(getPathForRow(getLeadSelectionRow() + 1)));
     }
@@ -91,38 +88,22 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     setModel(buildModel(c, accessibleModel));
   }
 
-  @Override
-  public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    if (value instanceof ComponentNode) {
-      Pair<Class<?>, String> pair = null;
-      if (((ComponentNode)value).myComponent != null) {
-        pair = getClassAndFieldName(((ComponentNode)value).myComponent);
-      }
-      if (pair != null) {
-        return pair.first.getSimpleName() + '.' + pair.second;
-      }
-      else {
-        return myComponent.getClass().getName();
-      }
-    }
-    return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);//todo
+  public void selectPath(@NotNull Component component) {
+    selectPath(component, false);
   }
 
-  public void expandPath() {
-    expandPath(false);
-  }
-
-  public void expandPath(boolean isAccessibleTree) {
-    TreeUtil.expandAll(this);
+  public void selectPath(@NotNull Component component, boolean isAccessibleTree) {
     int count = getRowCount();
-    ComponentNode node = ComponentNode.createComponentNode(myComponent, isAccessibleTree);
-
     for (int i = 0; i < count; i++) {
       TreePath row = getPathForRow(i);
-      if (row.getLastPathComponent().equals(node)) {
-        setSelectionPath(row);
-        scrollPathToVisible(getSelectionPath());
-        break;
+      Object last = row.getLastPathComponent();
+      if (last instanceof ComponentNode node) {
+        if (isAccessibleTree && node.myAccessible == component
+            || !isAccessibleTree && node.myComponent == component) {
+          setSelectionPath(row);
+          scrollPathToVisible(getSelectionPath());
+          break;
+        }
       }
     }
   }

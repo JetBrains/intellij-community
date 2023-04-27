@@ -27,7 +27,8 @@ internal class GHPRSearchPanelViewModel(
   override val quickFilters: List<GHPRListQuickFilter> = listOf(
     Open(currentUser),
     YourPullRequests(currentUser),
-    AssignedToYou(currentUser)
+    AssignedToYou(currentUser),
+    ReviewRequests(currentUser)
   )
 
   val stateFilterState = searchState.partialState(GHPRListSearchValue::state) {
@@ -70,5 +71,12 @@ internal sealed class GHPRListQuickFilter(user: GHUser) : ReviewListQuickFilter<
 
   data class AssignedToYou(val user: GHUser) : GHPRListQuickFilter(user) {
     override val filter = GHPRListSearchValue(state = GHPRListSearchValue.State.OPEN, assignee = userLogin)
+  }
+
+  data class ReviewRequests(val user: GHUser) : GHPRListQuickFilter(user) {
+    override val filter = GHPRListSearchValue(
+      state = GHPRListSearchValue.State.OPEN,
+      reviewState = GHPRListSearchValue.ReviewState.AWAITING_REVIEW
+    )
   }
 }

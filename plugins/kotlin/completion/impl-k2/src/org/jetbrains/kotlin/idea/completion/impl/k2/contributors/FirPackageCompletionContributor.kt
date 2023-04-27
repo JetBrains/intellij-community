@@ -9,26 +9,26 @@ import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createEmptyWeighingContext
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 
 internal class FirPackageCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext) {
+    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
         val rootSymbol = if (positionContext !is FirNameReferencePositionContext || positionContext.explicitReceiver == null) {
             ROOT_PACKAGE_SYMBOL
         } else {
             positionContext.explicitReceiver?.reference()?.resolveToSymbol() as? KtPackageSymbol
         } ?: return
-        val weighingContext = createEmptyWeighingContext(basicContext.fakeKtFile)
+
         rootSymbol.getPackageScope()
             .getPackageSymbols(scopeNameFilter)
             .filterNot { it.fqName.isExcludedFromAutoImport(project, originalKtFile) }
             .forEach { packageSymbol ->
                 val element = lookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
-                with(Weighers) { applyWeighsToLookupElement(weighingContext, element, packageSymbol) }
+                with(Weighers) { applyWeighsToLookupElement(weighingContext, element, packageSymbol, scopeKind = null) }
                 sink.addElement(element)
             }
     }

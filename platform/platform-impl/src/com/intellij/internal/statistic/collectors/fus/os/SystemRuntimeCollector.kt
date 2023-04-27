@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
+import com.intellij.util.ui.UIUtil
 import com.sun.management.OperatingSystemMXBean
 import java.io.IOException
 import java.lang.management.ManagementFactory
@@ -132,14 +133,14 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
       if (gc.name == "PS MarkSweep" || gc.name == "PS Scavenge") return "Parallel"  // -XX:+UseParallelGC
       if (gc.name == "ConcurrentMarkSweep" || gc.name == "ParNew") return "CMS"     // -XX:+UseConcMarkSweepGC
       if (gc.name.startsWith("G1 ")) return "G1"                                    // -XX:+UseG1GC
-      if (gc.name == "ZGC") return "Z"                                              // -XX:+UseZGC
+      if (gc.name.startsWith("ZGC ")) return "Z"                                    // -XX:+UseZGC
       if (gc.name.startsWith("Shenandoah ")) return "Shenandoah"                    // -XX:+UseShenandoahGC
       if (gc.name.startsWith("Epsilon ")) return "Epsilon"                          // -XX:+UseEpsilonGC
     }
     return "Other"
   }
 
-  private fun getRenderingPipelineName() = if (SystemInfo.isMetalRendering) "Metal" else "OpenGL"
+  private fun getRenderingPipelineName() = if (UIUtil.isMetalRendering()) "Metal" else "OpenGL"
 
   private fun getJavaVendor(): String =
     when {

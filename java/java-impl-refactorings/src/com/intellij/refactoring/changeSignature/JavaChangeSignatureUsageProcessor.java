@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -48,11 +48,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * @author Maxim.Medvedev
@@ -77,7 +78,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   }
 
   @Override
-  public MultiMap<PsiElement, String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages) {
+  public MultiMap<PsiElement, @DialogMessage String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages) {
     if (info instanceof JavaChangeInfo) {
       return new ConflictSearcher((JavaChangeInfo)info).findConflicts(refUsages);
     }
@@ -1278,10 +1279,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       this.myChangeInfo = changeInfo;
     }
 
-    public MultiMap<PsiElement, String> findConflicts(Ref<UsageInfo[]> refUsages) {
-      MultiMap<PsiElement, @Nls String> conflictDescriptions = new MultiMap<>();
+    private MultiMap<PsiElement, @DialogMessage String> findConflicts(Ref<UsageInfo[]> refUsages) {
+      MultiMap<PsiElement, @DialogMessage String> conflictDescriptions = new MultiMap<>();
       final PsiMethod prototype = addMethodConflicts(conflictDescriptions);
-      Set<UsageInfo> usagesSet = ContainerUtil.set(refUsages.get());
+      Set<UsageInfo> usagesSet = ContainerUtil.newHashSet(refUsages.get());
       RenameUtil.removeConflictUsages(usagesSet);
       if (myChangeInfo.isVisibilityChanged()) {
         try {
@@ -1332,7 +1333,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               for (int i = 0; i < toRemove.length; i++) {
                 if (toRemove[i] && i < args.length) {
                   if (RemoveUnusedVariableUtil.checkSideEffects(args[i], null, new ArrayList<>())) {
-                    conflictDescriptions.putValue(args[i], JavaRefactoringBundle.message("safe.delete.parameter.usage.warning", myChangeInfo.getOldParameterNames()[i]));
+                    final PsiParameter parameter = myChangeInfo.getMethod().getParameterList().getParameter(i);
+                    if (parameter != null) {
+                      String message =
+                        JavaRefactoringBundle.message("safe.delete.parameter.usage.warning",
+                                                      RefactoringUIUtil.getDescription(parameter, true));
+                      conflictDescriptions.putValue(args[i], StringUtil.capitalize(message));
+                    }
                   }
                 }
               }
@@ -1344,7 +1351,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       return conflictDescriptions;
     }
 
-    public static void checkParametersToDelete(PsiMethod method, boolean[] toRemove, MultiMap<PsiElement, @Nls String> conflictDescriptions) {
+    public static void checkParametersToDelete(PsiMethod method,
+                                               boolean[] toRemove,
+                                               MultiMap<PsiElement, @DialogMessage String> conflictDescriptions) {
       if (method instanceof SyntheticElement) return;
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiCodeBlock body = method.getBody();
@@ -1382,7 +1391,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       return null;
     }
 
-    private void checkContract(MultiMap<PsiElement, @Nls String> conflictDescriptions, PsiMethod method, boolean override) {
+    private void checkContract(MultiMap<PsiElement, @DialogMessage String> conflictDescriptions, PsiMethod method, boolean override) {
       try {
         ContractConverter.convertContract(method, myChangeInfo);
       }
@@ -1401,8 +1410,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
 
-    private void addInaccessibilityDescriptions(Set<UsageInfo> usages, MultiMap<PsiElement, @Nls String> conflictDescriptions)
-      throws IncorrectOperationException {
+    private void addInaccessibilityDescriptions(Set<UsageInfo> usages,
+                                                MultiMap<PsiElement, @DialogMessage String> conflictDescriptions) {
       PsiMethod method = myChangeInfo.getMethod();
       PsiModifierList modifierList = (PsiModifierList)method.getModifierList().copy();
       String visibility = myChangeInfo.getNewVisibility();
@@ -1441,7 +1450,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
     }
 
-    public static void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, @Nls String> conflicts, final String modifier) {
+    public static void searchForHierarchyConflicts(PsiMethod method,
+                                                   MultiMap<PsiElement, @DialogMessage String> conflicts,
+                                                   String modifier) {
       SuperMethodsSearch.search(method, ReadAction.compute(method::getContainingClass), true, false).forEach(
         new ReadActionProcessor<>() {
           @Override
@@ -1477,30 +1488,16 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     private static boolean hasCompatibleVisibility(PsiMethod method, boolean isSuper, final String modifier) {
-      if (modifier.equals(PsiModifier.PRIVATE)) {
-        return false;
-      }
-      else if (modifier.equals(PsiModifier.PACKAGE_LOCAL)) {
-        if (isSuper) {
-          return !(method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.PROTECTED));
-        }
-        return true;
-      }
-      else if (modifier.equals(PsiModifier.PROTECTED)) {
-        if (isSuper) {
-          return !method.hasModifierProperty(PsiModifier.PUBLIC);
-        }
-        else {
-          return method.hasModifierProperty(PsiModifier.PROTECTED) || method.hasModifierProperty(PsiModifier.PUBLIC);
-        }
-      }
-      else if (modifier.equals(PsiModifier.PUBLIC)) {
-        if (!isSuper) {
-          return method.hasModifierProperty(PsiModifier.PUBLIC);
-        }
-        return true;
-      }
-      throw new AssertionError();
+      return switch (modifier) {
+        case PsiModifier.PRIVATE -> false;
+        case PsiModifier.PACKAGE_LOCAL ->
+          !isSuper || !(method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.PROTECTED));
+        case PsiModifier.PROTECTED -> isSuper ? !method.hasModifierProperty(PsiModifier.PUBLIC)
+                                              : method.hasModifierProperty(PsiModifier.PROTECTED) ||
+                                                method.hasModifierProperty(PsiModifier.PUBLIC);
+        case PsiModifier.PUBLIC -> isSuper || method.hasModifierProperty(PsiModifier.PUBLIC);
+        default -> throw new IllegalStateException("Unexpected value: " + modifier);
+      };
     }
 
     private static boolean isVisibleFromOverridingMethod(PsiMethod method, PsiMethod overridingMethod, final String modifier) {
@@ -1509,8 +1506,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       return JavaResolveUtil.isAccessible(method, method.getContainingClass(), modifierListCopy, overridingMethod, null, null);
     }
 
-
-    private PsiMethod addMethodConflicts(MultiMap<PsiElement, @Nls String> conflicts) {
+    private PsiMethod addMethodConflicts(MultiMap<PsiElement, @DialogMessage String> conflicts) {
       String newMethodName = myChangeInfo.getNewName();
       try {
         final PsiMethod method = myChangeInfo.getMethod();

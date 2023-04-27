@@ -1,23 +1,43 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sourceToSink;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
 import com.intellij.codeInspection.restriction.RestrictionInfoFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.ULocalVariable;
 import org.jetbrains.uast.UastContextKt;
 
-import java.util.Arrays;
+import java.util.*;
 
 class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
 
-  static final TaintValueFactory INSTANCE = new TaintValueFactory();
+  public static final String JAVAX_ANNOTATION_UNTAINTED = "javax.annotation.Untainted";
+  @NotNull
+  private final Set<String> myTaintedAnnotations;
+  @NotNull
+  private final Set<String> myUnTaintedAnnotations;
+
+  @Nullable
+  private final String firstAnnotation;
+  @NotNull
+  private final UntaintedContext myContext;
+
+  TaintValueFactory(@NotNull UntaintedContext context) {
+    this.myTaintedAnnotations = new HashSet<>(context.taintedAnnotations);
+    this.myUnTaintedAnnotations = new HashSet<>(context.unTaintedAnnotations);
+    this.firstAnnotation = context.firstAnnotation();
+    this.myContext = context;
+  }
 
   @Override
   public @NotNull TaintValue fromAnnotationOwner(@Nullable PsiAnnotationOwner annotationOwner) {
@@ -38,7 +58,7 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
 
   @NotNull TaintValue of(@NotNull AnnotationContext context) {
     PsiType type = context.getType();
-    TaintValue info = INSTANCE.fromAnnotationOwner(type);
+    TaintValue info = fromAnnotationOwner(type);
     if (info != TaintValue.UNKNOWN) return info;
     PsiModifierListOwner owner = context.getOwner();
     if (owner == null) return TaintValue.UNKNOWN;
@@ -50,7 +70,7 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
       info = of(parameter);
       if (info != TaintValue.UNKNOWN) return info;
       if (parameter.isVarArgs() && type instanceof PsiEllipsisType) {
-        info = INSTANCE.fromAnnotationOwner(((PsiEllipsisType)type).getComponentType());
+        info = fromAnnotationOwner(((PsiEllipsisType)type).getComponentType());
       }
     }
     else if (owner instanceof PsiVariable) {
@@ -58,7 +78,7 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
       if (uLocal != null) {
         PsiElement psi = uLocal.getJavaPsi();
         if (psi instanceof PsiAnnotationOwner) {
-          info = INSTANCE.fromAnnotationOwner((PsiAnnotationOwner)psi);
+          info = fromAnnotationOwner((PsiAnnotationOwner)psi);
         }
       }
     }
@@ -76,7 +96,7 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     return info;
   }
 
-  private static @NotNull TaintValue fromExternalAnnotations(@NotNull PsiModifierListOwner owner) {
+  private @NotNull TaintValue fromExternalAnnotations(@NotNull PsiModifierListOwner owner) {
     ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(owner.getProject());
     PsiAnnotation[] annotations = annotationsManager.findExternalAnnotations(owner);
     if (annotations == null) return TaintValue.UNKNOWN;
@@ -85,17 +105,20 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
       .findFirst().orElse(TaintValue.UNKNOWN);
   }
 
-  static @NotNull TaintValue of(@NotNull PsiModifierListOwner annotationOwner) {
-    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(annotationOwner, TaintValue.NAMES, false);
+  private @NotNull TaintValue of(@NotNull PsiModifierListOwner annotationOwner) {
+    HashSet<String> allNames = new HashSet<>();
+    allNames.addAll(myUnTaintedAnnotations);
+    allNames.addAll(myTaintedAnnotations);
+    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(annotationOwner, allNames, false);
     if (annotation == null) return TaintValue.UNKNOWN;
     TaintValue value = fromAnnotation(annotation);
     return value == null ? TaintValue.UNKNOWN : value;
   }
 
-  private static @NotNull TaintValue of(@NotNull PsiMember member) {
+  private @NotNull TaintValue of(@NotNull PsiMember member) {
     PsiClass containingClass = member.getContainingClass();
     while (containingClass != null) {
-      TaintValue classInfo = INSTANCE.fromAnnotationOwner(containingClass.getModifierList());
+      TaintValue classInfo = fromAnnotationOwner(containingClass.getModifierList());
       if (classInfo != TaintValue.UNKNOWN) {
         return classInfo;
       }
@@ -104,14 +127,85 @@ class TaintValueFactory implements RestrictionInfoFactory<TaintValue> {
     return TaintValue.UNKNOWN;
   }
 
-  private static @Nullable TaintValue fromAnnotation(@NotNull PsiAnnotation annotation) {
-    if (annotation.hasQualifiedName(TaintValue.TAINTED.getAnnotationName())) {
+  private @Nullable TaintValue fromAnnotation(@NotNull PsiAnnotation annotation) {
+    String annotationQualifiedName = annotation.getQualifiedName();
+
+    TaintValue fromJsr = processJsr(annotationQualifiedName, annotation);
+    if (fromJsr != null) return fromJsr;
+
+    if (myTaintedAnnotations.contains(annotationQualifiedName)) {
       return TaintValue.TAINTED;
     }
-    if (annotation.hasQualifiedName(
-      TaintValue.UNTAINTED.getAnnotationName())) {
+    if (myUnTaintedAnnotations.contains(annotationQualifiedName)) {
       return TaintValue.UNTAINTED;
     }
     return null;
+  }
+
+  @Nullable
+  private TaintValue processJsr(@Nullable String qualifiedName, @NotNull PsiAnnotation annotation) {
+    if (qualifiedName == null) {
+      return null;
+    }
+    if (!qualifiedName.equals(JAVAX_ANNOTATION_UNTAINTED)) {
+      return null;
+    }
+    if (!myUnTaintedAnnotations.contains(JAVAX_ANNOTATION_UNTAINTED)) {
+      return null;
+    }
+    PsiAnnotationMemberValue when = annotation.findAttributeValue("when");
+    if (when == null) {
+      return null;
+    }
+    return when.textMatches("ALWAYS") ? TaintValue.UNTAINTED : null;
+  }
+
+  public @Nullable TaintValue fromAnnotation(@Nullable PsiElement target) {
+    PsiType type = target == null ? null : PsiUtil.getTypeByPsiElement(target);
+    if (type == null) return null;
+    if (target instanceof PsiClass) return null;
+    if (target instanceof PsiModifierListOwner owner) {
+      TaintValue taintValue = fromModifierListOwner(owner);
+      if (taintValue == TaintValue.UNKNOWN) taintValue = of(owner);
+      if (taintValue != TaintValue.UNKNOWN) return taintValue;
+    }
+    return fromAnnotationOwner(type);
+  }
+
+  @Nullable
+  public String getAnnotation() {
+    return firstAnnotation;
+  }
+
+  @NotNull
+  public Set<PsiAnnotation.TargetType> getAnnotationTarget(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+    if (firstAnnotation == null) {
+      return Set.of();
+    }
+    PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(firstAnnotation, scope);
+    if (annotationClass == null) {
+      return Set.of();
+    }
+    Set<PsiAnnotation.TargetType> targets = AnnotationTargetUtil.getAnnotationTargets(annotationClass);
+    return targets == null ? Set.of() : targets;
+  }
+
+  record UntaintedContext(@NotNull List<String> taintedAnnotations,
+                          @NotNull List<String> unTaintedAnnotations,
+                          @Nullable String firstAnnotation,
+                          @NotNull List<String> methodClass, @NotNull List<String> methodPatterns,
+                          @NotNull List<String> fieldClass, @NotNull List<String> fieldPatterns) {
+
+    public UntaintedContext copy() {
+      return new UntaintedContext(new ArrayList<>(taintedAnnotations), new ArrayList<>(unTaintedAnnotations),
+                                  firstAnnotation,
+                                  new ArrayList<>(methodClass), new ArrayList<>(methodPatterns),
+                                  new ArrayList<>(fieldClass), new ArrayList<>(fieldPatterns));
+    }
+  }
+
+  @NotNull
+  UntaintedContext getContext() {
+    return myContext;
   }
 }

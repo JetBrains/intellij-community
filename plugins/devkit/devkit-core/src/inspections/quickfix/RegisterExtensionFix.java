@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -21,7 +22,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +101,7 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
         Extension extension = extensions.addExtension(candidate.epName);
         XmlTag tag = extension.getXmlTag();
         PsiElement target = null;
-        String keyAttrName = KEY_MAP.get(candidate.beanClassName);
+        String keyAttrName = candidate.beanClassName==null?null:KEY_MAP.get(candidate.beanClassName);
         if (keyAttrName != null) {
           XmlAttribute attr = tag.setAttribute(keyAttrName, "");
           target = attr.getValueElement();
@@ -120,13 +120,12 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
   }
 
   @NonNls
-  private static final Map<String, String> KEY_MAP = ContainerUtil.<String, String>immutableMapBuilder()
-    .put(KeyedFactoryEPBean.class.getName(), "key")
-    .put(KeyedLazyInstanceEP.class.getName(), "key")
-    .put(FileTypeExtensionPoint.class.getName(), "filetype")
-    .put(LanguageExtensionPoint.class.getName(), "language")
-    .put(ClassExtensionPoint.class.getName(), "forClass")
-    .build();
+  private static final Map<String, String> KEY_MAP = Map.of(
+    KeyedFactoryEPBean.class.getName(), "key",
+    KeyedLazyInstanceEP.class.getName(), "key",
+    FileTypeExtensionPoint.class.getName(), "filetype",
+    LanguageExtensionPoint.class.getName(), "language",
+    ClassExtensionPoint.class.getName(), "forClass");
 
 
   @Override
@@ -135,7 +134,7 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     return IntentionPreviewInfo.EMPTY;
   }
 }

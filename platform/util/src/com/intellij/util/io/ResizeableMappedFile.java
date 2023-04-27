@@ -22,6 +22,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
@@ -190,9 +191,10 @@ public class ResizeableMappedFile implements Forceable, Closeable {
   }
 
   private long readLength() throws IOException {
-    Path lengthFile = getLengthFile();
-    long zero = 0L;
-    if (!Files.exists(lengthFile) && (!Files.exists(myStorage.getFile()) || Files.size(myStorage.getFile()) == zero)) {
+    final Path storageFile = myStorage.getFile();
+    final Path lengthFile = getLengthFile();
+    final long zero = 0L;
+    if (!Files.exists(lengthFile) && (!Files.exists(storageFile) || Files.size(storageFile) == zero)) {
       writeLength(zero);
       return zero;
     }
@@ -203,7 +205,8 @@ public class ResizeableMappedFile implements Forceable, Closeable {
     catch (IOException e) {
       long realSize = realSize();
       writeLength(realSize);
-      LOG.error("storage size = " + realSize + ", file size = " + Files.size(myStorage.getFile()), e);
+      LOG.info("Can't find .len file for " + storageFile + ", re-creating it from actual file. " +
+               "Storage size = " + realSize + ", file size = " + Files.size(storageFile), e);
       return realSize;
     }
   }
@@ -306,6 +309,19 @@ public class ResizeableMappedFile implements Forceable, Closeable {
 
   public void unlockWrite() {
     myStorage.unlockWrite();
+  }
+
+  /** Close the storage and remove all its data files */
+  public void closeAndRemoveAllFiles() throws IOException {
+    List<Exception> exceptions = new SmartList<>();
+
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(myStorage::close));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> FileUtil.delete(myStorage.getFile())));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> FileUtil.delete(getLengthFile())));
+
+    if (!exceptions.isEmpty()) {
+      throw new IOException(new CompoundRuntimeException(exceptions));
+    }
   }
 
   @Override

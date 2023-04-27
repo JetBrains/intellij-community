@@ -76,7 +76,7 @@ public final class PyNames {
   public static final String GET = "__get__";
   public static final String __CLASS__ = "__class__";
   public static final String DUNDER_METACLASS = "__metaclass__";
-  public static final String METACLASS = "metaclass";
+  public static final @NlsSafe String METACLASS = "metaclass";
   public static final String TYPE = "type";
 
   public static final String SUPER = "super";
@@ -220,7 +220,7 @@ public final class PyNames {
 
   public static final String NOT_IMPLEMENTED_ERROR = "NotImplementedError";
 
-  public static final String UNKNOWN_TYPE = "Any";
+  public static final @NlsSafe String UNKNOWN_TYPE = "Any";
 
   public static final @NlsSafe String UNNAMED_ELEMENT = "<unnamed>";
 

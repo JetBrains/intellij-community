@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.BooleanSupplier;
 
 /**
  * @author Dmitry Avdeev
@@ -41,13 +42,16 @@ public final class TestIconMapper implements PoolOfTestIcons {
   }
 
   @Nullable
-  public static Icon getToolbarIcon(@NotNull TestStateInfo.Magnitude magnitude) {
+  public static Icon getToolbarIcon(@NotNull TestStateInfo.Magnitude magnitude,
+                                    boolean hasErrors,
+                                    BooleanSupplier hasPassedTest) {
     return switch (magnitude) {
       case SKIPPED_INDEX -> AllIcons.RunConfigurations.ToolbarSkipped;
       case COMPLETE_INDEX, PASSED_INDEX -> AllIcons.RunConfigurations.ToolbarPassed;
       case NOT_RUN_INDEX -> AllIcons.RunConfigurations.TestNotRan;
       case TERMINATED_INDEX -> AllIcons.RunConfigurations.ToolbarTerminated;
-      case IGNORED_INDEX -> AllIcons.RunConfigurations.ShowIgnored;
+      case IGNORED_INDEX -> !hasErrors && hasPassedTest.getAsBoolean() ? AllIcons.RunConfigurations.ToolbarPassedIgnored
+                                                                       : AllIcons.RunConfigurations.ShowIgnored;
       case FAILED_INDEX -> AllIcons.RunConfigurations.ToolbarFailed;
       case ERROR_INDEX -> AllIcons.RunConfigurations.ToolbarError;
       default -> null;

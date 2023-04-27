@@ -52,14 +52,14 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.ScrollingUtil
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import java.io.File
 import java.util.*
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import javax.swing.JComponent
-import javax.swing.JLabel
 
 private data class CompletionTime(var cnt: Int, var time: Long)
 
@@ -419,7 +419,7 @@ class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper
       }
     }
 
-    val combo = ComboBox<FileType>(model)
+    val combo = ComboBox(model)
 
     combo.renderer = FileTypeRenderer()
 
@@ -428,11 +428,12 @@ class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper
 
   override fun createCenterPanel(): JComponent {
     return panel {
-      row(label = JLabel("File type:")) {
-        fileTypeCombo()
+      row("File type:") {
+        cell(fileTypeCombo)
       }
-      row(label = JLabel("Scope:")) {
-        scopeChooserCombo()
+      row("Scope:") {
+        cell(scopeChooserCombo)
+          .align(AlignX.FILL)
       }
     }
   }

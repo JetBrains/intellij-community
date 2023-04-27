@@ -4,8 +4,9 @@ package com.intellij.util;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Deprecated. Use {@link java.util.function.Consumer} instead
+ * deprecated Use {@link java.util.function.Consumer} instead
  */
+@ApiStatus.Obsolete
 public interface Consumer<T> {
   /**
    * @deprecated use {@link com.intellij.util.EmptyConsumer#getInstance()} instead

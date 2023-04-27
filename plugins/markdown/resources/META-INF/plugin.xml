@@ -244,13 +244,29 @@
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher"/>
+
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
+                                 hostLanguage="HTML"
+                                 implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.HtmlHeaderAnchorSelfReferenceProvider"
+                                 targetClass="org.intellij.plugins.markdown.model.psi.headers.MarkdownHeaderSymbol"/>
+
+    <searcher forClass="com.intellij.model.search.PsiSymbolReferenceSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.MarkdownHtmlAnchorPsiReferenceSearcher"/>
+
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorRenameUsageSearcher"/>
+
+    <vetoRenameCondition implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorVetoRenameCondition"/>
+    <rename.symbolRenameTargetFactory implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbolRenameTargetFactory"/>
+
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
               implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderRenameUsageSearcher"/>
     <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.headers.HeaderSymbolDeclarationProvider"/>
+    <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbolDeclarationProvider"/>
     <psi.symbolReferenceProvider hostElementClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination"
                                  hostLanguage="Markdown"
                                  implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderAnchorSymbolReferenceProvider"
-                                 targetClass="org.intellij.plugins.markdown.model.psi.headers.HeaderSymbol"/>
+                                 targetClass="org.intellij.plugins.markdown.model.psi.headers.MarkdownHeaderSymbol"/>
     <localInspection language="Markdown"
                      shortName="MarkdownUnresolvedHeaderReference"
                      bundle="messages.MarkdownBundle"
@@ -371,20 +387,14 @@
                  defaultValue="600000"
                  description="Interval in milliseconds defining how often Markdown plugin caches (e.g. PlantUML diagrams) should be cleared"/>
     <registryKey key="markdown.plantuml.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2022.7-5.jar"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2023.0-7.jar"
                  description="Link which Markdown plugin will use to download PlantUML JAR"/>
-    <registryKey key="markdown.mermaid.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-9.1.3-6.js"
-                 description="Link which Markdown plugin will use to download Mermaid.js library"/>
     <registryKey key="markdown.open.link.in.external.browser"
                  defaultValue="true"
                  description="Open Markdown link in an external browser (otherwise open in the IDE viewer)"/>
     <registryKey key="markdown.formatter.apply.to.code.fence"
                  defaultValue="false"
                  description="Should Markdown use injected languages' formatters to format code-fences"/>
-    <registryKey key="markdown.mermaid.theme"
-                 defaultValue="follow-ide"
-                 description="Theme name to be used for Mermaid.js diagrams (set to 'follow-ide' to let the IDE decide)"/>
     <registryKey key="markdown.structure.view.list.visibility"
                  defaultValue="false"
                  description="Determines whether lists are visible in the document structure view"/>
@@ -397,20 +407,11 @@
                  defaultValue="false"
                  description="Temporarily disable the action of the import docs from google"/>
 
-    <registryKey key="markdown.google.accounts.enable"
-                 defaultValue="false"
-                 description="Temporarily disabling the use of Google accounts, as the functionality is available only for internal users"/>
-
     <registryKey key="markdown.experimental.boundary.precise.scroll.enable"
                  defaultValue="true"
                  description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
                               Any opened Markdown editors should be manually reopened.
                               Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
-
-    <registryKey key="markdown.experimental.frontmatter.support.enable"
-                 defaultValue="true"
-                 description="Enables experimental front matter support"
-                 restartRequired="true"/>
 
     <registryKey key="markdown.experimental.header.level.inference.enable"
                  defaultValue="false"
@@ -419,6 +420,14 @@
     <registryKey key="markdown.validate.short.links"
                  defaultValue="false"
                  description="Enables validation for short style links by checking existing labeled link definitions in the current file."/>
+
+    <registryKey key="markdown.experimental.show.frontmatter.in.preview"
+                 defaultValue="false"
+                 description="Enables displaying of front matter headers in the preview."/>
+
+    <registryKey key="markdown.experimental.allow.external.requests"
+                 defaultValue="true"
+                 description="Enables requests for external resources from the preview (e.g. non-local images)."/>
     <!--endregion-->
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>

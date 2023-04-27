@@ -51,10 +51,10 @@ import java.util.function.Function;
 public final class RecentLocationsAction extends DumbAwareAction implements LightEditCompatible {
   @NonNls public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
-  private static final int DEFAULT_WIDTH = JBUIScale.scale(700);
-  private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);
-  private static final int MINIMUM_WIDTH = JBUIScale.scale(600);
-  private static final int MINIMUM_HEIGHT = JBUIScale.scale(450);
+  private static int getDefaultWidth() { return JBUIScale.scale(700); }
+  private static int getDefaultHeight() { return JBUIScale.scale(530); }
+  private static int getMinimumWidth() { return JBUIScale.scale(600); }
+  private static int getMinimumHeight() { return JBUIScale.scale(450); }
 
   static final class Holder {
     private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
@@ -135,7 +135,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
       .setMovable(true)
       .setBorderColor(borderColor)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
-      .setMinSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT))
+      .setMinSize(new Dimension(getMinimumWidth(), getMinimumHeight()))
       .setLocateWithinScreenBounds(false)
       .createPopup();
     Disposer.register(popup, renderer);
@@ -155,7 +155,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     });
 
     if (DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project) == null) {
-      popup.setSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+      popup.setSize(new Dimension(getDefaultWidth(), getDefaultHeight()));
     }
 
     list.addMouseListener(new MouseAdapter() {

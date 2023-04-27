@@ -12,9 +12,11 @@ import org.jetbrains.kotlin.serialization.deserialization.DeserializationConfigu
 import java.io.DataInput
 import java.io.DataOutput
 
-object KotlinJvmModuleAnnotationsIndex : FileBasedIndexExtension<String, List<ClassId>>() {
 
-    val KEY: ID<String, List<ClassId>> = ID.create(KotlinJvmModuleAnnotationsIndex::class.java.canonicalName)
+class KotlinJvmModuleAnnotationsIndex internal constructor() : FileBasedIndexExtension<String, List<ClassId>>() {
+    companion object {
+        val NAME: ID<String, List<ClassId>> = ID.create(KotlinJvmModuleAnnotationsIndex::class.java.canonicalName)
+    }
 
     private val KEY_DESCRIPTOR = KotlinModuleMappingIndex.STRING_KEY_DESCRIPTOR
 
@@ -26,7 +28,7 @@ object KotlinJvmModuleAnnotationsIndex : FileBasedIndexExtension<String, List<Cl
             IOUtil.writeStringList(out, value.map(ClassId::asString))
     }
 
-    override fun getName() = KEY
+    override fun getName() = NAME
 
     override fun dependsOnFileContent() = true
 
@@ -35,7 +37,7 @@ object KotlinJvmModuleAnnotationsIndex : FileBasedIndexExtension<String, List<Cl
     override fun getValueExternalizer() = VALUE_EXTERNALIZER
 
     override fun getInputFilter(): FileBasedIndex.InputFilter =
-        FileBasedIndex.InputFilter { file -> file.extension == ModuleMapping.MAPPING_FILE_EXT }
+        FileBasedIndex.InputFilter { file -> file.nameSequence.endsWith(MAPPING_FILE_DOT_FILE_EXTENSION) }
 
     override fun getVersion(): Int = 1
 

@@ -33,13 +33,16 @@ class KotlinFirLookupElementFactory {
         symbol: KtNamedSymbol,
         importStrategyDetector: ImportStrategyDetector,
         importingStrategy: ImportStrategy? = null,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
+        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
+        expectedType: KtType? = null,
     ): LookupElement {
         return when (symbol) {
             is KtCallableSymbol -> createCallableLookupElement(
+                symbol.name,
                 symbol,
                 detectCallableOptions(symbol, importStrategyDetector),
                 substitutor,
+                expectedType,
             )
 
             is KtClassLikeSymbol -> with(classLookupElementFactory) { createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategy(symbol)) }
@@ -49,12 +52,14 @@ class KotlinFirLookupElementFactory {
     }
 
     fun KtAnalysisSession.createCallableLookupElement(
+        name: Name,
         symbol: KtCallableSymbol,
         options: CallableInsertionOptions,
         substitutor: KtSubstitutor,
+        expectedType: KtType? = null,
     ): LookupElementBuilder {
         return when (symbol) {
-            is KtFunctionSymbol -> with(functionLookupElementFactory) { createLookup(symbol, options, substitutor) }
+            is KtFunctionLikeSymbol -> with(functionLookupElementFactory) { createLookup(name, symbol, options, substitutor, expectedType) }
             is KtVariableLikeSymbol -> with(variableLookupElementFactory) { createLookup(symbol, options, substitutor) }
             else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
         }

@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance(RenameJavaClassProcessor.class);
@@ -303,7 +304,8 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void findExistingNameConflicts(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final MultiMap<PsiElement,String> conflicts) {
+  public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName,
+                                        @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     final PsiClass aClass = (PsiClass)element;
     if (newName.equals(aClass.getName())) return;

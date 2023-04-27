@@ -3,11 +3,12 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroMap
-import com.intellij.openapi.module.impl.ModulePath
-import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
+import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -82,7 +83,7 @@ interface JpsDirectoryEntitiesSerializerFactory<E : WorkspaceEntity> {
   val componentName: String
 
   /** Returns a serializer for a file located in [directoryUrl] directory*/
-  fun createSerializer(fileUrl: String, entitySource: JpsFileEntitySource.FileInDirectory, virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<E>
+  fun createSerializer(fileUrl: String, entitySource: JpsProjectFileEntitySource.FileInDirectory, virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<E>
 
   fun getDefaultFileName(entity: E): String
 
@@ -115,13 +116,11 @@ interface JpsProjectSerializers {
                           directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                           moduleListSerializers: List<JpsModuleListSerializer>,
                           configLocation: JpsProjectConfigLocation,
-                          reader: JpsFileContentReader,
+                          context: SerializationContext,
                           externalStorageMapping: JpsExternalStorageMapping,
-                          enableExternalStorage: Boolean,
-                          virtualFileManager: VirtualFileUrlManager,
-                          fileInDirectorySourceNames: FileInDirectorySourceNames): JpsProjectSerializers {
-      return JpsProjectSerializersImpl(directorySerializersFactories, moduleListSerializers, reader, entityTypeSerializers, configLocation,
-                                       externalStorageMapping, enableExternalStorage, virtualFileManager, fileInDirectorySourceNames)
+                          enableExternalStorage: Boolean): JpsProjectSerializers {
+      return JpsProjectSerializersImpl(directorySerializersFactories, moduleListSerializers, context, entityTypeSerializers, configLocation,
+                                       externalStorageMapping, enableExternalStorage)
     }
   }
 
@@ -129,13 +128,12 @@ interface JpsProjectSerializers {
                       builder: MutableEntityStorage,
                       orphanageBuilder: MutableEntityStorage,
                       unloadedEntityBuilder: MutableEntityStorage,
-                      unloadedModuleNames: Set<String>,
-                      errorReporter: ErrorReporter,
-                      project: Project?): List<EntitySource>
+                      unloadedModuleNames: UnloadedModulesNameHolder,
+                      errorReporter: ErrorReporter): List<EntitySource>
 
   fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                              reader: JpsFileContentReader,
-                             unloadedModuleNames: Set<String>,
+                             unloadedModuleNames: UnloadedModulesNameHolder,
                              errorReporter: ErrorReporter): ReloadingResult
 
   @TestOnly
@@ -157,7 +155,7 @@ data class ReloadingResult(
 )
 
 interface ErrorReporter {
-  fun reportError(@Nls message: String, file: VirtualFileUrl)
+  fun reportError(message: @Nls String, file: VirtualFileUrl)
 }
 
 data class JpsConfigurationFilesChange(val addedFileUrls: Collection<String>,

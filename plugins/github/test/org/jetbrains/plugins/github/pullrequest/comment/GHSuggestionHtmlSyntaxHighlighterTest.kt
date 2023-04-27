@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment
 
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+import com.intellij.openapi.diff.impl.patch.PatchReader
 import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 
@@ -122,7 +124,12 @@ class GHSuggestionHtmlSyntaxHighlighterTest {
   }
 
   private fun checkSuggestedChange(expected: List<String>, diffHunk: String, afterStartLine: Int, afterEndLine: Int) {
-    val suggestedChangeInfo = GHSuggestedChange.create("", diffHunk, "", afterStartLine, afterEndLine)
+    val patchHunk = PatchHunkUtil.createPatchFromHunk("", diffHunk).let {
+      val reader = PatchReader(it, true)
+      reader.parseAllPatches()
+      reader.textPatches.first().hunks.first()
+    }
+    val suggestedChangeInfo = GHSuggestedChange("", patchHunk, "", afterStartLine, afterEndLine)
     val changedContent = suggestedChangeInfo.cutChangedContent()
 
     assertArrayEquals(expected.toTypedArray(), changedContent.toTypedArray())

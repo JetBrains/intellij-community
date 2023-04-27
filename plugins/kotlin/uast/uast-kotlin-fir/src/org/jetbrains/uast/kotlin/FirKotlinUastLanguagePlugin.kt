@@ -4,7 +4,10 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.DEFAULT_TYPES_LIST
@@ -12,7 +15,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinConverter.convertDeclarationOrElement
-import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 
@@ -23,7 +26,11 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         get() = KotlinLanguage.INSTANCE
 
     override fun isFileSupported(fileName: String): Boolean {
-        return fileName.endsWith(".kt", false) || fileName.endsWith(".kts", false)
+        return when {
+            fileName.endsWith(".kt", false) -> true
+            fileName.endsWith(".kts", false) -> Registry.`is`("kotlin.k2.scripting.enabled", false)
+            else -> false
+        }
     }
 
     private val PsiElement.isJvmElement: Boolean
@@ -32,13 +39,23 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
             return resolveProvider.isJvmElement(this)
         }
 
+    private val PsiElement.isSupportedElement: Boolean
+        get() {
+            if (!isJvmElement) {
+                return false
+            }
+
+            val containingFile = containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
+            return containingFile.getKtModule(project) !is KtNotUnderContentRootModule
+        }
+
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-        if (!element.isJvmElement) return null
+        if (!element.isSupportedElement) return null
         return convertDeclarationOrElement(element, parent, elementTypes(requiredType))
     }
 
     override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
-        if (!element.isJvmElement) return null
+        if (!element.isSupportedElement) return null
         return convertDeclarationOrElement(element, null, elementTypes(requiredType))
     }
 
@@ -51,14 +68,14 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? {
-        if (!element.isJvmElement) return null
+        if (!element.isSupportedElement) return null
         val nonEmptyRequiredTypes = requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)
         return convertDeclarationOrElement(element, null, nonEmptyRequiredTypes) as? T
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> {
-        if (!element.isJvmElement) return emptySequence()
+        if (!element.isSupportedElement) return emptySequence()
         return when {
             element is KtFile ->
                 FirKotlinConverter.convertKtFile(element, null, requiredTypes) as Sequence<T>
@@ -68,7 +85,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
                 FirKotlinConverter.convertNonLocalProperty(element, null, requiredTypes) as Sequence<T>
             element is KtParameter ->
                 FirKotlinConverter.convertParameter(element, null, requiredTypes) as Sequence<T>
-            element is UastFakeLightPrimaryConstructor ->
+            element is UastFakeSourceLightPrimaryConstructor ->
                 FirKotlinConverter.convertFakeLightConstructorAlternatives(element, null, requiredTypes) as Sequence<T>
             else ->
                 sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()

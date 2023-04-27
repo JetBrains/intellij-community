@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryUsage
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressManager
@@ -63,15 +62,13 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
     val processedLibraryNames = mutableSetOf<String>()
     val usages = mutableListOf<LibraryUsage>()
 
-    val libraryDescriptorFinder = service<LibraryDescriptorFinderService>()
-
     // we should process simple element imports first, because they can be unambiguously resolved
     val imports = importProcessor.imports(psiFile).sortedByDescending { importProcessor.isSingleElementImport(it) }
     for (import in imports) {
       ProgressManager.checkCanceled()
 
       val qualifier = importProcessor.importQualifier(import) ?: continue
-      val libraryName = libraryDescriptorFinder.findSuitableLibrary(qualifier)?.takeUnless { it in processedLibraryNames } ?: continue
+      val libraryName = LibraryUsageDescriptors.findSuitableLibrary(qualifier)?.takeUnless { it in processedLibraryNames } ?: continue
 
       val libraryElement = importProcessor.resolve(import) ?: continue
       val libraryVersion = findJarVersion(libraryElement) ?: continue
@@ -94,7 +91,7 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
     val isEnabled: Boolean
       get() {
         return isEnforceEnabledInTests || ApplicationManager.getApplication().run {
-          !isUnitTestMode && !isHeadlessEnvironment && StatisticsUploadAssistant.isSendAllowed()
+          !isUnitTestMode && !isHeadlessEnvironment && StatisticsUploadAssistant.isCollectAllowedOrForced()
         }
       }
   }

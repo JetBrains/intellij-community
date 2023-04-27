@@ -12,11 +12,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.LockSupport;
 
 import static com.intellij.util.io.IOUtil.GiB;
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -32,11 +36,11 @@ public abstract class PerformanceOfFileAccessBaseTest {
   protected static final int BUFFER_SIZE = Integer.getInteger("PerformanceOfFileAccessBase.BUFFER_SIZE", 1 << 20);
 
   // = max (32*5)=160 Gb of files
-  protected static final int THREADS = Integer.getInteger("PerformanceOfFileAccessBase.THREADS", 3);
+  protected static final int THREADS = Integer.getInteger("PerformanceOfFileAccessBase.THREADS", 4);
 
   //===== Response time (aka 'single shot') benchmarks params:
 
-  protected static final int RESPONSE_TIME_SHOTS = Integer.getInteger("PerformanceOfFileAccessBase.RESPONSE_TIME_SHOTS", 100_000);
+  protected static final int RESPONSE_TIME_SHOTS = Integer.getInteger("PerformanceOfFileAccessBase.RESPONSE_TIME_SHOTS", 300_000);
   //protected static final int DELAY_BETWEEN_RESPONSE_TIME_SHOTS_NS = 2_000_000;
   protected static final int DELAY_BETWEEN_RESPONSE_TIME_SHOTS_NS = 500_000;
   protected static final int SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT = 128;
@@ -48,7 +52,7 @@ public abstract class PerformanceOfFileAccessBaseTest {
   public final TemporaryFolder tmpDirectory = new TemporaryFolder();
 
   @BeforeClass
-  public static void beforeClass() throws Exception {
+  public static void checkBenchmarksAreEnabled() throws Exception {
     assumeTrue(
       "Benchmarks are disabled by default (because too heavy): set PerformanceOfFileAccessBase.RUN_BENCHMARKS = true to enable",
       ENABLE_BENCHMARKS

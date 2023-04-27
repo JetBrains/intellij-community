@@ -6,7 +6,7 @@ class Test {
             case String s:
                 System.out.println();
                 break;
-            case Integer integer:
+            case Integer i:
                 System.out.println();
                 break;
             case null:

@@ -42,4 +42,8 @@ class JavaMethodChainsDeclarativeInlayProvider : AbstractDeclarativeCallChainPro
   override fun PsiMethodCallExpression.getParentDotQualifiedExpression(): PsiMethodCallExpression? {
     return ExpressionUtils.getCallForQualifier(this)
   }
+
+  override fun presentableType(type: PsiType): String {
+    return type.presentableText
+  }
 }

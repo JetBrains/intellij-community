@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.IntFunction;
 
 public final class ControlFlowUtil {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class);
@@ -555,12 +556,12 @@ public final class ControlFlowUtil {
       private Map<PsiVariable, Set<PsiElement>> getReachableAfterWrite(@NotNull Map<PsiVariable, IntList> writeOffsets,
                                                                        @NotNull Map<PsiVariable, IntList> visibleReadOffsets) {
         final Map<PsiVariable, Set<PsiElement>> afterWrite = new HashMap<>();
+        final IntFunction<BitSet> calculator = getReachableInstructionsCalculator();
         for (PsiVariable variable : visibleReadOffsets.keySet()) {
-          final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator();
           final BitSet collectedOffsets = new BitSet(flowEnd);
           for (int writeOffset : writeOffsets.get(variable).toIntArray()) {
             LOG.assertTrue(writeOffset >= flowStart, "writeOffset");
-            final BitSet reachableOffsets = calculator.fun(writeOffset);
+            final BitSet reachableOffsets = calculator.apply(writeOffset);
             //skip current assignment
             reachableOffsets.set(writeOffset, false);
             if (writeOffset + 1 < flow.getSize()) {
@@ -585,7 +586,7 @@ public final class ControlFlowUtil {
               subordinates.add(element);
             }
           }
-          throwSources.removeAll(subordinates);
+          subordinates.forEach(throwSources::remove);
           if (throwSources.isEmpty()) {
             afterWrite.remove(variable);
           } else {
@@ -640,7 +641,7 @@ public final class ControlFlowUtil {
       }
 
       @NotNull
-      private Function<Integer, BitSet> getReachableInstructionsCalculator() {
+      private IntFunction<BitSet> getReachableInstructionsCalculator() {
         final ControlFlowGraph graph = new ControlFlowGraph(flow.getSize()) {
           @Override
           void addArc(int offset, int nextOffset) {

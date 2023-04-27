@@ -1,4 +1,5 @@
-from typing import Any
+from collections.abc import Callable
+from typing import Any, TypeVar, overload
 
 # connection and cursor not available at runtime
 from psycopg2._psycopg import (
@@ -32,6 +33,18 @@ from psycopg2._psycopg import (
     threadsafety as threadsafety,
 )
 
+_T_conn = TypeVar("_T_conn", bound=connection)
+
+@overload
+def connect(dsn: str, connection_factory: Callable[..., _T_conn], cursor_factory: None = ..., **kwargs: Any) -> _T_conn: ...
+@overload
 def connect(
-    dsn: Any | None = ..., connection_factory: Any | None = ..., cursor_factory: Any | None = ..., **kwargs
+    dsn: str | None = ..., *, connection_factory: Callable[..., _T_conn], cursor_factory: None = ..., **kwargs: Any
+) -> _T_conn: ...
+@overload
+def connect(
+    dsn: str | None = ...,
+    connection_factory: Callable[..., connection] | None = ...,
+    cursor_factory: Callable[..., cursor] | None = ...,
+    **kwargs: Any,
 ) -> connection: ...

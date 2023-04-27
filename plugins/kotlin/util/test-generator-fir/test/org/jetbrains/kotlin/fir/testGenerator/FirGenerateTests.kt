@@ -23,12 +23,8 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDecla
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
-import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveInJavaTest
-import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
-import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceToCompiledKotlinResolveInJavaTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
-import org.jetbrains.kotlin.idea.fir.uast.*
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -38,6 +34,8 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
+import org.jetbrains.fir.uast.test.*
+import org.jetbrains.kotlin.idea.fir.resolve.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
@@ -56,6 +54,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     generateK2HighlighterTests()
     generateK2RefactoringsTests()
     generateK2SearchTests()
+    generateK2RefIndexTests()
 
     testGroup("base/fir/analysis-api-providers") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
@@ -82,6 +81,18 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
         }
 
+        testClass<AbstractFirReferenceResolveWithLibTest> {
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCompiledLibTest> {
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCrossLibTest> {
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
         testClass<AbstractFirReferenceResolveInJavaTest> {
             model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
             model("resolve/referenceInJava/sourceOnly", pattern = JAVA)
@@ -103,6 +114,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/lateinit", pattern = pattern)
             model("quickfix/localVariableWithTypeParameters", pattern = pattern)
             model("quickfix/modifiers", pattern = pattern, isRecursive = false)
+            model("quickfix/modifiers/addOpenToClassDeclaration", pattern = pattern)
             model("quickfix/nullables", pattern = pattern)
             model("quickfix/override", pattern = pattern, isRecursive = false)
             model("quickfix/override/typeMismatchOnOverride", pattern = pattern, isRecursive = false)
@@ -161,6 +173,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractHighLevelBasicCompletionHandlerTest> {
             model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+            model("handlers", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX, isRecursive = false)
         }
 
         testClass<AbstractHighLevelJavaCompletionHandlerTest> {
@@ -241,9 +254,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirQuickDocTest> {
             model("quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
         }
+
+        testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {
+            model("extensions/references", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2JvmBasicCompletionTestWithResolveExtension> {
+            model("extensions/completion", pattern = KT_WITHOUT_DOTS)
+        }
     }
 
-    testGroup("uast/uast-kotlin-fir") {
+    testGroup("uast/uast-kotlin-fir/tests") {
         testClass<AbstractFirUastDeclarationTest> {
             model("declaration")
         }
@@ -257,7 +278,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/tests/testData") {
+    testGroup("uast/uast-kotlin-fir/tests", testDataPath = "../../uast-kotlin/tests/testData") {
         testClass<AbstractFirLegacyUastDeclarationTest> {
             model("")
         }

@@ -55,6 +55,7 @@ public final class ComponentTreeBuilder implements Disposable {
 
     myEditor = editor;
     mySelectionWatcher = new MySelectionWatcher(editor);
+    mySelectionWatcher.setupListeners();
 
     syncSelection();
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypes;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,9 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
     }
 
     final LookupElement[] items = context.getItems();
+    if (ContainerUtil.exists(items, t -> t.as(MethodTags.TagLookupElementDecorator.class) != null)) {
+      return AutoCompletionDecision.SHOW_LOOKUP;
+    }
     if (items.length > 1) {
       String commonName = null;
       final ArrayList<PsiMethod> allMethods = new ArrayList<>();

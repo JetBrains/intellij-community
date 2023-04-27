@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -20,11 +21,9 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.DECLARATION_TO_DESCRIPTOR
 import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
 
@@ -32,11 +31,12 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
         return simpleNameExpressionVisitor { expression ->
             if (isRecursivePropertyAccess(expression, anyRecursionTypes = false)) {
                 val isExtensionProperty = expression.getStrictParentOfType<KtProperty>()?.receiverTypeReference != null
+                val fixes = if (isExtensionProperty) LocalQuickFix.EMPTY_ARRAY else arrayOf<LocalQuickFix>(ReplaceWithFieldFix())
                 holder.registerProblem(
                     expression,
                     KotlinBundle.message("recursive.property.accessor"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    if (isExtensionProperty) null else ReplaceWithFieldFix()
+                    *fixes
                 )
             } else if (isRecursiveSyntheticPropertyAccess(expression)) {
                 holder.registerProblem(

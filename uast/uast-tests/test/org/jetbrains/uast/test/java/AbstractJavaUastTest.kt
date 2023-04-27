@@ -2,7 +2,7 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import org.jetbrains.uast.test.env.AbstractUastFixtureTest
+import com.intellij.platform.uast.testFramework.env.AbstractUastFixtureTest
 
 abstract class AbstractJavaUastTest : AbstractUastFixtureTest() {
   public override fun getTestDataPath(): String =

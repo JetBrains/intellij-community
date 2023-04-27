@@ -14,10 +14,14 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.util.PairConsumer
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jdom.Text
@@ -30,6 +34,7 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
@@ -144,6 +149,17 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         }
 
         configureFacet(mavenProject, modifiableModelsProvider, module)
+    }
+
+    override fun collectSourceRoots(mavenProject: MavenProject, result: PairConsumer<String, JpsModuleSourceRootType<*>>) {
+        val directories = collectSourceDirectories(mavenProject)
+        for ((type, dir) in directories) {
+            val jpsType: JpsModuleSourceRootType<*> = when (type) {
+                SourceType.TEST -> JavaSourceRootType.TEST_SOURCE
+                SourceType.PROD -> JavaSourceRootType.SOURCE
+            }
+            result.consume(dir, jpsType)
+        }
     }
 
     private fun scheduleDownloadStdlibSources(mavenProject: MavenProject, module: Module) {
@@ -317,7 +333,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         val kotlinFacet = module.getOrCreateFacet(
             modifiableModelsProvider,
             false,
-            ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
+            SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
         )
 
         // TODO There should be a way to figure out the correct platform version
@@ -332,9 +348,9 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         val executionArguments = mavenPlugin.executions
             ?.firstOrNull { it.goals.any { s -> s in compilationGoals } }
             ?.configurationElement?.let { getCompilerArgumentsByConfigurationElement(mavenProject, it, configuredPlatform, module.project) }
-        parseCompilerArgumentsToFacet(sharedArguments.args, emptyList(), kotlinFacet, modifiableModelsProvider)
+        parseCompilerArgumentsToFacet(sharedArguments.args, kotlinFacet, modifiableModelsProvider)
         if (executionArguments != null) {
-            parseCompilerArgumentsToFacet(executionArguments.args, emptyList(), kotlinFacet, modifiableModelsProvider)
+            parseCompilerArgumentsToFacet(executionArguments.args, kotlinFacet, modifiableModelsProvider)
         }
         if (facetSettings.compilerArguments is K2JSCompilerArguments) {
             configureJSOutputPaths(mavenProject, modifiableModelsProvider.getModifiableRootModel(module), facetSettings, mavenPlugin)

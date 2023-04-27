@@ -47,7 +47,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       element.accept(new AbstractUastVisitor() {
                        @Override
                        public boolean visitEnumConstant(@NotNull UEnumConstant node) {
-                         processNewLikeConstruct(node.resolve(), node.getValueArguments());
+                         processNewLikeConstruct(node.resolve(), node);
                          return false;
                        }
 
@@ -166,8 +166,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          if (node.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
                            PsiElement resolvedMethod = returnToPhysical(node.resolve());
-                           final List<UExpression> argumentList = node.getValueArguments();
-                           RefMethod refConstructor = processNewLikeConstruct(resolvedMethod, argumentList);
+                           RefMethod refConstructor = processNewLikeConstruct(resolvedMethod, node);
 
                            if (refConstructor == null) {  // No explicit constructor referenced. Should use default one.
                              UReferenceExpression reference = node.getClassReference();
@@ -275,19 +274,19 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        @Nullable
-                       private RefMethod processNewLikeConstruct(PsiElement javaConstructor, List<UExpression> argumentList) {
+                       private RefMethod processNewLikeConstruct(PsiElement javaConstructor, UCallExpression call) {
                          if (javaConstructor == null) return null;
                          RefMethodImpl refConstructor =
                            ObjectUtils.tryCast(refManager.getReference(javaConstructor.getOriginalElement()), RefMethodImpl.class);
                          refFrom.addReference(refConstructor, javaConstructor, decl, false, true, null);
 
-                         for (UExpression arg : argumentList) {
+                         for (UExpression arg : call.getValueArguments()) {
                            arg.accept(this);
                          }
 
                          if (refConstructor != null) {
                            refConstructor.initializeIfNeeded();
-                           refConstructor.updateParameterValues(argumentList, javaConstructor);
+                           refConstructor.updateParameterValues(call, javaConstructor);
                          }
                          return refConstructor;
                        }
@@ -454,10 +453,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       call = ObjectUtils.tryCast(qualifiedReference.getSelector(), UCallExpression.class);
     }
     if (call != null) {
-      List<UExpression> argumentList = call.getValueArguments();
-      if (!argumentList.isEmpty()) {
-        refMethod.updateParameterValues(argumentList, psiResolved);
-      }
+      refMethod.updateParameterValues(call, psiResolved);
 
       final PsiType usedType = call.getReceiverType();
       if (usedType != null) {

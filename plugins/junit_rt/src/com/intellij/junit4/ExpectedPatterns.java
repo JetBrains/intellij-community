@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class ExpectedPatterns extends AbstractExpectedPatterns {
-  private static final List<Pattern> PATTERNS = new ArrayList<Pattern>();
+  private static final List<Pattern> PATTERNS = new ArrayList<>();
 
   private static final String[] PATTERN_STRINGS = new String[]{
     "\nexpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",

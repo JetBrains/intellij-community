@@ -6,9 +6,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -18,60 +16,79 @@ import java.util.*;
 /**
  * @author Kirill Likhodedov
  */
-public final class VcsLogColorManagerImpl implements VcsLogColorManager {
+public class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Logger LOG = Logger.getInstance(VcsLogColorManagerImpl.class);
 
-  private static final Color[] ROOT_COLORS =
-    {JBColor.RED, JBColor.GREEN, JBColor.BLUE, JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW, JBColor.MAGENTA, JBColor.PINK};
-
-  private final @NotNull Map<String, Color> myPaths2Colors;
+  private final @NotNull Map<String, Map<String, Color>> myPath2Palette;
   private final @NotNull List<FilePath> myPaths;
 
-  public VcsLogColorManagerImpl(@NotNull Set<? extends VirtualFile> roots) {
-    this(ContainerUtil.map(ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName)),
-                           file -> VcsUtil.getFilePath(file)));
-  }
-
-  public VcsLogColorManagerImpl(@NotNull Collection<? extends FilePath> paths) {
+  public VcsLogColorManagerImpl(
+    @NotNull Collection<? extends FilePath> paths,
+    @NotNull List<Color> defaultPalette,
+    AdditionalColorSpace... additionalColorSpaces
+  ) {
     myPaths = new ArrayList<>(paths);
-    myPaths2Colors = new HashMap<>();
-    for (int i = 0; i < myPaths.size(); i++) {
-      myPaths2Colors.put(myPaths.get(i).getPath(), getColor(i, myPaths.size()));
+    myPath2Palette = new HashMap<>();
+
+    defaultPalette = defaultPalette.isEmpty() ? List.of(getDefaultRootColor()) : new ArrayList<>(defaultPalette);
+    myPath2Palette.put(VcsLogColorManager.DEFAULT_COLOR_MODE, generateFromPalette(defaultPalette));
+
+    for (AdditionalColorSpace colorSpace : additionalColorSpaces) {
+      // do not allow to override default palette
+      if (colorSpace.colorMode.equals(VcsLogColorManager.DEFAULT_COLOR_MODE)) continue;
+
+      // allow additional palettes only the same size as the default
+      if (colorSpace.palette.size() != defaultPalette.size()) continue;
+
+      Map<String, Color> colors = generateFromPalette(new ArrayList<>(colorSpace.palette));
+      myPath2Palette.put(colorSpace.colorMode, colors);
     }
   }
 
-  private static @NotNull Color getColor(int rootNumber, int rootsCount) {
+  private Map<String, Color> generateFromPalette(@NotNull List<Color> defaultPalette) {
+    Map<String, Color> path2Palette = new HashMap<>();
+
+    for (int i = 0; i < myPaths.size(); i++) {
+      path2Palette.put(myPaths.get(i).getPath(), getColor(i, myPaths.size(), defaultPalette));
+    }
+    return path2Palette;
+  }
+
+  private static @NotNull Color getColor(int rootNumber, int rootsCount, @NotNull List<Color> palette) {
     Color color;
-    if (rootNumber >= ROOT_COLORS.length) {
-      double balance = ((double)(rootNumber / ROOT_COLORS.length)) / (rootsCount / ROOT_COLORS.length);
-      Color mix = ColorUtil.mix(ROOT_COLORS[rootNumber % ROOT_COLORS.length], ROOT_COLORS[(rootNumber + 1) % ROOT_COLORS.length], balance);
-      int tones = (int)(Math.abs(balance - 0.5) * 2 * (rootsCount / ROOT_COLORS.length) + 1);
-      color = new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones));
+    int size = palette.size();
+    if (rootNumber >= size) {
+      double balance = ((double)(rootNumber / size)) / (rootsCount / size);
+      Color mix = ColorUtil.mix(palette.get(rootNumber % size), palette.get((rootNumber + 1) % size), balance);
+      int tones = (int)(Math.abs(balance - 0.5) * 2 * (rootsCount / size) + 1);
+      if (mix instanceof JBColor) {
+        color = JBColor.lazy(() -> new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones)));
+      }
+      else {
+        color = new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones));
+      }
     }
     else {
-      color = ROOT_COLORS[rootNumber];
+      color = palette.get(rootNumber);
     }
     return color;
   }
 
-  public static @NotNull JBColor getBackgroundColor(final @NotNull Color baseRootColor) {
-    return JBColor.lazy(() -> ColorUtil.mix(baseRootColor, UIUtil.getTableBackground(), 0.75));
+  @Override
+  public @NotNull Color getPathColor(@NotNull FilePath path, @NotNull String colorMode) {
+    return getColor(path.getPath(), colorMode);
   }
 
   @Override
-  public @NotNull Color getPathColor(@NotNull FilePath path) {
-    return getColor(path.getPath());
+  public @NotNull Color getRootColor(@NotNull VirtualFile root, @NotNull String colorMode) {
+    return getColor(root.getPath(), colorMode);
   }
 
-  @Override
-  public @NotNull Color getRootColor(@NotNull VirtualFile root) {
-    return getColor(root.getPath());
-  }
-
-  private @NotNull Color getColor(@NotNull String path) {
-    Color color = myPaths2Colors.get(path);
+  private @NotNull Color getColor(@NotNull String path, @NotNull String colorMode) {
+    Map<String, Color> paletteToColor = myPath2Palette.getOrDefault(colorMode, myPath2Palette.get(DEFAULT_COLOR_MODE));
+    Color color = paletteToColor.get(path);
     if (color == null) {
-      LOG.error("No color record for path " + path + ". All paths: " + myPaths2Colors);
+      LOG.error("No color record for path " + path + ". All paths: " + paletteToColor);
       color = getDefaultRootColor();
     }
     return color;
@@ -84,5 +101,15 @@ public final class VcsLogColorManagerImpl implements VcsLogColorManager {
   @Override
   public @NotNull Collection<FilePath> getPaths() {
     return myPaths;
+  }
+
+  static class AdditionalColorSpace {
+    private final String colorMode;
+    private final List<Color> palette;
+
+    AdditionalColorSpace(@NotNull String colorMode, @NotNull List<Color> palette) {
+      this.colorMode = colorMode;
+      this.palette = palette;
+    }
   }
 }

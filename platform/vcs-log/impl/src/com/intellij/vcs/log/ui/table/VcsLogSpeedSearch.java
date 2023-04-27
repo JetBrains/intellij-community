@@ -15,7 +15,7 @@ import java.util.ListIterator;
 
 public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
   public VcsLogSpeedSearch(@NotNull VcsLogGraphTable component) {
-    super(component);
+    super(component, null);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
 
   protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata, @NotNull List<? extends VcsLogMetadataColumn> columns) {
     if (metadata == null) return false;
-    return columns.stream().anyMatch(column -> compare(column.getValue(myComponent.getModel(), metadata), pattern));
+    return ContainerUtil.exists(columns, column -> compare(column.getValue(myComponent.getModel(), metadata), pattern));
   }
 
   protected @Nullable VcsCommitMetadata getCommitMetadata(int row) {

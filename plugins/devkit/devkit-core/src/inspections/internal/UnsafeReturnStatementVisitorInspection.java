@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UElementKt;
@@ -32,6 +33,16 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspection
 
   private static final @NonNls String EMPTY_VISIT_LAMBDA_METHOD = "public void visitLambdaExpression(PsiLambdaExpression expression) {}";
   private static final @NonNls String EMPTY_VISIT_CLASS_METHOD = "public void visitClass(PsiClass aClass) {}";
+
+  public UnsafeReturnStatementVisitorInspection() {
+    super(UClass.class);
+  }
+
+  @Override
+  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
+    return super.isAllowed(holder) &&
+           DevKitInspectionUtil.isClassAvailable(holder, BASE_VISITOR_NAME);
+  }
 
   @Override
   public ProblemDescriptor @Nullable [] checkClass(@NotNull UClass uClass, @NotNull InspectionManager manager, boolean isOnTheFly) {

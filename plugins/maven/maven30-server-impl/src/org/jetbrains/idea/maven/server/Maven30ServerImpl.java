@@ -18,15 +18,14 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import org.jetbrains.idea.maven.server.security.MavenToken;
 
-public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer {
-
+public class Maven30ServerImpl extends MavenWatchdogAware implements MavenServer {
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
@@ -99,7 +98,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
   public MavenPullServerLogger createPullLogger(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      MavenServerLoggerWrapper result = Maven3ServerGlobals.getLogger();
+      MavenServerLoggerWrapper result = MavenServerGlobals.getLogger();
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
@@ -112,7 +111,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
   public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      MavenServerDownloadListenerWrapper result = Maven3ServerGlobals.getDownloadListener();
+      MavenServerDownloadListenerWrapper result = MavenServerGlobals.getDownloadListener();
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }

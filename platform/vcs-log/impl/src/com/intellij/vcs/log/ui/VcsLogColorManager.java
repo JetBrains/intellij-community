@@ -16,19 +16,29 @@ import java.util.Collection;
  * @author Kirill Likhodedov
  */
 public interface VcsLogColorManager {
+  String DEFAULT_COLOR_MODE = "default";
 
   /**
    * Returns the color assigned to the given repository root.
    */
   default @NotNull Color getRootColor(@NotNull VirtualFile root) {
-    return getPathColor(VcsUtil.getFilePath(root));
+    return getRootColor(root, DEFAULT_COLOR_MODE);
+  }
+
+  default @NotNull Color getRootColor(@NotNull VirtualFile root, @NotNull String colorMode) {
+    return getPathColor(VcsUtil.getFilePath(root), colorMode);
   }
 
   /**
    * Returns the color assigned to the given file path.
    */
   @NotNull
-  Color getPathColor(@NotNull FilePath path);
+  default Color getPathColor(@NotNull FilePath path) {
+    return getPathColor(path, DEFAULT_COLOR_MODE);
+  }
+
+  @NotNull
+  Color getPathColor(@NotNull FilePath path, @NotNull String colorMode);
 
   /**
    * Tells if there are several paths currently shown in the log.

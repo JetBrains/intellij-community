@@ -11,9 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiManager
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.UsageInfo2UsageAdapter
@@ -26,6 +24,7 @@ import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -138,21 +137,8 @@ class FindImplicitNothingAction : AnAction() {
 
     private fun allKotlinFiles(filesOrDirs: Array<VirtualFile>, project: Project): Sequence<KtFile> {
         val manager = PsiManager.getInstance(project)
-        return allFiles(filesOrDirs)
+        return getAllFilesRecursively(filesOrDirs)
             .asSequence()
             .mapNotNull { manager.findFile(it) as? KtFile }
-    }
-
-    private fun allFiles(filesOrDirs: Array<VirtualFile>): Collection<VirtualFile> {
-        val result = ArrayList<VirtualFile>()
-        for (file in filesOrDirs) {
-            VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Unit>() {
-                override fun visitFile(file: VirtualFile): Boolean {
-                    result.add(file)
-                    return true
-                }
-            })
-        }
-        return result
     }
 }

@@ -38,8 +38,7 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.MemberScopeImpl
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.SimpleType
+import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
 
 class CodeFragmentCodegenException(val reason: Exception) : Exception()
@@ -194,10 +193,18 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
             CallableMemberDescriptor.Kind.SYNTHESIZED, classDescriptor.source
         )
 
+        val typeParameterUpperBoundEraser = TypeParameterUpperBoundEraser(ErasureProjectionComputer())
+        val erasureTypeAttributes = ErasureTypeAttributes(TypeUsage.COMMON)
+
+        fun upperBoundIfTypeParameter(type: KotlinType) =
+            TypeUtils.getTypeParameterDescriptorOrNull(type)
+                ?.let { typeParameterUpperBoundEraser.getErasedUpperBound(it, erasureTypeAttributes) }
+                ?: type
+
         val parameters = parameterInfo.parameters.mapIndexed { index, parameter ->
             ValueParameterDescriptorImpl(
                 methodDescriptor, null, index, Annotations.EMPTY, Name.identifier("p$index"),
-                parameter.targetType,
+                upperBoundIfTypeParameter(parameter.targetType),
                 declaresDefaultValue = false,
                 isCrossinline = false,
                 isNoinline = false,
@@ -208,7 +215,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         methodDescriptor.initialize(
             null, classDescriptor.thisAsReceiverParameter, emptyList(), emptyList(),
-            parameters, returnType, Modality.FINAL, DescriptorVisibilities.PUBLIC
+            parameters, upperBoundIfTypeParameter(returnType), Modality.FINAL, DescriptorVisibilities.PUBLIC
         )
 
         val memberScope = EvaluatorMemberScopeForMethod(methodDescriptor)

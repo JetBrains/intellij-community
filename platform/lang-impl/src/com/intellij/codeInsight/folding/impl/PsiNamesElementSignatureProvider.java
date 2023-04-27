@@ -175,7 +175,9 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       if (StringUtil.isEmpty(name)) {
         return null;
       }
-      int index = getChildIndex(named, element.getParent(), name, PsiNamedElement.class);
+      PsiElement parent = element.getParent();
+      if (parent == null) return null;
+      int index = getChildIndex(named, parent, name, PsiNamedElement.class);
       if (index < 0) return null;
       StringBuilder bufferToUse = buffer;
       if (bufferToUse == null) {

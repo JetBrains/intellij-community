@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.indexing.DataIndexer
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames.*
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
@@ -14,13 +16,21 @@ import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
 
-object KotlinJvmMetadataVersionIndex : KotlinMetadataVersionIndexBase<KotlinJvmMetadataVersionIndex, JvmMetadataVersion>(
-    KotlinJvmMetadataVersionIndex::class.java
-) {
+private val LOG = Logger.getInstance(KotlinJvmMetadataVersionIndex::class.java)
+
+class KotlinJvmMetadataVersionIndex internal constructor() : KotlinMetadataVersionIndexBase<JvmMetadataVersion>() {
+    companion object {
+        val NAME: ID<JvmMetadataVersion, Void> = ID.create(KotlinJvmMetadataVersionIndex::class.java.canonicalName)
+    }
+
+    override fun getName(): ID<JvmMetadataVersion, Void> = NAME
+
     override fun createBinaryVersion(versionArray: IntArray, extraBoolean: Boolean?): JvmMetadataVersion =
         JvmMetadataVersion(versionArray, isStrictSemantics = extraBoolean!!)
 
     override fun getIndexer() = INDEXER
+
+    override fun getLogger() = LOG
 
     override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
 

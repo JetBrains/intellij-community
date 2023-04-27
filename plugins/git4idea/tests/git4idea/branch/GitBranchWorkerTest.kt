@@ -711,7 +711,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     mergeBranch("master2", TestUiHandler(project))
 
     assertNotNull("Success message wasn't shown", vcsNotifier.lastNotification)
-    assertEquals("Success message is incorrect", "Already up-to-date<br/><a href=\"delete\">Delete master2</a>",
+    assertEquals("Success message is incorrect", "Already up to date<br/><a href=\"delete\">Delete master2</a>",
                  vcsNotifier.lastNotification.content)
   }
 

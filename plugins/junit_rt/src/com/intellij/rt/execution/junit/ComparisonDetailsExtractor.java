@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ComparisonDetailsExtractor  {
-  private static final Map<Class<?>, Field> EXPECTED = new HashMap<Class<?>, Field>();
-  private static final Map<Class<?>, Field> ACTUAL = new HashMap<Class<?>, Field>();
+  private static final Map<Class<?>, Field> EXPECTED = new HashMap<>();
+  private static final Map<Class<?>, Field> ACTUAL = new HashMap<>();
   protected final String myActual;
   protected final String myExpected;
   private final Throwable myAssertion;

@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -61,7 +62,7 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
       result = JBUI.insets("PopupMenu.borderInsets", DEFAULT_INSETS);
     }
     else {
-      result = JBUI.insets("Menu.borderInsets", DEFAULT_INSETS);
+      result = JBUI.insets("Menu.borderInsets", ExperimentalUI.isNewUI() ? JBUI.insets(6, 1) : DEFAULT_INSETS);
     }
     return result.asUIResource();
   }

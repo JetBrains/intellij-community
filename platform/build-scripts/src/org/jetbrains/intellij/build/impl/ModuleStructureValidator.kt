@@ -37,28 +37,16 @@ private val nonPathAttributes = hashSetOf(
 
 private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object")
-private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.tests")
+private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.testFramework")
 
-class ModuleStructureValidator(
-  private val context: BuildContext,
-  moduleJars: Map<String, List<String>>,
-) {
-  private val moduleJars = MultiMap<String, String>()
-  private val moduleNames = HashSet<String>()
+class ModuleStructureValidator(private val context: BuildContext, modules: Collection<ModuleItem>) {
+  // filter out jars with relative paths in name
+  private val modules: Collection<ModuleItem> = modules.filter {
+    !it.relativeOutputFile.contains("\\") || !it.relativeOutputFile.contains('/')
+  }
+
   private val errors = ArrayList<AssertionError>()
   private val libraryFiles = HashMap<JpsLibrary, Set<String>>()
-
-  init {
-    for ((jar, modules) in moduleJars) {
-      // filter out jars with relative paths in name
-      if (jar.contains("\\") || jar.contains('/')) {
-        continue
-      }
-
-      this.moduleJars.put(jar, modules)
-      this.moduleNames.addAll(modules)
-    }
-  }
 
   private fun getLibraryFiles(library: JpsLibrary): Set<String> {
     @Suppress("NAME_SHADOWING")
@@ -79,23 +67,24 @@ class ModuleStructureValidator(
   fun validate(): List<AssertionError> {
     errors.clear()
 
-    context.messages.info("Validating jars...")
+    val messages = context.messages
+    messages.info("Validating jars...")
     validateJarModules()
 
-    context.messages.info("Validating modules...")
+    messages.info("Validating modules...")
     val visitedModules = HashSet<JpsModule>()
-    for (moduleName in moduleNames) {
+    for (moduleName in modules.map { it.moduleName }.distinct()) {
       if (ignoreModules.contains(moduleName)) {
         continue
       }
       validateModuleDependencies(visitedModules, context.findRequiredModule(moduleName))
     }
 
-    context.messages.info("Validating xml descriptors...")
+    messages.info("Validating xml descriptors...")
     validateXmlDescriptors()
 
     if (errors.isEmpty()) {
-      context.messages.info("Validation finished successfully")
+      messages.info("Validation finished successfully")
     }
 
     return errors
@@ -103,10 +92,8 @@ class ModuleStructureValidator(
 
   private fun validateJarModules() {
     val modulesInJars = MultiMap<String, String>()
-    for (jar in moduleJars.keySet()) {
-      for (module in moduleJars.get(jar)) {
-        modulesInJars.putValue(module, jar)
-      }
+    for (item in modules) {
+      modulesInJars.putValue(item.moduleName, item.relativeOutputFile)
     }
 
     for (module in modulesInJars.keySet()) {
@@ -140,7 +127,7 @@ class ModuleStructureValidator(
           continue
         }
 
-        if (!moduleNames.contains(dependantModule.name)) {
+        if (modules.none { it.moduleName == dependantModule.name }) {
           errors.add(AssertionError("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name}]", null))
           continue
         }
@@ -153,7 +140,7 @@ class ModuleStructureValidator(
   private fun validateXmlDescriptors() {
     val roots = ArrayList<Path>()
     val libraries = HashSet<JpsLibrary>()
-    for (moduleName in moduleNames) {
+    for (moduleName in modules.map { it.moduleName }.distinct()) {
       val module = context.findRequiredModule(moduleName)
       for (root in module.sourceRoots) {
         roots.add(root.path)
@@ -220,7 +207,7 @@ class ModuleStructureValidator(
   private fun validateXmlRegistrations(descriptors: HashSet<Path>) {
     val classes = HashSet<String>(predefinedTypes)
     val visitedLibraries = HashSet<String>()
-    for (moduleName in moduleNames) {
+    for (moduleName in modules.map { it.moduleName }.distinct()) {
       val jpsModule = context.findRequiredModule(moduleName)
 
       val outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(jpsModule, false)!!.toPath()
@@ -270,7 +257,7 @@ class ModuleStructureValidator(
       }
     }
 
-    context.messages.info("Found ${classes.size} classes in ${moduleNames.size} modules and ${visitedLibraries.size} libraries")
+    context.messages.info("Found ${classes.size} classes in ${modules.map { it.moduleName }.distinct().size} modules and ${visitedLibraries.size} libraries")
 
     for (descriptor in descriptors) {
       val xml = Files.newInputStream(descriptor).use(::readXmlAsModel)

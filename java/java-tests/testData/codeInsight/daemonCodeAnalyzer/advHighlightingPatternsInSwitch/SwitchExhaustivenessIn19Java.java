@@ -166,6 +166,82 @@ public class Basic {
       case Pair<I>(D d,C c) -> { }
       case Pair<I>(D d,D d2) -> { }
     }
+
+    switch(pairI.x()) {
+      case C c when true -> {}
+      case D d -> {}
+    }
   }
 
+  record R(int x) {
+  }
+
+  void emptyRecord(R r) {
+    switch (<error descr="'switch' statement does not have any case clauses">r</error>) { //error
+    }
+  }
+  void emptyRecord2(R r) {
+    switch (<error descr="'switch' statement does not cover all possible input values">r</error>) { //error
+      case null -> System.out.println("1");
+    }
+  }
+  void emptyRecord3(R r) {
+    switch (<error descr="'switch' statement does not cover all possible input values">r</error>) { //error
+      case R r2 when r2.x() == 1 -> System.out.println("1");
+    }
+  }
+  void emptyInteger(int i) {
+    switch (i) {
+    }
+  }
+
+  void emptyObject(Object o) {
+    switch (<error descr="'switch' statement does not have any case clauses">o</error>) {  //error
+    }
+  }
+
+  void emptyObject(Object o) {
+    switch (<error descr="'switch' statement does not cover all possible input values">o</error>) {  //error
+      case null -> System.out.println(1);
+    }
+  }
+
+  void emptyObject2(Object o) {
+    switch (<error descr="'switch' statement does not cover all possible input values">o</error>) {
+      case String s when s.length()==1 -> System.out.println(1);
+    }
+  }
+
+  void emptyRecord4(R r) {
+    switch (r) {
+      case R r2 when r2.x() == 1  -> System.out.println(1);
+      case R r2 -> System.out.println("1");
+    }
+  }
+  void emptyRecord5(R r) {
+    switch (<error descr="'switch' statement does not cover all possible input values">r</error>) { //error
+      case R r2 when r2.x() == 1  -> System.out.println(1);
+    }
+  }
+
+  void emptyRecord6(R r) {
+    switch (r) {
+      default -> System.out.println("1");
+    }
+  }
+
+  void exhaustinvenessWithInterface(Pair<I> pairI) {
+    switch (pairI) {
+      case Pair<I>(C fst, D snd) -> {}
+      case Pair<I>(I fst, C snd) -> {}
+      case Pair<I>(D fst, I snd) -> {}
+    }
+  }
+  void exhaustinvenessWithInterface2(Pair<? extends I> pairI) {
+    switch (pairI) {
+      case Pair<? extends I>(C fst, D snd) -> {}
+      case Pair<? extends I>(I fst, C snd) -> {}
+      case Pair<? extends I>(D fst, I snd) -> {}
+    }
+  }
 }

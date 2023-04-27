@@ -165,7 +165,6 @@
     },
 
     "EditorTabs": {
-      "tabInsets": "0,8,0,8",
       "underlinedTabBackground": "#4E5254"
     },
 
@@ -181,7 +180,6 @@
     "Group.separatorColor": "#515151",
 
     "HelpTooltip": {
-      "defaultTextBorderInsets": "8,10,10,13",
       "descriptionSizeDelta": {
         "os.linux": -2,
         "os.mac": -1
@@ -192,7 +190,6 @@
       "mouseCursorOffset": {
         "os.mac": 17
       },
-      "smallTextBorderInsets": "6,10,7,12",
       "xOffset": 1,
       "yOffset": 1
     },
@@ -491,6 +488,11 @@
       }
     },
 
+    "GotItTooltip": {
+      "codeBackground": "#4C5052",
+      "codeBorderColor": "#5E6060"
+    },
+
     "ToolWindow": {
       "Header.background": "#3B4754",
       "Header.inactiveBackground": "#3C3F41",
@@ -562,13 +564,11 @@
     "MainToolbar": {
       "background": "#3c3f41",
       "Icon": {
-        "borderInsets": "10,10,10,10",
         "background": "#3C3F41",
         "hoverBackground": "#4C5052",
         "pressedBackground": "#4C5052"
       },
       "Dropdown": {
-        "borderInsets": "3,5,3,5",
         "background": "#3C3F41",
         "hoverBackground": "#4C5052",
         "pressedBackground": "#4C5052"
@@ -605,9 +605,11 @@
     },
     "RunWidget" : {
       "foreground": "#ffffff",
+      "runModeIconColor": "#5fad65",
       "disabledForeground": "#FFFFFF66",
       "background": "#3369d6",
       "runningBackground": "#599e5e",
+      "stopBackground": "#c94f4f",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028",
       "separatorColor": "#FFFFFF40"

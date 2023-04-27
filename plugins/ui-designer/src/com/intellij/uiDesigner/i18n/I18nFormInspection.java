@@ -95,13 +95,13 @@ public class I18nFormInspection extends StringDescriptorInspection {
     }
   }
 
-  private static LocalQuickFix @Nullable [] createBatchFixes() {
+  private static @NotNull LocalQuickFix @Nullable [] createBatchFixes() {
     return new LocalQuickFix[]{new I18nizeFormBatchFix()};
   }
 
   interface FixesProvider extends EditorQuickFixProvider, LocalQuickFixProvider {
     @Override
-    default LocalQuickFix @Nullable [] getQuickFixes() {
+    default @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       return createBatchFixes();
     }
   }

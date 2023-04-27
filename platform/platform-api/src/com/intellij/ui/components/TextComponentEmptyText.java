@@ -57,6 +57,10 @@ public class TextComponentEmptyText extends StatusText {
     paint(myOwner, g);
   }
 
+  public void resetFontToOwnerFont() {
+    setFont(myOwner.getFont());
+  }
+
   @Override
   @SuppressWarnings({"deprecation", "unchecked"})
   protected boolean isStatusVisible() {

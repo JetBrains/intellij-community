@@ -78,6 +78,26 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/annotations/NoSetterParameterAutopopup.kt");
             }
 
+            @TestMetadata("OnFunction.kt")
+            public void testOnFunction() throws Exception {
+                runTest("../testData/basic/common/annotations/OnFunction.kt");
+            }
+
+            @TestMetadata("OnFunction2.kt")
+            public void testOnFunction2() throws Exception {
+                runTest("../testData/basic/common/annotations/OnFunction2.kt");
+            }
+
+            @TestMetadata("OnFunctionWithoutDot.kt")
+            public void testOnFunctionWithoutDot() throws Exception {
+                runTest("../testData/basic/common/annotations/OnFunctionWithoutDot.kt");
+            }
+
+            @TestMetadata("OnFunctionWithoutDot2.kt")
+            public void testOnFunctionWithoutDot2() throws Exception {
+                runTest("../testData/basic/common/annotations/OnFunctionWithoutDot2.kt");
+            }
+
             @TestMetadata("OnlyAnnotations.kt")
             public void testOnlyAnnotations() throws Exception {
                 runTest("../testData/basic/common/annotations/OnlyAnnotations.kt");
@@ -2405,6 +2425,16 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/DataClassMembers2.kt");
             }
 
+            @TestMetadata("EnumEntriesInsideAbsentWhenFeatureDisabled.kt")
+            public void testEnumEntriesInsideAbsentWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumEntriesInsideAbsentWhenFeatureDisabled.kt");
+            }
+
+            @TestMetadata("EnumEntriesQualifiedAbsentWhenFeatureDisabled.kt")
+            public void testEnumEntriesQualifiedAbsentWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumEntriesQualifiedAbsentWhenFeatureDisabled.kt");
+            }
+
             @TestMetadata("EnumItemsThroughChainedTypeAlias.kt")
             public void testEnumItemsThroughChainedTypeAlias() throws Exception {
                 runTest("../testData/basic/common/EnumItemsThroughChainedTypeAlias.kt");
@@ -2413,6 +2443,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("EnumItemsThroughSingleTypeAlias.kt")
             public void testEnumItemsThroughSingleTypeAlias() throws Exception {
                 runTest("../testData/basic/common/EnumItemsThroughSingleTypeAlias.kt");
+            }
+
+            @TestMetadata("EnumUserDefinedEntriesNotAbsentWhenFeatureDisabled.kt")
+            public void testEnumUserDefinedEntriesNotAbsentWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumUserDefinedEntriesNotAbsentWhenFeatureDisabled.kt");
             }
 
             @TestMetadata("EnumValuesMethodLowerPriority.kt")
@@ -2778,6 +2813,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion4.kt")
             public void testKeywordsAreLowInParameterTypeCompletion4() throws Exception {
                 runTest("../testData/basic/common/KeywordsAreLowInParameterTypeCompletion4.kt");
+            }
+
+            @TestMetadata("localInnerClass.kt")
+            public void testLocalInnerClass() throws Exception {
+                runTest("../testData/basic/common/localInnerClass.kt");
             }
 
             @TestMetadata("LocalMultideclarationValues.kt")
@@ -3370,11 +3410,6 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("ExtensionFromStandardLibrary.kt")
             public void testExtensionFromStandardLibrary() throws Exception {
                 runTest("../testData/basic/java/ExtensionFromStandardLibrary.kt");
-            }
-
-            @TestMetadata("FlowCollectMethodLowerPriority.kt")
-            public void testFlowCollectMethodLowerPriority() throws Exception {
-                runTest("../testData/basic/java/FlowCollectMethodLowerPriority.kt");
             }
 
             @TestMetadata("InPackage.kt")

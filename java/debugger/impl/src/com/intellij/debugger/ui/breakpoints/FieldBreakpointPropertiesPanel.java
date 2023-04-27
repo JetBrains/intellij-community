@@ -44,8 +44,8 @@ public class FieldBreakpointPropertiesPanel extends XBreakpointCustomPropertiesP
   public JComponent getComponent() {
     JPanel _panel;
     JPanel _panel0;
-    myWatchAccessCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.filed.breakpoint.properties.panel.field.access"));
-    myWatchModificationCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.filed.breakpoint.properties.panel.field.modification"));
+    myWatchAccessCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.field.breakpoint.properties.panel.field.access"));
+    myWatchModificationCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.field.breakpoint.properties.panel.field.modification"));
     DialogUtil.registerMnemonic(myWatchAccessCheckBox);
     DialogUtil.registerMnemonic(myWatchModificationCheckBox);
 

@@ -224,7 +224,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
         PsiExpression initializer = variable.getInitializer();
         if (!ConstructionUtils.isEmptyCollectionInitializer(initializer)) return null;
         if (!PsiTypesUtil.classNameEquals(initializer.getType(), collectionClass)) return null;
-        Set<PsiElement> refs = ContainerUtil.set(DefUseUtil.getRefs(block, variable, initializer));
+        Set<PsiElement> refs = ContainerUtil.newHashSet(DefUseUtil.getRefs(block, variable, initializer));
         refs.remove(expression);
         PsiStatement cur = declaration;
         List<PsiExpression> contents = new ArrayList<>();

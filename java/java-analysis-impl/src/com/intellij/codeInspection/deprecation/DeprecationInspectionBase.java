@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -76,7 +76,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     LocalQuickFix replacementQuickFix = getReplacementQuickFix(element, elementToHighlight);
 
     holder.registerProblem(elementToHighlight, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement,
-                           replacementQuickFix);
+                           LocalQuickFix.notNullElements(replacementQuickFix));
   }
 
   private static boolean isElementInsideImportStatement(@NotNull PsiElement elementToHighlight) {
@@ -94,18 +94,19 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
   }
 
   @Nullable
-  private static LocalQuickFix getReplacementQuickFix(@NotNull PsiElement refElement, @NotNull PsiElement elementToHighlight) {
+  public static LocalQuickFix getReplacementQuickFix(@NotNull PsiModifierListOwner deprecatedElement, 
+                                                      @NotNull PsiElement elementToHighlight) {
     PsiMethodCallExpression methodCall = getMethodCall(elementToHighlight);
-    if (refElement instanceof PsiMethod && methodCall != null) {
-      PsiMethod replacement = findReplacementInJavaDoc((PsiMethod)refElement, methodCall);
+    if (deprecatedElement instanceof PsiMethod method && methodCall != null) {
+      PsiMethod replacement = findReplacementInJavaDoc(method, methodCall);
       if (replacement != null) {
         return new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement);
       }
     }
-    if (refElement instanceof PsiField) {
+    if (deprecatedElement instanceof PsiField field) {
       PsiReferenceExpression referenceExpression = getFieldReferenceExpression(elementToHighlight);
       if (referenceExpression != null) {
-        PsiMember replacement = findReplacementInJavaDoc((PsiField)refElement, referenceExpression);
+        PsiMember replacement = findReplacementInJavaDoc(field, referenceExpression);
         if (replacement != null) {
           return new ReplaceFieldReferenceFix(referenceExpression, replacement);
         }

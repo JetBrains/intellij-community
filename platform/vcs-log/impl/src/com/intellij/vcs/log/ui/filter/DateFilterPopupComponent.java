@@ -51,7 +51,7 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, Fi
   }
 
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     Calendar cal = Calendar.getInstance();
     cal.setTime(new Date());
     cal.add(Calendar.DAY_OF_YEAR, -1);

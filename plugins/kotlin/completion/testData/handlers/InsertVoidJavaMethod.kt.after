@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 import java.io.File
 
 fun test() {
@@ -5,3 +7,5 @@ fun test() {
   // Should be no ;
   f.deleteOnExit()
 }
+
+// AUTOCOMPLETE_SETTING: true

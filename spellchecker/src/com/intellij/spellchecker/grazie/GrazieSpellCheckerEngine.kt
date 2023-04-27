@@ -1,14 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.spellchecker.grazie
 
+import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.nlp.phonetics.metaphone.DoubleMetaphone
+import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
 import ai.grazie.spell.GrazieSpeller
 import ai.grazie.spell.GrazieSplittingSpeller
 import ai.grazie.spell.dictionary.RuleDictionary
 import ai.grazie.spell.dictionary.rule.IgnoreRuleDictionary
+import ai.grazie.spell.language.LanguageModel
+import ai.grazie.spell.lists.WordListWithFrequency
 import ai.grazie.spell.lists.hunspell.HunspellWordList
 import ai.grazie.spell.suggestion.filter.feature.RadiusSuggestionFilter
 import ai.grazie.spell.suggestion.ranker.*
@@ -35,17 +39,13 @@ import com.intellij.spellchecker.engine.Transformation
 import com.intellij.spellchecker.grazie.async.WordListLoader
 import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
-import com.intellij.util.childScope
 import kotlinx.coroutines.*
 
 @Service(Service.Level.PROJECT)
-internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine, Disposable {
-  @Suppress("DEPRECATION")
-  private val coroutineScope = project.coroutineScope.childScope()
-
+internal class GrazieSpellCheckerEngine(project: Project, private val coroutineScope: CoroutineScope) : SpellCheckerEngine, Disposable {
   override fun getTransformation(): Transformation = Transformation()
 
-  private val loader = WordListLoader(project)
+  private val loader = WordListLoader(project, coroutineScope)
   private val adapter = WordListAdapter()
 
   internal class SpellerLoadActivity : ProjectActivity {
@@ -96,25 +96,26 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine, 
       ),
       adapter
     )
-    val dictionary = GrazieSpeller.UserConfig.Dictionary(
-      dictionary = wordList,
+    return GrazieSpeller.UserConfig(model = buildModel(Language.ENGLISH, wordList))
+  }
+
+  private suspend fun buildModel(language: Language, wordList: WordListWithFrequency): LanguageModel {
+    return LanguageModel(
+      language = language,
+      words = wordList,
       rules = RuleDictionary.Aggregated(
         IgnoreRuleDictionary.standard(tooShortLength = 2),
         DictionaryResources.getReplacingRules("/rule/en", FromResourcesDataLoader)
       ),
+      ranker = LinearAggregatingSuggestionRanker(
+        JaroWinklerSuggestionRanker() to 0.43,
+        LevenshteinSuggestionRanker() to 0.20,
+        PhoneticSuggestionRanker(DoubleMetaphone()) to 0.11,
+        FrequencySuggestionRanker(wordList) to 0.23
+      ),
+      filter = RadiusSuggestionFilter(0.05),
+      normalizer = StripAccentsNormalizer(),
       isAlien = { !Alphabet.ENGLISH.matchAny(it) && adapter.isAlien(it) }
-    )
-    return GrazieSpeller.UserConfig(
-      dictionary,
-      model = GrazieSpeller.UserConfig.Model(
-        filter = RadiusSuggestionFilter(0.05),
-        ranker = LinearAggregatingSuggestionRanker(
-          JaroWinklerSuggestionRanker() to 0.43,
-          LevenshteinSuggestionRanker() to 0.20,
-          PhoneticSuggestionRanker(DoubleMetaphone()) to 0.11,
-          FrequencySuggestionRanker(wordList) to 0.23
-        )
-      )
     )
   }
 
@@ -133,7 +134,11 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine, 
   }
 
   override fun isCorrect(word: String): Boolean {
-    return !(speller ?: return true).isMisspelled(word = word, caseSensitive = false)
+    val speller = speller ?: return true
+    if (speller.isAlien(word)) {
+      return true
+    }
+    return !speller.isMisspelled(word = word, caseSensitive = false)
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {

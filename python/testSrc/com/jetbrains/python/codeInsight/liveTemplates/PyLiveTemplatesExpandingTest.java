@@ -84,4 +84,9 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
       doMultiFileTest();
     });
   }
+
+  // PY-41231
+  public void testIterableVariableWithTypeAnnotation() {
+    doMultiFileTest();
+  }
 }

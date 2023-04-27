@@ -3,12 +3,19 @@ package com.intellij.openapi.startup
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
 /**
- * @deprecated Use [ProjectActivity]
+ * ### Obsolescence notice
+ * This interface is obsolete in favor of [ProjectActivity].
+ *
+ * Reasoning: all activities should be executed in the background regardless of smart mode status.
+ * It's the responsibility of the implementation to schedule tasks in smart mode, or to dispatch some work to EDT -
+ * which can be done via `suspend` in [ProjectActivity.execute] easily.
  */
+// [IJPL-90](https://youtrack.jetbrains.com/issue/IJPL-90)
 @Obsolete
 interface StartupActivity {
   companion object {
@@ -23,20 +30,26 @@ interface StartupActivity {
    */
   interface RequiredForSmartMode : StartupActivity
 
+  /**
+   * See **obsolescence notice** on [StartupActivity].
+   */
   @Obsolete
   interface DumbAware : StartupActivity, com.intellij.openapi.project.DumbAware
 
+  /**
+   * See **obsolescence notice** on [StartupActivity].
+   */
   @Deprecated("Use ProjectPostStartupActivity")
   interface Background : StartupActivity, com.intellij.openapi.project.DumbAware
 }
 
 /**
- * Runs an activity on project open.
- * See [docs](https://youtrack.jetbrains.com/articles/IJPL-A-34/Startup-Activity) for details.
+ * Runs an activity after project open.
  *
  * @see StartupManager
  * @see com.intellij.ide.util.RunOnceUtil
  */
+@ApiStatus.OverrideOnly
 interface ProjectActivity {
   suspend fun execute(project: Project)
 }

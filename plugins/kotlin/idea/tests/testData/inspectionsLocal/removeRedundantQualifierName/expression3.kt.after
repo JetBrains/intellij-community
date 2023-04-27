@@ -6,3 +6,5 @@ fun main() {
     val b = Int.MAX_VALUE
     val c = kotlin.Int.Companion::MAX_VALUE
 }
+
+// IGNORE_FIR

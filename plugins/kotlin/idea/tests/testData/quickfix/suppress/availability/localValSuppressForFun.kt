@@ -3,3 +3,5 @@
 fun foo() {
     val a: String?<caret>? = null
 }
+
+// IGNORE_FIR

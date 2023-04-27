@@ -4,6 +4,7 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -66,11 +67,18 @@ public final class IntroduceTargetChooser {
                                                         @NotNull @NlsContexts.PopupTitle String title,
                                                         int selection,
                                                         @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger) {
-    ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
-      .finishOnUiThread(ModalityState.NON_MODAL, targets ->
-        showIntroduceTargetChooser(editor, targets, target -> callback.pass(target.getPlace()), title, selection))
-      .expireWhen(() -> editor.isDisposed())
-      .submit(AppExecutorUtil.getAppExecutorService());
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      List<MyIntroduceTarget<T>> targets = ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t)));
+      showIntroduceTargetChooser(editor, targets, target -> callback.accept(target.getPlace()), title, selection);
+    }
+    else {
+      ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
+        .finishOnUiThread(ModalityState.NON_MODAL, targets ->
+          showIntroduceTargetChooser(editor, targets, target -> callback.accept(target.getPlace()), title, selection))
+        .expireWhen(() -> editor.isDisposed())
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,
@@ -78,12 +86,12 @@ public final class IntroduceTargetChooser {
                                                                             @NotNull Consumer<? super T> callback,
                                                                             @NotNull @NlsContexts.PopupTitle String title,
                                                                             int selection) {
-    showIntroduceTargetChooser(editor, expressions, Pass.create(callback), title, null, selection);
+    showIntroduceTargetChooser(editor, expressions, callback, title, null, selection);
   }
 
   public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,
                                                                             @NotNull List<? extends T> expressions,
-                                                                            @NotNull Pass<? super T> callback,
+                                                                            @NotNull Consumer<? super T> callback,
                                                                             @NotNull @NlsContexts.PopupTitle String title,
                                                                             @Nullable JComponent southComponent,
                                                                             int selection) {
@@ -108,7 +116,7 @@ public final class IntroduceTargetChooser {
       })
       .setItemChosenCallback(expr -> {
         if (expr.isValid()) {
-          callback.pass(expr);
+          callback.accept(expr);
         }
       })
       .addListener(new JBPopupListener() {

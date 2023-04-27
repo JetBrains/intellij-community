@@ -1,12 +1,12 @@
 <keymap name="Mac OS X" parent="$default" version="1" disable-mnemonics="true">
-Ï  <action id="FileChooser.TogglePathBar">
-    <keyboard-shortcut first-keystroke="meta P"/>
+  <action id="FileChooser.GoToParent">
+    <keyboard-shortcut first-keystroke="meta UP"/>
   </action>
-  <action id="FileChooserList.Root">
+  <action id="FileChooser.GoToRoot">
     <keyboard-shortcut first-keystroke="meta SLASH"/>
   </action>
-  <action id="FileChooserList.LevelUp">
-    <keyboard-shortcut first-keystroke="meta UP"/>
+  <action id="FileChooser.TogglePathBar">
+    <keyboard-shortcut first-keystroke="meta P"/>
   </action>
 
   <action id="$Delete">
@@ -527,6 +527,15 @@
   </action>
   <action id="UiInspector">
     <mouse-shortcut keystroke="control alt button1"/>
+  </action>
+  <action id="ZoomInIdeAction">
+    <keyboard-shortcut first-keystroke="control alt EQUALS"/>
+  </action>
+  <action id="ZoomOutIdeAction">
+    <keyboard-shortcut first-keystroke="control alt MINUS"/>
+  </action>
+  <action id="ResetIdeScaleAction">
+    <keyboard-shortcut first-keystroke="control alt 0"/>
   </action>
 
   <action id="MainMenuButton.ShowMenu" />

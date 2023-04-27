@@ -26,6 +26,8 @@ public class MavenWrapperTestFixture {
   private final static String SNAPSHOT_URL_PATTERN =
     "https://repository.apache.org/content/repositories/snapshots/org/apache/maven/apache-maven/$version$/apache-maven-$versionWithoutSnapshot$-$timestamp$-$build$-bin.zip";
 
+  private final static String MAVEN_4_URL_PATTERN =
+    "https://dlcdn.apache.org/maven/maven-4/$version$/binaries/apache-maven-$version$-bin.zip";
   private final Project myProject;
   private final String myMavenVersion;
 
@@ -57,6 +59,9 @@ public class MavenWrapperTestFixture {
 
   @NotNull
   protected URI createURI() throws Exception {
+    if(myMavenVersion.contains("4.0.0.")) {
+      return URI.create(MAVEN_4_URL_PATTERN.replace("$version$", myMavenVersion));
+    }
     if (myMavenVersion.contains("SNAPSHOT")) {
       return createSnapshotUri();
     }

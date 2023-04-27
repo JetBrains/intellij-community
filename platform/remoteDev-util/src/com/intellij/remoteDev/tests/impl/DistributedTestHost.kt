@@ -11,7 +11,6 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
@@ -22,7 +21,7 @@ import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.RdTask
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.measureTimeMillis
 import com.jetbrains.rd.util.reactive.viewNotNull
 import org.jetbrains.annotations.ApiStatus
@@ -80,8 +79,8 @@ class DistributedTestHost {
   private fun createProtocol(hostAddress: InetAddress, port: Int) {
     logger.info("Creating protocol...")
 
-    val lifetime = LifetimeDefinition()
-    application.whenDisposed { lifetime.terminate() }
+    // EternalLifetime.createNested() is used intentionally to make sure logger session's lifetime is not terminated before the actual application stop.
+    val lifetime = EternalLifetime.createNested()
 
     val wire = SocketWire.Client(lifetime, DistributedTestIdeScheduler, port, AgentConstants.protocolName, hostAddress)
     val protocol =
@@ -89,15 +88,15 @@ class DistributedTestHost {
     val model = protocol.distributedTestModel
 
     logger.info("Advise for session...")
-    model.session.viewNotNull(lifetime) { lt, session ->
+    model.session.viewNotNull(lifetime) { sessionLifetime, session ->
       try {
-        logger.info("New test session: ${session.testClassName}.${session.testMethodName}")
         logger.info("Setting up loggers")
-        AgentTestLoggerFactory.bindSession(lt, session)
+        AgentTestLoggerFactory.bindSession(sessionLifetime, session)
         if (session.testMethodName == null) {
           logger.info("Test session without test class to run.")
         }
         else {
+          logger.info("New test session: ${session.testClassName}.${session.testMethodName}")
           // Create test class
           val testClass = Class.forName(session.testClassName)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
@@ -151,27 +150,51 @@ class DistributedTestHost {
               return@set result
             }
             catch (ex: Throwable) {
-              logger.warn("Test action ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully", ex)
+              val msg = "${session.agentId}: ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully"
+              logger.warn(msg, ex)
               if (!application.isHeadlessEnvironment)
                 actionTitle?.let { makeScreenshot("${it}_$screenshotOnFailureFileName") }
-              return@set RdTask.faulted(ex)
+              return@set RdTask.faulted(AssertionError(msg, ex))
             }
           }
+        }
 
-          session.shutdown.advise(lifetime) {
-            projectOrNull?.let {
+        session.closeProject.set { _, _ ->
+          when (projectOrNull) {
+            null ->
+              return@set RdTask.faulted(IllegalStateException("${session.agentId}: Nothing to close"))
+            else -> {
               logger.info("Close project...")
               try {
-                ProjectManagerEx.getInstanceEx().forceCloseProject(it)
+                ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+                return@set RdTask.fromResult(true)
               }
               catch (e: Exception) {
-                logger.error("Error on project closing", e)
+                logger.warn("Error on project closing", e)
+                return@set RdTask.fromResult(false)
               }
             }
-
-            logger.info("Shutdown application...")
-            application.exit(true, true, false)
           }
+        }
+
+        session.closeProjectIfOpened.set { _, _ ->
+          logger.info("Close project if it is opened...")
+          projectOrNull?.let {
+            try {
+              ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+              return@set RdTask.fromResult(true)
+            }
+            catch (e: Exception) {
+              logger.warn("Error on project closing", e)
+              return@set RdTask.fromResult(false)
+            }
+          } ?: return@set RdTask.fromResult(true)
+
+        }
+
+        session.shutdown.advise(lifetime) {
+          logger.info("Shutdown application...")
+          application.exit(true, true, false)
         }
 
         session.dumpThreads.adviseOn(lifetime, DistributedTestInplaceScheduler) {
@@ -195,7 +218,7 @@ class DistributedTestHost {
         session.ready.value = true
       }
       catch (ex: Throwable) {
-        logger.error("Test session initialization hasn't finished successfully", ex)
+        logger.warn("Test session initialization hasn't finished successfully", ex)
         session.ready.value = false
       }
     }
@@ -223,8 +246,10 @@ class DistributedTestHost {
           }
         }
       }
-      else
+      else {
         logger.info("Frame was empty when makeScreenshot was called")
+        result.complete(false)
+      }
     }
 
     IdeEventQueue.getInstance().flushQueue()
@@ -244,7 +269,7 @@ class DistributedTestHost {
         }
       }
     }
-    return true
+    return result.get()
   }
 
   private fun assertStateAfterTestMethod() {

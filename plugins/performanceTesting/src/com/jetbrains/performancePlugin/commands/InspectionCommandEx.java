@@ -39,7 +39,6 @@ import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import com.jetbrains.performancePlugin.utils.ResultsToFileProcessor;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -54,6 +53,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
@@ -265,12 +265,13 @@ public class InspectionCommandEx extends AbstractCommand {
   private static String buildIdentifier(@NotNull final String inspectionResultFilename,
                                         final String @Nullable [] inspectionTrueFields,
                                         @NotNull Project project) {
-    return StreamEx.of(project.getName(),
+
+    return Stream.of(project.getName(),
                        StringUtil.trimExtensions(inspectionResultFilename),
                        ArrayUtil.isEmpty(inspectionTrueFields) ? null : StringUtil.join(inspectionTrueFields, "-"),
                        "warning-count")
       .filter(nonNull())
-      .joining("-");
+      .collect(Collectors.joining("-"));
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

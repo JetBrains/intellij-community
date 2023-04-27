@@ -133,7 +133,7 @@ public final class OfflineDescriptorResolveResult {
   @NotNull
   private static CommonProblemDescriptor createProblemDescriptorFromOfflineDescriptor(@Nullable RefEntity element,
                                                                                       @NotNull OfflineProblemDescriptor offlineDescriptor,
-                                                                                      QuickFix<?> @NotNull [] fixes,
+                                                                                      @NotNull QuickFix<?> @NotNull [] fixes,
                                                                                       @NotNull Project project) {
     InspectionManager inspectionManager = InspectionManager.getInstance(project);
     if (element instanceof RefElement refElement) {
@@ -234,7 +234,7 @@ public final class OfflineDescriptorResolveResult {
     return PsiUtilCore.toPsiElementArray(result);
   }
 
-  private static QuickFix<?> @Nullable [] getFixes(@NotNull CommonProblemDescriptor descriptor,
+  private static @NotNull QuickFix<?> @Nullable [] getFixes(@NotNull CommonProblemDescriptor descriptor,
                                                 RefEntity entity,
                                                 InspectionToolPresentation presentation, List<String> hints) {
     List<QuickFix<?>> fixes = new ArrayList<>(hints == null ? 1 : hints.size());
@@ -298,7 +298,7 @@ public final class OfflineDescriptorResolveResult {
 
     private ProblemDescriptorBackedByRefElement(RefElement element,
                                                 OfflineProblemDescriptor descriptor,
-                                                QuickFix<?>[] fixes) {
+                                                @NotNull QuickFix<?> @NotNull [] fixes) {
       myElement = element;
       myOfflineProblemDescriptor = descriptor;
       myFixes = fixes;
@@ -368,7 +368,7 @@ public final class OfflineDescriptorResolveResult {
     }
 
     @Override
-    public QuickFix<?> @Nullable [] getFixes() {
+    public @NotNull QuickFix @Nullable [] getFixes() {
       return myFixes;
     }
   }

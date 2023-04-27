@@ -36,7 +36,7 @@ import org.jetbrains.annotations.TestOnly
 //internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2ObjectOpenHashMap<String, EntityId>>
 //internal typealias EntityId2JarDir = BidirectionalMultiMap<EntityId, VirtualFileUrl>
 internal typealias EntityId2Vfu = Long2ObjectOpenHashMap<Any>
-internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<String>>
+internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<EntityIdWithProperty>>
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
@@ -84,7 +84,7 @@ open class VirtualFileIndex internal constructor(
   override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
-      entityData.createEntity(entityStorage) to it.key.substring(it.value.asString().length + 1)
+      entityData.createEntity(entityStorage) to it.key.propertyName
     } ?: emptySequence()
 
   fun getIndexedJarDirectories(): Set<VirtualFileUrl> = entityId2JarDir.values
@@ -125,7 +125,8 @@ open class VirtualFileIndex internal constructor(
     assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
 
-  internal fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId.asString()}_$propertyName"
+  internal fun getCompositeKey(entityId: EntityId, propertyName: String) =
+    EntityIdWithProperty(entityId, propertyName)
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
@@ -260,7 +261,7 @@ open class VirtualFileIndex internal constructor(
           return vfu
         }
         else {
-          val result = CollectionFactory.createSmallMemoryFootprintSet<VirtualFileUrl>()
+          val result = CollectionFactory.createSmallMemoryFootprintSet<VirtualFileUrl>(DEFAULT_COLLECTION_SIZE)
           result.add(vfu as VirtualFileUrl)
           result.add(virtualFileUrl)
           return result
@@ -283,7 +284,7 @@ open class VirtualFileIndex internal constructor(
           is Pair<*, *> -> {
             property2Vfu as Pair<String, Any>
             if (property2Vfu.first != propertyName) {
-              val result = CollectionFactory.createSmallMemoryFootprintMap<String, Any>()
+              val result = CollectionFactory.createSmallMemoryFootprintMap<String, Any>(DEFAULT_COLLECTION_SIZE)
               result[property2Vfu.first] = property2Vfu.second
               result[propertyName] = virtualFileUrl
               result
@@ -348,7 +349,7 @@ open class VirtualFileIndex internal constructor(
         when (vfuMap) {
           is Map<*, *> -> {
             vfuMap as Map<String, *>
-            val copiedVfuMap = CollectionFactory.createSmallMemoryFootprintMap<String, Any>()
+            val copiedVfuMap = CollectionFactory.createSmallMemoryFootprintMap<String, Any>(vfuMap.size)
             vfuMap.forEach { copiedVfuMap[it.key] = getVirtualFileUrl(it.value!!) }
             copiedMap[entityId] = copiedVfuMap
           }
@@ -369,12 +370,20 @@ open class VirtualFileIndex internal constructor(
 
     companion object {
       private val LOG = logger<MutableVirtualFileIndex>()
+      private const val DEFAULT_COLLECTION_SIZE = 2
+
       const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
       fun from(other: VirtualFileIndex): MutableVirtualFileIndex {
         if (other is MutableVirtualFileIndex) other.freezed = true
         return MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId, other.entityId2JarDir)
       }
     }
+  }
+}
+
+internal data class EntityIdWithProperty(val entityId: EntityId, val propertyName: String) {
+  override fun toString(): String {
+    return "${entityId.asString()}_$propertyName"
   }
 }
 

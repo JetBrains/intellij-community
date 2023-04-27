@@ -28,7 +28,7 @@ import javax.swing.*
 import javax.swing.border.TitledBorder
 
 private val pathActionName: String
-  get() = ActionsBundle.message("action.CopySettingsPath.text", CommonBundle.settingsTitle())
+  get() = CommonBundle.message("action.settings.path.template.text", CommonBundle.settingsTitle())
 
 internal class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.message("action.CopySettingsPath.description"), null), DumbAware {
   init {

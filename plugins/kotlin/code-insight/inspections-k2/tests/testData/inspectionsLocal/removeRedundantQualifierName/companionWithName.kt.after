@@ -1,0 +1,11 @@
+package my.simple.name
+
+class Child {
+    fun f() {
+        value
+    }
+
+    companion object Helper {
+        val value = 1
+    }
+}

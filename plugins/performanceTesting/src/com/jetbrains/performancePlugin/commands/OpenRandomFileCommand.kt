@@ -1,7 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -21,7 +21,7 @@ class OpenRandomFileCommand(text: String, line: Int) : PlaybackCommandCoroutineA
 
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "openRandomFile"
-    private val cache: Cache<String, Set<VirtualFile>> = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build()
+    private val cache: Cache<String, Set<VirtualFile>> = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build()
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
@@ -64,34 +64,34 @@ class OpenRandomFileCommand(text: String, line: Int) : PlaybackCommandCoroutineA
     return LinkedHashSet(topFiles + midFiles + lastFiles)
   }
 
-  private fun fileTypeOf(extension: String): FileType {
-    return object : FileType {
-      override fun getName(): String {
-        return when (extension) {
-          "kt" -> "Kotlin"
-          "java" -> "JAVA"
-          else -> {
-            "default"
-          }
+}
+
+fun fileTypeOf(extension: String): FileType {
+  return object : FileType {
+    override fun getName(): String {
+      return when (extension) {
+        "kt" -> "Kotlin"
+        "java" -> "JAVA"
+        else -> {
+          "default"
         }
       }
+    }
 
-      override fun getDescription(): String {
-        throw NotImplementedError("no implemented")
-      }
+    override fun getDescription(): String {
+      throw NotImplementedError("no implemented")
+    }
 
-      override fun getDefaultExtension(): String {
-        return extension
-      }
+    override fun getDefaultExtension(): String {
+      return extension
+    }
 
-      override fun getIcon(): Icon {
-        throw NotImplementedError("no implemented")
-      }
+    override fun getIcon(): Icon {
+      throw NotImplementedError("no implemented")
+    }
 
-      override fun isBinary(): Boolean {
-        throw NotImplementedError("no implemented")
-      }
+    override fun isBinary(): Boolean {
+      throw NotImplementedError("no implemented")
     }
   }
-
 }

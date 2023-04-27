@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -10,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * The purpose of this class is to reserve action-id in a plugin.xml so the action appears in Keymap.
- * Then Keymap assignments can be used for non-registered actions created on runtime.
+ * The purpose of this class is to reserve action-id in a {@code plugin.xml}, so the action appears in <em>Preferences | Keymap</em>.
+ * Then Keymap assignments can be used for non-registered actions created at runtime.
  * <p>
- * Another usage is to override (hide) already registered actions by means of plugin.xml, see {@link EmptyActionGroup} as well.
+ * Another usage is to override (hide) already registered actions via {@code plugin.xml}, see {@link EmptyActionGroup} as well.
  *
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov

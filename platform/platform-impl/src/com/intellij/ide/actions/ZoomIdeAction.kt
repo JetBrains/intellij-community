@@ -5,7 +5,11 @@ import com.intellij.ide.actions.ui.ideScaleIndicator.IdeScaleIndicatorManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentValue
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.UIBundle
 
@@ -61,15 +65,16 @@ class ResetIdeScaleAction : ZoomIdeAction() {
   }
 }
 
-class CurrentIdeScaleAction : AnAction(), DumbAware {
+class SwitchIdeScaleAction : AnAction(), DumbAware {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = false
-    e.presentation.text = UIBundle.message("current.scale.action.format", UISettingsUtils.instance.currentIdeScale.percentValue)
+    e.presentation.isEnabled = true
+    e.presentation.text = UIBundle.message("switch.ide.scale.action.format", UISettingsUtils.instance.currentIdeScale.percentValue)
   }
 
-  override fun actionPerformed(e: AnActionEvent) {}
+  override fun actionPerformed(e: AnActionEvent) {
+    val changeScale = ActionManager.getInstance().getAction("ChangeIdeScale") ?: return
+    ActionUtil.invokeAction(changeScale, e.dataContext, e.place, e.inputEvent, null)
+  }
 }
-
-class ZoomIdeActionGroup : DefaultActionGroup(), AlwaysVisibleActionGroup

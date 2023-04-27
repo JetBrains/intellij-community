@@ -652,7 +652,7 @@ public final class KotlinTestUtils {
     @Nullable
     public static String getTestDataFileName(@NotNull Class<?> testCaseClass, @NotNull String testName) {
         try {
-            Method method = testCaseClass.getDeclaredMethod(testName);
+            Method method = testCaseClass.getMethod(testName);
             return getMethodMetadata(method);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);

@@ -1,12 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -27,7 +26,7 @@ public class ExceptionInfo {
     myExceptionMessage = exceptionMessage;
   }
 
-  @Nullable PsiElement matchSpecificExceptionElement(@NotNull PsiElement element) {
+  @Nullable ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement element) {
     return null;
   }
 
@@ -151,7 +150,18 @@ public class ExceptionInfo {
     private AfterExceptionRefiner(ExceptionInfo info) { this.myInfo = info;}
 
     @Override
-    public PsiElement matchElement(@NotNull PsiElement element) {
+    public RefinerMatchResult matchElement(@NotNull PsiElement current) {
+      PsiElement newException = findNewException(current);
+      if (newException != null) return RefinerMatchResult.of(newException);
+      if (current instanceof PsiKeyword && current.textMatches(PsiKeyword.THROW)) {
+        PsiElement nextLeaf = PsiTreeUtil.nextVisibleLeaf(current);
+        newException = findNewException(nextLeaf);
+        if (newException != null) return onTheSameLineFor(current, newException, true);
+      }
+      return myInfo.matchSpecificExceptionElement(current);
+      }
+
+    private @Nullable PsiElement findNewException(PsiElement element) {
       // We look for new Exception() expression rather than throw statement, because stack-trace is filled in exception constructor
       if (element instanceof PsiKeyword && element.textMatches(PsiKeyword.NEW)) {
         PsiNewExpression newExpression = ObjectUtils.tryCast(element.getParent(), PsiNewExpression.class);
@@ -160,7 +170,7 @@ public class ExceptionInfo {
           if (type != null && type.equalsToText(myInfo.getExceptionClassName())) return element;
         }
       }
-      return myInfo.matchSpecificExceptionElement(element);
+      return null;
     }
 
     @Override
@@ -180,5 +190,50 @@ public class ExceptionInfo {
 
   public ExceptionInfo consumeStackLine(@NonNls String line) {
     return null;
+  }
+
+  private static boolean onTheSameLine(@NotNull Document document, @NotNull PsiElement current, @NotNull PsiElement operand) {
+    return document.getLineNumber(current.getTextRange().getStartOffset()) == document.getLineNumber(operand.getTextRange().getStartOffset());
+  }
+
+  private static boolean isEmpty(@NotNull PsiElement element) {
+    return StringUtil.isEmptyOrSpaces(element.getText());
+  }
+  @Nullable
+  static ExceptionLineRefiner.RefinerMatchResult onTheSameLineFor(@Nullable PsiElement from,
+                                                                  @Nullable PsiElement reason,
+                                                                  boolean forward) {
+    if (from == null || reason == null) {
+      return null;
+    }
+    if (isEmpty(from)) {
+      PsiElement probablyFrom;
+      if (forward) {
+        probablyFrom = PsiTreeUtil.prevVisibleLeaf(from);
+      }
+      else {
+        probablyFrom = PsiTreeUtil.nextVisibleLeaf(from);
+      }
+      if (probablyFrom != null) {
+        from = probablyFrom;
+      }
+    }
+    PsiFile file = from.getContainingFile();
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null) return null;
+
+    PsiElement current = reason;
+    while (current != null && current != from) {
+      if (onTheSameLine(document, current, from)) {
+        return new ExceptionLineRefiner.RefinerMatchResult(current, reason);
+      }
+      if (forward) {
+        current = PsiTreeUtil.prevLeaf(current);
+      }
+      else {
+        current = PsiTreeUtil.nextLeaf(current);
+      }
+    }
+    return new ExceptionLineRefiner.RefinerMatchResult(from, reason);
   }
 }

@@ -194,7 +194,7 @@ class ActionsCollectorImpl : ActionsCollector() {
           if (delegateInfo.isSafeToReport()) delegate.javaClass.name else DEFAULT_ID
         }
         data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionId))
-        data.add(ActionsEventLogGroup.ACTION_PARENT.with(actionClassName))
+        data.add(ActionsEventLogGroup.ACTION_PARENT.with(action.javaClass))
       }
       else {
         data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionClassName))

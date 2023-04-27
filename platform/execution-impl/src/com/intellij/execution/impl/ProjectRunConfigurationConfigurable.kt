@@ -88,7 +88,7 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
       if (configurationType == null) {
         toolbarAddAction.showAddPopup(true, it.source as MouseEvent)
       }
-      else createNewConfiguration(configurationType.configurationFactories[0])
+      else if (configurationType.configurationFactories.isNotEmpty()) createNewConfiguration(configurationType.configurationFactories[0])
     }.appendLine(ExecutionBundle.message("status.text.or.select.run.configuration.to.edit"), SimpleTextAttributes.GRAYED_ATTRIBUTES, null)
     return messagePanel
   }

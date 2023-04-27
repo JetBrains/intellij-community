@@ -239,6 +239,24 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         }
         row { checkBox(virtualPageAtBottom) }
       }
+      group(message("group.scroll.offset")) {
+        row(message("label.vertical.scroll.offset.value")) {
+          intTextField()
+            .bindIntText(editorSettings::getVerticalScrollOffset, editorSettings::setVerticalScrollOffset)
+        }
+        row(message("label.vertical.scroll.jump.value")) {
+          intTextField()
+            .bindIntText(editorSettings::getVerticalScrollJump, editorSettings::setVerticalScrollJump)
+        }
+        row(message("label.horizontal.scroll.offset.value")) {
+          intTextField()
+            .bindIntText(editorSettings::getHorizontalScrollOffset, editorSettings::setHorizontalScrollOffset)
+        }
+        row(message("label.horizontal.scroll.jump.value")) {
+          intTextField()
+            .bindIntText(editorSettings::getHorizontalScrollJump, editorSettings::setHorizontalScrollJump)
+        }
+      }
       group(message("group.caret.movement")) {
         caretStopRow(message("label.word.move.caret.actions.behavior"), CaretOptionMode.WORD, WordBoundary.values())
         caretStopRow(message("label.word.move.caret.actions.behavior.at.line.break"), CaretOptionMode.LINE, LineBoundary.values())

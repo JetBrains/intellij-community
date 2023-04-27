@@ -54,7 +54,7 @@ fun getResolvedKotlinGradleVersion(module: Module): String? {
 
 fun findResolvedKotlinGradleVersion(module: Module): IdeKotlinVersion? {
     val projectStructureNode = findGradleProjectStructure(module) ?: return null
-    val gradleFacade = KotlinGradleFacade.instance ?: return null
+    val gradleFacade = KotlinGradleFacade.getInstance() ?: return null
 
     for (node in ExternalSystemApiUtil.findAll(projectStructureNode, ProjectKeys.MODULE)) {
         if (node.data.internalName == module.name) {

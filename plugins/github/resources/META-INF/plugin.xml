@@ -37,7 +37,6 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader"/>
 
-    <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
@@ -101,6 +100,11 @@
     <action id="Github.View.Pull.Request" class="org.jetbrains.plugins.github.GithubViewPullRequestsAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
+    <action id="Github.PullRequest.Details.Reload"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction"
+            use-shortcut-of="Refresh"/>
+    <action id="Github.PullRequest.Timeline.Show"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestTimelineAction"/>
     <group id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GHOpenInBrowserActionGroup">
       <override-text place="EditorTabPopup"/>
       <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
@@ -132,22 +136,13 @@
       <action id="Github.PullRequest.Show"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestAction"/>
       <reference id="Github.Open.In.Browser"/>
+      <separator/>
       <action id="Github.PullRequest.List.Reload"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction" use-shortcut-of="Refresh"/>
     </group>
     <group id="Github.PullRequest.Details.Popup">
-      <action id="Github.PullRequest.Timeline.Show"
-              class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestTimelineAction"/>
-      <reference id="Github.Open.In.Browser"/>
-      <action id="Github.PullRequest.Branch.Create"
-              class="org.jetbrains.plugins.github.pullrequest.action.GHPRCheckoutRemoteBranchAction"/>
-      <action id="Github.PullRequest.Branch.Update"
-              class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateBranchAction"/>
-      <action id="Github.PullRequest.Details.Reload"
-              class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction" use-shortcut-of="Refresh"/>
+      <reference id="Github.PullRequest.Details.Reload"/>
     </group>
-    <action id="Github.PullRequest.Changes.Reload"
-            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadChangesAction" use-shortcut-of="Refresh"/>
     <action id="Github.PullRequest.Comments.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
 
@@ -164,7 +159,7 @@
     <group id="Github.PullRequest.Changes.Popup">
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
-      <reference id="Github.PullRequest.Changes.Reload"/>
+      <reference id="Github.PullRequest.Details.Reload"/>
       <reference id="EditSource"/>
       <action id="Github.PullRequest.Changes.MarkViewed"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesViewedAction"/>

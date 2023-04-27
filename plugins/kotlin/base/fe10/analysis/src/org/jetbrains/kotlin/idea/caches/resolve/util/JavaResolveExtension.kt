@@ -37,6 +37,19 @@ private fun PsiMethod.getJavaMethodDescriptor(resolutionFacade: ResolutionFacade
     }
 }
 
+/**
+ * Kotlin sees Java annotation's methods only as properties. Because of that they cannot be queried with [getJavaMethodDescriptor],
+ * so we have to search among properties.
+ */
+private fun PsiMethod.getJavaPropertyDescriptorForAnnotationMethod(resolutionFacade: ResolutionFacade): PropertyDescriptor? {
+    val method = originalElement as? PsiMethod ?: return null
+    if (!Name.isValidIdentifier(method.name)) return null
+
+    if (method.containingClass?.isAnnotationType != true) return null
+
+    return method.getJavaDescriptorResolver(resolutionFacade)?.resolveKotlinPropertyForJavaMethod(JavaMethodImpl(method))
+}
+
 fun PsiClass.getJavaClassDescriptor() = javaResolutionFacade()?.let { getJavaClassDescriptor(it) }
 
 fun PsiClass.getJavaClassDescriptor(resolutionFacade: ResolutionFacade): ClassDescriptor? {
@@ -52,7 +65,7 @@ private fun PsiField.getJavaFieldDescriptor(resolutionFacade: ResolutionFacade):
 fun PsiMember.getJavaMemberDescriptor(resolutionFacade: ResolutionFacade): DeclarationDescriptor? {
     return when (this) {
         is PsiClass -> getJavaClassDescriptor(resolutionFacade)
-        is PsiMethod -> getJavaMethodDescriptor(resolutionFacade)
+        is PsiMethod -> getJavaMethodDescriptor(resolutionFacade) ?: getJavaPropertyDescriptorForAnnotationMethod(resolutionFacade)
         is PsiField -> getJavaFieldDescriptor(resolutionFacade)
         else -> null
     }
@@ -74,14 +87,29 @@ fun PsiMember.getJavaOrKotlinMemberDescriptor(resolutionFacade: ResolutionFacade
     }
 }
 
-fun PsiParameter.getParameterDescriptor(): ValueParameterDescriptor? = javaResolutionFacade()?.let {
+fun PsiParameter.getParameterDescriptor(): ParameterDescriptor? = javaResolutionFacade()?.let {
     getParameterDescriptor(it)
 }
 
-fun PsiParameter.getParameterDescriptor(resolutionFacade: ResolutionFacade): ValueParameterDescriptor? {
+fun PsiParameter.getParameterDescriptor(resolutionFacade: ResolutionFacade): ParameterDescriptor? {
     val method = declarationScope as? PsiMethod ?: return null
     val methodDescriptor = method.getJavaMethodDescriptor(resolutionFacade) ?: return null
-    return methodDescriptor.valueParameters[parameterIndex()]
+    var parameterIndex = parameterIndex()
+
+    methodDescriptor.extensionReceiverParameter?.let {
+        if (parameterIndex == 0) {
+            return it
+        } else {
+            // compensate for extension receiver as a virtual first parameter
+            parameterIndex--
+        }
+    }
+
+    if (methodDescriptor.valueParameters.size > parameterIndex) {
+        return methodDescriptor.valueParameters[parameterIndex]
+    }
+
+    throw AssertionError("Can't get parameter descriptor with index = $parameterIndex")
 }
 
 fun PsiClass.resolveToDescriptor(
@@ -104,6 +132,10 @@ private fun PsiElement.getJavaDescriptorResolver(resolutionFacade: ResolutionFac
 
 private fun JavaDescriptorResolver.resolveMethod(method: JavaMethod): FunctionDescriptor? {
     return getContainingScope(method)?.getContributedFunctions(method.name, NoLookupLocation.FROM_IDE)?.findByJavaElement(method)
+}
+
+private fun JavaDescriptorResolver.resolveKotlinPropertyForJavaMethod(method: JavaMethod): PropertyDescriptor? {
+    return getContainingScope(method)?.getContributedVariables(method.name, NoLookupLocation.FROM_IDE)?.findByJavaElement(method)
 }
 
 private fun JavaDescriptorResolver.resolveConstructor(constructor: JavaConstructor): ConstructorDescriptor? {

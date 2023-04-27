@@ -16,7 +16,8 @@ open class GitLabMergeRequestDetails(
   open val draft: Boolean,
   open val assignees: List<GitLabUserDTO>,
   open val reviewers: List<GitLabUserDTO>,
-  open val webUrl: @NlsSafe String
+  open val webUrl: @NlsSafe String,
+  val labels: List<String>
 ) : GitLabMergeRequestId {
 
   companion object {
@@ -31,7 +32,8 @@ open class GitLabMergeRequestDetails(
         dto.draft,
         dto.assignees,
         dto.reviewers,
-        dto.webUrl
+        dto.webUrl,
+        dto.labels
       )
   }
 }

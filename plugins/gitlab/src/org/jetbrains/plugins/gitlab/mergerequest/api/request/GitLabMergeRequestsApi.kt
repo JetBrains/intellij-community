@@ -114,15 +114,33 @@ suspend fun GitLabApi.mergeRequestSetReviewers(
 suspend fun GitLabApi.mergeRequestAccept(
   project: GitLabProjectCoordinates,
   mergeRequestId: GitLabMergeRequestId,
-  sha: String
+  commitMessage: String,
+  sha: String,
+  withSquash: Boolean
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
     "projectId" to project.projectPath.fullPath(),
     "mergeRequestId" to mergeRequestId.iid,
-    "sha" to sha
+    "commitMessage" to commitMessage,
+    "sha" to sha,
+    "withSquash" to withSquash
   )
   val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestAccept, parameters)
   return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestAccept")
+}
+
+suspend fun GitLabApi.mergeRequestSetDraft(
+  project: GitLabProjectCoordinates,
+  mergeRequestId: GitLabMergeRequestId,
+  isDraft: Boolean
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "mergeRequestId" to mergeRequestId.iid,
+    "isDraft" to isDraft
+  )
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestSetDraft, parameters)
+  return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestSetDraft")
 }
 
 private class GitLabMergeRequestResult(mergeRequest: GitLabMergeRequestDTO, errors: List<String>?)

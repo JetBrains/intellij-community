@@ -15,7 +15,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.ide.joinBlocking
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -50,7 +49,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -89,8 +90,6 @@ import java.util.*
 import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.ToolTipManager
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
@@ -387,7 +386,7 @@ object DynamicPlugins {
     if (options.save) {
       runInAutoSaveDisabledMode {
         FileDocumentManager.getInstance().saveAllDocuments()
-        runBlockingUnderModalProgress {
+        runBlockingModal(project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(), "") {
           saveProjectsAndApp(true)
         }
       }
@@ -1033,7 +1032,7 @@ private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: Id
 }
 
 /**
- * Load all sub plugins that depend on specified [dependencyPlugin].
+ * @return a Set of modules that depend on [dependencyPlugin]
  */
 private fun optionalDependenciesOnPlugin(
   dependencyPlugin: IdeaPluginDescriptorImpl,
@@ -1041,27 +1040,28 @@ private fun optionalDependenciesOnPlugin(
   pluginSet: PluginSet,
 ): Set<IdeaPluginDescriptorImpl> {
   // 1. collect optional descriptors
-  val modulesToMain = LinkedHashMap<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>()
+  val dependentPluginsAndItsModule = ArrayList<Pair<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>()
 
   processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { main, module ->
-    modulesToMain[module] = main
+    dependentPluginsAndItsModule.add(main to module)
     true
   }
 
-  if (modulesToMain.isEmpty()) {
+  if (dependentPluginsAndItsModule.isEmpty()) {
     return emptySet()
   }
 
   // 2. sort topologically
-  val topologicalComparator = PluginSetBuilder(modulesToMain.values)
+  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first })
     .moduleGraph
     .topologicalComparator
+  dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
-  return modulesToMain.toSortedMap(topologicalComparator)
-    .filter { (moduleDescriptor, mainDescriptor) ->
+  return dependentPluginsAndItsModule.distinct()
+    .filter { (mainDescriptor, moduleDescriptor) ->
       // 3. setup classloaders
       classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
-    }.keys
+    }.map { it.second }.toSet()
 }
 
 private fun loadModules(

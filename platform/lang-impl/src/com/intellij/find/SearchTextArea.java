@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
@@ -16,19 +17,16 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
@@ -62,14 +60,6 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
-
-  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
-                                         IconManager.getInstance().getIcon("expui/general/closeSmall.svg", AllIcons.class) :
-                                         AllIcons.Actions.Close;
-
-  private static final Icon CLOSE_HOVERED_ICON = ExperimentalUI.isNewUI() ?
-                                         IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons.class) :
-                                         AllIcons.Actions.CloseHovered;
 
   private static final ActionButtonLook FIELD_INPLACE_LOOK = new FieldInplaceActionButtonLook();
 
@@ -213,9 +203,10 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     iconsPanelWrapper.add(p, BorderLayout.WEST);
     iconsPanelWrapper.add(myExtraActionsPanel, BorderLayout.CENTER);
 
+    Border border = getBorder() == null ? JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchField.borderInsets()) : getBorder();
     removeAll();
     setLayout(new BorderLayout(JBUIScale.scale(3), 0));
-    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.SearchField.borderInsets", JBUI.insets(SystemInfo.isLinux ? 2 : 1))));
+    setBorder(border);
 
     add(historyButtonWrapper, BorderLayout.WEST);
     add(myScrollPane, BorderLayout.CENTER);
@@ -239,17 +230,25 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       myIconsPanel.setLayout(new BorderLayout());
       myIconsPanel.add(myClearButton, BorderLayout.CENTER);
       myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
-      myIconsPanel.setPreferredSize(myIconsPanel.getPreferredSize());
+      resetPreferredSize(myIconsPanel);
       if (!showClearIcon) myIconsPanel.remove(myClearButton);
       if (!showNewLine) myIconsPanel.remove(myNewLineButton);
       myIconsPanel.revalidate();
       myIconsPanel.repaint();
+    }
+    else {
+      resetPreferredSize(myIconsPanel);
     }
     myScrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
     myScrollPane.getHorizontalScrollBar().setVisible(multiline);
     myScrollPane.revalidate();
     doLayout();
+  }
+
+  private void resetPreferredSize(JComponent component) {
+    component.setPreferredSize(null);
+    component.setPreferredSize(myIconsPanel.getPreferredSize());
   }
 
   public List<Component> setExtraActions(AnAction... actions) {
@@ -334,8 +333,6 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   public void setInfoText(@SuppressWarnings("unused") String info) {}
 
   private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
-    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
-
     ShowHistoryAction() {
       super(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
             FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
@@ -346,19 +343,23 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      if (myPopupState.isRecentlyHidden() || project == null) return; // do not show new popup
+      if (project == null) return;
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
       JBList<String> historyList = new JBList<>(ArrayUtil.reverseArray(recent));
-      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null, myPopupState);
+      Dimension size = historyList.getPreferredSize();
+      size.width = Math.min(size.width, getWidth() + 200);
+      historyList.setPreferredSize(size);
+      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
     }
   }
 
   private class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
-      super(CLOSE_ICON);
-      getTemplatePresentation().setHoveredIcon(CLOSE_HOVERED_ICON);
+      super(ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmall : AllIcons.Actions.Close);
+      getTemplatePresentation().setHoveredIcon(
+        ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmallHovered : AllIcons.Actions.CloseHovered);
     }
 
     @Override

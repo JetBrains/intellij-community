@@ -21,6 +21,8 @@ import java.awt.*;
  */
 public class PythonHighlightingTest extends PyTestCase {
 
+  private EditorColorsScheme myOriginalScheme;
+
   @Override
   protected @Nullable LightProjectDescriptor getProjectDescriptor() {
     return ourPy2Descriptor;
@@ -31,7 +33,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
     TextAttributesKey xKey;
     TextAttributes xAttributes;
-    
+
     xKey = TextAttributesKey.find("PY.BUILTIN_NAME");
     xAttributes = new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
     scheme.setAttributes(xKey, xAttributes);
@@ -70,9 +72,9 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testAssignmentTargets3K() {
-    doTest(LanguageLevel.PYTHON34, true, false);    
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
-  
+
   public void testBreakOutsideOfLoop() {
     doTest(true, false);
   }
@@ -111,7 +113,7 @@ public class PythonHighlightingTest extends PyTestCase {
   public void testYieldInLambda() {
     doTest();
   }
-  
+
   public void testImportStarAtTopLevel() {
     doTest(true, false);
   }
@@ -427,7 +429,7 @@ public class PythonHighlightingTest extends PyTestCase {
   public void testFStringSingleRightBraces() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
   }
-  
+
   // PY-20901
   public void testFStringTooDeeplyNestedExpressionFragments() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
@@ -583,6 +585,25 @@ public class PythonHighlightingTest extends PyTestCase {
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
     myFixture.testHighlighting(checkWarnings, checkInfos, false, getTestName(true) + PyNames.DOT_PY);
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myOriginalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      EditorColorsManager.getInstance().setGlobalScheme(myOriginalScheme);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override

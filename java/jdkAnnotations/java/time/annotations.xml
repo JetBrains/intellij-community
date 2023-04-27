@@ -1339,13 +1339,13 @@
   <item name='java.time.OffsetDateTime java.time.OffsetDateTime of(int, int, int, int, int, int, int, java.time.ZoneOffset) 1'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="1"/>
-      <val name="to" val="31"/>
+      <val name="to" val="12"/>
     </annotation>
   </item>
   <item name='java.time.OffsetDateTime java.time.OffsetDateTime of(int, int, int, int, int, int, int, java.time.ZoneOffset) 2'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="1"/>
-      <val name="to" val="12"/>
+      <val name="to" val="31"/>
     </annotation>
   </item>
   <item name='java.time.OffsetDateTime java.time.OffsetDateTime of(int, int, int, int, int, int, int, java.time.ZoneOffset) 3'>

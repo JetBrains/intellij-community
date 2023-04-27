@@ -367,20 +367,27 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       if (handler != null) {
         DfaValue value = handler.getMethodResultValue(callArguments, state, factory, myTargetMethod);
         if (value != null) {
-          return value;
+          if (myPrecalculatedReturnValue != null) {
+            if (!state.applyCondition(myPrecalculatedReturnValue.eq(value))) {
+              throw new IllegalStateException("Precalculated value " + myPrecalculatedReturnValue + 
+                                              " mismatches with method handler result " + value);
+            }
+          }
+          return myPrecalculatedReturnValue instanceof DfaVariableValue var && !var.isFlushableByCalls()
+                 ? myPrecalculatedReturnValue
+                 : value;
         }
       }
     }
     DfaValue qualifierValue = callArguments.getQualifier();
-    DfaValue precalculated = myPrecalculatedReturnValue;
     PsiType type = getResultType();
 
     VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(realMethod);
     if (descriptor instanceof SpecialField || descriptor != null && qualifierValue instanceof DfaVariableValue) {
       return descriptor.createValue(factory, qualifierValue);
     }
-    if (precalculated != null) {
-      return precalculated;
+    if (myPrecalculatedReturnValue != null) {
+      return myPrecalculatedReturnValue;
     }
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {

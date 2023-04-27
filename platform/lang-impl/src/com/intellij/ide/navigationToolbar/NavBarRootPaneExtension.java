@@ -103,7 +103,7 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
     }
 
     if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      myNavigationBar = NavBarService.getInstance(myProject).getStaticNavBarPanel();
+      myNavigationBar = NavBarService.getInstance(myProject).createNavBarPanel();
     }
     else {
       myNavigationBar = new ReusableNavBarPanel(myProject, true);

@@ -119,9 +119,9 @@ class LocalRange(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRang
   : Range(line1, line2, vcsLine1, vcsLine2, innerRanges)
 
 
-class ChangelistsLocalLineStatusTracker(project: Project,
-                                        document: Document,
-                                        virtualFile: VirtualFile
+class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
+                                                             document: Document,
+                                                             virtualFile: VirtualFile
 ) : LocalLineStatusTrackerImpl<LocalRange>(project, document, virtualFile),
     PartialLocalLineStatusTracker,
     ChangeListWorker.PartialChangeTracker {
@@ -917,7 +917,14 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
 
   private var Block.marker: ChangeListMarker
-    get() = this.ourData.marker!! // can be null in MyLineTrackerListener, until `onBlockAdded` is called
+    get() = this.ourData.marker ?: run {
+      // This field should be initialized by PartialDocumentTrackerHandler, and should not be accessed from outside in this time frame.
+      // This error might indicate some internal inconsistency in DocumentTracker.
+      // Initialize field with some value to prevent bigger problems later.
+      LOG.error("Line range changelist was not set yet", Throwable())
+      this.ourData.marker = defaultMarker
+      defaultMarker
+    }
     set(value) {
       this.ourData.marker = value
     }
@@ -930,9 +937,9 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   companion object {
     @JvmStatic
-    fun createTracker(project: Project,
-                      document: Document,
-                      virtualFile: VirtualFile): ChangelistsLocalLineStatusTracker {
+    internal fun createTracker(project: Project,
+                               document: Document,
+                               virtualFile: VirtualFile): ChangelistsLocalLineStatusTracker {
       return ChangelistsLocalLineStatusTracker(project, document, virtualFile)
     }
   }

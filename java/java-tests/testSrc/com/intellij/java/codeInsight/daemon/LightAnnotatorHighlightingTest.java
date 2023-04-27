@@ -7,10 +7,7 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -280,7 +277,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       }
 
       @Override
-      public QuickFix @Nullable [] getFixes() {
+      public @NotNull QuickFix @Nullable [] getFixes() {
         return QuickFix.EMPTY_ARRAY;
       }
     };
@@ -464,7 +461,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
       List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
       HighlightInfo info = assertOneElement(infos);
-      assertEquals(HighlightSeverity.ERROR, info.getSeverity());
+      MyErrorAnnotator.assertMy(info);
     });
   }
   
@@ -474,7 +471,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
       List<HighlightInfo> infos = doHighlighting(HighlightSeverity.INFORMATION);
       HighlightInfo info = assertOneElement(infos);
-      assertEquals(HighlightSeverity.ERROR, info.getSeverity());
+      MyErrorAnnotator.assertMy(info);
     });
   }
 
@@ -495,6 +492,10 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         holder.newAnnotation(HighlightSeverity.ERROR, "error2").range(((PsiClass)psiElement).getNameIdentifier()).create();
         iDidIt();
       }
+    }
+    static void assertMy(HighlightInfo info) {
+      assertEquals(HighlightSeverity.ERROR, info.getSeverity());
+      assertEquals("error2", info.getDescription());
     }
   }
   public static class MyWarningAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
@@ -529,8 +530,9 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
    * Checks that the Platform doesn't add useless "Inspection 'Annotator' options" quick fix. see https://youtrack.jetbrains.com/issue/WEB-55217
    */
   public void testNoFixesOrOptionsMustBeShownWhenAnnotatorProvidedQuickFixWhichIsDisabled() {
-    enableInspectionTool(new DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection());
-    assertNotNull(HighlightDisplayKey.find("Annotator"));
+    GlobalInspectionTool tool = new HighlightVisitorBasedInspection().setRunAnnotators(true);
+    enableInspectionTool(tool);
+    assertNotNull(HighlightDisplayKey.find(tool.getShortName()));
     configureFromFileText("foo.txt", "hello<caret>");
     DisabledQuickFixAnnotator.FIX_ENABLED = true;
     assertEmpty(doHighlighting());

@@ -18,8 +18,12 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.DataInput
 import java.io.DataOutput
 
-object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() {
-    private val LOG = logger<KotlinPartialPackageNamesIndex>()
+private val LOG = logger<KotlinPartialPackageNamesIndex>()
+
+class KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() {
+    companion object {
+        val NAME: ID<FqName, Name?> = ID.create(KotlinPartialPackageNamesIndex::class.java.canonicalName)
+    }
 
     private object NullableNameExternalizer: DataExternalizer<Name?> {
         override fun save(out: DataOutput, value: Name?) {
@@ -33,9 +37,7 @@ object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>()
             if (input.readBoolean()) null else Name.guessByFirstCharacter(IOUtil.readUTF(input))
     }
 
-    val KEY: ID<FqName, Name?> = ID.create(KotlinPartialPackageNamesIndex::class.java.canonicalName)
-
-    override fun getName() = KEY
+    override fun getName() = NAME
 
     override fun dependsOnFileContent() = true
 

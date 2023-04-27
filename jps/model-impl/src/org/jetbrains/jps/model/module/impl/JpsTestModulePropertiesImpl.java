@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.module.JpsTestModuleProperties;
 
 import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
 
-public class JpsTestModulePropertiesImpl extends JpsCompositeElementBase<JpsTestModulePropertiesImpl> implements JpsTestModuleProperties {
+public final class JpsTestModulePropertiesImpl extends JpsCompositeElementBase<JpsTestModulePropertiesImpl> implements JpsTestModuleProperties {
   public static final JpsElementChildRole<JpsTestModuleProperties> ROLE = JpsElementChildRoleBase.create("test module properties");
 
   private static final JpsElementChildRole<JpsModuleReference> MODULE_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("production module reference");
@@ -28,22 +28,19 @@ public class JpsTestModulePropertiesImpl extends JpsCompositeElementBase<JpsTest
     super(original);
   }
 
-  @NotNull
   @Override
-  public JpsModuleReference getProductionModuleReference() {
+  public @NotNull JpsModuleReference getProductionModuleReference() {
     return myContainer.getChild(MODULE_REFERENCE_CHILD_ROLE);
   }
 
-  @Nullable
   @Override
-  public JpsModule getProductionModule() {
+  public @Nullable JpsModule getProductionModule() {
     return myCachedProductionModule.getValue();
   }
 
 
-  @NotNull
   @Override
-  public JpsTestModulePropertiesImpl createCopy() {
+  public @NotNull JpsTestModulePropertiesImpl createCopy() {
     return new JpsTestModulePropertiesImpl(this);
   }
 }

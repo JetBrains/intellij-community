@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.actions;
 
 import com.intellij.CommonBundle;
@@ -136,19 +136,20 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     for (String id : registry.getFeatureIds()) {
       FeatureDescriptor feature = registry.getFeatureDescriptor(id);
       if (feature.isNeedToBeShownInGuide()) {
-        TipAndTrickBean tip = TipUtils.getTip(feature);
-        if (tip != null && TipUtils.checkTipFileExist(tip)) {
+        TipAndTrickBean tip = TipUtils.INSTANCE.getTip(feature);
+        if (tip != null && TipUtils.INSTANCE.checkTipFileExist(tip)) {
           features.add(feature);
         }
       }
     }
     TableView<FeatureDescriptor> table = new TableView<>(new ListTableModel<>(COLUMNS, features, 0));
-    new TableViewSpeedSearch<>(table) {
+    TableViewSpeedSearch<FeatureDescriptor> search = new TableViewSpeedSearch<>(table, null) {
       @Override
       protected String getItemText(@NotNull FeatureDescriptor element) {
         return element.getDisplayName();
       }
     };
+    search.setupListeners();
 
     JPanel controlsPanel = new JPanel(new VerticalFlowLayout());
 
@@ -199,7 +200,7 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
           textPane.clear();
         }
         else {
-          TipAndTrickBean tip = TipUtils.getTip(selection.iterator().next());
+          TipAndTrickBean tip = TipUtils.INSTANCE.getTip(selection.iterator().next());
           Component contextComponent = table.isShowing() ? table : WindowManager.getInstance().getFrame(myProject);
           List<TextParagraph> paragraphs = TipUtils.loadAndParseTip(tip, contextComponent);
           textPane.setParagraphs(paragraphs);

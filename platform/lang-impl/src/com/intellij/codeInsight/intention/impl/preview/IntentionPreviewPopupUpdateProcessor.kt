@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -43,7 +43,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                                            private val originalEditor: Editor) : PopupUpdateProcessor(project) {
   private var index: Int = LOADING_PREVIEW
   private var show = false
-  private var originalPopup : JBPopup? = null
+  private var originalPopup: JBPopup? = null
   private val editorsToRelease = mutableListOf<EditorEx>()
 
   private lateinit var popup: JBPopup
@@ -98,7 +98,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       IntentionPreviewComputable(project, action, originalFile, originalEditor))
       .expireWith(popup)
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it)}
+      .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it) }
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
@@ -224,7 +224,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                        action: IntentionAction,
                        originalFile: PsiFile,
                        originalEditor: Editor): String? {
-      return (getPreviewInfo(project, action, originalFile, originalEditor) as? IntentionPreviewDiffResult)?.psiFile?.text
+      return (getPreviewInfo(project, action, originalFile, originalEditor) as? IntentionPreviewDiffResult)?.newText
     }
 
     /**
@@ -238,8 +238,8 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                           action: IntentionAction,
                           originalFile: PsiFile,
                           originalEditor: Editor): String {
-      return when(val info = getPreviewInfo(project, action, originalFile, originalEditor)) {
-        is IntentionPreviewDiffResult -> info.psiFile.text
+      return when (val info = getPreviewInfo(project, action, originalFile, originalEditor)) {
+        is IntentionPreviewDiffResult -> info.newText
         is Html -> info.content().toString()
         else -> ""
       }

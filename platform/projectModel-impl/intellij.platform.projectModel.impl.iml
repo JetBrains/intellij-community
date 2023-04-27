@@ -18,9 +18,12 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" exported="" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" exported="" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="Kryo5" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
   </component>
 </module>

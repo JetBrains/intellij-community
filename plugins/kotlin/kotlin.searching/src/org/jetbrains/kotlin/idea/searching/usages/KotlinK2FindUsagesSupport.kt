@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
@@ -42,6 +43,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         referenceProcessor: Processor<PsiReference>
     ): Boolean {
         val klass = companionObject.getStrictParentOfType<KtClass>() ?: return true
+        if (klass.containingKtFile.isCompiled) return true
         return !klass.anyDescendantOfType(fun(element: KtElement): Boolean {
             if (element == companionObject) return false
             return withResolvedCall(element) { call ->
@@ -73,7 +75,8 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     }
 
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
-        return analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+        return KotlinPsiDeclarationRenderer.render(declaration) ?: analyzeInModalWindow(declaration, KotlinBundle.message(
+          "find.usages.prepare.dialog.progress")) {
             declaration.getSymbol().render(noAnnotationsShortNameRenderer())
         }
     }
@@ -88,7 +91,7 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
 
     override fun formatJavaOrLightMethod(method: PsiMethod): String {
         val unwrapped = method.unwrapped as KtDeclaration
-        return analyzeInModalWindow(unwrapped, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+        return KotlinPsiDeclarationRenderer.render(unwrapped) ?: analyzeInModalWindow(unwrapped, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             unwrapped.getSymbol().render(noAnnotationsShortNameRenderer())
         }
     }

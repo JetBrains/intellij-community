@@ -25,6 +25,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.file.*;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -148,17 +150,19 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return file.getFileSystem() == this ? Paths.get(toIoPath(file)) : null;
   }
 
-  private static @NotNull File convertToIOFileAndCheck(@NotNull VirtualFile file, boolean assertSlowOp) throws FileNotFoundException {
+  private @NotNull Path convertToNIOFileAndCheck(@NotNull VirtualFile file, boolean assertSlowOp) throws FileNotFoundException {
     if (assertSlowOp) { // remove condition when writes are moved to BGT
       SlowOperations.assertSlowOperationsAreAllowed();
     }
-    File ioFile = convertToIOFile(file);
-
+    Path path = getNioPath(file);
+    if (path == null) {
+      throw new FileNotFoundException(file.getPath());
+    }
     if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening fifo files
-      throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + FileSystemUtil.getAttributes(ioFile) + ')');
+      throw new FileNotFoundException("Not a file: " + path + " (type=" + FileSystemUtil.getAttributes(path.toString()) + ')');
     }
 
-    return ioFile;
+    return path;
   }
 
   @Override
@@ -204,7 +208,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
-    String[] names = myChildrenGetter.accessDiskWithCheckCanceled(convertToIOFile(file));
+    Path path = getNioPath(file);
+    String[] names = path == null ? null : myNioChildrenGetter.accessDiskWithCheckCanceled(path);
     return names == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : names;
   }
 
@@ -453,24 +458,24 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    File ioFile = convertToIOFileAndCheck(file, true);
+    Path path = convertToNIOFileAndCheck(file, true);
 
     for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
-      InputStream is = loader.getInputStream(ioFile);
+      InputStream is = loader.getInputStream(path);
       if (is != null) {
         return is;
       }
     }
 
-    return new BufferedInputStream(new FileInputStream(ioFile));
+    return new BufferedInputStream(Files.newInputStream(path));
   }
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    File ioFile = convertToIOFileAndCheck(file, true);
+    Path path = convertToNIOFileAndCheck(file, true);
 
     for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
-      byte[] bytes = loader.contentToByteArray(ioFile);
+      byte[] bytes = loader.contentToByteArray(path);
       if (bytes != null) {
         return bytes;
       }
@@ -480,12 +485,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
     int length = (int)l;
     if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
-    return loadFileContent(ioFile, length);
+    return loadFileContent(path, length);
   }
 
-  protected static byte @NotNull [] loadFileContent(@NotNull File ioFile, int length) throws IOException {
+  protected static byte @NotNull [] loadFileContent(@NotNull Path path, int length) throws IOException {
     if (0 == length) return new byte[0];
-    try (InputStream stream = new FileInputStream(ioFile)) {
+    try (InputStream stream = Files.newInputStream(path)) {
       // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
       // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
       return loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
@@ -509,18 +514,16 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
-    File ioFile = convertToIOFileAndCheck(file, false);
-    OutputStream stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? new FileOutputStream(ioFile) :
-                          requestor instanceof LargeFileWriteRequestor ? new PreemptiveSafeFileOutputStream(ioFile.toPath()) :
-                          new SafeFileOutputStream(ioFile);
+    Path path = convertToNIOFileAndCheck(file, false);
+    OutputStream stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? Files.newOutputStream(path) :
+                          requestor instanceof LargeFileWriteRequestor ? new PreemptiveSafeFileOutputStream(path) :
+                          new SafeFileOutputStream(path);
     return new BufferedOutputStream(stream) {
       @Override
       public void close() throws IOException {
         super.close();
-        if (timeStamp > 0 && ioFile.exists()) {
-          if (!ioFile.setLastModified(timeStamp)) {
-            LOG.warn("Failed: " + ioFile.getPath() + ", new:" + timeStamp + ", old:" + ioFile.lastModified());
-          }
+        if (timeStamp > 0 && Files.exists(path)) {
+          Files.setLastModifiedTime(path, FileTime.fromMillis(timeStamp));
         }
       }
     };
@@ -755,7 +758,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(LocalFileSystemBase::getAttributesWithCustomTimestamp);
-  private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list());
+  private final DiskQueryRelay<Path, String[]> myNioChildrenGetter = new DiskQueryRelay<>(LocalFileSystemBase::listPathChildren);
 
   @Override
   public void refresh(boolean asynchronous) {
@@ -785,7 +788,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static @Nullable FileAttributes getAttributesWithCustomTimestamp(VirtualFile file) {
-    FileAttributes attributes = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
+    var pathStr = FileUtilRt.toSystemDependentName(file.getPath());
+    if (pathStr.length() == 2 && pathStr.charAt(1) == ':') pathStr += '\\';
+    var attributes = FileSystemUtil.getAttributes(pathStr);
     return copyWithCustomTimestamp(file, attributes);
   }
 
@@ -800,5 +805,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     return attributes;
+  }
+
+  private static String[] listPathChildren(@NotNull Path dir) {
+    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
+      return StreamEx.of(dirStream.iterator()).map(it -> it.getFileName().toString()).toArray(String[]::new);
+    }
+    catch (IOException e) {
+      LOG.warn("Unable to list children for path: " + dir, e);
+      return null;
+    }
   }
 }

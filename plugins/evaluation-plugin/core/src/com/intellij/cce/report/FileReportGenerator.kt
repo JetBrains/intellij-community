@@ -31,16 +31,13 @@ abstract class FileReportGenerator(
     val (resourcePath, reportPath) = dirs.getPaths(fileName)
     val sessionsJson = sessionSerializer.serialize(sessions.map { it.sessionsInfo.sessions }.flatten())
     val resourceFile = File(resourcePath.toString())
-    resourceFile.writeText("var sessions = {};\nconst features={};\nsessions = ${parseJsonInJs(sessionsJson)};")
-    for (featuresStorage in featuresStorages) {
-      for (session in featuresStorage.getSessions(fileInfo.sessionsInfo.filePath)) {
-        val featuresJson = featuresStorage.getFeatures(session, fileInfo.sessionsInfo.filePath)
-        resourceFile.appendText("features[\"${session}\"] = `${zipJson(featuresJson)}`;\n")
-      }
-    }
+    resourceFile.writeText("var sessions = {};\nvar features={};\nvar fullLineLog=[];\nsessions = ${parseJsonInJs(sessionsJson)};\n")
+    processStorages(sessions, resourceFile)
     val reportTitle = "Code Completion Report for file $fileName ($filterName and $comparisonFilterName filter)"
     createHTML().html {
-      createHead(reportTitle, resourcePath)
+      head {
+        createHead(this, reportTitle, resourcePath)
+      }
       body {
         h1 { +reportTitle }
         unsafe {
@@ -56,15 +53,22 @@ abstract class FileReportGenerator(
     reportReferences[fileInfo.sessionsInfo.filePath] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
   }
 
-  private fun HTML.createHead(reportTitle: String, resourcePath: Path) {
-    head {
-      meta(charset = "UTF-8")
-      title(reportTitle)
-      script { src = "../res/pako.min.js" }
-      script { src = dirs.filesDir.relativize(resourcePath).toString() }
-      link {
-        href = "../res/style.css"
-        rel = "stylesheet"
+  open fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) = with(head) {
+    meta(charset = "UTF-8")
+    title(reportTitle)
+    script { src = "../res/pako.min.js" }
+    script { src = dirs.filesDir.relativize(resourcePath).toString() }
+    link {
+      href = "../res/style.css"
+      rel = "stylesheet"
+    }
+  }
+
+  protected open fun processStorages(fileInfos: List<FileEvaluationInfo>, resourceFile: File) {
+    for ((featuresStorage, fileInfo) in featuresStorages.zip(fileInfos)) {
+      for (session in featuresStorage.getSessions(fileInfo.sessionsInfo.filePath)) {
+        val featuresJson = featuresStorage.getFeatures(session, fileInfo.sessionsInfo.filePath)
+        resourceFile.appendText("features[\"${session}\"] = `${zipJson(featuresJson)}`;\n")
       }
     }
   }
@@ -73,7 +77,7 @@ abstract class FileReportGenerator(
     return "JSON.parse(pako.ungzip(atob(`${zipJson(json)}`), { to: 'string' }))"
   }
 
-  private fun zipJson(json: String): String {
+  protected fun zipJson(json: String): String {
     val resultStream = ByteArrayOutputStream()
     OutputStreamWriter(GZIPOutputStream(Base64OutputStream(resultStream))).use {
       it.write(json)

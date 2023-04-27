@@ -7,4 +7,4 @@ Conversions:
 
 New expression type changes:
 Fails:
-foo(1, 2)->int
+(1, 2)->int

@@ -135,7 +135,7 @@ public final class AnnotationDocGenerator {
     boolean highlightNonCodeAnnotations = format == AnnotationFormat.ToolTip && isNonCodeAnnotation;
     if (highlightNonCodeAnnotations) buffer.append("<b>");
     if (isInferred) buffer.append("<i>");
-    if (red) buffer.append("<font color=red>");
+    if (red) buffer.append(JavaDocInfoGenerator.getSpanForUnresolvedItem());
 
     boolean forceShortNames = format != AnnotationFormat.JavaDocComplete;
 
@@ -159,7 +159,7 @@ public final class AnnotationDocGenerator {
     else if (name != null) {
       appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
     }
-    if (red) buffer.append("</font>");
+    if (red) buffer.append("</span>");
 
     generateAnnotationAttributes(buffer, generateLink, isForRenderedDoc, doSyntaxHighlighting);
     if (isInferred) buffer.append("</i>");

@@ -104,7 +104,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     for (JRadioButton init : inits) {
       initialization.add(init);
     }
-    new RadioUpDownListener(inits.toArray(new JRadioButton[0]));
+    RadioUpDownListener.installOn(inits.toArray(new JRadioButton[0]));
 
     if (clazz instanceof GroovyScriptClass) {
       myClassConstructorSRadioButton.setEnabled(false);
@@ -231,7 +231,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     else {
       myPrivateRadioButton.setSelected(true);
     }
-    new RadioUpDownListener(myPrivateRadioButton, myProtectedRadioButton, myPublicRadioButton, myPropertyRadioButton);
+    RadioUpDownListener.installOn(myPrivateRadioButton, myProtectedRadioButton, myPublicRadioButton, myPropertyRadioButton);
   }
 
   private static boolean isAlwaysInvokedConstructor(@Nullable PsiMethod method, @NotNull PsiClass clazz) {

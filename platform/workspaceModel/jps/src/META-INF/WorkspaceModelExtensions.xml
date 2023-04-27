@@ -1,8 +1,4 @@
 <idea-plugin>
-  <projectListeners>
-    <listener class="com.intellij.workspaceModel.ide.impl.JpsProjectLoadedListenerImpl"
-              topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
-  </projectListeners>
   <extensionPoints>
     <extensionPoint name="workspaceModel.customModuleRootsSerializer"
                     interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer"
@@ -13,29 +9,15 @@
     <extensionPoint name="workspaceModel.customFacetRelatedEntitySerializer"
                     interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer"
                     dynamic="true"/>
-    <extensionPoint name="workspaceModel.preUpdateHandler"
-                    interface="com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler"
-                    dynamic="true"/>
-    <extensionPoint name="workspaceModel.cache.version"
-                    interface="com.intellij.workspaceModel.ide.WorkspaceModelCacheVersion"
-                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="true" restartRequired="true"
-                 description="Enable additional checks after replaceBySource and addDiff"/>
     <registryKey key="ide.new.project.model.report.wrapped" defaultValue="true" restartRequired="false"
                  description="Wrap workspace model error report with IJ classes"/>
     <registryKey key="ide.new.project.model.index.case.sensitivity" defaultValue="false" restartRequired="true"
                  description="Enable checking FS sensitivity for paths stored at VFU index"/>
-    <registryKey key="ide.new.project.model.artifacts.sync.initialization" defaultValue="true" restartRequired="false"
-                 description="Enable locks during artifacts initialization"/>
-    <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
-                 description="Enable workspace model consistency checking after every update"/>
-    <registryKey key="ide.workspace.model.rbs.as.tree" defaultValue="true" restartRequired="false"
-                 description="Enable new algorithm for ReplaceBySource operation"/>
     <registryKey key="ide.workspace.model.generated.code.for.cache" defaultValue="true" restartRequired="false"
                  description="Enable new method of workspace model caching"/>
-    <registryKey key="ide.workspace.model.separate.component.for.roots" defaultValue="false" restartRequired="true"
+    <registryKey key="ide.workspace.model.separate.component.for.roots" defaultValue="true" restartRequired="true"
                  description="Enables storing of additional roots in the separate iml component"/>
     <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DefaultFacetEntitySerializer" />
   </extensions>

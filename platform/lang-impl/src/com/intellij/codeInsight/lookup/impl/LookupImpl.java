@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -15,7 +15,6 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -76,6 +75,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
+
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
 
@@ -111,6 +112,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final ClientId myClientId = ClientId.getCurrent();
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
+  private boolean myFirstElementAdded = false;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
@@ -427,6 +429,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       toSelect = 0;
     }
 
+    if (!myFirstElementAdded && !items.isEmpty()) {
+      myFirstElementAdded = true;
+      myListeners.forEach(LookupListener::firstElementShown);
+    }
+
     myOffsets.checkMinPrefixLengthChanges(items, this);
     List<LookupElement> oldModel = listModel.toList();
 
@@ -434,6 +441,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       synchronized (myUiLock) {
         model.removeAll();
         if (!items.isEmpty()) {
+          Long currentTimeMillis = System.currentTimeMillis();
+          items.forEach(item -> item.putUserDataIfAbsent(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS, currentTimeMillis));
           model.add(items);
           addDummyItems(myDummyItemCount.get());
         }
@@ -446,7 +455,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     updateListHeight(listModel);
 
     myList.setSelectedIndex(toSelect);
-    if (GeneralSettings.getInstance().isSupportScreenReaders()) {
+    if (ScreenReader.isActive()) {
       AccessibleContext context = myList.getAccessibleContext();
       Accessible child = context.getAccessibleChild(myList.getSelectedIndex());
       context.firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY, null, child);
@@ -681,7 +690,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     LOG.assertTrue(!myShown);
     myShown = true;
     myStampShown = System.currentTimeMillis();
-
     fireLookupShown();
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
@@ -694,6 +702,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     LookupUsageTracker.trackLookup(myCreatedTimestamp, this);
 
     return doShowLookup();
+  }
+
+  /**
+   * @return The timestamp (in milliseconds) at which the lookup window was shown.
+   * If the window has not been shown, 0 is returned.
+   */
+  public long getShownTimestampMillis() {
+    return myStampShown;
+  }
+
+  /**
+   * @return The timestamp (in milliseconds) at which the lookup was obtained.
+   */
+  public long getCreatedTimestampMillis() {
+    return myCreatedTimestamp;
   }
 
   protected boolean doShowLookup() {
@@ -804,7 +827,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     JComponent editorComponent = myEditor.getContentComponent();
     if (editorComponent.isShowing()) {
-      Disposer.register(this, new UiNotifyConnector(editorComponent, new Activatable() {
+      Disposer.register(this, UiNotifyConnector.installOn(editorComponent, new Activatable() {
         @Override
         public void hideNotify() {
           hideLookup(false);

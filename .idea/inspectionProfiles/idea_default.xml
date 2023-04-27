@@ -4,6 +4,7 @@
     <inspection_tool class="03c8b094-627d-3aaa-8d8b-4a66542826cd" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Production" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="2b82dee6-0e1c-36ce-846f-749c578bd315" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AbstractMethodCallInConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidElementNotAllowed" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -846,12 +847,6 @@
         <constraint name="runnable" nameOfExprType="java.lang.Runnable" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="Arrays.asList() is not immutable" text="public static final $Type$ $Field$ = java.util.Arrays.asList($elements$);" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="public static final $Type$ $Field$ = com.intellij.util.containers.ContainerUtil.immutableList($elements$);">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="Field" within="" contains="" />
-        <constraint name="Type" within="" contains="" />
-        <constraint name="elements" maxCount="2147483647" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="Arrays.asList() is not immutable" text="val $Field$ = java.util.Arrays.asList($elements$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="val $Field$ = listOf($elements$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Field" within="" contains="" />
@@ -945,16 +940,20 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="list" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.unmodifiableList(Arrays.asList($c$))" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.immutableList($c$)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="c" maxCount="2147483647" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.unmodifiableList(Arrays.asList($c$))" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="listOf($c$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="c" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap(new ConcurrentHashMap&lt;&gt;())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.newConcurrentSet()">
-        <constraint name="__context__" within="" contains="" />
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap(new ConcurrentHashMap&lt;&gt;())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentSet()">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def ccf = JavaPsiFacade.getInstance(__context__.getProject()).findClass(&quot;com.intellij.concurrency.ConcurrentCollectionFactory&quot;, GlobalSearchScope.allScope(__context__.getProject()));&#10;def ccfVirtualFile = PsiUtil.getVirtualFile(ccf);&#10;&#10;ccfVirtualFile != null &amp;&amp;  &#10;__context__.getResolveScope().contains(ccfVirtualFile)&#10;&#10;&quot;" target="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap&lt;$T$&gt;(ConcurrentHashMap())" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentSet&lt;$T$&gt;()">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def ccf = JavaPsiFacade.getInstance(__context__.getProject()).findClass(&quot;com.intellij.concurrency.ConcurrentCollectionFactory&quot;, GlobalSearchScope.allScope(__context__.getProject()));&#10;def ccfVirtualFile = PsiUtil.getVirtualFile(ccf);&#10;&#10;ccfVirtualFile != null &amp;&amp;  &#10;__context__.getResolveScope().contains(ccfVirtualFile)&#10;&#10;&quot;" target="true" within="" contains="" />
+        <constraint name="T" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can use ContainerUtil" uuid="c9f1d44f-a345-34e5-8460-cf58d74c993d" text="Collections.newSetFromMap&lt;$T$&gt;(ConcurrentHashMap())" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentSet()">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def ccf = JavaPsiFacade.getInstance(__context__.getProject()).findClass(&quot;com.intellij.concurrency.ConcurrentCollectionFactory&quot;, GlobalSearchScope.allScope(__context__.getProject()));&#10;def ccfVirtualFile = PsiUtil.getVirtualFile(ccf);&#10;&#10;ccfVirtualFile != null &amp;&amp;  &#10;__context__.getResolveScope().contains(ccfVirtualFile)&#10;&#10;&quot;" target="true" within="" contains="" />
+        <constraint name="T" minCount="0" maxCount="0" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="can use StringUtil" uuid="e2009598-65b8-3ae6-a9f8-9159d2b2e27a" text="if ($s$.endsWith($e$)) {&#10;  $s$ = $s$.substring(0, $s$.length() - $e$.length());&#10;}" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$s$ = com.intellij.openapi.util.text.StringUtil.trimEnd($s$, $e$);&#10;">
         <constraint name="s" within="" contains="" />
@@ -1045,6 +1044,11 @@
         <constraint name="Var2" nameOfExprType="DataKey" within="" contains="" />
         <constraint name="Var3" nameOfExprType="String" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="DB introspection query is not tested (Microsoft)" uuid="2b82dee6-0e1c-36ce-846f-749c578bd315" problemDescriptor="The introspection query is not tested. See class MsIntroQueriesTest" text="object MsIntroQueries {  &#10;    val $Field$ = $Init$&#10;}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Field" script="&quot;import com.intellij.psi.search.GlobalSearchScopesCore&#10;import com.intellij.psi.search.searches.ReferencesSearch&#10;&#10;!ReferencesSearch.search(__context__, GlobalSearchScopesCore.projectTestScope(__context__.getProject())).any()&quot;" nameOfExprType="com\.intellij\.database\.remote\.jdba\.sql\.SqlQuery&lt;.*&gt;" maxCount="2147483647" target="true" within="" contains="" />
+        <constraint name="Init" minCount="0" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="DBE model property must be public" uuid="0899a4c2-78e7-3f01-be3c-9c46451baec3" text="class $Class$ {&#10;  @StateProperty&#10;  @Modifier(&quot;packageLocal&quot;) $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" within="" contains="" />
@@ -1854,9 +1858,6 @@
         <constraint name="class" within="" contains="" />
         <constraint name="collection" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
-      <searchConfiguration name="Use Kotlin sequences instead of JBIterable" uuid="6db0f481-2d17-3ff3-9051-2d8f6c0734a9" text="JBIterable" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
-        <constraint name="__context__" within="" contains="" />
-      </searchConfiguration>
       <replaceConfiguration name="Use Kotlin syntax instead of Java utilities or Streams" uuid="e3d20d4e-3c07-3e8a-b860-9928a874f4ef" text="java.lang.Boolean.TRUE" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="true">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -22,6 +23,9 @@ public final class MavenRunnerParameters implements Cloneable {
   private final List<String> myGoals = new ArrayList<>();
 
   private boolean myResolveToWorkspace;
+
+  private final List<String> myProjectsCmdOptionValues = new ArrayList<>();
+  private @Nullable String myCmdOptions = null;
 
   private final Map<String, Boolean> myProfilesMap = new LinkedHashMap<>();
 
@@ -109,6 +113,7 @@ public final class MavenRunnerParameters implements Cloneable {
   public MavenRunnerParameters(MavenRunnerParameters that) {
     this(that.myWorkingDirPath, that.myPomFileName, that.isPomExecution, that.myGoals, that.myProfilesMap);
     myResolveToWorkspace = that.myResolveToWorkspace;
+    setProjectsCmdOptionValues(that.myProjectsCmdOptionValues);
   }
 
   public boolean isPomExecution() {
@@ -171,6 +176,38 @@ public final class MavenRunnerParameters implements Cloneable {
     if (goals != null) {
       myGoals.addAll(goals);
     }
+  }
+
+  public List<String> getProjectsCmdOptionValues() {
+    return myProjectsCmdOptionValues;
+  }
+
+  public void setProjectsCmdOptionValues(@Nullable List<String> projectsCmdOptionValues) {
+    if (myProjectsCmdOptionValues == projectsCmdOptionValues) return;
+    myProjectsCmdOptionValues.clear();
+
+    if (projectsCmdOptionValues != null) {
+      myProjectsCmdOptionValues.addAll(projectsCmdOptionValues);
+    }
+  }
+
+  public List<String> getOptions() {
+    List<String> options = new ArrayList<>();
+    if (!myProjectsCmdOptionValues.isEmpty()) {
+      options.add("--projects=" + String.join(",", myProjectsCmdOptionValues));
+    }
+    if (StringUtil.isNotEmpty(myCmdOptions)) {
+      options.add(myCmdOptions);
+    }
+    return options;
+  }
+
+  public @Nullable String getCmdOptions() {
+    return myCmdOptions;
+  }
+
+  public void setCmdOptions(@Nullable String cmdOptions) {
+    myCmdOptions = cmdOptions;
   }
 
   /**
@@ -244,6 +281,7 @@ public final class MavenRunnerParameters implements Cloneable {
     if (isPomExecution != that.isPomExecution) return false;
     if (myResolveToWorkspace != that.myResolveToWorkspace) return false;
     if (!myGoals.equals(that.myGoals)) return false;
+    if (!myProjectsCmdOptionValues.equals(that.myProjectsCmdOptionValues)) return false;
     if (!Objects.equals(myWorkingDirPath, that.myWorkingDirPath)) return false;
     if (!Objects.equals(myPomFileName, that.myPomFileName)) return false;
     if (!myProfilesMap.equals(that.myProfilesMap)) return false;

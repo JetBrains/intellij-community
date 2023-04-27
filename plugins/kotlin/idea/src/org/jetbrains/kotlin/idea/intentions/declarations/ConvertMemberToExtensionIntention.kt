@@ -263,13 +263,15 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         if (javaCallsToFix.isNotEmpty()) {
             val lightMethod = extension.toLightMethods().first()
             for (javaCallToFix in javaCallsToFix) {
-                javaCallToFix.methodExpression.qualifierExpression?.let {
-                    val argumentList = javaCallToFix.argumentList
-                    argumentList.addBefore(it, argumentList.expressions.firstOrNull())
-                }
+                runWriteAction {
+                    javaCallToFix.methodExpression.qualifierExpression?.let {
+                        val argumentList = javaCallToFix.argumentList
+                        argumentList.addBefore(it, argumentList.expressions.firstOrNull())
+                    }
 
-                val newRef = javaCallToFix.methodExpression.bindToElement(lightMethod)
-                JavaCodeStyleManager.getInstance(project).shortenClassReferences(newRef)
+                    val newRef = javaCallToFix.methodExpression.bindToElement(lightMethod)
+                    JavaCodeStyleManager.getInstance(project).shortenClassReferences(newRef)
+                }
             }
         }
 

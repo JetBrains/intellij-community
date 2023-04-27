@@ -3,10 +3,9 @@ package com.intellij.diagnostic;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import kotlin.Pair;
 import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +32,7 @@ public final class StartUpMeasurer {
     public static final String PROJECT_DUMB_POST_START_UP_ACTIVITIES = "project post-startup dumb-aware activities";
     public static final String EDITOR_RESTORING = "editor restoring";
     public static final String EDITOR_RESTORING_TILL_PAINT = "editor restoring till paint";
+    public static final String EDITOR_RESTORING_TILL_HIGHLIGHTED = "initial entire file highlighting";
   }
 
   @SuppressWarnings("StaticNonFinalField")
@@ -192,7 +192,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static void addTimings(@NotNull ArrayList<Pair<String, Long>> timings, @NotNull String groupName) {
+  public static void addTimings(@NotNull List<Object> timings, @NotNull String groupName) {
     if (!items.isEmpty()) {
       throw new IllegalStateException("addTimings must be not called if some events were already added using API");
     }
@@ -201,17 +201,17 @@ public final class StartUpMeasurer {
       return;
     }
 
-    ActivityImpl parent = new ActivityImpl(groupName, timings.get(0).getSecond(), null, null);
+    ActivityImpl parent = new ActivityImpl(groupName, (long)timings.get(1), null, null);
     parent.setEnd(getCurrentTime());
 
-    for (int i = 0; i < timings.size(); i++) {
-      long start = timings.get(i).getSecond();
+    for (int i = 0; i < timings.size(); i += 2) {
+      long start = (long)timings.get(i + 1);
       if (start < startTime) {
         startTime = start;
       }
 
-      ActivityImpl activity = new ActivityImpl(timings.get(i).getFirst(), start, parent, null);
-      activity.setEnd(i == timings.size() - 1 ? parent.getEnd() : timings.get(i + 1).getSecond());
+      ActivityImpl activity = new ActivityImpl((String)timings.get(i), start, parent, null);
+      activity.setEnd(i == timings.size() - 2 ? parent.getEnd() : (long)timings.get(i + 3));
       items.add(activity);
     }
     items.add(parent);

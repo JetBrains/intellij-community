@@ -304,6 +304,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/Generic.kt"));
         }
 
+        @TestMetadata("ImplicitArrayWithFlexibleParameterTypes.kt")
+        public void testImplicitArrayWithFlexibleParameterTypes() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/ImplicitArrayWithFlexibleParameterTypes.kt"));
+        }
+
         @TestMetadata("IntOverridesAny.kt")
         public void testIntOverridesAny() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/IntOverridesAny.kt"));
@@ -327,6 +332,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("PlatformTypes.kt")
         public void testPlatformTypes() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/PlatformTypes.kt"));
+        }
+
+        @TestMetadata("PrimitiveBackedInlineClasses.kt")
+        public void testPrimitiveBackedInlineClasses() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/PrimitiveBackedInlineClasses.kt"));
         }
 
         @TestMetadata("Primitives.kt")
@@ -537,6 +547,16 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InlineReified.kt"));
         }
 
+        @TestMetadata("InvalidJavaIdentifierAsAnnotationArgument.kt")
+        public void testInvalidJavaIdentifierAsAnnotationArgument() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InvalidJavaIdentifierAsAnnotationArgument.kt"));
+        }
+
+        @TestMetadata("InvalidJavaIdentifierAsPropertyInitializer.kt")
+        public void testInvalidJavaIdentifierAsPropertyInitializer() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InvalidJavaIdentifierAsPropertyInitializer.kt"));
+        }
+
         @TestMetadata("JavaBetween.kt")
         public void testJavaBetween() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/JavaBetween.kt"));
@@ -575,6 +595,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("OnlySecondaryConstructors.kt")
         public void testOnlySecondaryConstructors() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/OnlySecondaryConstructors.kt"));
+        }
+
+        @TestMetadata("PrivateObject.kt")
+        public void testPrivateObject() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/PrivateObject.kt"));
         }
 
         @TestMetadata("PublishedApi.kt")

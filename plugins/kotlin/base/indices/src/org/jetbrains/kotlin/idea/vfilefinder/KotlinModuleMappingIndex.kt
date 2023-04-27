@@ -13,18 +13,20 @@ import org.jetbrains.kotlin.serialization.deserialization.DeserializationConfigu
 import java.io.DataInput
 import java.io.DataOutput
 
-object KotlinModuleMappingIndex : FileBasedIndexExtension<String, PackageParts>() {
+internal const val MAPPING_FILE_DOT_FILE_EXTENSION = ".${ModuleMapping.MAPPING_FILE_EXT}"
+class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<String, PackageParts>() {
+    companion object {
+        val NAME: ID<String, PackageParts> = ID.create(KotlinModuleMappingIndex::class.java.canonicalName)
 
-    val KEY: ID<String, PackageParts> = ID.create(KotlinModuleMappingIndex::class.java.canonicalName)
+        internal val STRING_KEY_DESCRIPTOR = object : KeyDescriptor<String> {
+            override fun save(output: DataOutput, value: String) = IOUtil.writeUTF(output, value)
 
-    internal val STRING_KEY_DESCRIPTOR = object : KeyDescriptor<String> {
-        override fun save(output: DataOutput, value: String) = IOUtil.writeUTF(output, value)
+            override fun read(input: DataInput) = IOUtil.readUTF(input)
 
-        override fun read(input: DataInput) = IOUtil.readUTF(input)
+            override fun getHashCode(value: String) = value.hashCode()
 
-        override fun getHashCode(value: String) = value.hashCode()
-
-        override fun isEqual(val1: String?, val2: String?) = val1 == val2
+            override fun isEqual(val1: String?, val2: String?) = val1 == val2
+        }
     }
 
     private val VALUE_EXTERNALIZER = object : DataExternalizer<PackageParts> {
@@ -45,7 +47,7 @@ object KotlinModuleMappingIndex : FileBasedIndexExtension<String, PackageParts>(
         }
     }
 
-    override fun getName() = KEY
+    override fun getName() = NAME
 
     override fun dependsOnFileContent() = true
 
@@ -54,7 +56,7 @@ object KotlinModuleMappingIndex : FileBasedIndexExtension<String, PackageParts>(
     override fun getValueExternalizer() = VALUE_EXTERNALIZER
 
     override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
-        file.extension == ModuleMapping.MAPPING_FILE_EXT
+        file.nameSequence.endsWith(MAPPING_FILE_DOT_FILE_EXTENSION)
     }
 
     override fun getVersion(): Int = 5

@@ -24,12 +24,12 @@ public final class DefaultFileCollectionDependency extends AbstractExternalDepen
 
   public DefaultFileCollectionDependency(Collection<File> files) {
     super(new DefaultExternalDependencyId(null, files.toString(), null), null, null);
-    this.files = new ArrayList<File>(files);
+    this.files = new ArrayList<>(files);
   }
 
   public DefaultFileCollectionDependency(FileCollectionDependency dependency) {
     super(dependency);
-    files = new ArrayList<File>(dependency.getFiles());
+    files = new ArrayList<>(dependency.getFiles());
   }
 
   @NotNull

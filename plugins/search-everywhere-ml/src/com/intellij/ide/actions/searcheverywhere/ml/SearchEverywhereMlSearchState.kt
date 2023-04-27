@@ -10,6 +10,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereEle
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankingModel
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 
 internal class SearchEverywhereMlSearchState(
@@ -19,9 +20,12 @@ internal class SearchEverywhereMlSearchState(
   val keysTyped: Int, val backspacesTyped: Int, private val searchQuery: String,
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?,
-  projectIsDumb: Boolean?
+  projectIsDumb: Boolean?,
+  searchScope: ScopeDescriptor?,
+  isSearchEverywhere: Boolean,
 ) {
-  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery, projectIsDumb)
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery, projectIsDumb,
+                                                                                           searchScope, isSearchEverywhere)
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
   private val model: SearchEverywhereRankingModel by lazy {
@@ -54,9 +58,4 @@ internal class SearchEverywhereMlSearchState(
 internal data class SearchEverywhereMLItemInfo(val id: Int?,
                                                val contributorId: String,
                                                val features: List<EventPair<*>>,
-                                               val contributorFeatures: List<EventPair<*>>) {
-  fun featuresAsMap(): Map<String, Any> = features.mapNotNull {
-    val data = it.data
-    if (data == null) null else it.field.name to data
-  }.toMap()
-}
+                                               val contributorFeatures: List<EventPair<*>>)

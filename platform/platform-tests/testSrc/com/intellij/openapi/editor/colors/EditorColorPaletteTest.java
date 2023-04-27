@@ -28,13 +28,6 @@ import java.util.Collection;
 @SuppressWarnings("SameParameterValue")
 public class EditorColorPaletteTest extends LightPlatformTestCase {
   
-  public void testDefaultColors() {
-    checkSchemeBackgrounds("Default", 80, 255);
-  }
-  
-  public void testDarculaColors() {
-    checkSchemeBackgrounds("Darcula", 0, 175);
-  }
 
   public void testGetNonConflictingColor() {
     Color sampleColor = new Color(0, 0, 255);

@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ComponentUtil
@@ -29,14 +28,12 @@ interface ToolWindowManagerState : PersistentStateComponent<Element> {
   var frame: ProjectFrameHelper?
 }
 
-private const val EDITOR_ELEMENT = "editor"
-private const val ACTIVE_ATTR_VALUE = "active"
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 private const val RECENT_TW_TAG = "recentWindows"
 
 @ApiStatus.Internal
 @State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class ToolWindowManagerStateImpl(private val project: Project) : ToolWindowManagerState {
+class ToolWindowManagerStateImpl : ToolWindowManagerState {
   private val isNewUi = ExperimentalUI.isNewUI()
 
   override var layout = DesktopLayout()
@@ -47,13 +44,13 @@ class ToolWindowManagerStateImpl(private val project: Project) : ToolWindowManag
   override var layoutToRestoreLater: DesktopLayout? = null
   override val recentToolWindows = LinkedList<String>()
   override val scheduledLayout = AtomicProperty<DesktopLayout?>(null)
-  private val focusManager: IdeFocusManager
-    get() = IdeFocusManager.getInstance(project)!!
+
   override val isEditorComponentActive: Boolean
     get() {
       ApplicationManager.getApplication().assertIsDispatchThread()
-      return ComponentUtil.getParentOfType(EditorsSplitters::class.java, focusManager.focusOwner) != null
+      return ComponentUtil.getParentOfType(EditorsSplitters::class.java, IdeFocusManager.getGlobalInstance().focusOwner) != null
     }
+
   override var frame: ProjectFrameHelper? = null
 
   override fun getState(): Element? {
@@ -62,10 +59,6 @@ class ToolWindowManagerStateImpl(private val project: Project) : ToolWindowManag
     }
 
     val element = Element("state")
-    if (isEditorComponentActive) {
-      element.addContent(Element(EDITOR_ELEMENT).setAttribute(ACTIVE_ATTR_VALUE, "true"))
-    }
-
     // save layout of tool windows
     writeLayout(layout, element, isV2 = isNewUi)
 

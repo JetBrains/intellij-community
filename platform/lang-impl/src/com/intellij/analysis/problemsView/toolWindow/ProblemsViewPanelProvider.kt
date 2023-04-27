@@ -8,5 +8,8 @@ interface ProblemsViewPanelProvider {
     val EP = ExtensionPointName<ProblemsViewPanelProvider>("com.intellij.problemsViewPanelProvider")
   }
 
+  /**
+   * @return Problem view tab or null, if was unable to create
+   */
   fun create(): ProblemsViewTab?
 }

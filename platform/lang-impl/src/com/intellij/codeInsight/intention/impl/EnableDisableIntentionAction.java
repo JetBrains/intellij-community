@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -19,15 +19,14 @@ public class EnableDisableIntentionAction extends AbstractEditIntentionSettingsA
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
+  public @NotNull String getText() {
+    IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
     return CodeInsightBundle.message(mySettings.isEnabled(myAction) ? "disable.intention.action" : "enable.intention.action", myFamilyName);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
+    IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
     mySettings.setEnabled(myAction, !mySettings.isEnabled(myAction));
   }
 

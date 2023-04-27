@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   private static final Map<String, String[][]> DEFAULT_DUPLICATES = Map.ofEntries(
     Map.entry("$default", new String[][]{
       {"ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
-      {"BACK_SPACE",               "EditorBackSpace", "FileChooserList.LevelUp"},
+      {"BACK_SPACE",               "EditorBackSpace", "FileChooser.GoToParent"},
       {"C",                        "Uml.CollapseNodes", "JupyterNotebookCopyCellCommandModeAction"},
       {"DELETE",                   "$Delete", "DatabaseView.DropAction", "JupyterNotebookDeleteCellCommandModeAction"},
       {"ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
@@ -145,6 +145,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt S",         "ShowProjectStructureSettings", "GoShareInPlaygroundAction"},
       {"shift ctrl alt RIGHT",     "MoveElementRight", "ResizeToolWindowRight"},
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
+      {"shift ctrl alt M",         "Console.TableResult.MaximizeEditingCell", "org.jetbrains.completion.full.line.markers.actions.GenerateMarkerAction"},
       {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
@@ -169,6 +170,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
       {"meta 2",                   "ActivateBookmarksToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
       {"meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
+      {"meta A",                   "$SelectAll", "Terminal.SelectAll"},
       {"meta BACK_SPACE",          "EditorDeleteLine", "$Delete"},
       {"meta I",                   "DatabaseView.PropertiesAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
       {"meta K",                   "CheckinProject", "Terminal.ClearBuffer"},
@@ -176,8 +178,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta N",                   "FileChooser.NewFolder", "Generate", "NewElement"},
       {"meta R",                   "Refresh", "Replace", "Rerun", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta T",                   "Terminal.NewTab", "Vcs.UpdateProject"},
-      {"meta SLASH",               "CommentByLineComment", "FileChooserList.Root", "Graph.ActualSize"},
-      {"meta UP",                  "ShowNavBar", "FileChooserList.LevelUp"},
+      {"meta SLASH",               "CommentByLineComment", "FileChooser.GoToRoot", "Graph.ActualSize"},
+      {"meta UP",                  "ShowNavBar", "FileChooser.GoToParent"},
       {"shift BACK_SPACE",         "EditorBackSpace", "UsageView.Include"},
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift ctrl DOWN",          "MethodDown", "ShowContent"},
@@ -201,11 +203,12 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
       {"meta 2",                   "ActivateBookmarksToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
       {"meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
+      {"meta A",                   "$SelectAll", "Terminal.SelectAll"},
       {"meta K",                   "CheckinProject", "Terminal.ClearBuffer"},
       {"meta R",                   "WebInspector.Browser.Refresh", "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
-      {"meta SLASH",               "CommentByLineComment", "FileChooserList.Root", "Graph.ActualSize"},
+      {"meta SLASH",               "CommentByLineComment", "FileChooser.GoToRoot", "Graph.ActualSize"},
       {"meta T",                   "Terminal.NewTab", "Vcs.UpdateProject"},
-      {"meta UP",                  "EditorScrollUp", "FileChooserList.LevelUp", "MethodOverloadSwitchUp"},
+      {"meta UP",                  "EditorScrollUp", "FileChooser.GoToParent", "MethodOverloadSwitchUp"},
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift meta C",             "CopyPaths", "DatabaseView.CopyDdlAction", "WebInspector.Browser.Selection.Toggle", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     }),
@@ -320,7 +323,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta T",                   "SearchEverywhere", "Terminal.NewTab"},
     }),
     Map.entry("Default for XWin", new String[][]{
-      {"ctrl SLASH",               "CommentByLineComment", "FileChooserList.Root", "Graph.ActualSize"},
+      {"ctrl SLASH",               "CommentByLineComment", "FileChooser.GoToRoot", "Graph.ActualSize"},
       {"shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction", "Terminal.CopySelectedText",
                                    "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
       {"shift ctrl V",             "PasteMultiple", "Terminal.Paste", "JupyterNotebookPasteCellAboveCommandModeAction"},
@@ -384,7 +387,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"control 1",                "ActivateProjectToolWindow", "DuplicatesForm.SendToLeft"},
       {"control 2",                "ActivateProjectToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
       {"control 3",                "ActivateProjectToolWindow", "FileChooser.GotoModule"},
-      {"control BACK_SLASH",       "CodeCompletion", "FileChooserList.Root"},
+      {"control BACK_SLASH",       "CodeCompletion", "FileChooser.GoToRoot"},
       {"control BACK_SPACE",       "EditorDeleteToWordStart", "ToggleDockMode"},
       {"control DIVIDE",           "CollapseRegionRecursively", "Graph.ActualSize"},
       {"control I",                "GotoAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
@@ -501,7 +504,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta R",                   "FileStructurePopup", "Refresh", "Rerun", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta SUBTRACT",            "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
       {"meta T",                   "GotoFile", "Terminal.NewTab"},
-      {"meta UP",                  "EditorTextStart", "FileChooserList.LevelUp"},
+      {"meta UP",                  "EditorTextStart", "FileChooser.GoToParent"},
       {"meta V",                   "EditorPasteSimple", "Terminal.Paste", "JupyterNotebookPasteCellCommandModeAction"},
       {"meta alt DOWN",            "Console.TableResult.NextPage", "GotoDeclaration"},
       {"meta alt G",               "DatabaseView.SqlGenerator", "FindWordAtCaret", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction"},
@@ -526,7 +529,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta DOWN",                "EditSourceNotInEditor", "EditorTextEnd"},
       {"meta I",                   "DatabaseView.PropertiesAction", "QuickJavaDoc", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
       {"meta OPEN_BRACKET",        "Back", "PreviousDiff"},
-      {"meta UP",                  "EditorTextStart", "FileChooserList.LevelUp"},
+      {"meta UP",                  "EditorTextStart", "FileChooser.GoToParent"},
       {"meta alt DOWN",            "Console.TableResult.NextPage", "NotebookSelectCellBelowAction", "NextOccurence"},
       {"meta alt E",               "Console.History.Browse", "GotoNextElementUnderCaretUsage", "PerforceDirect.Edit"},
       {"meta alt I",               "Move", "RMarkdownNewChunk"},
@@ -544,7 +547,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions", "ActivateErrorsInSolutionToolWindow",
     "ActivateUnitTestsToolWindow", "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow",
     "RiderBackendAction-EncapsulateField", "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
-    "ActivateInspectionResultsToolWindow", ""
+    "ActivateInspectionResultsToolWindow", "", "ValidateXml"
   );
 
   private static final Set<String> DEFAULT_BOUND_ACTIONS = Set.of(

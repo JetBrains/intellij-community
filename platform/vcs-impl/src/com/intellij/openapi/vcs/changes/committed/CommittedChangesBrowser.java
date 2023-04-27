@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class CommittedChangesBrowser extends SimpleChangesBrowser {
+public class CommittedChangesBrowser extends SimpleAsyncChangesBrowser {
   private CommittedChangesBrowserUseCase myUseCase;
 
   public CommittedChangesBrowser(@NotNull Project project) {

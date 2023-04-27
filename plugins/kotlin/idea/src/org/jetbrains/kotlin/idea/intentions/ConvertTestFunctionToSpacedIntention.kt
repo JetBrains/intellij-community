@@ -48,8 +48,8 @@ sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfTargetingR
         val newName = convert(name)
         if (newName == name.quoteIfNeeded()) return null
 
-        val lightMethod = element.toLightMethods().firstOrNull() ?: return null
-        if (!TestFrameworks.getInstance().isTestMethod(lightMethod)) return null
+        val psiClass = element.toLightMethods().firstOrNull()?.containingClass ?: return null
+        if (!TestFrameworks.getInstance().isTestClass(psiClass)) return null
 
         setTextGetter(KotlinBundle.lazyMessage("rename.to.01", newName))
 

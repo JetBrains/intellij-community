@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -7,6 +9,7 @@ import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.tasks.MAVEN_REPO
 import java.io.File
 import java.io.OutputStream
 import java.nio.file.Files
@@ -18,7 +21,7 @@ internal val Collection<DistributionFileEntry>.includedModules: Sequence<String>
 
 /**
  * Provides mapping between files in the product distribution and modules and libraries in the project configuration. The generated JSON file
- * contains array of [DistributionFileEntry].
+ * contains an array of [DistributionFileEntry].
  */
 internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>, out: OutputStream?, buildPaths: BuildPaths) {
   val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
@@ -57,8 +60,7 @@ fun writeProjectStructureReport(entries: Collection<DistributionFileEntry>, file
             writer.writeNumberField("size", entry.size)
           }
           is ModuleOutputEntry -> {
-            writer.writeStringField("module", entry.moduleName)
-            writer.writeNumberField("size", entry.size)
+            writeModuleItem(writer, entry)
           }
           is ModuleTestOutputEntry -> {
             writer.writeStringField("module", entry.moduleName)
@@ -107,8 +109,6 @@ private class IntelliJDefaultPrettyPrinter : DefaultPrettyPrinter() {
   }
 }
 
-private val MAVEN_REPO = Path.of(System.getProperty("user.home"), ".m2/repository")
-
 private fun shortenAndNormalizePath(file: Path, buildPaths: BuildPaths, extraRoot: Path? = null): String {
   val result = shortenPath(file, buildPaths, extraRoot).replace(File.separatorChar, '/')
   return if (result.startsWith("temp/")) result.substring("temp/".length) else result
@@ -128,13 +128,20 @@ private fun writeModules(writer: JsonGenerator, fileEntries: List<DistributionFi
 
     writer.writeStartObject()
     val moduleName = entry.moduleName
-    writer.writeStringField("name", moduleName)
-    writer.writeNumberField("size", entry.size)
+    writeModuleItem(writer, entry)
     writeModuleLibraries(fileEntries = fileEntries, moduleName = moduleName, writer = writer, buildPaths = buildPaths)
     writer.writeEndObject()
   }
   if (opened) {
     writer.writeEndArray()
+  }
+}
+
+private fun writeModuleItem(writer: JsonGenerator, entry: ModuleOutputEntry) {
+  writer.writeStringField("name", entry.moduleName)
+  writer.writeNumberField("size", entry.size)
+  entry.reason?.let {
+    writer.writeStringField("reason", it)
   }
 }
 

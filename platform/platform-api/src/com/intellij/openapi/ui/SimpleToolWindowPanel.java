@@ -96,7 +96,10 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
 
   public void setToolbar(@Nullable JComponent c) {
     if (c == null) {
-      remove(myToolbar);
+      JComponent toolbar = myToolbar;
+      if (toolbar != null) {
+        remove(toolbar);
+      }
     }
     myToolbar = c;
     if (myToolbar instanceof ActionToolbar) {

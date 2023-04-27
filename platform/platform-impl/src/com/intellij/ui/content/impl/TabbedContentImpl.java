@@ -11,7 +11,10 @@ import com.intellij.ui.content.TabGroupId;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -158,7 +161,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   @NotNull
   @Override
   public List<Pair<String, JComponent>> getTabs() {
-    return ContainerUtil.map2List(myTabs, tab -> Pair.create(tab.getDisplayName(), tab.getComponent()));
+    return ContainerUtil.map(myTabs, tab -> Pair.create(tab.getDisplayName(), tab.getComponent()));
   }
 
   @Override

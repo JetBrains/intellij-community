@@ -2,7 +2,6 @@
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.ActionCenter
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.options.ConfigurableUi
@@ -24,7 +23,7 @@ import javax.swing.ListSelectionModel
 class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl> {
   private val ui: DialogPanel
   private val notificationsList = createNotificationsList()
-  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationsList) {
+  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationsList, null, null) {
     override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
       if (super.isMatchingElement(element, pattern)) {
         return true
@@ -41,6 +40,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
   private val myDoNotAskConfigurableUi = DoNotAskConfigurableUi()
 
   init {
+    speedSearch.setupListeners()
     ui = panel {
       row {
         useBalloonNotifications = checkBox(IdeBundle.message("notifications.configurable.display.balloon.notifications"))
@@ -58,14 +58,12 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
         cell(notificationSettings.ui)
           .align(AlignY.TOP)
       }
-      if (ActionCenter.isEnabled()) {
-        row {
-          cell(myDoNotAskConfigurableUi.createComponent())
-            .label(IdeBundle.message("notifications.configurable.do.not.ask.title"), LabelPosition.TOP)
-            .align(Align.FILL)
-        }.topGap(TopGap.SMALL)
-          .resizableRow()
-      }
+      row {
+        cell(myDoNotAskConfigurableUi.createComponent())
+          .label(IdeBundle.message("notifications.configurable.do.not.ask.title"), LabelPosition.TOP)
+          .align(Align.FILL)
+      }.topGap(TopGap.SMALL)
+        .resizableRow()
     }
     ScrollingUtil.ensureSelectionExists(notificationsList)
   }

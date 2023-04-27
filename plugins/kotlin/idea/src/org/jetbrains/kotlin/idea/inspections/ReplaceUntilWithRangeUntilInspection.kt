@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -10,8 +11,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
+import org.jetbrains.kotlin.idea.statistics.NewAndDeprecatedFeaturesInspectionData
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
-import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.RANGE_UNTIL
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.UNTIL
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.EXPERIMENTAL_STDLIB_API_ANNOTATION
@@ -27,24 +30,27 @@ import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptIn
  * Tests:
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ReplaceUntilWithRangeUntil]
  */
-class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection() {
-    override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) {
-        when (type) {
-            RANGE_TO, DOWN_TO -> Unit
-            RANGE_UNTIL -> range.containingFile?.virtualFile?.let { file ->
-                KotlinLanguageFeaturesFUSCollector.RangeUntil.logNewRangeUntilOccurence(
-                    file,
-                    range.languageVersionSettings.languageVersion.toString()
-                )
+class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection(
+    collector = KotlinLanguageFeaturesFUSCollector.rangeUntilCollector,
+    defaultDeprecationData = NewAndDeprecatedFeaturesInspectionData()
+) {
+    override fun visitRange(
+        range: KtExpression,
+        context: Lazy<BindingContext>,
+        type: RangeKtExpressionType,
+        holder: ProblemsHolder,
+        session: LocalInspectionToolSession
+    ) {
+        if (range.isPossibleToUseRangeUntil(context)) {
+            session.updateDeprecationData {
+                when (type) {
+                    UNTIL -> it.withDeprecatedFeature()
+                    RANGE_UNTIL -> it.withNewFeature()
+                    else -> it
+                }
             }
-            UNTIL -> range.containingFile?.virtualFile?.let { file ->
-                KotlinLanguageFeaturesFUSCollector.RangeUntil.logOldUntilOccurence(
-                    file,
-                    range.languageVersionSettings.languageVersion.toString()
-                )
-            }
-        }
-        if (type == UNTIL && range.isPossibleToUseRangeUntil(context)) {
+            if (type != UNTIL) return
+
             holder.registerProblem(
                 range,
                 KotlinBundle.message("until.can.be.replaced.with.rangeUntil.operator"),
@@ -60,13 +66,8 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection() {
             val element = descriptor.psiElement as? KtExpression ?: return
             val (left, right) = element.getArguments() ?: return
             if (left == null || right == null) return
-            val replaced = element.replace(KtPsiFactory(project).createExpressionByPattern("$0..<$1", left, right))
-            replaced.containingFile?.virtualFile?.let { file ->
-                KotlinLanguageFeaturesFUSCollector.RangeUntil.logUntilToRangeUntilQuickFixIsApplied(
-                    file,
-                    element.languageVersionSettings.languageVersion.toString()
-                )
-            }
+            KotlinLanguageFeaturesFUSCollector.rangeUntilCollector.logQuickFixApplied(element.containingFile)
+            element.replace(KtPsiFactory(project).createExpressionByPattern("$0..<$1", left, right))
         }
     }
 

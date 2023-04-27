@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.core;
 
 import java.awt.*;
+import java.util.Objects;
 
 public final class GridConstraints implements Cloneable {
   public static final GridConstraints[] EMPTY_ARRAY = new GridConstraints[0];
@@ -372,9 +373,9 @@ public final class GridConstraints implements Cloneable {
     if (myRow != gridConstraints.myRow) return false;
     if (myRowSpan != gridConstraints.myRowSpan) return false;
     if (myVSizePolicy != gridConstraints.myVSizePolicy) return false;
-    if (myMaximumSize != null ? !myMaximumSize.equals(gridConstraints.myMaximumSize) : gridConstraints.myMaximumSize != null) return false;
-    if (myMinimumSize != null ? !myMinimumSize.equals(gridConstraints.myMinimumSize) : gridConstraints.myMinimumSize != null) return false;
-    if (myPreferredSize != null ? !myPreferredSize.equals(gridConstraints.myPreferredSize) : gridConstraints.myPreferredSize != null) return false;
+    if (!Objects.equals(myMaximumSize, gridConstraints.myMaximumSize)) return false;
+    if (!Objects.equals(myMinimumSize, gridConstraints.myMinimumSize)) return false;
+    if (!Objects.equals(myPreferredSize, gridConstraints.myPreferredSize)) return false;
     if (myIndent != gridConstraints.myIndent) return false;
     if (myUseParentLayout != gridConstraints.myUseParentLayout) return false;
 

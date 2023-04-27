@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util.resolve;
 
 import org.gradle.api.Action;
@@ -118,7 +118,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
         .resolveDependencies(sourceSet);
     }
 
-    Collection<ExternalDependency> result = new ArrayList<ExternalDependency>();
+    Collection<ExternalDependency> result = new ArrayList<>();
 
     // resolve compile dependencies
     FileCollection compileClasspath = getCompileClasspath(sourceSet);
@@ -195,8 +195,8 @@ public final class DependencyResolverImpl implements DependencyResolver {
 
     LenientConfiguration lenientConfiguration = configuration.getResolvedConfiguration().getLenientConfiguration();
     ResolutionResult resolutionResult = configuration.getIncoming().getResolutionResult();
-    List<ComponentIdentifier> components = new ArrayList<ComponentIdentifier>();
-    Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts = new LinkedHashMap<ResolvedDependency, Set<ResolvedArtifact>>();
+    List<ComponentIdentifier> components = new ArrayList<>();
+    Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts = new LinkedHashMap<>();
     Map<ModuleVersionIdentifier, ResolvedDependencyResult> transformedProjectDependenciesResultMap = null;
     for (ResolvedDependency dependency : lenientConfiguration.getAllModuleDependencies()) {
       try {
@@ -209,7 +209,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
       }
       catch (GradleException e) {
         if (transformedProjectDependenciesResultMap == null) {
-          transformedProjectDependenciesResultMap = new HashMap<ModuleVersionIdentifier, ResolvedDependencyResult>();
+          transformedProjectDependenciesResultMap = new HashMap<>();
           for (DependencyResult dependencyResult : resolutionResult.getAllDependencies()) {
             ComponentSelector resultRequested = dependencyResult.getRequested();
             if (dependencyResult instanceof ResolvedDependencyResult && resultRequested instanceof ProjectComponentSelector) {
@@ -226,10 +226,10 @@ public final class DependencyResolverImpl implements DependencyResolver {
       }
     }
     Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap = buildAuxiliaryArtifactsMap(configuration, components);
-    Collection<FileCollectionDependency> sourceSetsOutputDirsRuntimeFileDependencies = new LinkedHashSet<FileCollectionDependency>();
-    Collection<ExternalDependency> artifactDependencies = new LinkedHashSet<ExternalDependency>();
-    Set<String> resolvedFiles = new HashSet<String>();
-    Map<String, DefaultExternalProjectDependency> resolvedProjectDependencies = new HashMap<String, DefaultExternalProjectDependency>();
+    Collection<FileCollectionDependency> sourceSetsOutputDirsRuntimeFileDependencies = new LinkedHashSet<>();
+    Collection<ExternalDependency> artifactDependencies = new LinkedHashSet<>();
+    Set<String> resolvedFiles = new HashSet<>();
+    Map<String, DefaultExternalProjectDependency> resolvedProjectDependencies = new HashMap<>();
     for (Map.Entry<ResolvedDependency, Set<ResolvedArtifact>> resolvedDependencySetEntry : resolvedArtifacts.entrySet()) {
       ResolvedDependency resolvedDependency = resolvedDependencySetEntry.getKey();
       Set<ResolvedArtifact> artifacts = resolvedDependencySetEntry.getValue();
@@ -268,10 +268,10 @@ public final class DependencyResolverImpl implements DependencyResolver {
           String key = buildName + "_" + projectPath + "_" + resolvedDependency.getConfiguration();
           DefaultExternalProjectDependency projectDependency = resolvedProjectDependencies.get(key);
           if (projectDependency != null) {
-            Set<File> projectDependencyArtifacts = new LinkedHashSet<File>(projectDependency.getProjectDependencyArtifacts());
+            Set<File> projectDependencyArtifacts = new LinkedHashSet<>(projectDependency.getProjectDependencyArtifacts());
             projectDependencyArtifacts.add(artifactFile);
             projectDependency.setProjectDependencyArtifacts(projectDependencyArtifacts);
-            Set<File> artifactSources = new LinkedHashSet<File>(projectDependency.getProjectDependencyArtifactsSources());
+            Set<File> artifactSources = new LinkedHashSet<>(projectDependency.getProjectDependencyArtifactsSources());
             artifactSources.addAll(findArtifactSources(singleton(artifactFile), mySourceSetFinder));
             projectDependency.setProjectDependencyArtifactsSources(artifactSources);
             continue;
@@ -334,7 +334,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
 
     Collection<FileCollectionDependency> otherFileDependencies = resolveOtherFileDependencies(resolvedFiles, configuration, scope);
 
-    Collection<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
+    Collection<ExternalDependency> result = new LinkedHashSet<>();
     result.addAll(sourceSetsOutputDirsRuntimeFileDependencies);
     result.addAll(otherFileDependencies);
     result.addAll(artifactDependencies);
@@ -383,7 +383,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
                                                                                         List<ComponentIdentifier> components) {
     Map<ComponentIdentifier, ComponentArtifactsResult> artifactsResultMap;
     if (!components.isEmpty()) {
-      List<Class<? extends Artifact>> artifactTypes = new ArrayList<Class<? extends Artifact>>(2);
+      List<Class<? extends Artifact>> artifactTypes = new ArrayList<>(2);
       if (myDownloadSources) {
         artifactTypes.add(SourcesArtifact.class);
       }
@@ -399,7 +399,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
         .execute()
         .getResolvedComponents();
 
-      artifactsResultMap = new HashMap<ComponentIdentifier, ComponentArtifactsResult>(componentResults.size());
+      artifactsResultMap = new HashMap<>(componentResults.size());
       for (ComponentArtifactsResult artifactsResult : componentResults) {
         artifactsResultMap.put(artifactsResult.getId(), artifactsResult);
       }
@@ -426,7 +426,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
       }
     });
     Set<ResolvedArtifactResult> artifactResults = artifactView.getArtifacts().getArtifacts();
-    Collection<FileCollectionDependency> result = new LinkedHashSet<FileCollectionDependency>();
+    Collection<FileCollectionDependency> result = new LinkedHashSet<>();
     for (ResolvedArtifactResult artifactResult : artifactResults) {
       File file = artifactResult.getFile();
       if (!resolvedFiles.contains(file.getPath())) {
@@ -478,8 +478,8 @@ public final class DependencyResolverImpl implements DependencyResolver {
 
   private static Collection<ExternalDependency> resolveSourceOutputFileDependencies(@NotNull SourceSetOutput sourceSetOutput,
                                                                                     @Nullable String scope) {
-    Collection<ExternalDependency> result = new ArrayList<ExternalDependency>(2);
-    List<File> files = new ArrayList<File>(sourceSetOutput.getClassesDirs().getFiles());
+    Collection<ExternalDependency> result = new ArrayList<>(2);
+    List<File> files = new ArrayList<>(sourceSetOutput.getClassesDirs().getFiles());
     files.add(sourceSetOutput.getResourcesDir());
     DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(files);
     fileCollectionDependency.setScope(scope);
@@ -496,7 +496,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
 
   @Nullable
   private static FileCollectionDependency resolveSourceSetOutputDirsRuntimeFileDependency(@NotNull SourceSetOutput sourceSetOutput) {
-    List<File> runtimeOutputDirs = new ArrayList<File>(sourceSetOutput.getDirs().getFiles());
+    List<File> runtimeOutputDirs = new ArrayList<>(sourceSetOutput.getDirs().getFiles());
     if (!runtimeOutputDirs.isEmpty()) {
       DefaultFileCollectionDependency runtimeOutputDirsDependency = new DefaultFileCollectionDependency(runtimeOutputDirs);
       runtimeOutputDirsDependency.setScope(RUNTIME_SCOPE);
@@ -518,7 +518,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
       final Collection<File> resolvedFiles = getFiles(compileDependency);
 
       Collection<ExternalDependency> dependencies = filesToRuntimeDependenciesMap.get(resolvedFiles);
-      final boolean hasRuntimeDependencies = dependencies != null && !dependencies.isEmpty();
+      final boolean hasRuntimeDependencies = !dependencies.isEmpty();
 
       if (hasRuntimeDependencies) {
         runtimeDependencies.removeAll(dependencies);
@@ -530,7 +530,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
   }
 
   private void addAdditionalProvidedDependencies(@NotNull SourceSet sourceSet, @NotNull Collection<ExternalDependency> result) {
-    final Set<Configuration> providedConfigurations = new LinkedHashSet<Configuration>();
+    final Set<Configuration> providedConfigurations = new LinkedHashSet<>();
     if (sourceSet.getName().equals("main") && myProject.getPlugins().findPlugin(WarPlugin.class) != null) {
       Configuration providedCompile = myProject.getConfigurations().findByName("providedCompile");
       if (providedCompile != null) {
@@ -598,7 +598,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
   }
 
   private Collection<ExternalDependency> getDependencies(@NotNull Iterable<?> fileCollections, @NotNull String scope) {
-    Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
+    Set<ExternalDependency> result = new LinkedHashSet<>();
     for (Object fileCollection : fileCollections) {
       if (fileCollection instanceof FileCollection) {
         result.addAll(getDependencies((FileCollection)fileCollection, scope));
@@ -626,7 +626,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
 
   @NotNull
   public static List<File> findArtifactSources(Collection<? extends File> artifactFiles, SourceSetCachedFinder sourceSetFinder) {
-    List<File> artifactSources = new ArrayList<File>();
+    List<File> artifactSources = new ArrayList<>();
     for (File artifactFile : artifactFiles) {
       Set<File> sources = sourceSetFinder.findSourcesByArtifact(artifactFile.getPath());
       if (sources != null) {

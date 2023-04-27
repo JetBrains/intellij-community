@@ -11,7 +11,10 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -21,14 +24,11 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
-
-fun Collection<String>.toPluginIds(): Set<PluginId> = PluginManagerCore.toPluginIds(this)
-
 fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
-fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
+internal fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
   val pluginIdMap = PluginManagerCore.buildPluginIdMap()
-  return mapNotNull { pluginIdMap[it] }
+  return mapNotNull { pluginIdMap.get(it) }
 }
 
 internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String {
@@ -92,37 +92,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     pluginDependencies = list ?: Collections.emptyList()
   }
 
-  companion object {
-
-    private var _isOnDemandEnabled: Boolean? = null
-
-    @VisibleForTesting
-    const val ON_DEMAND_ENABLED_KEY: String = "ide.plugins.allow.on.demand"
-
-    @JvmStatic
-    var isOnDemandEnabled: Boolean
-      @ApiStatus.Experimental get() {
-        var result = _isOnDemandEnabled
-
-        if (result == null) {
-          synchronized(Companion::class.java) {
-            if (_isOnDemandEnabled == null) {
-              result = !AppMode.isHeadless()
-                       && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
-              _isOnDemandEnabled = result
-            }
-          }
-        }
-
-        return result!!
-      }
-      @TestOnly set(value) {
-        synchronized(Companion::class.java) {
-          _isOnDemandEnabled = value
-        }
-      }
-  }
-
   @Transient @JvmField var jarFiles: List<Path>? = null
   private var _pluginClassLoader: ClassLoader? = null
 
@@ -144,7 +113,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @JvmField val isUseIdeaClassLoader = raw.isUseIdeaClassLoader
   @JvmField val isBundledUpdateAllowed = raw.isBundledUpdateAllowed
   @JvmField internal val implementationDetail = raw.implementationDetail
-  @ApiStatus.Experimental @JvmField internal val onDemand = isOnDemandEnabled && raw.onDemand
+  @ApiStatus.Experimental @JvmField internal val onDemand = raw.onDemand && isOnDemandPluginEnabled
   @JvmField internal val isRestartRequired = raw.isRestartRequired
   @JvmField val packagePrefix = raw.`package`
 
@@ -588,3 +557,27 @@ private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String,
     i++
   }
 }
+
+private var isOnDemandEnabled: Boolean? = null
+private const val ON_DEMAND_ENABLED_KEY: String = "ide.plugins.allow.on.demand"
+
+var isOnDemandPluginEnabled: Boolean
+  @ApiStatus.Experimental get() {
+    var result = isOnDemandEnabled
+    if (result == null) {
+      synchronized(IdeaPluginDescriptorImpl::class.java) {
+        if (isOnDemandEnabled == null) {
+          result = !AppMode.isHeadless() && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
+          isOnDemandEnabled = result
+        }
+      }
+    }
+
+    return result!!
+  }
+
+  @TestOnly set(value) {
+    synchronized(IdeaPluginDescriptorImpl::class.java) {
+      isOnDemandEnabled = value
+    }
+  }

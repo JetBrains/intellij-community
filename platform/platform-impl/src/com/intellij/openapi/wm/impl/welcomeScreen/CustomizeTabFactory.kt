@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.*
+import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
@@ -33,10 +34,8 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.not
+import com.intellij.ui.layout.selected
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -59,7 +58,15 @@ class CustomizeTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable) = CustomizeTab(parentDisposable)
 }
 
-private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize2D else JBFont.label().size2D
+private fun getIdeFontSize() =
+  if (settings.overrideLafFonts) settings.fontSize2D
+  else getDefaultIdeFont().size2D
+
+private fun getIdeFontName() =
+  if (settings.overrideLafFonts) settings.fontFace
+  else getDefaultIdeFont().family
+
+private fun getDefaultIdeFont() = (LafManager.getInstance() as? LafManagerImpl)?.defaultFont ?: JBFont.label()
 
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
                                                                            WelcomeScreenEventCollector.TabType.TabNavCustomize) {
@@ -67,7 +74,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.lazyProperty { laf.lookAndFeelReference }
   private val syncThemeProperty = propertyGraph.lazyProperty { laf.autodetect }
-  private val ideFontProperty = propertyGraph.lazyProperty { getIdeFont() }
+  private val ideFontProperty = propertyGraph.lazyProperty { getIdeFontSize() }
   private val keymapProperty = propertyGraph.lazyProperty { keymapManager.activeKeymap }
   private val colorBlindnessProperty = propertyGraph.lazyProperty { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
   private val adjustColorsProperty = propertyGraph.lazyProperty { settings.colorBlindness != null }
@@ -91,6 +98,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     }
     ideFontProperty.afterChange(parentDisposable) {
       if (settings.fontSize2D == it) return@afterChange
+      settings.fontFace = getIdeFontName()
       settings.overrideLafFonts = true
       WelcomeScreenEventCollector.logIdeFontChanged(settings.fontSize2D, it)
       settings.fontSize2D = it
@@ -111,7 +119,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     }
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
-    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { updateProperty(ideFontProperty) { getIdeFont() } })
+    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { updateProperty(ideFontProperty) { getIdeFontSize() } })
     busConnection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { updateAccessibilityProperties() })
     busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       updateProperty(lafProperty) { laf.lookAndFeelReference }

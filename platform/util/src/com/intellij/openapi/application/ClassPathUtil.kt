@@ -2,7 +2,6 @@
 package com.intellij.openapi.application
 
 import com.fasterxml.aalto.`in`.ReaderConfig
-import com.intellij.diff.comparison.ComparisonUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.lang.UrlClassLoader
@@ -42,7 +41,6 @@ object ClassPathUtil {
       Strings::class.java,  // module 'intellij.platform.util.base'
       classLoader.loadClass("com.intellij.util.xml.dom.XmlDomReader"),  // module 'intellij.platform.util.xmlDom'
       SystemInfoRt::class.java,  // module 'intellij.platform.util.rt'
-      ComparisonUtil::class.java,  // module 'intellij.platform.util.diff'
       UrlClassLoader::class.java,  // module 'intellij.platform.util.classLoader'
       classLoader.loadClass("org.jetbrains.xxh3.Xx3UnencodedString"),  // intellij.platform.util.rt.java8 (required for classLoader)
       Flow::class.java,  // jetbrains-annotations-java5

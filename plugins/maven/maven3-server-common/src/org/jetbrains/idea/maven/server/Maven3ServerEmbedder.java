@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
@@ -17,11 +16,7 @@ import org.apache.maven.archetype.metadata.ArchetypeDescriptor;
 import org.apache.maven.archetype.metadata.RequiredProperty;
 import org.apache.maven.archetype.source.ArchetypeDataSource;
 import org.apache.maven.archetype.source.ArchetypeDataSourceException;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
-import org.apache.maven.artifact.handler.DefaultArtifactHandler;
-import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.MavenArtifactRepository;
@@ -30,7 +25,6 @@ import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
 import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.ResolutionListener;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
@@ -57,7 +51,9 @@ import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -80,6 +76,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
   private static final Pattern PROPERTY_PATTERN = Pattern.compile("\"-D([\\S&&[^=]]+)(?:=([^\"]+))?\"|-D([\\S&&[^=]]+)(?:=(\\S+))?");
   protected final MavenServerSettings myServerSettings;
+  protected final Map<String, LongRunningTask> myLongRunningTasks = new ConcurrentHashMap<>();
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
     myServerSettings = settings;
@@ -118,29 +115,6 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   }
 
   protected abstract ArtifactRepository getLocalRepository();
-
-  @NotNull
-  @Override
-  public List<String> retrieveAvailableVersions(@NotNull String groupId,
-                                                @NotNull String artifactId,
-                                                @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
-    throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    try {
-      Artifact artifact =
-        new DefaultArtifact(groupId, artifactId, "", Artifact.SCOPE_COMPILE, "pom", null, new DefaultArtifactHandler("pom"));
-      List<ArtifactVersion> versions = getComponent(ArtifactMetadataSource.class)
-        .retrieveAvailableVersions(
-          artifact,
-          getLocalRepository(),
-          convertRepositories(remoteRepositories));
-      return ContainerUtilRt.map2List(versions, version -> version.toString());
-    }
-    catch (Exception e) {
-      Maven3ServerGlobals.getLogger().info(e);
-    }
-    return Collections.emptyList();
-  }
 
   @NotNull
   protected List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
@@ -264,11 +238,10 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
   }
 
-  protected void addMvn2CompatResults(MavenProject project,
-                                      List<Exception> exceptions,
-                                      List<ResolutionListener> listeners,
-                                      ArtifactRepository localRepository,
-                                      Collection<MavenExecutionResult> executionResults) {
+  protected MavenExecutionResult resolveMvn2CompatResult(MavenProject project,
+                                                         List<Exception> exceptions,
+                                                         List<ResolutionListener> listeners,
+                                                         ArtifactRepository localRepository) {
     ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
     resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
     resolutionRequest.setArtifact(project.getArtifact());
@@ -284,7 +257,15 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
 
     project.setArtifacts(result.getArtifacts());
-    executionResults.add(new MavenExecutionResult(project, exceptions));
+    return new MavenExecutionResult(project, exceptions);
+  }
+
+  protected void addMvn2CompatResults(MavenProject project,
+                                      List<Exception> exceptions,
+                                      List<ResolutionListener> listeners,
+                                      ArtifactRepository localRepository,
+                                      Collection<MavenExecutionResult> executionResults) {
+    executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, localRepository));
   }
 
   @Override
@@ -344,7 +325,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
         result.add(ProjectUtils.buildArtifactRepository(MavenModelConverter.toNativeRepository(each), factory, container));
       }
       catch (InvalidRepositoryException e) {
-        Maven3ServerGlobals.getLogger().warn(e);
+        MavenServerGlobals.getLogger().warn(e);
       }
     }
     return result;
@@ -455,16 +436,11 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   public abstract MavenExecutionRequest createRequest(File file,
                                                       List<String> activeProfiles,
                                                       List<String> inactiveProfiles,
-                                                      List<String> goals)
+                                                      String goal)
     throws RemoteException;
 
   protected static void warn(String message, Throwable e) {
-    try {
-      Maven3ServerGlobals.getLogger().warn(new RuntimeException(message, e));
-    }
-    catch (RemoteException e1) {
-      throw new RuntimeException(e1);
-    }
+    MavenServerGlobals.getLogger().warn(new RuntimeException(message, e));
   }
 
   @Override
@@ -489,7 +465,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       return getArchetypes(archetypeCatalog);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return Collections.emptyList();
   }
@@ -505,7 +481,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       return getArchetypes(archetypeCatalog);
     }
     catch (Exception e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return Collections.emptyList();
   }
@@ -521,7 +497,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       return getArchetypes(archetypeCatalog);
     }
     catch (ArchetypeDataSourceException e) {
-      Maven3ServerGlobals.getLogger().warn(e);
+      MavenServerGlobals.getLogger().warn(e);
     }
     return Collections.emptyList();
   }
@@ -626,4 +602,72 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
     return lifecycleListeners;
   }
+
+  @NotNull
+  @Override
+  public LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) {
+    MavenServerUtil.checkToken(token);
+
+    LongRunningTask task = myLongRunningTasks.get(longRunningTaskId);
+
+    if (null == task) return new LongRunningTaskStatus(0, 0);
+
+    return new LongRunningTaskStatus(task.getTotalRequests(), task.getFinishedRequests());
+  }
+
+  @Override
+  public boolean cancelLongRunningTask(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+
+    LongRunningTask task = myLongRunningTasks.get(longRunningTaskId);
+
+    if (null == task) return false;
+
+    task.cancel();
+    return true;
+  }
+
+  protected class LongRunningTask implements AutoCloseable {
+    @NotNull private final String myId;
+    private final AtomicInteger myFinishedRequests = new AtomicInteger(0);
+    private final AtomicInteger myTotalRequests;
+    private final AtomicBoolean isCanceled = new AtomicBoolean(false);
+
+    protected LongRunningTask(@NotNull String id, int totalRequests) {
+      myId = id;
+      myTotalRequests = new AtomicInteger(totalRequests);
+
+      myLongRunningTasks.put(myId, this);
+    }
+
+    public void incrementFinishedRequests() {
+      myFinishedRequests.incrementAndGet();
+    }
+
+    private int getFinishedRequests() {
+      return myFinishedRequests.get();
+    }
+
+    private int getTotalRequests() {
+      return myTotalRequests.get();
+    }
+
+    public void updateTotalRequests(int newValue) {
+      myTotalRequests.set(newValue);
+    }
+
+    private void cancel() {
+      isCanceled.set(true);
+    }
+
+    public boolean isCanceled() {
+      return isCanceled.get();
+    }
+
+    @Override
+    public void close() {
+      myLongRunningTasks.remove(myId);
+    }
+  }
+
 }

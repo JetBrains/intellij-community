@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.options.OptTable;
-import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsContexts;
@@ -26,14 +26,14 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.codeInspection.options.OptPane.stringList;
+import static com.intellij.codeInspection.options.OptPane.column;
 import static com.intellij.codeInspection.options.OptPane.table;
 
 /**
  * Remember to call readSettings() and writeSettings from your inspection class!
  * @author Bas Leijdekkers
  */
-public class MethodMatcher {
+public class MethodMatcher implements OptionContainer {
 
   private final List<String> myMethodNamePatterns = new ArrayList<>();
   private final List<String> myClassNames = new ArrayList<>();
@@ -191,13 +191,9 @@ public class MethodMatcher {
    */
   public @NotNull OptTable getTable(@NotNull @NlsContexts.Label String label) {
     return table(label,
-                 stringList("myClassNames", InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
+                 column("myClassNames", InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
                             new JavaClassValidator()),
-                 stringList("myMethodNamePatterns", InspectionGadgetsBundle.message("method.name.regex"),
+                 column("myMethodNamePatterns", InspectionGadgetsBundle.message("method.name.regex"),
                             new RegexValidator()));
-  }
-
-  public @NotNull OptionController getOptionController() {
-    return OptionController.fieldsOf(this);
   }
 }

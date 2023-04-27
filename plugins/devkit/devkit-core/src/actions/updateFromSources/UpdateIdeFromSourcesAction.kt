@@ -1,14 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.process.*
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -53,10 +58,6 @@ import java.util.*
 import kotlin.io.path.name
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
-
-private val notificationGroup by lazy {
-  NotificationGroupManager.getInstance().getNotificationGroup("Update from Sources")
-}
 
 internal open class UpdateIdeFromSourcesAction
 @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
@@ -181,6 +182,7 @@ internal open class UpdateIdeFromSourcesAction
     return null
   }
 
+  @Suppress("SameParameterValue")
   private fun runUpdateScript(params: JavaParameters,
                               project: Project,
                               workIdeHome: String,
@@ -214,19 +216,21 @@ internal open class UpdateIdeFromSourcesAction
             }
 
             if (event.exitCode != 0) {
-              notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.title"),
-                                                   content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content",
+              Notification(
+                "Update from Sources",
+                DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.title"),
+                DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content",
                                                                                   event.exitCode),
-                                                   type = NotificationType.ERROR)
-                .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.output")) {
+                NotificationType.ERROR
+              ).addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.output")) {
                   FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
-                })
-                .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
+                }
+              ).addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
                   val logFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$deployDirPath/log/debug.log") ?: return@createSimple // NON-NLS
                   logFile.refresh(true, false)
                   FileEditorManager.getInstance(project).openFile(logFile, true)
-                })
-                .notify(project)
+                }
+              ).notify(project)
               return
             }
 
@@ -254,9 +258,8 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun showRestartNotification(command: Array<String>, deployDirPath: String, project: Project) {
-    notificationGroup
-      .createNotification(DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"), DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"), NotificationType.INFORMATION)
-      .setListener(NotificationListener { _, _ -> restartWithCommand(command, deployDirPath) })
+    Notification("Update from Sources", DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"), DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"), NotificationType.INFORMATION)
+      .addAction(NotificationAction.createSimpleExpiring(DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.restart")) { restartWithCommand(command, deployDirPath) })
       .notify(project)
   }
 
@@ -327,9 +330,9 @@ internal open class UpdateIdeFromSourcesAction
       val updateScript = FileUtil.createTempFile("update", ".cmd", false)
       val workHomePath = File(workIdeHome).absolutePath
       /* deletion of the IDE files may fail to delete some executable files because they are still used by the IDE process,
-         so the script wait for some time and try to delete again;
+         so the script waits for some time and tries to delete again;
          'ping' command is used instead of 'timeout' because the latter doesn't work from batch files;
-         removal of the script file is performed in separate process to avoid errors while executing the script */
+         removal of the script file is performed in a separate process to avoid errors while executing the script */
       FileUtil.writeToFile(updateScript, """
         @echo off
         SET count=20
@@ -348,7 +351,6 @@ internal open class UpdateIdeFromSourcesAction
           ECHO Failed to delete "$workHomePath", IDE wasn't updated. You may delete it manually and copy files from "${File(builtDistPath).absolutePath}" by hand  
           GOTO CLEANUP_AND_EXIT 
         )
-        
         XCOPY "${File(builtDistPath).absolutePath}" "$workHomePath"\ /Q /E /Y
         :CLEANUP_AND_EXIT
         START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
@@ -454,7 +456,6 @@ internal open class UpdateIdeFromSourcesAction
 
     params.classPath.addAll(classpath)
 
-    params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
     params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk_jcef-")
 
     if (buildEnabledPluginsOnly) {
@@ -478,8 +479,6 @@ internal open class UpdateIdeFromSourcesAction
     e.presentation.isEnabledAndVisible = project != null && PsiUtil.isIdeaProject(project)
   }
 }
-
-private const val includeBinAndRuntimeProperty = "intellij.build.generate.bin.and.runtime.for.unpacked.dist"
 
 internal class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesAction(true)
 

@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
+import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.ui.Splash
 import com.intellij.ui.loadSplashImage
 import com.intellij.util.ui.StartupUiUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
@@ -31,56 +32,42 @@ import javax.swing.WindowConstants
 
 @Volatile
 private var PROJECT_FRAME: JFrame? = null
+@Volatile
 private var SPLASH_WINDOW: Splash? = null
 
-internal suspend fun scheduleShowSplash(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfoEx>) {
+internal suspend fun showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfoEx>) {
   // A splash instance must not be created before base LaF is created.
   // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
   // https://youtrack.jetbrains.com/issue/IDEA-286544
   initUiDeferred.join()
 
-  // before showEuaIfNeededJob to prepare during showing EUA dialog
-  // products may specify `splash` VM property; `nosplash` is deprecated and should be checked first
   val appInfo = appInfoDeferred.await()
-  val runnable = runActivity("splash preparation") {
-    try {
-      scheduleShow(appInfo)
-    }
-    catch (e: Exception) {
-      logger<StartupUiUtil>().error("Cannot schedule splash showing", e)
+  try {
+    val prepareActivity = StartUpMeasurer.startActivity("splash preparation")
+    if (showLastProjectFrameIfAvailable(prepareActivity)) {
       return
     }
+
+    assert(SPLASH_WINDOW == null)
+    val image = loadSplashImage(appInfo = appInfo)
+    val activity = prepareActivity.endAndStart("splash initialization")
+    val queueActivity = activity.startChild("splash initialization (in queue)")
+    withContext(RawSwingDispatcher) {
+      queueActivity.end()
+      SPLASH_WINDOW = Splash(image)
+      activity.end()
+    }
   }
-  withContext(RawSwingDispatcher) {
-    runnable()
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    logger<StartupUiUtil>().warn("Cannot show splash", e)
   }
 }
 
-private fun scheduleShow(appInfo: ApplicationInfoEx): () -> Unit {
-  runActivity("splash as project frame initialization") {
-    try {
-      createFrameIfPossible()
-    }
-    catch (e: Throwable) {
-      logger<Splash>().error(e)
-      null
-    }
-  }?.let {
-    return it
-  }
-
-  assert(SPLASH_WINDOW == null)
-  val activity = StartUpMeasurer.startActivity("splash initialization")
-  val image = loadSplashImage(appInfo = appInfo)
-  val queueActivity = activity.startChild("splash initialization (in queue)")
-  return {
-    queueActivity.end()
-    SPLASH_WINDOW = Splash(image)
-    activity.end()
-  }
-}
-
-private fun createFrameIfPossible(): (() -> Unit)? {
+private suspend fun showLastProjectFrameIfAvailable(prepareActivity: Activity): Boolean {
+  val activity = StartUpMeasurer.startActivity("splash as project frame initialization")
   val infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo")
   var buffer: ByteBuffer
   try {
@@ -92,12 +79,12 @@ private fun createFrameIfPossible(): (() -> Unit)? {
       while (buffer.hasRemaining())
       buffer.flip()
       if (buffer.getShort().toInt() != 0) {
-        return null
+        return false
       }
     }
   }
   catch (ignore: NoSuchFileException) {
-    return null
+    return false
   }
 
   val savedBounds = Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt())
@@ -108,14 +95,13 @@ private fun createFrameIfPossible(): (() -> Unit)? {
   @Suppress("UNUSED_VARIABLE")
   val isFullScreen = buffer.get().toInt() == 1
   val extendedState = buffer.getInt()
-  return {
-    try {
-      PROJECT_FRAME = doShowFrame(savedBounds = savedBounds, backgroundColor = backgroundColor, extendedState = extendedState)
-    }
-    catch (e: Throwable) {
-      logger<Splash>().error(e)
-    }
+
+  activity.end()
+  prepareActivity.end()
+  withContext(RawSwingDispatcher) {
+    PROJECT_FRAME = doShowFrame(savedBounds = savedBounds, backgroundColor = backgroundColor, extendedState = extendedState)
   }
+  return true
 }
 
 internal fun getAndUnsetSplashProjectFrame(): JFrame? {

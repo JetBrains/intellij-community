@@ -1,0 +1,8 @@
+// WITH_STDLIB
+fun List<Int>.test() {
+    with (Any()) {
+        this@test.forEach { element ->
+            println(element)
+        }
+    }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.trac;
 
 import com.intellij.tasks.Comment;
@@ -145,24 +145,23 @@ public class TracRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public TaskType getType() {
-        TaskType taskType = TaskType.OTHER;
         String type = map.get("type");
-        if (type == null) return taskType;
-        if ("Feature".equals(type) || "enhancement".equals(type)) taskType = TaskType.FEATURE;
-        else if ("Bug".equals(type) || "defect".equals(type) || "error".equals(type)) taskType = TaskType.BUG;
-        else if ("Exception".equals(type)) taskType = TaskType.EXCEPTION;
-        return taskType;
+        if (type == null) return TaskType.OTHER;
+        return switch (type) {
+          case "Feature", "enhancement" -> TaskType.FEATURE;
+          case "Bug", "defect", "error" -> TaskType.BUG;
+          case "Exception" -> TaskType.EXCEPTION;
+          default -> TaskType.OTHER;
+        };
       }
 
-      @Nullable
       @Override
-      public Date getUpdated() {
+      public @NotNull Date getUpdated() {
         return getDate(vector.get(2));
       }
 
-      @Nullable
       @Override
-      public Date getCreated() {
+      public @NotNull Date getCreated() {
         return getDate(vector.get(1));
       }
 
@@ -182,9 +181,8 @@ public class TracRepository extends BaseRepositoryImpl {
         return null;
       }
 
-      @Nullable
       @Override
-      public TaskRepository getRepository() {
+      public @NotNull TaskRepository getRepository() {
         return TracRepository.this;
       }
     };
@@ -221,7 +219,7 @@ public class TracRepository extends BaseRepositoryImpl {
     return new TracRepository(this);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public TracRepository() {
     // for serialization
   }

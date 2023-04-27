@@ -2,12 +2,12 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.browsers.actions.WebPreviewFileType
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.JS_FUNCTION_NAME
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -35,18 +35,23 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     const val JS_FUNCTION_NAME: String = "jbCefQuery"
 
     @JvmStatic
-    fun openEditor(project: Project, @DialogTitle title: String, html: String) =
+    fun openEditor(project: Project, @DialogTitle title: String, html: String) {
       openEditor(project, title, Request.html(html))
+    }
 
     @JvmStatic
-    fun openEditor(project: Project, @DialogTitle title: String, url: String, timeoutHtml: String? = null) =
+    fun openEditor(project: Project, @DialogTitle title: String, url: String, timeoutHtml: String? = null) {
       openEditor(project, title, Request.url(url).withTimeoutHtml(timeoutHtml))
+    }
 
     @JvmStatic
-    fun openEditor(project: Project, @DialogTitle title: String, request: Request) {
+    fun openEditor(project: Project, @DialogTitle title: String, request: Request): FileEditor? {
+      logger<HTMLEditorProvider>().info(if (request.url != null) "URL=${request.url}" else "HTML (${request.html!!.length} chars)")
       val file = LightVirtualFile(title, WebPreviewFileType.INSTANCE, "")
       REQUEST_KEY.set(file, request)
-      FileEditorManager.getInstance(project).openFile(file, true)
+      return FileEditorManager.getInstance(project)
+        .openFile(file, true)
+        .find { it is HTMLFileEditor }
     }
   }
 
@@ -86,16 +91,11 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
    *
    * <button onclick="sendPingRequest()">Ping it</button>
    * ```
+   *
+   * **Note to implementers**: as there is no way to verify whether the request was initiated by a user,
+   * please make sure the listener doesn't perform any potentially dangerous action.
    */
   interface JsQueryHandler {
     suspend fun query(id: Long, request: String): String
-
-    // Java compatibility layer
-    interface Java : JsQueryHandler {
-      fun syncQuery(id: Long, request: String): String
-
-      override suspend fun query(id: Long, request: String): String =
-        blockingContext { syncQuery(id, request) }
-    }
   }
 }

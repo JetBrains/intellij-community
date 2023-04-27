@@ -6,6 +6,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 
@@ -33,5 +36,17 @@ interface VcsCodeVisionLanguageContext {
   @ApiStatus.Experimental
   fun isCustomFileAccepted(file: PsiFile): Boolean = false
 
-  fun trimInsignificantChildren(element: PsiElement): TextRange = element.textRange
+  /**
+   * This method returns a text range that will be considered when computing the code author
+   * for a given element. The method is necessary for the correct display of new elements. An
+   * inlay hint "new *" will be displayed next to an element iff all lines in the element text
+   * range are new according to VCS. If you have deleted a method and written a new method in
+   * the same place, but both the deleted and new methods have the same annotation line on the
+   * same line, it is recommended to consider a text range without this annotation to display
+   * this method as new, but not as written by the author or the line with the annotation.
+   * */
+  fun computeEffectiveRange(element: PsiElement): TextRange {
+    val start = (element as? PsiNameIdentifierOwner)?.nameIdentifier ?: element
+    return TextRange.create(start.startOffset, element.endOffset)
+  }
 }

@@ -55,17 +55,26 @@ func initPath() {
 		if err != nil {
 			logger.ConsoleLogger.Fatal("You passed \"--path\" argument with \"" + passedBinary + "\" value, but there is no IDE binary here.")
 		}
-	} else if possibleIdeaBinary, _ := helpers.DetectInstallationByInnerPath(filepath.Dir(os.Args[0]), true); len(possibleIdeaBinary) > 0 {
+	} else if possibleIdeaBinary, _ := helpers.DetectInstallationByInnerPath(getExecutablePath(), true); len(possibleIdeaBinary) > 0 {
 		ideaBinary = possibleIdeaBinary
 		helpers.CurrentIde.MarkRepairAsBundled()
 	} else {
 		ideaBinary, err = helpers.SelectIdeaBinary()
 		logger.ExitWithExceptionOnError(err)
 	}
+	helpers.CurrentIde.CheckIfPathIsAllowed(ideaBinary)
 	helpers.CurrentIde.SetBinaryToWrokWith(ideaBinary)
 }
 
-//returns true if user called repair command with help argument
+func getExecutablePath() string {
+	executable, err := os.Executable()
+	if err != nil {
+		logger.ErrorLogger.Fatal("Could not get executable path")
+	}
+	return filepath.Dir(executable)
+}
+
+// returns true if user called repair command with help argument
 func isHelpPassed() bool {
 	for _, argument := range os.Args {
 		if argument == "help" || argument == "--help" {
@@ -83,7 +92,7 @@ func isCompareHashesPassed() bool {
 	return false
 }
 
-//returns true if user called repair command with an aspect
+// returns true if user called repair command with an aspect
 func isAspectPassed() bool {
 	if len(initialArgs) == 0 {
 		initialArgs = os.Args
@@ -99,7 +108,7 @@ func isAspectPassed() bool {
 }
 func runAllAspects() {
 	for _, command := range rootCmd.Commands() {
-		if command.Name() != "help" {
+		if command.Name() != "help" && command.Name() != "completion" {
 			os.Args = append([]string{os.Args[0], command.Name()})
 			_, _ = command.ExecuteC()
 		}

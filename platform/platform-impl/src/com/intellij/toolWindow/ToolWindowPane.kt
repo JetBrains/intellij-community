@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.ide.RemoteDesktopService
@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedRatio
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
 import com.intellij.openapi.wm.impl.WindowInfoImpl
-import com.intellij.reference.SoftReference
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.awt.DevicePoint
@@ -43,6 +42,8 @@ import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.geom.Point2D
 import java.awt.image.BufferedImage
+import java.lang.ref.SoftReference
+import java.util.concurrent.Future
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -241,8 +242,17 @@ class ToolWindowPane internal constructor(
     setWeight(anchor, weight)
   }
 
+  private val setAnchorWeightFutures = hashMapOf<ToolWindowAnchor, Future<*>>()
+
   internal fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
+    setAnchorWeightFutures.remove(anchor)?.cancel(false)
     val size = rootPane.size
+    if (size.height == 0 && size.width == 0) {
+      setAnchorWeightFutures[anchor] = UIUtil.runOnceWhenResized(rootPane) {
+        setWeight(anchor, weight)
+      }
+      return
+    }
     when (anchor) {
       ToolWindowAnchor.TOP -> verticalSplitter.firstSize = (size.getHeight() * weight).toInt()
       ToolWindowAnchor.LEFT -> horizontalSplitter.firstSize = (size.getWidth() * weight).toInt()
@@ -716,7 +726,7 @@ private class ImageRef(image: BufferedImage) : SoftReference<BufferedImage?>(ima
 private class ImageCache(imageProvider: Function<ScaleContext, ImageRef>) : ScaleContext.Cache<ImageRef?>(imageProvider) {
   fun get(ctx: ScaleContext): BufferedImage {
     val ref = getOrProvide(ctx)
-    val image = SoftReference.dereference(ref)
+    val image = ref?.get()
     if (image != null) {
       return image
     }

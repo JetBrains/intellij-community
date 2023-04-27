@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics.PROJECT_ROOTS
-import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
@@ -15,6 +14,9 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -23,7 +25,6 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
@@ -146,7 +147,8 @@ class ModuleBridgesTest {
         }
       }
 
-      saveSettings(project)
+      project.stateStore.save()
+      project.stateStore.save()
 
       assertTrue(oldNameFile.exists())
       assertTrue(modulesXmlFile.readText().contains(oldNameFile.name))
@@ -178,7 +180,7 @@ class ModuleBridgesTest {
       assertEquals(newNameFile, File(moduleFilePath!!))
       assertTrue(module.getModuleNioFile().toString().endsWith(newNameFile.name))
 
-      saveSettings(project)
+      project.stateStore.save()
 
       assertFalse(modulesXmlFile.readText().contains(oldNameFile.name))
       assertFalse(oldNameFile.exists())
@@ -218,7 +220,7 @@ class ModuleBridgesTest {
     ModuleRootModificationUtil.addDependency(mavenModule, antModule)
     checkModuleDependency(mavenModuleName, antModuleName)
 
-    saveSettings(project)
+    project.stateStore.save()
     var fileText = modulesFile.readText()
     assertEquals(2, listOf(antModuleName, mavenModuleName).filter { fileText.contains(it) }.size)
 
@@ -229,7 +231,7 @@ class ModuleBridgesTest {
     projectModel.renameModule(antModule, gradleModuleName)
     checkModuleDependency(mavenModuleName, gradleModuleName)
 
-    saveSettings(project)
+    project.stateStore.save()
     fileText = modulesFile.readText()
     assertEquals(2, listOf(mavenModuleName, gradleModuleName).filter { fileText.contains(it) }.size)
 
@@ -254,7 +256,8 @@ class ModuleBridgesTest {
       val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
-        it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
+        it.addModuleEntity("name", emptyList(),
+                           JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
       }
 
       assertNotNull(moduleManager.findModuleByName("name"))
@@ -262,7 +265,8 @@ class ModuleBridgesTest {
       projectModel.updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
         it.removeEntity(moduleEntity)
-        it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
+        it.addModuleEntity("name", emptyList(),
+                           JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
       }
 
       assertEquals(1, moduleManager.modules.size)
@@ -297,7 +301,8 @@ class ModuleBridgesTest {
     )
 
     projectModel.updateProjectModel {
-      it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
+      it.addModuleEntity("name", emptyList(),
+                         JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
     }
 
     assertNotNull(moduleManager.findModuleByName("name"))
@@ -370,10 +375,11 @@ class ModuleBridgesTest {
       val projectLocation = getJpsProjectConfigLocation(project)!!
       val virtualFileUrl = dir.toVirtualFileUrl(virtualFileManager)
       projectModel.updateProjectModel {
-        val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+        val moduleEntity = it.addModuleEntity("name", emptyList(),
+                                              JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
         val contentRootEntity = it.addContentRootEntity(virtualFileUrl, emptyList(), emptyList(), moduleEntity)
         it.addSourceRootEntity(contentRootEntity, virtualFileUrl, "",
-                               JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+                               JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
       }
 
       val module = moduleManager.findModuleByName("name")
@@ -396,13 +402,13 @@ class ModuleBridgesTest {
     val moduleManager = ModuleManager.getInstance(project)
     val module = runWriteActionAndWait { moduleManager.newModule(moduleFile.path, ModuleTypeId.JAVA_MODULE) }
 
-    saveSettings(project)
+    project.stateStore.save()
 
     assertNull(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX"))
 
     TestModuleComponent.getInstance(module).testString = "My String"
 
-    saveSettings(project, forceSavingAllSettings = true)
+    project.stateStore.save(forceSavingAllSettings = true)
 
     assertEquals(
       """  
@@ -467,7 +473,7 @@ class ModuleBridgesTest {
 
     val iprFile = tempDir.resolve("testProject.ipr")
     val configLocation = toConfigLocation(iprFile, virtualFileManager)
-    val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
+    val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
@@ -627,7 +633,7 @@ class ModuleBridgesTest {
       }
     }
 
-    saveSettings(project)
+    project.stateStore.save()
 
     val rootManagerComponent = JDomSerializationUtil.findComponent(JDOMUtil.load(moduleImlFile), "NewModuleRootManager")!!
     assertEquals("""
@@ -667,7 +673,7 @@ class ModuleBridgesTest {
       }
     }
 
-    saveSettings(project)
+    project.stateStore.save()
 
     withContext(Dispatchers.EDT) {
       assertTrue(moduleFile.readText().contains(antLibraryFolder))

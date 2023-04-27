@@ -480,7 +480,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @NotNull
-  private List<? extends LocalQuickFix> registerFixes() {
+  private List<? extends @NotNull LocalQuickFix> registerFixes() {
     List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(this, new ArrayList<>());
 
     String extendClass = ContainerUtil.getFirstItem(getSuperClasses());
@@ -552,8 +552,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
-    List<? extends LocalQuickFix> list = registerFixes();
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
+    List<? extends @NotNull LocalQuickFix> list = registerFixes();
     return list.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 

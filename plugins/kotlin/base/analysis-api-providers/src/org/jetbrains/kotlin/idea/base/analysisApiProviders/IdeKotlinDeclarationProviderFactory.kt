@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
+import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -52,7 +53,7 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? {
-        return firstMatchingOrNull(KotlinFullClassNameIndex.KEY, key = classId.asStringForIndexes()) { candidate ->
+        return firstMatchingOrNull(KotlinFullClassNameIndex.indexKey, key = classId.asStringForIndexes()) { candidate ->
             candidate.getClassId() == classId
         } ?: getTypeAliasByClassId(classId)
     }
@@ -69,36 +70,36 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> {
-        return KotlinTopLevelCallableByPackageShortNameIndex.getNamesInPackage(packageFqName, scope)
-
+        return getNamesInPackage(KotlinTopLevelCallableByPackageShortNameIndex.NAME, packageFqName, scope)
     }
 
     override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> {
-        return KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex.getNamesInPackage(packageFqName, scope)
+        return getNamesInPackage(KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex.NAME, packageFqName, scope)
     }
 
     override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> {
-        return KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope)
+        return KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, scope]
     }
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
-        return KotlinFileFacadeFqNameIndex.get(
-            key = facadeFqName.asString(),
-            project = project,
-            scope = scope
-        ) //TODO original LC has platformSourcesFirst()
+        //TODO original LC has platformSourcesFirst()
+        return KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, scope]
     }
 
     override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
         return KotlinMultiFileClassPartIndex[facadeFqName.asString(), project, scope]
     }
 
+    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> {
+        return KotlinScriptFqnIndex[scriptFqName.asString(), project, scope]
+    }
+
     private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? {
         return firstMatchingOrNull(
-            stubKey = KotlinTopLevelTypeAliasFqNameIndex.KEY,
+            stubKey = KotlinTopLevelTypeAliasFqNameIndex.indexKey,
             key = classId.asStringForIndexes(),
             filter = { candidate -> candidate.getClassId() == classId }
-        ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.key, key = classId.asString())
+        ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.indexKey, key = classId.asString())
     }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> =
@@ -111,10 +112,10 @@ private class IdeKotlinDeclarationProvider(
         val callableIdString = callableId.asTopLevelStringForIndexes()
 
         return buildSet {
-            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.key, callableIdString, project, scope).forEach { file ->
+            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.indexKey, callableIdString, project, scope).forEach { file ->
                 psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
             }
-            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.key, callableIdString, project, scope).forEach { file ->
+            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.indexKey, callableIdString, project, scope).forEach { file ->
                 psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
             }
         }

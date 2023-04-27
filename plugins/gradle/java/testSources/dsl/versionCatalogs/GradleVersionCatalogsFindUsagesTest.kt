@@ -6,9 +6,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
@@ -19,11 +17,11 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
   private fun testVersionCatalogFindUsages(version: GradleVersion, versionCatalogText: String, buildGradleText: String,
                                    checker: (Collection<PsiReference>) -> Unit) {
     checkCaret(versionCatalogText)
-    test(version, BASE_VERSION_CATALOG_FIXTURE) {
-      val versionCatalog = findOrCreateFile("gradle/libs.versions.toml", versionCatalogText)
-      findOrCreateFile("build.gradle", buildGradleText)
+    testEmptyProject(version) {
+      writeTextAndCommit("gradle/libs.versions.toml", versionCatalogText)
+      writeTextAndCommit("build.gradle", buildGradleText)
       runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(versionCatalog)
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
         val elementAtCaret = codeInsightFixture.elementAtCaret
         assertNotNull(elementAtCaret)
         val usages = ReferencesSearch.search(elementAtCaret).findAll()
@@ -77,16 +75,4 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
       assertNotNull(refs.find { it.element.containingFile is TomlFile })
     }
   }
-
-
-  companion object {
-    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-      .create("GradleVersionCatalogs-find-usages-bare") {
-        withSettingsFile {
-          setProjectName("GradleVersionCatalogs-find-usages-bare")
-          enableFeaturePreview("VERSION_CATALOGS")
-        }
-      }
-  }
-
 }

@@ -57,6 +57,9 @@
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
                         serviceImplementation="com.jetbrains.python.PyIdeCommonOptionsFormFactory"/>
 
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
+                        serviceImplementation="com.jetbrains.python.PyIdeCommonFragmentsBuilder"/>
+
     <!-- Console -->
     <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
@@ -71,6 +74,7 @@
     <ignoredFileProvider implementation="com.jetbrains.python.sdk.configuration.PyTemporarilyIgnoredFileProvider"/>
 
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
+    <defaultToolWindowLayout implementation="com.jetbrains.python.PyToolWindowLayoutProvider" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

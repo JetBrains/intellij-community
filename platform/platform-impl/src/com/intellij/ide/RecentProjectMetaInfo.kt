@@ -4,15 +4,24 @@
 package com.intellij.ide
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
+import java.awt.Rectangle
 
 class RecentProjectMetaInfo : BaseState() {
   @get:Attribute
   var opened by property(false)
+
+  /**
+   * If true, the project will not be reopened on startup and not displayed in the recent projects list.
+   * Suitable for internal projects, that should not be accessed by usual ways of opening projects.
+   */
+  @get:Attribute
+  var hidden by property(false)
 
   @get:Attribute
   var displayName by string()
@@ -35,6 +44,9 @@ class RecentProjectMetaInfo : BaseState() {
 
   @get:Property(surroundWithTag = false)
   internal var frame: FrameInfo? by property()
+  @IntellijInternalApi
+  val windowBounds: Rectangle?
+    get() = frame?.bounds
 }
 
 class RecentProjectManagerState : BaseState() {

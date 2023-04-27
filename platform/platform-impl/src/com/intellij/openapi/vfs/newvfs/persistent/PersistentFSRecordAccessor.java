@@ -29,12 +29,6 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE
 final class PersistentFSRecordAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSRecordAccessor.class);
 
-  //static {
-  //  assert (PersistentFS.Flags.MASK & FREE_RECORD_FLAG) == 0 : PersistentFS.Flags.MASK;
-  //}
-
-  private static final int ALL_VALID_FLAGS = PersistentFS.Flags.MASK;
-
   @NotNull
   private final PersistentFSContentAccessor myPersistentFSContentAccessor;
   @NotNull
@@ -54,10 +48,7 @@ final class PersistentFSRecordAccessor {
     myFSConnection = connection;
   }
 
-  //RC: method name is a bit misleading, since really (in production) it doesn't add record to free-list
-  //    -- it does that only in unit-tests.
-  //    AFM: name like deleteRecord(id) would suit better
-  public void addToFreeRecordsList(int id) throws IOException {
+  public void markRecordAsDeleted(int id) throws IOException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myNewFreeRecords.add(id);
     }
@@ -66,7 +57,6 @@ final class PersistentFSRecordAccessor {
     myFSConnection.markDirty();
   }
 
-  // todo: Address  / capacity store in records table, size store with payload
   public int createRecord() throws IOException {
     myFSConnection.markDirty();
 
@@ -84,19 +74,14 @@ final class PersistentFSRecordAccessor {
   public void checkSanity() throws IOException {
     final long startedAtNs = System.nanoTime();
 
-    final int fileLength = recordsFileLength();
-    assert fileLength % PersistentFSRecordsStorageFactory.recordsLength() == 0;
-    final int recordCount = fileLength / PersistentFSRecordsStorageFactory.recordsLength();
+    final int recordCount = myFSConnection.getRecords().recordsCount();
 
     final IntList usedAttributeRecordIds = new IntArrayList();
     final IntList validAttributeIds = new IntArrayList();
     final IntList freeRecords = myFSConnection.getFreeRecords();
-    //FIXME RC: here we start from record #2 because 0-th record is used for header, and 1st record is used for root, which is also
-    //          somehow special, hence we skip its validation here. I think, this is kind of sacred knowledge that should be either
-    //          made explicit, or encapsulated
-    for (int id = 2; id < recordCount; id++) {
+    for (int id = FSRecords.MIN_REGULAR_FILE_ID; id < recordCount; id++) {
       final int flags = myFSConnection.getRecords().getFlags(id);
-      LOG.assertTrue((flags & ~ALL_VALID_FLAGS) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
+      LOG.assertTrue((flags & ~PersistentFS.Flags.getAllValidFlags()) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
 
       final boolean recordInFreeList = freeRecords.contains(id);
       final boolean recordMarkedAsFree = hasDeletedFlag(flags);
@@ -157,10 +142,6 @@ final class PersistentFSRecordAccessor {
   @Nullable
   private CharSequence getName(int fileId) throws IOException {
     return myFSConnection.getNames().valueOf(myFSConnection.getRecords().getNameId(fileId));
-  }
-
-  private int recordsFileLength() {
-    return (int)myFSConnection.getRecords().length();
   }
 
   private void deleteContentAndAttributes(int id) throws IOException {

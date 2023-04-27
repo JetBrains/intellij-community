@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
@@ -94,7 +94,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
         if (BoolUtils.isBooleanLiteral(condition)) {
           LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
           holder.registerProblem(condition, JavaAnalysisBundle
-            .message("dataflow.message.constant.no.ref", condition.textMatches(PsiKeyword.TRUE) ? 1 : 0), fix);
+            .message("dataflow.message.constant.no.ref", condition.textMatches(PsiKeyword.TRUE) ? 1 : 0), LocalQuickFix.notNullElements(fix));
         }
       }
 
@@ -103,7 +103,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
           holder.registerProblem(condition, JavaAnalysisBundle.message("dataflow.message.constant.no.ref", 0),
-                                 createSimplifyBooleanExpressionFix(condition, false));
+                                 LocalQuickFix.notNullElements(createSimplifyBooleanExpressionFix(condition, false)));
         }
       }
     };
@@ -123,7 +123,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
 
   private void processAnchor(@NotNull DfType dfType, @NotNull JavaDfaAnchor anchor, @NotNull ProblemsHolder reporter) {
     ConstantResult result = ConstantResult.fromDfType(dfType);
-    if (result == ConstantResult.UNKNOWN && dfType instanceof DfReferenceType refType && refType.getSpecialField() == SpecialField.UNBOX) {
+    if (result == ConstantResult.UNKNOWN && dfType instanceof DfReferenceType refType && refType.getSpecialField() == SpecialField.UNBOX &&
+        refType.getNullability() == DfaNullability.NOT_NULL) {
       result = ConstantResult.fromDfType(refType.getSpecialFieldType());
     }
     if (result == ConstantResult.UNKNOWN) return;
@@ -525,8 +526,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     return EqualsToEqualityFix.buildFix(call, negated);
   }
 
-  private static LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue,
-                                                                  PsiAssignmentExpression assignment,
+  private static LocalQuickFix @NotNull [] createConditionalAssignmentFixes(boolean evaluatesToTrue,
+                                                                  @NotNull PsiAssignmentExpression assignment,
                                                                   final boolean onTheFly) {
     IElementType op = assignment.getOperationTokenType();
     boolean toRemove = op == JavaTokenType.ANDEQ && !evaluatesToTrue || op == JavaTokenType.OREQ && evaluatesToTrue;

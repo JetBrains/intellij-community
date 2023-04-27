@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.references;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -20,158 +18,153 @@ public final class MavenModelClassesProperties {
   static {
     Map<String, Map<String, String>> res = new HashMap<>();
 
-    res.put(MAVEN_PROJECT_CLASS, ContainerUtil.<String, String>immutableMapBuilder()
-      .put("parentFile", "java.io.File")
-      .put("artifact", "org.apache.maven.artifact.Artifact")
-      .put("model", MAVEN_MODEL_CLASS)
-      .put("parent", MAVEN_PROJECT_CLASS)
-      .put("file", "java.io.File")
-      .put("dependencies", CommonClassNames.JAVA_UTIL_LIST)
-      .put("compileSourceRoots", CommonClassNames.JAVA_UTIL_LIST)
-      .put("scriptSourceRoots", CommonClassNames.JAVA_UTIL_LIST)
-      .put("testCompileSourceRoots", CommonClassNames.JAVA_UTIL_LIST)
-      .put("compileClasspathElements", CommonClassNames.JAVA_UTIL_LIST)
-      .put("compileArtifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("compileDependencies", CommonClassNames.JAVA_UTIL_LIST)
-      .put("testClasspathElements", CommonClassNames.JAVA_UTIL_LIST)
-      .put("testArtifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("testDependencies", CommonClassNames.JAVA_UTIL_LIST)
-      .put("runtimeClasspathElements", CommonClassNames.JAVA_UTIL_LIST)
-      .put("runtimeArtifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("runtimeDependencies", CommonClassNames.JAVA_UTIL_LIST)
-      .put("systemClasspathElements", CommonClassNames.JAVA_UTIL_LIST)
-      .put("systemArtifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("systemDependencies", CommonClassNames.JAVA_UTIL_LIST)
-      .put("modelVersion", CommonClassNames.JAVA_LANG_STRING)
-      .put("id", CommonClassNames.JAVA_LANG_STRING)
-      .put("groupId", CommonClassNames.JAVA_LANG_STRING)
-      .put("artifactId", CommonClassNames.JAVA_LANG_STRING)
-      .put("version", CommonClassNames.JAVA_LANG_STRING)
-      .put("packaging", CommonClassNames.JAVA_LANG_STRING)
-      .put("name", CommonClassNames.JAVA_LANG_STRING)
-      .put("inceptionYear", CommonClassNames.JAVA_LANG_STRING)
-      .put("url", CommonClassNames.JAVA_LANG_STRING)
-      .put("prerequisites", "org.apache.maven.model.Prerequisites")
-      .put("issueManagement", "org.apache.maven.model.IssueManagement")
-      .put("ciManagement", "org.apache.maven.model.CiManagement")
-      .put("description", CommonClassNames.JAVA_LANG_STRING)
-      .put("organization", "org.apache.maven.model.Organization")
-      .put("scm", "org.apache.maven.model.Scm")
-      .put("mailingLists", CommonClassNames.JAVA_UTIL_LIST)
-      .put("developers", CommonClassNames.JAVA_UTIL_LIST)
-      .put("contributors", CommonClassNames.JAVA_UTIL_LIST)
-      .put("build", "org.apache.maven.model.Build")
-
-      .put("resources", CommonClassNames.JAVA_UTIL_LIST)
-      .put("testResources", CommonClassNames.JAVA_UTIL_LIST)
-      .put("reporting", "org.apache.maven.model.Reporting")
-      .put("licenses", CommonClassNames.JAVA_UTIL_LIST)
-      .put("artifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("artifactMap", CommonClassNames.JAVA_UTIL_LIST)
-      .put("pluginArtifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("pluginArtifactMap", CommonClassNames.JAVA_UTIL_LIST)
-      .put("reportArtifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("reportArtifactMap", CommonClassNames.JAVA_UTIL_LIST)
-      .put("extensionArtifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("extensionArtifactMap", CommonClassNames.JAVA_UTIL_LIST)
-      .put("parentArtifact", CommonClassNames.JAVA_UTIL_LIST)
-      .put("repositories", CommonClassNames.JAVA_UTIL_LIST)
-      .put("reportPlugins", CommonClassNames.JAVA_UTIL_LIST)
-      .put("buildPlugins", CommonClassNames.JAVA_UTIL_LIST)
-      .put("modules", CommonClassNames.JAVA_UTIL_LIST)
-      .put("modelBuild", "org.apache.maven.model.Build")
-      .put("remoteArtifactRepositories", CommonClassNames.JAVA_UTIL_LIST)
-      .put("pluginArtifactRepositories", CommonClassNames.JAVA_UTIL_LIST)
-      .put("distributionManagementArtifactRepository", "org.apache.maven.artifact.repository.ArtifactRepository")
-      .put("pluginRepositories", CommonClassNames.JAVA_UTIL_LIST)
-      .put("remoteProjectRepositories", CommonClassNames.JAVA_UTIL_LIST)
-      .put("remotePluginRepositories", CommonClassNames.JAVA_UTIL_LIST)
-      .put("activeProfiles", CommonClassNames.JAVA_UTIL_LIST)
-      .put("injectedProfileIds", CommonClassNames.JAVA_UTIL_LIST)
-      .put("attachedArtifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("executionProject", MAVEN_PROJECT_CLASS)
-      .put("collectedProjects", CommonClassNames.JAVA_UTIL_LIST)
-      .put("dependencyArtifacts", CommonClassNames.JAVA_UTIL_LIST)
-      .put("managedVersionMap", CommonClassNames.JAVA_UTIL_LIST)
-      .put("buildExtensions", CommonClassNames.JAVA_UTIL_LIST)
-      .put("properties", CommonClassNames.JAVA_UTIL_LIST)
-      .put("filters", CommonClassNames.JAVA_UTIL_LIST)
-      .put("projectReferences", CommonClassNames.JAVA_UTIL_LIST)
-      .put("executionRoot", "boolean")
-      .put("defaultGoal", CommonClassNames.JAVA_UTIL_LIST)
-      .put("releaseArtifactRepository", "org.apache.maven.artifact.repository.ArtifactRepository")
-      .put("snapshotArtifactRepository", "org.apache.maven.artifact.repository.ArtifactRepository")
-      .put("classRealm", "org.codehaus.plexus.classworlds.realm.ClassRealm")
-      .put("extensionDependencyFilter", "org.sonatype.aether.graph.DependencyFilter")
-      .put("projectBuildingRequest", "org.apache.maven.project.ProjectBuildingRequest")
-
-      .build()
+    res.put(MAVEN_PROJECT_CLASS, Map.<String, String>ofEntries(
+      Map.entry("parentFile", "java.io.File"),
+      Map.entry("artifact", "org.apache.maven.artifact.Artifact"),
+      Map.entry("model", MAVEN_MODEL_CLASS),
+      Map.entry("parent", MAVEN_PROJECT_CLASS),
+      Map.entry("file", "java.io.File"),
+      Map.entry("dependencies", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("compileSourceRoots", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("scriptSourceRoots", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("testCompileSourceRoots", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("compileClasspathElements", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("compileArtifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("compileDependencies", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("testClasspathElements", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("testArtifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("testDependencies", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("runtimeClasspathElements", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("runtimeArtifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("runtimeDependencies", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("systemClasspathElements", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("systemArtifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("systemDependencies", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("modelVersion", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("id", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("groupId", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("artifactId", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("version", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("packaging", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("name", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("inceptionYear", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("url", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("prerequisites", "org.apache.maven.model.Prerequisites"),
+      Map.entry("issueManagement", "org.apache.maven.model.IssueManagement"),
+      Map.entry("ciManagement", "org.apache.maven.model.CiManagement"),
+      Map.entry("description", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("organization", "org.apache.maven.model.Organization"),
+      Map.entry("scm", "org.apache.maven.model.Scm"),
+      Map.entry("mailingLists", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("developers", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("contributors", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("build", "org.apache.maven.model.Build"),
+      Map.entry("resources", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("testResources", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("reporting", "org.apache.maven.model.Reporting"),
+      Map.entry("licenses", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("artifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("artifactMap", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("pluginArtifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("pluginArtifactMap", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("reportArtifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("reportArtifactMap", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("extensionArtifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("extensionArtifactMap", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("parentArtifact", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("repositories", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("reportPlugins", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("buildPlugins", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("modules", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("modelBuild", "org.apache.maven.model.Build"),
+      Map.entry("remoteArtifactRepositories", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("pluginArtifactRepositories", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("distributionManagementArtifactRepository", "org.apache.maven.artifact.repository.ArtifactRepository"),
+      Map.entry("pluginRepositories", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("remoteProjectRepositories", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("remotePluginRepositories", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("activeProfiles", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("injectedProfileIds", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("attachedArtifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("executionProject", MAVEN_PROJECT_CLASS),
+      Map.entry("collectedProjects", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("dependencyArtifacts", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("managedVersionMap", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("buildExtensions", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("properties", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("filters", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("projectReferences", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("executionRoot", "boolean"),
+      Map.entry("defaultGoal", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("releaseArtifactRepository", "org.apache.maven.artifact.repository.ArtifactRepository"),
+      Map.entry("snapshotArtifactRepository", "org.apache.maven.artifact.repository.ArtifactRepository"),
+      Map.entry("classRealm", "org.codehaus.plexus.classworlds.realm.ClassRealm"),
+      Map.entry("extensionDependencyFilter", "org.sonatype.aether.graph.DependencyFilter"),
+      Map.entry("projectBuildingRequest", "org.apache.maven.project.ProjectBuildingRequest"))
     );
 
-    res.put(MAVEN_MODEL_CLASS, ImmutableMap.<String, String>builder()
-      .put("modelVersion", CommonClassNames.JAVA_LANG_STRING)
-      .put("parent", MAVEN_PROJECT_CLASS)
-      .put("groupId", CommonClassNames.JAVA_LANG_STRING)
-      .put("artifactId", CommonClassNames.JAVA_LANG_STRING)
-      .put("version", CommonClassNames.JAVA_LANG_STRING)
-      .put("packaging", CommonClassNames.JAVA_LANG_STRING)
-      .put("name", CommonClassNames.JAVA_LANG_STRING)
-      .put("description", CommonClassNames.JAVA_LANG_STRING)
-      .put("url", CommonClassNames.JAVA_LANG_STRING)
-      .put("inceptionYear", CommonClassNames.JAVA_LANG_STRING)
-      .put("organization", "org.apache.maven.model.Organization")
-      .put("licenses", CommonClassNames.JAVA_UTIL_LIST)
-      .put("developers", CommonClassNames.JAVA_UTIL_LIST)
-      .put("contributors", CommonClassNames.JAVA_UTIL_LIST)
-      .put("mailingLists", CommonClassNames.JAVA_UTIL_LIST)
-      .put("prerequisites", "org.apache.maven.model.Prerequisites")
-      .put("scm", "org.apache.maven.model.Scm")
-      .put("issueManagement", "org.apache.maven.model.IssueManagement")
-      .put("ciManagement", "org.apache.maven.model.CiManagement")
-      .put("build", "org.apache.maven.model.Build")
-      .put("profiles", CommonClassNames.JAVA_UTIL_LIST)
-      .put("modelEncoding", CommonClassNames.JAVA_LANG_STRING)
-      .put("pomFile", "java.io.File")
-      .put("projectDirectory", "java.io.File")
-      .put("id", CommonClassNames.JAVA_LANG_STRING)
-
-      .put("repositories", CommonClassNames.JAVA_UTIL_LIST)
-      .put("dependencies", CommonClassNames.JAVA_UTIL_LIST)
-      .put("modules", CommonClassNames.JAVA_UTIL_LIST)
-      .put("pluginRepositories", CommonClassNames.JAVA_UTIL_LIST)
-      .put("properties", CommonClassNames.JAVA_UTIL_LIST)
-      .put("reports", CommonClassNames.JAVA_LANG_OBJECT)
-      .put("reporting", "org.apache.maven.model.Reporting")
-      .build()
+    res.put(MAVEN_MODEL_CLASS, Map.ofEntries(
+      Map.entry("modelVersion", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("parent", MAVEN_PROJECT_CLASS),
+      Map.entry("groupId", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("artifactId", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("version", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("packaging", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("name", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("description", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("url", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("inceptionYear", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("organization", "org.apache.maven.model.Organization"),
+      Map.entry("licenses", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("developers", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("contributors", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("mailingLists", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("prerequisites", "org.apache.maven.model.Prerequisites"),
+      Map.entry("scm", "org.apache.maven.model.Scm"),
+      Map.entry("issueManagement", "org.apache.maven.model.IssueManagement"),
+      Map.entry("ciManagement", "org.apache.maven.model.CiManagement"),
+      Map.entry("build", "org.apache.maven.model.Build"),
+      Map.entry("profiles", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("modelEncoding", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("pomFile", "java.io.File"),
+      Map.entry("projectDirectory", "java.io.File"),
+      Map.entry("id", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("repositories", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("dependencies", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("modules", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("pluginRepositories", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("properties", CommonClassNames.JAVA_UTIL_LIST),
+      Map.entry("reports", CommonClassNames.JAVA_LANG_OBJECT),
+      Map.entry("reporting", "org.apache.maven.model.Reporting"))
     );
 
-    res.put(CommonClassNames.JAVA_UTIL_LIST, ImmutableMap.of("empty", "boolean"));
+    res.put(CommonClassNames.JAVA_UTIL_LIST, Map.of("empty", "boolean"));
 
-    res.put("org.apache.maven.model.Build", ImmutableMap.<String, String>builder()
-      .put("extensions", CommonClassNames.JAVA_UTIL_LIST)
-      .put("filters", CommonClassNames.JAVA_UTIL_LIST)
-      .put("resources", CommonClassNames.JAVA_UTIL_LIST)
-      .put("testResources", CommonClassNames.JAVA_UTIL_LIST)
-      .build());
+    res.put("org.apache.maven.model.Build", Map.of(
+      "extensions", CommonClassNames.JAVA_UTIL_LIST,
+      "filters", CommonClassNames.JAVA_UTIL_LIST,
+      "resources", CommonClassNames.JAVA_UTIL_LIST,
+      "testResources", CommonClassNames.JAVA_UTIL_LIST)
+      );
 
-    res.put("java.io.File", ImmutableMap.<String, String>builder()
-      .put("prefixLength", "long")
-      .put("name", CommonClassNames.JAVA_LANG_STRING)
-      .put("parent", CommonClassNames.JAVA_LANG_STRING)
-      .put("parentFile", "java.io.File")
-      .put("path", CommonClassNames.JAVA_LANG_STRING)
-      .put("absolute", "boolean")
-      .put("absolutePath", CommonClassNames.JAVA_LANG_STRING)
-      .put("absoluteFile", "java.io.File")
-      .put("canonicalPath", CommonClassNames.JAVA_LANG_STRING)
-      .put("canonicalFile", "java.io.File")
-      .put("directory", "boolean")
-      .put("file", "boolean")
-      .put("hidden", "boolean")
-      .put("totalSpace", "long")
-      .put("freeSpace", "long")
-      .put("usableSpace", "long")
-      .build());
+    res.put("java.io.File", Map.ofEntries(
+      Map.entry("prefixLength", "long"),
+      Map.entry("name", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("parent", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("parentFile", "java.io.File"),
+      Map.entry("path", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("absolute", "boolean"),
+      Map.entry("absolutePath", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("absoluteFile", "java.io.File"),
+      Map.entry("canonicalPath", CommonClassNames.JAVA_LANG_STRING),
+      Map.entry("canonicalFile", "java.io.File"),
+      Map.entry("directory", "boolean"),
+      Map.entry("file", "boolean"),
+      Map.entry("hidden", "boolean"),
+      Map.entry("totalSpace", "long"),
+      Map.entry("freeSpace", "long"),
+      Map.entry("usableSpace", "long"))
+      );
 
     PROPERTIES_MAP = res;
   }

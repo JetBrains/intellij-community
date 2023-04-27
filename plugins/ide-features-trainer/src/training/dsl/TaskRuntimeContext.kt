@@ -59,13 +59,13 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
 
   /// Utility methods ///
 
-  fun setSample(sample: LessonSample) {
+  fun setSample(sample: LessonSample, setCaret: Boolean = true) {
     taskInvokeLater(ModalityState.NON_MODAL) {
       TemplateManagerImpl.getTemplateState(editor)?.gotoEnd()
       (editor as? EditorEx)?.isViewer = false
       editor.caretModel.removeSecondaryCarets()
       setDocumentCode(sample.text)
-      setCaret(sample.getPosition(0))
+      if (setCaret) setCaret(sample.getPosition(0))
     }
   }
 

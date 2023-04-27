@@ -54,10 +54,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -428,19 +425,26 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private void createTextFieldTitle() {
-    myTextFieldTitle = new JLabel(IdeBundle.message("run.anything.run.anything.title"));
+    myTextFieldTitle = new JLabel(IdeBundle.message("run.anything.run.anything.title")) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        Font defaultFont = JBFont.label();
+        if (SystemInfo.isMac) {
+          setFont(defaultFont.deriveFont(Font.BOLD, defaultFont.getSize() - 1f));
+        }
+        else {
+          setFont(defaultFont.deriveFont(Font.BOLD));
+        }
+      }
+    };
+
     Color foregroundColor = StartupUiUtil.isUnderDarcula()
                             ? UIUtil.isUnderWin10LookAndFeel() ? JBColor.WHITE : new JBColor(Gray._240, Gray._200)
                             : UIUtil.getLabelForeground();
 
 
     myTextFieldTitle.setForeground(foregroundColor);
-    if (SystemInfo.isMac) {
-      myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD, myTextFieldTitle.getFont().getSize() - 1f));
-    }
-    else {
-      myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD));
-    }
   }
 
   @NotNull

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.inspectopedia.extractor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -8,37 +9,31 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.options.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.inspectopedia.extractor.data.Inspection;
 import com.intellij.inspectopedia.extractor.data.OptionsPanelInfo;
 import com.intellij.inspectopedia.extractor.data.Plugin;
 import com.intellij.inspectopedia.extractor.data.Plugins;
 import com.intellij.inspectopedia.extractor.utils.HtmlUtils;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.ui.HyperlinkLabel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import javax.swing.text.JTextComponent;
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class InspectopediaExtractor implements ApplicationStarter {
+public final class InspectopediaExtractor implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(InspectopediaExtractor.class);
   public static final String IDE_CODE = ApplicationInfo.getInstance().getBuild().getProductCode().toLowerCase(Locale.getDefault());
   public static final String IDE_NAME = ApplicationInfo.getInstance().getVersionName();
@@ -67,7 +62,7 @@ public class InspectopediaExtractor implements ApplicationStarter {
   public void main(@NotNull List<String> args) {
     final int size = args.size();
     if (size != 2) {
-      LOG.error("Usage: %s <output directory>", getCommandName());
+      LOG.error("Usage: %s <output directory>".formatted(getCommandName()));
       System.exit(-1);
     }
 
@@ -110,11 +105,11 @@ public class InspectopediaExtractor implements ApplicationStarter {
         final String originalDescription = wrapper.loadDescription();
         final String[] description = originalDescription == null ? new String[]{""} : originalDescription.split("<!-- tooltip end -->");
 
-        OptionsPanelInfo panelInfo = null;
+        List<OptionsPanelInfo> panelInfo = null;
         try {
-          final JComponent panel = wrapper.getTool().createOptionsPanel();
+          final OptPane panel = wrapper.getTool().getOptionsPane();
 
-          if (panel != null) {
+          if (!panel.equals(OptPane.EMPTY)) {
             LOG.info("Saving options panel for " + wrapper.getShortName());
             panelInfo = retrievePanelStructure(panel);
           }
@@ -137,7 +132,6 @@ public class InspectopediaExtractor implements ApplicationStarter {
         .sorted(Comparator.comparing(Plugin::getId))
         .peek(plugin -> {
           plugin.inspections.sort(null);
-          plugin.inspections.forEach(it -> sortRecursively(it.optionsPanelInfo));
         }).toList();
       final Plugins pluginsData = new Plugins(sortedPlugins, IDE_CODE, IDE_NAME, IDE_VERSION);
 
@@ -170,84 +164,68 @@ public class InspectopediaExtractor implements ApplicationStarter {
     System.exit(0);
   }
 
-  private static final Comparator<OptionsPanelInfo> optionsPanelInfoComparator = Comparator
-    .<OptionsPanelInfo, String>comparing(info -> Optional.ofNullable(info).map(it -> it.type).orElse("null"))
-    .thenComparing(info -> Optional.ofNullable(info).map(it -> it.text).orElse("null"));
-
-  private static void sortRecursively(OptionsPanelInfo optionsPanelInfo) {
-    Optional.ofNullable(optionsPanelInfo).map(it -> it.children).ifPresent(it -> {
-      it.sort(optionsPanelInfoComparator);
-      it.forEach(InspectopediaExtractor::sortRecursively);
-    });
-  }
-
-  @Nullable
-  private static String getMyText(final @NotNull Object object) {
-    if (object instanceof AbstractButton) {
-      return ((AbstractButton)object).getText();
+  private static @Nullable LocMessage getMyText(final @NotNull OptComponent cmp) {
+    if (cmp instanceof OptCheckbox checkbox) {
+      return checkbox.label();
     }
-    else if (object instanceof JEditorPane) {
-      return ((JEditorPane)object).getText();
+    else if (cmp instanceof OptString string) {
+      return string.splitLabel();
     }
-    else if (object instanceof JLabel) {
-      return ((JLabel)object).getText();
+    else if (cmp instanceof OptNumber number) {
+      return number.splitLabel();
     }
-    else if (object instanceof JTextComponent) {
-      return ((JTextComponent)object).getText();
+    else if (cmp instanceof OptExpandableString expandableString) {
+      return expandableString.label();
     }
-    else if (object instanceof Frame) {
-      return ((Frame)object).getTitle();
+    else if (cmp instanceof OptStringList list) {
+      return list.label();
     }
-    else if (object instanceof Dialog) {
-      return ((Dialog)object).getTitle();
+    else if (cmp instanceof OptTable table) {
+      return table.label();
     }
-    else if (object instanceof JInternalFrame) {
-      return ((JInternalFrame)object).getTitle();
+    else if (cmp instanceof OptTableColumn column) {
+      return column.name();
     }
-    else if (object instanceof TitledBorder) {
-      return ((TitledBorder)object).getTitle();
+    else if (cmp instanceof OptTab tab) {
+      return tab.label();
     }
-    else if (object instanceof HyperlinkLabel) {
-      return ((HyperlinkLabel)object).getText();
+    else if (cmp instanceof OptDropdown dropdown) {
+      return dropdown.splitLabel();
+    }
+    else if (cmp instanceof OptGroup group) {
+      return group.label();
+    }
+    else if (cmp instanceof OptSettingLink link) {
+      return link.displayName();
     }
     else {
       return null;
     }
   }
 
-  @SuppressWarnings("rawtypes")
-  @NotNull
-  private static OptionsPanelInfo retrievePanelStructure(final @NotNull Component ofWhat) {
-    final OptionsPanelInfo result = new OptionsPanelInfo();
-    result.type = ofWhat.getClass().getSimpleName();
-    result.text = getMyText(ofWhat);
+  private static @NotNull List<@NotNull OptionsPanelInfo> retrievePanelStructure(final @NotNull OptPane pane) {
+    List<OptionsPanelInfo> children = new ArrayList<>();
+    for (OptRegularComponent component : pane.components()) {
+      children.add(retrievePanelStructure(component));
+    }
+    return children;
+  }
 
-    if (ofWhat instanceof JList || ofWhat instanceof JComboBox) {
-      final ListModel model = ofWhat instanceof JList ? ((JList)ofWhat).getModel() : ((JComboBox)ofWhat).getModel();
-      result.children = new ArrayList<>();
-      for (int i = 0; i < model.getSize(); i++) {
-        var element = model.getElementAt(i);
-        result.children.add(new OptionsPanelInfo("ListItem", element.getClass().getName()));
-      }
+  private static @NotNull OptionsPanelInfo retrievePanelStructure(@NotNull OptComponent component) {
+    final OptionsPanelInfo result = new OptionsPanelInfo();
+    result.type = component.getClass().getSimpleName();
+    LocMessage text = getMyText(component);
+    result.text = text == null ? null : text.label();
+    if (component instanceof OptDescribedComponent describedComponent) {
+      HtmlChunk description = describedComponent.description();
+      result.description = description == null ? null : description.toString();
     }
-    else if (ofWhat instanceof JTable table) {
-      result.children = new ArrayList<>();
-      for (int i = 0; i < table.getModel().getRowCount(); i++) {
-        final StringBuilder sb = new StringBuilder();
-        for (int j = 0; j < table.getModel().getColumnCount(); j++) {
-          sb.append(table.getModel().getValueAt(i, j));
-        }
-        result.children.add(new OptionsPanelInfo("TableItem", sb.toString()));
-      }
+    List<OptionsPanelInfo> children = new ArrayList<>();
+    for (OptComponent child : component.children()) {
+      children.add(retrievePanelStructure(child));
     }
-    else if (ofWhat instanceof Container) {
-      final Component[] children = ((Container)ofWhat).getComponents();
-      if (children != null) {
-        result.children = new ArrayList<>();
-        for (final Component c : children) {
-          result.children.add(retrievePanelStructure(c));
-        }
-      }
+    if (!children.isEmpty()) {
+      result.children = children;
     }
     return result;
   }

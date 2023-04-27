@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithQuickFixTextRange;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -13,16 +13,16 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import javax.swing.*;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -43,64 +43,40 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         if (!ExpressionUtils.hasStringType(expression)) return;
-        PsiExpression[] operands = expression.getOperands();
-        int rightIndex = 0;
-        while (rightIndex < operands.length) {
-          int leftIndex = rightIndex;
-          int nNewLines = 0;
-          TextRange firstNewLineTextRange = null;
-          boolean hasEscapedQuotes = false;
-          PsiLiteralExpression literal;
-          while (rightIndex < operands.length &&
-                 (literal = tryCast(PsiUtil.skipParenthesizedExprDown(operands[rightIndex]), PsiLiteralExpression.class)) != null) {
-            if (literal.isTextBlock()) return;
-            ++rightIndex;
-            if (nNewLines > 1) continue;
-            String text = literal.getText();
-            hasEscapedQuotes |= (getQuoteIndex(text) != -1);
-            int newLineIdx = getNewLineIndex(text, 0);
-            if (newLineIdx == -1) continue;
-            if (firstNewLineTextRange == null) {
-              int operandOffset = literal.getTextOffset() - expression.getTextOffset();
-              firstNewLineTextRange = new TextRange(operandOffset + newLineIdx, operandOffset + newLineIdx + 2);
-            }
-            while (nNewLines <= 1 && newLineIdx != -1) {
-              nNewLines++;
-              newLineIdx = getNewLineIndex(text, newLineIdx + 1);
-            }
+        int nNewLines = 0;
+        TextRange firstNewLineTextRange = null;
+        boolean hasEscapedQuotes = false;
+        for (PsiExpression operand : expression.getOperands()) {
+          PsiLiteralExpression literal = getLiteralExpression(operand);
+          if (literal == null) return;
+          if (nNewLines > 1) continue;
+          String text = literal.getText();
+          hasEscapedQuotes |= (getQuoteIndex(text) != -1);
+          int newLineIdx = getNewLineIndex(text, 0);
+          if (newLineIdx == -1) continue;
+          if (firstNewLineTextRange == null) {
+            int operandOffset = literal.getTextOffset() - expression.getTextOffset();
+            firstNewLineTextRange = new TextRange(operandOffset + newLineIdx, operandOffset + newLineIdx + 2);
           }
-          if (leftIndex != rightIndex) {
-            boolean hasComments = hasComments(operands, leftIndex, rightIndex - 1);
-            boolean reportWarning = nNewLines > 1 && !hasComments;
-            boolean reportInfo = isOnTheFly && (hasEscapedQuotes || hasComments);
-            if (reportWarning) {
-              boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
-              InspectionManager inspectionManager = InspectionManager.getInstance(expression.getProject());
-              String message = JavaBundle.message("inspection.text.block.migration.concatenation.message");
-              ProblemDescriptor pd = inspectionManager.createProblemDescriptor(expression, quickFixOnly ? null : firstNewLineTextRange,
-                                                                               message,
-                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly,
-                                                                               new ReplaceWithTextBlockFix(leftIndex, rightIndex - 1));
-              PsiExpression leftOperand = operands[leftIndex];
-              PsiExpression rightOperand = operands[rightIndex - 1];
-              TextRange range = TextRange.create(leftOperand.getTextRange().getStartOffset(), rightOperand.getTextRange().getEndOffset());
-              holder.registerProblem(new ProblemDescriptorWithQuickFixTextRange((ProblemDescriptorBase)pd, range));
-            }
-            else if (reportInfo) {
-              holder.registerProblem(expression,
-                                     JavaBundle.message("inspection.text.block.migration.string.message"),
-                                     ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix(leftIndex, rightIndex - 1));
-            }
+          while (nNewLines <= 1 && newLineIdx != -1) {
+            nNewLines++;
+            newLineIdx = getNewLineIndex(text, newLineIdx + 1);
           }
-          ++rightIndex;
         }
-      }
-
-      private static boolean hasComments(PsiExpression[] operands, int leftIndex, int rightIndex) {
-        for (PsiElement child = operands[leftIndex]; child != operands[rightIndex]; child = child.getNextSibling()) {
-          if (child instanceof PsiComment) return true;
+        boolean hasComments = ContainerUtil.exists(expression.getChildren(), child -> child instanceof PsiComment);
+        boolean reportWarning = nNewLines > 1 && !hasComments;
+        boolean reportInfo = isOnTheFly && (hasEscapedQuotes || hasComments);
+        if (reportWarning) {
+          boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
+          holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
+                                 JavaBundle.message("inspection.text.block.migration.concatenation.message"),
+                                 new ReplaceWithTextBlockFix());
         }
-        return false;
+        else if (reportInfo) {
+          holder.registerProblem(expression,
+                                 JavaBundle.message("inspection.text.block.migration.string.message"),
+                                 ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
+        }
       }
 
       @Override
@@ -128,19 +104,6 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
 
   private static class ReplaceWithTextBlockFix implements LocalQuickFix {
 
-    private final int myLeftIndex;
-    private final int myRightIndex;
-
-    ReplaceWithTextBlockFix() {
-      myLeftIndex = -1;
-      myRightIndex = -1;
-    }
-
-    ReplaceWithTextBlockFix(int leftIndex, int rightIndex) {
-      myLeftIndex = leftIndex;
-      myRightIndex = rightIndex;
-    }
-
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -161,13 +124,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
       PsiPolyadicExpression polyadicExpression = tryCast(expression, PsiPolyadicExpression.class);
       if (polyadicExpression == null || !ExpressionUtils.hasStringType(polyadicExpression)) return;
-      PsiExpression[] operands = polyadicExpression.getOperands();
-      if (myLeftIndex == 0 && myRightIndex == operands.length - 1) {
-        replaceWithTextBlock(operands, polyadicExpression);
-      }
-      else {
-        replaceWithTextBlock(polyadicExpression, myLeftIndex, myRightIndex);
-      }
+      replaceWithTextBlock(polyadicExpression.getOperands(), polyadicExpression);
     }
 
     private static void replaceWithTextBlock(PsiExpression @NotNull [] operands, @NotNull PsiExpression toReplace) {
@@ -175,17 +132,6 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (lines == null) return;
       CommentTracker tracker = new CommentTracker();
       tracker.replaceAndRestoreComments(toReplace, getTextBlock(lines));
-    }
-
-    private static void replaceWithTextBlock(@NotNull PsiPolyadicExpression polyadicExpression, int leftIndex, int rightIndex) {
-      PsiExpression[] operands = polyadicExpression.getOperands();
-      String[] lines = getContentLines(Arrays.copyOfRange(operands, leftIndex, rightIndex + 1));
-      if (lines == null) return;
-      if (lines.length > 1) {
-        polyadicExpression.deleteChildRange(operands[leftIndex], operands[rightIndex].getPrevSibling());
-      }
-      CommentTracker tracker = new CommentTracker();
-      tracker.replaceAndRestoreComments(operands[rightIndex], getTextBlock(lines));
     }
 
     @NotNull

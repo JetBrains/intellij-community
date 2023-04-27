@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
@@ -31,7 +33,8 @@ class PluginDeclarationProviderFactory(
         return PsiBasedClassMemberDeclarationProvider(storageManager, classLikeInfo)
     }
 
-    override fun createPackageMemberDeclarationProvider(name: FqName): PackageMemberDeclarationProvider? {
+    @ApiStatus.Internal
+    public override fun createPackageMemberDeclarationProvider(name: FqName): PackageMemberDeclarationProvider? {
         val fileBasedProvider = fileBasedDeclarationProviderFactory.getPackageMemberDeclarationProvider(name)
         val stubBasedProvider = getStubBasedPackageMemberDeclarationProvider(name)
         return when {
@@ -59,12 +62,13 @@ class PluginDeclarationProviderFactory(
     }
 
     private fun diagnoseMissingPackageFragmentPartialPackageIndexCorruption(message: String): Nothing {
-        throw IllegalStateException("KotlinPartialPackageNamesIndex seems corrupted.\n$message")
+        PerModulePackageCacheService.getInstance(project).onTooComplexChange() // force cache clean up
+        throw InconsistencyIndexException("KotlinPartialPackageNamesIndex inconsistency.\n$message")
     }
 
     private fun diagnoseMissingPackageFragmentPerModulePackageCacheMiss(message: String): Nothing {
         PerModulePackageCacheService.getInstance(project).onTooComplexChange() // Postpone cache rebuild
-        throw IllegalStateException("PerModulePackageCache miss.\n$message")
+        throw InconsistencyIndexException("PerModulePackageCache miss.\n$message")
     }
 
     private fun diagnoseMissingPackageFragmentUnknownReason(message: String): Nothing {
@@ -146,3 +150,5 @@ class PluginDeclarationProviderFactory(
         }
     }
 }
+
+private class InconsistencyIndexException(message: String): ProcessCanceledException(message)

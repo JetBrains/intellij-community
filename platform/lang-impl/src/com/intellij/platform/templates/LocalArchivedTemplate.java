@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -9,9 +9,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -152,7 +154,7 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
           ZipEntry entry;
           while ((entry = stream.getNextEntry()) != null) {
             if (entry.getName().endsWith(endsWith)) {
-              return new String(StreamUtil.readBytes(stream), StandardCharsets.UTF_8);
+              return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
             }
           }
           return null;

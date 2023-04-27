@@ -3,7 +3,6 @@ package com.intellij.diagnostic.telemetry
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.sdk.trace.data.SpanData
@@ -103,7 +102,7 @@ class JaegerJsonSpanExporter(
     writer.writeEndObject()
     // close data
     writer.writeEndArray()
-    // close root object
+    // close the root object
     writer.writeEndObject()
     writer.close()
   }
@@ -155,10 +154,6 @@ private fun writeStringTag(name: String, value: String, w: JsonGenerator) {
 
 private fun writeAttributesAsJson(w: JsonGenerator, attributes: Attributes) {
   attributes.forEach { k, v ->
-    if ((k as AttributeKey<*>).key == "_CES_") {
-      return@forEach
-    }
-
     w.writeStartObject()
     w.writeStringField("key", k.key)
     w.writeStringField("type", k.type.name.lowercase(Locale.getDefault()))

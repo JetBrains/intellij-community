@@ -32,25 +32,32 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
 
     override fun getId(): String = "kotlin.inlay.hints"
 
-    override fun getOptions(project: Project): MutableCollection<OptionDescription> =
-        InlaySettingsProvider.EP.getExtensions().flatMap { it.createModels(project, KotlinLanguage.INSTANCE) }.flatMap {
-            listOf(
-                CheckboxDescriptor(
-                    KotlinBundle.message(it.id),
-                    getter = it::isEnabled,
-                    setter = { newValue ->
-                        with(it) {
-                            isEnabled = newValue
-                            apply()
-                            refreshHints()
+    override fun getOptions(project: Project): MutableCollection<OptionDescription> {
+        val options = mutableListOf<OptionDescription>()
+
+        InlaySettingsProvider.EP.getExtensions().flatMap { it.createModels(project, KotlinLanguage.INSTANCE) }.forEach {
+            KotlinBundle.messageOrNull(it.id)?.let { msg ->
+                options.add(
+                    CheckboxDescriptor(
+                        msg,
+                        getter = it::isEnabled,
+                        setter = { newValue ->
+                            with(it) {
+                                isEnabled = newValue
+                                apply()
+                                refreshHints(project)
+                            }
                         }
-                    }
-                ).asOptionDescriptor()
-            ) +
-                    it.cases.map { case ->
+                    ).asOptionDescriptor()
+                )
+            }
+
+            it.cases.forEach { case ->
+                // TODO: Have to clean up this hidden "gem" - maybe make `Case` open ?
+                KotlinBundle.messageOrNull("${it.id}.${case.id}")?.let { msg ->
+                    options.add(
                         CheckboxDescriptor(
-                            // TODO: Have to clean up this hidden "gem" - maybe make `Case` open ?
-                            KotlinBundle.message("${it.id}.${case.id}"),
+                            msg,
                             getter = case::value,
                             setter = { newValue ->
                                 case.value = newValue
@@ -58,9 +65,13 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
                                     it.isEnabled = true
                                 }
                                 it.apply()
-                                refreshHints()
+                                refreshHints(project)
                             }
-                        ).asOptionDescriptor()
-                    }
-        }.toMutableList()
+                        ).asOptionDescriptor())
+                }
+            }
+        }
+
+        return options
+    }
 }

@@ -542,15 +542,8 @@ public final class ListPluginComponent extends JPanel {
           }
         }
 
-        String message;
-        if (myUpdateDescriptor instanceof PluginNode && ((PluginNode)myUpdateDescriptor).getTags().contains(Tags.Freemium.name())) {
-          message = IdeBundle.message("label.next.plugin.version.is.freemium");
-        }
-        else {
-          message = IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or");
-        }
-        myUpdateLicensePanel.setText(message, true, false);
-        myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
+        myUpdateLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is"), true, false);
+        myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor, true);
         myUpdateLicensePanel.setVisible(true);
       }
       if (myUpdateButton == null) {
@@ -797,7 +790,6 @@ public final class ListPluginComponent extends JPanel {
       ((JCheckBox)myEnableDisableButton).setSelected(
         myPluginModel.isEnabled(getDescriptorForActions()));
     }
-    myNameComponent.setIcon(AllIcons.General.ProjectConfigurable);
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
@@ -1149,7 +1141,7 @@ public final class ListPluginComponent extends JPanel {
       result.add(new PropertyBean("Plugin ID", myPlugin.getPluginId(), true));
       result.add(new PropertyBean("Plugin Dependencies",
                                   StringUtil.join(myPlugin.getDependencies(),
-                                                  it -> it.getPluginId() + (it.isOptional() ? " (optional)" : ""), ", ")));
+                                                  it -> it.getPluginId() + (it.isOptional() ? " (optional)" : ""), ", "), true));
       return result;
     }
   }

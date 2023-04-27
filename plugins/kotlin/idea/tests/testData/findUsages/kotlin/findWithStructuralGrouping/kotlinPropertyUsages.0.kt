@@ -1,6 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // GROUPING_RULES: org.jetbrains.kotlin.idea.base.searching.usages.KotlinDeclarationGroupingRule
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "var foo: T"
 
 package server
 

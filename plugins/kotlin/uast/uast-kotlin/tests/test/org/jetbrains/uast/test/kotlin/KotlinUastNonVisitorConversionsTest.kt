@@ -48,4 +48,7 @@ class KotlinUastNonVisitorConversionsTest : AbstractKotlinNonVisitorConversionsT
     @Test
     fun testBrokenGeneric() = doTest("BrokenGeneric")
 
+    @Test
+    fun testTryCatch() = doTest("TryCatch")
+
 }

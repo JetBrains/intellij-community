@@ -12,7 +12,7 @@ import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Paths
 
-class ScriptHighlightingGradleDistributionTypeTest : AbstractProjectTemplateNewWizardProjectImportTest() {
+class ScriptHighlightingGradleDistributionTypeTest : AbstractProjectTemplateNewWizardProjectImportTestBase() {
 
     @Test
     fun testScriptHighlightingGradleWrapped() {

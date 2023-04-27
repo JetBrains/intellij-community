@@ -247,10 +247,10 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
    */
   protected void installSpeedSearch() {
     if (Registry.is("debugger.variablesView.rss")) {
-      new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+      XDebuggerTreeSpeedSearch.installOn(this, SPEED_SEARCH_CONVERTER);
     }
     else {
-      new TreeSpeedSearch(this, false, SPEED_SEARCH_CONVERTER.asFunction());
+      TreeSpeedSearch.installOn(this, false, SPEED_SEARCH_CONVERTER);
     }
   }
 

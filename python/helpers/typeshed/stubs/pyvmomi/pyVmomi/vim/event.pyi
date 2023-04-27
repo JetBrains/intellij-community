@@ -1,7 +1,7 @@
+from _typeshed import Incomplete
 from datetime import datetime
-from typing import Any
 
-def __getattr__(name: str) -> Any: ...  # incomplete
+def __getattr__(name: str) -> Incomplete: ...
 
 class Event:
     createdTime: datetime

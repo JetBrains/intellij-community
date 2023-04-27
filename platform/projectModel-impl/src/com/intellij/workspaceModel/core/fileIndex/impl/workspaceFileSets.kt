@@ -96,7 +96,8 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
                                     override val kind: WorkspaceFileKind,
                                     override val entityReference: EntityReference<WorkspaceEntity>,
                                     override val entityStorageKind: EntityStorageKind,
-                                    override val data: WorkspaceFileSetData)
+                                    override val data: WorkspaceFileSetData,
+                                    val recursive: Boolean = true)
   : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
   fun isUnloaded(project: Project): Boolean {
     return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
@@ -108,7 +109,7 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
 
   override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
     val acceptedKindMask = (currentMasks shr ACCEPTED_KINDS_MASK_SHIFT) and WorkspaceFileKindMask.ALL
-    val update = if (acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project)) {
+    val update = if (acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project) && (recursive || root == file)) {
       StoredFileSetKindMask.ACCEPTED_FILE_SET
     }
     else {

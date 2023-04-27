@@ -35,7 +35,7 @@ import java.nio.ByteOrder;
  *
  * @param <T> the type of the object to access
  */
-abstract class Access<T> {
+public interface Access<T> {
   /**
    * Reads {@code [offset, offset + 7]} bytes of the byte sequence represented by the given
    * {@code input} as a single {@code long} value.
@@ -45,7 +45,7 @@ abstract class Access<T> {
    *               by the given object
    * @return eight bytes as a {@code long} value, in the expected byteOrder
    */
-  public abstract long i64(T input, int offset);
+  long i64(T input, int offset);
 
   /**
    * Shortcut for {@code getInt(input, offset) & 0xFFFFFFFFL}. Could be implemented more
@@ -56,7 +56,7 @@ abstract class Access<T> {
    *               by the given object
    * @return four bytes as an unsigned int value, in the expected byteOrder
    */
-  public long u32(T input, int offset) {
+  default long u32(T input, int offset) {
     return i32(input, offset) & 0xFFFFFFFFL;
   }
 
@@ -69,7 +69,7 @@ abstract class Access<T> {
    *               by the given object
    * @return four bytes as an {@code int} value, in the expected byteOrder
    */
-  public abstract int i32(T input, int offset);
+  int i32(T input, int offset);
 
   /**
    * Reads a single byte at the given {@code offset} in the byte sequence represented by the given
@@ -80,5 +80,5 @@ abstract class Access<T> {
    *               by the given object
    * @return a byte by the given {@code offset}, widened to {@code int}
    */
-  protected abstract int i8(T input, int offset);
+  int i8(T input, int offset);
 }

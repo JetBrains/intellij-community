@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -343,6 +344,30 @@ public final class IOUtil {
   }
 
 
+
+  private static final ByteBuffer ZEROES = ByteBuffer.allocateDirect(1);
+
+  /**
+   * Imitates 'fallocate' linux call: ensures file region [offsetInFile..offsetInFile+size) is allocated on disk.
+   * We can't call 'fallocate' directly, hence just write zeros into the channel.
+   */
+  public static void allocateFileRegion(final FileChannel channel,
+                                        final long offsetInFile,
+                                        final int size) throws IOException {
+    final long channelSize = channel.size();
+    if (channelSize < offsetInFile + size) {
+      //Assumes OS file cache page >= 1024, so writes land on each page at least once, and the write forces each
+      // page to be allocated (consume disk space):
+      final int stride = 1024;
+      for (long pos = Math.max(offsetInFile, channelSize);
+           pos < offsetInFile + size;
+           pos += stride) {
+        channel.write(ZEROES, pos);
+      }
+    }
+  }
+
+
   public static <T> byte[] toBytes(final T object,
                                    final @NotNull DataExternalizer<? super T> externalizer) throws IOException {
     final ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -360,6 +385,7 @@ public final class IOUtil {
     }
   }
 
+  /** @return string with buffer content, as-if it is byte[], formatted by Arrays.toString(byte[]) */
   public static String toString(final @NotNull ByteBuffer buffer) {
     final byte[] bytes = new byte[buffer.capacity()];
     final ByteBuffer slice = buffer.duplicate();
@@ -410,4 +436,6 @@ public final class IOUtil {
     }
     return sb.toString();
   }
+
+
 }

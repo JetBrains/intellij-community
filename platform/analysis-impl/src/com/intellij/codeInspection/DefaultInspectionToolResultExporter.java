@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -163,7 +164,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
   protected void exportResults(CommonProblemDescriptor @NotNull [] descriptors,
                                @NotNull RefEntity refEntity,
-                               @NotNull Consumer<? super Element> problemSink,
+                               @NotNull BiConsumer<? super Element, ? super CommonProblemDescriptor> problemSink,
                                @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     final List<ProblemDescriptorKey> keys = Arrays
       .stream(descriptors)
@@ -186,8 +187,15 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       }
       if (element == null) return;
       exportResult(refEntity, descriptor, element);
-      problemSink.accept(element);
+      problemSink.accept(element, descriptor);
     }
+  }
+  protected void exportResults(CommonProblemDescriptor @NotNull [] descriptors,
+                               @NotNull RefEntity refEntity,
+                               @NotNull Consumer<? super Element> problemSink,
+                               @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
+    exportResults(descriptors, refEntity, (element, problem) -> problemSink.accept(element) , isDescriptorExcluded);
+
   }
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
@@ -319,7 +327,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   public boolean isExcluded(@NotNull RefEntity entity) {
     CommonProblemDescriptor[] excluded = myExcludedElements.get(entity);
     CommonProblemDescriptor[] problems = myProblemElements.get(entity);
-    return excluded != null && problems != null && Comparing.equal(ContainerUtil.set(excluded), ContainerUtil.set(problems));
+    return excluded != null && problems != null && Comparing.equal(ContainerUtil.newHashSet(excluded), ContainerUtil.newHashSet(problems));
   }
 
   @Override

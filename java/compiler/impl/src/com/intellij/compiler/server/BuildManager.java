@@ -32,10 +32,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -87,7 +84,6 @@ import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
@@ -101,8 +97,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
+import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -174,9 +169,9 @@ public final class BuildManager implements Disposable {
   private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds = Collections.synchronizedMap(new HashMap<>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager(this);
-  private final Executor myRequestsProcessor = AppExecutorUtil.createBoundedApplicationPoolExecutor("BuildManager RequestProcessor Pool", 1);
+  private final Executor myRequestsProcessor;
   private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
-  private final Executor myAutomakeTrigger = AppExecutorUtil.createBoundedApplicationPoolExecutor("BuildManager Auto-Make Trigger", 1);
+  private final Executor myAutomakeTrigger;
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
 
@@ -273,7 +268,7 @@ public final class BuildManager implements Disposable {
 
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
 
-  private static class ListeningConnection {
+  private static final class ListeningConnection {
     private final InetAddress myAddress;
     private final ChannelRegistrar myChannelRegistrar = new ChannelRegistrar();
     private volatile int myListenPort = -1;
@@ -288,7 +283,10 @@ public final class BuildManager implements Disposable {
   private final @NotNull Charset mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
   private volatile boolean myBuildProcessDebuggingEnabled;
 
-  public BuildManager() {
+  public BuildManager(@NotNull CoroutineScope coroutineScope) {
+    myRequestsProcessor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("BuildManager RequestProcessor Pool", coroutineScope);
+    myAutomakeTrigger = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("BuildManager Auto-Make Trigger", coroutineScope);
+
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
 
@@ -408,14 +406,14 @@ public final class BuildManager implements Disposable {
   private void configureIdleAutomake() {
     int idleTimeout = getAutomakeWhileIdleTimeout();
     int listenerTimeout = idleTimeout > 0 ? idleTimeout : 60000;
-    Ref<Function0<Unit>> idleListenerHandle = new Ref<>();
+    Ref<AccessToken> idleListenerHandle = new Ref<>();
     idleListenerHandle.set(IdleTracker.getInstance().addIdleListener(listenerTimeout, () -> {
       int currentTimeout = getAutomakeWhileIdleTimeout();
       if (idleTimeout != currentTimeout) {
         // re-schedule with a changed period
-        Function0<Unit> removeListener = idleListenerHandle.get();
+        AccessToken removeListener = idleListenerHandle.get();
         if (removeListener != null) {
-          removeListener.invoke();
+          removeListener.close();
         }
         configureIdleAutomake();
       }
@@ -1930,7 +1928,7 @@ public final class BuildManager implements Disposable {
               final Pair<SourceRootEntity, EntityStorage> p = getEntityAndStorage(event, change);
               final SourceRootEntity entity = p.first; // added, changed or removed source root in some module
               final EntityStorage storage = p.second;  // storage state relevant to the change
-              if (entity != null && !ModuleEntityUtils.isModuleUnloaded(entity.getContentRoot().getModule(), storage)) {
+              if (entity != null) {
                 needFSRescan = true;
                 break;
               }

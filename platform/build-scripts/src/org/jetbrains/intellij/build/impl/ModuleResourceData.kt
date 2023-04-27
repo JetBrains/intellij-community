@@ -2,19 +2,23 @@
 package org.jetbrains.intellij.build.impl
 
 /**
- * Describes additional resources which should be included into a plugin or the platform distribution. This isn't related to files from
- * 'resources roots' of a module, such files are automatically included into the plugin JAR files.
+ * Describes additional resources which should be included in a plugin or the platform distribution.
+ * This isn't related to files from `resource roots` of a module, such files are automatically included in the plugin JAR files.
  */
 internal data class ModuleResourceData(
-  /** Name of the module resources will be taken from */
+  /** The Name of the module resources will be taken from */
+  @JvmField
   val moduleName: String,
 
   /** Path to resource file or directory relative to the module content root */
+  @JvmField
   val resourcePath: String,
 
   /** Target path relative to the plugin root directory */
+  @JvmField
   val relativeOutputPath: String,
 
-  /** If {@code true} resource will be packed into zip archive */
+  /** If `true` resource is packed into the zip archive */
+  @JvmField
   val packToZip: Boolean = false,
 )

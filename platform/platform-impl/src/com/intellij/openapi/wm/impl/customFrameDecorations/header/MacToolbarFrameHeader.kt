@@ -2,24 +2,26 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.ui.JBUI
 import com.jetbrains.CustomWindowDecoration
 import com.jetbrains.JBR
-import java.awt.*
+import java.awt.CardLayout
+import java.awt.Component
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.beans.PropertyChangeListener
@@ -49,19 +51,20 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     toolbar = createToolBar()
     updateVisibleCard()
 
-    val rKey = Registry.get("apple.awt.newFullScreeControls")
-    System.setProperty(rKey.key, java.lang.Boolean.toString(rKey.asBoolean()))
-    rKey.addListener(
-      object : RegistryValueListener {
-        override fun afterValueChanged(value: RegistryValue) {
-          System.setProperty(rKey.key, java.lang.Boolean.toString(rKey.asBoolean()))
-          updateBorders()
-        }
-      }, this)
+    MacFullScreenControlsManager.configureEnable(this) {
+      updateBorders()
+    }
+
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      if (root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null) {
+        MacFullScreenControlsManager.updateColors(frame)
+      }
+    })
   }
 
   private fun createToolBar(): MainToolbar {
     val toolbar = MainToolbar()
+    toolbar.layoutCallBack = { updateCustomDecorationHitTestSpots() }
     toolbar.isOpaque = false
     toolbar.addComponentListener(object: ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
@@ -83,6 +86,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     super.updateUI()
 
     if (parent != null) {
+      updateToolbar()
       updateBorders()
     }
   }
@@ -150,7 +154,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   private fun updateBorders() {
     val isFullscreen = root.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) != null
-    if (isFullscreen && !Registry.`is`("apple.awt.newFullScreeControls")) {
+    if (isFullscreen && !MacFullScreenControlsManager.enabled()) {
       border = JBUI.Borders.empty()
       headerTitle.updateBorders(0)
     }

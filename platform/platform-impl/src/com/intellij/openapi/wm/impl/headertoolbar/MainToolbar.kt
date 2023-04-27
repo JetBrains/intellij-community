@@ -12,30 +12,43 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import java.awt.*
+import java.beans.PropertyChangeListener
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
+
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
+
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
+
+  var layoutCallBack : LayoutCallBack? = null
 
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
-    mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton() else null
+    mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton(null) else null
+    ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
 
   companion object {
@@ -48,18 +61,20 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
     fun computeActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, String>> {
       return sequenceOf(
-        HorizontalLayout.LEFT to "MainToolbarLeft",
-        HorizontalLayout.CENTER to "MainToolbarCenter",
-        HorizontalLayout.RIGHT to "MainToolbarRight",
+        GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.LEFT),
+        GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.CENTER),
+        GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.RIGHT)
       )
-        .mapNotNull { (position, id) ->
-          (customActionSchema.getCorrectedAction(id) as ActionGroup?)?.let {
-            it to position
+        .mapNotNull { info ->
+          customActionSchema.getCorrectedAction(info.id, info.name)?.let {
+            it to info.align
           }
         }
         .toList()
     }
   }
+
+  override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(IdeBackgroundUtil.getOriginalGraphics(g))
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
@@ -71,8 +86,10 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       addWidget(it.button, HorizontalLayout.LEFT)
     }
 
+    val customizationGroup = CustomActionsSchema.getInstance().getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
+
     for ((actionGroup, position) in actionGroups) {
-      addWidget(widget = createActionBar(actionGroup), position = position)
+      addWidget(widget = createActionBar(actionGroup, customizationGroup), position = position)
     }
   }
 
@@ -91,8 +108,8 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     (widget as? Disposable)?.let { Disposer.register(disposable, it) }
   }
 
-  private fun createActionBar(group: ActionGroup): JComponent {
-    val toolbar = MyActionToolbarImpl(group = group)
+  private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): JComponent {
+    val toolbar = MyActionToolbarImpl(group, layoutCallBack, customizationGroup, MAIN_TOOLBAR_ID)
     toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
     toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
@@ -106,30 +123,63 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 }
 
-private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+typealias LayoutCallBack = () -> Unit
+
+private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: LayoutCallBack?, customizationGroup: ActionGroup?, customizationGroupID: String)
+  : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, true, customizationGroup, customizationGroupID) {
+
+  private val iconUpdater = HeaderIconUpdater()
 
   init {
     updateFont()
+    ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
-    for (i in 0 until bounds.size) fitRectangle(bounds[i], getComponent(i))
+    for (i in 0 until bounds.size) {
+      val prevRect = if (i > 0) bounds[i - 1] else null
+      val rect = bounds[i]
+      fitRectangle(prevRect, rect, getComponent(i))
+    }
   }
 
-  private fun fitRectangle(rect: Rectangle, cmp: Component) {
+  override fun doLayout() {
+    super.doLayout()
+    layoutCallBack?.invoke()
+  }
+
+  private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component) {
     val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
-    if (!isSeparator(cmp)) rect.width = Integer.max(rect.width, minSize.width)
-    rect.height = Integer.max(rect.height, minSize.height)
-    rect.y = 0
+    if (!isSeparator(cmp)) currRect.width = Integer.max(currRect.width, minSize.width)
+    currRect.height = Integer.max(currRect.height, minSize.height)
+    if (prevRect != null && prevRect.maxX > currRect.minX) currRect.x = prevRect.maxX.toInt()
+    currRect.y = 0
   }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     val component = super.createCustomComponent(action, presentation)
+
+    if (component.foreground != null) {
+      component.foreground = JBColor.namedColor("MainToolbar.foreground", component.foreground)
+    }
+
+    adjustIcons(presentation)
+
     if (action is ComboBoxAction) {
-      findComboButton(component)?.setUI(MainToolbarComboBoxButtonUI())
+      findComboButton(component)?.apply {
+        setUI(MainToolbarComboBoxButtonUI())
+        addPropertyChangeListener("UI") { evt -> if (evt.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
+      }
     }
     return component
+  }
+
+  private fun adjustIcons(presentation: Presentation) {
+    iconUpdater.registerFor(presentation, "icon", { it.icon }, { pst, icn -> pst.icon = icn})
+    iconUpdater.registerFor(presentation, "selectedIcon", { it.selectedIcon }, { pst, icn -> pst.selectedIcon = icn})
+    iconUpdater.registerFor(presentation, "hoveredIcon", { it.hoveredIcon }, { pst, icn -> pst.hoveredIcon = icn})
+    iconUpdater.registerFor(presentation, "disabledIcon", { it.disabledIcon }, { pst, icn -> pst.disabledIcon = icn})
   }
 
   override fun getSeparatorColor(): Color {
@@ -155,6 +205,9 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
   override fun addImpl(comp: Component, constraints: Any?, index: Int) {
     super.addImpl(comp, constraints, index)
     comp.font = font
+    if (comp is JComponent) {
+      ClientProperty.put(comp, IdeBackgroundUtil.NO_BACKGROUND, true)
+    }
   }
 
   private fun updateFont() {
@@ -172,3 +225,30 @@ internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance)
 }
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
+
+fun adjustIconForHeader(icon: Icon) = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
+
+private class HeaderIconUpdater {
+  private val iconsCache = ContainerUtil.createWeakSet<Icon>()
+
+  private fun updateIcon(p: Presentation, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
+    if (!isDarkHeader()) return
+
+    getter(p)?.let { icon ->
+      val replaceIcon = adjustIconForHeader(icon)
+      iconsCache.add(replaceIcon)
+      setter(p, replaceIcon)
+    }
+  }
+
+  fun registerFor(presentation: Presentation, propName: String, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
+    updateIcon(presentation, getter, setter)
+    presentation.addPropertyChangeListener(PropertyChangeListener { evt ->
+      if (evt.propertyName != propName) return@PropertyChangeListener
+      if (evt.newValue != null && evt.newValue in iconsCache) return@PropertyChangeListener
+      updateIcon(presentation, getter, setter)
+    })
+  }
+}
+
+private data class GroupInfo(val id: String, val name: String, val align: String)

@@ -12,8 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptDependenciesSourcesScope
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -88,10 +86,11 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
                 return true
             }
 
-            val classFileScope = when {
-                correctedFilter.includeScriptDependencies -> getAllScriptsDependenciesClassFilesScope(project)
-                else -> null
-            }
+          val classFileScope = when {
+            correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(
+              project).getAllScriptsDependenciesClassFilesScope()
+            else -> null
+          }
 
             if (classFileScope != null && classFileScope.contains(virtualFile)) {
                 return true
@@ -104,7 +103,9 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             }
 
             val sourceFileScope = when {
-                correctedFilter.includeScriptDependencies -> getAllScriptDependenciesSourcesScope(project)
+                correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(project)
+                    .getAllScriptDependenciesSourcesScope()
+
                 else -> null
             }
 

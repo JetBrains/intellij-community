@@ -9,7 +9,9 @@ import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -186,7 +188,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     get() = getFileSequence().toList()
 
   @RequiresEdt
-  fun getFileSequence(): Sequence<VirtualFile> = getComposites().map { it.file }
+  internal fun getFileSequence(): Sequence<VirtualFile> = getComposites().map { it.file }
 
   init {
     panel = JPanel(BorderLayout())
@@ -975,7 +977,14 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   internal fun getFileAt(i: Int): VirtualFile = getCompositeAt(i).file
 
-  override fun toString() = "EditorWindow(files=${getComposites().joinToString { it.file.path }})"
+  override fun toString(): String {
+    if (EDT.isCurrentThreadEdt()) {
+      return "EditorWindow(files=${getComposites().joinToString { it.file.path }})"
+    }
+    else {
+      return super.toString()
+    }
+  }
 }
 
 private fun shouldReservePreview(file: VirtualFile, options: FileEditorOpenOptions, project: Project): Boolean {
@@ -1094,7 +1103,7 @@ private class MySplitPainter(
     val switchShortcuts = IdeBundle.message("split.with.chooser.switch.tab", getShortcut("SplitChooser.NextWindow"))
 
     // Adjust default width to an info text
-    val font = StartupUiUtil.getLabelFont()
+    val font = StartupUiUtil.labelFont
     val fontMetrics = g.getFontMetrics(font)
     val openShortcutsWidth = fontMetrics.stringWidth(openShortcuts)
     val switchShortcutsWidth = fontMetrics.stringWidth(switchShortcuts)

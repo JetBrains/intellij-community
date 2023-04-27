@@ -6,3 +6,5 @@ enum class E {
         fun foo(): String?? = null
     }
 }
+
+// IGNORE_FIR

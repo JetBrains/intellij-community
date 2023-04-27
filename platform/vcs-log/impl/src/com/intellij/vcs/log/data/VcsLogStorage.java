@@ -6,9 +6,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -36,6 +39,24 @@ public interface VcsLogStorage {
    */
   @Nullable
   CommitId getCommitId(int commitIndex);
+
+  /**
+   * Return mapping of specified commit indexes to the corresponding commits.
+   *
+   * @see #getCommitId
+   * @return commits identified by the given commit indexes or empty map
+   */
+  default Map<@NotNull Integer, @NotNull CommitId> getCommitIds(@NotNull Collection<Integer> commitIds) {
+    Map<@NotNull Integer, @NotNull CommitId> result = new Int2ObjectOpenHashMap<>();
+    for (Integer commitIndex : commitIds) {
+      CommitId commitId = getCommitId(commitIndex);
+      if (commitId != null) {
+        result.put(commitIndex, commitId);
+      }
+    }
+
+    return result;
+  }
 
   /**
    * Iterates over known commit ids. Stops when processor returns false.

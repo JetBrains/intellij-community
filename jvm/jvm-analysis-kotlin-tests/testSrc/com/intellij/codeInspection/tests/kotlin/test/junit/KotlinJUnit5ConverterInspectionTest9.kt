@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnit5ConverterInspectionTestBase
 
 class KotlinJUnit5ConverterInspectionTest9 : JUnit5ConverterInspectionTestBase() {
   fun `test qualified conversion`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.Test
       import org.junit.Assert
 
@@ -52,7 +52,7 @@ class KotlinJUnit5ConverterInspectionTest9 : JUnit5ConverterInspectionTestBase()
   }
 
   fun `test unqualified conversion`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import org.junit.Test
       import org.junit.Assert.*
 
@@ -98,7 +98,7 @@ class KotlinJUnit5ConverterInspectionTest9 : JUnit5ConverterInspectionTestBase()
   }
 
   fun `test expected on test annotation`() {
-    myFixture.testQuickFixUnavailable(ULanguage.KOTLIN, """
+    myFixture.testQuickFixUnavailable(JvmLanguage.KOTLIN, """
       import org.junit.Assert.*
       import org.junit.jupiter.api.Test
 

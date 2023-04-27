@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -493,7 +494,8 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     @NotNull
     public Document getDocument() {
-      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+      Document document = ProjectLocator.computeWithPreferredProject(virtualFile, project, () ->
+        FileDocumentManager.getInstance().getDocument(virtualFile));
       if (document == null) {
         Language language = (virtualFile instanceof LightVirtualFile) ? ((LightVirtualFile)virtualFile).getLanguage() : null;
         throw new AssertionError(String.format("no document for: %s (fileType: %s, language: %s, length: %s, valid: %s)",

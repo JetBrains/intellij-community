@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -25,7 +25,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
 
-@SuppressWarnings("BlockingMethodInNonBlockingContext")
 @ApiStatus.Internal
 public final class ClassPath {
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
@@ -79,9 +78,9 @@ public final class ClassPath {
   public interface ClassDataConsumer {
     boolean isByteBufferSupported(String name);
 
-    Class<?> consumeClassData(String name, byte[] data, Loader loader) throws IOException;
+    Class<?> consumeClassData(String name, byte[] data) throws IOException;
 
-    Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException;
+    Class<?> consumeClassData(String name, ByteBuffer data) throws IOException;
   }
 
   public ClassPath(@NotNull Collection<Path> files,
@@ -105,6 +104,11 @@ public final class ClassPath {
 
   synchronized List<Path> getFiles() {
     return Arrays.asList(files);
+  }
+
+  synchronized void reset(Collection<Path> newClassPath) {
+    reset();
+    files = newClassPath.toArray(new Path[]{});
   }
 
   public synchronized void reset() {
@@ -149,12 +153,12 @@ public final class ClassPath {
 
   /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
   // use only after approval
-  public synchronized void addFiles(@NotNull List<Path> newList) {
+  public synchronized void addFiles(@NotNull Collection<Path> newList) {
     if (newList.isEmpty()) {
       return;
     }
     else if (newList.size() == 1) {
-      addFile(newList.get(0));
+      addFile(newList instanceof List ? ((List<Path>)newList).get(0) : newList.iterator().next());
       return;
     }
 
@@ -335,7 +339,10 @@ public final class ClassPath {
         return null;
       }
 
-      Path path = files[searchOffset++];
+      // https://youtrack.jetbrains.com/issue/IDEA-314175
+      // some environments (e.g. Bazel tests) put relative jar paths on the Java classpath,
+      // because relative paths are useful for hermeticity.
+      Path path = files[searchOffset++].toAbsolutePath();
       try {
         Loader loader = createLoader(path);
         if (loader != null) {
@@ -566,10 +573,10 @@ public final class ClassPath {
     }
 
     @Override
-    public Class<?> consumeClassData(String name, byte[] data, Loader loader) throws IOException {
+    public Class<?> consumeClassData(String name, byte[] data) throws IOException {
       long start = startTiming();
       try {
-        return classDataConsumer.consumeClassData(name, data, loader);
+        return classDataConsumer.consumeClassData(name, data);
       }
       finally {
         record(start);
@@ -577,10 +584,10 @@ public final class ClassPath {
     }
 
     @Override
-    public Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException {
+    public Class<?> consumeClassData(String name, ByteBuffer data) throws IOException {
       long start = startTiming();
       try {
-        return classDataConsumer.consumeClassData(name, data, loader);
+        return classDataConsumer.consumeClassData(name, data);
       }
       finally {
         record(start);

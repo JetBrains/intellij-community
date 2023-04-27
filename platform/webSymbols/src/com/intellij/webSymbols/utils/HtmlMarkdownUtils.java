@@ -8,17 +8,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.markdown4j.Markdown4jProcessor;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.markdown.utils.MarkdownToHtmlConverterKt.convertMarkdownToHtml;
 
 /**
  * TODO move to contrib/markdown/lib/intellij-markdown.jar
@@ -38,6 +37,8 @@ public final class HtmlMarkdownUtils {
   // Final adjustments to make PhpDoc look more readable
   private static final Map<String, String> HTML_DOC_SUBSTITUTIONS = new HashMap<>();
   public static final String BR_TAG_AFTER_MARKDOWN_PROCESSING = "<br  />";
+  public static final String BR_TAG_OPENING = "&lt;br&gt;";
+  public static final String BR_TAG_CLOSING = "&lt;/br&gt;";
 
   static {
     HTML_DOC_SUBSTITUTIONS.put("<pre><code>", "<pre>");
@@ -50,8 +51,8 @@ public final class HtmlMarkdownUtils {
   }
 
   private static final Set<String> ACCEPTABLE_TAGS =
-    ContainerUtil.immutableSet("span", "img", "p", "i", "code", "ul", "h1", "h2", "h3", "h4", "h5", "h6",
-                               "li", "blockquote", "ol", "b", "a", "tt", "tt", "pre", "tr", "th",
+    Set.of("span", "img", "p", "i", "code", "ul", "h1", "h2", "h3", "h4", "h5", "h6",
+                               "li", "blockquote", "ol", "b", "a", "tt", "pre", "tr", "th",
                                "td", "table", "strong", "em", "u", "dl", "dd", "dt");
 
   private HtmlMarkdownUtils() {
@@ -78,6 +79,9 @@ public final class HtmlMarkdownUtils {
       String line = lines[i];
       String processedLine = StringUtil.trimTrailing(line);
       processedLine = StringUtil.trimStart(processedLine, " ");
+      if (processedLine.matches("\\s+```.*")) {
+        processedLine = processedLine.trim();
+      }
 
       int count = StringUtil.getOccurrenceCount(processedLine, FENCED_CODE_BLOCK);
       if (count > 0) {
@@ -220,7 +224,7 @@ public final class HtmlMarkdownUtils {
 
   private static @Nullable @NlsSafe String convert(@NotNull @Nls String text) {
     try {
-      return new Markdown4jProcessor().process(text);
+      return convertMarkdownToHtml(text);
     }
     catch (Exception e) {
       LOG.warn(e.getMessage(), e);

@@ -1,5 +1,6 @@
 package com.intellij.cce.visitor
 
+import com.intellij.cce.actions.CompletionGolfMode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.cce.processor.EvaluationRootProcessor
@@ -9,11 +10,11 @@ import com.intellij.cce.core.CodeFragment
 
 abstract class CodeFragmentBuilder {
   companion object {
-    fun create(project: Project, languageName: String, isCompletionGolf: Boolean): CodeFragmentBuilder {
+    fun create(project: Project, languageName: String, completionGolf: CompletionGolfMode?): CodeFragmentBuilder {
       val language = Language.resolve(languageName)
 
       return when {
-        isCompletionGolf -> CompletionGolfFragmentBuilder(project, language)
+        completionGolf != null -> CompletionGolfFragmentBuilder(project, language, completionGolf)
         language != Language.ANOTHER -> CodeFragmentFromPsiBuilder(project, language)
         else -> CodeFragmentFromTextBuilder()
       }

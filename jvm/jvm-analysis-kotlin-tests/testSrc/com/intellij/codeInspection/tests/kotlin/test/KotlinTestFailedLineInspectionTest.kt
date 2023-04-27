@@ -1,12 +1,12 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.TestFailedLineInspectionTestBase
 
 class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
   fun `test non qualified call`() {
     doTest(
-      lang = ULanguage.KOTLIN,
+      lang = JvmLanguage.KOTLIN,
       text = """
         class MainTest : junit.framework.TestCase() {
           fun testFoo() {
@@ -29,7 +29,7 @@ class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
 
   fun `test qualified call`() {
     doTest(
-      lang = ULanguage.KOTLIN,
+      lang = JvmLanguage.KOTLIN,
       text = """
         class QualifiedTest : junit.framework.TestCase() {
           fun testFoo() {
@@ -53,7 +53,7 @@ class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
 
   fun `test local method call`() {
     doTest(
-      lang = ULanguage.KOTLIN,
+      lang = JvmLanguage.KOTLIN,
       text = """
         class LocalFunctionTest {
           @org.junit.jupiter.api.Test

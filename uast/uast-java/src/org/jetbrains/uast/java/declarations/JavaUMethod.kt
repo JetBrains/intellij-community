@@ -5,8 +5,6 @@ package org.jetbrains.uast.java
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
-import com.intellij.util.asSafely
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.convertOrReport

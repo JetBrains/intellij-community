@@ -4,9 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.VcsCodeAuthorInlayHintsProvider
 import com.intellij.lang.Language
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.CLASS_LOCATION
 import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.FUNCTION_LOCATION
 import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.logCodeAuthorClicked
@@ -39,6 +40,9 @@ internal class KotlinCodeAuthorInlayHintsProvider : VcsCodeAuthorInlayHintsProvi
 
         return { logCodeAuthorClicked(project, location) }
     }
+
+    override val description: String
+      get() = VcsBundle.message("inlay.vcs.code.author.description")
 
     override fun getProperty(key: String): String = KotlinBundle.getMessage(key)
 

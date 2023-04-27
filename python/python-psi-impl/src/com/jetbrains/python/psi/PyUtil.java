@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -134,7 +135,7 @@ public final class PyUtil {
    * @return the representation.
    */
   @NotNull
-  @NonNls
+  @NlsSafe
   public static String getReadableRepr(PsiElement elt, final boolean cutAtEOL) {
     if (elt == null) return "null!";
     ASTNode node = elt.getNode();

@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -22,11 +21,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.ui.*;
 import com.intellij.ui.hover.HoverListener;
+import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -52,6 +51,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+
+import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.wrapKeepEditorAreaFocusNavigatable;
 
 public class XDebuggerFramesList extends DebuggerFramesList implements DataProvider {
   private final Project myProject;
@@ -152,7 +153,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   @Nullable
   private Object getSlowData(@NotNull XStackFrame frame, @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return getFrameNavigatable(frame);
+      return getFrameNavigatable(frame, true);
     }
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return getFile(frame);
@@ -198,34 +199,14 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   @Override
   protected @Nullable Navigatable getSelectedFrameNavigatable() {
     XStackFrame frame = getSelectedFrame();
-    Navigatable navigatable = frame != null ? getFrameNavigatable(frame) : null;
+    Navigatable navigatable = frame != null ? getFrameNavigatable(frame, false) : null;
     if (navigatable instanceof OpenFileDescriptor) {
       ((OpenFileDescriptor)navigatable).setUsePreviewTab(true);
     }
-    return navigatable != null ? keepFocus(navigatable) : null;
+    return navigatable != null ? wrapKeepEditorAreaFocusNavigatable(myProject, navigatable) : null;
   }
 
-  /**
-   * Forbids focus requests unless the editor area is already focused.
-   */
-  private @NotNull Navigatable keepFocus(@NotNull Navigatable navigatable) {
-    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-    boolean isEditorAreaFocused = IJSwingUtilities.hasFocus(fileEditorManager.getComponent());
-    return isEditorAreaFocused ? navigatable : new Navigatable() {
-      @Override
-      public void navigate(boolean requestFocus) {
-        navigatable.navigate(false);
-      }
-
-      @Override
-      public boolean canNavigate() { return navigatable.canNavigate(); }
-
-      @Override
-      public boolean canNavigateToSource() { return navigatable.canNavigateToSource(); }
-    };
-  }
-
-  private @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
+  protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
     XSourcePosition position = frame.getSourcePosition();
     return position != null ? position.createNavigatable(myProject) : null;
   }

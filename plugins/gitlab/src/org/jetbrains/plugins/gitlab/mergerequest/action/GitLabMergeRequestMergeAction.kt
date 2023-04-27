@@ -2,23 +2,26 @@
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.collaboration.async.combineAndCollect
-import com.intellij.collaboration.ui.codereview.details.RequestState
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 
 internal class GitLabMergeRequestMergeAction(
   scope: CoroutineScope,
   private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel
-) : AbstractAction(GitLabBundle.message("merge.request.details.action.review.merge.text")) {
+) : AbstractAction(CollaborationToolsBundle.message("review.details.action.merge")) {
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.requestState) { isBusy, requestState ->
-        // TODO: add additional conditions
-        isEnabled = !isBusy && requestState == RequestState.OPENED
+      combineAndCollect(
+        reviewFlowVm.isBusy,
+        reviewFlowVm.reviewRequestState,
+        reviewFlowVm.userCanMergeReviewer
+      ) { isBusy, reviewRequestState, userCanMergeReviewer ->
+        isEnabled = !isBusy && reviewRequestState == ReviewRequestState.OPENED && userCanMergeReviewer
       }
     }
   }

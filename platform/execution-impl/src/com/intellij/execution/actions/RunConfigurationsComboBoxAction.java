@@ -43,6 +43,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
@@ -137,7 +138,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         }
       }
       else {
-        name = StringUtil.shortenTextWithEllipsis(settings.getName(), 25, 8, true);
+        name = StringUtil.shortenTextWithEllipsis(settings.getName(), RedesignedRunWidgetKt.CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH, 8, true);
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -252,32 +253,42 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     addRunConfigurations(allActionsGroup, project,
                          settings -> createFinalAction(settings, project),
-                         folderName -> DefaultActionGroup.createPopupGroup(() -> folderName));
+                         folderName -> DefaultActionGroup.createPopupGroup(() -> folderName),
+                         null);
     return allActionsGroup;
   }
 
   @ApiStatus.Internal
-  public static void addRunConfigurations(DefaultActionGroup allActionsGroup,
-                                          Project project,
-                                          Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
-                                          Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder) {
+  public static int addRunConfigurations(@NotNull DefaultActionGroup allActionsGroup,
+                                         @NotNull Project project,
+                                         @NotNull Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
+                                         @NotNull Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder,
+                                         @Nullable BiFunction<? super RunnerAndConfigurationSettings, String, ? extends AnAction> createSubAction) {
+    int allConfigurationsNumber = 0;
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
         @NlsSafe String folderName = entry.getKey();
         DefaultActionGroup group = folderName == null ? actionGroup : createFolder.apply(folderName);
         group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
-        for (RunnerAndConfigurationSettings settings : entry.getValue()) {
+        List<RunnerAndConfigurationSettings> configurationsList = entry.getValue();
+        for (RunnerAndConfigurationSettings settings : configurationsList) {
           group.add(createAction.apply(settings));
+          if (createSubAction != null && group != actionGroup) {
+            // Inline run configuration from folder to the top level popup. It may be hidden by default but shown on search.
+            actionGroup.add(createSubAction.apply(settings, folderName));
+          }
         }
         if (group != actionGroup) {
           actionGroup.add(group);
         }
+        allConfigurationsNumber += configurationsList.size();
       }
 
       allActionsGroup.add(actionGroup);
       allActionsGroup.addSeparator();
     }
+    return allConfigurationsNumber;
   }
 
   protected void addTargetGroup(Project project, DefaultActionGroup allActionsGroup) {
@@ -496,7 +507,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @ApiStatus.Internal
-  public static class SelectConfigAction extends DefaultActionGroup implements DumbAware {
+  public static class SelectConfigAction extends DefaultActionGroup implements DumbAware, AlwaysVisibleActionGroup {
     private final RunnerAndConfigurationSettings myConfiguration;
     private final Project myProject;
     private final @NotNull Function<? super Executor, Boolean> myExecutorFilter;
@@ -577,7 +588,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
   }
 }

@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -37,6 +36,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Consider using {@link AsyncChangesBrowserBase} to avoid potentially-expensive tree building operations on EDT.
+ */
 public abstract class ChangesBrowserBase extends JPanel implements DataProvider {
   public static final DataKey<ChangesBrowserBase> DATA_KEY =
     DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase");
@@ -76,7 +78,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   @NotNull
-  protected ChangesBrowserTreeList createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+  protected ChangesTree createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
     return new ChangesBrowserTreeList(this, project, showCheckboxes, highlightProblems);
   }
 
@@ -132,8 +134,6 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public void setViewerBorder(@NotNull Border border) {
-    if(ExperimentalUI.isNewUI()) return;
-
     myViewerScrollPane.setBorder(border);
   }
 
@@ -283,7 +283,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     return myDiffPreview;
   }
 
-  protected void setShowDiffActionPreview(@Nullable DiffPreview diffPreview) {
+  public void setShowDiffActionPreview(@Nullable DiffPreview diffPreview) {
     myDiffPreview = diffPreview;
   }
 
@@ -380,28 +380,23 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     }
   }
 
-  protected static class ChangesBrowserTreeList extends ChangesTree {
-    @NotNull private final ChangesBrowserBase myViewer;
+  private static class ChangesBrowserTreeList extends ChangesTree {
+    @NotNull private final ChangesBrowserBase myBrowser;
 
-    public ChangesBrowserTreeList(@NotNull ChangesBrowserBase viewer,
-                                  @NotNull Project project,
-                                  boolean showCheckboxes,
-                                  boolean highlightProblems) {
+    ChangesBrowserTreeList(@NotNull ChangesBrowserBase browser,
+                           @NotNull Project project,
+                           boolean showCheckboxes,
+                           boolean highlightProblems) {
       super(project, showCheckboxes, highlightProblems);
-      myViewer = viewer;
-      setDoubleClickAndEnterKeyHandler(myViewer::onDoubleClick);
-      setInclusionListener(myViewer::onIncludedChanged);
+      myBrowser = browser;
+      setDoubleClickAndEnterKeyHandler(myBrowser::onDoubleClick);
+      setInclusionListener(myBrowser::onIncludedChanged);
     }
 
     @Override
     public final void rebuildTree() {
-      DefaultTreeModel newModel = myViewer.buildTreeModel();
+      DefaultTreeModel newModel = myBrowser.buildTreeModel();
       updateTreeModel(newModel);
-    }
-
-    @Override
-    public void updateTreeModel(@NotNull DefaultTreeModel model) {
-      super.updateTreeModel(model);
     }
   }
 }

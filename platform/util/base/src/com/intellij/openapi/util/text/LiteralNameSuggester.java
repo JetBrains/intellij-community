@@ -24,16 +24,16 @@ public class LiteralNameSuggester {
   }
   
   private static final PatternBasedSuggestions[] ourPatternBasedSuggestions = {
-    new PatternBasedSuggestions("(?i)https?://|file:///", "protocol"),
+    new PatternBasedSuggestions("(?i)https?://|file:///", "protocol", "scheme"),
     new PatternBasedSuggestions("(?i)(https?://|file:///)\\w.*", "url"),
     new PatternBasedSuggestions("(/\\w+){2,}", "path", "filePath", "fileName"),
-    new PatternBasedSuggestions("(?i)(\\w+)\\.(jpg|jpeg|gif|png|apng)", "image", "img"),
-    new PatternBasedSuggestions("(?i)(\\w+)\\.(mp4|avi|mov)", "video"),
+    new PatternBasedSuggestions("(?i)(\\w+)\\.(jpg|jpeg|gif|png|apng)", "image", "img", "picture"),
+    new PatternBasedSuggestions("(?i)(\\w+)\\.(mp4|avi|mov)", "video", "movie"),
     new PatternBasedSuggestions("(?i)(\\w+)\\.txt", "file", "fileName", "text"),
     new PatternBasedSuggestions("text/plain|text/html|text/css|text/javascript|" +
                                 "image/png|image/jpeg|image/gif|image/apng|image/webp|image/svg+xml|" +
                                 "audio/mpeg|audio/webm|video/webm|multipart/form-data|application/json|" +
-                                "application/zip|application/pdf|application/graphql", "contentType"),
+                                "application/zip|application/pdf|application/graphql", "contentType", "mediaType", "mimeType"),
     new PatternBasedSuggestions(" ", "space", "indent"),
     new PatternBasedSuggestions("#\\w+", "hashtag"),
     new PatternBasedSuggestions(" {2,}", "spaces", "indent"),
@@ -47,6 +47,11 @@ public class LiteralNameSuggester {
     new PatternBasedSuggestions("(?i)[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}", "uuid", "guid"),
     new PatternBasedSuggestions("SELECT\\s.*FROM\\s.*", "query", "sql"),
     new PatternBasedSuggestions("(19|20)[0-9][0-9]([-/])(0?[1-9]|1[0-2])\\2(0?[1-9]|[12][0-9]|30|31)", "date"),
+    new PatternBasedSuggestions("(?:[0-1]?[0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?", "time"),
+    new PatternBasedSuggestions("[0-9a-fA-F]{40}", "sha1", "hash", "key", "secret", "token"),
+    new PatternBasedSuggestions("[0-9a-fA-F]{64}", "sha256", "hash", "key", "secret", "token"),
+    new PatternBasedSuggestions("[0-9a-fA-F]{96}|sha384-[A-Za-z0-9+=/]{64}", "sha384", "hash", "key", "secret", "token"),
+    new PatternBasedSuggestions("[0-9a-fA-F]{128}|sha512-[A-Za-z0-9+=/]{88}", "sha512", "hash", "key", "secret", "token"),
   };
 
   /**

@@ -323,30 +323,30 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
           case MouseEvent.MOUSE_EXITED:
             if (!isHovered(crumb)) consumer = hover;
             break;
-          case MouseEvent.MOUSE_CLICKED:
-            if (!isLeftMouseButton(event)) break;
-            crumb = getCrumbAt(event.getX(), event.getY());
-            if (crumb != null) consumer = select;
-            break;
           case MouseEvent.MOUSE_PRESSED:
           case MouseEvent.MOUSE_RELEASED:
-            if (!event.isPopupTrigger()) break;
-            crumb = getCrumbAt(event.getX(), event.getY());
-            if (crumb == null) break; // crumb is not found
-            Collection<? extends Action> actions = crumb.getContextActions();
-            if (actions.isEmpty()) break; // nothing to show
-            JPopupMenu popup = new JPopupMenu();
-            for (Action action : actions) {
-              if (action != null) {
-                popup.add(action);
+            if (event.isPopupTrigger()) {
+              crumb = getCrumbAt(event.getX(), event.getY());
+              if (crumb == null) break; // crumb is not found
+              Collection<? extends Action> actions = crumb.getContextActions();
+              if (actions.isEmpty()) break; // nothing to show
+              JPopupMenu popup = new JPopupMenu();
+              for (Action action : actions) {
+                if (action != null) {
+                  popup.add(action);
+                }
+                else {
+                  popup.addSeparator();
+                }
               }
-              else {
-                popup.addSeparator();
-              }
+              Component invoker = event.getComponent();
+              popup.show(invoker, event.getX(), invoker.getHeight());
+              event.consume();
             }
-            Component invoker = event.getComponent();
-            popup.show(invoker, event.getX(), invoker.getHeight());
-            event.consume();
+            else if (isLeftMouseButton(event)) {
+              crumb = getCrumbAt(event.getX(), event.getY());
+              if (crumb != null) consumer = select;
+            }
             break;
         }
         if (consumer != null) {

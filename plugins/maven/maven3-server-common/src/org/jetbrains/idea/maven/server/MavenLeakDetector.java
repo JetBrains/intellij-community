@@ -51,7 +51,7 @@ public class MavenLeakDetector {
 
   private static void removeHook(Thread thread) throws RemoteException {
     Runtime.getRuntime().removeShutdownHook(thread);
-    Maven3ServerGlobals.getLogger().print(String.format("ShutdownHook[%s] was removed to avoid memory leak", thread));
+    MavenServerGlobals.getLogger().print(String.format("ShutdownHook[%s] was removed to avoid memory leak", thread));
   }
 
   private static Map<Thread, Thread> getShutdownHooks() {

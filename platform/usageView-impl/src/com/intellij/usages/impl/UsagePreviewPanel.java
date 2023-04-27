@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindBundle;
@@ -462,10 +462,11 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (!myPreviousSelectedGroupNodes.equals(selectedGroupNodes)) {
       releaseEditor();
       removeAll();
-      if (myMostCommonUsagePatternsComponent == null) {
-        myMostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
-        Disposer.register(this, myMostCommonUsagePatternsComponent);
+      if (myMostCommonUsagePatternsComponent != null) {
+        Disposer.dispose(myMostCommonUsagePatternsComponent);
       }
+      myMostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
+      Disposer.register(this, myMostCommonUsagePatternsComponent);
       add(myMostCommonUsagePatternsComponent);
       myMostCommonUsagePatternsComponent.loadSnippets();
     }
@@ -585,7 +586,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
       Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
       Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
-      Point point = new Point((startPoint.x + endPoint.x) / 2, startPoint.y + myEditor.getLineHeight());
+      Point point = new Point((startPoint.x + endPoint.x) / 2, endPoint.y + myEditor.getLineHeight());
 
       return new RelativePoint(myEditor.getContentComponent(), point);
     }

@@ -30,7 +30,7 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
             GenerationPhase.PROJECT_GENERATION
         ) {
             tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version.tooltip")
-            defaultValue = value(TargetJvmVersion.JVM_1_8)
+            defaultValue = value(TargetJvmVersion.JVM_11)
             filter = { _, targetJvmVersion ->
                 // we need to make sure that kotlin compiler supports this target
                 val projectKind = KotlinPlugin.projectKind.settingValue
@@ -99,7 +99,9 @@ enum class TargetJvmVersion(@NonNls val value: String, val versionNumber: Int) :
     JVM_13("13", 13),
     JVM_14("14", 14),
     JVM_15("15", 15),
-    JVM_16("16", 16);
+    JVM_16("16", 16),
+    JVM_17("17", 17),
+    ;
 
     override val text: String
         @NlsSafe

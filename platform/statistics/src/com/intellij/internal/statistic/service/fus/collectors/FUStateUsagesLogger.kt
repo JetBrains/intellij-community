@@ -51,9 +51,6 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
 
   init {
     cs.launch {
-      if (!StatisticsUploadAssistant.isSendAllowed()) {
-        return@launch
-      }
       logApplicationStateRegularly()
     }
   }
@@ -170,6 +167,8 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
 
   private suspend fun logApplicationStates(onStartup: Boolean) {
     coroutineScope {
+      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return@coroutineScope
+
       val recorderLoggers = HashMap<String, StatisticsEventLogger>()
 
       val collectors = ApplicationUsagesCollector.getExtensions(this@FUStateUsagesLogger, onStartup)

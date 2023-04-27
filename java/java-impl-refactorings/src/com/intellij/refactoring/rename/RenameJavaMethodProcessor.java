@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   private static final Logger LOG = Logger.getInstance(RenameJavaMethodProcessor.class);
 
@@ -251,7 +253,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   }
 
   @Override
-  public void findExistingNameConflicts(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final MultiMap<PsiElement, String> conflicts) {
+  public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName,
+                                        @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     final PsiMethod refactoredMethod = (PsiMethod)element;
     if (newName.equals(refactoredMethod.getName())) return;
@@ -353,7 +356,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       final PsiClass containingClass = psiMethod.getContainingClass();
       if (containingClass == null) return;
       if (!Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
-        renameCallback.pass(psiMethod);
+        renameCallback.accept(psiMethod);
         return;
       }
       super.substituteElementToRename(element, editor, renameCallback);
@@ -361,14 +364,14 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     else {
       PsiRecordComponent recordComponent = JavaPsiRecordUtil.getRecordComponentForAccessor(psiMethod);
       if (recordComponent != null) {
-        renameCallback.pass(recordComponent);
+        renameCallback.accept(recordComponent);
         return;
       }
       SuperMethodWarningUtil.checkSuperMethod(psiMethod, new PsiElementProcessor<>() {
         @Override
         public boolean execute(@NotNull PsiMethod method) {
           if (!PsiElementRenameHandler.canRename(method.getProject(), editor, method)) return false;
-          renameCallback.pass(method);
+          renameCallback.accept(method);
           return false;
         }
       }, editor);

@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,7 +33,7 @@ public class AttachmentFactoryTest {
     byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
     Files.write(testFile, contentBytes);
 
-    Attachment attachment = AttachmentFactory.createAttachment(testFile, false);
+    Attachment attachment = com.intellij.openapi.diagnostic.AttachmentFactory.createAttachment(testFile, false);
     assertThat(attachment.getDisplayText()).isNotEmpty().isNotEqualTo(content);
     assertThat(attachment.getBytes()).isEqualTo(contentBytes);
     try (InputStream stream = attachment.openContentStream()) {

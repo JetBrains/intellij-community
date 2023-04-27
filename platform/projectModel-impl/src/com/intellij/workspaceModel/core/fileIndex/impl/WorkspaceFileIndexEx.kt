@@ -2,14 +2,11 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.roots.ContentIteratorEx
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
@@ -32,19 +29,9 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                   includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo
 
   /**
-   * Reset caches which cannot be updated incrementally.
+   * Holds references to the currently stored data.
    */
-  fun resetCustomContributors()
-
-  /**
-   * Notifies the index about changes in files associated with the entities. 
-   * Must be called inside Write Action, and [updateDirtyEntities] must be called before that Write Action finishes.
-   * It may happen that an implementation of [com.intellij.openapi.vfs.newvfs.BulkFileListener] will try to get information about changed
-   * files synchronously during the same Write Action, in that case the index should recalculate the data to provide correct results.
-   * @param entityReferences references to entities which refer to files which were created, deleted, moved or renamed
-   * @param filesToInvalidate files which were deleted or moved to other directories and was referenced from some entities
-   */
-  fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>)
+  val indexData: WorkspaceFileIndexData
 
   /**
    * Processes [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] files from the file sets located under 
@@ -56,17 +43,6 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    */
   fun processContentFilesRecursively(fileOrDir: VirtualFile, processor: ContentIteratorEx, customFilter: VirtualFileFilter?,
                                      fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
-
-  /**
-   * Forces the index to update entities marked by [markDirty]. Must be called during execution of the same Write Action as [markDirty].
-   */
-  fun updateDirtyEntities()
-
-  /**
-   * Analyzes changes in VFS and determines how the index must be updated.
-   */
-  @RequiresReadLock
-  fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? 
 
   /**
    * Returns package name for [directory] if it's located under source root or classes root of Java library, or `null` otherwise.
@@ -87,9 +63,14 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun getDirectoriesByPackageName(packageName: String, scope: GlobalSearchScope): Query<VirtualFile>
 
   /**
-   * Initialize the index data if it isn't done yet.
+   * Initialize the index data. The index must not be accessed before this function is called.
    */
-  suspend fun ensureInitialized()
+  suspend fun initialize()
+
+  /**
+   * A blocking variant of [initialize]. It's temporary extracted to be used in CodeServer until suspending read actions are supported in it.
+   */
+  fun initializeBlocking()
 
   /**
    * There may be thousands of file sets in index, so visiting them all is generally discouraged.
@@ -101,8 +82,12 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun reset()
 
   companion object {
+    /**
+     * WorkspaceFileIndex is now always enabled. Usages of this constant will be inlined later.
+     */
+    @Suppress("MayBeConstant")
     @JvmField
-    val IS_ENABLED: Boolean = Registry.`is`("platform.projectModel.workspace.model.file.index", true)
+    val IS_ENABLED: Boolean = true
   }
 }
 

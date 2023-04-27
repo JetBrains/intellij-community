@@ -13,6 +13,8 @@ import com.intellij.execution.wsl.listWindowsRoots
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.SystemInfoRt
+import com.sun.jna.platform.win32.Kernel32.*
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.pathString
@@ -65,13 +67,21 @@ class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTa
   }
 
   override fun getPathInfo(targetPath: String): PathInfo? {
+    // TODO: 9P is unreliable and we must migrate to some tool running in WSL (like ijent)
+    assert(SystemInfoRt.isWindows) { "WSL is for Windows only" }
     val distribution = distribution
     if (distribution == null) {
       thisLogger().warn("No distribution, cant check path")
       return null
     }
-    val pathInfo = PathInfo.getPathInfoForLocalPath(Paths.get(distribution.getWindowsPath(targetPath)))
-    // We can't check if file is executable or not (we could but it is too heavy), so we set this flag
+    val winLocalPath = Paths.get(distribution.getWindowsPath(targetPath))
+    val fileAttributes = INSTANCE.GetFileAttributes(winLocalPath.pathString)
+    // Reparse point is probably symlink, but could be dir or file. See https://github.com/microsoft/WSL/issues/5118
+    if (fileAttributes != INVALID_FILE_ATTRIBUTES && fileAttributes.and(FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT) {
+      return PathInfo.Unknown
+    }
+    val pathInfo = PathInfo.getPathInfoForLocalPath(winLocalPath)
+    // We can't check if file is executable or not (we could, but it is too heavy), so we set this flag
     return if (pathInfo is PathInfo.RegularFile) pathInfo.copy(executable = true) else pathInfo
   }
 

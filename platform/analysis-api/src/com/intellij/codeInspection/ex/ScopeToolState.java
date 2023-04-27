@@ -158,7 +158,7 @@ public final class ScopeToolState {
     try {
       entry.readSettings(node);
     }
-    catch (InvalidDataException e) {
+    catch (InvalidDataException | ProcessCanceledException e) {
       throw e;
     }
     catch (Exception e) {

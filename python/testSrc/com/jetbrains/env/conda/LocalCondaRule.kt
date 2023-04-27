@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.conda
 
-import com.jetbrains.env.conda.LocalCondaRule.Companion.CONDA_PATH
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.jetbrains.env.conda.LocalCondaRule.Companion.CONDA_PATH
+import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
+import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import kotlinx.coroutines.runBlocking
@@ -25,12 +28,15 @@ class LocalCondaRule : ExternalResource() {
     private set
 
   val condaPathOnTarget: FullPathOnTarget get() = condaPath.toString()
+
+  val commandExecutor: TargetCommandExecutor get() = TargetEnvironmentRequestCommandExecutor(LocalTargetEnvironmentRequest())
+
   val condaCommand: PyCondaCommand get() = PyCondaCommand(condaPathOnTarget, null)
 
   override fun before() {
     super.before()
     val condaPathEnv = System.getenv()[CONDA_PATH]
-                       ?: runBlocking { suggestCondaPath(null) }
+                       ?: runBlocking { suggestCondaPath() }
                        ?: throw AssumptionViolatedException("No $CONDA_PATH set")
     condaPath = Path.of(condaPathEnv)
     if (!condaPath.isExecutable()) {

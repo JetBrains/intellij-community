@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -406,6 +403,7 @@ public abstract class NullableNotNullManager {
     return info == null ? Nullability.UNKNOWN : info.getNullability();
   }
 
+  @Unmodifiable
   public abstract @NotNull List<String> getInstrumentedNotNulls();
 
   public abstract void setInstrumentedNotNulls(@NotNull List<String> names);

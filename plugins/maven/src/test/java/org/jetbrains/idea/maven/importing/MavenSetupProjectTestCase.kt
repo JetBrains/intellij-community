@@ -1,16 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.ide.actions.ImportProjectAction
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.externalSystem.util.importProjectAsync
 import com.intellij.openapi.externalSystem.util.performAction
+import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,8 +44,25 @@ abstract class MavenSetupProjectTestCase : MavenImportingTestCase() {
     return ProjectInfo(projectFile, "$name-project", "$name-module", "$name-external-module")
   }
 
+  suspend fun openPlatformProjectAsync(projectDirectory: VirtualFile): Project {
+    return closeOpenedProjectsIfFailAsync {
+      ProjectManagerEx.getInstanceEx().openProjectAsync(
+        projectStoreBaseDir = projectDirectory.toNioPath(),
+        options = OpenProjectTask {
+          forceOpenInNewFrame = true
+          useDefaultProjectAsTemplate = false
+          isRefreshVfsNeeded = false
+        }
+      )!!
+    }
+  }
+
   suspend fun importProjectAsync(projectFile: VirtualFile): Project {
-    return importProjectAsync(projectFile, SYSTEM_ID)
+    return performOpenAction(
+      action = ImportProjectAction(),
+      systemId = SYSTEM_ID,
+      selectedFile = projectFile
+    )
   }
 
   suspend fun attachProjectAsync(project: Project, projectFile: VirtualFile): Project {

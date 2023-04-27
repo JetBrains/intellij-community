@@ -18,10 +18,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.index.IndexDiagnosticRunner;
-import com.intellij.vcs.log.data.index.VcsLogIndex;
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
+import com.intellij.vcs.log.data.index.*;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
@@ -32,10 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.intellij.diagnostic.telemetry.TraceKt.runSpanWithScope;
@@ -79,6 +73,8 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private @NotNull State myState = State.CREATED;
   private @Nullable SingleTaskController.SingleTask myInitialization = null;
 
+  private static final boolean useSqlite = Registry.is("vcs.log.index.sqlite.storage", false);
+
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                     @NotNull VcsLogErrorHandler errorHandler,
@@ -91,14 +87,8 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     VcsLogProgress progress = new VcsLogProgress(this);
 
     if (VcsLogCachesInvalidator.getInstance().isValid()) {
-      myStorage = createStorage();
-      if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
-        myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myErrorHandler, this);
-      }
-      else {
-        LOG.info("Vcs log index is turned off for project " + myProject.getName());
-        myIndex = new EmptyIndex();
-      }
+      myStorage = createStorage(logProviders);
+      myIndex = createIndex(logProviders, progress);
     }
     else {
       // this is not recoverable
@@ -138,16 +128,33 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myDisposableFlag);
   }
 
-  private @NotNull VcsLogStorage createStorage() {
-    VcsLogStorage vcsLogStorage;
+  private @NotNull VcsLogStorage createStorage(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     try {
-      vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
+      if (useSqlite) {
+        Set<VirtualFile> roots = new LinkedHashSet<>(logProviders.keySet());
+        String logId = PersistentUtil.calcLogId(myProject, logProviders);
+        return new SqliteVcsLogStorageBackend(myProject, logId, roots, logProviders, this);
+      }
+      return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
     }
     catch (IOException e) {
-      vcsLogStorage = new InMemoryStorage();
       LOG.error("Falling back to in-memory hashes", e);
+      return new InMemoryStorage();
     }
-    return vcsLogStorage;
+  }
+
+  @NotNull
+  private VcsLogModifiableIndex createIndex(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogProgress progress) {
+    if (!VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
+      LOG.info("Vcs log index is turned off for project " + myProject.getName());
+      return new EmptyIndex();
+    }
+    VcsLogPersistentIndex index = VcsLogPersistentIndex.create(myProject, myStorage, logProviders, progress, myErrorHandler, this);
+    if (index == null) {
+      LOG.error("Cannot create vcs log index for project " + myProject.getName());
+      return new EmptyIndex();
+    }
+    return index;
   }
 
   public void initialize() {

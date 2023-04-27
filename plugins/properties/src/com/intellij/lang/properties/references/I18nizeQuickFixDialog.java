@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.references;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -11,15 +11,18 @@ import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -35,6 +38,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -229,10 +233,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   protected void init() {
     populatePropertiesFiles();
     propertiesFileChanged();
-    somethingChanged();
     setKeyValueEditBoxes();
 
     super.init();
+    somethingChanged();
   }
 
   private JTextField getKeyTextField() {
@@ -535,22 +539,46 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     if (!createPropertiesFileIfNotExists()) return;
     saveLastSelectedFile();
     Collection<PropertiesFile> propertiesFiles = getAllPropertiesFiles();
+
+    HashMap<PropertiesFile, IProperty> existingProperties;
+    try {
+      ThrowableComputable<HashMap<PropertiesFile, IProperty>, RuntimeException> existingPropertiesGenerator =
+        () -> findExistingProperties(propertiesFiles);
+      existingProperties = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReadAction.compute(existingPropertiesGenerator),
+        PropertiesBundle.message("i18nize.dialog.searching.for.already.existing.properties"),
+        true, myProject
+      );
+    } catch (ProcessCanceledException e) {
+      super.doOKAction();
+      return;
+    }
+
     for (PropertiesFile propertiesFile : propertiesFiles) {
-      IProperty existingProperty = propertiesFile.findPropertyByKey(getKey());
+      IProperty existingProperty = existingProperties.get(propertiesFile);
       final String propValue = getValue();
       if (existingProperty != null && !Comparing.strEqual(existingProperty.getUnescapedValue(), propValue)) {
         final String messageText = PropertiesBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(), propertiesFile.getName());
-        final int code = Messages.showOkCancelDialog(myProject,
-                                                     messageText,
-                                                     PropertiesBundle.message("i18nize.dialog.error.property.already.defined.title"),
-                                                     null);
-        if (code == Messages.CANCEL) {
+        final boolean code = MessageDialogBuilder
+          .yesNo(PropertiesBundle.message("i18nize.dialog.error.property.already.defined.title"), messageText)
+          .ask(myProject);
+        if (!code) {
           return;
         }
       }
     }
 
     super.doOKAction();
+  }
+
+  @RequiresBackgroundThread
+  private HashMap<PropertiesFile, IProperty> findExistingProperties(Collection<PropertiesFile> files) {
+    final HashMap<PropertiesFile, IProperty> existingProperties = new HashMap<>();
+    for (PropertiesFile propertiesFile : files) {
+      IProperty existingProperty = propertiesFile.findPropertyByKey(getKey());
+      existingProperties.put(propertiesFile, existingProperty);
+    }
+    return existingProperties;
   }
 
   @Override

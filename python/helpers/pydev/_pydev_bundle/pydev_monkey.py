@@ -5,7 +5,7 @@ import traceback
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, \
     IS_JYTHON, IS_PY36_OR_LESSER, IS_PY36_OR_GREATER, IS_PY38_OR_GREATER, \
-    get_current_thread_id
+    get_current_thread_id, IS_PY311_OR_GREATER
 from _pydev_bundle import pydev_log
 
 try:
@@ -63,6 +63,16 @@ def _is_already_patched(args):
 def _is_py3_and_has_bytes_args(args):
     if not isinstance('', type(u'')):
         return False
+
+    if len(args) == 0:
+        return False
+
+    # PY-57217 Uvicorn with '-reload' flag when starting a new process in Python3.11 passes the path to the interpreter as bytes
+    if IS_PY311_OR_GREATER and isinstance(args[0], bytes):
+        interpreter = args[0].decode('utf-8')
+        if is_python(interpreter):
+            args[0] = interpreter
+
     for arg in args:
         if isinstance(arg, bytes):
             return True

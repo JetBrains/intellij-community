@@ -1,6 +1,8 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
+annotation class Annotation
 open class B {
+    @Annotation
     open var someVar: String = ""
 }
 

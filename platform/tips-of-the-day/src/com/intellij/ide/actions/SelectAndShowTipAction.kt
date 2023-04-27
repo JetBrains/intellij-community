@@ -9,14 +9,21 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
+import kotlinx.coroutines.launch
 
-class SelectAndShowTipAction : DumbAwareAction() {
+private class SelectAndShowTipAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val tips = TipAndTrickBean.EP_NAME.extensionList.sortedBy { tip -> tip.id.lowercase() }
-    @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization") // it is internal action
+    // it is internal action
+    @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
     PopupChooserBuilder(JBList(tips))
-      .setItemChosenCallback { tip -> TipAndTrickManager.getInstance().showTipDialog(project, tip) }
+      .setItemChosenCallback { tip ->
+        @Suppress("DEPRECATION")
+        project.coroutineScope.launch {
+          TipAndTrickManager.getInstance().showTipDialog(project, tip)
+        }
+      }
       .setNamerForFiltering { tip -> tip.id }
       .setRenderer(SimpleListCellRenderer.create("") { tip -> tip.id })
       .setCloseOnEnter(true)

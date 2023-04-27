@@ -111,7 +111,7 @@ public class Alarm implements Disposable {
     this(ThreadToUse.SWING_THREAD, parent);
     myActivationComponent = activationComponent;
     //noinspection ResultOfObjectAllocationIgnored
-    new UiNotifyConnector(activationComponent, new Activatable() {
+    UiNotifyConnector.installOn(activationComponent, new Activatable() {
       @Override
       public void showNotify() {
         flushPending();
@@ -417,7 +417,7 @@ public class Alarm implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myActivationComponent = component;
     //noinspection ResultOfObjectAllocationIgnored
-    new UiNotifyConnector(component, new Activatable() {
+    UiNotifyConnector.installOn(component, new Activatable() {
       @Override
       public void showNotify() {
         flushPending();

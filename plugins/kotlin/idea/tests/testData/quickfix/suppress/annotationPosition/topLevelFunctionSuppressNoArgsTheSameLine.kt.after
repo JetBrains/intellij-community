@@ -2,3 +2,5 @@
 
 @Suppress("REDUNDANT_NULLABLE")
 fun foo(): String?? = null
+
+// IGNORE_FIR

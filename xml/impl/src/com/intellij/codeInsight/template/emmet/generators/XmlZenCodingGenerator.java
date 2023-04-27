@@ -22,7 +22,7 @@ import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.lang.html.HtmlQuotesFormatPreprocessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +48,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   public TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
     TemplateImpl tokenTemplate = token.getTemplate();
     if (!ApplicationManager.getApplication().isDispatchThread()) return tokenTemplate;
-    
+
     String s = toString(token, hasChildren, context);
     assert tokenTemplate != null;
     TemplateImpl template = tokenTemplate.copy();
@@ -60,7 +60,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   public TemplateImpl createTemplateByKey(@NotNull String key, boolean forceSingleTag) {
     StringBuilder builder = new StringBuilder("<");
     builder.append(key).append('>');
-    if (!forceSingleTag && !HtmlUtil.isSingleHtmlTag(key)) {
+    if (!forceSingleTag && !HtmlUtil.isSingleHtmlTag(key, false)) {
       builder.append("$END$</").append(key).append('>');
     }
     return new TemplateImpl("", builder.toString(), "");
@@ -139,7 +139,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     if (startOffset < 0 || currentOffset > documentText.length() || currentOffset < startOffset) {
       Logger.getInstance(getClass())
         .error("Error while calculating emmet abbreviation. Offset: " + currentOffset + "; Start: " + startOffset,
-               AttachmentFactory.createAttachment(editor.getDocument()));
+               CoreAttachmentFactory.createAttachment(editor.getDocument()));
       return null;
     }
     String key = computeKey(documentText.subSequence(startOffset, currentOffset));

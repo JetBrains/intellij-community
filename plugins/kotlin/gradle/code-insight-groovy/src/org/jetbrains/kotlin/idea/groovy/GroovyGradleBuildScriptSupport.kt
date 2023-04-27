@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 
-object GroovyGradleBuildScriptSupport : GradleBuildScriptSupport {
+internal class GroovyGradleBuildScriptSupport : GradleBuildScriptSupport {
     override fun createManipulator(file: PsiFile, preferNewSyntax: Boolean): GroovyBuildScriptManipulator? {
         if (file !is GroovyFile) {
             return null
@@ -84,7 +84,7 @@ class GroovyBuildScriptManipulator(
                 .addLastExpressionInBlockIfNeeded("$kotlinPluginExpression version '${version.artifactVersion}'")
             scriptFile.getRepositoriesBlock().apply {
                 val repository = getRepositoryForVersion(version)
-                val gradleFacade = KotlinGradleFacade.instance
+                val gradleFacade = KotlinGradleFacade.getInstance()
                 if (repository != null && gradleFacade != null) {
                     scriptFile.module?.getBuildScriptSettingsPsiFile()?.let {
                         with(GradleBuildScriptSupport.getManipulator(it)) {

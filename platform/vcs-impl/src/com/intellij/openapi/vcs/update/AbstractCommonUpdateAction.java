@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.configurationStore.StoreReloadManager;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -14,6 +13,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -45,6 +45,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
 import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
@@ -111,11 +112,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
       if (ApplicationManager.getApplication().isDispatchThread()) {
         // Not only documents, but also project settings should be saved,
-        // to ensure that if as result of Update some project settings will be changed,
+        // to ensure that if as a result of Update some project settings will be changed,
         // all local changes are saved in prior and do not overwrite remote changes.
         // Also, there is a chance that save during update can break it -
         // we do disable auto saving during update, but still, there is a chance that save will occur.
-        StoreUtil.saveDocumentsAndProjectSettings(project);
+        FileDocumentManager.getInstance().saveAllDocuments();
+        forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project, false);
       }
 
       Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText()) {
@@ -339,7 +341,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     private void runImpl() {
-      StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+      if (myProject != null) {
+        StoreReloadManager.Companion.getInstance(myProject).blockReloadingProjectOnExternalChanges();
+      }
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("update.label.before.update"));
@@ -497,7 +501,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     private void onSuccessImpl(final boolean wasCanceled) {
       if (!myProject.isOpen() || myProject.isDisposed()) {
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
         LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("local.history.update.from.vcs")); // TODO check why this label is needed
         return;
       }
@@ -538,7 +542,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       final boolean updateSuccess = !someSessionWasCancelled && myGroupedExceptions.isEmpty();
 
       if (myProject.isDisposed()) {
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
         return;
       }
 
@@ -589,7 +593,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
 
 
-      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+      StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
 
       if (continueChainFinal && updateSuccess) {
         if (!noMerged) {

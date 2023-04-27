@@ -99,6 +99,10 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradlePropertiesFile))
   }
 
+  fun assertLocalProperties(java: TestSdk?) {
+    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, LocalPropertiesFile))
+  }
+
   fun withServiceGradleUserHome(action: () -> Unit) {
     val localSettings = GradleLocalSettings.getInstance(project)
     val localGradleUserHome = localSettings.gradleUserHome
@@ -122,6 +126,15 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
       val propertiesPath = FileUtil.join(parentDirectory, GRADLE_PROPERTIES_FILE_NAME)
       createProperties(propertiesPath) {
         java?.let { setProperty(GRADLE_JAVA_HOME_PROPERTY, it.homePath) }
+      }
+      action()
+      FileUtil.delete(File(propertiesPath))
+    }
+
+    fun withLocalProperties(parentDirectory: String, java: TestSdk?, action: () -> Unit) {
+      val propertiesPath = FileUtil.join(parentDirectory, LOCAL_PROPERTIES_FILE_NAME)
+      createProperties(propertiesPath) {
+        java?.let { setProperty(LOCAL_JAVA_HOME_PROPERTY, it.homePath) }
       }
       action()
       FileUtil.delete(File(propertiesPath))

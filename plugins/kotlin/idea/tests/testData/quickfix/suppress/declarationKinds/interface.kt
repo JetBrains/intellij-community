@@ -3,3 +3,5 @@
 interface C {
     var foo: String?<caret>?
 }
+
+// IGNORE_FIR

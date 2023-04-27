@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.DynamicBundle;
@@ -39,9 +39,8 @@ final class ResourceTextDescriptor implements TextDescriptor {
     return Objects.hash(myLoader, myResourcePath);
   }
 
-  @NotNull
   @Override
-  public String getText() throws IOException {
+  public @NotNull String getText() throws IOException {
     InputStream languageStream = !myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME) ? null : getLanguageStream();
     if (languageStream != null) {
       try {
@@ -58,8 +57,7 @@ final class ResourceTextDescriptor implements TextDescriptor {
     return ResourceUtil.loadText(stream); //NON-NLS
   }
 
-  @Nullable
-  private InputStream getLanguageStream() {
+  private @Nullable InputStream getLanguageStream() {
     DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
     if (langBundle == null) return null;
 
@@ -70,9 +68,9 @@ final class ResourceTextDescriptor implements TextDescriptor {
     return classLoader != null ? classLoader.getResourceAsStream(myResourcePath) : null;
   }
 
-  @NotNull
   @Override
-  public String getFileName() {
-    return Strings.trimEnd(myResourcePath.substring(myResourcePath.lastIndexOf('/') + 1), BeforeAfterActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
+  public @NotNull String getFileName() {
+    return Strings.trimEnd(myResourcePath.substring(myResourcePath.lastIndexOf('/') + 1),
+                           BeforeAfterActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
   }
 }

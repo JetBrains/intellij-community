@@ -14,10 +14,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
@@ -203,6 +206,24 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
 
   public List<RegExpInspectionConfiguration> getConfigurations() {
     return myConfigurations;
+  }
+
+  @NotNull
+  public InspectionMetaDataDialog createMetaDataDialog(Project project, @Nullable RegExpInspectionConfiguration configuration) {
+    Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {
+      for (RegExpInspectionConfiguration current : myConfigurations) {
+        if ((configuration == null || !configuration.getUuid().equals(current.getUuid())) &&
+            current.getName().equals(name)) {
+          return RegExpBundle.message("dialog.message.inspection.with.name.exists.warning", name);
+        }
+      }
+      return null;
+    };
+    if (configuration == null) {
+      return new InspectionMetaDataDialog(project, nameValidator);
+    }
+    return new InspectionMetaDataDialog(project, nameValidator, configuration.getName(), configuration.getDescription(),
+                                        configuration.getProblemDescriptor(), configuration.getSuppressId());
   }
 
   private static class CustomRegExpQuickFix implements LocalQuickFix {

@@ -6,6 +6,7 @@ import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.wsl.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Ref
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.delete
 import kotlinx.coroutines.runBlocking
@@ -18,14 +19,15 @@ import kotlin.io.path.writeText
 private val LOGGER = Logger.getInstance(LinuxFileStorage::class.java)
 
 
-class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, onlyExtensions: Array<String>)
-  : FileStorage<LinuxFilePath, WindowsFilePath>(dir.trimEnd('/') + '/', distro, onlyExtensions) {
+class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution)
+  : FileStorage<LinuxFilePath, WindowsFilePath>(dir.trimEnd('/') + '/', distro) {
 
   // Linux side only works with UTF of 7-bit ASCII which is also supported by UTF and WSL doesn't support other charsets
-
   private val CHARSET = Charsets.UTF_8
-  private val FILE_SEPARATOR = CHARSET.encode(":").get()
-  private val LINK_SEPARATOR = CHARSET.encode(";").get()
+
+  private val FILE_SEPARATOR: Byte = 0
+  private val LINK_SEPARATOR: Byte = 1
+  private val STUB_SEPARATOR: Byte = 2
 
   override fun createSymLinks(links: Map<FilePathRelativeToDir, FilePathRelativeToDir>) {
     val script = createTmpWinFile(distro)
@@ -38,25 +40,37 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, only
     script.first.delete()
   }
 
-  override fun getHashesAndLinks(skipHashCalculation: Boolean): Pair<List<WslHashRecord>, Map<FilePathRelativeToDir, FilePathRelativeToDir>> {
-    val hashes = ArrayList<WslHashRecord>(AVG_NUM_FILES)
-    val links = HashMap<FilePathRelativeToDir, FilePathRelativeToDir>(AVG_NUM_FILES)
+  override fun calculateSyncData(filters: WslHashFilters, skipHash: Boolean, useStubs: Boolean): WslSyncData {
+    val dataRef = Ref<WslSyncData>()
     val time = TimeoutUtil.measureExecutionTime<Throwable> {
-      val tool = distro.getTool("wslhash", dir, if (skipHashCalculation) "no_hash" else "hash", *onlyExtensions)
+      val wslHashArgs = listOfNotNull(if (skipHash) "-n" else null,
+                                      if (useStubs) "-s" else null,
+                                      *filters.toArgs().toTypedArray(),
+                                      dir)
+      val tool = distro.getTool("wslhash", *wslHashArgs.toTypedArray())
       val process = tool.createProcess()
       process.inputStream.use {
-        val hashesAndLinks = getHashesInternal(it)
-        hashes += hashesAndLinks.first
-        links += hashesAndLinks.second
+        dataRef.set(calculateSyncDataInternal(it))
       }
       runBlocking { process.getResultStdoutStr() }
     }
     LOGGER.info("Linux files calculated in $time")
-    return Pair(hashes, links)
+    return dataRef.get()
   }
 
-
   override fun createTempFile(): String = distro.runCommand("mktemp", "-u").getOrThrow()
+
+  override fun createStubs(files: Collection<FilePathRelativeToDir>) {
+    val script = createTmpWinFile(distro)
+    try {
+      val scriptContent = files.joinToString("\n") { "mkdir -p \"$(dirname ${it.escapedWithDir})\" && touch ${it.escapedWithDir}" }
+      script.first.writeText(scriptContent)
+      runBlocking { distro.createProcess("sh", script.second).getBareExecutionResult() }
+    }
+    finally {
+      script.first.delete()
+    }
+  }
 
   override fun removeLinks(vararg linksToRemove: FilePathRelativeToDir) {
     this.removeFiles(linksToRemove.asList())
@@ -111,17 +125,19 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, only
   }
 
   /**
-   * Read `wslhash` stdout and return map of [file->hash]
+   * Parse output from `wslhash` and return [WslSyncData].
    */
-  private fun getHashesInternal(toolStdout: InputStream): Pair<List<WslHashRecord>, Map<FilePathRelativeToDir, FilePathRelativeToDir>> {
+  private fun calculateSyncDataInternal(toolStdout: InputStream): WslSyncData {
     val hashes = ArrayList<WslHashRecord>(AVG_NUM_FILES)
-    val links = HashMap<FilePathRelativeToDir, FilePathRelativeToDir>(AVG_NUM_FILES)
+    val links = mutableMapOf<FilePathRelativeToDir, FilePathRelativeToDir>()
+    val stubs = mutableSetOf<FilePathRelativeToDir>()
     val fileOutput = ByteBuffer.wrap(toolStdout.readAllBytes()).order(ByteOrder.LITTLE_ENDIAN)
 
-    // See wslhash.c: format is the following: [file_path]:[hash].
-    // Hash is little-endian 8 byte (64 bit) integer
-    // or [file_path];[link_len][link] where link_len is 4 byte signed int
-
+    // See wslhash.c.
+    // Output format is the following:
+    //   [file_path]\0[hash], where hash is little-endian 8 byte (64 bit) integer
+    //   [link_path]\1[link_len][link], where link_len is 4 byte signed int
+    //   [stub_path]\2
     var fileStarted = 0
     val outputLimit = fileOutput.limit()
     while (fileOutput.position() < outputLimit) {
@@ -147,9 +163,17 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, only
           }
           fileStarted = prevPos + length
         }
+        STUB_SEPARATOR -> {
+          val prevPos = fileOutput.position()
+          // 1 = separator
+          val name = CHARSET.decode(fileOutput.limit(prevPos - 1).position(fileStarted)).toString()
+          fileOutput.limit(outputLimit).position(prevPos)
+          stubs += FilePathRelativeToDir(name)
+          fileStarted = prevPos
+        }
       }
     }
-    return Pair(hashes, links)
+    return WslSyncData(hashes, links, stubs)
   }
 
   private val FilePathRelativeToDir.escapedWithDir: String get() = escapePath(dir + asUnixPath)
@@ -169,6 +193,10 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, only
       distro.runCommand("sh", script.second)
       script.first.delete()
     }
+  }
+
+  fun markExec(fileToMarkExec: String) {
+    distro.runCommand("chmod", "+x", "$dir/$fileToMarkExec").getOrThrow()
   }
 }
 

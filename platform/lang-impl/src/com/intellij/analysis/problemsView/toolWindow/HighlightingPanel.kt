@@ -6,14 +6,15 @@ import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
-import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.application.ModalityState.stateForComponent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.AnalyzingType
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
@@ -28,16 +29,22 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     const val ID = "CurrentFile"
   }
 
-  private val statusUpdateAlarm = SingleAlarm(Runnable(this::updateStatus), 200, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
+  private val statusUpdateAlarm = SingleAlarm({ updateStatus() }, 200, this, ThreadToUse.POOLED_THREAD)
+  @Volatile
   private var previousStatus: Status? = null
 
   init {
+    ApplicationManager.getApplication().assertIsDispatchThread()
     tree.showsRootHandles = false
-    updateCurrentFile()
     project.messageBus.connect(this)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
-    getApplication().messageBus.connect(this)
+    ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(PowerSaveMode.TOPIC, this)
+  }
+
+  fun initInBGT() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    updateCurrentFile()
   }
 
   override fun getSortFoldersFirst(): Option? = null
@@ -46,6 +53,10 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   override fun getData(dataId: String): Any? {
     if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) return currentFile
     return super.getData(dataId)
+  }
+
+  override fun getSortBySeverity(): Option? {
+    return mySortBySeverity
   }
 
   override fun selectionChangedTo(selected: Boolean) {
@@ -115,16 +126,22 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   }
 
   private fun updateStatus() {
-    val status = ClientId.withClientId(myClientId) { getCurrentStatus() }
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val status = ClientId.withClientId(myClientId) { ReadAction.compute(ThrowableComputable { getCurrentStatus() })}
     if (previousStatus != status) {
-      previousStatus = status
-      tree.emptyText.text = status.title
-      if (status.details.isNotEmpty()) tree.emptyText.appendLine(status.details)
+      ApplicationManager.getApplication().invokeLater {
+        if (!myDisposed) {
+          previousStatus = status
+          tree.emptyText.text = status.title
+          if (status.details.isNotEmpty()) tree.emptyText.appendLine(status.details)
+        }
+      }
     }
     if (status.request) statusUpdateAlarm.cancelAndRequest()
   }
 
   private fun getCurrentStatus(): Status {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     val file = currentFile ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))
     if (PowerSaveMode.isEnabled()) return Status(ProblemsViewBundle.message("problems.view.highlighting.power.save.mode"))
     val document = ProblemsView.getDocument(project, file) ?: return statusAnalyzing(file)

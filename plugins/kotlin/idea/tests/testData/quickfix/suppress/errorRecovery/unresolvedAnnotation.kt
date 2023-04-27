@@ -2,3 +2,5 @@
 // ERROR: Unresolved reference: ann
 
 @ann fun foo(): String?<caret>? = null
+
+// IGNORE_FIR

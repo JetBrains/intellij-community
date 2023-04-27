@@ -3,3 +3,6 @@ class SortedSet
 fun test(set: SortedSet) {
   val a = java.util.SortedSet
 }
+
+// ELEMENT: SortedSet
+// TAIL_TEXT: "<E> (java.util)"

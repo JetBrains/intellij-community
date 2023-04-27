@@ -37,6 +37,10 @@ internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GH
         })
       }
     }
+
+    valueModel.addAndInvokeListener {
+      changeEventDispatcher.multicaster.eventOccurred()
+    }
   }
 
   @RequiresEdt

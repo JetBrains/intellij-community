@@ -38,7 +38,6 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -49,6 +48,11 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.configureFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
@@ -59,13 +63,11 @@ import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.JVM_TARGET_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.KOTLIN_COMPILER_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.PROJECT_LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.compiler.configuration.*
-import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.KOTLIN_COMPILER_VERSION_DIRECTIVE
-import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.PROJECT_LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.rethrow
 import java.io.File
@@ -76,6 +78,7 @@ import kotlin.test.assertEquals
 abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCaseBase() {
 
     private val exceptions = ArrayList<Throwable>()
+    private var mockLibraryFacility: MockLibraryFacility? = null
 
     protected open val captureExceptions = false
 
@@ -113,6 +116,43 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         EditorTracker.getInstance(project)
 
         invalidateLibraryCache(project)
+        mockLibraryFacility = loadMockLibrary()?.also {
+            it.setUp(module)
+        }
+    }
+
+    private fun loadMockLibrary(): MockLibraryFacility? {
+        val file = mainFile()
+        if (!file.exists() || !file.isFile) {
+            return null
+        }
+        val fileText = FileUtil.loadFile(file, true)
+        val withLibraryDirective = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "WITH_LIBRARY:")
+
+        when (withLibraryDirective.size) {
+            0 -> return null
+            1 -> {
+                val libraryDir = file.parentFile!!.resolve(withLibraryDirective.single())
+                return MockLibraryFacility(
+                    source = libraryDir,
+                    options = parseExtraLibraryCompileOptions(libraryDir),
+                )
+            }
+            else -> error("Only one library directive is allowed")
+        }
+    }
+
+    private fun parseExtraLibraryCompileOptions(libraryDir: File): List<String> {
+        val extraDirectivesFile = libraryDir.resolve("directives.test")
+        if (extraDirectivesFile.exists()) {
+            val extraDirectivesFileText = FileUtil.loadFile(extraDirectivesFile, true)
+            val extraCompilerArguments =
+                InTextDirectivesUtils.findStringWithPrefixes(extraDirectivesFileText, COMPILER_ARGUMENTS_DIRECTIVE)
+            if (extraCompilerArguments != null) {
+                return extraCompilerArguments.split(" ")
+            }
+        }
+        return emptyList()
     }
 
     override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
@@ -133,6 +173,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
     override fun tearDown() {
         runAll(
+            { mockLibraryFacility?.tearDown(module) },
             { runCatching { project }.getOrNull()?.let { disableKotlinOfficialCodeStyle(it) } },
             { super.tearDown() },
         )
@@ -193,7 +234,6 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         try {
             val fileText = FileUtil.loadFile(file, true)
 
-            val withLibraryDirective = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "WITH_LIBRARY:")
             val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "MIN_JAVA_VERSION:")?.toInt()
 
             if (minJavaVersion != null && !(InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME") ||
@@ -202,9 +242,6 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                 error("MIN_JAVA_VERSION so far is supported for RUNTIME/WITH_STDLIB only")
             }
             return when {
-                withLibraryDirective.isNotEmpty() ->
-                    SdkAndMockLibraryProjectDescriptor(IDEA_TEST_DATA_DIR.resolve(withLibraryDirective[0]).path, true)
-
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_SOURCES") ->
                     ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 

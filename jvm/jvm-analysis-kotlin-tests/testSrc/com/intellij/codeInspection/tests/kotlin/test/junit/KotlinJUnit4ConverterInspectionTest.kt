@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnit4ConverterInspectionTestBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -22,7 +22,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
   }
 
   fun `test highlighting`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
       class <warning descr="'JUnit3Test' could be converted to JUnit4 test case">JUnit3Test</warning> : TestCase() {
@@ -87,7 +87,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
   }
 
   fun `test quickfix semantic change`() {
-    myFixture.testQuickFixException<BaseRefactoringProcessor.ConflictsInTestsException>(ULanguage.KOTLIN, """
+    myFixture.testQuickFixException<BaseRefactoringProcessor.ConflictsInTestsException>(JvmLanguage.KOTLIN, """
         import junit.framework.TestCase
       
         class JUnit3<caret>Test : TestCase() {
@@ -105,7 +105,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
   }
 
   fun `test quickfix removed method`() {
-    myFixture.testQuickFixException<BaseRefactoringProcessor.ConflictsInTestsException>(ULanguage.KOTLIN, """
+    myFixture.testQuickFixException<BaseRefactoringProcessor.ConflictsInTestsException>(JvmLanguage.KOTLIN, """
         import junit.framework.TestCase
       
         class JUnit3<caret>Test : TestCase() {
@@ -123,7 +123,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
   }
 
   fun `test quickfix non convertable suite`() {
-    myFixture.testQuickFixException<BaseRefactoringProcessor.ConflictsInTestsException>(ULanguage.KOTLIN, """
+    myFixture.testQuickFixException<BaseRefactoringProcessor.ConflictsInTestsException>(JvmLanguage.KOTLIN, """
         import junit.framework.TestCase
         import junit.framework.Test
         
@@ -150,7 +150,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
   }
 
   fun `test quickfix class expression suite converter`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       import junit.framework.TestSuite
       import junit.framework.Test
@@ -185,11 +185,11 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
         companion object {
         }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case", true)
+      """.trimIndent(), "Convert to JUnit 4 test case")
   }
 
   fun `test quickfix nested suite converter`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       import junit.framework.TestSuite
       import junit.framework.Test
@@ -243,14 +243,14 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
         companion object {
         }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case", true)
+      """.trimIndent(), "Convert to JUnit 4 test case")
   }
 
   fun `test quickfix assertion converter`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
-      class JUnit3<caret>Test : TestCase {
+      class JUnit3<caret>Test : TestCase() {
           fun testAddition() {
               assertEquals(2, 1 + 1)
           }
@@ -266,14 +266,14 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
               Assert.assertEquals(2, 1 + 1)
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case", true)
+      """.trimIndent(), "Convert to JUnit 4 test case")
   }
 
   fun `test quickfix setup and teardown converter`() {
-    myFixture.testQuickFix(ULanguage.KOTLIN, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
-      class JUnit3<caret>Test : TestCase {
+      class JUnit3<caret>Test : TestCase() {
           override fun setUp() {
               println("setup")
               super.setUp()
@@ -314,6 +314,6 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
               println("tearDown")
           }
       }
-      """.trimIndent(), "Convert to JUnit 4 test case", true)
+      """.trimIndent(), "Convert to JUnit 4 test case")
   }
 }

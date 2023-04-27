@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ThreadContext")
 @file:Experimental
 
 package com.intellij.concurrency
 
 import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.concurrency.captureCallableThreadContext
+import com.intellij.util.concurrency.captureRunnableThreadContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -12,14 +15,13 @@ import java.util.concurrent.Callable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+private val LOG: Logger = Logger.getInstance("#com.intellij.concurrency")
+
 private val tlCoroutineContext: ThreadLocal<CoroutineContext?> = ThreadLocal()
 
-@Internal
 @VisibleForTesting
-fun checkUninitializedThreadContext() {
-  check(tlCoroutineContext.get() == null) {
-    "Thread context was already set"
-  }
+fun currentThreadContextOrNull(): CoroutineContext? {
+  return tlCoroutineContext.get()
 }
 
 /**
@@ -35,62 +37,65 @@ fun currentThreadContext(): CoroutineContext {
  * @return handle to restore the previous thread context
  */
 fun resetThreadContext(): AccessToken {
-  return updateThreadContext {
+  return withThreadLocal(tlCoroutineContext) { _ ->
     null
   }
 }
 
 /**
- * Replaces the current thread context with [coroutineContext].
+ * Installs [coroutineContext] as the current thread context.
+ * If [replace] is `false` (default) and the current thread already has context, then this function logs an error.
  *
  * @return handle to restore the previous thread context
  */
-fun replaceThreadContext(coroutineContext: CoroutineContext): AccessToken {
-  return updateThreadContext {
+fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
+  return withThreadLocal(tlCoroutineContext) { previousContext: CoroutineContext? ->
+    if (!replace && previousContext != null) {
+      LOG.error("Thread context was already set: $previousContext")
+    }
     coroutineContext
   }
 }
 
 /**
- * Updates the current thread context with [coroutineContext] as per [CoroutineContext.plus],
- * and runs the [action].
+ * Updates given [variable] with a new value obtained by applying [update] to the current value.
+ * Returns a token which must be [closed][AccessToken.close] to revert the [variable] to the previous value.
+ * The token implementation ensures that nested updates and reverts are mirrored:
+ * [update0, update1, ... updateN, revertN, ... revert1, revert0].
+ * Unordered updates, such as [update0, update1, revert0, revert1] will result in [IllegalStateException].
  *
- * @return result of [action] invocation
- */
-fun <X> withThreadContext(coroutineContext: CoroutineContext, action: () -> X): X {
-  return withThreadContext(coroutineContext).use {
-    action()
-  }
-}
-
-/**
- * Updates the current thread context with [coroutineContext] as per [CoroutineContext.plus].
+ * Example usage:
+ * ```
+ * withThreadLocal(ourCounter) { value ->
+ *   value + 1
+ * }.use {
+ *   ...
+ * }
  *
- * @return handle to restore the previous thread context
+ * // or, if the new value does not depend on the current one
+ * withThreadLocal(ourCounter) { _ ->
+ *   42
+ * }.use {
+ *   ...
+ * }
+ * ```
+ *
+ * TODO ? move to more appropriate package before removing `@Internal`
  */
-fun withThreadContext(coroutineContext: CoroutineContext): AccessToken {
-  return updateThreadContext { current ->
-    if (current == null) {
-      coroutineContext
-    }
-    else {
-      current + coroutineContext
-    }
+@Internal
+fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): AccessToken {
+  val previousValue = variable.get()
+  val newValue = update(previousValue)
+  if (newValue === previousValue) {
+    return AccessToken.EMPTY_ACCESS_TOKEN;
   }
-}
-
-private fun updateThreadContext(
-  update: (CoroutineContext?) -> CoroutineContext?
-): AccessToken {
-  val previousContext = tlCoroutineContext.get()
-  val newContext = update(previousContext)
-  tlCoroutineContext.set(newContext)
+  variable.set(newValue)
   return object : AccessToken() {
     override fun finish() {
-      val currentContext = tlCoroutineContext.get()
-      tlCoroutineContext.set(previousContext)
-      check(currentContext === newContext) {
-        "Context was not reset correctly"
+      val currentValue = variable.get()
+      variable.set(previousValue)
+      check(currentValue === newValue) {
+        "Value was not reset correctly. Expected: $newValue, actual: $currentValue"
       }
     }
   }
@@ -103,7 +108,7 @@ private fun updateThreadContext(
  * val executor = Executors.newSingleThreadExecutor()
  * val context = currentThreadContext()
  * executor.submit {
- *   replaceThreadContext(context).use {
+ *   installThreadContext(context).use {
  *     runnable.run()
  *   }
  * }
@@ -117,12 +122,12 @@ private fun updateThreadContext(
  * Do not use this method with executors returned from [com.intellij.util.concurrency.AppExecutorUtil], they already capture the context.
  */
 fun captureThreadContext(runnable: Runnable): Runnable {
-  return ContextRunnable(true, runnable)
+  return captureRunnableThreadContext(runnable)
 }
 
 /**
- * Same as [captureThreadContext] but for [Callable].
+ * Same as [captureCallableThreadContext] but for [Callable].
  */
 fun <V> captureThreadContext(callable: Callable<V>): Callable<V> {
-  return ContextCallable(true, callable)
+  return captureCallableThreadContext(callable)
 }

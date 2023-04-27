@@ -18,7 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GotItTooltip;
-import com.intellij.ui.jcef.JCEFHtmlPanel;
+import com.intellij.ui.jcef.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +41,9 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
 
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
-    myPanel = new JCEFHtmlPanel(false, file.getPreviewUrl().toExternalForm());
     myUrl = file.getPreviewUrl().toExternalForm();
+    myPanel = new JCEFHtmlPanel(myUrl);
+    myPanel.setPageBackgroundColor("white");
     reloadPage();
     previewsOpened++;
     showPreviewTooltip();

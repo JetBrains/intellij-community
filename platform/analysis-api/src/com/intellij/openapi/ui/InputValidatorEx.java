@@ -14,6 +14,12 @@ public interface InputValidatorEx extends InputValidator {
   @Nullable
   String getErrorText(@NonNls String inputString);
 
+  @NlsContexts.DetailedDescription
+  @Nullable
+  default String getWarningText(@NonNls String inputString) {
+    return null;
+  }
+
   /**
    * @return {@code true} iff there are no errors
    */

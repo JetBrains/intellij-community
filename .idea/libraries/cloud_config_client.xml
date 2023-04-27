@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="cloud-config-client">
+  <library name="cloud-config-client" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.cloudconfig:cloudconfig:2.2.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/cloud-config-client.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/cloudconfig/cloudconfig/2.2.0/cloudconfig-2.2.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/cloud-config-client-src.zip!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/cloudconfig/cloudconfig/2.2.0/cloudconfig-2.2.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

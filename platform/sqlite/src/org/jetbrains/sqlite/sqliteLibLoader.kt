@@ -14,7 +14,7 @@ import java.nio.file.StandardCopyOption
 private var extracted = false
 
 // The version of the SQLite JDBC driver.
-private const val VERSION: String = "3.40.0.1-2"
+private const val VERSION: String = "3.41.0-jb.2"
 
 /**
  * Loads the SQLite interface backend.

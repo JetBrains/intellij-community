@@ -13,7 +13,7 @@ import java.util.List;
 public final class ReflectionUtilRt {
   @NotNull
   public static List<Field> collectFields(@NotNull Class<?> clazz) {
-    List<Field> result = new ArrayList<Field>();
+    List<Field> result = new ArrayList<>();
     collectFields(clazz, result);
     return result;
   }

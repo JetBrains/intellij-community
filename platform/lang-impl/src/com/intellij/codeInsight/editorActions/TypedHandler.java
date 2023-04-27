@@ -132,7 +132,9 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
   @Override
   public void execute(@NotNull final Editor originalEditor, final char charTyped, @NotNull final DataContext dataContext) {
-    SlowOperations.allowSlowOperations(()-> doExecute(originalEditor, charTyped, dataContext));
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      doExecute(originalEditor, charTyped, dataContext);
+    }
   }
 
   private void doExecute(@NotNull Editor originalEditor, char charTyped, @NotNull DataContext dataContext) {

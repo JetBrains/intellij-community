@@ -154,8 +154,8 @@ abstract class AbstractKotlinTestMethodGradleConfigurationProducer
         if (sourceElement.isNull) return false
 
         (configuration as? GradleRunConfiguration)?.apply {
-            isScriptDebugEnabled = false
-            isForceTestExecution = true
+            isDebugServerProcess = false
+            isRunAsTest = true
         }
         return doSetupConfigurationFromContext(configuration, context, sourceElement)
     }

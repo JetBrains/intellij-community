@@ -71,6 +71,7 @@ class GradleManagedPropertyTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
+
     private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleManagedPropertyTest") {
       withFile("buildSrc/build.gradle", "")
       withFile("buildSrc/src/main/java/pkg/MyExtension.java", """

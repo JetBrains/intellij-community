@@ -115,6 +115,14 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
       protected boolean isResizable() {
         return true;
       }
+      @Override
+      public @NotNull Dimension getPreferredContentSize() {
+        return new Dimension(DEFAULT_WIDTH, super.getPreferredContentSize().height);
+      }
+      @Override
+      public Dimension getSize() {
+        return getPreferredContentSize();
+      }
     };
 
     updatePopupSize(popup);

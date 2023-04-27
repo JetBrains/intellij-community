@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -31,13 +32,13 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
@@ -75,8 +76,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       public void onSuccess() {
         super.onSuccess();
         @Nullable ItemWithPresentation oneElement = getTheOnlyOneElement();
-        if (oneElement != null && oneElement.item instanceof SmartPsiElementPointer<?> &&
-            navigateToElement(((SmartPsiElementPointer<?>)oneElement.item).getElement())) {
+        if (oneElement != null && oneElement.getItem() instanceof SmartPsiElementPointer<?> &&
+            navigateToElement(((SmartPsiElementPointer<?>)oneElement.getItem()).getElement())) {
           myPopup.cancel();
         }
       }
@@ -124,14 +125,10 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       GotoData data = createDataForSource(editor, offset, element);
-      successCallback.consume(data);
+      successCallback.accept(data);
       return true;
     };
-    Project project = editor.getProject();
-    if (project == null) return;
-
-    GotoDeclarationAction
-      .chooseAmbiguousTarget(project, editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
+    GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
   }
 
   private static PsiElement getContainer(PsiElement refElement) {
@@ -241,8 +238,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
 
     @Override
     protected @Nullable Usage createUsage(@NotNull ItemWithPresentation element) {
-      if (element.item instanceof Pointer<?>) {
-        PsiElement psiElement = (PsiElement)((Pointer<?>)element.item).dereference();
+      if (element.getItem() instanceof Pointer<?>) {
+        PsiElement psiElement = (PsiElement)((Pointer<?>)element.getItem()).dereference();
         return psiElement == null ? null : new UsageInfo2UsageAdapter(new UsageInfo(psiElement));
       }
       return null;
@@ -259,8 +256,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   @NotNull
   private static Comparator<ItemWithPresentation> wrapPsiComparator(Comparator<PsiElement> result) {
     Comparator<ItemWithPresentation> comparator = (o1, o2) -> {
-      if (o1.item instanceof SmartPsiElementPointer<?> && o2.item instanceof SmartPsiElementPointer<?>) {
-        return ReadAction.compute(() -> result.compare(((SmartPsiElementPointer<?>)o1.item).getElement(), ((SmartPsiElementPointer<?>)o2.item).getElement()));
+      if (o1.getItem() instanceof SmartPsiElementPointer<?> && o2.getItem() instanceof SmartPsiElementPointer<?>) {
+        return ReadAction.compute(() -> result.compare(((SmartPsiElementPointer<?>)o1.getItem()).getElement(), ((SmartPsiElementPointer<?>)o2.getItem()).getElement()));
       }
       return 0;
     };
@@ -269,7 +266,14 @@ public class GotoImplementationHandler extends GotoTargetHandler {
 
   public static @NotNull Comparator<PsiElement> projectElementsFirst(@NotNull Project project) {
     FileIndexFacade index = FileIndexFacade.getInstance(project);
-    return Comparator.comparing((PsiElement element) -> index.isInContent(element.getContainingFile().getVirtualFile())).reversed();
+    return Comparator.comparing((PsiElement element) -> {
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile != null) {
+        VirtualFile virtualFile = containingFile.getVirtualFile();
+        if (virtualFile != null && index.isInContent(virtualFile)) return true;
+      }
+      return false;
+    }).reversed();
   }
 
   public static <T> @NotNull Comparator<T> wrapIntoReadAction(@NotNull Comparator<? super T> base) {

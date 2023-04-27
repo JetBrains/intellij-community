@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.JBPopupMenu;
@@ -21,6 +22,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
+import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
@@ -31,7 +33,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +104,10 @@ public final class ActionMenu extends JBMenu {
 
     if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       myScreenMenuPeer = new Menu(myPresentation.getText(enableMnemonics));
-      myScreenMenuPeer.setOnOpen(() -> fillMenu(), this);
+      myScreenMenuPeer.setOnOpen(() -> {
+        setSelected(true);
+        fillMenu();
+      }, this);
       myScreenMenuPeer.setOnClose(() -> setSelected(false), this);
       myScreenMenuPeer.listenPresentationChanges(myPresentation);
     }
@@ -120,12 +124,6 @@ public final class ActionMenu extends JBMenu {
     BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu(), popupMenu -> {
       Utils.updateMenuItems(popupMenu, getDataContext(), myPlace, myPresentationFactory);
     });
-  }
-
-  @Override
-  protected Graphics getComponentGraphics(Graphics graphics) {
-    if (!(getParent() instanceof JMenuBar)) return super.getComponentGraphics(graphics);
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   public @NotNull AnAction getAnAction() { return myGroup.getAction(); }
@@ -221,7 +219,7 @@ public final class ActionMenu extends JBMenu {
     if (icon != null && settings != null && settings.getShowIconsInMenus()) {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.INSTANCE.getMenuBarIcon(icon, myUseDarkIcons);
+        icon = IconUtilKt.getMenuBarIcon(icon, myUseDarkIcons);
       } else if (shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);
       }
@@ -248,6 +246,12 @@ public final class ActionMenu extends JBMenu {
 
   static boolean isShowNoIcons() {
     return SystemInfo.isMac && (Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons") || ExperimentalUI.isNewUI());
+  }
+
+  static boolean isShowNoIcons(AnAction action) {
+    if (action == null) return false;
+    if (action instanceof MainMenuPresentationAware && ((MainMenuPresentationAware)action).alwaysShowIconInMainMenu()) return false;
+    return isShowNoIcons();
   }
 
   static boolean isAligned() {

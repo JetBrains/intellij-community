@@ -151,18 +151,25 @@ public class LicensePanel extends NonOpaquePanel {
     myPanel.setVisible(false);
   }
 
-  public void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin) {
+  public void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate) {
     IdeaPluginDescriptor plugin = getPlugin.get();
 
     setLink(IdeBundle.message("plugins.configurable.buy.the.plugin"), () ->
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode())), true);
 
+    if (forUpdate) {
+      updateLink(IdeBundle.message("label.plugin.paid"), false);
+    }
+
     if (plugin instanceof PluginNode) {
       List<String> tags = ((PluginNode)plugin).getTags();
       if (tags.contains(Tags.Freemium.name())) {
-        updateLink(IdeBundle.message("plugins.configurable.activate.trial.for.full.access"), false);
+        updateLink(IdeBundle.message(forUpdate ? "label.plugin.freemium" : "plugins.configurable.activate.trial.for.full.access"), false);
         return;
       }
+    }
+    if (forUpdate) {
+      return;
     }
     PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
       if (plugin == getPlugin.get()) {

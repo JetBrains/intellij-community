@@ -51,6 +51,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean USE_CUSTOM_SOFT_WRAP_INDENT = true;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = false;
+    public int VERTICAL_SCROLL_OFFSET = 1;
+    public int VERTICAL_SCROLL_JUMP = 0;
+    public int HORIZONTAL_SCROLL_OFFSET = 3;
+    public int HORIZONTAL_SCROLL_JUMP = 0;
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
@@ -190,6 +194,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     Disposer.register(disposable, () -> myPropertyChangeSupport.removePropertyChangeListener(listener));
   }
 
+  protected void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+    myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+  }
+
   @NotNull
   @Override
   public OptionSet getState() {
@@ -229,7 +237,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     for (SoftWrapAppliancePlaces placeToStore : myPlacesToUseSoftWraps) {
       buffer.append(placeToStore).append(COMPOSITE_PROPERTY_SEPARATOR);
     }
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
     myOptions.USE_SOFT_WRAPS = buffer.toString();
@@ -440,6 +448,38 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setCustomSoftWrapIndent(int indent) {
     myOptions.CUSTOM_SOFT_WRAP_INDENT = indent;
+  }
+
+  public int getVerticalScrollOffset() {
+    return myOptions.VERTICAL_SCROLL_OFFSET;
+  }
+
+  public void setVerticalScrollOffset(int offset) {
+    myOptions.VERTICAL_SCROLL_OFFSET = offset;
+  }
+
+  public int getHorizontalScrollOffset() {
+    return myOptions.HORIZONTAL_SCROLL_OFFSET;
+  }
+
+  public void setHorizontalScrollOffset(int offset) {
+    myOptions.HORIZONTAL_SCROLL_OFFSET = offset;
+  }
+
+  public int getVerticalScrollJump() {
+    return myOptions.VERTICAL_SCROLL_JUMP;
+  }
+
+  public void setVerticalScrollJump(int jump) {
+    myOptions.VERTICAL_SCROLL_JUMP = jump;
+  }
+
+  public int getHorizontalScrollJump() {
+    return myOptions.HORIZONTAL_SCROLL_JUMP;
+  }
+
+  public void setHorizontalScrollJump(int jump) {
+    myOptions.HORIZONTAL_SCROLL_JUMP = jump;
   }
 
   public boolean isVirtualSpace() {

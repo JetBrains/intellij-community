@@ -57,7 +57,6 @@ final class DirectoryLock {
   private static final int MARKER = 0xFACADE;
   private static final int HEADER_LENGTH = 6;  // the marker (4 bytes) + a packet length (2 bytes)
   private static final String SERVER_THREAD_NAME = "External Command Listener";
-  private static final String INTERNAL_DIAGNOSTIC_COMMAND = "ij-activation-diagnostic";
 
   private static final Logger LOG = Logger.getInstance(DirectoryLock.class);
   private static final AtomicInteger COUNT = new AtomicInteger();  // to ensure redirected port file uniqueness in tests
@@ -75,7 +74,7 @@ final class DirectoryLock {
     myPortFile = systemPath.resolve(SpecialConfigFiles.PORT_FILE);
     myLockFile = configPath.resolve(SpecialConfigFiles.LOCK_FILE);
 
-    myFallbackMode = myPortFile.getFileSystem().getClass().getModule() != Object.class.getModule();
+    myFallbackMode = !areUdsSupported(myPortFile);
 
     if (!myFallbackMode && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
       var baseDir = SystemInfoRt.isWindows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
@@ -86,6 +85,20 @@ final class DirectoryLock {
     }
 
     myProcessor = processor;
+  }
+
+  private static boolean areUdsSupported(Path file) {
+    if (!SystemInfoRt.isUnix) {
+      try {
+        SocketChannel.open(StandardProtocolFamily.UNIX).close();
+      }
+      catch (UnsupportedOperationException e) {
+        return false;
+      }
+      catch (IOException ignored) { }
+    }
+
+    return file.getFileSystem().getClass().getModule() == Object.class.getModule();
   }
 
   /**
@@ -273,13 +286,7 @@ final class DirectoryLock {
 
       CliResult result;
       try {
-        if (request.size() == 2 && INTERNAL_DIAGNOSTIC_COMMAND.equals(request.get(1))) {
-          @SuppressWarnings("HardCodedStringLiteral") var message = "PID=" + myPid + " thread=" + Thread.currentThread();
-          result = new CliResult(0, message);
-        }
-        else {
-          result = myProcessor.apply(request);
-        }
+        result = myProcessor.apply(request);
       }
       catch (Throwable t) {
         LOG.error(t);

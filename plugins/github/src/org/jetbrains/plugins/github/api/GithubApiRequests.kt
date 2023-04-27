@@ -9,6 +9,7 @@ import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
+import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import java.awt.image.BufferedImage
 
 /**
@@ -16,6 +17,16 @@ import java.awt.image.BufferedImage
  * TODO: improve url building (DSL?)
  */
 object GithubApiRequests {
+
+  @JvmStatic
+  fun getBytes(url: String): GithubApiRequest<ByteArray> = object : Get<ByteArray>(url) {
+    override fun extractResult(response: GithubApiResponse): ByteArray {
+      return response.handleBody(ThrowableConvertor {
+        it.readAllBytes()
+      })
+    }
+  }
+
   object CurrentUser : Entity("/user") {
     @JvmStatic
     fun get(server: GithubServerPath) = get(getUrl(server, urlSuffix))
@@ -24,7 +35,7 @@ object GithubApiRequests {
     fun get(url: String) = Get.json<GithubAuthenticatedUser>(url).withOperationName("get profile information")
 
     @JvmStatic
-    fun getAvatar(url: String) = object : Get<BufferedImage>(url) {
+    fun getAvatar(url: String): GithubApiRequest<BufferedImage> = object : Get<BufferedImage>(url) {
       override fun extractResult(response: GithubApiResponse): BufferedImage {
         return response.handleBody(ThrowableConvertor {
           GithubApiContentHelper.loadImage(it)
@@ -153,6 +164,17 @@ object GithubApiRequests {
             })
           }
         }.withOperationName("get diff for ref")
+
+      @JvmStatic
+      fun getDiff(repository: GHRepositoryCoordinates, refA: String, refB: String) =
+        object : Get<String>(getUrl(repository, "/compare/$refA...$refB"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              it.reader().use { it.readText() }
+            })
+          }
+        }.withOperationName("get diff between refs")
     }
 
     object Forks : Entity("/forks") {
@@ -401,9 +423,9 @@ object GithubApiRequests {
         get(getUrl(server, Search.urlSuffix, urlSuffix,
                    GithubApiUrlQueryBuilder.urlQuery {
                      param("q", GithubApiSearchQueryBuilder.searchQuery {
-                       qualifier("repo", repoPath?.toString().orEmpty())
-                       qualifier("state", state)
-                       qualifier("assignee", assignee)
+                       term(GHPRSearchQuery.QualifierName.repo.createTerm(repoPath?.toString().orEmpty()))
+                       term(GHPRSearchQuery.QualifierName.state.createTerm(state.orEmpty()))
+                       term(GHPRSearchQuery.QualifierName.assignee.createTerm(assignee.orEmpty()))
                        query(query)
                      })
                      param(pagination)

@@ -51,6 +51,8 @@ class BackgroundStepFactory(
                               config.interpret.logLocationAndItemText, isHeadless)
     else null
 
+  override fun setupFullLineStep(): EvaluationStep = SetupFullLineStep()
+
   override fun setupCompletionStep(): EvaluationStep = SetupCompletionStep(config.language, config.interpret.completionType)
 
   override fun setupSdkStep(): EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language))

@@ -24,12 +24,6 @@ import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.*;
 public class DarculaButtonPainter implements Border, UIResource {
   private static final int myOffset = 4;
 
-  private static final Color GOT_IT_BORDER_COLOR_START = JBColor.namedColor("GotItTooltip.Button.startBorderColor",
-                                                                           JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
-  private static final Color GOT_IT_BORDER_COLOR_END = JBColor.namedColor("GotItTooltip.Button.endBorderColor",
-                                                                          JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false));
-
-
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     Graphics2D g2 = (Graphics2D)g.create();
@@ -112,7 +106,7 @@ public class DarculaButtonPainter implements Border, UIResource {
         return borderColor;
       }
       else if (isGotItButton(button)) {
-        return new GradientPaint(0, 0, GOT_IT_BORDER_COLOR_START, 0, r.height, GOT_IT_BORDER_COLOR_END);
+        return new GradientPaint(0, 0, getGotItBorderColorStart(button), 0, r.height, getGotItBorderColorEnd(button));
       }
       else if (button.hasFocus()) {
         return JBUI.CurrentTheme.Button.focusBorderColor(defButton);
@@ -142,5 +136,21 @@ public class DarculaButtonPainter implements Border, UIResource {
   @Override
   public boolean isBorderOpaque() {
     return false;
+  }
+
+  private static Color getGotItBorderColorStart(Component c) {
+    if (isContrastGotIt(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
+    }
+    return JBColor.namedColor("GotItTooltip.Button.startBorderColor",
+                              JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
+  }
+
+  private static Color getGotItBorderColorEnd(Component c) {
+    if (isContrastGotIt(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
+    }
+    return JBColor.namedColor("GotItTooltip.Button.endBorderColor",
+                              JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false));
   }
 }

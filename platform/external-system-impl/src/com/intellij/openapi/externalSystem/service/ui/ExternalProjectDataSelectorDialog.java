@@ -23,7 +23,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -41,7 +40,7 @@ import com.intellij.util.CachedValueImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.indexing.UnindexedFilesScannerExecutor;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +60,7 @@ import java.util.*;
  */
 public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private static final int MAX_PATH_LENGTH = 50;
-  private static final Set<? extends Key<?>> DATA_KEYS = ContainerUtil.set(ProjectKeys.PROJECT, ProjectKeys.MODULE);
+  private static final Set<? extends Key<?>> DATA_KEYS = Set.of(ProjectKeys.PROJECT, ProjectKeys.MODULE);
   private static final com.intellij.openapi.util.Key<DataNode<?>> MODIFIED_NODE_KEY = com.intellij.openapi.util.Key.create("modifiedData");
   private static final com.intellij.openapi.util.Key<DataNodeCheckedTreeNode> CONNECTED_UI_NODE_KEY =
     com.intellij.openapi.util.Key.create("connectedUiNode");

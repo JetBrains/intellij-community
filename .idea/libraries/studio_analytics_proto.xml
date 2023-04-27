@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="studio-analytics-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:libstudio.proto:221.0.12.0" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:libstudio.proto:221.0.19.0" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libstudio.proto/221.0.12.0/libstudio.proto-221.0.12.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libstudio.proto/221.0.19.0/libstudio.proto-221.0.19.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -9,6 +9,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -72,12 +74,14 @@ object GlobalStyleSheetHolder {
     }
   }
 
+  @Service(Service.Level.APP)
   @OptIn(FlowPreview::class)
-  internal class UpdateListener : EditorColorsListener, LafManagerListener {
-    private val updateRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private class UpdateService(cs: CoroutineScope) {
+
+    private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     init {
-      ApplicationManager.getApplication().coroutineScope.launch {
+      cs.launch {
         updateRequests
           .debounce(5.milliseconds)
           .collectLatest {
@@ -93,12 +97,19 @@ object GlobalStyleSheetHolder {
       }
     }
 
-    override fun lookAndFeelChanged(source: LafManager) {
+    fun requestUpdate() {
       check(updateRequests.tryEmit(Unit))
+    }
+  }
+
+  internal class UpdateListener : EditorColorsListener, LafManagerListener {
+
+    override fun lookAndFeelChanged(source: LafManager) {
+      ApplicationManager.getApplication().service<UpdateService>().requestUpdate()
     }
 
     override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-      check(updateRequests.tryEmit(Unit))
+      ApplicationManager.getApplication().service<UpdateService>().requestUpdate()
     }
   }
 }

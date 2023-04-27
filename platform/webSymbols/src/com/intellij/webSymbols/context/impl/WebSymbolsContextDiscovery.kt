@@ -25,9 +25,9 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.context.DependencyProximityProvider
-import com.intellij.webSymbols.context.DependencyProximityProvider.Companion.mergeProximity
-import com.intellij.webSymbols.context.DependencyProximityProvider.DependenciesKind
+import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider
+import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.Companion.mergeProximity
+import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.SourceKind
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.WEB_SYMBOLS_CONTEXT_EP
@@ -182,7 +182,7 @@ private fun calcProximityPerContextFromRules(project: Project,
   val result = mutableMapOf<ContextKind, MutableMap<String, Double>>()
   val modificationTrackers = mutableSetOf<ModificationTracker>()
 
-  fun calculateProximity(listAccessor: (EnablementRules) -> List<String>, dependenciesKind: DependenciesKind) {
+  fun calculateProximity(listAccessor: (EnablementRules) -> List<String>, sourceKind: SourceKind) {
     val depsToContext = enableWhen
       .flatMap { (contextKind, map) ->
         map.entries.flatMap { (contextName, value) ->
@@ -191,7 +191,7 @@ private fun calcProximityPerContextFromRules(project: Project,
       }
       .groupBy({ it.first }, { it.second })
 
-    DependencyProximityProvider.calculateProximity(project, directory, depsToContext.keys, dependenciesKind)
+    WebSymbolsContextSourceProximityProvider.calculateProximity(project, directory, depsToContext.keys, sourceKind)
       .let {
         it.dependency2proximity.forEach { (lib, proximity) ->
           depsToContext[lib]?.forEach { (contextKind, contextName) ->
@@ -205,10 +205,13 @@ private fun calcProximityPerContextFromRules(project: Project,
   }
 
   // Check enabled IDE libraries
-  calculateProximity({ it.ideLibraries }, DependenciesKind.IdeLibrary)
+  calculateProximity({ it.ideLibraries }, SourceKind.IdeLibrary)
 
   // Check packages by `package.json` entries
-  calculateProximity({ it.pkgManagerDependencies }, DependenciesKind.PackageManagerDependency)
+  calculateProximity({ it.pkgManagerDependencies }, SourceKind.PackageManagerDependency)
+
+  // Check project tool executables
+  calculateProximity({ it.projectToolExecutables }, SourceKind.ProjectToolExecutable)
 
   return Pair(result.mapValues { (_, map) -> map.toMap() }, modificationTrackers)
 }

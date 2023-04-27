@@ -16,6 +16,7 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
@@ -26,8 +27,9 @@ import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
 
-open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSafeSettings, provider: CredentialStore? = null /* TestOnly */) : PasswordSafe() {
-  constructor() : this(service<PasswordSafeSettings>(), null)
+abstract class BasePasswordSafe(private val cs: CoroutineScope) : PasswordSafe() {
+
+  protected abstract val settings: PasswordSafeSettings
 
   override var isRememberPasswordByDefault: Boolean
     get() = settings.state.isRememberPasswordByDefault
@@ -81,12 +83,6 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
 
-  init {
-    provider?.let {
-      currentProvider = it
-    }
-  }
-
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
     if ((value == null || value.password.isNullOrEmpty()) && memoryHelperProvider.isInitialized()) {
@@ -122,7 +118,7 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
 
   // maybe in the future we will use native async, so, this method added here instead "if needed, just use runAsync in your code"
   override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> {
-    return ApplicationManager.getApplication().coroutineScope.async(Dispatchers.IO) {
+    return cs.async(Dispatchers.IO) {
       get(attributes)
     }.asCompletableFuture().asPromise()
   }
@@ -147,7 +143,27 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
   }
 }
 
-class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
+class TestPasswordSafeImpl @NonInjectable constructor(
+  override val settings: PasswordSafeSettings
+) : BasePasswordSafe(
+  ApplicationManager.getApplication().coroutineScope
+) {
+
+  @TestOnly
+  constructor() : this(service<PasswordSafeSettings>())
+
+  @TestOnly
+  @NonInjectable
+  constructor(settings: PasswordSafeSettings, provider: CredentialStore) : this(settings) {
+    currentProvider = provider
+  }
+}
+
+class PasswordSafeImpl(cs: CoroutineScope) : BasePasswordSafe(cs), SettingsSavingComponent {
+
+  override val settings: PasswordSafeSettings
+    get() = service<PasswordSafeSettings>()
+
   // SecureRandom (used to generate master password on first save) can be blocking on Linux
   private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(delay = 0, ApplicationManager.getApplication()) {
     val currentThread = Thread.currentThread()
@@ -244,7 +260,7 @@ fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
     provider = ProviderType.KEEPASS
     keepassDb = store.dbFile.toString()
   })
-  return BasePasswordSafe(settings, store)
+  return TestPasswordSafeImpl(settings, store)
 }
 
 private fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this

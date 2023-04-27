@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -142,10 +141,10 @@ public class JavaFxAntTaskTest extends TestCase {
              </fx:fileset>
              </fx:resources>
              </fx:deploy>
-             """, new ContainerUtil.ImmutableMapBuilder<String, String>()
-             .put(ICONS, "/project_dir/app_icon.png,/project_dir/app_icon.icns,/project_dir/app_icon.ico")
-             .put(BASE_DIR_PATH, "/project_dir")
-             .build());
+             """, Map.of(
+             ICONS, "/project_dir/app_icon.png,/project_dir/app_icon.icns,/project_dir/app_icon.ico",
+             BASE_DIR_PATH, "/project_dir")
+             );
   }
 
   public void testJarDeployIconAbsolute() {
@@ -267,11 +266,11 @@ public class JavaFxAntTaskTest extends TestCase {
              <fx:template file="${basedir}/app_template.html" tofile="temp/deploy/app_template.html">
              </fx:template>
              </fx:deploy>
-             """, new ContainerUtil.ImmutableMapBuilder<String, String>()
-             .put(TEMPLATE, "/project_dir/app_template.html")
-             .put(PLACEHOLDER, "app-placeholder-id")
-             .put(BASE_DIR_PATH, "/project_dir")
-             .build());
+             """, Map.of(
+             TEMPLATE, "/project_dir/app_template.html",
+             PLACEHOLDER, "app-placeholder-id",
+             BASE_DIR_PATH, "/project_dir")
+             );
   }
 
   public void testJarDeploySigned() {

@@ -5,11 +5,17 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addModuleEntity(name: @NlsSafe String,
                                          dependencies: List<ModuleDependencyItem>,
                                          source: EntitySource,
@@ -19,6 +25,12 @@ fun MutableEntityStorage.addModuleEntity(name: @NlsSafe String,
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addJavaModuleSettingsEntity(inheritedCompilerOutput: Boolean,
                                                      excludeOutput: Boolean,
                                                      compilerOutput: VirtualFileUrl?,
@@ -34,6 +46,12 @@ fun MutableEntityStorage.addJavaModuleSettingsEntity(inheritedCompilerOutput: Bo
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addModuleCustomImlDataEntity(rootManagerTagCustomData: @NonNls String?,
                                                       customModuleOptions: Map<String, String>,
                                                       module: ModuleEntity,
@@ -44,6 +62,12 @@ fun MutableEntityStorage.addModuleCustomImlDataEntity(rootManagerTagCustomData: 
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addModuleGroupPathEntity(path: List<@NlsSafe String>,
                                                   module: ModuleEntity,
                                                   source: EntitySource): ModuleGroupPathEntity {
@@ -52,6 +76,12 @@ fun MutableEntityStorage.addModuleGroupPathEntity(path: List<@NlsSafe String>,
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
                                              url: VirtualFileUrl,
                                              rootType: @NonNls String,
@@ -63,9 +93,12 @@ fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
 
 /**
  * [JavaSourceRootPropertiesEntity] has the same entity source as [SourceRootEntity].
- * [JavaSourceRootEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
- *   entities.
+ *
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
  */
+@Obsolete
 fun MutableEntityStorage.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
                                                  generated: Boolean,
                                                  packagePrefix: @NlsSafe String): JavaSourceRootPropertiesEntity {
@@ -74,6 +107,12 @@ fun MutableEntityStorage.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
                                                    generated: Boolean,
                                                    relativeOutputPath: @NlsSafe String): JavaResourceRootPropertiesEntity {
@@ -82,6 +121,12 @@ fun MutableEntityStorage.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity,
                                                              propertiesXmlTag: @NonNls String): CustomSourceRootPropertiesEntity {
   return this addEntity CustomSourceRootPropertiesEntity(propertiesXmlTag, sourceRoot.entitySource) {
@@ -89,6 +134,12 @@ fun MutableEntityStorage.addCustomSourceRootPropertiesEntity(sourceRoot: SourceR
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addContentRootEntity(url: VirtualFileUrl,
                                               excludedUrls: List<VirtualFileUrl>,
                                               excludedPatterns: List<@NlsSafe String>,
@@ -101,12 +152,24 @@ fun MutableEntityStorage.addContentRootEntity(url: VirtualFileUrl,
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addLibraryEntity(name: @NlsSafe String, tableId: LibraryTableId, roots: List<LibraryRoot>,
                                           excludedRoots: List<VirtualFileUrl>, source: EntitySource): LibraryEntity {
   val excludes = excludedRoots.map { this addEntity ExcludeUrlEntity(it, source) }
   return addLibraryEntityWithExcludes(name, tableId, roots, excludes, source)
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addLibraryEntityWithExcludes(name: @NlsSafe String, tableId: LibraryTableId, roots: List<LibraryRoot>,
                                                       excludedRoots: List<ExcludeUrlEntity>, source: EntitySource): LibraryEntity {
   return this addEntity LibraryEntity(name, tableId, roots, source) {
@@ -118,7 +181,11 @@ fun MutableEntityStorage.addLibraryEntityWithExcludes(name: @NlsSafe String, tab
  * [LibraryPropertiesEntity] has the same entity source as [LibraryEntity].
  * [LibraryPropertiesEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
  *   entities.
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
  */
+@Obsolete
 fun MutableEntityStorage.addLibraryPropertiesEntity(library: LibraryEntity,
                                                     libraryType: @NonNls String,
                                                     propertiesXmlTag: @NonNls String?): LibraryPropertiesEntity {
@@ -128,15 +195,12 @@ fun MutableEntityStorage.addLibraryPropertiesEntity(library: LibraryEntity,
   }
 }
 
-fun MutableEntityStorage.addSdkEntity(library: LibraryEntity,
-                                      homeUrl: VirtualFileUrl, source: EntitySource): SdkEntity {
-  val entity = SdkEntity(homeUrl, source) {
-    this.library = library
-  }
-  this.addEntity(entity)
-  return entity
-}
-
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.getOrCreateExternalSystemModuleOptions(module: ModuleEntity,
                                                                 source: EntitySource): ExternalSystemModuleOptionsEntity {
   return module.exModuleOptions ?: run {
@@ -148,6 +212,12 @@ fun MutableEntityStorage.getOrCreateExternalSystemModuleOptions(module: ModuleEn
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addFacetEntity(name: @NlsSafe String,
                                         facetType: @NonNls String,
                                         configurationXmlTag: @NonNls String?,
@@ -161,6 +231,12 @@ fun MutableEntityStorage.addFacetEntity(name: @NlsSafe String,
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addArtifactEntity(name: @NlsSafe String,
                                            artifactType: @NonNls String,
                                            includeInProjectBuild: Boolean,
@@ -173,6 +249,12 @@ fun MutableEntityStorage.addArtifactEntity(name: @NlsSafe String,
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addArtifactPropertiesEntity(artifact: ArtifactEntity,
                                                      providerType: @NonNls String,
                                                      propertiesXmlTag: @NonNls String?,
@@ -183,6 +265,12 @@ fun MutableEntityStorage.addArtifactPropertiesEntity(artifact: ArtifactEntity,
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addArtifactRootElementEntity(children: List<PackagingElementEntity>,
                                                       source: EntitySource): ArtifactRootElementEntity {
   return this addEntity ArtifactRootElementEntity(source) {
@@ -190,6 +278,12 @@ fun MutableEntityStorage.addArtifactRootElementEntity(children: List<PackagingEl
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addDirectoryPackagingElementEntity(directoryName: @NlsSafe String,
                                                             children: List<PackagingElementEntity>,
                                                             source: EntitySource): DirectoryPackagingElementEntity {
@@ -198,6 +292,12 @@ fun MutableEntityStorage.addDirectoryPackagingElementEntity(directoryName: @NlsS
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addArchivePackagingElementEntity(fileName: @NlsSafe String,
                                                           children: List<PackagingElementEntity>,
                                                           source: EntitySource): ArchivePackagingElementEntity {
@@ -206,6 +306,12 @@ fun MutableEntityStorage.addArchivePackagingElementEntity(fileName: @NlsSafe Str
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addArtifactOutputPackagingElementEntity(artifact: ArtifactId?,
                                                                  source: EntitySource): ArtifactOutputPackagingElementEntity {
   return this addEntity ArtifactOutputPackagingElementEntity(source) {
@@ -213,6 +319,12 @@ fun MutableEntityStorage.addArtifactOutputPackagingElementEntity(artifact: Artif
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addModuleOutputPackagingElementEntity(module: ModuleId?,
                                                                source: EntitySource): ModuleOutputPackagingElementEntity {
   return this addEntity ModuleOutputPackagingElementEntity(source) {
@@ -220,6 +332,12 @@ fun MutableEntityStorage.addModuleOutputPackagingElementEntity(module: ModuleId?
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addLibraryFilesPackagingElementEntity(library: LibraryId?,
                                                                source: EntitySource): LibraryFilesPackagingElementEntity {
   return this addEntity LibraryFilesPackagingElementEntity(source) {
@@ -227,6 +345,12 @@ fun MutableEntityStorage.addLibraryFilesPackagingElementEntity(library: LibraryI
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addModuleSourcePackagingElementEntity(module: ModuleId?,
                                                                source: EntitySource): ModuleSourcePackagingElementEntity {
   return this addEntity ModuleSourcePackagingElementEntity(source) {
@@ -234,6 +358,12 @@ fun MutableEntityStorage.addModuleSourcePackagingElementEntity(module: ModuleId?
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addModuleTestOutputPackagingElementEntity(module: ModuleId?,
                                                                    source: EntitySource): ModuleTestOutputPackagingElementEntity {
   return this addEntity ModuleTestOutputPackagingElementEntity(source) {
@@ -241,17 +371,35 @@ fun MutableEntityStorage.addModuleTestOutputPackagingElementEntity(module: Modul
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addDirectoryCopyPackagingElementEntity(filePath: VirtualFileUrl,
                                                                 source: EntitySource): DirectoryCopyPackagingElementEntity {
   return this addEntity DirectoryCopyPackagingElementEntity(filePath, source)
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addExtractedDirectoryPackagingElementEntity(filePath: VirtualFileUrl,
                                                                      pathInArchive: @NlsSafe String,
                                                                      source: EntitySource): ExtractedDirectoryPackagingElementEntity {
   return this addEntity ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, source)
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addFileCopyPackagingElementEntity(filePath: VirtualFileUrl,
                                                            renamedOutputFileName: @NlsSafe String?,
                                                            source: EntitySource): FileCopyPackagingElementEntity {
@@ -260,6 +408,12 @@ fun MutableEntityStorage.addFileCopyPackagingElementEntity(filePath: VirtualFile
   }
 }
 
+/**
+ * This helper function is now obsolete:
+ * - If you use this function - inline it
+ * - If you want to use this function - use the code inside this function
+ */
+@Obsolete
 fun MutableEntityStorage.addCustomPackagingElementEntity(typeId: @NonNls String,
                                                          propertiesXmlTag: @NonNls String,
                                                          children: List<PackagingElementEntity>,
@@ -311,14 +465,16 @@ fun SourceRootEntity.hashCodeAsOrderEntry(): Int {
   return Objects.hash(packagePrefix, generated, url)
 }
 
+private fun ContentRootEntity.excludedUrlsSet(): Set<VirtualFileUrl> = this.excludedUrls.map { excludedUrl -> excludedUrl.url }.toHashSet()
+
 fun ContentRootEntity.equalsAsOrderEntry(other: ContentRootEntity): Boolean {
   if (this.url != other.url) return false
-  if (this.excludedUrls != other.excludedUrls) return false
+  if (this.excludedUrlsSet() != other.excludedUrlsSet()) return false
   if (this.excludedPatterns != other.excludedPatterns) return false
   return true
 }
 
-fun ContentRootEntity.hashCodeAsOrderEntry(): Int = Objects.hash(url, excludedUrls, excludedPatterns)
+fun ContentRootEntity.hashCodeAsOrderEntry(): Int = Objects.hash(url, excludedUrlsSet(), excludedPatterns)
 
 fun ModuleDependencyItem.equalsAsOrderEntry(other: ModuleDependencyItem,
                                             thisStore: EntityStorage, otherStore: EntityStorage): Boolean {

@@ -3,7 +3,9 @@ package com.intellij.webSymbols.documentation
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
+import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -37,16 +39,9 @@ interface WebSymbolDocumentation {
   val docUrl: @NlsSafe String?
 
   /**
-   * Whether the symbol is deprecated
+   * API status of the symbol - deprecated or experimental
    */
-  @get:JvmName("isDeprecated")
-  val deprecated: Boolean
-
-  /**
-   * Whether the symbol is an experimental technology
-   */
-  @get:JvmName("isExperimental")
-  val experimental: Boolean
+  val apiStatus: WebSymbolApiStatus?
 
   /**
    * Whether the symbol is required
@@ -89,9 +84,7 @@ interface WebSymbolDocumentation {
 
   fun withDocUrl(docUrl: @NlsSafe String?): WebSymbolDocumentation
 
-  fun withDeprecated(deprecated: Boolean): WebSymbolDocumentation
-
-  fun withExperimental(experimental: Boolean): WebSymbolDocumentation
+  fun withApiStatus(apiStatus: WebSymbolApiStatus?): WebSymbolDocumentation
 
   fun withRequired(required: Boolean): WebSymbolDocumentation
 
@@ -109,8 +102,7 @@ interface WebSymbolDocumentation {
            definition: @NlsSafe String = this.definition,
            description: @Nls String? = this.description,
            docUrl: @NlsSafe String? = this.docUrl,
-           deprecated: Boolean = this.deprecated,
-           experimental: Boolean = this.experimental,
+           apiStatus: WebSymbolApiStatus? = this.apiStatus,
            required: Boolean = this.required,
            defaultValue: @NlsSafe String? = this.defaultValue,
            library: @NlsSafe String? = this.library,
@@ -118,22 +110,36 @@ interface WebSymbolDocumentation {
            additionalSections: Map<@Nls String, @Nls String> = emptyMap(),
            footnote: @Nls String? = this.footnote): WebSymbolDocumentation
 
+  fun appendFootnote(footnote: @Nls String?): WebSymbolDocumentation =
+    if (footnote != null)
+      withFootnote((this.footnote ?: "") + footnote)
+    else
+      this
+
   companion object {
 
-    fun create(symbol: WebSymbol): WebSymbolDocumentation =
-      WebSymbolDocumentationImpl(symbol.name, Strings.escapeXmlEntities(symbol.name), symbol.description, symbol.docUrl, symbol.deprecated,
-                                 symbol.experimental,
-                                 symbol.required ?: false,
-                                 symbol.defaultValue ?: symbol.attributeValue?.default,
-                                 symbol.origin.takeIf { it.library != null }
-                                   ?.let { context ->
-                                     context.library +
-                                     if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
-                                   },
-                                 symbol.icon, symbol.descriptionSections, null)
+    fun create(symbol: WebSymbol,
+               location: PsiElement?,
+               name: String = symbol.name,
+               definition: String = Strings.escapeXmlEntities(symbol.name),
+               description: @Nls String? = symbol.description,
+               docUrl: String? = symbol.docUrl,
+               apiStatus: WebSymbolApiStatus? = symbol.apiStatus,
+               required: Boolean = symbol.required ?: false,
+               defaultValue: String? = symbol.defaultValue ?: symbol.attributeValue?.default,
+               library: String? = symbol.origin.takeIf { it.library != null }
+                 ?.let { context ->
+                   context.library +
+                   if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
+                 },
+               icon: Icon? = symbol.icon,
+               descriptionSections: Map<@Nls String, @Nls String> = symbol.descriptionSections,
+               footnote: @Nls String? = null): WebSymbolDocumentation =
+      WebSymbolDocumentationImpl(name, definition, description, docUrl, apiStatus, required, defaultValue, library, icon,
+                                 descriptionSections, footnote)
         .let { doc: WebSymbolDocumentation ->
           WebSymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->
-            customizer.customize(symbol, documentation)
+            customizer.customize(symbol, location, documentation)
           }
         }
 

@@ -16,34 +16,38 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsProcessorBasicTask {
+import java.util.Collection;
+
+public class MavenProjectsProcessorFoldersResolvingTask implements MavenProjectsProcessorTask {
+  @NotNull private final Collection<MavenProject> myMavenProjects;
   @NotNull private final MavenImportingSettings myImportingSettings;
+  @NotNull private final MavenProjectsTree myTree;
   @Nullable private final Runnable myOnCompletion;
 
-  public MavenProjectsProcessorFoldersResolvingTask(@NotNull MavenProject project,
+  public MavenProjectsProcessorFoldersResolvingTask(@NotNull Collection<MavenProject> mavenProjects,
                                                     @NotNull MavenImportingSettings importingSettings,
                                                     @NotNull MavenProjectsTree tree,
                                                     @Nullable Runnable onCompletion) {
-    super(project, tree);
+    myMavenProjects = mavenProjects;
     myImportingSettings = importingSettings;
+    myTree = tree;
     myOnCompletion = onCompletion;
   }
 
   @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myResolver.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator);
+    var resolver = new MavenFolderResolver();
+    resolver.resolveFolders(myMavenProjects, myTree, myImportingSettings, embeddersManager, console, indicator);
+
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false, c -> {
       Sdk sdk = c.getJdk();

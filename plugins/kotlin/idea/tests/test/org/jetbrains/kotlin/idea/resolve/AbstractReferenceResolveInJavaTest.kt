@@ -48,8 +48,9 @@ abstract class AbstractReferenceToCompiledKotlinResolveInJavaTest : AbstractRefe
         )
     }
 
-    override val refMarkerText: String
-        get() = "CLS_REF"
+    override fun getExpectedReferences(text: String, index: Int): List<String> {
+        return getExpectedReferences(text, index, "CLS_REF")
+    }
 
     override fun checkResolvedTo(element: PsiElement) {
         val navigationElement = element.navigationElement

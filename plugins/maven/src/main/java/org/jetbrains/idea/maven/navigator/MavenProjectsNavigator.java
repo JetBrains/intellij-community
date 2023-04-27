@@ -42,6 +42,8 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsNavigatorPanel;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
@@ -91,7 +93,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
   @Override
   public MavenProjectsNavigatorState getState() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (myStructure != null) {
       try {
         myState.treeState = new Element("root");
@@ -444,9 +446,13 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
   }
 
   private void initStructure() {
-    myStructure =
-      new MavenProjectsStructure(myProject, MavenProjectsManager.getInstance(myProject), MavenTasksManager.getInstance(myProject),
-                                 MavenShortcutsManager.getInstance(myProject), this, myTree);
+    myStructure = new MavenProjectsStructure(myProject,
+                                             MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL,
+                                             MavenProjectsManager.getInstance(myProject),
+                                             MavenTasksManager.getInstance(myProject),
+                                             MavenShortcutsManager.getInstance(myProject),
+                                             this,
+                                             myTree);
   }
 
   @ApiStatus.Internal

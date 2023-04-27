@@ -14,7 +14,6 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.JavaNameSuggestionUtil;
-import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +40,9 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                     final boolean allowInitInMethod,
                                     boolean allowInitInMethodIfAll, final PsiElement anchorElement,
                                     final PsiElement anchorElementIfAll,
-                                    final OccurrenceManager occurrenceManager, Project project) {
+                                    Project project) {
     super(project, editor, initializerExpression, localVariable, occurrences, typeSelectorManager,
-          IntroduceFieldHandler.getRefactoringNameText(), parentClass, anchorElement, occurrenceManager, anchorElementIfAll);
+          IntroduceFieldHandler.getRefactoringNameText(), parentClass, anchorElement, anchorElementIfAll);
     myStatic = aStatic;
     myIntroduceFieldPanel =
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
@@ -85,7 +84,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
       if (myExprText != null) {
         updateInitializer(elementFactory, field1);
       }
-      myFieldRangeStart = myEditor.getDocument().createRangeMarker(field1.getTextRange());
+      updateVariable(field1);
       return field1;
     });
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
@@ -201,21 +200,6 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                                   forcedType,
                                                   myIntroduceFieldPanel.isDeleteVariable(),
                                                   getParentClass(), false, false);
-      WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
-        if (getLocalVariable() != null) {
-          final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myOccurrences);
-          fieldRunnable.run();
-        }
-        else {
-          final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
-            new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
-                                                                    myOccurrences, myOccurrenceManager,
-                                                                    getAnchorElementIfAll(),
-                                                                    getAnchorElement(), myEditor,
-                                                                    getParentClass());
-          convertToFieldRunnable.run();
-        }
-      });
+      performIntroduce(settings);
     }
 }

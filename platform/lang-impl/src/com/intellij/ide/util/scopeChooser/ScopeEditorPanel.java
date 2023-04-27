@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -154,11 +153,10 @@ public final class ScopeEditorPanel implements Disposable {
       }
     });
     myPatternLegend.setForeground(new JBColor(Gray._50, Gray._130));
-    myPatternLegend.setText(new HtmlBuilder().appendRaw(
-      LangBundle.message("scope.editor.pattern.legend.label")).wrapWithHtmlBody().toString());
+    myPatternLegend.setText("");
 
     initTree(myPackageTree);
-    Disposer.register(this, new UiNotifyConnector(myPanel, new Activatable() {
+    Disposer.register(this, UiNotifyConnector.installOn(myPanel, new Activatable() {
       @Override
       public void hideNotify() {
         cancelCurrentProgress();
@@ -456,6 +454,11 @@ public final class ScopeEditorPanel implements Disposable {
     PanelProgressIndicator progress = createProgressIndicator(requestFocus);
     progress.setBordersVisible(false);
     myCurrentProgress = progress;
+
+    PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+    String hintMessage = provider != null ? provider.getHintMessage() : "";
+    myPatternLegend.setText(new HtmlBuilder().appendRaw(hintMessage).wrapWithHtmlBody().toString());
+
     final Runnable request = () -> {
       if (updateText) {
         final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
@@ -501,7 +504,7 @@ public final class ScopeEditorPanel implements Disposable {
 
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillExpand(TreeExpansionEvent event) {

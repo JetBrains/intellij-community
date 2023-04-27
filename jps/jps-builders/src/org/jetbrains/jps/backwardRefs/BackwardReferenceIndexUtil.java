@@ -3,7 +3,6 @@ package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
@@ -18,7 +17,7 @@ public final class BackwardReferenceIndexUtil {
   private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexUtil.class);
 
   static void registerFile(String filePath,
-                           Iterable<Object2IntMap.Entry<? extends JavacRef>> refs,
+                           Iterable<Map.Entry<? extends JavacRef, Integer>> refs,
                            Collection<? extends JavacDef> defs,
                            Collection<? extends JavacTypeCast> casts,
                            Collection<? extends JavacRef> implicitToString,
@@ -82,9 +81,9 @@ public final class BackwardReferenceIndexUtil {
       }
 
       Map<CompilerRef, Integer> convertedRefs = new HashMap<>();
-      for (Object2IntMap.Entry<? extends JavacRef> entry : refs) {
+      for (Map.Entry<? extends JavacRef, Integer> entry : refs) {
         JavacRef ref = entry.getKey();
-        int count = entry.getIntValue();
+        int count = entry.getValue();
         CompilerRef compilerRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
         if (compilerRef != null) {
           convertedRefs.merge(compilerRef, count, (oldValue, value) -> oldValue + value);

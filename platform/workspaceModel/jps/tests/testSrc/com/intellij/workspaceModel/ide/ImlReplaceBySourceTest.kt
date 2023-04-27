@@ -2,11 +2,12 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.storage.EntityChange
@@ -68,7 +69,8 @@ class ImlReplaceBySourceTest {
     val configLocation = JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
 
     var builder = MutableEntityStorage.create()
-    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), configLocation, builder, TestErrorReporter, virtualFileManager)
+    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), configLocation, builder, TestErrorReporter,
+                                        SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation)))
 
     moduleFile.writeText("""
       <module type="JAVA_MODULE" version="4">
@@ -86,8 +88,9 @@ class ImlReplaceBySourceTest {
     """.trimIndent())
 
     val replaceWith = MutableEntityStorage.create()
-    val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
-    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, configLocation, replaceWith, replaceWith, TestErrorReporter, virtualFileManager)
+    val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsProjectFileEntitySource.FileInDirectory
+    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, replaceWith, replaceWith, TestErrorReporter,
+                                        SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation)))
 
     val before = builder.toSnapshot()
 
@@ -119,7 +122,7 @@ class ImlReplaceBySourceTest {
     val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager))
     runBlocking {
       val builder = MutableEntityStorage.create()
-      data.loadAll(reader, storageBuilder2, builder, builder, emptySet(), TestErrorReporter, null)
+      data.loadAll(reader, storageBuilder2, builder, builder, UnloadedModulesNameHolder.DUMMY, TestErrorReporter)
     }
 
     val before = storageBuilder1.toSnapshot()

@@ -4,10 +4,13 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.execution.ExecutionTestCase
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -29,18 +32,18 @@ import java.io.File
  *
  * Platform of the leaf JVM module ('jvm') is JVM; for all other modules default platform is COMMON, but can be changed to JVM as well.
  *
- * Project structure can be set by defining dependencies between modules via DEPENDS_ON.
+ * Project structure can be set by defining dependencies between modules via parentheses.
  * Transitive refinement dependencies should **NOT** be declared.
  * ```
- * // DEPENDS_ON: <module_name>[, <module_name>, ...]
+ * // MODULE: <module_name>(<dependency_module_name1>[, <dependency_module_name2>, ...])
  * ```
  *
- * Both directives should belong to any file inside a module (after MODULE and FILE directives).
+ * // PLATFORM: directive should belong to any file inside a module (after MODULE and FILE directives).
  * Multiples of the same directive in any one module in one or several of its files are forbidden.
  *
  * A single leaf JVM module named 'jvm' is expected in a test with multiple modules, all other modules are considered common,
- * can have arbitrary name and can be referenced by their name in a DEPENDS_ON list of another module.
- * The resulting DEPENDS_ON graph is not checked for cycles or hanging nodes, so be careful when defining dependencies.
+ * can have arbitrary name and can be referenced by their name in a dependency list of another module.
+ * The resulting dependency graph is not checked for cycles or hanging nodes, so be careful when defining dependencies.
  *
  * A small clarification on common modules with JVM platform.
  * In hierarchical multiplatform projects a platform of a common module is determined by all leaf platform modules depending on it.
@@ -58,16 +61,14 @@ import java.io.File
  * // PLATFORM: common
  * /* optionally code and test directives for debugger */
  *
- * // MODULE: intermediate
+ * // MODULE: intermediate(common)
  * // FILE: intermediateFile.kt
  * // PLATFORM: jvm
- * // DEPENDS_ON: common
  * /* optionally code and test directives for debugger */
  *
- * // MODULE: jvm
+ * // MODULE: jvm(intermediate)
  * // FILE: leafJvmFile.kt
  * // PLATFORM: jvm
- * // DEPENDS_ON: intermediate
  * /* optionally code and test directives for debugger */
  * ```
  */
@@ -104,7 +105,7 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
 
         when (module) {
             is DebuggerTestModule.Common -> createAndConfigureCommonModule(context, module, platformName, dependsOnModuleNames)
-            is DebuggerTestModule.Jvm -> configureLeafJvmModule(context, platformName, dependsOnModuleNames)
+            is DebuggerTestModule.Jvm -> configureLeafJvmModule(context, module, platformName, dependsOnModuleNames)
         }
     }
 
@@ -134,12 +135,13 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
 
     private fun configureLeafJvmModule(
         context: ConfigurationContext,
+        module: DebuggerTestModule,
         platformName: PlatformName?,
         dependsOnModuleNames: List<ModuleName>,
     ) {
         check(platformName != COMMON_PLATFORM) { "Leaf JVM module cannot have common platform" }
 
-        context.workspaceModuleMap[DebuggerTestModule.Jvm] = myModule
+        context.workspaceModuleMap[module] = myModule
         val jvmSrcPath = listOf(testAppPath, ExecutionTestCase.SOURCES_DIRECTORY_NAME).joinToString(File.separator)
         doWriteAction {
             myModule.createMultiplatformFacetM3(JvmPlatforms.jvm8, true, dependsOnModuleNames, listOf(jvmSrcPath))
@@ -160,8 +162,7 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
         }
 
         val allModuleNames = context.filesByModules.keys.map(DebuggerTestModule::name)
-        val dependsOnModuleNames = findAtMostOneDirectiveInModuleFiles(moduleFiles, DEPENDS_ON_DIRECTIVE.toPrefix())
-            ?.split(", ")?.map(String::trim).orEmpty()
+        val dependsOnModuleNames = module.dependenciesSymbols
 
         dependsOnModuleNames.forEach { name ->
             val dependsOnModule = context.filesByModules.keys.find { it.name == name } ?:
@@ -197,6 +198,14 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
         }
     }
 
+    override fun createDebuggerTestCompilerFacility(
+        testFiles: TestFiles,
+        jvmTarget: JvmTarget,
+        compileConfig: TestCompileConfiguration
+    ): DebuggerTestCompilerFacility {
+        return MppDebuggerCompilerFacility(project, testFiles, jvmTarget, compileConfig)
+    }
+
     private class ConfigurationContext(
         val filesByModules: Map<DebuggerTestModule, List<TestFileWithModule>>,
         val dependsOnEdges: MultiMap<DebuggerTestModule, DebuggerTestModule>,
@@ -213,7 +222,6 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
                 )
             )
 
-        private const val DEPENDS_ON_DIRECTIVE = "DEPENDS_ON"
         private const val PLATFORM_DIRECTIVE = "PLATFORM"
         private const val JVM_PLATFORM = "JVM"
         private const val COMMON_PLATFORM = "COMMON"
@@ -225,3 +233,53 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
 private typealias PlatformName = String
 private typealias ModuleName = String
 
+abstract class AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluateExpressionInMppTest() {
+    override val compileWithK2 = true
+
+    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
+}
+
+
+private class MppDebuggerCompilerFacility(
+    project: Project,
+    files: List<TestFileWithModule>,
+    jvmTarget: JvmTarget,
+    compileConfig: TestCompileConfiguration,
+) : DebuggerTestCompilerFacility(project, files, jvmTarget, compileConfig) {
+
+    override fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File): List<String> {
+        return super.getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir) +
+                getExtraOptionsForMultiplatform(jvmSrcDir, commonSrcDir)
+    }
+
+    private fun getExtraOptionsForMultiplatform(jvmSrcDir: File, commonSrcDir: File): List<String> {
+        if (mainFiles.kotlinCommon.isEmpty()) {
+            return emptyList()
+        }
+
+        val sources = mainFiles.kotlinJvm + mainFiles.kotlinCommon
+        val modules = sources.map { it.module }
+        val fragments = modules.map { it.name }.toSet()
+        val fragmentDependencies = modules
+            .flatMap { module -> module.dependencies.map { module.name to it.name } }
+            .toSet()
+
+        fun getFileForSource(source: TestFileWithModule): File {
+            val baseDir = if (source in mainFiles.kotlinJvm) {
+                jvmSrcDir
+            } else {
+                commonSrcDir.resolve(source.module.name)
+            }
+            return baseDir.resolve(source.name)
+        }
+
+        val fragmentSources = sources
+            .map { it.module.name to getFileForSource(it).absolutePath }
+
+        return listOf(
+            "-Xmulti-platform",
+            "-Xfragments=" + fragments.joinToString(",")
+        ) + fragmentDependencies.map { (module, dependency) -> "-Xfragment-refines=$module:$dependency" } +
+                fragmentSources.map { (module, src) -> "-Xfragment-sources=$module:$src" }
+    }
+}

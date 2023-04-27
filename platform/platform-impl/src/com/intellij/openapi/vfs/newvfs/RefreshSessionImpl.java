@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
@@ -63,7 +63,9 @@ final class RefreshSessionImpl extends RefreshSession {
 
   RefreshSessionImpl(boolean async, List<? extends VFileEvent> events) {
     this(async, false, null, getSafeModalityState());
-    myEvents.addAll(events);
+    var filtered = events.stream().filter(Objects::nonNull).toList();
+    if (filtered.size() < events.size()) LOG.error("The list of events must not contain null elements");
+    myEvents.addAll(filtered);
   }
 
   private static ModalityState getSafeModalityState() {
@@ -247,6 +249,10 @@ final class RefreshSessionImpl extends RefreshSession {
 
   void waitFor() {
     mySemaphore.waitFor();
+  }
+
+  boolean waitFor(long msTimeout) {
+    return mySemaphore.waitFor(msTimeout);
   }
 
   @NotNull ModalityState getModality() {

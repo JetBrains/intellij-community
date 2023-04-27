@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.*;
@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
@@ -52,6 +53,7 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
 
   public static final DataKey<String> SPEED_SEARCH_TEXT = DataKey.create("speed.search.text");
   public static final DataKey<Object> SPEED_SEARCH_COMPONENT = DataKey.create("speed.search.component");
+  public static final DataKey<SpeedSearchSupply.SpeedSearchLocator> SPEED_SEARCH_LOCATOR = DataKey.create("speed.search.locator");
 
   /**
    * Returns {@link Point} to guess where to show context menu invoked by key.
@@ -66,4 +68,6 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
    */
   @ApiStatus.Experimental
   public static final DataKey<PopupLocator> CONTEXT_MENU_LOCATOR = DataKey.create("contextMenuLocator");
+
+  public static final DataKey<Boolean> EDITOR_CLICK_OVER_TEXT = DataKey.create("editor.over.text");
 }

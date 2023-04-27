@@ -22,11 +22,13 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.PlatformDataKeys.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.PopupOwner
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.EDT
@@ -52,6 +54,7 @@ internal class NewNavBarPanel(
   val project: Project,
   val isFloating: Boolean,
 ) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)),
+    PopupOwner,
     DataProvider {
 
   private val myItemComponents: ArrayList<NavBarItemComponent> = ArrayList()
@@ -65,7 +68,7 @@ internal class NewNavBarPanel(
   init {
     EDT.assertIsEdt()
     isOpaque = false
-    if (!ExperimentalUI.isNewUI() && StartupUiUtil.isUnderDarcula() && isFloating) {
+    if (!ExperimentalUI.isNewUI() && StartupUiUtil.isUnderDarcula && isFloating) {
       border = LineBorder(Gray._120, 1)
     }
     AccessibleContextUtil.setName(this, IdeBundle.message("navigation.bar"))
@@ -80,6 +83,7 @@ internal class NewNavBarPanel(
     cs.launch {
       handleItems()
     }
+    putClientProperty(ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN, true)
   }
 
   private suspend fun handleItems() {
@@ -104,8 +108,8 @@ internal class NewNavBarPanel(
         itemComponent.focusItem()
         if (!ExperimentalUI.isNewUI()) {
           // Components update themselves on selection change.
-          // In total 2 components ate updated: the one which became selected, and the one which lost the selection.
-          // In the old chevron needs to know whether the next component is selected
+          // In total 2 components are updated: the one which became selected, and the one which lost the selection.
+          // In the old UI chevron needs to know whether the next component is selected
           // regardless of selection moving to the left or right.
           // I don't really want to expose and maintain [NavBarItemVm#isNextSelected] as StateFlow,
           // so in the old UI all components are updated on each selection change.
@@ -205,6 +209,16 @@ internal class NewNavBarPanel(
       isItemComponentFocusable() -> UIUtil.isFocusAncestor(this)
       else -> hasFocus()
     }
+  }
+
+  override fun getBestPopupPosition(): Point? {
+    val itemComponent = myItemComponents.getOrNull(vm.selectedIndex.value)
+                        ?: return null
+    return Point(itemComponent.x, itemComponent.y + itemComponent.height)
+  }
+
+  override fun getPopupComponent(): JComponent? {
+    return popupList?.get()
   }
 
   override fun getData(dataId: String): Any? = when (dataId) {

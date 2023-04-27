@@ -125,15 +125,19 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     private void highlightDefaultDuplicate(@NotNull BranchBase<?> branch) {
+      List<LocalQuickFix> fixes = new ArrayList<>();
       LocalQuickFix deleteCaseFix = branch.deleteCaseFix();
+      ContainerUtil.addIfNotNull(fixes, deleteCaseFix);
       LocalQuickFix mergeWithDefaultFix = branch.mergeWithDefaultFix();
-      if (deleteCaseFix == null && mergeWithDefaultFix == null) return;
-      registerProblem(branch, branch.getDefaultBranchMessage(), deleteCaseFix, mergeWithDefaultFix);
+      ContainerUtil.addIfNotNull(fixes, mergeWithDefaultFix);
+      if (!fixes.isEmpty()) {
+        registerProblem(branch, branch.getDefaultBranchMessage(), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      }
     }
 
     private void registerProblem(@NotNull BranchBase<?> duplicate,
                                  @NotNull @InspectionMessage String message,
-                                 LocalQuickFix @NotNull ... fixes) {
+                                 @NotNull LocalQuickFix @NotNull ... fixes) {
       ProblemDescriptor descriptor = InspectionManager.getInstance(myHolder.getProject())
         .createProblemDescriptor(duplicate.myStatements[0], duplicate.myStatements[duplicate.myStatements.length - 1],
                                  message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -381,19 +385,19 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
              case R():
              case null:
              case S():
-               <caret>System.out.println(42); // Branch in 'switch' is a duplicate of the default branch
-               break;
+               <caret>return 42; // Branch in 'switch' is a duplicate of the default branch
              case String s:
-               System.out.println(0);
-               break;
+               return 0;
              default:
-               System.out.println(42);
+               return 42;
            }
 
            The 'case R():' and 'case S():' statements can be removed as redundant,
            because the corresponding branch is a duplicate of the default branch.
            But the 'default' case does not handle null values, so we cannot delete
            the 'case null:' and the 'return 42;' statement.
+
+           See com.intellij.java.codeInspection.DuplicateBranchesInSwitchFixTest [DeleteRedundantBranch7.java]
           */
           context.deleteStatements();
         }
@@ -439,7 +443,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
       myNextFromLabelToMergeWith = PsiTreeUtil.skipWhitespacesForward(myLabelToMergeWith);
 
-      myCommentsToMergeWith = ContainerUtil.set(myBranchToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = ContainerUtil.immutableSet(myBranchToMergeWith.myCommentTexts);
       return true;
     }
 
@@ -605,7 +609,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
-      return ContainerUtil.exists(elements, ExpressionUtils::isNullLiteral);
+      return ContainerUtil.exists(elements, el -> el instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
 
     boolean isDefault() {
@@ -968,7 +972,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements, element -> element instanceof PsiPattern ||
                                                         element instanceof PsiPatternGuard ||
-                                                        ExpressionUtils.isNullLiteral(element));
+                                                        element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
 
     @Override
@@ -1100,7 +1104,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           }
         }
       }
-      myCommentsToMergeWith = ContainerUtil.set(myRuleToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = ContainerUtil.immutableSet(myRuleToMergeWith.myCommentTexts);
       return true;
     }
 

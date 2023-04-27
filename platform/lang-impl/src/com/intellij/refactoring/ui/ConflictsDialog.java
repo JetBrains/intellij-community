@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.ui;
 
@@ -21,7 +21,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -269,18 +272,6 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
           }
         };
       }
-
-      @Override
-      public boolean canNavigateToSource() {
-        return false;
-      }
-
-      @Override
-      public boolean canNavigate() {
-        return false;
-      }
-      @Override
-      public void navigate(boolean requestFocus) {}
 
       @Override
       public FileEditorLocation getLocation() {

@@ -250,7 +250,7 @@ public class RemoteDebuggerClient implements Debugger {
     public List<Breakpoint> getBreakpoints() {
       try {
         final List<RemoteBreakpoint> list = myManager.getBreakpoints();
-        final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>(list.size());
+        final ArrayList<Breakpoint> breakpoints = new ArrayList<>(list.size());
         for (RemoteBreakpoint breakpoint : list) {
           breakpoints.add(new MyBreakpoint(breakpoint));
         }
@@ -558,7 +558,7 @@ public class RemoteDebuggerClient implements Debugger {
     }
 
     static List<Variable> convert(List<? extends RemoteDebugger.Variable> list) {
-      final ArrayList<Variable> variables = new ArrayList<Variable>(list.size());
+      final ArrayList<Variable> variables = new ArrayList<>(list.size());
       for (final RemoteDebugger.Variable variable : list) {
         variables.add(new MyVariable(variable));
       }

@@ -13,11 +13,7 @@ public class MockProblemDescriptor extends ProblemDescriptorImpl {
   public MockProblemDescriptor(@NotNull PsiElement psiElement,
                                String descriptionTemplate,
                                @NotNull ProblemHighlightType highlightType,
-                               LocalQuickFix @NotNull ... fixes) {
+                               @NotNull LocalQuickFix @NotNull ... fixes) {
     super(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, true);
-  }
-
-  @Override
-  protected void assertPhysical(@NotNull PsiElement startElement) {
   }
 }

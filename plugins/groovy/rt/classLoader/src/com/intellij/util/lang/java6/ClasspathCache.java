@@ -25,8 +25,8 @@ public final class ClasspathCache {
       return s==0?ArrayUtilRt.EMPTY_OBJECT_ARRAY:new Object[s];
     }
   };
-  private final IntObjectHashMap<Object/*Loader|Loader[]*/> myResourcePackagesCache = new IntObjectHashMap<Object>(OBJECT_ARRAY_PRODUCER);
-  private final IntObjectHashMap<Object/*Loader|Loader[]*/>  myClassPackagesCache = new IntObjectHashMap<Object>(OBJECT_ARRAY_PRODUCER);
+  private final IntObjectHashMap<Object/*Loader|Loader[]*/> myResourcePackagesCache = new IntObjectHashMap<>(OBJECT_ARRAY_PRODUCER);
+  private final IntObjectHashMap<Object/*Loader|Loader[]*/>  myClassPackagesCache = new IntObjectHashMap<>(OBJECT_ARRAY_PRODUCER);
 
   private static final double PROBABILITY = 0.005d;
 

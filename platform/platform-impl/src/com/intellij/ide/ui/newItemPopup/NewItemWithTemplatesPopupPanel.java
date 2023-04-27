@@ -1,15 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.newItemPopup;
 
+import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -38,6 +41,11 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
 
     myTemplatesListModel = new MyListModel(templatesList);
     myTemplatesList = createTemplatesList(myTemplatesListModel, renderer);
+
+    JTextField textField = getTextField();
+    if (textField instanceof JBExtendableTextFieldWithMixedAccessibleContext) {
+      ((JBExtendableTextFieldWithMixedAccessibleContext)textField).myListContext = myTemplatesList.getAccessibleContext();
+    }
 
     ScrollingUtil.installMoveUpAction(myTemplatesList, myTextField);
     ScrollingUtil.installMoveDownAction(myTemplatesList, myTextField);
@@ -105,6 +113,11 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     return list;
   }
 
+  @Override
+  protected ExtendableTextField createNonCustomizedTextField() {
+    return new JBExtendableTextFieldWithMixedAccessibleContext();
+  }
+
   protected final class MyListModel extends AbstractListModel<T> {
 
     private final List<T> myItems = new ArrayList<>();
@@ -133,6 +146,15 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     @Override
     public T getElementAt(int index) {
       return myItems.get(index);
+    }
+  }
+
+  private static class JBExtendableTextFieldWithMixedAccessibleContext extends ExtendableTextField {
+    private AccessibleContext myListContext;
+
+    @Override
+    protected AccessibleContext getOriginalAccessibleContext() {
+      return new TextFieldWithListAccessibleContext(this, myListContext);
     }
   }
 }

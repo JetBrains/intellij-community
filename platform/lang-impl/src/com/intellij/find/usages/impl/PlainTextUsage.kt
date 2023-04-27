@@ -3,8 +3,10 @@ package com.intellij.find.usages.impl
 
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
+import org.jetbrains.annotations.ApiStatus
 
-internal class PlainTextUsage(private val psiUsage: PsiUsage) : PsiUsage by psiUsage {
+@ApiStatus.Internal
+class PlainTextUsage internal constructor(private val psiUsage: PsiUsage) : PsiUsage by psiUsage {
 
   override fun createPointer(): Pointer<out PsiUsage> {
     return Pointer.delegatingPointer(psiUsage.createPointer(), ::PlainTextUsage)

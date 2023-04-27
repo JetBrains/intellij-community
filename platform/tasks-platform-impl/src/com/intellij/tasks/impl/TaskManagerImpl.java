@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
@@ -104,7 +105,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   private final List<TaskRepository> myRepositories = new ArrayList<>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
-  private final Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
+  private final Set<TaskRepository> myBadRepositories = ConcurrentCollectionFactory.createConcurrentSet();
 
   public TaskManagerImpl(@NotNull Project project) {
     myProject = project;

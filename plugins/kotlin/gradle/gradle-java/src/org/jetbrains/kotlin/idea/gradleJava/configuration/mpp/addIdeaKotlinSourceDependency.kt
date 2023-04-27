@@ -21,8 +21,6 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinSourceDepe
         createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
     }
 
-    dependencyNode.kotlinDependencies.add(dependency)
-
     kotlinSourceSetData?.sourceSetInfo?.let { kotlinSourceSetInfo ->
         when (dependency.type) {
             IdeaKotlinSourceDependency.Type.Regular -> Unit

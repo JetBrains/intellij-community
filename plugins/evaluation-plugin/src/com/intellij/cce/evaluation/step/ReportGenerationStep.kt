@@ -47,8 +47,10 @@ class ReportGenerationStep(
     val suggestionsComparators = configs.map { SuggestionsComparator.create(Language.resolve(it.language), it.interpret.completionType) }
     val strategies = configs.map { it.actions.strategy }
     val featuresStorages = workspaces.map { it.featuresStorage }
+    val fullLineStorages = workspaces.map { it.fullLineLogsStorage }
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
-    val isCompletionGolfEvaluation = strategies.map { it.completionGolf }.allEquals()
+    val completionGolfSettings = configs.firstOrNull { it.actions.strategy.completionGolf != null }?.interpret?.completionGolfSettings
+    val defaultMetrics = configs.firstOrNull()?.reports?.defaultMetrics
     var iteration = 0
     for (filter in sessionsFilters) {
       val sessionStorages = workspaces.map { FilteredSessionsStorage(filter, it.sessionsStorage) }
@@ -62,14 +64,16 @@ class ReportGenerationStep(
         progress.setProgress(filter.name, "${filter.name} ${comparisonStorage.reportName} filter ($iteration/${iterationsCount})",
                              (iteration.toDouble() + 1) / iterationsCount)
 
-        val reportGenerators = mutableListOf<FullReportGenerator>(
+        val reportGenerators = mutableListOf(
           HtmlReportGenerator(
             workspace.reportsDirectory(),
             filter.name,
             comparisonStorage.reportName,
+            defaultMetrics,
             suggestionsComparators,
             featuresStorages,
-            isCompletionGolfEvaluation
+            fullLineStorages,
+            completionGolfSettings
           ),
           JsonReportGenerator(
             workspace.reportsDirectory(),

@@ -1,1 +1,1 @@
-New instance creation 6 val x = Local()
+New instance creation 7 val x = Local()

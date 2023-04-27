@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.Contract;
@@ -61,7 +60,7 @@ public final class PathManager {
   private static String ourConfigPath;
   private static String ourSystemPath;
   private static String ourScratchPath;
-  private static String ourPluginsPath;
+  private static String ourPluginPath;
   private static String ourLogPath;
 
   // IDE installation paths
@@ -109,7 +108,17 @@ public final class PathManager {
 
       // set before ourHomePath because getBinDirectories() rely on the fact that if `getHomePath(true)`
       // returns something, then `ourBinDirectories` is already computed
-      ourBinDirectories = result == null ?  Collections.emptyList() : getBinDirectories(Paths.get(result));
+      if (result == null) {
+        ourBinDirectories = Collections.emptyList();
+      }
+      else {
+        Path root = Paths.get(result);
+        if (Boolean.getBoolean("idea.use.dev.build.server")) {
+          root = root.resolve("../../..").normalize();
+        }
+        ourBinDirectories = getBinDirectories(root);
+      }
+
       ourHomePath = result;
     }
 
@@ -177,19 +186,20 @@ public final class PathManager {
     String osSuffix = SystemInfoRt.isWindows ? "win" : SystemInfoRt.isMac ? "mac" : "linux";
 
     for (Path dir : candidates) {
-      if (binDirs.contains(dir)) continue;
+      if (binDirs.contains(dir) || !Files.isDirectory(dir)) {
+        continue;
+      }
+
+      binDirs.add(dir);
+      dir = dir.resolve(osSuffix);
       if (Files.isDirectory(dir)) {
         binDirs.add(dir);
-        dir = dir.resolve(osSuffix);
-        if (Files.isDirectory(dir)) {
-          binDirs.add(dir);
-          if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
-            String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
-            if (arch != null) {
-              dir = dir.resolve(arch);
-              if (Files.isDirectory(dir)) {
-                binDirs.add(dir);
-              }
+        if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
+          String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
+          if (arch != null) {
+            dir = dir.resolve(arch);
+            if (Files.isDirectory(dir)) {
+              binDirs.add(dir);
             }
           }
         }
@@ -328,7 +338,6 @@ public final class PathManager {
     return getConfigPath() + '/' + OPTIONS_DIRECTORY;
   }
 
-  @SuppressWarnings("IdentifierGrammar")
   public static @NotNull File getOptionsFile(@NotNull String fileName) {
     return Paths.get(getOptionsPath(), fileName + DEFAULT_EXT).toFile();
   }
@@ -338,20 +347,20 @@ public final class PathManager {
   }
 
   public static @NotNull String getPluginsPath() {
-    if (ourPluginsPath != null) return ourPluginsPath;
+    if (ourPluginPath != null) return ourPluginPath;
 
     String explicit = getExplicitPath(PROPERTY_PLUGINS_PATH);
     if (explicit != null) {
-      ourPluginsPath = explicit;
+      ourPluginPath = explicit;
     }
     else if (PATHS_SELECTOR != null && System.getProperty(PROPERTY_CONFIG_PATH) == null) {
-      ourPluginsPath = getDefaultPluginPathFor(PATHS_SELECTOR);
+      ourPluginPath = getDefaultPluginPathFor(PATHS_SELECTOR);
     }
     else {
-      ourPluginsPath = getConfigPath() + '/' + PLUGINS_DIRECTORY;
+      ourPluginPath = getConfigPath() + '/' + PLUGINS_DIRECTORY;
     }
 
-    return ourPluginsPath;
+    return ourPluginPath;
   }
 
   public static @NotNull String getDefaultPluginPathFor(@NotNull String selector) {
@@ -439,7 +448,7 @@ public final class PathManager {
   // misc stuff
 
   /**
-   * Attempts to detect classpath entry containing given resource.
+   * Attempts to detect classpath entry containing the resource.
    */
   public static @Nullable String getResourceRoot(@NotNull Class<?> context, @NotNull String path) {
     URL url = context.getResource(path);
@@ -450,7 +459,7 @@ public final class PathManager {
   }
 
   /**
-   * Attempts to detect classpath entry containing given resource.
+   * Attempts to detect classpath entry containing the resource.
    */
   public static @Nullable String getResourceRoot(@NotNull ClassLoader classLoader, @NotNull String resourcePath) {
     URL url = classLoader.getResource(resourcePath);
@@ -461,7 +470,7 @@ public final class PathManager {
    * Attempts to extract classpath entry part from passed URL.
    */
   private static @Nullable String extractRoot(URL resourceURL, String resourcePath) {
-    if (resourcePath.length() == 0 || resourcePath.charAt(0) != '/' && resourcePath.charAt(0) != '\\') {
+    if (resourcePath.isEmpty() || resourcePath.charAt(0) != '/' && resourcePath.charAt(0) != '\\') {
       log("precondition failed: " + resourcePath);
       return null;
     }
@@ -677,7 +686,7 @@ public final class PathManager {
       // support projects in ULTIMATE_REPO/remote-dev/extras/SUBDIR
       return homePath + "/../../../community";
     }
-    if (Files.isRegularFile(Paths.get(homePath, "../../Product.Root"))) { // .NET products directory
+    if (Files.isRegularFile(Paths.get(homePath, "../../.dotnet-products.root.marker"))) {
       return homePath + "/../ultimate/community";
     }
     return homePath;
@@ -692,52 +701,6 @@ public final class PathManager {
     String resourceRoot = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
     return resourceRoot == null ? null : Paths.get(resourceRoot).toAbsolutePath();
   }
-
-  /**
-   * Resolves the path to the jar file of an artifact.
-   *
-   * @param classesRoot  the resource root containing any class of the plugin, see {@link #getJarPathForClass}.
-   * @param artifactName the artifact name, from which the necessary relative paths and the jar name are derived.
-   *                     For an artifact named "foo-bar:jar", we assume that:
-   *                     <li> the artifact jar file name is "foo-bar.jar",
-   *                     <li> the output directory specified in the project structure is named "foo_bar_jar",
-   *                     <li> the "relativeOutputPath" argument of "withArtifact()" in the plugin layout script is just "rt".
-   */
-  public static @NotNull Path getJarArtifactPath(@NotNull String classesRoot,
-                                                 @NotNull String artifactName) {
-    String artifactJarName = Strings.trimEnd(artifactName, ":jar") + ".jar";
-    String artifactDirNameInBuildLayout = artifactName.replaceAll("\\W", "_");
-    return getArtifactPath(classesRoot, artifactJarName, "rt", artifactDirNameInBuildLayout);
-  }
-
-  /**
-   * Resolves the path to an artifact.
-   *
-   * @param classesRoot                   the resource root containing any class of the plugin, see {@link #getJarPathForClass}.
-   * @param artifactFileName              the name of the target artifact file
-   * @param artifactDirNameInPluginLayout the value of "relativeOutputPath" used in the plugin layout for "withArtifact()", usually "rt"
-   * @param artifactDirNameInBuildLayout  the name specified in the output directory property in the project structure
-   */
-  public static @NotNull Path getArtifactPath(@NotNull String classesRoot,
-                                              @NotNull String artifactFileName,
-                                              @NotNull String artifactDirNameInPluginLayout,
-                                              @NotNull String artifactDirNameInBuildLayout) {
-    Path rootPath = Paths.get(classesRoot);
-    if (Files.isRegularFile(rootPath)) {
-      // running regular installation
-      return rootPath.resolveSibling(artifactDirNameInPluginLayout).resolve(artifactFileName);
-    }
-
-    Path outClassesDir = rootPath.getParent().getParent();
-    Path artifactsDir = outClassesDir.resolveSibling("jps-artifacts");
-    if (!Files.exists(artifactsDir)) {
-      // running IDE or tests in IDE
-      artifactsDir = outClassesDir.resolve("artifacts");
-    } // otherwise, running tests via build scripts
-    return artifactsDir.resolve(artifactDirNameInBuildLayout).resolve(artifactFileName);
-  }
-
-  // helpers
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void log(String x) {

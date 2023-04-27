@@ -5,7 +5,6 @@ import com.intellij.conversion.*
 import com.intellij.conversion.impl.ConversionContextImpl
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryKindRegistry
@@ -20,6 +19,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.kotlin.config.getFacetPlatformByConfigurationElement
@@ -182,7 +182,8 @@ internal class KotlinNonJvmSourceRootConverterProvider : ConverterProvider() {
                 private fun ModuleSettings.isExternalModule(): Boolean {
                     return when {
                         rootElement.getAttributeValue(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY) != null -> true
-                        rootElement.getAttributeValue(ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY)?.toBoolean() ?: false -> true
+                      rootElement.getAttributeValue(
+                        SerializationConstants.IS_MAVEN_MODULE_IML_ATTRIBUTE)?.toBoolean() ?: false -> true
                         else -> false
                     }
                 }

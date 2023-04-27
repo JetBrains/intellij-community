@@ -2,13 +2,13 @@
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.Url
 import com.intellij.util.Urls
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.net.NetUtils
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.BootstrapUtil
@@ -87,6 +87,7 @@ fun Channel.closeAndShutdownEventLoop() {
  * Synchronously connects to remote address.
  */
 @JvmOverloads
+@RequiresBackgroundThread
 fun Bootstrap.connectRetrying(remoteAddress: InetSocketAddress,
                               maxAttemptCount: Int = NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT,
                               stopCondition: Condition<Void>? = null): ConnectToChannelResult {
@@ -102,8 +103,6 @@ private fun doConnect(bootstrap: Bootstrap,
                        remoteAddress: InetSocketAddress,
                        maxAttemptCount: Int,
                        stopCondition: Condition<Void>): ConnectToChannelResult {
-  ApplicationManager.getApplication().assertIsNonDispatchThread();
-
   var attemptCount = 0
   @Suppress("DEPRECATION")
   if (bootstrap.config().group() !is io.netty.channel.oio.OioEventLoopGroup) {

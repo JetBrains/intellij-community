@@ -2,16 +2,15 @@
 package org.jetbrains.kotlin.idea.fir.completion
 
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmWithLibBasicCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.firFileName
 import org.jetbrains.kotlin.test.utils.IgnoreTests
-import java.io.File
 
 abstract class AbstractFirWithLibBasicCompletionTest: AbstractJvmWithLibBasicCompletionTest() {
     override val captureExceptions: Boolean = false
 
     override fun isFirPlugin(): Boolean = true
 
-    override fun handleTestPath(path: String): File =
-        IgnoreTests.getFirTestFileIfFirPassing(File(path), IgnoreTests.DIRECTIVES.FIR_COMPARISON)
+    override fun fileName(): String = firFileName(super.fileName(), testDataDirectory)
 
     override fun executeTest(test: () -> Unit) {
         IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON) {

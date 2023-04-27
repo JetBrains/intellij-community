@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.mock.MockInspectionProfile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.xml.XmlElement;
@@ -166,7 +167,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   public void testDefaultAnnotator() {
     final DefaultDomAnnotator annotator = new DefaultDomAnnotator() {
       @Override
-      protected DomElementAnnotationsManagerImpl getAnnotationsManager(final DomElement element) {
+      protected @NotNull DomElementAnnotationsManagerImpl getAnnotationsManager(final @NotNull Project project) {
         return myAnnotationsManager;
       }
     };
@@ -175,7 +176,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
       @Override
-      public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
+      public void checkFileElement(final @NotNull DomFileElement fileElement, final @NotNull DomElementAnnotationHolder holder) {
         s.append("visited");
       }
     };
@@ -215,7 +216,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
 
       @Override
-      public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
+      public void checkFileElement(final @NotNull DomFileElement fileElement, final @NotNull DomElementAnnotationHolder holder) {
       }
     };
     registerInspectionKey(inspection);
@@ -243,7 +244,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
 
       @Override
-      public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
+      public void checkFileElement(final @NotNull DomFileElement fileElement, final @NotNull DomElementAnnotationHolder holder) {
       }
     };
     registerInspectionKey(inspection);
@@ -298,7 +299,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     }
 
     @Override
-    protected void checkDomElement(final DomElement element, final DomElementAnnotationHolder holder, final DomHighlightingHelper helper) {
+    protected void checkDomElement(final @NotNull DomElement element, final @NotNull DomElementAnnotationHolder holder, final @NotNull DomHighlightingHelper helper) {
       super.checkDomElement(element, holder, helper);
     }
 

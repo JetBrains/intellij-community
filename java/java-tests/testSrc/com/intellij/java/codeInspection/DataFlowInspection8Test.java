@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -221,6 +221,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamReduceLogicalAnd() { doTest(); }
   public void testStreamSingleElementReduce() { doTest(); }
   public void testStreamGroupingBy() { doTest(); }
+  public void testStreamNestedIncomplete() { doTest(); }
   public void testRequireNonNullMethodRef() {
     doTestWith((dfa, __) -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
   }
@@ -382,6 +383,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testCheckerDefaultQualifier() {
     addCheckerAnnotations(myFixture);
+    doTest();
+  }
+  public void testSpotBugsDefaultAnnotation() {
     doTest();
   }
   public void testConstructorMethodReferenceNullability() { doTest(); }

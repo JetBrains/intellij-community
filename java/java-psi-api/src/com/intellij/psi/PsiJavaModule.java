@@ -2,9 +2,11 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -18,9 +20,9 @@ public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierO
   String AUTO_MODULE_NAME = "Automatic-Module-Name";
 
   /* See http://openjdk.org/jeps/261#Class-loaders, "Class loaders" */
-  Set<String> UPGRADEABLE = ContainerUtil.immutableSet(
+  Set<String> UPGRADEABLE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     "java.activation", "java.compiler", "java.corba", "java.transaction", "java.xml.bind", "java.xml.ws", "java.xml.ws.annotation",
-    "jdk.internal.vm.compiler", "jdk.xml.bind", "jdk.xml.ws");
+    "jdk.internal.vm.compiler", "jdk.xml.bind", "jdk.xml.ws")));
 
   @Override @NotNull PsiJavaModuleReferenceElement getNameIdentifier();
   @Override @NotNull String getName();

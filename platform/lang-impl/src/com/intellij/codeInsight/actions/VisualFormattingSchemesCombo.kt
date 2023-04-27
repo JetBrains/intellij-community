@@ -22,12 +22,12 @@ internal class VisualFormattingSchemesCombo(project: Project) : SchemesCombo<Cod
   }
 
   fun onApply(settings: ReaderModeSettings) {
-    settings.visualFormattingChosenScheme = ReaderModeSettings.State.SchemeState().apply {
-      val selected = selectedScheme
-      if (selected != null) {
-        name = selected.name
-        isProjectLevel = codeStyleSchemesModel.isProjectScheme(selected)
-      }
+    val selected = selectedScheme
+    settings.visualFormattingChosenScheme = if (selected != null) {
+      ReaderModeSettings.Scheme(selected.name, codeStyleSchemesModel.isProjectScheme(selected))
+    }
+    else {
+      ReaderModeSettings.Scheme()
     }
   }
 

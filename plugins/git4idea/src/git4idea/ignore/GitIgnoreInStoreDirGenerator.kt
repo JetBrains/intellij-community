@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.vcsUtil.VcsImplUtil
@@ -36,7 +35,6 @@ import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
@@ -63,14 +61,10 @@ private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
  * Generate .idea/.gitignore file silently after project create/open
  */
 @Service(Service.Level.PROJECT)
-internal class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
+internal class GitIgnoreInStoreDirGenerator(private val project: Project, private val coroutineScope: CoroutineScope) : Disposable {
   private val needGenerate = AtomicBoolean(true)
 
-  @Suppress("DEPRECATION")
-  private val coroutineScope: CoroutineScope = project.coroutineScope.childScope()
-
   override fun dispose() {
-    coroutineScope.cancel()
   }
 
   suspend fun run() {

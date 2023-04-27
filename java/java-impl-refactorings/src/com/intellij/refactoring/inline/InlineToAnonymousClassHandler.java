@@ -322,7 +322,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       if (parentElement instanceof PsiThisExpression) {
         return JavaBundle.message("class.cannot.be.inlined.because.it.is.used.as.a.this.qualifier");
       }
-      if (parentElement instanceof PsiNewExpression newExpression) {
+      if (parentElement instanceof PsiNewExpression newExpression && !newExpression.isArrayCreation()) {
         final PsiMethod[] constructors = aClass.getConstructors();
         if (constructors.length == 0) {
           PsiExpressionList newArgumentList = newExpression.getArgumentList();

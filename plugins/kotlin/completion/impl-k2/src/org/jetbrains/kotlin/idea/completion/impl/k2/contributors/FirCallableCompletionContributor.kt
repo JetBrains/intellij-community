@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResu
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -17,16 +18,13 @@ import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.checkers.ExtensionApplicabilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.canDefinitelyNotBeSeenFromOtherFile
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensions
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbolAndInvokeCompletion
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.*
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -55,16 +53,24 @@ internal open class FirCallableCompletionContributor(
         symbol: KtCallableSymbol,
         applicability: KtExtensionApplicabilityResult
     ): CallableInsertionOptions? =
-        getInsertionStrategyForExtensionFunction(symbol, applicability)?.let { CallableInsertionOptions(importStrategyDetector.detectImportStrategy(symbol), it) }
+        getInsertionStrategyForExtensionFunction(
+            symbol,
+            applicability
+        )?.let { CallableInsertionOptions(importStrategyDetector.detectImportStrategy(symbol), it) }
 
     protected open fun KtAnalysisSession.filter(symbol: KtCallableSymbol): Boolean = true
 
     private val shouldCompleteTopLevelCallablesFromIndex: Boolean
         get() = prefixMatcher.prefix.isNotEmpty()
 
-    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext): Unit = with(positionContext) {
+    protected val excludeEnumEntries =
+        !basicContext.project.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
+
+    override fun KtAnalysisSession.complete(
+        positionContext: FirNameReferencePositionContext,
+        weighingContext: WeighingContext
+    ): Unit = with(positionContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
-        val expectedType = nameExpression.getExpectedType()
         val scopesContext = originalKtFile.getScopeContextForPosition(nameExpression)
 
         val extensionChecker = object : ExtensionApplicabilityChecker {
@@ -75,12 +81,10 @@ internal open class FirCallableCompletionContributor(
         }
 
         val receiver = explicitReceiver
-        val weighingContext = createWeighingContext(receiver, expectedType, scopesContext.implicitReceivers, basicContext.fakeKtFile)
-
         when {
             receiver != null -> {
                 collectDotCompletion(
-                    scopesContext.scopes,
+                    scopesContext,
                     receiver,
                     weighingContext,
                     extensionChecker,
@@ -92,28 +96,22 @@ internal open class FirCallableCompletionContributor(
         }
     }
 
-
     private fun KtAnalysisSession.completeWithoutReceiver(
-        implicitScopesContext: KtScopeContext,
+        scopeContext: KtScopeContext,
         context: WeighingContext,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ) {
-        val implicitScopes = implicitScopesContext.scopes
-        val implicitReceivers = implicitScopesContext.implicitReceivers
+        val implicitReceivers = scopeContext.implicitReceivers
         val implicitReceiversTypes = implicitReceivers.map { it.type }
 
-        val syntheticJavaPropertiesScopes = implicitReceiversTypes.mapNotNull { type ->
-            type.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
-        }.asCompositeScope()
-
-        val availableNonExtensions = collectNonExtensions(
-            implicitScopes,
-            syntheticJavaPropertiesScopes,
+        val availableNonExtensions = collectNonExtensionsFromScopeContext(
+            scopeContext,
             visibilityChecker,
-            scopeNameFilter
+            scopeNameFilter,
+            excludeEnumEntries,
         ) { filter(it) }
-        val extensionsWhichCanBeCalled = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
+        val extensionsWhichCanBeCalled = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker)
 
         // TODO: consider relying on tower resolver when populating callable entries. For example
         //  val Int.foo : ...
@@ -133,43 +131,48 @@ internal open class FirCallableCompletionContributor(
         //
         availableNonExtensions
             // skip shadowed variable or properties
-            .distinctBy {
-                when (it) {
-                    is KtVariableLikeSymbol -> it.name
-                    else -> it
+            .distinctBy { (symbol, _) ->
+                when (symbol) {
+                    is KtVariableLikeSymbol -> symbol.name
+                    else -> symbol
                 }
             }
-            .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
+            .forEach { (symbol, scopeKind) -> addCallableSymbolToCompletion(context, symbol, getOptions(symbol), scopeKind) }
 
         // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
         // equal to the same symbols from top level without substitution.
         val extensionMembers = mutableSetOf<KtCallableSymbol>()
-        extensionsWhichCanBeCalled.forEach { (symbol, applicabilityResult) ->
+        extensionsWhichCanBeCalled.forEach { (symbolWithScopeKind, applicabilityResult) ->
+            val (symbol, scopeKind) = symbolWithScopeKind
             getExtensionOptions(symbol, applicabilityResult)?.let {
                 extensionMembers += symbol
-                addCallableSymbolToCompletion(context, symbol, it, applicabilityResult.substitutor)
+                addCallableSymbolToCompletion(context, symbol, it, scopeKind, applicabilityResult.substitutor)
             }
         }
 
         if (shouldCompleteTopLevelCallablesFromIndex) {
             val topLevelCallables = indexHelper.getTopLevelCallables(scopeNameFilter)
-            topLevelCallables.asSequence()
+            val callablesFromIndex = topLevelCallables.asSequence()
                 .filterNot { it.canDefinitelyNotBeSeenFromOtherFile() }
                 .filter { it.canBeAnalysed() }
                 .map { it.getSymbol() as KtCallableSymbol }
+
+            val callablesFromExtensions = getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(scopeNameFilter)
+
+            (callablesFromIndex + callablesFromExtensions)
                 .filter { it !in extensionMembers && visibilityChecker.isVisible(it) }
-                .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
+                .forEach { addCallableSymbolToCompletion(context, it, getOptions(it), scopeKind = null) }
         }
 
         collectTopLevelExtensionsFromIndices(implicitReceiversTypes, extensionChecker, visibilityChecker)
             .filter { it !in extensionMembers }
             .forEach {
-                addCallableSymbolToCompletion(context, it, getOptions(it))
+                addCallableSymbolToCompletion(context, it, getOptions(it), scopeKind = null)
             }
     }
 
     protected open fun KtAnalysisSession.collectDotCompletion(
-        implicitScopes: KtScope,
+        scopeContext: KtScopeContext,
         explicitReceiver: KtExpression,
         context: WeighingContext,
         extensionChecker: ExtensionApplicabilityChecker,
@@ -181,19 +184,21 @@ internal open class FirCallableCompletionContributor(
 
             symbol is KtNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope -> {
                 if (symbol.classKind == KtClassKind.ENUM_CLASS) {
-                    collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
+                    collectDotCompletionForCallableReceiver(scopeContext, explicitReceiver, context, extensionChecker, visibilityChecker)
                 }
-                val nonExtensions = collectNonExtensions(
+                val nonExtensions = collectNonExtensionsFromScope(
                     symbol.getStaticMemberScope(),
-                    syntheticJavaPropertiesScope = null,
                     visibilityChecker,
-                    scopeNameFilter
+                    scopeNameFilter,
+                    excludeEnumEntries,
                 )
+
                 nonExtensions.forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
                         context,
                         memberSymbol,
-                        CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(memberSymbol))
+                        CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(memberSymbol)),
+                        scopeKind = null
                     )
                 }
             }
@@ -203,7 +208,7 @@ internal open class FirCallableCompletionContributor(
             }
 
             else -> {
-                collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
+                collectDotCompletionForCallableReceiver(scopeContext, explicitReceiver, context, extensionChecker, visibilityChecker)
             }
         }
     }
@@ -226,12 +231,13 @@ internal open class FirCallableCompletionContributor(
             .filter { visibilityChecker.isVisible(it) }
             .filter { filter(it) }
             .forEach { callable ->
-                addCallableSymbolToCompletion(context, callable, getOptions(callable))
+                val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(callable))
+                addCallableSymbolToCompletion(context, callable, options, scopeKind = null)
             }
     }
 
     protected fun KtAnalysisSession.collectDotCompletionForCallableReceiver(
-        implicitScopes: KtScope,
+        scopeContext: KtScopeContext,
         explicitReceiver: KtExpression,
         context: WeighingContext,
         extensionChecker: ExtensionApplicabilityChecker,
@@ -244,7 +250,7 @@ internal open class FirCallableCompletionContributor(
             collectDotCompletionForCallableReceiver(
                 smartCastInfo.smartCastType,
                 visibilityChecker,
-                implicitScopes,
+                scopeContext,
                 extensionChecker,
                 context,
                 allowSyntheticJavaProperties,
@@ -253,11 +259,11 @@ internal open class FirCallableCompletionContributor(
             )
         }
 
-        val receiverType = explicitReceiver.getKtType() ?: return
+        val receiverType = explicitReceiver.getKtType().takeUnless { it is KtErrorType } ?: return
         collectDotCompletionForCallableReceiver(
             receiverType,
             visibilityChecker,
-            implicitScopes,
+            scopeContext,
             extensionChecker,
             context,
             allowSyntheticJavaProperties
@@ -267,39 +273,43 @@ internal open class FirCallableCompletionContributor(
     private fun KtAnalysisSession.collectDotCompletionForCallableReceiver(
         typeOfPossibleReceiver: KtType,
         visibilityChecker: CompletionVisibilityChecker,
-        implicitScopes: KtScope,
+        scopeContext: KtScopeContext,
         extensionChecker: ExtensionApplicabilityChecker,
         context: WeighingContext,
         allowSyntheticJavaProperties: Boolean = true,
         explicitReceiverTypeHint: KtType? = null
     ) {
-        val possibleReceiverScope = typeOfPossibleReceiver.getTypeScope()?.getDeclarationScope() ?: return
-        val syntheticJavaPropertiesScope = if (allowSyntheticJavaProperties) {
-            typeOfPossibleReceiver.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
-        } else null
-
-        val nonExtensionMembers = collectNonExtensions(
-            possibleReceiverScope,
-            syntheticJavaPropertiesScope,
+        val nonExtensionMembers = collectNonExtensionsForType(
+            typeOfPossibleReceiver,
             visibilityChecker,
-            scopeNameFilter
+            scopeNameFilter,
+            excludeEnumEntries,
+            withSyntheticJavaProperties = allowSyntheticJavaProperties
         ) { filter(it) }
-        val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
+        val extensionNonMembers = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker)
 
-        nonExtensionMembers.forEach {
-            addCallableSymbolToCompletion(context, it, getOptions(it), explicitReceiverTypeHint = explicitReceiverTypeHint)
+        nonExtensionMembers.forEach { (symbol, scopeKind) ->
+            addCallableSymbolToCompletion(
+                context,
+                symbol,
+                getOptions(symbol),
+                scopeKind,
+                explicitReceiverTypeHint = explicitReceiverTypeHint
+            )
         }
 
         // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
         // equal to the same symbols from top level without substitution.
         val extensionMembers = mutableSetOf<CallableId>()
-        extensionNonMembers.forEach { (symbol, applicabilityResult) ->
+        extensionNonMembers.forEach { (symbolWithScopeKind, applicabilityResult) ->
+            val (symbol, scopeKind) = symbolWithScopeKind
             getExtensionOptions(symbol, applicabilityResult)?.let {
                 symbol.callableIdIfNonLocal?.let(extensionMembers::add)
                 addCallableSymbolToCompletion(
                     context,
                     symbol,
                     it,
+                    scopeKind,
                     applicabilityResult.substitutor,
                     explicitReceiverTypeHint = explicitReceiverTypeHint
                 )
@@ -308,7 +318,15 @@ internal open class FirCallableCompletionContributor(
 
         collectTopLevelExtensionsFromIndices(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
             .filter { it.callableIdIfNonLocal !in extensionMembers && filter(it) }
-            .forEach { addCallableSymbolToCompletion(context, it, getOptions(it), explicitReceiverTypeHint = explicitReceiverTypeHint) }
+            .forEach {
+                addCallableSymbolToCompletion(
+                    context,
+                    it,
+                    getOptions(it),
+                    scopeKind = null,
+                    explicitReceiverTypeHint = explicitReceiverTypeHint
+                )
+            }
     }
 
     private fun KtAnalysisSession.collectTopLevelExtensionsFromIndices(
@@ -329,6 +347,16 @@ internal open class FirCallableCompletionContributor(
             .filter { visibilityChecker.isVisible(it) }
             .filter { extensionChecker.checkApplicability(it) is KtExtensionApplicabilityResult.Applicable }
     }
+
+    private fun KtAnalysisSession.collectSuitableExtensions(
+        scopeContext: KtScopeContext,
+        hasSuitableExtensionReceiver: ExtensionApplicabilityChecker,
+        visibilityChecker: CompletionVisibilityChecker,
+    ): Sequence<Pair<KtSymbolWithContainingScopeKind<KtCallableSymbol>, KtExtensionApplicabilityResult.Applicable>> =
+        scopeContext.scopes.asSequence().flatMap { scopeWithKind ->
+            val extensions = collectSuitableExtensions(scopeWithKind.scope, hasSuitableExtensionReceiver, visibilityChecker)
+            extensions.map { (symbol, applicability) -> KtSymbolWithContainingScopeKind(symbol, scopeWithKind.kind) to applicability }
+        }
 
     private fun KtAnalysisSession.collectSuitableExtensions(
         scope: KtScope,
@@ -368,7 +396,7 @@ internal class FirCallableReferenceCompletionContributor(
     }
 
     override fun KtAnalysisSession.collectDotCompletion(
-        implicitScopes: KtScope,
+        scopeContext: KtScopeContext,
         explicitReceiver: KtExpression,
         context: WeighingContext,
         extensionChecker: ExtensionApplicabilityChecker,
@@ -377,32 +405,34 @@ internal class FirCallableReferenceCompletionContributor(
         val allowSyntheticJavaProperties =
             explicitReceiver.languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
 
-        when (val resolved = explicitReceiver.reference()?.resolveToSymbol()) {
+        when (val symbol = explicitReceiver.reference()?.resolveToSymbol()) {
             is KtPackageSymbol -> return
             is KtNamedClassOrObjectSymbol -> {
-                val memberScope = listOfNotNull(
-                    resolved.getMemberScope(),
-                    resolved.companionObject?.getMemberScope(),
-                    resolved.getStaticMemberScope()
-                ).asCompositeScope()
-
-                val syntheticJavaPropertiesScope = if (allowSyntheticJavaProperties) {
-                    resolved.buildSelfClassType().getSyntheticJavaPropertiesScope()?.getDeclarationScope()
-                } else null
-
-                val nonExtensionMembers = collectNonExtensions(
-                    memberScope,
-                    syntheticJavaPropertiesScope,
+                val type = symbol.buildSelfClassType()
+                val nonExtensionMembers = collectNonExtensionsForType(
+                    type,
                     visibilityChecker,
-                    scopeNameFilter
+                    scopeNameFilter,
+                    excludeEnumEntries,
+                    withSyntheticJavaProperties = allowSyntheticJavaProperties
                 ) { filter(it) }
 
-                nonExtensionMembers.forEach { addCallableSymbolToCompletion(context.withoutExpectedType(), it, getOptions(it)) }
+                val staticScope = listOfNotNull(symbol.companionObject?.getMemberScope(), symbol.getStaticMemberScope()).asCompositeScope()
+                val staticMembers = collectNonExtensionsFromScope(
+                    staticScope,
+                    visibilityChecker,
+                    scopeNameFilter,
+                    excludeEnumEntries
+                ) { filter(it) }.map { KtSymbolWithContainingScopeKind(it, scopeKind = null) }
+
+                (nonExtensionMembers + staticMembers).forEach { (callableSymbol, scopeKind) ->
+                    addCallableSymbolToCompletion(context.withoutExpectedType(), callableSymbol, getOptions(callableSymbol), scopeKind)
+                }
             }
 
             else -> {
                 collectDotCompletionForCallableReceiver(
-                    implicitScopes,
+                    scopeContext,
                     explicitReceiver,
                     context,
                     extensionChecker,

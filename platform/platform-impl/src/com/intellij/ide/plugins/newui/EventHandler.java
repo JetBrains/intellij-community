@@ -52,7 +52,7 @@ public abstract class EventHandler {
   public void initialSelection(boolean scrollAndFocus) {
   }
 
-  public @NotNull List<? extends ListPluginComponent> getSelection() {
+  public @NotNull List<ListPluginComponent> getSelection() {
     return List.of();
   }
 
@@ -63,7 +63,7 @@ public abstract class EventHandler {
   public void setSelection(@NotNull ListPluginComponent component, boolean scrollAndFocus) {
   }
 
-  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
+  public void setSelection(@NotNull List<ListPluginComponent> components) {
   }
 
   public void updateSelection() {

@@ -2,14 +2,17 @@
 package com.intellij.codeInspection.tests.test.junit
 
 import com.intellij.codeInspection.test.junit.JUnit5AssertionsConverterInspection
-import com.intellij.codeInspection.tests.UastInspectionTestBase
+import com.intellij.codeInspection.tests.JvmInspectionTestBase
+import com.intellij.codeInspection.tests.test.addHamcrestLibrary
+import com.intellij.codeInspection.tests.test.addJUnit4Library
+import com.intellij.codeInspection.tests.test.addJUnit5Library
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
-abstract class JUnit5AssertionsConverterInspectionTestBase : UastInspectionTestBase() {
+abstract class JUnit5AssertionsConverterInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = JUnit5AssertionsConverterInspection()
 
   protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {

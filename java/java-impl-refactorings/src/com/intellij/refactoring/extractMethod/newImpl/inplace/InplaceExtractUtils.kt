@@ -97,9 +97,13 @@ object InplaceExtractUtils {
     if (!checkIdentifierName(editor, file, variableRange)) {
       return false
     }
-    val reference = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiReferenceExpression::class.java, false)
-    val resolvedElements = reference?.multiResolve(false)
-    if (resolvedElements?.size != 1) {
+    val identifier = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiIdentifier::class.java, false)
+    val parent = identifier?.parent
+    if (parent is PsiReferenceExpression && parent.multiResolve(false).size != 1) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("extract.method.error.method.conflict"))
+      return false
+    }
+    if (parent is PsiMethod && parent.containingClass?.findMethodsBySignature(parent, true).orEmpty().size > 1) {
       showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("extract.method.error.method.conflict"))
       return false
     }
@@ -125,11 +129,11 @@ object InplaceExtractUtils {
     val name = editor.document.getText(variableRange)
     val containingClass = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiClass::class.java, false)
     val conflictsInParentClasses = generateSequence(containingClass?.containingClass) { parentClass -> parentClass.containingClass }
-      .map { parentClass -> parentClass.findInnerClassByName(name, false) }
+      .mapNotNull { parentClass -> parentClass.findInnerClassByName(name, false) }
       .toList()
     val conflictsInSameClass = PsiTreeUtil.findChildrenOfType(file, PsiClass::class.java).filter { psiClass -> psiClass.name == name }
     if (conflictsInSameClass.size + conflictsInParentClasses.size > 1) {
-      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.class.already.defined"))
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.class.already.defined", name))
       return false
     }
     return true
@@ -301,11 +305,13 @@ object InplaceExtractUtils {
     return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
 
-  fun createPreview(editor: Editor, methodRange: TextRange, methodOffset: Int, callRange: TextRange, callOffset: Int): EditorCodePreview {
+  fun createPreview(editor: Editor, methodRange: TextRange, methodOffset: Int, callRange: TextRange?, callOffset: Int?): EditorCodePreview {
     val codePreview = EditorCodePreview.create(editor)
     val highlighting = createInsertedHighlighting(editor, methodRange)
     Disposer.register(codePreview, highlighting)
-    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange), callOffset)
+    if (callRange != null && callOffset != null) {
+      addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange), callOffset)
+    }
     addPreview(codePreview, editor, getLinesFromTextRange(editor.document, methodRange).trim(4), methodOffset)
     return codePreview
   }

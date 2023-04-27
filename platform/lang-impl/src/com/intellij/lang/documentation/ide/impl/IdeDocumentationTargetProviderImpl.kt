@@ -12,7 +12,7 @@ import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.psi.PsiFile
 import com.intellij.util.asSafely
 

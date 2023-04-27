@@ -21,16 +21,24 @@ public interface ToolWindowId {
   String FIND = "Find";
   String HIERARCHY = "Hierarchy";
   String TODO_VIEW = "TODO";
-  String DEPENDENCIES = "Dependency Viewer";
+  String ANALYZE_DEPENDENCIES = "Dependency Viewer";
+  String BUILD_DEPENDENCIES = "Dependencies";
   String VCS = "Version Control";
   String COMMIT = "Commit";
   String MODULES_DEPENDENCIES = "Module Dependencies";
   String DUPLICATES = "Duplicates";
   String EXTRACT_METHOD = "Extract Method";
+  /**
+   * @deprecated Not used in v2.
+   * Consider using {@link com.intellij.platform.backend.documentation.DocumentationResult#asyncDocumentation}
+   * instead of accessing the tool window directly.
+   */
+  @Deprecated(forRemoval = true)
   String DOCUMENTATION = "Documentation";
   String TASKS = "Time Tracking";
   String DATABASE_VIEW = "Database";
   String PREVIEW = "Preview";
   String SERVICES = "Services";
   String ENDPOINTS = "Endpoints";
+  String MEET_NEW_UI = "Meet New UI";
 }

@@ -12,7 +12,6 @@ import com.intellij.build.events.MessageEventResult
 import com.intellij.build.events.impl.*
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.execution.ExecutionException
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -20,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -39,7 +37,6 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.q
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.jetbrains.idea.maven.server.CannotStartServerException
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -267,7 +264,7 @@ class MavenSyncConsole(private val myProject: Project) {
         addBuildIssue(buildIssueException.buildIssue, MessageEvent.Kind.ERROR)
       }
       else {
-        mySyncView.onEvent(mySyncId, createMessageEvent(e))
+        mySyncView.onEvent(mySyncId, createMessageEvent(myProject, mySyncId, e))
       }
 
     }
@@ -276,33 +273,6 @@ class MavenSyncConsole(private val myProject: Project) {
       this.addException(e, progressListener)
       this.finishImport()
     }
-  }
-
-  private fun createMessageEvent(e: Throwable): MessageEventImpl {
-    val csse = ExceptionUtil.findCause(e, CannotStartServerException::class.java)
-    if (csse != null) {
-      val cause = ExceptionUtil.findCause(csse, ExecutionException::class.java)
-      if (cause != null) {
-        return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
-                                getExceptionText(cause), getExceptionText(cause))
-      }
-      else {
-        return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
-                                getExceptionText(csse), getExceptionText(csse))
-      }
-    }
-    return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.error"),
-                            getExceptionText(e), getExceptionText(e))
-  }
-
-
-  private fun getExceptionText(e: Throwable): @NlsSafe String {
-    if (MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().isPrintErrorStackTraces) {
-      return ExceptionUtil.getThrowableText(e)
-    }
-
-    if (!e.localizedMessage.isNullOrEmpty()) return e.localizedMessage
-    return if (StringUtil.isEmpty(e.message)) SyncBundle.message("build.event.title.error") else e.message!!
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
@@ -456,7 +426,8 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   fun showQuickFixBadMaven(message: String, kind: MessageEvent.Kind) {
-    val bundledVersion = MavenServerManager.getMavenVersion(MavenServerManager.BUNDLED_MAVEN_3)
+    val bundledVersion = MavenUtil.getMavenVersionByMavenHome(
+      MavenServerManager.BUNDLED_MAVEN_3)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
       override val title = SyncBundle.message("maven.sync.version.issue.title")
       override val description: String = "${message}\n" +

@@ -1,14 +1,15 @@
 <html>
 <body>
-Reports array declarations written in C-style syntax in which the array indicator brackets
-  are placed after the variable name or after the method parameter list.
-<p>Example:</p>
+Reports array declarations written in C-style syntax, where the array brackets
+  are placed after a variable name or after a method parameter list.
+Most code styles prefer Java-style array declarations, where the array brackets are placed after the type name.
+<p><b>Example:</b></p>
 <pre><code>
   <b>public</b> String process(String value[])[] {
     return value;
   }
 </code></pre>
-<p>Most code styles prefer Java-style array declarations in which the array indicator brackets are attached to the type name, for example:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   <b>public</b> String[] process(String[] value) {
     return value;

@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.importing
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.junit.Test
 
 @Suppress("GrUnresolvedAccess")
@@ -12,10 +12,9 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
   @Test
   fun `test build script errors on Build`() {
     createSettingsFile("include 'api', 'impl', 'brokenProject' ")
-    createProjectSubFile("impl/build.gradle",
-                         buildscript {
-                           addImplementationDependency(project(":api"))
-                         })
+    createBuildFile("impl") {
+      addImplementationDependency(project(":api"))
+    }
     createProjectSubFile("api/src/main/java/my/pack/Api.java",
                          "package my.pack;\n" +
                          "public interface Api {\n" +

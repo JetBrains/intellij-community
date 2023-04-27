@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.actions.ShowCommitOptionsAction
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -101,7 +102,13 @@ abstract class NonModalCommitPanel(
   override fun getComponent(): JComponent = this
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
-  override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
+  override fun getData(dataId: String): Any? {
+    if (VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId)) {
+      return this
+    }
+    return getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
+  }
+
   fun getDataFromProviders(dataId: String): Any? {
     for (dataProvider in dataProviders) {
       return dataProvider.getData(dataId) ?: continue

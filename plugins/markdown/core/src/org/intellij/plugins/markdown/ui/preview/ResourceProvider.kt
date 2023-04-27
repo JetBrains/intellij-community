@@ -54,7 +54,8 @@ interface ResourceProvider {
     /**
      * Shared instance of [DefaultResourceProvider].
      */
-    internal val default: ResourceProvider = DefaultResourceProvider()
+    @Deprecated("Create dedicated instance of DefaultResourceProvider instead.", ReplaceWith("DefaultResourceProvider()"))
+    val default: ResourceProvider = DefaultResourceProvider()
 
     fun aggregating(vararg providers: ResourceProvider): ResourceProvider {
       return AggregatingResourceProvider(providers)

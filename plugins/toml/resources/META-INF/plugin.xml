@@ -5,7 +5,7 @@
     <category>Languages</category>
 
     <description><![CDATA[
-      TOML language support
+      Adds support for the <a href="https://toml.io/en/">TOML</a> configuration file syntax.
     ]]></description>
 
     <dependencies>

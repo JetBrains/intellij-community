@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.application.options.XmlSettings;
@@ -1048,8 +1048,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     text = "<!DOCTYPE schema [ <!ENTITY RelativeURL  \"[^:#/\\?]*(:{0,0}|[#/\\?].*)\">";
     xmlHighlighter.setText(text);
     iterator = xmlHighlighter.createIterator(53);
-    assertSame("Xml attribute value", XmlTokenType.XML_DATA_CHARACTERS, iterator.getTokenType());
-    assertEquals(41, iterator.getStart());
+    assertSame("Xml unfinished markup declaration", XmlElementType.XML_MARKUP_DECL, iterator.getTokenType());
+    assertEquals(17, iterator.getStart());
     assertEquals(70, iterator.getEnd());
 
     //              10        20        30        40          50        60

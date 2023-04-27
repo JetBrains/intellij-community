@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -19,7 +19,7 @@ data class JsonScanningStatistics(
   val scanningTime: JsonDuration = JsonDuration(0),
   val timeProcessingUpToDateFiles: JsonDuration = JsonDuration(0),
   val timeUpdatingContentLessIndexes: JsonDuration = JsonDuration(0),
-  val timeIndexingWithoutContent: JsonDuration = JsonDuration(0),
+  val timeIndexingWithoutContentViaInfrastructureExtension: JsonDuration = JsonDuration(0),
 
   /**
    * Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpProviderRootPaths] is enabled.

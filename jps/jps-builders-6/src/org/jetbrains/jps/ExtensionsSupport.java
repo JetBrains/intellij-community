@@ -26,7 +26,7 @@ public final class ExtensionsSupport<T> {
       return cached;
     }
     final ServiceLoader<T> loader = ServiceLoader.load(myExtensionClass, myExtensionClass.getClassLoader());
-    final List<T> extensions = new ArrayList<T>();
+    final List<T> extensions = new ArrayList<>();
     for (T extension : loader) {
       extensions.add(extension);
     }

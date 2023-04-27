@@ -7,7 +7,10 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.ide.impl.DataValidators
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
@@ -17,12 +20,14 @@ import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignC
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
@@ -35,7 +40,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
-import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.BoxLayout
 import javax.swing.JComponent
@@ -51,7 +55,7 @@ import javax.swing.SwingConstants
 open class EditorComposite internal constructor(
   val file: VirtualFile,
   editorsWithProviders: List<FileEditorWithProvider>,
-  private val project: Project,
+  internal val project: Project,
 ) : FileEditorComposite, Disposable {
   private val clientId: ClientId
 
@@ -171,7 +175,10 @@ open class EditorComposite internal constructor(
     get() = allProviders.toTypedArray()
 
   override val allProviders: List<FileEditorProvider>
-    get() = allEditorsWithProviders.map { it.provider }
+    get() = providerSequence.toList()
+
+  internal val providerSequence: Sequence<FileEditorProvider>
+    get() = editorsWithProviders.asSequence().map { it.provider }
 
   private fun createTabbedPaneWrapper(component: EditorCompositePanel?): TabbedPaneWrapper {
     val descriptor = PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB)
@@ -225,7 +232,7 @@ open class EditorComposite internal constructor(
         ClientProperty.put(it, JBTabsImpl.PINNED, if (field) true else null)
       }
       if (pinned != oldPinned) {
-        dispatcher.multicaster.isPinnedChanged(pinned)
+        dispatcher.multicaster.isPinnedChanged(this, pinned)
       }
     }
 
@@ -236,7 +243,7 @@ open class EditorComposite internal constructor(
     set(preview) {
       if (preview != field) {
         field = preview
-        dispatcher.multicaster.isPreviewChanged(preview)
+        dispatcher.multicaster.isPreviewChanged(this, preview)
       }
     }
 
@@ -273,7 +280,7 @@ open class EditorComposite internal constructor(
     get() = allEditors.toTypedArray()
 
   override val allEditors: List<FileEditor>
-    get() = allEditorsWithProviders.map { it.fileEditor }
+    get() = editorsWithProviders.map { it.fileEditor }
 
   val allEditorsWithProviders: List<FileEditorWithProvider>
     get() = java.util.List.copyOf(editorsWithProviders)
@@ -476,6 +483,7 @@ private class EditorCompositePanel(realComponent: JComponent,
 
   override fun getData(dataId: String): Any? {
     return when {
+      CommonDataKeys.PROJECT.`is`(dataId) -> composite.project
       PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> composite.selectedEditor
       CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> composite.file
       CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> arrayOf(composite.file)
@@ -493,7 +501,7 @@ private class EditorCompositePanel(realComponent: JComponent,
   }
 }
 
-private class TopBottomPanel : JBPanelWithEmptyText() {
+private class TopBottomPanel : JPanel() {
   init {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
   }

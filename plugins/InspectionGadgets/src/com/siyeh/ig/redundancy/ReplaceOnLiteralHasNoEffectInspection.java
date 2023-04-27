@@ -44,7 +44,7 @@ public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocal
         holder.registerProblem(call, InspectionGadgetsBundle.message("inspection.replace.on.literal.display.name"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                TextRange.create(refName.getTextRangeInParent().getStartOffset(), call.getTextLength()),
-                               ExpressionUtils.isVoidContext(call) ? null : new ReplaceWithQualifierFix());
+                               ExpressionUtils.isVoidContext(call) ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{new ReplaceOnLiteralWithQualifierFix()});
       }
 
       private boolean isRedundant(@NotNull String str, PsiExpression pattern, boolean literalMatch) {
@@ -91,7 +91,7 @@ public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocal
     };
   }
 
-  private static class ReplaceWithQualifierFix implements LocalQuickFix {
+  private static class ReplaceOnLiteralWithQualifierFix implements LocalQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.redundant.string.fix.family.name");

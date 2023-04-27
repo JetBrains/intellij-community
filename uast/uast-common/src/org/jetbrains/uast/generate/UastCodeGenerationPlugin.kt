@@ -97,6 +97,23 @@ interface UastCodeGenerationPlugin {
    * Kotlin property is initialized with the parameter.
    */
   fun initializeField(uField: UField, uParameter: UParameter): UExpression?
+  
+  /**
+   * Creates new return expression with changed return label for Explicit return expression (for Kotlin)
+   *
+   * Example:
+   * ```
+   * return@map { ... }
+   * ```
+   * Becomes:
+   * ```
+   * return@handle { ... }
+   * ```
+   * @param returnExpression the initial return expression
+   * @param context new context in which return is used (label is calculated due to this context)
+   * @return new return expression with changed label if return is explicit, otherwise same expression if return is implicit 
+   */
+  fun changeLabel(returnExpression: UReturnExpression, context: PsiElement) : UReturnExpression
 }
 
 /**
@@ -180,13 +197,17 @@ data class UParameterInfo(val type: PsiType?, val suggestedName: String?)
 infix fun String?.ofType(type: PsiType?): UParameterInfo = UParameterInfo(type, this)
 
 @ApiStatus.Experimental
-inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
-  UastCodeGenerationPlugin.byLanguage(this.lang)
+inline fun <reified T : UElement> UElement.replace(newElement: T): T? {
+  if (this == newElement) return newElement
+
+  return UastCodeGenerationPlugin.byLanguage(this.lang)
     ?.replace(this, newElement, T::class.java).also {
       if (it == null) {
         logger<UastCodeGenerationPlugin>().warn("failed replacing the $this with $newElement")
       }
     }
+}
+
 
 fun UReferenceExpression.bindToElement(element: PsiElement): PsiElement? =
   UastCodeGenerationPlugin.byLanguage(this.lang)?.bindToElement(this, element)

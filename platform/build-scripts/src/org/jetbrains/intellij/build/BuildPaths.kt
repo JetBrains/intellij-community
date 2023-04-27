@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.io.FileUtilRt
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 
 /**
  * All paths are absolute and use '/' as a separator
@@ -49,7 +50,10 @@ abstract class BuildPaths(
   /**
    * Path to a directory where temporary files required for a particular build step can be stored
    */
-  val tempDir: Path = buildOutputDir.resolve("temp")
+  val tempDir: Path
+    get() {
+      return buildOutputDir.resolve("temp").createDirectories()
+    }
 
   /**
    * Path to a directory where temporary files required for a particular build step can be stored

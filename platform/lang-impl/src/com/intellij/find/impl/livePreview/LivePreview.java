@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -328,7 +329,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       } else if (needsAdditionalHighlighting) {
         RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
                                                                 new TextAttributes(null, null,
-                                                                                   Color.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN));
+                                                                                   JBColor.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN));
         highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
       }
     }
@@ -392,7 +393,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   private RangeHighlighter addHighlighter(int startOffset, int endOffset, @NotNull TextAttributes attributes) {
     Project project = mySearchResults.getProject();
-    if (project == null || project.isDisposed()) return null;
+    if (project.isDisposed()) return null;
     List<RangeHighlighter> sink = new ArrayList<>();
     HighlightManager.getInstance(project).addRangeHighlight(mySearchResults.getEditor(), startOffset, endOffset, attributes, false, sink);
     RangeHighlighter result = ContainerUtil.getFirstItem(sink);
@@ -402,7 +403,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   private void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     Project project = mySearchResults.getProject();
-    if (project == null || project.isDisposed()) return;
+    if (project.isDisposed()) return;
     HighlightManager.getInstance(project).removeSegmentHighlighter(mySearchResults.getEditor(), highlighter);
   }
 
@@ -441,7 +442,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
       Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
       Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
-      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y + myEditor.getLineHeight());
+      Point point = new Point((startPoint.x + endPoint.x)/2, endPoint.y + myEditor.getLineHeight());
 
       return new RelativePoint(myEditor.getContentComponent(), point);
     }

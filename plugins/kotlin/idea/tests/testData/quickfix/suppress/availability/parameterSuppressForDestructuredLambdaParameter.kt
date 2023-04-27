@@ -17,3 +17,5 @@ fun test() {
     foo { (<caret>a, b) ->
     }
 }
+
+// IGNORE_FIR

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
@@ -6,10 +6,13 @@ import com.intellij.find.actions.FindInPathAction;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -62,14 +65,6 @@ public final class ReplaceInProjectManager {
 
   public ReplaceInProjectManager(Project project) {
     myProject = project;
-  }
-
-  private static boolean hasReadOnlyUsages(final Collection<? extends Usage> usages) {
-    for (Usage usage : usages) {
-      if (usage.isReadOnly()) return true;
-    }
-
-    return false;
   }
 
   static class ReplaceContext {
@@ -180,7 +175,7 @@ public final class ReplaceInProjectManager {
 
     @Override
     public KeyboardShortcut getShortcut() {
-      return ActionManager.getInstance().getKeyboardShortcut("ReplaceInPath");
+      return ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_REPLACE_IN_PATH);
     }
 
     @Override
@@ -221,8 +216,7 @@ public final class ReplaceInProjectManager {
         public void findingUsagesFinished(final UsageView usageView) {
           if (context[0] != null && !processPresentation.isShowFindOptionsPrompt()) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              replaceUsagesUnderCommand(context[0], usageView.getUsages());
-              context[0].invalidateExcludedSetCache();
+              replaceUsagesUnderCommand(context[0], usageView.getUsages(), true);
             }, myProject.getDisposed());
           }
         }
@@ -268,7 +262,7 @@ public final class ReplaceInProjectManager {
           replaceContext.getFindModel().getStringToFind(),
           String.valueOf(files.size()),
           replaceContext.getFindModel().getStringToReplace())) {
-          replaceUsagesUnderCommand(replaceContext, usages);
+          replaceUsagesUnderCommand(replaceContext, usages, true);
         }
       }
 
@@ -289,7 +283,7 @@ public final class ReplaceInProjectManager {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        replaceUsagesUnderCommand(replaceContext, getSelectedUsages());
+        replaceUsagesUnderCommand(replaceContext, getSelectedUsages(), false);
       }
 
       @Override
@@ -316,10 +310,6 @@ public final class ReplaceInProjectManager {
   }
 
   private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<? extends Usage> usages) {
-    if (!ensureUsagesWritable(replaceContext, usages)) {
-      return true;
-    }
-
     int[] replacedCount = {0};
     boolean[] success = {true};
     boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
@@ -378,10 +368,12 @@ public final class ReplaceInProjectManager {
     }
   }
 
-  public boolean replaceUsage(@NotNull final Usage usage,
-                              @NotNull final FindModel findModel,
-                              @NotNull final Set<Usage> excludedSet,
-                              final boolean justCheck)
+  public boolean replaceSingleUsage(@NotNull Usage usage, @NotNull FindModel findModel, @NotNull Set<Usage> excludedSet)
+    throws FindManager.MalformedReplacementStringException {
+    return ensureUsagesWritable(Collections.singleton(usage)) && replaceUsage(usage, findModel, excludedSet, false);
+  }
+
+  public boolean replaceUsage(@NotNull Usage usage, @NotNull FindModel findModel, @NotNull Set<Usage> excludedSet, boolean justCheck)
     throws FindManager.MalformedReplacementStringException {
     final Ref<FindManager.MalformedReplacementStringException> exceptionResult = Ref.create();
     final boolean result = WriteAction.compute(() -> {
@@ -443,7 +435,8 @@ public final class ReplaceInProjectManager {
     return true;
   }
 
-  private void replaceUsagesUnderCommand(@NotNull final ReplaceContext replaceContext, @NotNull final Set<? extends Usage> usagesSet) {
+  private void replaceUsagesUnderCommand(@NotNull ReplaceContext replaceContext, @NotNull Set<? extends Usage> usagesSet,
+                                         boolean replaceAll) {
     if (usagesSet.isEmpty()) {
       return;
     }
@@ -451,44 +444,45 @@ public final class ReplaceInProjectManager {
     final List<Usage> usages = new ArrayList<>(usagesSet);
     usages.sort(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
 
-    if (!ensureUsagesWritable(replaceContext, usages)) return;
+    if (!ensureUsagesWritable(usages)) return;
 
-    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+    Runnable runnable = () -> {
       final boolean success = replaceUsages(replaceContext, usages);
       final UsageView usageView = replaceContext.getUsageView();
 
       if (closeUsageViewIfEmpty(usageView, success)) return;
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true));
-    }, FindBundle.message("find.replace.command"), null);
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+        () -> IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true));
+    };
+    if (replaceAll) {
+      FindModel findModel = replaceContext.getFindModel();
+      LocalHistoryAction action =
+        LocalHistory.getInstance().startAction(FindBundle.message("find.in.files.replace.all.local.history.action",
+                                                                  findModel.getStringToFind(),
+                                                                  findModel.getStringToReplace(),
+                                                                  FindInProjectUtil.getTitleForScope(findModel)));
+      try {
+        CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
+      }
+      finally {
+        action.finish();
+      }
+    }
+    else {
+      CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
+    }
 
     replaceContext.invalidateExcludedSetCache();
   }
 
-  private boolean ensureUsagesWritable(ReplaceContext replaceContext, Collection<? extends Usage> selectedUsages) {
-    Set<VirtualFile> readOnlyFiles = null;
-    for (final Usage usage : selectedUsages) {
+  private boolean ensureUsagesWritable(Collection<? extends Usage> selectedUsages) {
+    Set<VirtualFile> files = new HashSet<>();
+    for (Usage usage : selectedUsages) {
       final VirtualFile file = ((UsageInFile)usage).getFile();
-
-      if (file != null && !file.isWritable()) {
-        if (readOnlyFiles == null) readOnlyFiles = new HashSet<>();
-        readOnlyFiles.add(file);
-      }
+      files.add(file);
     }
 
-    if (readOnlyFiles != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyFiles);
-    }
-
-    if (hasReadOnlyUsages(selectedUsages)) {
-      int result = Messages.showOkCancelDialog(replaceContext.getUsageView().getComponent(),
-                                               FindBundle.message("find.replace.occurrences.in.read.only.files.prompt"),
-                                               FindBundle.message("find.replace.occurrences.in.read.only.files.title"),
-                                               Messages.getWarningIcon());
-      if (result != Messages.OK) {
-        return false;
-      }
-    }
-    return true;
+    return !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files).hasReadonlyFiles();
   }
 
   private boolean closeUsageViewIfEmpty(UsageView usageView, boolean success) {

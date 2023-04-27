@@ -2,15 +2,17 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.junit.jupiter.params.ParameterizedTest
 import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODEL_FQN
 import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODULE_FQN
 import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_MODULE_IML_FQN
 import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDEA_PROJECT_FQN
 import org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor.Companion.IDE_XML_MERGER_FQN
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.IDEA_PLUGIN_PROJECT
+import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.junit.jupiter.params.ParameterizedTest
 
 class GradleIdeaPluginTest : GradleCodeInsightTestCase() {
 
@@ -60,6 +62,18 @@ class GradleIdeaPluginTest : GradleCodeInsightTestCase() {
     test(gradleVersion, IDEA_PLUGIN_PROJECT) {
       testBuildscript(decorator, "idea { module { iml { <caret> } } }") {
         closureDelegateTest(IDEA_MODULE_IML_FQN, 1)
+      }
+    }
+  }
+
+  companion object {
+
+    private val IDEA_PLUGIN_PROJECT = GradleTestFixtureBuilder.create("GradleIdeaPluginTest") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("GradleIdeaPluginTest")
+      }
+      withBuildFile(gradleVersion) {
+        withIdeaPlugin()
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -20,12 +20,11 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.text.Formats;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -33,22 +32,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PlatformNioHelper;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.NamedColorUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.DocumentEvent;
+import javax.swing.event.*;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -74,22 +72,25 @@ import static java.awt.GridBagConstraints.*;
 
 final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implements FileChooserPanel, Disposable {
   private static final Logger LOG = Logger.getInstance(FileChooserPanelImpl.class);
+  private static final String PROJECT_DIR_DETECTION_PROPERTY = "idea.chooser.lookup.for.project.dirs";
   private static final String SEPARATOR = "!/";
   private static final CoreLocalFileSystem FS = new CoreLocalFileSystem();
+  private static final String OPEN = "open";
 
   private final FileTypeRegistry myRegistry;
   private final FileChooserDescriptor myDescriptor;
   private final Runnable myCallback;
-  private final @NotNull Consumer<? super @Nullable @DialogMessage String> myErrorSink;
+  private final Consumer<@Nullable @DialogMessage String> myErrorSink;
   private final @Nullable WatchService myWatcher;
   private final Map<Path, FileSystem> myOpenFileSystems;
 
   private final ComboBox<PathWrapper> myPath;
-  private final SortedListModel<FsItem> myModel;
-  private final JBList<FsItem> myList;
+  private final ListTableModel<FsItem> myModel;
+  private final TableView<FsItem> myList;
   private boolean myShowPathBar;
   private boolean myPathBarActive;
   private volatile boolean myShowHiddenFiles;
+  private volatile boolean myDetectProjectDirectories;
 
   private final Object myLock = new String("file.chooser.panel.lock");
   private int myCounter = 0;
@@ -98,10 +99,13 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private @Nullable Path myCurrentDirectory;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private final List<FsItem> myCurrentContent = new ArrayList<>();
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private @Nullable WatchKey myWatchKey;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private final List<@Nullable Path> myHistory = new ArrayList<>();
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private int myHistoryIndex = -1;  // points to the last added or used element
+  private volatile boolean myReloadSuppressed = false;
 
   FileChooserPanelImpl(@NotNull FileChooserDescriptor descriptor,
                        @NotNull Runnable callback,
-                       @NotNull Consumer<? super @Nullable @DialogMessage String> errorSink,
+                       @NotNull Consumer<@Nullable @DialogMessage String> errorSink,
                        Path @NotNull [] recentPaths) {
     super(new GridBagLayout());
 
@@ -114,18 +118,44 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     myShowHiddenFiles = descriptor.isShowHiddenFiles();
     myShowPathBar = PropertiesComponent.getInstance().getBoolean(FILE_CHOOSER_SHOW_PATH_PROPERTY, true);
+    myDetectProjectDirectories= PropertiesComponent.getInstance().getBoolean(PROJECT_DIR_DETECTION_PROPERTY, true);
 
     var label = new JLabel(descriptor.getDescription());
 
-    var group = (DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar");
+    var group = new DefaultActionGroup();
+    for (var action : ((DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar")).getChildActionsOrStubs()) {
+      group.addAction(action);
+    }
+    for (var action : ((DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserSettings")).getChildActionsOrStubs()) {
+      group.addAction(action).setAsSecondary(true);
+    }
     var toolBar = ActionManager.getInstance().createActionToolbar("FileChooserDialog", group, true);
+    toolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
     toolBar.setTargetComponent(this);
 
     myPath = new ComboBox<>(Stream.of(recentPaths).map(PathWrapper::new).toArray(PathWrapper[]::new));
     setupPathBar();
 
-    myModel = new SortedListModel<>(FsItem.COMPARATOR);
-    myList = new JBList<>(myModel);
+    var nameColumn = new MyColumnInfo(UIBundle.message("file.chooser.column.name"), 0, FsItem.COMPARATOR) {
+      @Override
+      public String valueOf(FsItem item) {
+        return item.name;
+      }
+    };
+    var sizeColumn = new MyColumnInfo(UIBundle.message("file.chooser.column.size"), 12, Comparator.comparing(item -> item.size)) {
+      @Override
+      public String valueOf(FsItem item) {
+        return item.directory ? "--" : Formats.formatFileSize(item.size);
+      }
+    };
+    var dateColumn = new MyColumnInfo(UIBundle.message("file.chooser.column.date"), 20, Comparator.comparing(item -> item.lastUpdated)) {
+      @Override
+      public String valueOf(FsItem item) {
+        return DateFormatUtil.formatBetweenDates(item.lastUpdated, System.currentTimeMillis());
+      }
+    };
+    myModel = new ListTableModel<>(nameColumn, sizeColumn, dateColumn);
+    myList = new TableView<>(myModel);
     setupDirectoryView();
 
     var scrollPane = ScrollPaneFactory.createScrollPane(myList);
@@ -148,7 +178,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
             var key = watcher.take();
             var events = key.pollEvents();
             key.reset();
-            if (!events.isEmpty()) {
+            if (!events.isEmpty() && !myReloadSuppressed) {
               UIUtil.invokeLaterIfNeeded(() -> {
                 synchronized (myLock) {
                   if (key == myWatchKey && myCurrentDirectory != null) {
@@ -194,15 +224,15 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
     });
     var finder = new LocalFsFinder(false).withBaseDir(null);
-    FileLookup.LookupFilter filter =
+    var filter = (FileLookup.LookupFilter)
       f -> myDescriptor.isFileVisible(new CoreLocalVirtualFile(FS, ((LocalFsFinder.IoFile)f).getFile()), myShowHiddenFiles);
-    new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this) {
+    var ignored = new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this) {
       @Override
       protected void setTextToFile(FileLookup.LookupFile file) {
         super.setTextToFile(file);
         var path = typedPath();
         if (path != null) {
-          load(path, null, 0, false);
+          load(path, null, Set.of());
         }
       }
     };
@@ -214,17 +244,36 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
         var path = typedPath();
         if (path != null) {
-          load(path, null, 0, false);
+          load(path, null, Set.of());
         }
         else if (((String)myPath.getEditor().getItem()).isBlank()) {
-          load(null, null, 0, false);
+          load(null, null, Set.of());
         }
       }
     });
   }
 
+  private @Nullable Path typedPath() {
+    var object = myPath.getEditor().getItem();
+    if (object instanceof PathWrapper wrapper) {
+      return wrapper.path;
+    }
+    if (object instanceof String str && !str.isBlank()) {
+      var path = findByPath(FileUtil.expandUserHome(str.trim()));
+      if (path != null && path.isAbsolute()) {
+        return path;
+      }
+    }
+    return null;
+  }
+
   private void setupDirectoryView() {
-    myList.setCellRenderer(new MyListCellRenderer());
+    myList.getTableHeader().setDefaultRenderer(new MyHeaderCellRenderer(myList.getTableHeader().getDefaultRenderer()));
+    myList.setDefaultRenderer(Object.class, new MyTableCellRenderer(myList.getDefaultRenderer(Object.class)));
+    myList.putClientProperty("Table.isFileList", Boolean.TRUE);
+    myList.resetDefaultFocusTraversalKeys();
+    myList.setShowGrid(false);
+    myList.setColumnSelectionAllowed(false);
     myList.setSelectionMode(myDescriptor.isChooseMultiple() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
     myList.addFocusListener(new FocusAdapter() {
       @Override
@@ -236,69 +285,54 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
-          var idx = myList.locationToIndex(e.getPoint());
+          var idx = myList.rowAtPoint(e.getPoint());
           if (idx >= 0) {
-            openItemAtIndex(idx, e);
+            myList.setRowSelectionInterval(idx, idx);
+            var action = myList.getActionMap().get(OPEN);
+            if (action != null) action.actionPerformed(null);
+            e.consume();
           }
         }
       }
     });
-    myList.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiersEx() == 0) {
-          int[] selection = myList.getSelectedIndices();
-          if (selection.length == 1) {
-            openItemAtIndex(selection[0], e);
-          }
-        }
-      }
-    });
-    new ListSpeedSearch<>(myList);
-    myList.getActionMap().put(ListActions.Left.ID, myList.getActionMap().get(ListActions.Home.ID));
-    myList.getActionMap().put(ListActions.Right.ID, myList.getActionMap().get(ListActions.End.ID));
-    myList.getActionMap().put(FileChooserPanelActions.Root.ID, new AbstractAction() {
+    myList.getActionMap().put(OPEN, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        load(null, myCurrentDirectory, 0, true);
+        openSelectedRow();
       }
     });
-    myList.getActionMap().put(FileChooserPanelActions.LevelUp.ID, new AbstractAction() {
+    myList.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), OPEN);
+    TableSpeedSearch.installOn(myList);
+    myList.getActionMap().put(TableActions.Left.ID, myList.getActionMap().get(TableActions.CtrlHome.ID));
+    myList.getActionMap().put(TableActions.Right.ID, myList.getActionMap().get(TableActions.CtrlEnd.ID));
+    myList.setTransferHandler(new TransferHandler(null) {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myCurrentDirectory != null) {
-          load(parent(myCurrentDirectory), null, UPPER_LEVEL, true);
-        }
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        var items = myList.getSelectedObjects();
+        return items.isEmpty() ? null : new TextTransferable(items.stream().map(item -> item.name).collect(Collectors.joining("\n")));
       }
     });
   }
 
-  private @Nullable Path typedPath() {
-    var object = myPath.getEditor().getItem();
-    if (object instanceof PathWrapper) {
-      return ((PathWrapper)object).path;
-    }
-    if (object instanceof String && !((String)object).isBlank()) {
-      var path = findByPath(FileUtil.expandUserHome(((String)object).trim()));
-      if (path != null && path.isAbsolute()) {
-        return path;
+  private void openSelectedRow() {
+    var selection = myList.getSelectedRows();
+    if (selection.length == 1) {
+      var item = myList.getRow(selection[0]);
+      if (item.directory) {
+        load(item.path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR));
+      }
+      else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
+        load(item.path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.INTO_ARCHIVE));
+      }
+      else {
+        myCallback.run();
       }
     }
-    return null;
-  }
-
-  private void openItemAtIndex(int idx, InputEvent e) {
-    FsItem item = myModel.get(idx);
-    if (item.directory) {
-      load(item.path, null, FsItem.UPLINK.equals(item.name) ? UPPER_LEVEL : 0, true);
-    }
-    else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
-      load(item.path, null, INTO_ARCHIVE, true);
-    }
-    else {
-      myCallback.run();
-    }
-    e.consume();
   }
 
   JComponent getPreferredFocusedComponent() {
@@ -310,10 +344,13 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       var path = typedPath();
       return path != null ? List.of(path) : List.of();
     }
+    else if (myList.getSelectedObjects().isEmpty()) {
+      return myCurrentDirectory != null ? List.of(myCurrentDirectory) : List.of();
+    }
     else {
-      return myList.getSelectedValuesList().stream()
+      return myList.getSelectedObjects().stream()
         .filter(r -> r.selectable)
-        .map(r -> FsItem.UPLINK.equals(r.name) ? myCurrentDirectory : r.path)
+        .map(r -> r.path)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
     }
@@ -330,53 +367,95 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       LOG.info("unexpected relative path: " + path);
       path = null;
     }
-    load(path, null, 0, true);
+    load(path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR));
+  }
+
+  @Override
+  public void loadParent() {
+    if (myCurrentDirectory != null) {
+      load(parent(myCurrentDirectory), null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.UPPER_LEVEL));
+    }
+  }
+
+  @Override
+  public boolean hasHistory(boolean backward) {
+    return !myHistory.isEmpty() && (backward ? myHistoryIndex > 0 : myHistoryIndex < myHistory.size() - 1);
+  }
+
+  @Override
+  public void loadHistory(boolean backward) {
+    var path = myHistory.get(backward ? --myHistoryIndex : ++myHistoryIndex);
+    load(path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.KEEP_HISTORY));
   }
 
   @Override
   public void reload(@Nullable Path focusOn) {
     if (focusOn == null) {
-      FsItem value = myList.getSelectedValue();
+      var value = myList.getSelectedObject();
       if (value != null) {
         focusOn = value.path;
       }
     }
     synchronized (myLock) {
-      load(myCurrentDirectory, focusOn, 0, true);
+      load(myCurrentDirectory, focusOn, EnumSet.of(OpenFlags.RELOAD, OpenFlags.UPDATE_PATH_BAR, OpenFlags.KEEP_HISTORY));
     }
   }
 
   @Override
-  public boolean showPathBar() {
+  public void reloadAfter(@SuppressWarnings("BoundedWildcard") @NotNull ThrowableComputable<@Nullable Path, IOException> task) throws IOException {
+    try {
+      myReloadSuppressed = true;
+      reload(task.compute());
+    }
+    finally {
+      myReloadSuppressed = false;
+    }
+  }
+
+  @Override
+  public boolean pathBar() {
     return myShowPathBar;
   }
 
   @Override
-  public void showPathBar(boolean show) {
-    myShowPathBar = show;
-    PropertiesComponent.getInstance().setValue(FILE_CHOOSER_SHOW_PATH_PROPERTY, Boolean.toString(show));
-    myPath.setVisible(show);
-    (show ? myPath : myList).requestFocusInWindow();
+  public boolean togglePathBar() {
+    myShowPathBar = !myShowPathBar;
+    PropertiesComponent.getInstance().setValue(FILE_CHOOSER_SHOW_PATH_PROPERTY, Boolean.toString(myShowPathBar));
+    myPath.setVisible(myShowPathBar);
+    (myShowPathBar ? myPath : myList).requestFocusInWindow();
+    return myShowPathBar;
   }
 
   @Override
-  public boolean showHiddenFiles() {
+  public boolean hiddenFiles() {
     return myShowHiddenFiles;
   }
 
   @Override
-  public void showHiddenFiles(boolean show) {
-    myShowHiddenFiles = show;
+  public boolean toggleHiddenFiles() {
     synchronized (myLock) {
+      myShowHiddenFiles = !myShowHiddenFiles;
       if (myCurrentDirectory != null) {
-        var selection = myList.getSelectedValue();
-        myModel.clear();
-        for (var item : myCurrentContent) {
-          if (show || item.visible) myModel.add(item);
-        }
-        myList.setSelectedValue(selection, true);
+        var selection = myList.getSelectedObject();
+        myModel.setItems(myShowHiddenFiles ? new ArrayList<>(myCurrentContent) : ContainerUtil.filter(myCurrentContent, item -> item.visible));
+        myList.setSelection(selection != null ? List.of(selection) : List.of());
       }
+      return myShowHiddenFiles;
     }
+  }
+
+  @Override
+  public boolean projectDetection() {
+    return myDetectProjectDirectories;
+  }
+
+  @Override
+  public boolean toggleProjectDetection() {
+    var newState = !myDetectProjectDirectories;
+    myDetectProjectDirectories = newState;
+    PropertiesComponent.getInstance().setValue(PROJECT_DIR_DETECTION_PROPERTY, newState);
+    reload(null);
+    return newState;
   }
 
   @Override
@@ -386,8 +465,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   @Override
   public @NotNull List<Path> selectedPaths() {
-    return myList.getSelectedValuesList().stream()
-      .filter(r -> !FsItem.UPLINK.equals(r.name) && r.path != null && r.path.getParent() != null)
+    return myList.getSelectedObjects().stream()
+      .filter(r -> r.path != null && r.path.getParent() != null)
       .map(r -> r.path)
       .collect(Collectors.toList());
   }
@@ -415,35 +494,41 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
   }
 
-  private static final int UPPER_LEVEL = 1;
-  private static final int INTO_ARCHIVE = 2;
+  private enum OpenFlags {
+    UPPER_LEVEL, INTO_ARCHIVE, RELOAD, UPDATE_PATH_BAR, KEEP_HISTORY
+  }
 
-  private void load(@Nullable Path path, @Nullable Path focusOn, int direction, boolean updatePathBar) {
+  private void load(@Nullable Path path, @Nullable Path focusOn, Set<OpenFlags> flags) {
     synchronized (myLock) {
+      var updatePathBar = flags.contains(OpenFlags.UPDATE_PATH_BAR);
+      var updateHistory = !flags.contains(OpenFlags.KEEP_HISTORY);
+
       if (updatePathBar) {
         myPath.setItem(path != null ? new PathWrapper(path) : null);
       }
 
-      myModel.clear();
+      myModel.setItems(new ArrayList<>());
       myList.clearSelection();
       myList.setPaintBusy(true);
 
-      var childDir = direction == UPPER_LEVEL ? myCurrentDirectory : null;
-      myCurrentDirectory = null;
+      var childDir = flags.contains(OpenFlags.UPPER_LEVEL) ? myCurrentDirectory : null;
+      if (!flags.contains(OpenFlags.RELOAD)) {
+        myCurrentDirectory = null;
+      }
       myCurrentContent.clear();
       cancelCurrentTask();
       var id = myCounter++;
       if (LOG.isTraceEnabled()) LOG.trace("starting: " + id + ", " + path);
       myCurrentTask = pair(id, execute(() -> {
-        var directory = directoryToLoad(path, direction == INTO_ARCHIVE);
+        var directory = directoryToLoad(path, flags.contains(OpenFlags.INTO_ARCHIVE));
         if (directory != null) {
           var pathToSelect = focusOn != null ? focusOn :
                              childDir != null && childDir.getParent() == null && !isLocalFs(childDir) ? parent(childDir) :
                              childDir;
-          loadDirectory(id, directory, pathToSelect, updatePathBar);
+          loadDirectory(id, directory, pathToSelect, updatePathBar, updateHistory);
         }
         else {
-          loadRoots(id, childDir, updatePathBar);
+          loadRoots(id, childDir, updatePathBar, updateHistory);
         }
       }));
     }
@@ -489,21 +574,16 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     return null;
   }
 
-  private void loadDirectory(int id, Path directory, @Nullable Path pathToSelect, boolean updatePathBar) {
+  private void loadDirectory(int id, Path directory, @Nullable Path pathToSelect, boolean updatePathBar, boolean updateHistory) {
     var cancelled = new AtomicBoolean(false);
 
     var vfsDirectory = new PreloadedDirectory(directory);
-    var uplink = new FsItem(parent(directory), FsItem.UPLINK, true, true, myDescriptor.isFileSelectable(vfsDirectory), AllIcons.Nodes.UpFolder);
     update(id, cancelled, () -> {
       myCurrentDirectory = directory;
-      if (updatePathBar) {
-        myPath.setItem(new PathWrapper(directory));
-      }
-      myCurrentContent.add(uplink);
-      myModel.add(uplink);
+      updatePathBarAndHistory(directory, updatePathBar, updateHistory);
     });
 
-    var selection = new AtomicReference<>(uplink);
+    var selection = new AtomicReference<FsItem>();
     var error = new AtomicReference<String>();
     try {
       PlatformNioHelper.visitDirectory(directory, (file, result) -> {
@@ -531,12 +611,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
         var visible = myDescriptor.isFileVisible(virtualFile, false);
         var selectable = myDescriptor.isFileSelectable(virtualFile);
-        var icon = myDescriptor.getIcon(virtualFile);
-        var item = new FsItem(file, file.getFileName().toString(), attrs.isDirectory(), visible, selectable, icon);
+        var icon = myDetectProjectDirectories || !virtualFile.isDirectory() ? myDescriptor.getIcon(virtualFile) : AllIcons.Nodes.Folder;
+        var item = new FsItem(file, file.getFileName().toString(), attrs, visible, selectable, icon);
         update(id, cancelled, () -> {
           myCurrentContent.add(item);
           if (visible || myShowHiddenFiles) {
-            myModel.add(item);
+            myModel.addRow(item);
           }
         });
 
@@ -568,7 +648,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         id,
         () -> {
           myList.setPaintBusy(false);
-          myList.setSelectedValue(selection.get(), true);
+          updateSelection(selection);
           reportError("file.chooser.cannot.load.dir", error);
           myWatchKey = _watchKey;
         },
@@ -576,14 +656,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
   }
 
-  private void loadRoots(int id, @Nullable Path pathToSelect, boolean updatePathBar) {
+  private void loadRoots(int id, @Nullable Path pathToSelect, boolean updatePathBar, boolean updateHistory) {
     var cancelled = new AtomicBoolean(false);
 
     update(id, cancelled, () -> {
       myCurrentDirectory = null;
-      if (updatePathBar) {
-        myPath.setItem(null);
-      }
+      updatePathBarAndHistory(null, updatePathBar, updateHistory);
     });
 
     var roots = new ArrayList<Path>();
@@ -620,8 +698,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
             LOG.debug(e);
           }
         }
-        var item = new FsItem(root, name, true, true, myDescriptor.isFileSelectable(virtualFile), AllIcons.Nodes.Folder);
-        update(id, cancelled, () -> myModel.add(item));
+        var item = new FsItem(root, name, null, true, myDescriptor.isFileSelectable(virtualFile), AllIcons.Nodes.Folder);
+        update(id, cancelled, () -> myModel.addRow(item));
         if (pathToSelect != null && root.equals(pathToSelect)) {
           selection.set(item);
         }
@@ -635,12 +713,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     if (!cancelled.get()) {
       update(id, cancelled, () -> {
         myList.setPaintBusy(false);
-        if (selection.get() != null) {
-          myList.setSelectedValue(selection.get(), true);
-        }
-        else if (myModel.getSize() > 0) {
-          myList.setSelectedIndex(0);
-        }
+        updateSelection(selection);
         reportError("file.chooser.cannot.load.roots", error);
       });
     }
@@ -704,10 +777,29 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void update(int id, Runnable whenActive, Runnable whenCancelled) {
     UIUtil.invokeLaterIfNeeded(() -> {
       synchronized (myLock) {
-        boolean active = myCurrentTask.first == id && !myCurrentTask.second.isCancelled();
+        var active = myCurrentTask.first == id && !myCurrentTask.second.isCancelled();
         (active ? whenActive : whenCancelled).run();
       }
     });
+  }
+
+  private void updatePathBarAndHistory(@Nullable Path path, boolean updatePathBar, boolean updateHistory) {
+    if (updatePathBar) {
+      myPath.setItem(path != null ? new PathWrapper(path) : null);
+    }
+    if (updateHistory) {
+      myHistory.subList(++myHistoryIndex, myHistory.size()).clear();
+      myHistory.add(path);
+    }
+  }
+
+  private void updateSelection(AtomicReference<FsItem> selection) {
+    if (selection.get() != null) {
+      myList.setSelection(List.of(selection.get()));
+    }
+    else {
+      myList.clearSelection();
+    }
   }
 
   private void reportError(String key, AtomicReference<String> error) {
@@ -724,7 +816,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     @Override
     public boolean equals(Object o) {
-      return this == o || o instanceof FsItem && path.equals(((FsItem)o).path);
+      return this == o || o instanceof FsItem item && path.equals(item.path);
     }
 
     @Override
@@ -750,32 +842,27 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   private static final class FsItem {
-    private static final String UPLINK = "..";
-
     private final Path path;
     private final @NlsSafe String name;
     private final boolean directory;
+    private final long size;
+    private final long lastUpdated;
     private final boolean visible;
     private final boolean selectable;
     private final @Nullable Icon icon;
 
-    private FsItem(Path path, String name, boolean directory, boolean visible, boolean selectable, @Nullable Icon icon) {
+    private FsItem(Path path, String name, @Nullable BasicFileAttributes attrs, boolean visible, boolean selectable, @Nullable Icon icon) {
       this.path = path;
       this.name = name;
-      this.directory = directory;
+      this.directory = attrs == null || attrs.isDirectory();
+      this.size = attrs == null || attrs.isDirectory() ? 0L : attrs.size();
+      this.lastUpdated = attrs == null ? 0L : attrs.lastModifiedTime().toMillis();
       this.visible = visible;
       this.selectable = selectable;
       this.icon = icon;
     }
 
-    @Override
-    public String toString() {
-      return name;  // called by `JBList#doCopyToClipboardAction` and `ListSpeedSearch`
-    }
-
     private static final Comparator<FsItem> COMPARATOR = (o1, o2) -> {
-      if (UPLINK.equals(o1.name)) return -1;
-      if (UPLINK.equals(o2.name)) return 1;
       var byType = Boolean.compare(o2.directory, o1.directory);
       if (byType != 0) return byType;
       byType = Boolean.compare(o1.name.startsWith("\\\\"), o2.name.startsWith("\\\\"));
@@ -784,16 +871,69 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     };
   }
 
-  private static final class MyListCellRenderer extends SimpleListCellRenderer<FsItem> {
-    private final Border myPadding = JBUI.Borders.empty(UIUtil.getListCellVPadding(), 3);  // a constant from `DarculaComboBoxUI`
+  private static abstract class MyDelegatingTableCellRenderer implements TableCellRenderer {
+    private final TableCellRenderer myDelegate;
+
+    private MyDelegatingTableCellRenderer(TableCellRenderer delegate) {
+      myDelegate = delegate;
+    }
 
     @Override
-    public void customize(@NotNull JList<? extends FsItem> list, FsItem value, int index, boolean selected, boolean focused) {
-      setBorder(myPadding);
-      setIcon(value.icon);
-      setText(value.name);
-      setForeground(selected ? NamedColorUtil.getListSelectionForeground(true) : UIUtil.getListForeground());
-      setEnabled(value.selectable || FsItem.UPLINK.equals(value.name));
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
+      var component = myDelegate.getTableCellRendererComponent(table, value, selected, false, row, column);
+      if (component instanceof JLabel label) {
+        customizeComponent(table, row, column, label);
+      }
+      return component;
+    }
+
+    protected abstract void customizeComponent(JTable table, int row, int column, JLabel label);
+  }
+
+  private static final class MyHeaderCellRenderer extends MyDelegatingTableCellRenderer {
+    private MyHeaderCellRenderer(TableCellRenderer delegate) {
+      super(delegate);
+    }
+
+    @Override
+    protected void customizeComponent(JTable table, int row, int column, JLabel label) {
+      label.setHorizontalAlignment(column == 0 ? SwingConstants.LEFT : SwingConstants.RIGHT);
+    }
+  }
+
+  private static final class MyTableCellRenderer extends MyDelegatingTableCellRenderer {
+    private MyTableCellRenderer(TableCellRenderer delegate) {
+      super(delegate);
+    }
+
+    @Override
+    protected void customizeComponent(JTable table, int row, int column, JLabel label) {
+      @SuppressWarnings("unchecked") var item = ((TableView<FsItem>)table).getRow(row);
+      label.setIcon(column == 0 ? item.icon : null);
+      label.setHorizontalAlignment(column == 0 ? SwingConstants.LEFT : SwingConstants.RIGHT);
+      label.setToolTipText(column == 2 ? DateFormatUtil.formatDateTime(item.lastUpdated) : null);
+      label.setEnabled(item.selectable);
+    }
+  }
+
+  private static abstract class MyColumnInfo extends ColumnInfo<FsItem, String> {
+    private final int myWidth;
+    private final Comparator<FsItem> myComparator;
+
+    private MyColumnInfo(@NlsContexts.ColumnName String name, int width, Comparator<FsItem> comparator) {
+      super(name);
+      myWidth = width;
+      myComparator = comparator;
+    }
+
+    @Override
+    public int getWidth(JTable table) {
+      return myWidth == 0 ? 0 : table.getFontMetrics(table.getFont()).charWidth('X') * myWidth;
+    }
+
+    @Override
+    public Comparator<FsItem> getComparator() {
+      return myComparator;
     }
   }
 
@@ -829,8 +969,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       super(FS, file, attrs);
       myParent = parent;
       myChildren = attrs.isDirectory() ? new HashMap<>() : null;
-      if (parent instanceof PreloadedDirectory) {
-        ((PreloadedDirectory)parent).myChildren.add(this);
+      if (parent instanceof PreloadedDirectory preloaded) {
+        preloaded.myChildren.add(this);
       }
     }
 

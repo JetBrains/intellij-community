@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-@SuppressWarnings("BlockingMethodInNonBlockingContext")
 final class FileLoader implements Loader {
   private static final EnumSet<StandardOpenOption> READ_OPTIONS = EnumSet.of(StandardOpenOption.READ);
   private static final EnumSet<StandardOpenOption> WRITE_OPTIONS = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE);
@@ -180,7 +179,7 @@ final class FileLoader implements Loader {
     catch (NoSuchFileException e) {
       return null;
     }
-    return classConsumer.consumeClassData(className, data, this);
+    return classConsumer.consumeClassData(className, data);
   }
 
   private static @Nullable LoaderData readFromIndex(Path index) {

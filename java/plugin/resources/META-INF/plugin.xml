@@ -1,7 +1,9 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>com.intellij.java</id>
   <name>Java</name>
-  <description>Java language support.</description>
+  <description><![CDATA[
+  Adds support for the Java language, including Java projects, language syntax highlighting, inspections, and all other coding assistance features.
+]]></description>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
@@ -29,6 +31,7 @@
   <depends optional="true" config-file="intellij.java.structuralSearch.xml">com.intellij.modules.structuralsearch</depends>
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>
   <depends optional="true" config-file="intellij.java.featuresTrainer.xml">training</depends>
+  <depends optional="true" config-file="intellij.java.performancePlugin.xml">com.jetbrains.performancePlugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="JAVA_MODULE" classpathProvider="true" implementationClass="com.intellij.openapi.module.JavaModuleType"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
@@ -15,6 +15,8 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
     override fun getTemplateUrl(recorderId: String): String = URL
     override fun isSendAllowedOverride(): Boolean = true
     override fun isCollectAllowedOverride(): Boolean = true
+    override fun forceDisableCollectionConsent(): Boolean = true
+    override fun forceLoggingAlwaysEnabled(): Boolean = true
     override fun getExtraLogUploadHeaders(): Map<String, String> = emptyMap()
   }
 
@@ -29,7 +31,7 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
 
   fun testSubstitution() {
     val applicationInfo = EventLogInternalApplicationInfo(true)
-    Assertions.assertThat(applicationInfo.templateUrl).isEqualTo(URL)
+    Assertions.assertThat(applicationInfo.templateUrl).isNotEqualTo(URL)
   }
 
   fun testSendOverride() {
@@ -38,5 +40,13 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
 
   fun testCollectOverride() {
     assertTrue(StatisticsUploadAssistant.getCollectAllowedOverride())
+  }
+
+  fun testForceDisableCollectionConsent() {
+    assertFalse(StatisticsUploadAssistant.isCollectAllowed())
+  }
+
+  fun testForceCollectionWithoutRecord() {
+    assertTrue(!StatisticsUploadAssistant.isCollectAllowed() && StatisticsUploadAssistant.isCollectAllowedOrForced())
   }
 }

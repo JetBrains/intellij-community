@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +28,7 @@ import java.awt.event.KeyEvent;
  * Usually shown in View|Tool-windows sub-menu.
  * Dynamically registered in Settings|Keymap for each newly-registered tool window.
  */
-public class ActivateToolWindowAction extends DumbAwareAction {
+public class ActivateToolWindowAction extends DumbAwareAction implements MainMenuPresentationAware {
   private final String myToolWindowId;
 
   protected ActivateToolWindowAction(@NotNull String toolWindowId) {
@@ -40,12 +39,17 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     return myToolWindowId;
   }
 
+  @Override
+  public boolean alwaysShowIconInMainMenu() {
+    return true;
+  }
+
   public static void ensureToolWindowActionRegistered(@NotNull ToolWindow toolWindow, @NotNull ActionManager actionManager) {
     String actionId = getActionIdForToolWindow(toolWindow.getId());
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
       ActivateToolWindowAction newAction = new ActivateToolWindowAction(toolWindow.getId());
-      newAction.updatePresentation(newAction.getTemplatePresentation(), toolWindow);
+      updatePresentation(newAction.getTemplatePresentation(), toolWindow);
       actionManager.registerAction(actionId, newAction);
     }
   }
@@ -61,7 +65,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
   public static void updateToolWindowActionPresentation(@NotNull ToolWindow toolWindow) {
     AnAction action = ActionManager.getInstance().getAction(getActionIdForToolWindow(toolWindow.getId()));
     if (action instanceof ActivateToolWindowAction) {
-      ((ActivateToolWindowAction)action).updatePresentation(action.getTemplatePresentation(), toolWindow);
+      updatePresentation(action.getTemplatePresentation(), toolWindow);
     }
   }
 
@@ -100,14 +104,11 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     return false;
   }
 
-  private void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
+  private static void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
     String title = toolWindow.getStripeTitle();
     presentation.setText(title);
     presentation.setDescription(IdeBundle.messagePointer("action.activate.tool.window", title));
     Icon icon = toolWindow.getIcon();
-    if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
-      icon = AllIcons.Ide.Notification.InfoEvents;
-    }
     if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
       icon = ((ScalableIcon)icon).scale(JBUIScale.scale(16f) / icon.getIconWidth());
       presentation.setIcon(icon);

@@ -84,7 +84,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     for (TreeNodeOnVcsRevision revision : mySelection) {
       String message = revision.getRevision().getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
-      if (html.length() > 0) {
+      if (!html.isEmpty()) {
         html.append("<br/><br/>"); //NON-NLS
       }
       if (addRevisionInfo) {

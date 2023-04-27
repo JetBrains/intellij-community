@@ -69,8 +69,8 @@ public class GitBranchPopupActions {
   public static final @NonNls String EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP = "Git.Experimental.Branch.Popup.Actions";
 
   private static final int MAX_BRANCH_NAME_LENGTH = 40;
-  private static final int BRANCH_NAME_LENGTH_DELTA = 4;
-  private static final int BRANCH_NAME_SUFFIX_LENGTH = 5;
+  public static final int BRANCH_NAME_LENGTH_DELTA = 4;
+  public static final int BRANCH_NAME_SUFFIX_LENGTH = 5;
   private final Project myProject;
   private final GitRepository myRepository;
 
@@ -391,7 +391,7 @@ public class GitBranchPopupActions {
                               @NotNull @NlsSafe String branchName,
                               @NotNull GitRepository selectedRepository) {
       myProject = project;
-      myRepositories = immutableList(repositories);
+      myRepositories = Collections.unmodifiableList(repositories);
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
       myGitBranchManager = project.getService(GitBranchManager.class);

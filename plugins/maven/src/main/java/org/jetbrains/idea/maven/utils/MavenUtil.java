@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -54,21 +54,19 @@ import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.*;
+import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
-import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.*;
 import org.xml.sax.Attributes;
@@ -106,13 +104,13 @@ import static org.apache.commons.lang.StringUtils.EMPTY;
 
 public class MavenUtil {
 
-  private static List<String> settingsListNamespaces = List.of(
+  private static final List<String> settingsListNamespaces = List.of(
     "http://maven.apache.org/SETTINGS/1.0.0",
     "http://maven.apache.org/SETTINGS/1.1.0",
     "http://maven.apache.org/SETTINGS/1.2.0"
   );
 
-  private static List<String> extensionListNamespaces = List.of(
+  private static final List<String> extensionListNamespaces = List.of(
     "http://maven.apache.org/EXTENSIONS/1.0.0",
     "http://maven.apache.org/EXTENSIONS/1.1.0",
     "http://maven.apache.org/EXTENSIONS/1.2.0"
@@ -322,6 +320,10 @@ public class MavenUtil {
     return virtualBaseDir.toNioPath();
   }
 
+  public static MultiMap<String, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects, @NotNull MavenProjectsTree tree) {
+    return ContainerUtil.groupBy(projects, p -> getBaseDir(tree.findRootProject(p).getDirectoryFile()).toString());
+  }
+
   public static VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
     VirtualFile baseDir = file.isDirectory() || file.getParent() == null ? file : file.getParent();
     VirtualFile dir = baseDir;
@@ -393,7 +395,7 @@ public class MavenUtil {
 
   @NotNull
   public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
-    return ContainerUtil.map2List(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
+    return ContainerUtil.map(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
   }
 
   public static String formatHtmlImage(URL url) {
@@ -485,7 +487,7 @@ public class MavenUtil {
     }
     allProperties.putAll(conditions);
     String text = fileTemplate.getText(allProperties);
-    Pattern pattern = Pattern.compile("\\$\\{(.*)\\}");
+    Pattern pattern = Pattern.compile("\\$\\{(.*)}");
     Matcher matcher = pattern.matcher(text);
     StringBuilder builder = new StringBuilder();
     while (matcher.find()) {
@@ -650,7 +652,7 @@ public class MavenUtil {
   @Nullable
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
-      return MavenServerManager.getMavenHomeFile(overrideMavenHome);
+      return getMavenHomeFile(overrideMavenHome);
     }
 
     String m2home = System.getenv(ENV_M2_HOME);
@@ -699,7 +701,7 @@ public class MavenUtil {
       }
     }
 
-    return MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3);
+    return getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3);
   }
 
   public static void addEventListener(@NotNull String mavenVersion, @NotNull SimpleJavaParameters params) {
@@ -707,7 +709,7 @@ public class MavenUtil {
       MavenLog.LOG.warn("Maven version less than 3.0.2 are not correctly displayed in Build Window");
       return;
     }
-    String listenerPath = MavenServerManager.getMavenEventListener().getAbsolutePath();
+    String listenerPath = MavenServerManager.getInstance().getMavenEventListener().getAbsolutePath();
     String extClassPath = params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH);
     if (isEmpty(extClassPath)) {
       params.getVMParametersList()
@@ -788,6 +790,27 @@ public class MavenUtil {
 
   public static File getMavenConfFile(File mavenHome) {
     return new File(new File(mavenHome, BIN_DIR), M2_CONF_FILE);
+  }
+
+  /**
+   * do not use this method directly, as it is impossible to resolve correct version if maven home is set to wrapper
+   * @see MavenDistributionsCache
+   */
+  @Nullable
+  @ApiStatus.Internal
+  public static File getMavenHomeFile(@Nullable String mavenHome) {
+    if (mavenHome == null) return null;
+    for (MavenVersionAwareSupportExtension e : MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.getExtensionList()) {
+      File file = e.getMavenHomeFile(mavenHome);
+      if (file != null) return file;
+    }
+
+    final File home = new File(mavenHome);
+    return isValidMavenHome(home) ? home : null;
+  }
+
+  public static @Nullable String getMavenVersionByMavenHome(@Nullable String mavenHome) {
+    return getMavenVersion(getMavenHomeFile(mavenHome));
   }
 
   @Nullable
@@ -1106,7 +1129,7 @@ public class MavenUtil {
       result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
     }
     return result == null ? doResolveSuperPomFile(
-      new File(MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
+      new File(getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
   }
 
   @Nullable
@@ -1175,6 +1198,20 @@ public class MavenUtil {
     restartMavenConnectors(project, wait, c -> Boolean.TRUE);
   }
 
+  public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
+    if (compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
+      return true;
+    }
+    SdkTypeId sdkType = jdk.getSdkType();
+    if (sdkType instanceof JavaSdk) {
+      JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(jdk);
+      if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public interface MavenTaskHandler {
     void waitFor();
   }
@@ -1199,7 +1236,7 @@ public class MavenUtil {
         }
 
         @Override
-        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+        public void startElement(String uri, String localName, String qName, Attributes attributes) {
           textContentOccur = false;
 
           crc.update(1);
@@ -1212,7 +1249,7 @@ public class MavenUtil {
         }
 
         @Override
-        public void endElement(String uri, String localName, String qName) throws SAXException {
+        public void endElement(String uri, String localName, String qName) {
           textContentOccur = false;
 
           crc.update(2);
@@ -1243,28 +1280,28 @@ public class MavenUtil {
         }
 
         @Override
-        public void characters(char[] ch, int start, int length) throws SAXException {
+        public void characters(char[] ch, int start, int length) {
           processTextOrSpaces(ch, start, length);
         }
 
         @Override
-        public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+        public void ignorableWhitespace(char[] ch, int start, int length) {
           processTextOrSpaces(ch, start, length);
         }
 
         @Override
-        public void processingInstruction(String target, String data) throws SAXException {
+        public void processingInstruction(String target, String data) {
           putString(target);
           putString(data);
         }
 
         @Override
-        public void skippedEntity(String name) throws SAXException {
+        public void skippedEntity(String name) {
           putString(name);
         }
 
         @Override
-        public void error(SAXParseException e) throws SAXException {
+        public void error(SAXParseException e) {
           crc.update(100);
         }
       });
@@ -1276,12 +1313,6 @@ public class MavenUtil {
     }
     catch (SAXException e) {
       return -1;
-    }
-  }
-
-  public static int crcWithoutSpaces(@NotNull VirtualFile xmlFile) throws IOException {
-    try (InputStream inputStream = xmlFile.getInputStream()) {
-      return crcWithoutSpaces(inputStream);
     }
   }
 
@@ -1323,14 +1354,15 @@ public class MavenUtil {
   }
 
   @NotNull
-  public static <K, V extends Map> V getOrCreate(Map map, K key) {
-    Map res = (Map)map.get(key);
+  public static <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
+    V res = map.get(key);
     if (res == null) {
-      res = new HashMap();
+      //noinspection unchecked
+      res = (V)new HashMap<>();
       map.put(key, res);
     }
 
-    return (V)res;
+    return res;
   }
 
   public static boolean isMavenModule(@Nullable Module module) {
@@ -1386,8 +1418,8 @@ public class MavenUtil {
     try {
 
       Element extensions = getDomRootElement(extensionFile);
-      if (!extensions.getName().equals("extensions")) return false;
       if (extensions == null) return false;
+      if (!extensions.getName().equals("extensions")) return false;
       for (Element extension : getElementsWithRegardToNamespace(extensions, "extension", extensionListNamespaces)) {
         Element groupId = getElementWithRegardToNamespace(extension, "groupId", extensionListNamespaces);
         Element artifactId = getElementWithRegardToNamespace(extension, "artifactId", extensionListNamespaces);
@@ -1411,7 +1443,7 @@ public class MavenUtil {
 
   public static boolean isPomFileIgnoringName(@Nullable Project project, @NotNull VirtualFile file) {
     if (project == null || !project.isInitialized()) {
-      if (!FileUtil.extensionEquals(file.getName(), "xml")) return false;
+      if (!FileUtilRt.extensionEquals(file.getName(), "xml")) return false;
       try {
         try (InputStream in = file.getInputStream()) {
           Ref<Boolean> isPomFile = Ref.create(false);
@@ -1449,7 +1481,7 @@ public class MavenUtil {
     return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
   }
 
-  public static void restartConfigHighlightning(Project project, Collection<MavenProject> projects) {
+  public static void restartConfigHighlighting(Collection<MavenProject> projects) {
     VirtualFile[] configFiles = getConfigFiles(projects);
     ApplicationManager.getApplication().invokeLater(() -> {
       FileContentUtilCore.reparseFiles(configFiles);
@@ -1555,7 +1587,7 @@ public class MavenUtil {
   @NotNull
   public static String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    return plugin != null ? plugin.getVersion() : StringUtils.EMPTY;
+    return plugin != null ? plugin.getVersion() : EMPTY;
   }
 
   public static boolean isWrapper(@NotNull MavenGeneralSettings settings) {
@@ -1603,7 +1635,7 @@ public class MavenUtil {
       baseDir = EMPTY;
     }
 
-    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir, baseDir);
+    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir);
     try {
       Set<MavenRemoteRepository> resolvedRepositories = embedderWrapper.resolveRepositories(repositories);
       return resolvedRepositories.isEmpty() ? repositories : resolvedRepositories;
@@ -1627,5 +1659,12 @@ public class MavenUtil {
 
   public static boolean isLinearImportEnabled() {
     return Registry.is("maven.linear.import");
+  }
+
+  @ApiStatus.Internal
+  public static boolean shouldResetDependenciesAndFolders(Collection<MavenProjectProblem> readingProblems) {
+    if (Registry.is("maven.always.reset")) return true;
+    MavenProjectProblem unrecoverable = ContainerUtil.find(readingProblems, it -> !it.isRecoverable());
+    return unrecoverable == null;
   }
 }

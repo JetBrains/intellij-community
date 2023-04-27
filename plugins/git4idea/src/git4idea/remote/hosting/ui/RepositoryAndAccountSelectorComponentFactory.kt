@@ -9,11 +9,12 @@ import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.ActionLinkListener
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
-import com.intellij.collaboration.ui.util.bindDisabled
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.getName
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
@@ -34,9 +35,6 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.*
-
-private const val AVATAR_SIZE = 20
-private const val AVATAR_SIZE_POPUP = 40
 
 class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMapping, A : ServerAccount>(
   private val vm: RepositoryAndAccountSelectorViewModel<M, A>
@@ -59,19 +57,19 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       )
     }).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
-      bindDisabled(scope, vm.busyState)
+      bindDisabledIn(scope, vm.busyState)
     }
 
     val accountCombo = AccountSelectorComponentFactory(vm.accountsState, vm.accountSelectionState).create(
       scope,
       detailsProvider,
-      AVATAR_SIZE,
-      AVATAR_SIZE_POPUP,
+      Avatar.Sizes.BASE,
+      Avatar.Sizes.ACCOUNT,
       CollaborationToolsBundle.message("account.choose.link"),
       vm.repoSelectionState.mapState(scope) { if (it == null) emptyList() else accountsPopupActionsSupplier(it) }
     ).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
-      bindDisabled(scope, vm.busyState)
+      bindDisabledIn(scope, vm.busyState)
     }
 
     val submitButton = JButton(submitActionText).apply {
@@ -82,8 +80,8 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
         vm.submitSelection()
       }
 
-      bindVisibility(scope, vm.submitAvailableState)
-      bindDisabled(scope, vm.busyState)
+      bindVisibilityIn(scope, vm.submitAvailableState)
+      bindDisabledIn(scope, vm.busyState)
     }
 
     val errorPanel = JPanel(BorderLayout()).apply {
@@ -98,7 +96,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
         removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
         addHyperlinkListener(actionLinkListener)
 
-        bindText(scope, vm.errorState.map { error ->
+        bindTextIn(scope, vm.errorState.map { error ->
           if (error == null) return@map ""
           HtmlBuilder().append(errorPresenter.getErrorTitle(error)).br().apply {
             val errorDescription = errorPresenter.getErrorDescription(error)
@@ -118,10 +116,10 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       add(iconPanel, BorderLayout.WEST)
       add(errorTextPane, BorderLayout.CENTER)
 
-      bindVisibility(scope, vm.errorState.map { it != null })
+      bindVisibilityIn(scope, vm.errorState.map { it != null })
     }
     val busyLabel = JLabel(AnimatedIcon.Default()).apply {
-      bindVisibility(scope, vm.busyState)
+      bindVisibilityIn(scope, vm.busyState)
     }
 
 

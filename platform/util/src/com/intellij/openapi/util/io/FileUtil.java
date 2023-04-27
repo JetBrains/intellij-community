@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
@@ -133,10 +133,9 @@ public class FileUtil extends FileUtilRt {
    * @param file     supposed descendant.
    * @param strict   if {@code false}, the file can be ancestor of itself,
    *                 i.e. the method returns {@code ThreeState.YES} if {@code ancestor} equals to {@code file}.
-   *
    * @return {@code ThreeState.YES} if ancestor is an immediate parent of the file,
-   *         {@code ThreeState.UNSURE} if ancestor is not immediate parent of the file,
-   *         {@code ThreeState.NO} if ancestor is not a parent of the file at all.
+   * {@code ThreeState.UNSURE} if ancestor is not immediate parent of the file,
+   * {@code ThreeState.NO} if ancestor is not a parent of the file at all.
    */
   @NotNull
   public static ThreeState isAncestorThreeState(@NotNull String ancestor, @NotNull String file, boolean strict) {
@@ -380,6 +379,14 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.delete(file);
   }
 
+  /**
+   * Delete the path -- recursively, if it is a directory.
+   * Really insist: i.e. retry delete a few times with a timeout -- see {@link FileUtilRt#doDelete(Path)}
+   * for details of a single-file delete operation.
+   *
+   * @throws an exception if delete is not successful
+   * @see FileUtilRt#doDelete(Path)
+   */
   public static void delete(@NotNull Path path) throws IOException {
     deleteRecursively(path, null);
   }
@@ -555,7 +562,9 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static @NlsSafe String createSequentFileName(@NotNull File aParentFolder, @NotNull String aFilePrefix, @NotNull String aExtension) {
+  public static @NlsSafe String createSequentFileName(@NotNull File aParentFolder,
+                                                      @NotNull String aFilePrefix,
+                                                      @NotNull String aExtension) {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
   }
 
@@ -577,9 +586,9 @@ public class FileUtil extends FileUtilRt {
    * and returns the first file which conforms to the provided condition.
    *
    * @param parentFolder the parent folder of the file to be returned
-   * @param filePrefix the prefix of the file to be returned
-   * @param extension the extension of the file to be returned
-   * @param condition the check of the file to be returned
+   * @param filePrefix   the prefix of the file to be returned
+   * @param extension    the extension of the file to be returned
+   * @param condition    the check of the file to be returned
    */
   @NotNull
   public static File findSequentFile(@NotNull File parentFolder,
@@ -727,7 +736,7 @@ public class FileUtil extends FileUtilRt {
     StringBuilder result = new StringBuilder(path.length());
     result.append(path, 0, prefixEnd);
     int start = prefixEnd;
-    if (start==0 && SystemInfoRt.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
+    if (start == 0 && SystemInfoRt.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
       start = 2;
       result.append("//");
       separator = true;
@@ -815,8 +824,8 @@ public class FileUtil extends FileUtilRt {
 
   /**
    * @deprecated this method returns extension converted to lower case, this may not be correct for case-sensitive FS.
-   *             Use {@link FileUtilRt#getExtension(String)} instead to get the unchanged extension.
-   *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
+   * Use {@link FileUtilRt#getExtension(String)} instead to get the unchanged extension.
+   * If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
@@ -932,9 +941,9 @@ public class FileUtil extends FileUtilRt {
   /**
    * @param antPattern ant-style path pattern
    * @return java regexp pattern.
-   *         Note that no matter whether forward or backward slashes were used in the antPattern
-   *         the returned regexp pattern will use forward slashes ('/') as file separators.
-   *         Paths containing windows-style backslashes must be converted before matching against the resulting regexp
+   * Note that no matter whether forward or backward slashes were used in the antPattern
+   * the returned regexp pattern will use forward slashes ('/') as file separators.
+   * Paths containing windows-style backslashes must be converted before matching against the resulting regexp
    * @see FileUtil#toSystemIndependentName
    */
   @RegExp
@@ -1118,9 +1127,11 @@ public class FileUtil extends FileUtilRt {
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
     writeToFile(file, text, false);
   }
+
   public static void writeToFile(@NotNull File file, @NotNull String text, @NotNull Charset charset) throws IOException {
     writeToFile(file, text.getBytes(charset));
   }
+
   public static void writeToFile(@NotNull File file, @NotNull String text, boolean append) throws IOException {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), append);
   }
@@ -1307,12 +1318,16 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static String expandUserHome(@NotNull String path) {
-    if (path.startsWith("~/") || path.startsWith("~\\")) {
-      path = SystemProperties.getUserHome() + path.substring(1);
+  public static @NotNull String expandUserHome(@NotNull String path) {
+    if (path.equals("~")) {
+      return SystemProperties.getUserHome();
     }
-    return path;
+    else if (path.startsWith("~/") || path.startsWith("~\\")) {
+      return SystemProperties.getUserHome() + path.substring(1);
+    }
+    else {
+      return path;
+    }
   }
 
   public static File @NotNull [] notNullize(File @Nullable [] files) {
@@ -1439,6 +1454,7 @@ public class FileUtil extends FileUtilRt {
   public static String loadFile(@NotNull File file, @Nullable String encoding) throws IOException {
     return FileUtilRt.loadFile(file, encoding);
   }
+
   @NotNull
   public static String loadFile(@NotNull File file, @NotNull Charset encoding) throws IOException {
     return String.valueOf(FileUtilRt.loadFileText(file, encoding));
@@ -1527,7 +1543,7 @@ public class FileUtil extends FileUtilRt {
   public static boolean deleteWithRenaming(@NotNull File file) {
     File tempFileNameForDeletion = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
     boolean success = file.renameTo(tempFileNameForDeletion);
-    return delete(success ? tempFileNameForDeletion:file);
+    return delete(success ? tempFileNameForDeletion : file);
   }
 
   @NotNull

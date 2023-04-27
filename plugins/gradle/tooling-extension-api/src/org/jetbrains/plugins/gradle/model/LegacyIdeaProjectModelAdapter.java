@@ -25,7 +25,7 @@ public class LegacyIdeaProjectModelAdapter implements Build {
     assert !ideaModules.isEmpty();
     IdeaModule ideaModule = ideaModules.getAt(0);
     myBuildIdentifier = ideaModule.getGradleProject().getProjectIdentifier().getBuildIdentifier();
-    myProjectModels = new ArrayList<Project>(ideaModules.size());
+    myProjectModels = new ArrayList<>(ideaModules.size());
     for (final IdeaModule module : ideaModules) {
       myProjectModels.add(new Project() {
         @Override

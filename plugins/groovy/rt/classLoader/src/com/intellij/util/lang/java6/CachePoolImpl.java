@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 
 final class CachePoolImpl implements UrlClassLoader.CachePool {
-  private final Map<URL, ClasspathCache.LoaderData> myLoaderIndexCache = new ConcurrentHashMap<URL, ClasspathCache.LoaderData>();
-  private final Map<URL, Attributes> myManifestData = new ConcurrentHashMap<URL, Attributes>();
+  private final Map<URL, ClasspathCache.LoaderData> myLoaderIndexCache = new ConcurrentHashMap<>();
+  private final Map<URL, Attributes> myManifestData = new ConcurrentHashMap<>();
 
   void cacheData(@NotNull URL url, @NotNull ClasspathCache.LoaderData data) {
     myLoaderIndexCache.put(url, data);

@@ -35,11 +35,11 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     }
 
     ensureDeleted(argsFile)
-    executeRunConfiguration("myTask", isScriptDebugEnabled = true)
+    executeRunConfiguration("myTask", isDebugServerProcess = true)
     assertDebugJvmArgs(":myTask", argsFile)
 
     ensureDeleted(argsFile)
-    executeRunConfiguration("myTask", isScriptDebugEnabled = false)
+    executeRunConfiguration("myTask", isDebugServerProcess = false)
     assertDebugJvmArgs(":myTask", argsFile, shouldBeDebugged = false)
   }
 

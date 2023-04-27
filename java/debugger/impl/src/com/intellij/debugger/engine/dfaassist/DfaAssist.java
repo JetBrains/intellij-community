@@ -1,11 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
-import com.intellij.codeInsight.hints.presentation.PresentationFactory;
-import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -18,69 +13,47 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.InlayModel;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.impl.dfaassist.DfaAssistBase;
+import com.intellij.xdebugger.impl.dfaassist.DfaResult;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
-import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public final class DfaAssist implements DebuggerContextListener, Disposable {
+import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.*;
+
+public final class DfaAssist extends DfaAssistBase implements DebuggerContextListener {
   private static final int CLEANUP_DELAY_MILLIS = 300;
-  private final @NotNull Project myProject;
-  // modified from EDT only
-  private DfaAssistMarkup myMarkup = new DfaAssistMarkup(null, Collections.emptyList(), Collections.emptyList());
   private volatile CancellablePromise<?> myComputation;
   private volatile ScheduledFuture<?> myScheduledCleanup;
   private final DebuggerStateManager myManager;
-  private volatile AssistMode myMode;
 
   private DfaAssist(@NotNull Project project, @NotNull DebuggerStateManager manager) {
-    myProject = project;
+    super(project);
     myManager = manager;
     updateFromSettings();
   }
 
   private void updateFromSettings() {
-    AssistMode newMode = AssistMode.fromSettings();
+    AssistMode newMode = fromSettings();
     if (myMode != newMode) {
       myMode = newMode;
-      if (newMode == AssistMode.NONE) {
+      if (newMode == NONE) {
         cleanUp();
       }
       else {
@@ -92,40 +65,13 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     }
   }
 
-  private static final class DfaAssistMarkup implements Disposable {
-    private final @NotNull List<Inlay<?>> myInlays;
-    private final @NotNull List<RangeHighlighter> myRanges;
-
-    private DfaAssistMarkup(@Nullable Editor editor, @NotNull List<Inlay<?>> inlays, @NotNull List<RangeHighlighter> ranges) {
-      myInlays = inlays;
-      myRanges = ranges;
-      if (editor != null) {
-        editor.getDocument().addDocumentListener(new DocumentListener() {
-          @Override
-          public void beforeDocumentChange(@NotNull DocumentEvent event) {
-            ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(DfaAssistMarkup.this));
-          }
-        }, this);
-      }
-    }
-
-    @Override
-    public void dispose() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      myInlays.forEach(Disposer::dispose);
-      myInlays.clear();
-      myRanges.forEach(RangeHighlighter::dispose);
-      myRanges.clear();
-    }
-  }
-
   @Override
   public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
     if (event == DebuggerSession.Event.DISPOSE) {
       Disposer.dispose(this);
       return;
     }
-    if (myMode == AssistMode.NONE) return;
+    if (myMode == NONE) return;
     if (event == DebuggerSession.Event.DETACHED) {
       cleanUp();
       return;
@@ -165,7 +111,7 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
         }
         myComputation = ReadAction.nonBlocking(() -> {
             DebuggerDfaRunner runner = runnerPupa.transform();
-            return runner == null ? DebuggerDfaRunner.DfaResult.EMPTY : runner.computeHints();
+            return runner == null ? DfaResult.EMPTY : runner.computeHints();
           })
           .withDocumentsCommitted(myProject)
           .coalesceBy(DfaAssist.this)
@@ -192,51 +138,10 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     }
   }
 
-  private void cleanUp() {
+  @Override
+  protected void cleanUp() {
     cancelComputation();
-    UIUtil.invokeLaterIfNeeded(() -> {
-      Disposer.dispose(myMarkup);
-    });
-  }
-
-  private void displayInlays(DebuggerDfaRunner.DfaResult result) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    cleanUp();
-    Map<PsiElement, DfaHint> hints = result.hints;
-    Collection<TextRange> unreachable = result.unreachable;
-    if (result.file == null) return;
-    EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
-    if (editor == null) return;
-    VirtualFile expectedFile = result.file.getVirtualFile();
-    if (expectedFile == null || !expectedFile.equals(editor.getVirtualFile())) return;
-    List<Inlay<?>> newInlays = new ArrayList<>();
-    List<RangeHighlighter> ranges = new ArrayList<>();
-    AssistMode mode = myMode;
-    if (!hints.isEmpty() && mode.displayInlays()) {
-      InlayModel model = editor.getInlayModel();
-      AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
-      hints.forEach((expr, hint) -> {
-        Segment range = expr.getTextRange();
-        if (range == null) return;
-        PresentationFactory factory = new PresentationFactory(editor);
-        MenuOnClickPresentation presentation = new MenuOnClickPresentation(
-          factory.roundWithBackground(factory.smallText(hint.getTitle())), myProject,
-          () -> Collections.singletonList(turnOffDfaProcessor));
-        newInlays.add(model.addInlineElement(range.getEndOffset(), new PresentationRenderer(presentation)));
-      });
-    }
-    if (!unreachable.isEmpty() && mode.displayGrayOut()) {
-      MarkupModelEx model = editor.getMarkupModel();
-      for (TextRange range : unreachable) {
-        RangeHighlighter highlighter = model.addRangeHighlighter(HighlightInfoType.UNUSED_SYMBOL.getAttributesKey(),
-                                                                 range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ERROR + 1,
-                                                                 HighlighterTargetArea.EXACT_RANGE);
-        ranges.add(highlighter);
-      }
-    }
-    if (!newInlays.isEmpty() || !ranges.isEmpty()) {
-      myMarkup = new DfaAssistMarkup(editor, newInlays, ranges);
-    }
+    super.cleanUp();
   }
 
   public static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrameProxyEx proxy,
@@ -271,18 +176,6 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     return pupa;
   }
 
-  private final class TurnOffDfaProcessorAction extends AnAction {
-    private TurnOffDfaProcessorAction() {
-      super(JavaDebuggerBundle.message("action.TurnOffDfaAssist.text"),
-            JavaDebuggerBundle.message("action.TurnOffDfaAssist.description"), AllIcons.Actions.Cancel);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent evt) {
-      Disposer.dispose(DfaAssist.this);
-    }
-  }
-
   /**
    * Install dataflow assistant to the specified debugging session
    *
@@ -306,29 +199,17 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     }
   }
 
-  private enum AssistMode {
-    NONE, INLAYS, GRAY_OUT, BOTH;
-
-    boolean displayInlays() {
-      return this == INLAYS || this == BOTH;
+  private static AssistMode fromSettings() {
+    ViewsGeneralSettings settings = ViewsGeneralSettings.getInstance();
+    if (settings.USE_DFA_ASSIST && settings.USE_DFA_ASSIST_GRAY_OUT) {
+      return BOTH;
     }
-
-    boolean displayGrayOut() {
-      return this == GRAY_OUT || this == BOTH;
+    if (settings.USE_DFA_ASSIST) {
+      return INLAYS;
     }
-
-    static AssistMode fromSettings() {
-      ViewsGeneralSettings settings = ViewsGeneralSettings.getInstance();
-      if (settings.USE_DFA_ASSIST && settings.USE_DFA_ASSIST_GRAY_OUT) {
-        return BOTH;
-      }
-      if (settings.USE_DFA_ASSIST) {
-        return INLAYS;
-      }
-      if (settings.USE_DFA_ASSIST_GRAY_OUT) {
-        return GRAY_OUT;
-      }
-      return NONE;
+    if (settings.USE_DFA_ASSIST_GRAY_OUT) {
+      return GRAY_OUT;
     }
+    return NONE;
   }
 }

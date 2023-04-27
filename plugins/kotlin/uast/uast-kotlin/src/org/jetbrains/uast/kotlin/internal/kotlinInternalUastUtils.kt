@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
@@ -67,9 +67,9 @@ import org.jetbrains.kotlin.types.typeUtil.isInterface
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.KotlinUastTypeMapper
-import org.jetbrains.uast.kotlin.psi.UastDescriptorLightMethod
-import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
-import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
+import org.jetbrains.uast.kotlin.psi.UastFakeDescriptorLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 import java.text.StringCharacterIterator
 
 val kotlinUastPlugin: UastLanguagePlugin by lz {
@@ -256,7 +256,18 @@ internal fun KtElement.analyze(): BindingContext {
 
 internal fun KtExpression.getExpectedType(): KotlinType? = analyze()[BindingContext.EXPECTED_EXPRESSION_TYPE, this]
 
-internal fun KtTypeReference.getType(): KotlinType? = analyze()[BindingContext.TYPE, this]
+internal fun KtTypeReference.getType(): KotlinType? =
+    analyze()[BindingContext.TYPE, this]
+        ?: getTypeAsTypeArgument()
+
+private fun KtTypeReference.getTypeAsTypeArgument(): KotlinType? {
+    val call = getParentOfType<KtCallElement>(strict = true) ?: return null
+    val resolvedCall = call.getResolvedCall(analyze()) ?: return null
+    val typeProjection = call.typeArguments.find { it.typeReference == this } ?: return null
+    val index = call.typeArguments.indexOf(typeProjection)
+    val paramDescriptor = resolvedCall.candidateDescriptor.typeParameters.find { it.index == index } ?: return null
+    return resolvedCall.typeArguments[paramDescriptor]
+}
 
 internal fun KtCallableDeclaration.getReturnType(): KotlinType? =
     (analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? CallableDescriptor)?.returnType
@@ -350,7 +361,7 @@ internal fun resolveToPsiMethod(
         val lightClass = source.toLightClass() ?: return null
         lightClass.constructors.firstOrNull()?.let { return it }
         if (source.isLocal) {
-            return UastFakeLightPrimaryConstructor(source, lightClass)
+            return UastFakeSourceLightPrimaryConstructor(source, lightClass)
         }
         return null
     }
@@ -365,9 +376,9 @@ internal fun resolveToPsiMethod(
     return when (source) {
         is KtFunction ->
             if (source.isLocal)
-                getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
+                getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
             else // UltraLightMembersCreator.createMethods() returns nothing for JVM-invisible methods, so fake it if we get null here
-                LightClassUtil.getLightClassMethod(source) ?: getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
+                LightClassUtil.getLightClassMethod(source) ?: getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
         is PsiMethod -> source
         null -> {
             val unwrapped = descriptor.unwrapIfFakeOverride() as? DeserializedCallableMemberDescriptor ?: descriptor
@@ -375,6 +386,10 @@ internal fun resolveToPsiMethod(
         }
         else -> null
     }
+}
+
+private fun <T : DeclarationDescriptor> T.unwrapIfFakeOverride(): T {
+    return if (this is CallableMemberDescriptor) DescriptorUtils.unwrapFakeOverride(this) else this
 }
 
 internal fun resolveToClassIfConstructorCallImpl(ktCallElement: KtCallElement, source: UElement): PsiElement? =
@@ -537,7 +552,7 @@ private fun resolveDeserialized(
             psiClass.getMethodBySignature(
                 JvmProtoBufUtil.getJvmMethodSignature(proto, nameResolver, typeTable)
                     ?: getMethodSignatureFromDescriptor(context, descriptor)
-            ) ?: UastDescriptorLightMethod(descriptor as SimpleFunctionDescriptor, psiClass, context) // fake Java-invisible methods
+            ) ?: UastFakeDescriptorLightMethod(descriptor as SimpleFunctionDescriptor, psiClass, context) // fake Java-invisible methods
         }
         is ProtoBuf.Constructor -> {
             val signature = JvmProtoBufUtil.getJvmConstructorSignature(proto, nameResolver, typeTable)

@@ -40,7 +40,86 @@ private data class ScriptLanguageSettings(
     val targetPlatformVersion: TargetPlatformVersion
 )
 
-internal object ScriptingTargetPlatformDetector : TargetPlatformDetector {
+internal class ScriptingTargetPlatformDetector : TargetPlatformDetector {
+    companion object {
+        fun getLanguageVersionSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): LanguageVersionSettings {
+            return getScriptSettings(project, virtualFile, definition).languageVersionSettings
+        }
+
+        fun getTargetPlatformVersion(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): TargetPlatformVersion {
+            return getScriptSettings(project, virtualFile, definition).targetPlatformVersion
+        }
+
+        fun getPlatform(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): TargetPlatform {
+            val targetPlatformVersion = getScriptSettings(project, virtualFile, definition).targetPlatformVersion
+            if (targetPlatformVersion != TargetPlatformVersion.NoVersion) {
+                for (compilerPlatform in CommonPlatforms.allSimplePlatforms) {
+                    if (compilerPlatform.single().targetPlatformVersion == targetPlatformVersion) {
+                        return compilerPlatform
+                    }
+                }
+            }
+
+            val platformNameFromDefinition = definition.platform
+
+            if ("JVM" == platformNameFromDefinition) { // optional compiler arg "-jvmTarget" is considered in getScriptSettings()
+                return defaultJvmPlatform
+            }
+
+            for (compilerPlatform in CommonPlatforms.allSimplePlatforms) {
+                // FIXME(dsavvinov): get rid of matching by name
+                if (compilerPlatform.single().platformName == platformNameFromDefinition) {
+                    return compilerPlatform
+                }
+            }
+
+            return defaultJvmPlatform
+        }
+
+        private fun getScriptSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): ScriptLanguageSettings {
+            val environmentCompilerOptions = definition.defaultCompilerOptions
+            val args = definition.compilerOptions
+            return if (environmentCompilerOptions.none() && args.none()) {
+                val scriptModule = getScriptModule(project, virtualFile)
+                val languageVersionSettings = scriptModule?.languageVersionSettings ?: project.languageVersionSettings
+                val platformVersion = detectDefaultTargetPlatformVersion(scriptModule?.platform)
+                ScriptLanguageSettings(languageVersionSettings, platformVersion)
+            } else {
+                val settings = definition.getUserData(SCRIPT_LANGUAGE_SETTINGS) ?: createCachedValue(project) {
+                    val compilerArguments = K2JVMCompilerArguments()
+
+                    parseCommandLineArguments(environmentCompilerOptions.toList(), compilerArguments)
+                    parseCommandLineArguments(args.toList(), compilerArguments)
+
+                    // TODO: reporting
+                    val languageVersionSettings = compilerArguments.toLanguageVersionSettings(
+                        MessageCollector.NONE,
+                        mapOf(AnalysisFlags.ideMode to true)
+                    )
+                    val scriptModule = getScriptModule(project, virtualFile)
+                    val platformVersion = compilerArguments.jvmTarget?.let { JvmTarget.fromString(it) }
+                        ?: detectDefaultTargetPlatformVersion(scriptModule?.platform)
+
+                    ScriptLanguageSettings(languageVersionSettings, platformVersion)
+                }.also { definition.putUserData(SCRIPT_LANGUAGE_SETTINGS, it) }
+                settings.value
+            }
+        }
+
+        private fun getScriptModule(project: Project, virtualFile: VirtualFile): Module? {
+            val scriptModuleName = ScriptRelatedModuleNameFile[project, virtualFile]
+            return if (scriptModuleName != null) {
+                ModuleManager.getInstance(project).findModuleByName(scriptModuleName)
+            } else {
+                ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
+            }
+        }
+
+        private fun detectDefaultTargetPlatformVersion(platform: TargetPlatform?): TargetPlatformVersion {
+            return platform?.subplatformsOfType<JdkPlatform>()?.firstOrNull()?.targetVersion ?: TargetPlatformVersion.NoVersion
+        }
+    }
+
     override fun detectPlatform(file: KtFile): TargetPlatform? {
         val definition = runReadAction {
             file.takeIf { it.isValid && it.isScript() }?.findScriptDefinition()
@@ -48,83 +127,6 @@ internal object ScriptingTargetPlatformDetector : TargetPlatformDetector {
 
         val virtualFile = file.originalFile.virtualFile ?: return null
         return getPlatform(file.project, virtualFile, definition)
-    }
-
-    fun getLanguageVersionSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): LanguageVersionSettings {
-        return getScriptSettings(project, virtualFile, definition).languageVersionSettings
-    }
-
-    fun getTargetPlatformVersion(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): TargetPlatformVersion {
-        return getScriptSettings(project, virtualFile, definition).targetPlatformVersion
-    }
-
-    fun getPlatform(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): TargetPlatform {
-        val targetPlatformVersion = getScriptSettings(project, virtualFile, definition).targetPlatformVersion
-        if (targetPlatformVersion != TargetPlatformVersion.NoVersion) {
-            for (compilerPlatform in CommonPlatforms.allSimplePlatforms) {
-                if (compilerPlatform.single().targetPlatformVersion == targetPlatformVersion) {
-                    return compilerPlatform
-                }
-            }
-        }
-
-        val platformNameFromDefinition = definition.platform
-
-        if ("JVM" == platformNameFromDefinition) { // optional compiler arg "-jvmTarget" is considered in getScriptSettings()
-            return defaultJvmPlatform
-        }
-
-        for (compilerPlatform in CommonPlatforms.allSimplePlatforms) {
-            // FIXME(dsavvinov): get rid of matching by name
-            if (compilerPlatform.single().platformName == platformNameFromDefinition) {
-                return compilerPlatform
-            }
-        }
-
-        return defaultJvmPlatform
-    }
-
-    private fun getScriptSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): ScriptLanguageSettings {
-        val scriptModule = getScriptModule(project, virtualFile)
-
-        val environmentCompilerOptions = definition.defaultCompilerOptions
-        val args = definition.compilerOptions
-        return if (environmentCompilerOptions.none() && args.none()) {
-            val languageVersionSettings = scriptModule?.languageVersionSettings ?: project.languageVersionSettings
-            val platformVersion = detectDefaultTargetPlatformVersion(scriptModule?.platform)
-            ScriptLanguageSettings(languageVersionSettings, platformVersion)
-        } else {
-            val settings = definition.getUserData(SCRIPT_LANGUAGE_SETTINGS) ?: createCachedValue(project) {
-                val compilerArguments = K2JVMCompilerArguments()
-
-                parseCommandLineArguments(environmentCompilerOptions.toList(), compilerArguments)
-                parseCommandLineArguments(args.toList(), compilerArguments)
-
-                // TODO: reporting
-                val languageVersionSettings = compilerArguments.toLanguageVersionSettings(
-                    MessageCollector.NONE,
-                    mapOf(AnalysisFlags.ideMode to true)
-                )
-                val platformVersion = compilerArguments.jvmTarget?.let { JvmTarget.fromString(it) }
-                    ?: detectDefaultTargetPlatformVersion(scriptModule?.platform)
-
-                ScriptLanguageSettings(languageVersionSettings, platformVersion)
-            }.also { definition.putUserData(SCRIPT_LANGUAGE_SETTINGS, it) }
-            settings.value
-        }
-    }
-
-    private fun getScriptModule(project: Project, virtualFile: VirtualFile): Module? {
-        val scriptModuleName = ScriptRelatedModuleNameFile[project, virtualFile]
-        return if (scriptModuleName != null) {
-            ModuleManager.getInstance(project).findModuleByName(scriptModuleName)
-        } else {
-            ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
-        }
-    }
-
-    private fun detectDefaultTargetPlatformVersion(platform: TargetPlatform?): TargetPlatformVersion {
-        return platform?.subplatformsOfType<JdkPlatform>()?.firstOrNull()?.targetVersion ?: TargetPlatformVersion.NoVersion
     }
 }
 

@@ -5,9 +5,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -21,32 +19,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import java.util.Set;
 
 /**
  * Looks for the 'self' or its equivalents.
  */
 public class PyMethodParametersInspection extends PyInspection {
-  private static final @NlsSafe String MODE_MCS = "mcs";
-  private static final @NlsSafe String MODE_METACLS = "metacls";
-  
-  public String MCS = MODE_MCS;
 
   @Nullable
   public static PyMethodParametersInspection getInstance(@NotNull PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyMethodParametersInspection.class.getSimpleName();
     return (PyMethodParametersInspection)inspectionProfile.getUnwrappedTool(toolName, element);
-  }
-
-  @Override
-  public @NotNull OptPane getOptionsPane() {
-    //TODO: simplify this (drop this?)
-    // it should offer only one default option mcs or metacls, inspection should accept both
-    return pane(
-      dropdown("MCS", PyPsiBundle.message("INSP.method.parameters.metaclass.method.first.argument.name"),
-               option(MODE_MCS, MODE_MCS), option(MODE_METACLS, MODE_METACLS))
-    );
   }
 
   @NotNull
@@ -57,7 +41,7 @@ public class PyMethodParametersInspection extends PyInspection {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
-  private class Visitor extends PyInspectionVisitor {
+  private static class Visitor extends PyInspectionVisitor {
 
     private Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
@@ -77,7 +61,6 @@ public class PyMethodParametersInspection extends PyInspection {
         PyParameterList plist = node.getParameterList();
         PyParameter[] params = plist.getParameters();
         final String methodName = node.getName();
-        final String CLS = "cls"; // TODO: move to style settings
         if (params.length == 0) { // fix: add
           // check for "staticmetod"
           if (flags.isStaticMethod()) return; // no params may be fine
@@ -91,16 +74,8 @@ public class PyMethodParametersInspection extends PyInspection {
               "(".equals(open_paren.getText()) && ")".equals(close_paren.getText())
             ) {
               String paramName;
-              if (flags.isMetaclassMethod()) {
-                if (flags.isClassMethod()) {
-                  paramName = MCS;
-                }
-                else {
-                  paramName = CLS;
-                }
-              }
-              else if (flags.isClassMethod()) {
-                paramName = CLS;
+              if (flags.isMetaclassMethod() || flags.isClassMethod()) {
+                paramName = PyNames.CANONICAL_CLS;
               }
               else {
                 paramName = PyNames.CANONICAL_SELF;
@@ -134,18 +109,20 @@ public class PyMethodParametersInspection extends PyInspection {
                 return;
               }
               String expectedName;
-              String alternativeName = null;
+              Set<String> alternativeNames;
               if (PyNames.NEW.equals(methodName) || flags.isClassMethod()) {
-                expectedName = MCS;
+                expectedName = PyNames.CANONICAL_CLS;
+                alternativeNames = Set.of("mcs", "mcls", "metacls");
               }
               else if (flags.isSpecialMetaclassMethod()) {
-                expectedName = CLS;
+                expectedName = PyNames.CANONICAL_CLS;
+                alternativeNames = Set.of();
               }
               else {
                 expectedName = PyNames.CANONICAL_SELF;
-                alternativeName = CLS;
+                alternativeNames = Set.of(PyNames.CANONICAL_CLS);
               }
-              if (!expectedName.equals(pname) && (alternativeName == null || !alternativeName.equals(pname))) {
+              if (!expectedName.equals(pname) && !alternativeNames.contains(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
                   PyPsiBundle.message("INSP.usually.named", expectedName),
@@ -154,11 +131,11 @@ public class PyMethodParametersInspection extends PyInspection {
               }
             }
             else if (flags.isClassMethod() || PyNames.NEW.equals(methodName)) {
-              if (!CLS.equals(pname)) {
+              if (!PyNames.CANONICAL_CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyPsiBundle.message("INSP.usually.named", CLS),
-                  new RenameParameterQuickFix(CLS)
+                  PyPsiBundle.message("INSP.usually.named", PyNames.CANONICAL_CLS),
+                  new RenameParameterQuickFix(PyNames.CANONICAL_CLS)
                 );
               }
             }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -36,7 +36,7 @@ import static org.jetbrains.concurrency.Promises.createError;
 public class StructureTreeModel<Structure extends AbstractTreeStructure>
   extends AbstractTreeModel implements Disposable, InvokerSupplier, ChildrenProvider<TreeNode> {
 
-  private static final TreePath ROOT_INVALIDATED = new TreePath(new DefaultMutableTreeNode());
+  private static final TreePath ROOT_INVALIDATED = new CachingTreePath(new DefaultMutableTreeNode());
   private static final Logger LOG = Logger.getInstance(StructureTreeModel.class);
   private final Reference<Node> root = new Reference<>();
   private final String description;
@@ -62,6 +62,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     this.description = format(structure.toString());
     this.invoker = invoker;
     this.comparator = comparator == null ? null : wrapToNodeComparator(comparator);
+    Disposer.register(this, invoker);
     Disposer.register(parent, this);
   }
 

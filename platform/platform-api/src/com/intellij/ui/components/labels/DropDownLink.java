@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
@@ -25,7 +24,6 @@ import java.util.function.Function;
 @SuppressWarnings("HardCodedStringLiteral")
 @Deprecated(forRemoval = true)
 public class DropDownLink<T> extends LinkLabel<Object> {
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private T chosenItem;
 
   public DropDownLink(@NotNull T value, @NotNull Runnable clickAction) {
@@ -39,10 +37,8 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     chosenItem = value;
 
     setListener((linkLabel, d) -> {
-      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       JBPopup popup = popupBuilder.apply((DropDownLink)linkLabel);
       Point showPoint = new Point(0, getHeight() + JBUIScale.scale(4));
-      myPopupState.prepareToShow(popup);
       popup.show(new RelativePoint(this, showPoint));
     }, null);
 
@@ -75,10 +71,6 @@ public class DropDownLink<T> extends LinkLabel<Object> {
 
   public T getChosenItem() {
     return chosenItem;
-  }
-
-  public PopupState getPopupState() {
-    return myPopupState;
   }
 
   private static final class LinkCellRenderer<T> extends JLabel implements ListCellRenderer<T> {

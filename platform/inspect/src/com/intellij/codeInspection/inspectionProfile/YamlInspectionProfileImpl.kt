@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.ex.InspectionToolsSupplier
 import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.createProfileCopy
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.io.toNioPath
@@ -21,6 +22,7 @@ import com.intellij.psi.search.scope.packageSet.AbstractPackageSet
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
+import com.intellij.psi.search.scope.packageSet.ParsingException
 import org.jdom.Element
 import java.io.File
 import java.io.Reader
@@ -31,6 +33,8 @@ import kotlin.io.path.exists
 import kotlin.io.path.reader
 
 private const val SCOPE_PREFIX = "scope#"
+
+private val LOG = logger<YamlInspectionProfileImpl>()
 
 class YamlInspectionConfigImpl(override val inspection: String,
                                override val enabled: Boolean?,
@@ -137,9 +141,9 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     }
 
     private fun findBaseProfile(profileManager: InspectionProfileManager, profileName: String?): InspectionProfileImpl {
-      return profileName
-        ?.let { profileManager.getProfile(profileName, false) }
-        ?: InspectionProfileImpl("Default")
+      val name = profileName ?: "Default"
+      return profileManager.getProfile(name, false)
+             ?: throw IllegalArgumentException("Can't find base profile '$name'")
     }
 
     @JvmStatic
@@ -218,7 +222,12 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
 
   private fun parsePattern(pattern: String): NamedScope.UnnamedScope {
     if (pattern.startsWith(SCOPE_PREFIX)) {
-     return NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(pattern.drop(SCOPE_PREFIX.length)))
+      val scope = pattern.drop(SCOPE_PREFIX.length)
+      try {
+        return NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(scope))
+      } catch (e: ParsingException) {
+        LOG.warn("Unknown scope format: $scope", e)
+      }
     }
 
     return getGlobScope(pattern)

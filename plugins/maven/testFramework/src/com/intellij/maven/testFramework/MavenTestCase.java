@@ -192,7 +192,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> MavenServerManager.getInstance().shutdown(true),
       () -> tearDownEmbedders(),
       () -> checkAllMavenConnectorsDisposed(),
-      () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
       () -> myProject = null,
       () -> {
         Project defaultProject = ProjectManager.getInstance().getDefaultProject();
@@ -612,7 +611,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected static <T> void assertContain(Collection<? extends T> actual, T... expected) {
     List<T> expectedList = Arrays.asList(expected);
-    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
+    if (actual.containsAll(expectedList)) return;
+    Set<T> absent = new HashSet<T>(expectedList);
+    absent.removeAll(actual);
+    fail("expected: " + expectedList + "\n" + "actual: " + actual.toString() +
+         "\nthis elements not present: " + absent.toString());
   }
 
   protected static <T> void assertDoNotContain(List<T> actual, T... expected) {

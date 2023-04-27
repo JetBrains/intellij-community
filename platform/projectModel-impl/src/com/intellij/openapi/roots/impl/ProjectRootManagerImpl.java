@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.Application;
@@ -264,7 +264,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     for (Module module : modules) {
       Collections.addAll(result, ModuleRootManager.getInstance(module).getContentRoots());
     }
-    ContainerUtil.addIfNotNull(result, myProject.getBaseDir());
+    @SuppressWarnings("deprecation") VirtualFile baseDir = myProject.getBaseDir();
+    ContainerUtil.addIfNotNull(result, baseDir);
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
@@ -498,7 +499,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   public static @NotNull String extractLocalPath(@NotNull String url) {
-    String path = VfsUtilCore.urlToPath(url);
+    String path = URLUtil.extractPath(url);
     int separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
     return separatorIndex > 0 ? path.substring(0, separatorIndex) : path;
   }
@@ -508,9 +509,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
-  public void markRootsForRefresh() {
-
-  }
+  public void markRootsForRefresh() { }
 
   public @NotNull VirtualFilePointerListener getRootsValidityChangedListener() {
     return myEmptyRootsValidityChangedListener;

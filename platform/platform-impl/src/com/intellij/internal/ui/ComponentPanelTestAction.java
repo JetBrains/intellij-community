@@ -28,7 +28,6 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -102,8 +101,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
   @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
   private static final class ComponentPanelTest extends DialogWrapper {
 
-    private static final Set<String> ALLOWED_VALUES = ContainerUtil
-      .set("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
+    private static final Set<String> ALLOWED_VALUES = Set.of("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
            "fifteen", "sixteen", "abracadabra");
 
     private static final String[] STRING_VALUES = { "One", "Two", "Three", "Four", "Five", "Six" };
@@ -557,6 +555,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
       ComponentWithBrowseButton<EditorTextField> etfbb = new ComponentWithBrowseButton<>(editor, e -> System.out.println("JTextField browse button pressed"));
       new ComponentValidator(getDisposable()).withValidator(() -> {
         try {
+          //noinspection ResultOfObjectAllocationIgnored
           new URL(etfbb.getChildComponent().getDocument().getText());
           return null;
         } catch (MalformedURLException mex) {

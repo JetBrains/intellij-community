@@ -3,18 +3,15 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlServiceImpl.Companion.RECORDER_CODE
+import com.intellij.ide.actions.searcheverywhere.ml.features.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider.Companion.SE_TABS
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
@@ -22,204 +19,244 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import kotlin.math.round
 
 @ApiStatus.Internal
 @IntellijInternalApi
 class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
+  private val featuresCache = SearchEverywhereMlFeaturesCache()
 
   override fun getGroup(): EventLogGroup {
     return GROUP
   }
 
-  internal fun onItemSelected(project: Project?, seSessionId: Int, searchIndex: Int,
-                     shouldLogFeatures: Boolean, experimentGroup: Int,
-                     orderByMl: Boolean,
-                     elementIdProvider: SearchEverywhereMlItemIdProvider,
-                     context: SearchEverywhereMLContextInfo,
-                     cache: SearchEverywhereMlSearchState,
-                     selectedIndices: IntArray,
-                     selectedItems: List<Any>,
-                     closePopup: Boolean,
-                     timeToFirstResult: Int,
-                     mixedListInfo: SearchEverywhereMixedListInfo,
-                     elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+  internal fun onItemSelected(project: Project?,
+                              seSessionId: Int,
+                              shouldLogFeatures: Boolean,
+                              elementIdProvider: SearchEverywhereMlItemIdProvider,
+                              cache: SearchEverywhereMlSearchState,
+                              selectedIndices: IntArray,
+                              selectedItems: List<Any>,
+                              closePopup: Boolean,
+                              timeToFirstResult: Int,
+                              mixedListInfo: SearchEverywhereMixedListInfo,
+                              elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+    if (!isLoggingEnabled()) return
+    val elements = elementsProvider.invoke()
+    val additionalEvents = buildList {
+      addAll(getSelectedElementsEvents(selectedIndices, elements, elementIdProvider, selectedItems))
+      addAll(getOnFinishEvents(closePopup))
+    }
+    reportElements(
+      project = project,
+      eventId = SESSION_FINISHED,
+      seSessionId = seSessionId,
+      cache = cache,
+      shouldLogFeatures = shouldLogFeatures,
+      timeToFirstResult = timeToFirstResult,
+      mixedListInfo = mixedListInfo,
+      elements = elements,
+      elementIdProvider = elementIdProvider,
+      additionalEvents = additionalEvents
+    )
+  }
+
+  internal fun onSearchFinished(project: Project?,
+                                seSessionId: Int,
+                                shouldLogFeatures: Boolean,
+                                elementIdProvider: SearchEverywhereMlItemIdProvider,
+                                cache: SearchEverywhereMlSearchState,
+                                timeToFirstResult: Int,
+                                mixedListInfo: SearchEverywhereMixedListInfo,
+                                elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+    if (!isLoggingEnabled()) return
+    val elements = elementsProvider.invoke()
+    val additionalEvents = getOnFinishEvents(closePopup = true)
+    reportElements(
+      project = project,
+      eventId = SESSION_FINISHED,
+      seSessionId = seSessionId,
+      cache = cache,
+      shouldLogFeatures = shouldLogFeatures,
+      timeToFirstResult = timeToFirstResult,
+      mixedListInfo = mixedListInfo,
+      elements = elements,
+      elementIdProvider = elementIdProvider,
+      additionalEvents = additionalEvents
+    )
+  }
+
+  internal fun onSearchRestarted(project: Project?, seSessionId: Int,
+                                 shouldLogFeatures: Boolean,
+                                 elementIdProvider: SearchEverywhereMlItemIdProvider,
+                                 context: SearchEverywhereMLContextInfo,
+                                 cache: SearchEverywhereMlSearchState,
+                                 timeToFirstResult: Int,
+                                 mixedListInfo: SearchEverywhereMixedListInfo,
+                                 elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+    if (!isLoggingEnabled()) return
+    val elements = elementsProvider.invoke()
+    val additionalEvents = buildList {
+      if (cache.searchStartReason == SearchRestartReason.SEARCH_STARTED) {
+        addAll(
+          getSessionLevelEvents(project, shouldLogFeatures, context)
+        )
+      }
+    }
+    reportElements(
+      project = project,
+      eventId = SEARCH_RESTARTED,
+      seSessionId = seSessionId,
+      cache = cache,
+      shouldLogFeatures = shouldLogFeatures,
+      timeToFirstResult = timeToFirstResult,
+      mixedListInfo = mixedListInfo,
+      elements = elements,
+      elementIdProvider = elementIdProvider,
+      additionalEvents = additionalEvents
+    )
+  }
+
+  private fun reportElements(project: Project?,
+                             eventId: VarargEventId,
+                             seSessionId: Int,
+                             cache: SearchEverywhereMlSearchState,
+                             shouldLogFeatures: Boolean,
+                             timeToFirstResult: Int,
+                             mixedListInfo: SearchEverywhereMixedListInfo,
+                             elements: List<SearchEverywhereFoundElementInfoWithMl>,
+                             elementIdProvider: SearchEverywhereMlItemIdProvider,
+                             additionalEvents: List<EventPair<*>>) {
+    NonUrgentExecutor.getInstance().execute {
+      val eventData = mutableListOf<EventPair<*>>()
+      eventData.addAll(additionalEvents)
+
+      eventData.addAll(
+        getCommonTypeLevelEvents(seSessionId = seSessionId,
+                                 tabId = cache.tabId,
+                                 elementsSize = elements.size,
+                                 searchStateFeatures = cache.searchStateFeatures,
+                                 timeToFirstResult = timeToFirstResult,
+                                 searchIndex = cache.searchIndex,
+                                 searchStartTime = cache.searchStartTime,
+                                 keysTyped = cache.keysTyped,
+                                 backspacesTyped = cache.backspacesTyped,
+                                 searchStartReason = cache.searchStartReason,
+                                 isMixedList = mixedListInfo.isMixedList,
+                                 orderByMl = cache.orderByMl,
+                                 experimentGroup = cache.experimentGroup)
+      )
+
+      eventData.addAll(getElementsEvents(project, shouldLogFeatures, elements, mixedListInfo, elementIdProvider))
+
+      eventId.log(eventData)
+    }
+  }
+
+  private fun getOnFinishEvents(closePopup: Boolean): List<EventPair<Boolean>> {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
-    val data = arrayListOf<EventPair<*>>(
+    return listOf(
       CLOSE_POPUP_KEY.with(closePopup),
       FORCE_EXPERIMENT_GROUP.with(experimentFromRegistry)
     )
-    reportElements(
-      project, SESSION_FINISHED, seSessionId, searchIndex, shouldLogFeatures, experimentGroup,
-      orderByMl, elementIdProvider, context, cache, timeToFirstResult, data,
-      selectedIndices, selectedItems, mixedListInfo, elementsProvider,
-    )
   }
 
-  internal fun onSearchFinished(project: Project?, seSessionId: Int, searchIndex: Int,
-                       shouldLogFeatures: Boolean, experimentGroup: Int,
-                       orderByMl: Boolean,
-                       elementIdProvider: SearchEverywhereMlItemIdProvider,
-                       context: SearchEverywhereMLContextInfo,
-                       cache: SearchEverywhereMlSearchState,
-                       timeToFirstResult: Int,
-                       mixedListInfo: SearchEverywhereMixedListInfo,
-                       elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
-    val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
-    val additional = listOf(
-      CLOSE_POPUP_KEY.with(true),
-      FORCE_EXPERIMENT_GROUP.with(experimentFromRegistry)
+  private fun getElementsEvents(project: Project?, shouldLogFeatures: Boolean,
+                                elements: List<SearchEverywhereFoundElementInfoWithMl>,
+                                mixedListInfo: SearchEverywhereMixedListInfo,
+                                elementIdProvider: SearchEverywhereMlItemIdProvider): List<EventPair<*>> {
+    val contributorFeaturesProvider = { it: SearchEverywhereFoundElementInfoWithMl ->
+      buildList {
+        if (shouldLogFeatures) {
+          addAll(contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo))
+        }
+        else {
+          add(contributorFeaturesProvider.getContributorIdFeature(it.contributor))
+        }
+      }
+    }
+
+    val updateEvents = featuresCache.getUpdateEventsAndCache(project, shouldLogFeatures, elements.take(REPORTED_ITEMS_LIMIT),
+                                                             contributorFeaturesProvider, elementIdProvider)
+    val events = listOf(
+      IS_PROJECT_DISPOSED_KEY.with(updateEvents == null)
     )
-    reportElements(
-      project, SESSION_FINISHED, seSessionId, searchIndex, shouldLogFeatures, experimentGroup,
-      orderByMl, elementIdProvider, context, cache, timeToFirstResult, additional,
-      EMPTY_ARRAY, emptyList(), mixedListInfo, elementsProvider,
-    )
+
+    if (updateEvents == null) return events
+
+    return events + listOf(COLLECTED_RESULTS_DATA_KEY.with(updateEvents))
   }
 
-  internal fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
-                        shouldLogFeatures: Boolean,
-                        elementIdProvider: SearchEverywhereMlItemIdProvider,
-                        context: SearchEverywhereMLContextInfo,
-                        cache: SearchEverywhereMlSearchState,
-                        timeToFirstResult: Int,
-                        mixedListInfo: SearchEverywhereMixedListInfo,
-                        elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
-    reportElements(
-      project, SEARCH_RESTARTED, seSessionId, searchIndex, shouldLogFeatures, cache.experimentGroup,
-      cache.orderByMl, elementIdProvider, context, cache, timeToFirstResult,
-      emptyList(), EMPTY_ARRAY, emptyList(), mixedListInfo, elementsProvider
-    )
-  }
-
-  private fun reportElements(project: Project?, eventId: VarargEventId,
-                             seSessionId: Int, searchIndex: Int,
-                             shouldLogFeatures: Boolean, experimentGroup: Int,
-                             orderByMl: Boolean,
-                             elementIdProvider: SearchEverywhereMlItemIdProvider,
-                             context: SearchEverywhereMLContextInfo,
-                             state: SearchEverywhereMlSearchState,
-                             timeToFirstResult: Int,
-                             additional: List<EventPair<*>>,
-                             selectedElements: IntArray,
-                             selectedItems: List<Any>,
-                             mixedListInfo: SearchEverywhereMixedListInfo,
-                             elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
-    if (!isLoggingEnabled()) return
-
-    val elements = elementsProvider.invoke()
-    NonUrgentExecutor.getInstance().execute {
-      val data = ArrayList<EventPair<*>>()
-      data.add(PROJECT_OPENED_KEY.with(project != null))
-      data.add(SESSION_ID_LOG_DATA_KEY.with(seSessionId))
-      data.add(SEARCH_INDEX_DATA_KEY.with(searchIndex))
-      data.add(LOG_FEATURES_DATA_KEY.with(shouldLogFeatures))
-      data.add(TOTAL_NUMBER_OF_ITEMS_DATA_KEY.with(elements.size))
-      data.add(SE_TAB_ID_KEY.with(state.tabId))
-      data.add(EXPERIMENT_GROUP.with(experimentGroup))
-      data.add(ORDER_BY_ML_GROUP.with(orderByMl))
-      data.add(SEARCH_START_TIME_KEY.with(state.searchStartTime))
-      data.add(SEARCH_STATE_FEATURES_DATA_KEY.with(ObjectEventData(state.searchStateFeatures)))
-
+  private fun getCommonTypeLevelEvents(seSessionId: Int,
+                                       tabId: String,
+                                       elementsSize: Int,
+                                       searchStateFeatures: List<EventPair<*>>,
+                                       timeToFirstResult: Int,
+                                       searchIndex: Int,
+                                       searchStartTime: Long,
+                                       keysTyped: Int,
+                                       backspacesTyped: Int,
+                                       searchStartReason: SearchRestartReason,
+                                       isMixedList: Boolean,
+                                       orderByMl: Boolean,
+                                       experimentGroup: Int): List<EventPair<*>> {
+    return buildList {
+      add(SE_TAB_ID_KEY.with(tabId))
+      add(SESSION_ID_LOG_DATA_KEY.with(seSessionId))
+      add(SEARCH_INDEX_DATA_KEY.with(searchIndex))
+      add(SEARCH_START_TIME_KEY.with(searchStartTime))
+      add(TOTAL_NUMBER_OF_ITEMS_DATA_KEY.with(elementsSize))
+      add(SEARCH_STATE_FEATURES_DATA_KEY.with(ObjectEventData(searchStateFeatures)))
       if (timeToFirstResult > -1) {
         // Only report if some results came up in the search
-        data.add(TIME_TO_FIRST_RESULT_DATA_KEY.with(timeToFirstResult))
+        add(TIME_TO_FIRST_RESULT_DATA_KEY.with(timeToFirstResult))
       }
-
-      data.add(TYPED_SYMBOL_KEYS.with(state.keysTyped))
-      data.add(TYPED_BACKSPACES_DATA_KEY.with(state.backspacesTyped))
-      data.add(REBUILD_REASON_KEY.with(state.searchStartReason))
-      data.add(IS_MIXED_LIST.with(mixedListInfo.isMixedList))
-      data.addAll(additional)
-      if (shouldLogFeatures) {
-        data.addAll(context.features)
-      }
-
-      val elementData = getElementsData(selectedElements, shouldLogFeatures, mixedListInfo,
-                                        elements, elementIdProvider, selectedItems, project)
-      data.add(IS_PROJECT_DISPOSED_KEY.with(elementData == null))
-      if (elementData != null) {
-        data.addAll(elementData)
-      }
-
-      eventId.log(data)
+      add(TYPED_SYMBOL_KEYS.with(keysTyped))
+      add(TYPED_BACKSPACES_DATA_KEY.with(backspacesTyped))
+      add(REBUILD_REASON_KEY.with(searchStartReason))
+      add(IS_MIXED_LIST.with(isMixedList))
+      add(ORDER_BY_ML_GROUP.with(orderByMl))
+      add(EXPERIMENT_GROUP.with(experimentGroup))
     }
+  }
+
+  private fun getSessionLevelEvents(
+    project: Project?,
+    shouldLogFeatures: Boolean,
+    context: SearchEverywhereMLContextInfo
+  ): List<EventPair<*>> {
+    val sessionEvents = listOf(
+      PROJECT_OPENED_KEY.with(project != null),
+      LOG_FEATURES_DATA_KEY.with(shouldLogFeatures),
+    )
+    val contextEvents = if (shouldLogFeatures) context.features else emptyList()
+    return sessionEvents + contextEvents
   }
 
   private fun isLoggingEnabled() =
     ApplicationManager.getApplication().isEAP && !Registry.`is`("search.everywhere.force.disable.logging.ml")
 
-  private fun getElementsData(selectedElements: IntArray,
-                              shouldLogFeatures: Boolean,
-                              mixedListInfo: SearchEverywhereMixedListInfo,
-                              elements: List<SearchEverywhereFoundElementInfoWithMl>,
-                              elementIdProvider: SearchEverywhereMlItemIdProvider,
-                              selectedItems: List<Any>,
-                              project: Project?): List<EventPair<*>>? {
-    return ArrayList<EventPair<*>>().apply {
-      addAll(getSelectedElementsData(selectedElements, elements, elementIdProvider, selectedItems))
-      addAll(getCollectedElementsData(project, shouldLogFeatures, mixedListInfo, elements, elementIdProvider) ?: return null)
-    }
-  }
 
-  private fun getSelectedElementsData(selectedElements: IntArray,
-                                      elements: List<SearchEverywhereFoundElementInfoWithMl>,
-                                      elementIdProvider: SearchEverywhereMlItemIdProvider,
-                                      selectedItems: List<Any>): List<EventPair<*>> {
-    val data = ArrayList<EventPair<*>>()
-    if (selectedElements.isNotEmpty()) {
-      data.add(SELECTED_INDEXES_DATA_KEY.with(selectedElements.map { it }))
-      data.add(SELECTED_ELEMENTS_DATA_KEY.with(selectedElements.map {
-        if (it < elements.size) {
-          val element = elements[it].element
-          val elementId = elementIdProvider.getId(element)
-          if (elementId != null) {
-            return@map elementId
+  private fun getSelectedElementsEvents(selectedElements: IntArray,
+                                        elements: List<SearchEverywhereFoundElementInfoWithMl>,
+                                        elementIdProvider: SearchEverywhereMlItemIdProvider,
+                                        selectedItems: List<Any>): List<EventPair<*>> {
+    return buildList {
+      if (selectedElements.isNotEmpty()) {
+        add(SELECTED_INDEXES_DATA_KEY.with(selectedElements.map { it }))
+        add(SELECTED_ELEMENTS_DATA_KEY.with(selectedElements.map {
+          if (it < elements.size) {
+            val element = elements[it].element
+            val elementId = elementIdProvider.getId(element)
+            if (elementId != null) {
+              return@map elementId
+            }
           }
-        }
-        return@map -1
-      }))
-      data.add(SELECTED_ELEMENTS_CONSISTENT.with(isSelectionConsistent(selectedElements, selectedItems, elements)))
+          return@map -1
+        }))
+        add(SELECTED_ELEMENTS_CONSISTENT.with(isSelectionConsistent(selectedElements, selectedItems, elements)))
+      }
     }
-
-    return data
-  }
-
-  /**
-   * Gets features of the collected elements.
-   * May return null if the project gets disposed.
-   */
-  private fun getCollectedElementsData(project: Project?,
-                                       shouldLogFeatures: Boolean,
-                                       mixedListInfo: SearchEverywhereMixedListInfo,
-                                       elements: List<SearchEverywhereFoundElementInfoWithMl>,
-                                       elementIdProvider: SearchEverywhereMlItemIdProvider): ArrayList<EventPair<*>>? {
-    val data = ArrayList<EventPair<*>>()
-    val actionManager = ActionManager.getInstance()
-    val value = elements.take(REPORTED_ITEMS_LIMIT).map {
-      if (project != null && project.isDisposed) {
-        return null
-      }
-
-      val result = arrayListOf<EventPair<*>>()
-
-      val elementId = elementIdProvider.getId(it.element)
-      elementId?.let { id -> result.add(ID_KEY.with(id)) }
-
-      if (shouldLogFeatures) {
-        addElementFeatures(it, result, actionManager)
-        result.add(CONTRIBUTOR_DATA_KEY.with(ObjectEventData(contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo))))
-      }
-      else {
-        result.add(CONTRIBUTOR_DATA_KEY.with(ObjectEventData(contributorFeaturesProvider.getContributorIdFeature(it.contributor))))
-      }
-
-      ObjectEventData(result)
-    }
-    data.add(COLLECTED_RESULTS_DATA_KEY.with(value))
-
-    return data
   }
 
   private fun isSelectionConsistent(selectedIndices: IntArray,
@@ -236,42 +273,8 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return true
   }
 
-  private fun addElementFeatures(elementInfo: SearchEverywhereFoundElementInfoWithMl,
-                                 result: MutableList<EventPair<*>>,
-                                 actionManager: ActionManager) {
-    if (elementInfo.mlFeatures.isNotEmpty()) {
-      result.add(FEATURES_DATA_KEY.with(ObjectEventData(elementInfo.mlFeatures)))
-    }
-
-    val mlWeight = elementInfo.mlWeight ?: -1.0
-    if (mlWeight >= 0.0) {
-      result.add(ML_WEIGHT_KEY.with(roundDouble(mlWeight)))
-    }
-
-    doWhenIsActionWrapper(elementInfo.element) {
-      val action = it.action
-      result.add(ACTION_ID_KEY.with(actionManager.getId(action) ?: action.javaClass.name))
-    }
-  }
-
-  /**
-   * Executes the operation when and only when [element] is [GotoActionModel.ActionWrapper].
-   *
-   * As the class is a public API, smart casting is not available and multiple casts are required,
-   * the function simply takes care of that leaving the call site more concise.
-   *
-   * @param element: Element that may or may not be [GotoActionModel.ActionWrapper]
-   * @param operation: Operation to be executed when the element is [GotoActionModel.ActionWrapper]
-   */
-  private fun doWhenIsActionWrapper(element: Any, operation: (GotoActionModel.ActionWrapper) -> Unit) {
-    if ((element is GotoActionModel.MatchedValue) && (element.value is GotoActionModel.ActionWrapper)) {
-      operation(element.value as GotoActionModel.ActionWrapper)
-    }
-  }
-
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 53, RECORDER_CODE)
-    private val EMPTY_ARRAY = IntArray(0)
+    private val GROUP = EventLogGroup("mlse.log", 59, RECORDER_CODE)
     private const val REPORTED_ITEMS_LIMIT = 50
 
     private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
@@ -307,16 +310,18 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     @VisibleForTesting
     val ID_KEY = EventFields.Int("id")
     internal val ACTION_ID_KEY = EventFields.StringValidatedByCustomRule("actionId", "action")
+
     @VisibleForTesting
     val FEATURES_DATA_KEY = createFeaturesEventObject()
     internal val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
+    internal val ABSENT_FEATURES_KEY = EventFields.StringListValidatedByCustomRule("absentFeatures",
+                                                                                   SearchEverywhereMlElementFeatureValidationRule::class.java)
     internal val CONTRIBUTOR_DATA_KEY = ObjectEventField(
       "contributor", *SearchEverywhereContributorFeaturesProvider.getFeaturesDeclarations().toTypedArray()
     )
 
-    @VisibleForTesting
     val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
-      "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, ML_WEIGHT_KEY, CONTRIBUTOR_DATA_KEY
+      "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_DATA_KEY, ML_WEIGHT_KEY, ABSENT_FEATURES_KEY
     )
 
 
@@ -325,13 +330,26 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)
     private val SEARCH_RESTARTED = registerEvent("searchRestarted")
 
-    private fun createFeaturesEventObject(): ObjectEventField {
-      val features = arrayListOf<EventField<*>>(SearchEverywhereElementFeaturesProvider.NAME_LENGTH)
-      features.addAll(SearchEverywhereElementFeaturesProvider.nameFeatureToField.values)
+    private fun collectNameFeaturesToFields(): Map<String, EventField<*>> {
+      val nameFeatureToField = hashMapOf<String, EventField<*>>(
+        SearchEverywhereElementFeaturesProvider.NAME_LENGTH.name to SearchEverywhereElementFeaturesProvider.NAME_LENGTH
+      )
+      nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.nameFeatureToField.values.map { it.name to it })
       for (featureProvider in SearchEverywhereElementFeaturesProvider.getFeatureProviders()) {
-        features.addAll(featureProvider.getFeaturesDeclarations())
+        nameFeatureToField.putAll(featureProvider.getFeaturesDeclarations().map {
+          it.name to it
+        })
       }
-      return ObjectEventField("features", *features.toTypedArray())
+      return nameFeatureToField
+    }
+
+    internal fun findElementFeatureByName(name: String): EventField<*>? {
+      return collectNameFeaturesToFields()[name]
+    }
+
+    private fun createFeaturesEventObject(): ObjectEventField {
+      val nameFeatureToField = collectNameFeaturesToFields()
+      return ObjectEventField("features", *nameFeatureToField.values.toTypedArray())
     }
 
     private fun registerEvent(eventId: String, vararg additional: EventField<*>): VarargEventId {
@@ -360,11 +378,6 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       fields.addAll(SearchEverywhereContextFeaturesProvider.getContextFields())
       fields.addAll(additional)
       return GROUP.registerVarargEvent(eventId, *fields.toTypedArray())
-    }
-
-    private fun roundDouble(value: Double): Double {
-      if (!value.isFinite()) return -1.0
-      return round(value * 100000) / 100000
     }
   }
 }

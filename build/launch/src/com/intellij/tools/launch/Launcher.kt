@@ -12,7 +12,6 @@ import java.util.logging.Logger
 
 object Launcher {
 
-  private const val defaultDebugPort = 5050
   private val logger = Logger.getLogger(Launcher::class.java.name)
 
   fun launch(paths: PathsProvider,
@@ -81,9 +80,9 @@ object Launcher {
       cmd.add("-Didea.platform.prefix=${options.platformPrefix}")
     }
 
-    if (!TeamCityHelper.isUnderTeamCity) {
+    if (!TeamCityHelper.isUnderTeamCity && options.debugPort != null) {
       val suspendOnStart = if (options.debugSuspendOnStart) "y" else "n"
-      val port = if (options.debugPort != null) options.debugPort else findFreeDebugPort()
+      val port = options.debugPort
 
       // changed in Java 9, now we have to use *: to listen on all interfaces
       val host = if (options.runInDocker) "*:" else ""
@@ -139,29 +138,12 @@ object Launcher {
   }
 
   fun findFreeDebugPort(): Int {
-    if (isDefaultPortFree()) {
-      return defaultDebugPort
-    }
-
-    val socket = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
-    val result = socket.localPort
-    socket.reuseAddress = true
-    socket.close()
-    return result
-  }
-
-  private fun isDefaultPortFree(): Boolean {
-    var socket: ServerSocket? = null
-    try {
-      socket = ServerSocket(defaultDebugPort, 0, InetAddress.getByName("127.0.0.1"))
+    synchronized(this) {
+      val socket = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
+      val result = socket.localPort
       socket.reuseAddress = true
-      return true
-    }
-    catch (e: Exception) {
-      return false
-    }
-    finally {
-      socket?.close()
+      socket.close()
+      return result
     }
   }
 }

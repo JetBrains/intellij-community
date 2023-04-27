@@ -27,17 +27,17 @@ public class Test {
       boolean dropping = true;
       OUTER:
       for (String s : data) {
-          for (String s1 : Arrays.asList(s, s + s)) {
-              if (s1.isEmpty()) {
+          for (String string : Arrays.asList(s, s + s)) {
+              if (string.isEmpty()) {
                   break OUTER;
               }
               if (dropping) {
-                  if (s1.length() < 3) {
+                  if (string.length() < 3) {
                       continue;
                   }
                   dropping = false;
               }
-              xyz.add(s1);
+              xyz.add(string);
           }
       }
       System.out.println(xyz);

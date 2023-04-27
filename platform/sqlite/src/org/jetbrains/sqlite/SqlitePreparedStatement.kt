@@ -1,12 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.sqlite
 
-import kotlin.time.Duration
-
 class SqlitePreparedStatement<T : Binder> internal constructor(private val connection: SqliteConnection,
-                                                               private val sql: String,
-                                                               val binder: T,
-                                                               private val queryTimeout: Duration = Duration.ZERO) : SqliteStatement {
+                                                               private val sql: ByteArray,
+                                                               val binder: T) : SqliteStatement {
   private val resultSet = SqliteResultSet(this)
 
   @JvmField
@@ -55,38 +52,34 @@ class SqlitePreparedStatement<T : Binder> internal constructor(private val conne
     require(columnCount > 0) { "Query does not return results" }
     pointer.ensureOpen()
     resultSet.close()
-    connection.withConnectionTimeout(queryTimeout) {
-      // SqliteResultSet is responsible for `db.reset`, that's why here we do not have try-finally as `executeLifecycle` does
-      synchronized(db) {
-        bindParams()
-        val isEmpty = connection.step(pointer.pointer, sql)
-        if (isEmpty) {
-          // SQLITE_DONE means that the statement has finished executing successfully.
-          // sqlite3_step() should not be called again on this virtual machine without first calling sqlite3_reset()
-          // to reset the virtual machine back to its initial state.
+    // SqliteResultSet is responsible for `db.reset`, that's why here we do not have try-finally as `executeLifecycle` does
+    synchronized(db) {
+      bindParams()
+      val isEmpty = connection.step(pointer.pointer, sql)
+      if (isEmpty) {
+        // SQLITE_DONE means that the statement has finished executing successfully.
+        // sqlite3_step() should not be called again on this virtual machine without first calling sqlite3_reset()
+        // to reset the virtual machine back to its initial state.
 
-          // resultSet.close() do this, but as we do not set `isOpen` to `true`, we have to reset it right now
-          db.reset(pointer.pointer)
-        }
-        else {
-          resultSet.isOpen = true
-        }
-        return resultSet
+        // resultSet.close() do this, but as we do not set `isOpen` to `true`, we have to reset it right now
+        db.reset(pointer.pointer)
       }
+      else {
+        resultSet.isOpen = true
+      }
+      return resultSet
     }
   }
 
   fun executeUpdate() {
     pointer.ensureOpen()
-    connection.withConnectionTimeout(queryTimeout) {
-      synchronized(this.db) {
-        bindParams()
-        try {
-          connection.step(pointer.pointer, sql)
-        }
-        finally {
-          db.reset(pointer.pointer)
-        }
+    synchronized(db) {
+      bindParams()
+      try {
+        connection.step(pointer.pointer, sql)
+      }
+      finally {
+        db.reset(pointer.pointer)
       }
     }
   }
@@ -105,16 +98,14 @@ class SqlitePreparedStatement<T : Binder> internal constructor(private val conne
 
   private inline fun <T> executeLifecycle(executor: (isEmpty: Boolean) -> T): T {
     pointer.ensureOpen()
-    connection.withConnectionTimeout(queryTimeout) {
-      synchronized(db) {
-        try {
-          bindParams()
-          val isEmpty = connection.step(pointer.pointer, sql)
-          return executor(isEmpty)
-        }
-        finally {
-          db.reset(pointer.pointer)
-        }
+    synchronized(db) {
+      try {
+        bindParams()
+        val isEmpty = connection.step(pointer.pointer, sql)
+        return executor(isEmpty)
+      }
+      finally {
+        db.reset(pointer.pointer)
       }
     }
   }
@@ -130,17 +121,15 @@ class SqlitePreparedStatement<T : Binder> internal constructor(private val conne
       return
     }
 
-    connection.withConnectionTimeout(queryTimeout) {
-      try {
-        synchronized(db) {
-          pointer.ensureOpen()
-          binder.executeBatch(pointer.pointer, db)
-          db.reset(pointer.pointer)
-        }
+    try {
+      synchronized(db) {
+        pointer.ensureOpen()
+        binder.executeBatch(pointer.pointer, db)
+        db.reset(pointer.pointer)
       }
-      finally {
-        binder.clearBatch()
-      }
+    }
+    finally {
+      binder.clearBatch()
     }
   }
 }

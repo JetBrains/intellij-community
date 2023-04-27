@@ -29,7 +29,7 @@ public class DependenciesToolWindow {
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
 
-      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
+      ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.ANALYZE_DEPENDENCIES,
                                                                    true,
                                                                    ToolWindowAnchor.BOTTOM,
                                                                    project);
@@ -47,7 +47,7 @@ public class DependenciesToolWindow {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
       myContentManager.addContent(content);
       myContentManager.setSelectedContent(content);
-      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);
+      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.ANALYZE_DEPENDENCIES).activate(null);
     });
   }
 

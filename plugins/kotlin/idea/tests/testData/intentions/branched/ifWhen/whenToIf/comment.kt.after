@@ -5,3 +5,5 @@ fun foo(b: Boolean) {
         b) 1 // comment 2
     else 2
 }
+
+// IGNORE_FIR

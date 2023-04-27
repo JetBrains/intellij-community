@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "operator fun component1(): Int"
 
 open class X {
     operator fun <caret>component1(): Int = 0

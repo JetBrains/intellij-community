@@ -51,6 +51,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @NonNls private static final String SEARCH_ICON = "JTextField.Search.Icon";
   @NonNls private static final String HISTORY_POPUP_ENABLED = "History.Popup.Enabled";
 
+  @NonNls private static final String SEARCH_VARIANT_VALUE = "search";
+
   private final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
   private boolean monospaced;
@@ -226,7 +228,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       return false;
     }
     var variant = ((JTextField)c).getClientProperty(VARIANT);
-    return "search".equals(variant) || "searchWithJbPopup".equals(variant);
+    return SEARCH_VARIANT_VALUE.equals(variant) || "searchWithJbPopup".equals(variant);
   }
 
   @Nullable
@@ -561,7 +563,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
           }
         }
       }
-      else if ("search".equals(variant)) {
+      else if (SEARCH_VARIANT_VALUE.equals(variant)) {
         Object extension = getComponent().getClientProperty("search.extension");
         if (extension instanceof Extension) {
           addExtension((Extension)extension);

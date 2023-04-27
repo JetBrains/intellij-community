@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtil.positionCursor
@@ -90,7 +90,7 @@ private class JavaMethodRenderer(
   }
 
   fun renderMethod(): PsiMethod {
-    val method = factory.createMethod(request.methodName, PsiTypes.voidType())
+    val method = factory.createMethodFromText("<__TMP__> __TMP__ ${request.methodName}() {}", null)
 
     val modifiersToRender = requestedModifiers.toMutableList()
     if (targetClass.isInterface) {
@@ -130,7 +130,9 @@ private class JavaMethodRenderer(
   private fun setupTemplate(method: PsiMethod): TemplateBuilderImpl {
     val builder = TemplateBuilderImpl(method)
     createTemplateContext(builder).run {
-      setupTypeElement(method.returnTypeElement, request.returnType)
+      val returnType = request.returnType
+      method.typeParameters.forEach { typeParameter -> typeParameter.delete() }
+      setupTypeElement(method.returnTypeElement, returnType)
       setupParameters(method, request.expectedParameters)
     }
     builder.setEndVariableAfter(method.body ?: method)

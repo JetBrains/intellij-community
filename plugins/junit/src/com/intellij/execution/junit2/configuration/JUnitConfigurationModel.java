@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
@@ -37,8 +38,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-// Author: dyoma
-
 public class JUnitConfigurationModel {
   public static final int ALL_IN_PACKAGE = 0;
   public static final int CLASS = 1;
@@ -55,7 +54,7 @@ public class JUnitConfigurationModel {
 
   static {
     ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE,
-                                   JUnitConfiguration.TEST_CLASS, 
+                                   JUnitConfiguration.TEST_CLASS,
                                    JUnitConfiguration.TEST_METHOD,
                                    JUnitConfiguration.TEST_PATTERN,
                                    JUnitConfiguration.TEST_DIRECTORY,
@@ -93,23 +92,19 @@ public class JUnitConfigurationModel {
     myListener = listener;
   }
 
-  public Object getJUnitDocument(final int i) {
-    return myJUnitDocuments[i];
-  }
-
   public void setJUnitDocument(final int i, Object doc) {
      myJUnitDocuments[i] = doc;
   }
 
-  public void apply(final Module module, final JUnitConfiguration configuration) {
+  public void apply(final Module module, final JUnitConfiguration configuration, @Nullable ClassEditorField classField) {
     final boolean shouldUpdateName = configuration.isGeneratedName();
-    applyTo(configuration.getPersistentData(), module);
+    applyTo(configuration.getPersistentData(), module, classField);
     if (shouldUpdateName && !JavaExecutionUtil.isNewName(configuration.getName())) {
       configuration.setGeneratedName();
     }
   }
 
-  private void applyTo(final JUnitConfiguration.Data data, final Module module) {
+  private void applyTo(final JUnitConfiguration.Data data, final Module module, @Nullable ClassEditorField classField) {
     final String testObject = getTestObject();
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
@@ -119,6 +114,17 @@ public class JUnitConfigurationModel {
         !JUnitConfiguration.TEST_CATEGORY.equals(testObject) &&
         !JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
       data.METHOD_NAME = getJUnitTextValue(METHOD);
+      if (classField != null) {
+        String jvmName = classField.getClassName();
+        if (jvmName != null) {
+          data.MAIN_CLASS_NAME = jvmName;
+          data.PACKAGE_NAME = StringUtil.getPackageName(jvmName);
+        }
+        else {
+          data.MAIN_CLASS_NAME = className;
+        }
+        return;
+      }
       if (!className.equals(replaceRuntimeClassName(data.getMainClassName()))) {
         try {
           final PsiClass testClass;
@@ -143,24 +149,20 @@ public class JUnitConfigurationModel {
       }
     }
     else if (!JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
-      if (JUnitConfiguration.TEST_PACKAGE.equals(testObject)) {
-        data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
-      }
-      else if (JUnitConfiguration.TEST_DIRECTORY.equals(testObject)) {
-        data.setDirName(getJUnitTextValue(DIR));
-      }
-      else if (JUnitConfiguration.TEST_CATEGORY.equals(testObject)) {
-        data.setCategoryName(getJUnitTextValue(CATEGORY));
-      }
-      else {
-        final LinkedHashSet<String> set = new LinkedHashSet<>();
-        final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
-        for (String pattern : patterns) {
-          if (pattern.length() > 0) {
-            set.add(pattern);
+      switch (testObject) {
+        case JUnitConfiguration.TEST_PACKAGE -> data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
+        case JUnitConfiguration.TEST_DIRECTORY -> data.setDirName(getJUnitTextValue(DIR));
+        case JUnitConfiguration.TEST_CATEGORY -> data.setCategoryName(getJUnitTextValue(CATEGORY));
+        default -> {
+          final LinkedHashSet<String> set = new LinkedHashSet<>();
+          final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
+          for (String pattern : patterns) {
+            if (!pattern.isEmpty()) {
+              set.add(pattern);
+            }
           }
+          data.setPatterns(set);
         }
-        data.setPatterns(set);
       }
       data.MAIN_CLASS_NAME = "";
       data.METHOD_NAME = "";
@@ -200,7 +202,7 @@ public class JUnitConfigurationModel {
   }
 
   private static String replaceRuntimeClassName(String mainClassName) {
-    return mainClassName.replaceAll("\\$", "\\.");
+    return mainClassName.replace('$', '.');
   }
 
   private void setJUnitTextValue(final int index, final String text) {
@@ -219,8 +221,8 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      WriteCommandAction
-        .runWriteCommandAction(myProject, () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
+      WriteCommandAction.runWriteCommandAction(myProject, null, null,
+                                               () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
     }
   }
 
@@ -266,7 +268,7 @@ public class JUnitConfigurationModel {
   }
 
   public void reloadTestKindModel(JComboBox<Integer> comboBox, Module module, @Nullable Runnable onDone) {
-    int selectedIndex = comboBox.getSelectedIndex();
+    Object selectedItem = comboBox.getSelectedItem();
     ReadAction.nonBlocking(() -> {
       final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
       aModel.addElement(ALL_IN_PACKAGE);
@@ -296,7 +298,7 @@ public class JUnitConfigurationModel {
       return aModel;
     }).finishOnUiThread(ModalityState.any(), model -> {
       comboBox.setModel(model);
-      comboBox.setSelectedIndex(selectedIndex == -1 ? myType : selectedIndex);
+      comboBox.setSelectedItem(selectedItem == null ? myType : selectedItem);
       if (onDone != null) {
         onDone.run();
       }

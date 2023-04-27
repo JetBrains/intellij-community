@@ -2,14 +2,16 @@
 package com.intellij.codeInspection.tests.test.junit
 
 import com.intellij.codeInspection.test.junit.JUnit4ConverterInspection
-import com.intellij.codeInspection.tests.UastInspectionTestBase
+import com.intellij.codeInspection.tests.JvmInspectionTestBase
+import com.intellij.codeInspection.tests.test.addJUnit3Library
+import com.intellij.codeInspection.tests.test.addJUnit4Library
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
-abstract class JUnit4ConverterInspectionTestBase : UastInspectionTestBase() {
+abstract class JUnit4ConverterInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = JUnit4ConverterInspection()
 
   protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {

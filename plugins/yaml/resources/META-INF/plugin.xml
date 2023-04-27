@@ -108,6 +108,8 @@
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
 
     <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLWebReferenceContributor"/>
+
+    <pluginSuggestionProvider implementation="org.jetbrains.yaml.swagger.OpenApiSuggestionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

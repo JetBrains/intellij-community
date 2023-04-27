@@ -75,10 +75,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -105,6 +102,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   private PathAssembler.LocalDistribution myDistribution;
 
   private final Ref<Couple<String>> deprecationError = Ref.create();
+  private final StringBuilder deprecationTextBuilder = new StringBuilder();
+  private int deprecationTextLineCount = 0;
 
   @Override
   public void setUp() throws Exception {
@@ -113,7 +112,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
     super.setUp();
 
-    WriteAction.runAndWait(this::configureJDKTable);
+    WriteAction.runAndWait(this::configureJdkTable);
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
 
     ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestRootDisposable());
@@ -123,19 +122,34 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     cleanScriptsCacheIfNeeded();
   }
 
-  protected void configureJDKTable() throws Exception {
+  protected void configureJdkTable() {
+    cleanJdkTable();
+    ArrayList<Sdk> jdks = new ArrayList<>(Arrays.asList(createJdkFromJavaHome()));
+    populateJdkTable(jdks);
+  }
+
+  protected void cleanJdkTable() {
     removedSdks.clear();
     for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
       ProjectJdkTable.getInstance().removeJdk(sdk);
       if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
       removedSdks.add(sdk);
     }
+  }
+
+  protected void populateJdkTable(@NotNull List<Sdk> jdks) {
+    for (Sdk jdk : jdks) {
+      ProjectJdkTable.getInstance().addJdk(jdk);
+    }
+  }
+
+  private Sdk createJdkFromJavaHome() {
     VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
     JavaSdk javaSdk = JavaSdk.getInstance();
     SdkType javaSdkType = javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
     Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, javaSdkType, true, null, GRADLE_JDK_NAME);
     assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-    ProjectJdkTable.getInstance().addJdk(jdk);
+    return jdk;
   }
 
   @Override
@@ -361,7 +375,15 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @Override
   protected void printOutput(@NotNull String text, boolean stdOut) {
     if (text.contains("This is scheduled to be removed in Gradle")) {
-      deprecationError.set(Couple.of("Deprecation warning from Gradle", text));
+      deprecationTextLineCount = 15;
+    }
+    if (deprecationTextLineCount > 0) {
+      deprecationTextBuilder.append(text);
+      deprecationTextLineCount--;
+      if (deprecationTextLineCount == 0) {
+        deprecationError.set(Couple.of("Deprecation warning from Gradle", deprecationTextBuilder.toString()));
+        deprecationTextBuilder.setLength(0);
+      }
     }
     super.printOutput(text, stdOut);
   }
@@ -388,11 +410,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     var builder = createBuildScriptBuilder();
     configure.accept(builder);
     return builder.generate();
-  }
-
-  protected @NotNull String getJUnitTestAnnotationClass() {
-    return GradleBuildScriptBuilderUtil.isSupportedJUnit5(getCurrentGradleVersion())
-           ? "org.junit.jupiter.api.Test" : "org.junit.Test";
   }
 
   @Override
@@ -516,7 +533,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected boolean isJavaLibraryPluginSupported() {
-    return GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(getCurrentGradleVersion());
+    return GradleBuildScriptBuilderUtil.isJavaLibraryPluginSupported(getCurrentGradleVersion());
   }
 
   protected boolean isGradleOlderThan(@NotNull String ver) {

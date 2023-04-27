@@ -13,9 +13,9 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -95,7 +95,9 @@ internal class LibraryModifiableModelBridgeImpl(
     }
     if (isChanged) {
       if (targetBuilder != null) {
-        targetBuilder.addDiff(diff)
+        if (targetBuilder !== diff) {
+          targetBuilder.addDiff(diff)
+        }
       }
       else {
         if (originalLibrary.project != null) {
@@ -136,11 +138,16 @@ internal class LibraryModifiableModelBridgeImpl(
     }
   }
 
-  private fun updateProperties(libraryType: String, propertiesXmlTag: String? = null) {
+  private fun updateProperties(libraryType: String?, propertiesXmlTag: String? = null) {
     val entity = currentLibrary.libraryEntity
 
     val properties = entity.libraryProperties
-    if (properties == null) {
+    if (libraryType == null) {
+      if (properties != null) {
+        diff.removeEntity(properties)
+      }
+    }
+    else if (properties == null) {
       diff.addEntity(LibraryPropertiesEntity(libraryType, entity.entitySource) {
         library = entity
         if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
@@ -303,16 +310,16 @@ internal class LibraryModifiableModelBridgeImpl(
     }
   }
 
-  override fun setKind(type: PersistentLibraryKind<*>) {
+  override fun setKind(type: PersistentLibraryKind<*>?) {
     assertModelIsLive()
 
     if (kind == type) return
 
-    updateProperties(type.kindId)
+    updateProperties(type?.kindId)
 
-    if (assertChangesApplied && currentLibrary.kind?.kindId != type.kindId) {
+    if (assertChangesApplied && currentLibrary.kind?.kindId != type?.kindId) {
       error(
-        "setKind: expected kindId ${type.kindId}, but got ${currentLibrary.kind?.kindId}. Original kind: ${originalLibrarySnapshot.kind?.kindId}")
+        "setKind: expected kindId ${type?.kindId}, but got ${currentLibrary.kind?.kindId}. Original kind: ${originalLibrarySnapshot.kind?.kindId}")
     }
   }
 

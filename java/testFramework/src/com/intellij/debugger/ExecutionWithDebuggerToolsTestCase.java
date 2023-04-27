@@ -149,8 +149,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
    * <p>
    * The actions added here are run after the one-time action from {@link #onBreakpoint(SuspendContextRunnable)}.
    */
-  protected void onBreakpoints(SuspendContextRunnable runnable) {
-    getBreakpointProvider().onBreakpoints(runnable);
+  protected void onEveryBreakpoint(SuspendContextRunnable runnable) {
+    getBreakpointProvider().onEveryBreakpoint(runnable);
   }
 
   /**
@@ -287,7 +287,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
     else {
       if (!SwingUtilities.isEventDispatchThread()) {
-        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> pumpSwingThread());
+        UIUtil.invokeAndWaitIfNeeded(() -> pumpSwingThread());
       }
       else {
         SwingUtilities.invokeLater(() -> pumpSwingThread());
@@ -361,7 +361,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         String breakpointLocation = fileName + ":" + (commentLine + 1 + 1);
 
         String commentText = text.substring(document.getLineStartOffset(commentLine), document.getLineEndOffset(commentLine));
-        BreakpointComment comment = BreakpointComment.parse(commentText, fileName, commentLine + 1);
+        BreakpointComment comment = BreakpointComment.parse(commentText, file.getVirtualFile().getPresentableUrl(), commentLine);
 
         Breakpoint breakpoint;
 
@@ -398,7 +398,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             }
           }
           case "Exception" -> {
-            breakpoint = breakpointManager.addExceptionBreakpoint(comment.readKindValue(), "");
+            String exceptionClassName = Objects.requireNonNull(comment.readKindValue());
+            breakpoint = breakpointManager.addExceptionBreakpoint(exceptionClassName, "");
             if (breakpoint == null) break;
             systemPrintln("ExceptionBreakpoint created at " + breakpointLocation);
             String catchClassFiltersStr = comment.readValue("Catch class filters");
@@ -425,6 +426,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           continue;
         }
 
+        String enabled = comment.readValue("Enabled");
+        if (enabled != null) {
+          breakpoint.getXBreakpoint().setEnabled(Boolean.parseBoolean(enabled));
+          systemPrintln("Enabled = " + enabled);
+        }
+
         String suspendPolicy = comment.readValue("suspendPolicy");
         if (suspendPolicy != null) {
           //breakpoint.setSuspend(!DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy));
@@ -445,10 +452,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           systemPrintln("LogExpression = " + logExpression);
         }
 
-        String passCount = comment.readValue("Pass count");
+        Integer passCount = comment.readIntValue("Pass count");
         if (passCount != null) {
           breakpoint.setCountFilterEnabled(true);
-          breakpoint.setCountFilter(Integer.parseInt(passCount));
+          breakpoint.setCountFilter(passCount);
           systemPrintln("Pass count = " + passCount);
         }
 
@@ -518,7 +525,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected class BreakpointProvider extends DebugProcessAdapterImpl {
     private final DebugProcessImpl myDebugProcess;
-    private final List<SuspendContextRunnable> myBreakpointListeners = new ArrayList<>();
+    private final List<SuspendContextRunnable> myRepeatingRunnables = new ArrayList<>();
     private final Queue<SuspendContextRunnable> myScriptRunnables = new ArrayDeque<>();
 
     public BreakpointProvider(DebugProcessImpl debugProcess) {
@@ -529,14 +536,14 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myScriptRunnables.add(runnable);
     }
 
-    public void onBreakpoints(SuspendContextRunnable runnable) {
-      myBreakpointListeners.add(runnable);
+    public void onEveryBreakpoint(SuspendContextRunnable runnable) {
+      myRepeatingRunnables.add(runnable);
     }
 
     @Override
     public void paused(SuspendContextImpl suspendContext) {
       try {
-        if (myScriptRunnables.isEmpty() && myBreakpointListeners.isEmpty()) {
+        if (myScriptRunnables.isEmpty() && myRepeatingRunnables.isEmpty()) {
           print("resuming ", ProcessOutputTypes.SYSTEM);
           printContext(suspendContext);
           resume(suspendContext);
@@ -546,7 +553,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         if (suspendContextRunnable != null) {
           suspendContextRunnable.run(suspendContext);
         }
-        for (SuspendContextRunnable it : myBreakpointListeners) {
+        for (SuspendContextRunnable it : myRepeatingRunnables) {
           it.run(suspendContext);
         }
       }

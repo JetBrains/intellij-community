@@ -54,11 +54,11 @@ public class Ref<T> {
 
   @NotNull
   public static <T> Ref<T> create() {
-    return new Ref<T>();
+    return new Ref<>();
   }
 
   public static <T> Ref<T> create(@Nullable T value) {
-    return new Ref<T>(value);
+    return new Ref<>(value);
   }
 
   @Nullable

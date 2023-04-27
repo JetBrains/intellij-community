@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.processTools
 
-import kotlinx.coroutines.*
+import com.intellij.util.io.computeDetached
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.runInterruptible
 import java.io.IOException
 import java.io.InputStream
-import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
 // Several methods for process to get its output as kotlin result wrapped into coroutines
@@ -28,24 +30,15 @@ suspend fun Process.getResultStdout(): Result<ByteArray> = getBareExecutionResul
 /**
  * Get process result as [ExecutionResult].
  */
-@OptIn(DelicateCoroutinesApi::class)
 suspend fun Process.getBareExecutionResult(): ExecutionResult {
   // Streams can't be read in async manner, so they may block coroutine scope
   // To fix that, we use separate scope and cancel it when our scope is canceled.
   // This may leave blocked thread, but will cancel coroutine scope at least
-  val deferred = GlobalScope.async {
-    withContext(Dispatchers.IO) {
-      val stdOut = async { inputStream.readInterruptible() }
-      val stdErr = async { errorStream.readInterruptible() }
-      ExecutionResult(onExit().await().exitValue(), stdOut.await(), stdErr.await())
-    }
-  }
-  try {
-    return deferred.await()
-  }
-  catch (ce: CancellationException) {
-    deferred.cancel(ce)
-    throw ce
+  @OptIn(DelicateCoroutinesApi::class)
+  return computeDetached {
+    val stdOut = async { inputStream.readInterruptible() }
+    val stdErr = async { errorStream.readInterruptible() }
+    ExecutionResult(onExit().await().exitValue(), stdOut.await(), stdErr.await())
   }
 }
 

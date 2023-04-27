@@ -89,13 +89,6 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         }
     }
 
-    override fun KDocReference.renameTo(newElementName: String): PsiElement? {
-        val textRange = element.getNameTextRange()
-        val newText = textRange.replace(element.text, newElementName)
-        val newLink = KDocElementFactory(element.project).createNameFromText(newText)
-        return element.replace(newLink)
-    }
-
     override fun SyntheticPropertyAccessorReference.renameTo(newElementName: String): KtElement? {
         if (!Name.isValidIdentifier(newElementName)) return expression
 

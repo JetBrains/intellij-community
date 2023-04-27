@@ -26,6 +26,7 @@ import training.ui.showOnboardingFeedbackNotification
 import training.util.enableLessonsAndPromoters
 import training.util.resetPrimaryLanguage
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
@@ -38,7 +39,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   override val promoImage: Icon
     get() = FeaturesTrainerIcons.PluginIcon
 
-  override fun getPromotion(isEmptyState: Boolean): JPanel? {
+  override fun getPromotion(isEmptyState: Boolean): JComponent {
     scheduleOnboardingFeedback()
     return super.getPromotion(isEmptyState)
   }
@@ -90,7 +91,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   override val closeAction: ((JPanel) -> Unit) = { promoPanel ->
     PropertiesComponent.getInstance().setValue(PROMO_HIDDEN, true)
     promoPanel.removeAll()
-    promoPanel.border = JBUI.Borders.empty(0, 2, 0, 0)
+    promoPanel.border = JBUI.Borders.emptyLeft(2)
     promoPanel.isOpaque = false
     val text = LearnBundle.message("welcome.promo.close.hint",
                                    ActionsBundle.message("group.HelpMenu.text").dropMnemonic(),

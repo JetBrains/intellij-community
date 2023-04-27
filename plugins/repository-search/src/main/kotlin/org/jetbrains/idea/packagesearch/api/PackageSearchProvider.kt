@@ -22,8 +22,6 @@ import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.future
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
@@ -31,7 +29,6 @@ import org.jetbrains.idea.packagesearch.PackageSearchServiceConfig
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
-import java.util.function.Consumer
 
 /**
  * If you need to access Package Search API only, it is generally recommended to use [PackageSearchApiClient] or [AsyncPackageSearchApiClient] directly.
@@ -83,4 +80,4 @@ fun PackageSearchProvider(
   project: Project,
   config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>(),
   engine: HttpClientEngine? = null
-): PackageSearchProvider = PackageSearchProvider(project.service<LifecycleScope>(), config, engine)
+): PackageSearchProvider = PackageSearchProvider(project.service<LifecycleScope>().cs, config, engine)

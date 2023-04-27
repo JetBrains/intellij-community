@@ -3,23 +3,32 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
-object KotlinAnnotationsIndex : KotlinStringStubIndexExtension<KtAnnotationEntry>(KtAnnotationEntry::class.java) {
-    private val KEY: StubIndexKey<String, KtAnnotationEntry> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex")
+class KotlinAnnotationsIndex internal constructor() : StringStubIndexExtension<KtAnnotationEntry>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtAnnotationEntry>(KtAnnotationEntry::class.java) {
+        @JvmField
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.HIDDEN)
+        val INSTANCE: KotlinAnnotationsIndex = KotlinAnnotationsIndex()
 
-    override fun getKey(): StubIndexKey<String, KtAnnotationEntry> = KEY
+        @JvmStatic
+        @Suppress("DeprecatedCallableAddReplaceWith")
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        fun getInstance(): KotlinAnnotationsIndex {
+            return KotlinAnnotationsIndex()
+        }
+
+        override val indexKey: StubIndexKey<String, KtAnnotationEntry> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex")
+    }
+
+    override fun getKey(): StubIndexKey<String, KtAnnotationEntry> = indexKey
 
     override fun getVersion(): Int = super.getVersion() + 1
 
-    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtAnnotationEntry> {
-        return StubIndex.getElements(KEY, s, project, scope, KtAnnotationEntry::class.java)
+    override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtAnnotationEntry> {
+        return Helper[shortName, project, scope]
     }
-
-    @JvmStatic
-    @Deprecated("Use KotlinAnnotationsIndex as an object.", ReplaceWith("KotlinAnnotationsIndex"))
-    fun getInstance(): KotlinAnnotationsIndex = KotlinAnnotationsIndex
 }

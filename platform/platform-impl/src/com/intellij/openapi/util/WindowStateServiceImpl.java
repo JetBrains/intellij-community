@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
   @NonNls private static final String FULL_SCREEN = "full-screen";
   @NonNls private static final String TIMESTAMP = "timestamp";
   @NonNls private static final String SCREEN = "screen";
+  @NonNls private static final String PRESENTATION_MODE_MODE_KEY_SUFFIX = ".inPresentationMode";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
   private final AtomicLong myModificationCount = new AtomicLong();
@@ -173,15 +175,25 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
   private <T> T getFor(Object object, @NotNull String key, @NotNull Class<T> type) {
     if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return null;
     if (Registry.is("ui.disable.dimension.service.keys")) return null;
-    if (UISettings.getInstance().getPresentationMode()) key += ".inPresentationMode"; // separate key for the presentation mode
+    if (UISettings.getInstance().getPresentationMode()) key += PRESENTATION_MODE_MODE_KEY_SUFFIX; // separate key for the presentation mode
+    String keyWithScale = withAppendedIdeScale(key);
+    boolean tryWithScale = shouldAppendIdeScaleToKey();
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
-      CachedState state = myStateMap.get(getAbsoluteKey(configuration, key));
-      if (isVisible(state)) return state.get(type, null);
-
-      state = myStateMap.get(key);
-      return state == null ? null : state.get(type, state.myScreen == null ? null : getScreenRectangle(configuration));
+      if (tryWithScale) {
+        T result = synchronizedGetFor(configuration, keyWithScale, type);
+        if (result != null) return result;
+      }
+      return synchronizedGetFor(configuration, key, type);
     }
+  }
+
+  private <T> T synchronizedGetFor(GraphicsConfiguration configuration, @NotNull String key, @NotNull Class<T> type) {
+    CachedState state = myStateMap.get(getAbsoluteKey(configuration, key));
+    if (isVisible(state)) return state.get(type, null);
+
+    state = myStateMap.get(key);
+    return state == null ? null : state.get(type, state.myScreen == null ? null : getScreenRectangle(configuration));
   }
 
   private void putFor(Object object, @NotNull String key,
@@ -190,7 +202,8 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
                       boolean maximized, boolean maximizedSet,
                       boolean fullScreen, boolean fullScreenSet) {
     if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return;
-    if (UISettings.getInstance().getPresentationMode()) key += ".inPresentationMode"; // separate key for the presentation mode
+    if (UISettings.getInstance().getPresentationMode()) key += PRESENTATION_MODE_MODE_KEY_SUFFIX; // separate key for the presentation mode
+    key = withAppendedIdeScale(key);
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
       put(getAbsoluteKey(configuration, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
@@ -199,6 +212,21 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
       if (state != null) state.updateScreenRectangle(configuration); // update a screen to adjust stored state
     }
     myModificationCount.getAndIncrement();
+  }
+
+  private static String withAppendedIdeScale(String key) {
+    if (!shouldAppendIdeScaleToKey()) return key;
+
+    UISettingsUtils settingsUtils = UISettingsUtils.getInstance();
+    int percentScale = UISettingsUtils.percentValue(settingsUtils.getCurrentIdeScale());
+    int defaultPercentScale = UISettingsUtils.percentValue(settingsUtils.getCurrentDefaultScale());
+
+    if (percentScale == defaultPercentScale) return key;
+    else return key + ".ideScale=" + percentScale;
+  }
+
+  private static boolean shouldAppendIdeScaleToKey() {
+    return Registry.is("ide.window.state.consider.ide.scale");
   }
 
   @Nullable
@@ -333,7 +361,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     }
   }
 
-  private static boolean isVisible(CachedState state) {
+  private static boolean isVisible(@Nullable CachedState state) {
     return state != null && isVisible(state.myLocation, state.mySize);
   }
 

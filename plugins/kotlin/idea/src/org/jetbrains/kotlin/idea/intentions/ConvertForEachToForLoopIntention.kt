@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
@@ -29,13 +30,22 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         private val FOR_EACH_FQ_NAMES: Set<String> by lazy {
             sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_NAME" }.toSet()
         }
+
+        private const val FOR_EACH_INDEXED_NAME = "forEachIndexed"
+        private val FOR_EACH_INDEXED_FQ_NAMES: Set<String> by lazy {
+            sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_INDEXED_NAME" }.toSet()
+        }
     }
 
     override fun isApplicableTo(element: KtSimpleNameExpression): Boolean {
-        if (element.getReferencedName() != FOR_EACH_NAME) return false
+        val referencedName = element.getReferencedName()
+        val isForEach = referencedName == FOR_EACH_NAME
+        val isForEachIndexed = referencedName == FOR_EACH_INDEXED_NAME
+        if (!isForEach && !isForEachIndexed) return false
 
         val data = extractData(element) ?: return false
-        if (data.functionLiteral.valueParameters.size > 1) return false
+        val valueParameterSize = data.functionLiteral.valueParameters.size
+        if (isForEach && valueParameterSize > 1 || isForEachIndexed && valueParameterSize != 2) return false
         if (data.functionLiteral.bodyExpression == null) return false
 
         return true
@@ -46,7 +56,8 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
 
         val commentSaver = CommentSaver(expressionToReplace)
 
-        val loop = generateLoop(functionLiteral, receiver, context)
+        val isForEachIndexed = element.getReferencedName() == FOR_EACH_INDEXED_NAME
+        val loop = generateLoop(functionLiteral, receiver, isForEachIndexed, context)
         val result = expressionToReplace.replace(loop) as KtForExpression
         result.loopParameter?.also { editor?.caretModel?.moveToOffset(it.startOffset) }
 
@@ -69,7 +80,10 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
 
         val context = expression.analyze()
         val resolvedCall = expression.getResolvedCall(context) ?: return null
-        if (DescriptorUtils.getFqName(resolvedCall.resultingDescriptor).toString() !in FOR_EACH_FQ_NAMES) return null
+        val fqName = DescriptorUtils.getFqName(resolvedCall.resultingDescriptor).toString()
+        if (fqName !in FOR_EACH_FQ_NAMES && fqName !in FOR_EACH_INDEXED_FQ_NAMES) return null
+
+        if (expression.isUsedAsExpression(context)) return null
 
         val explicitReceiver = resolvedCall.call.explicitReceiver as? ExpressionReceiver
         val receiver = if (explicitReceiver != null) {
@@ -85,7 +99,12 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         return Data(expression, receiver, functionLiteral, context)
     }
 
-    private fun generateLoop(functionLiteral: KtLambdaExpression, receiver: KtExpression, context: BindingContext): KtExpression {
+    private fun generateLoop(
+        functionLiteral: KtLambdaExpression,
+        receiver: KtExpression,
+        isForEachIndexed: Boolean,
+        context: BindingContext
+    ): KtExpression {
         val psiFactory = KtPsiFactory(functionLiteral.project)
 
         val body = functionLiteral.bodyExpression!!
@@ -98,8 +117,27 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         }
 
         val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
-        val parameter = functionLiteral.valueParameters.singleOrNull()
-
-        return psiFactory.createExpressionByPattern("for($0 in $1){ $2 }", parameter ?: "it", loopRange, body.allChildren)
+        val parameters = functionLiteral.valueParameters
+        return if (isForEachIndexed) {
+            val loopRangeWithIndex = if (loopRange is KtThisExpression && loopRange.labelQualifier == null) {
+                psiFactory.createExpression("withIndex()")
+            } else {
+                psiFactory.createExpressionByPattern("$0.withIndex()", loopRange)
+            }
+            psiFactory.createExpressionByPattern(
+                "for(($0, $1) in $2){ $3 }",
+                parameters[0].text,
+                parameters[1].text,
+                loopRangeWithIndex,
+                body.allChildren
+            )
+        } else {
+            psiFactory.createExpressionByPattern(
+                "for($0 in $1){ $2 }",
+                parameters.singleOrNull() ?: "it",
+                loopRange,
+                body.allChildren
+            )
+        }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.internal.inspector.PropertyBean;
@@ -74,8 +74,12 @@ class FileTypeWithDescriptorRenderer<T> extends SimpleListCellRenderer<T> implem
     if (fileType == null) return Collections.emptyList();
 
     List<PropertyBean> result = new ArrayList<>();
-    result.add(new PropertyBean("FileType ID", fileType.getName()));
-    result.add(new PropertyBean("FileType Class", UiInspectorUtil.getClassPresentation(fileType)));
+    result.add(new PropertyBean("FileType ID", fileType.getName(), true));
+    result.add(new PropertyBean("FileType Class", UiInspectorUtil.getClassPresentation(fileType), true));
     return result;
+  }
+
+  public void resetDuplicates() {
+    myDuplicateDescriptions = null;
   }
 }

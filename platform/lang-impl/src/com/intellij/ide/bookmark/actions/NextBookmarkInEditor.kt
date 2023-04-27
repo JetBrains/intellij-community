@@ -1,28 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
-import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
 import com.intellij.ide.bookmark.BookmarkOccurrence
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.fileEditor.FileDocumentManager
 
-internal class NextBookmarkInEditorAction : EditorAction(NextBookmarkInEditor(true)) {
-  init {
-    templatePresentation.setText(messagePointer("bookmark.go.to.next.editor.action.text"))
-  }
-}
+internal class NextBookmarkInEditorAction : EditorAction(NextBookmarkInEditor(true))
 
-internal class PreviousBookmarkInEditorAction : EditorAction(NextBookmarkInEditor(false)) {
-  init {
-    templatePresentation.setText(messagePointer("bookmark.go.to.previous.editor.action.text"))
-  }
-}
+internal class PreviousBookmarkInEditorAction : EditorAction(NextBookmarkInEditor(false))
 
 private class NextBookmarkInEditor(val forward: Boolean) : EditorActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, context: DataContext) = getNextBookmark(editor, context) != null

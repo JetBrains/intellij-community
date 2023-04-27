@@ -1,1 +1,1 @@
-public final [BODY_RESOLVE] fun stringFun(): R|kotlin/String!|
+public final [ResolvedTo(BODY_RESOLVE)] fun stringFun(): R|kotlin/String!|

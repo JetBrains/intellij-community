@@ -72,8 +72,8 @@ record StaticFieldCollides(int i) {
   static int <error descr="Variable 'i' is already defined in the scope">i</error>;
 }
 record Incomplete(@<error descr="Class reference expected">i</error>nt a) {}
-record CStyle(int a<error descr="C-style record component declaration is not allowed">[]</error>) {}
-record CStyle2(int[] a<error descr="C-style record component declaration is not allowed">[] []</error> ) {}
+record CStyle(int a<error descr="C-style array declaration not allowed in record component">[]</error>) {}
+record CStyle2(int[] a<error descr="C-style array declaration not allowed in record component">[] []</error> ) {}
 record JavaStyle(int[] [] a) {}
 record SafeVarargComponent(<error descr="@SafeVarargs is not allowed on a record component">@SafeVarargs</error> int... component) {}
 record ExtendsRecordExplicitly() <error descr="No extends clause allowed for record">extends java.lang.Record</error> {}

@@ -171,7 +171,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @NotNull
   public ModuleEditor getOrCreateModuleEditor(@NotNull Module module) {
-    LOG.assertTrue(getModule(module.getName()) != null, "Module has been deleted");
+    String moduleName = module.getName();
+    LOG.assertTrue(getModule(moduleName) != null, "Module " + moduleName + " has been deleted");
     ModuleEditor editor = getModuleEditor(module);
     if (editor == null) {
       editor = doCreateModuleEditor(module);
@@ -396,23 +397,23 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     var builder = runWizard(wizard);
     if (null == builder) return null;
 
-    final List<Module> modules = new ArrayList<>();
-    final List<Module> committedModules;
+    List<Module> modules;
     if (builder instanceof ProjectImportBuilder<?>) {
       var artifactModel = myProjectStructureConfigurable.getArtifactsStructureConfigurable().getModifiableArtifactModel();
-      committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
+      modules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
     }
     else {
-      committedModules = builder.commit(myProject, myModuleModel, this);
+      modules = builder.commit(myProject, myModuleModel, this);
     }
-    if (committedModules != null) {
-      modules.addAll(committedModules);
+    if (null != modules && !modules.isEmpty()) {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        for (Module module : modules) {
+          if (module != null && getModule(module.getName()) != null) {
+            getOrCreateModuleEditor(module);
+          }
+        }
+      });
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      for (Module module : modules) {
-        getOrCreateModuleEditor(module);
-      }
-    });
     return modules;
   }
 

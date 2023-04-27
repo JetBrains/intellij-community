@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.openapi.util.NlsSafe
@@ -9,9 +9,6 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -110,6 +107,10 @@ fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity,
   LibraryPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
+/**
+ * Will represent an SDK in the project configuration. 
+ * Currently, these entities aren't synchronized with the project model, so until IDEA-306969 is implemented, it makes no sense to use them.  
+ */
 interface SdkEntity : WorkspaceEntity {
     val library: LibraryEntity
 

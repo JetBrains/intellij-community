@@ -3,7 +3,7 @@ package com.siyeh.igtest.memory.inner_class_may_be_static;
 import javax.swing.*;
 
 public class InnerClassMayBeStatic {
-     class <warning descr="Inner class 'Nested' may be 'static'">Nested</warning> {
+     class <warning descr="Inner class 'Nested' may be 'static'"><caret>Nested</warning> {
          public void foo() {
              bar("InnerClassMayBeStaticInspection.this");
          }
@@ -182,5 +182,80 @@ class JUnit5Test {
   @org.junit.jupiter.api.Nested
   class Inner {
 
+  }
+}
+abstract class JavaClass<T> {
+  public class <warning descr="Inner class 'InnerClass' may be 'static'">InnerClass</warning><M> {}
+
+  public static <K, L> JavaClass<K>.InnerClass<L> baz(K t) {
+    return null;
+  }
+}
+class Simple {
+  class <warning descr="Inner class 'Inner' may be 'static'">Inner</warning> {}
+
+  void m() {
+    new Inner();
+  }
+
+  static void s(Simple s) {
+    s.new Inner();
+  }
+}
+class X {
+  X() {
+    new Simple().new Inner();
+  }
+}
+class Usage {
+
+  {
+    new Node(0, new Node(1, null));
+  }
+
+  private class <warning descr="Inner class 'Node' may be 'static'">Node</warning> {
+    Node(int idx, Node next) {
+    }
+  }
+}
+class IdeaTest {
+
+  public void test(){
+    print(new InnerClass<Integer>().foo(Integer.valueOf(1)));
+  }
+
+  public void print(Integer foo){
+    System.out.println(foo);
+  }
+
+  class <warning descr="Inner class 'InnerClass' may be 'static'">InnerClass</warning><T>{
+    public T foo(T bar){
+      return bar;
+    }
+  }
+}
+class C1 {
+  public C1(Feedback i) {
+  }
+}
+
+class Feedback {
+  String getOutputWindowName() {
+    return null;
+  }
+}
+
+class A {
+
+  protected class <warning descr="Inner class 'B' may be 'static'">B</warning> extends C1 {
+
+    public B() {
+      super(new Feedback() {
+              public void outputMessage() {
+                getOutputWindowName();
+              }
+            }
+      );
+    }
   }
 }

@@ -36,7 +36,7 @@ public final class IdeGlassPaneUtil {
   }
 
   public static void installPainter(@NotNull JComponent target, @NotNull Painter painter, @NotNull Disposable parent) {
-    final UiNotifyConnector connector = new UiNotifyConnector(target, new Activatable() {
+    final UiNotifyConnector connector = UiNotifyConnector.installOn(target, new Activatable() {
       private IdeGlassPane myPane;
       private Disposable myPanePainterListeners = Disposer.newDisposable();
 

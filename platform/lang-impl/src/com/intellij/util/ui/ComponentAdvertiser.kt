@@ -14,7 +14,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 open class ComponentAdvertiser {
-  val component = JPanel(FlowLayout(FlowLayout.LEFT))
+  val component = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
   protected val multiPanel = MyPanel()
   protected var currentIndex = AtomicInteger(0)
 
@@ -69,7 +69,7 @@ open class ComponentAdvertiser {
 
   companion object {
     fun adFont(): Font {
-      val font = StartupUiUtil.getLabelFont()
+      val font = StartupUiUtil.labelFont
       val relativeFont = RelativeFont.NORMAL.scale(JBUI.CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get())
       return relativeFont.derive(font)
     }

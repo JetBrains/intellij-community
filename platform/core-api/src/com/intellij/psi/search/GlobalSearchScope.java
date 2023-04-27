@@ -665,7 +665,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
       UnionScope that = (UnionScope)o;
 
-      return ContainerUtil.set(myScopes).equals(ContainerUtil.set(that.myScopes));
+      return ContainerUtil.newHashSet(myScopes).equals(ContainerUtil.newHashSet(that.myScopes));
     }
 
     @Override

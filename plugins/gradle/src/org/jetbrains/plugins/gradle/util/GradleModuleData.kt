@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("unused") // API
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 
 @ApiStatus.Experimental
 class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
@@ -18,21 +20,43 @@ class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
   }
 
   val moduleName = moduleData.moduleName
+
   val gradleProjectDir = moduleData.linkedExternalProjectPath
+
   val directoryToRunTask: String
     get() = moduleData.getDirectoryToRunTask()
+
+
   val gradlePath: String
-    get() = moduleData.getGradlePath()
-  val compositeBuildGradlePath: String
-    get() = moduleData.getCompositeBuildGradlePath()
+    get() = moduleData.gradlePath
+
+  val gradleIdentityPath: String
+    get() = moduleData.gradleIdentityPath
+
+  @Deprecated("Use gradleIdentityPath instead")
   val fullGradlePath: String
-    get() = compositeBuildGradlePath + gradlePath
+    get() = gradleIdentityPath
+
   val isBuildSrcModule: Boolean
     get() = moduleData.isBuildSrcModule()
 
+  val isIncludedBuild: Boolean
+    get() = moduleData.isIncludedBuild
+
+  @Deprecated("Use 'getTaskPath(String) instead")
   fun getTaskPath(simpleTaskName: String, prependCompositeBuildPath: Boolean = true): String {
-    val path = if (prependCompositeBuildPath) fullGradlePath else gradlePath
-    return "${path.trimEnd(':')}:$simpleTaskName"
+    return getTaskPath(simpleTaskName)
+  }
+
+  @JvmName("getTaskPathOfSimpleTaskName")
+  fun getTaskPath(simpleTaskName: String): String {
+    val identityPath = moduleData.gradleIdentityPath
+    return if (identityPath.isEmpty() || identityPath == ":") {
+      ":$simpleTaskName"
+    }
+    else {
+      "$identityPath:$simpleTaskName"
+    }
   }
 
   fun <T> findAll(key: Key<T>): Collection<T> {
@@ -45,12 +69,37 @@ class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
 }
 
 fun ModuleData.getDirectoryToRunTask() = getProperty("directoryToRunTask") ?: linkedExternalProjectPath
+
 fun ModuleData.setDirectoryToRunTask(directoryToRunTask: String) = setProperty("directoryToRunTask", directoryToRunTask)
 
-fun ModuleData.getGradlePath() = GradleProjectResolverUtil.getGradlePath(this)
-fun ModuleData.getCompositeBuildGradlePath() = getProperty("compositeBuildGradlePath") ?: ""
-fun ModuleData.setCompositeBuildGradlePath(compositeBuildGradlePath: String) =
-  setProperty("compositeBuildGradlePath", compositeBuildGradlePath)
+var ModuleData.gradlePath: String
+  get() = getProperty("gradlePath") ?: throw IllegalStateException("Missing gradlePath on $id")
+  set(value) = setProperty("gradlePath", value)
+
+@Suppress("unused") /* Safe API even when unused right now */
+val ModuleData.gradlePathOrNull: String?
+  get() = getProperty("gradlePath")
+
+/**
+ * The path of the project in the current build setup.
+ * In simplest cases, this just matches org.gradle.api.Project.getPath().
+ * However, e.g. for composite builds, paths to projects will receive a 'composite prefix'.
+ */
+var ModuleData.gradleIdentityPath: String
+  get() = getProperty("gradleIdentityPath") ?: throw IllegalStateException("Missing gradleIdentityPath on $id")
+  set(value) = setProperty("gradleIdentityPath", value)
+
+val ModuleData.gradleIdentityPathOrNull: String?
+  get() = getProperty("gradleIdentityPath")
+
+var ModuleData.isIncludedBuild: Boolean
+  get() = getProperty("isIncludedBuild")?.toBooleanStrictOrNull() ?: false
+  set(value) = setProperty("isIncludedBuild", value.toString())
 
 fun ModuleData.isBuildSrcModule() = getProperty("buildSrcModule")?.toBoolean() ?: false
+
 fun ModuleData.setBuildSrcModule() = setProperty("buildSrcModule", true.toString())
+
+private fun Module.findMainModuleDataNode(): DataNode<out ModuleData>? {
+  return CachedModuleDataFinder.getInstance(project).findMainModuleData(this)
+}

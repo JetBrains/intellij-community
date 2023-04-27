@@ -3,16 +3,23 @@ package training.learn.lesson.general.run
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
+import com.intellij.execution.ui.RunConfigurationStartHistory
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.icons.toStrokeIcon
+import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.util.ui.JBUI
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.ui.LearningUiHighlightingManager
-import training.ui.LearningUiManager
-import javax.swing.JButton
+import java.awt.Rectangle
+import javax.swing.Icon
+import javax.swing.JList
 
 abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBundle.message("run.configuration.lesson.name")) {
   protected abstract val sample: LessonSample
@@ -22,51 +29,65 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
   protected fun TaskRuntimeContext.configurations() =
     runManager().allSettings.filter { it.name.contains(demoConfigurationName) }
 
-  private fun TaskContext.runToolWindow() = strong(ExecutionBundle.message("tool.window.name.run"))
+  protected val demoWithParametersName: String get() = "$demoConfigurationName with parameters"
+
+  private val runIcon: Icon by lazy { toStrokeIcon(AllIcons.Actions.Execute, JBUI.CurrentTheme.RunWidget.RUN_MODE_ICON) }
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)
 
       prepareRuntimeTask {
-        configurations().forEach { runManager().removeConfiguration(it) }
+        val configurations = configurations()
+        for (it in configurations) {
+          runManager().removeConfiguration(it)
+        }
+        RunConfigurationStartHistory.getInstance(project).loadState(RunConfigurationStartHistory.State())
+        RunManager.getInstance(project).selectedConfiguration = null
         LessonUtil.setEditorReadOnly(editor)
       }
 
-      runTask()
-
-      task("HideActiveWindow") {
-        LearningUiHighlightingManager.clearHighlights()
-        text(LessonsBundle.message("run.configuration.hide.toolwindow", runToolWindow(), action(it)))
-        checkToolWindowState("Run", false)
-        test { actions(it) }
-      }
-
-      showWarningIfRunConfigurationsHidden()
+      highlightButtonById("Run", highlightInside = false, usePulsation = false)
 
       task {
-        triggerAndFullHighlight().component { ui: JButton ->
-          ui.text == demoConfigurationName
+        text(LessonsBundle.message("run.configuration.run.current", icon(runIcon)))
+        text(LessonsBundle.message("run.configuration.run.current.balloon"), LearningBalloonConfig(Balloon.Position.below, 0))
+        checkToolWindowState("Run", true)
+        test {
+          ideFrame {
+            highlightedArea.click()
+          }
         }
       }
 
-      val saveConfigurationItemName = ExecutionBundle.message("save.temporary.run.configuration.action.name", demoConfigurationName)
-        .dropMnemonic()
+      text(LessonsBundle.message("run.configuration.no.run.configuration",
+                                 strong(ExecutionBundle.message("run.configurations.combo.run.current.file.selected"))))
+
+      runTask()
+
+      lateinit var restoreMoreTask: TaskContext.TaskId
+      highlightButtonById("MoreRunToolbarActions", highlightInside = false, usePulsation = false) {
+        restoreMoreTask = taskId
+      }
+
+      val saveConfigurationItemName = ExecutionBundle.message("choose.run.popup.save")
       task {
-        text(LessonsBundle.message("run.configuration.temporary.to.permanent"))
+        text(LessonsBundle.message("run.configuration.temporary.to.permanent", actionIcon("MoreRunToolbarActions")))
+        text(LessonsBundle.message("run.configuration.open.additional.menu.balloon"),
+             LearningBalloonConfig(Balloon.Position.below, 0, highlightingComponent = LessonUtil.lastHighlightedUi()))
         triggerAndBorderHighlight().listItem { item ->
-          item.toString() == saveConfigurationItemName
+          item is PopupFactoryImpl.ActionItem && item.text == saveConfigurationItemName
         }
         test {
           ideFrame {
-            button(demoConfigurationName).click()
+            highlightedArea.click()
           }
         }
       }
 
       task {
         text(LessonsBundle.message("run.configuration.select.save.configuration", strong(saveConfigurationItemName)))
-        restoreByUi()
+        restoreByUi(restoreId = restoreMoreTask, delayMillis = defaultRestoreDelay)
         stateCheck {
           val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration ?: return@stateCheck false
           !selectedConfiguration.isTemporary
@@ -78,11 +99,88 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         }
       }
 
+      addAnotherRunConfiguration()
+
+      lateinit var dropDownTask: TaskContext.TaskId
+      highlightButtonById("RedesignedRunConfigurationSelector", usePulsation = false) {
+        dropDownTask = taskId
+      }
+
+      task {
+        text(LessonsBundle.message("run.configuration.open.run.configurations.popup"))
+        triggerAndBorderHighlight().listItem { item ->
+          item is PopupFactoryImpl.ActionItem && item.text.contains(ExecutionBundle.message("run.toolbar.widget.all.configurations", ""))
+        }
+        test {
+          ideFrame {
+            highlightedArea.click()
+          }
+        }
+      }
+
+      var foundItem = 0
+
+      task {
+        text(LessonsBundle.message("run.configuration.open.expand.all.configurations"))
+        triggerAndBorderHighlight().componentPart { jList: JList<*> ->
+          foundItem = LessonUtil.findItem(jList) { item ->
+            item is PopupFactoryImpl.ActionItem && item.text == demoWithParametersName
+          } ?: return@componentPart null
+
+          jList.getCellBounds(foundItem, foundItem)
+        }
+        restoreByUi(restoreId = dropDownTask)
+        test {
+          ideFrame {
+            highlightedArea.click()
+          }
+        }
+      }
+
+      task {
+        text(LessonsBundle.message("run.configuration.hover.generated.configuration"))
+        addFutureStep {
+          val jList = previous.ui as? JList<*> ?: return@addFutureStep
+          jList.addListSelectionListener { _ ->
+            if (jList.selectedIndex == foundItem) {
+              completeStep()
+            }
+          }
+        }
+        restoreByUi(restoreId = dropDownTask)
+        test {
+          ideFrame {
+            highlightedArea.hover()
+          }
+        }
+      }
+
+      task {
+        before {
+          val ui = previous.ui as? JList<*> ?: return@before
+          LearningUiHighlightingManager.highlightPartOfComponent(ui, LearningUiHighlightingManager.HighlightingOptions(highlightInside = false)) {
+            val itemRect = ui.getCellBounds(foundItem, foundItem)
+            Rectangle(itemRect.x + itemRect.width - JBUI.scale(110), itemRect.y, JBUI.scale(35), itemRect.height)
+          }
+        }
+        text(LessonsBundle.message("run.configuration.run.generated.configuration"))
+        stateCheck {
+          RunConfigurationStartHistory.getInstance(project).history().first().configuration.name == demoWithParametersName
+        }
+        restoreByUi(restoreId = dropDownTask)
+        test {
+          ideFrame {
+            highlightedArea.click()
+          }
+        }
+      }
+
+      highlightButtonById("RedesignedRunConfigurationSelector", usePulsation = false)
+
       task("editRunConfigurations") {
-        LearningUiHighlightingManager.clearHighlights()
         text(LessonsBundle.message("run.configuration.edit.configuration",
-                                   strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic()),
-                                   action(it)))
+                                   LessonUtil.rawShift(),
+                                   strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic())))
         triggerAndBorderHighlight().component { ui: JBCheckBox ->
           ui.text?.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic()) == true
         }
@@ -93,7 +191,14 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
 
       task {
         text(LessonsBundle.message("run.configuration.settings.description"))
-        text(LessonsBundle.message("run.configuration.tip.about.save.configuration.into.file"))
+        gotItStep(Balloon.Position.below, 300, LessonsBundle.message("run.configuration.tip.about.save.configuration.into.file"))
+      }
+
+      task {
+        before {
+          LearningUiHighlightingManager.clearHighlights()
+        }
+        text(LessonsBundle.message("run.configuration.close.settings"))
         stateCheck {
           focusOwner is EditorComponentImpl
         }
@@ -107,29 +212,9 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
       restoreUiInformer()
     }
 
-  protected abstract fun LessonContext.runTask()
+  protected open fun LessonContext.addAnotherRunConfiguration() {}
 
-  private fun LessonContext.showWarningIfRunConfigurationsHidden() {
-    task {
-      val step = stateCheck {
-        UISettings.getInstance().run { showNavigationBar || showMainToolbar }
-      }
-      val callbackId = LearningUiManager.addCallback {
-        UISettings.getInstance().apply {
-          showNavigationBar = true
-          fireUISettingsChanged()
-        }
-        step.complete(true)
-      }
-      showWarning(LessonsBundle.message("run.configuration.list.not.shown.warning",
-                                        strong(ActionsBundle.message("action.ViewNavigationBar.text").dropMnemonic()),
-                                        strong(ActionsBundle.message("group.ViewMenu.text").dropMnemonic()),
-                                        strong(ActionsBundle.message("group.ViewAppearanceGroup.text").dropMnemonic()),
-                                        callbackId)) {
-        UISettings.getInstance().run { !showNavigationBar && !showMainToolbar }
-      }
-    }
-  }
+  protected abstract fun LessonContext.runTask()
 
   private fun LessonContext.restoreUiInformer() {
     if (UISettings.getInstance().run { showNavigationBar || showMainToolbar }) return

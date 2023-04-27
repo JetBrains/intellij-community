@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.internal.statistic.eventLog.*
-import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 
 /**

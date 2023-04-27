@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
@@ -177,13 +177,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
   protected void validateButtons() {
     boolean enabled = true;
     try {
+      setErrorText(null);
       canRun();
     }
     catch (ConfigurationException e) {
       enabled = false;
       setErrorText(e.getMessage());
     }
-    if (enabled) setErrorText(null);
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
   }

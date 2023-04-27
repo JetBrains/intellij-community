@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.CheckedDisposable
@@ -514,15 +515,20 @@ class InternalDecoratorImpl internal constructor(
     get() = toolWindow.isActive
 
   fun updateActiveAndHoverState() {
+    val isHoverAlphaAnimationEnabled =
+      toolWindow.toolWindowManager.isNewUi &&
+      !AdvancedSettings.getBoolean("ide.always.show.tool.window.header.icons")
     val narrow = this.toolWindow.decorator?.width?.let { it < JBUI.scale(120) } ?: false
-    val toolbar = headerToolbar
+    val isVisible = narrow || !isHoverAlphaAnimationEnabled || isWindowHovered || header.isPopupShowing || toolWindow.isActive
+
+    val toolbar = header.getToolbar()
     if (toolbar is AlphaAnimated) {
-      val alpha = toolbar as AlphaAnimated
-      alpha.alphaContext.isVisible = (narrow
-                                     || !toolWindow.toolWindowManager.isNewUi
-                                     || isWindowHovered
-                                     || header.isPopupShowing
-                                     || toolWindow.isActive)
+      toolbar.alphaContext.isVisible = isVisible
+    }
+
+    val toolbarWest = header.getToolbarWest()
+    if (toolbarWest != null && toolbarWest is AlphaAnimated) {
+      toolbarWest.alphaContext.isVisible = isVisible
     }
   }
 

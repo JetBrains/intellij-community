@@ -8,8 +8,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 
 internal sealed interface GitLabReviewTab : ReviewTab {
   data class ReviewSelected(val reviewId: GitLabMergeRequestId) : GitLabReviewTab {
-    override val id: @NonNls String = "ReviewDetails#${reviewId.iid}"
-    override val displayName: @NlsSafe String = "#${reviewId.iid}"
+    override val id: @NonNls String = "ReviewDetails!${reviewId.iid}"
+    override val displayName: @NlsSafe String = "!${reviewId.iid}"
 
     override val reuseTabOnRequest: Boolean = true
   }

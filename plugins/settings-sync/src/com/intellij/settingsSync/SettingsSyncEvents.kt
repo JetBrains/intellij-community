@@ -3,9 +3,11 @@ package com.intellij.settingsSync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-internal class SettingsSyncEvents : Disposable {
+@ApiStatus.Internal
+class SettingsSyncEvents : Disposable {
 
   private val settingsChangeDispatcher = EventDispatcher.create(SettingsChangeListener::class.java)
   private val enabledStateChangeDispatcher = EventDispatcher.create(SettingsSyncEnabledStateListener::class.java)

@@ -20,10 +20,16 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescrip
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.modify
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.runChangeSignature
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.util.graph.DirectedGraph
 import org.jetbrains.kotlin.util.graph.sortTopologically
 
+/**
+ * Tests:
+ * [org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated.ReorderParameters]
+ */
 class ReorderParametersFix(
     element: KtNamedFunction,
     private val newParametersOrder: List<String>,
@@ -59,7 +65,7 @@ class ReorderParametersFix(
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val function = diagnostic.psiElement.parentOfType<KtNamedFunction>(withSelf = true) ?: return null
+            val function: KtNamedFunction = diagnostic.psiElement.parentOfType(withSelf = true) ?: return null
             val functionDescriptor = function.descriptor as? FunctionDescriptor ?: return null
             val parameters = function.valueParameterList?.parameters ?: return null
             val parametersDependencyGraph = parameters.asSequence().flatMap { parameter ->
@@ -74,15 +80,16 @@ class ReorderParametersFix(
                 } ?: emptyList()
             }.toSet()
             val parametersSortedTopologically = DirectedGraph(parametersDependencyGraph).sortTopologically() ?: return null
-            val parameterToTopologicalIndex = parametersSortedTopologically.asSequence().withIndex()
-                .flatMap { (topologicalIndex, parameters) -> parameters.map { IndexedValue(topologicalIndex, it) } }
-                .associate { (topologicalIndex, parameterName) -> parameterName to topologicalIndex }
-            val sortedParameters = parameters.asSequence()
-                .mapNotNull(KtParameter::getName)
-                // `sortedBy` is stable (It's written in the KDoc).
-                // It means that equal elements preserve their order relative to each other after sorting.
-                .sortedBy(parameterToTopologicalIndex::getValue)
-                .toList()
+            val parameterToIndex = parameters.asSequence().mapIndexedNotNull { index, parameter ->
+                parameter.name?.let { it to index }
+            }.toMap()
+            val parametersToSortSorted = parametersSortedTopologically.flatMap { it.sortedBy(parameterToIndex::get) }
+            val parametersToSortSortedIterator = parametersToSortSorted.iterator()
+            val sortedParameters = parameters.mapNotNull {
+                val parameterName = it.name
+                if (parameterName in parametersToSortSorted) parametersToSortSortedIterator.next()
+                else parameterName
+            }
             if (sortedParameters.size != parameters.size) return null
             return ReorderParametersFix(function, sortedParameters)
         }

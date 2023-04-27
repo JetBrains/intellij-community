@@ -30,7 +30,7 @@
                          instance="org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable"/>
 
     <!--TODO: correct icon-->
-    <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"
+    <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabToolWindow"
                 anchor="left" doNotActivateOnStart="true"
                 factoryClass="org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowFactory"
                 canCloseContents="true"/>
@@ -38,6 +38,7 @@
     <virtualFileSystem key="gitlabmr" implementationClass="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabVirtualFileSystem"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFileEditorProvider"/>
     <diff.DiffExtension implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffExtension"/>
+    <iconMapper mappingFile="GitlabIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -45,11 +46,42 @@
   </extensions>
 
   <actions>
-    <group id="GitLab.Merge.Requests.List.Actions">
-      <action id="GitLab.Merge.Request.Show"
-              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
-      <action id="GitLab.Merge.Request.Open.In.Browser"
-              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
+    <action id="GitLab.Merge.Request.List.Refresh"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
+            use-shortcut-of="Refresh"
+            icon="AllIcons.Actions.Refresh"/>
+    <action id="GitLab.Merge.Request.Refresh"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
+            use-shortcut-of="Refresh"/>
+    <action id="GitLab.Merge.Request.Branch.Checkout.Remote"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCheckoutRemoteBranchAction"/>
+    <action id="GitLab.Merge.Request.Show"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
+    <action id="GitLab.Merge.Request.Open.In.Browser"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
+
+    <group id="GitLab.Merge.Request.List.Actions">
+      <reference id="GitLab.Merge.Request.Show"/>
+      <reference id="GitLab.Merge.Request.Open.In.Browser"/>
+      <separator/>
+      <reference id="GitLab.Merge.Request.List.Refresh"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Details.Popup">
+      <reference id="GitLab.Merge.Request.Refresh"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Changes.Popup">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Diff.ShowStandaloneDiff"/>
+      <reference id="GitLab.Merge.Request.Refresh"/>
+      <reference id="EditSource"/>
+      <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+        <reference id="ChangesView.GroupBy"/>
+      </group>
+      <separator/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
   </actions>
 </idea-plugin>

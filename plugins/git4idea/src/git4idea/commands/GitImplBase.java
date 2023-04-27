@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -408,7 +409,7 @@ public abstract class GitImplBase implements Git {
                 ? executionLock.readLock()
                 : executionLock.writeLock();
 
-    lock.lock();
+    ProgressIndicatorUtils.awaitWithCheckCanceled(lock);
     return new AccessToken() {
       @Override
       public void finish() {

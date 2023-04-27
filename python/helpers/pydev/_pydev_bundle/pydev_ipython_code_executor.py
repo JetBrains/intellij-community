@@ -2,8 +2,9 @@ import sys
 import traceback
 
 from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
-from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend
+from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend, PyDebuggerTerminalInteractiveShell, get_ipython_hidden_vars
 from _pydevd_bundle.pydevd_constants import dict_iter_items
+from IPython.core.interactiveshell import InteractiveShell
 
 
 # Uncomment to force PyDev standard shell.
@@ -21,7 +22,15 @@ class IPythonCodeExecutor(BaseCodeExecutor):
     def __init__(self, show_banner=True, rpc_client=None):
         super(IPythonCodeExecutor, self).__init__()
 
-        self.interpreter = get_pydev_ipython_frontend(rpc_client)
+        self.is_jupyter_debugger_shell = False
+        # checking if it's not a Jupyter Debug Session
+        ipython = self._get_ipython_or_none()
+        if ipython is None or not hasattr(ipython, 'debugger'):
+            self.interpreter = get_pydev_ipython_frontend(rpc_client)
+        else:
+            self.is_jupyter_debugger_shell = True
+            self.original_interactive_shell_instance = InteractiveShell._instance
+            self.interpreter = get_pydev_ipython_frontend(rpc_client, is_jupyter_debugger=True)
         self._input_error_printed = False
         self.notification_succeeded = False
         self.notification_tries = 0
@@ -38,8 +47,17 @@ class IPythonCodeExecutor(BaseCodeExecutor):
         if code_fragment.text.rstrip().endswith('??'):
             print('IPython-->')
         try:
-            more, exception_occurred = self.interpreter.add_exec(code_fragment.text)
+            if self.is_jupyter_debugger_shell:
+                self.interpreter.ipython.execution_count = self.original_interactive_shell_instance.execution_count
+                InteractiveShell._instance = PyDebuggerTerminalInteractiveShell.new_instance
+                more, exception_occurred = self.interpreter.add_exec(code_fragment.text)
+                self.interpreter.ipython.execution_count += 1
+                self.original_interactive_shell_instance.execution_count = self.interpreter.ipython.execution_count
+            else:
+                more, exception_occurred = self.interpreter.add_exec(code_fragment.text)
         finally:
+            if self.is_jupyter_debugger_shell:
+                InteractiveShell._instance = self.original_interactive_shell_instance
             if code_fragment.text.rstrip().endswith('??'):
                 print('<--IPython')
         return bool(more), exception_occurred
@@ -54,23 +72,28 @@ class IPythonCodeExecutor(BaseCodeExecutor):
         pass
 
     def get_ipython_hidden_vars_dict(self):
+        if hasattr(self.interpreter, 'ipython'):
+            shell_ns_hidden_dict = get_ipython_hidden_vars(self.interpreter.ipython)
+            global_ns_hidden_dict = None
+            if self.is_jupyter_debugger_shell:
+                try:
+                    ipython = self._get_ipython_or_none()
+                    if ipython is not None:
+                        global_ns_hidden_dict = get_ipython_hidden_vars(ipython)
+                except:
+                    pass
+
+                if global_ns_hidden_dict is not None:
+                    shell_ns_hidden_dict.update(global_ns_hidden_dict)
+
+            return shell_ns_hidden_dict
+
+    def _get_ipython_or_none(self):
+        ipython = None
+
         try:
-            if hasattr(self.interpreter, 'ipython') and hasattr(self.interpreter.ipython, 'user_ns_hidden'):
-                user_ns_hidden = self.interpreter.ipython.user_ns_hidden
-                if isinstance(user_ns_hidden, dict):
-                    # Since IPython 2 dict `user_ns_hidden` contains hidden variables and values
-                    user_hidden_dict = user_ns_hidden.copy()
-                else:
-                    # In IPython 1.x `user_ns_hidden` used to be a set with names of hidden variables
-                    user_hidden_dict = dict([(key, val) for key, val in dict_iter_items(self.interpreter.ipython.user_ns)
-                                             if key in user_ns_hidden])
-
-                # while `_`, `__` and `___` were not initialized, they are not presented in `user_ns_hidden`
-                user_hidden_dict.setdefault('_', '')
-                user_hidden_dict.setdefault('__', '')
-                user_hidden_dict.setdefault('___', '')
-
-                return user_hidden_dict
+            ipython = get_ipython()
         except:
-            # Getting IPython variables shouldn't break loading frame variables
-            traceback.print_exc()
+            pass
+
+        return ipython

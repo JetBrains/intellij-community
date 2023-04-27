@@ -160,7 +160,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final PsiImportStatementBase[] imports = importList.getAllImportStatements();
     if (imports.length == 0) return null;
 
-    Set<PsiImportStatementBase> allImports = ContainerUtil.set(imports);
+    Set<PsiImportStatementBase> allImports = ContainerUtil.newHashSet(imports);
     final Collection<PsiImportStatementBase> redundant;
     if (FileTypeUtils.isInServerPageFile(file)) {
       // remove only duplicate imports
@@ -264,6 +264,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       _propertyName = namesByExpr != null ? namesByExpr.propertyName : null;
     }
 
+    filterOutBadNames(names);
     addNamesFromStatistics(names, kind, _propertyName, type);
 
     String[] namesArray = ArrayUtilRt.toStringArray(names);
@@ -278,6 +279,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     };
+  }
+
+  private static void filterOutBadNames(Set<String> names) {
+    names.remove("of");
+    names.remove("to");
   }
 
   private static void addNamesFromStatistics(@NotNull Set<? super String> names,
@@ -332,16 +338,20 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   private Collection<String> doSuggestNamesByType(@NotNull PsiType type, @NotNull final VariableKind variableKind) {
     String fromTypeMap = suggestNameFromTypeMap(type, variableKind, getLongTypeName(type));
-    if (fromTypeMap != null) {
+    if (fromTypeMap != null && type instanceof PsiPrimitiveType) {
       return Collections.singletonList(fromTypeMap);
+    }
+    final Collection<String> suggestions = new LinkedHashSet<>();
+    if (fromTypeMap != null) {
+      suggestions.add(fromTypeMap);
     }
 
     List<String> fromTypeName = suggestNamesFromTypeName(type, variableKind, getTypeName(type));
     if (!(type instanceof PsiClassType classType)) {
-      return fromTypeName;
+      suggestions.addAll(fromTypeName);
+      return suggestions;
     }
 
-    final Collection<String> suggestions = new LinkedHashSet<>();
     suggestNamesForCollectionInheritors(classType, suggestions);
     suggestFromOptionalContent(variableKind, classType, suggestions);
     suggestNamesFromGenericParameters(classType, suggestions);
@@ -366,11 +376,25 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Nullable
   private static String nameByType(@NotNull String longTypeName, @NotNull VariableKind kind) {
-    if (kind == VariableKind.PARAMETER || kind == VariableKind.LOCAL_VARIABLE) {
+    if (kind == VariableKind.PARAMETER) {
       return switch (longTypeName) {
         case "int", "boolean", "byte", "char", "long" -> longTypeName.substring(0, 1);
         case "double", "float" -> "v";
         case "short" -> "i";
+        case CommonClassNames.JAVA_LANG_OBJECT -> "o";
+        case CommonClassNames.JAVA_LANG_STRING -> "s";
+        case CommonClassNames.JAVA_LANG_VOID -> "unused";
+        default -> null;
+      };
+    }
+    if (kind == VariableKind.LOCAL_VARIABLE) {
+      return switch (longTypeName) {
+        case "int", "boolean", "byte", "char", "long" -> longTypeName.substring(0, 1);
+        case "double", "float", CommonClassNames.JAVA_LANG_DOUBLE, CommonClassNames.JAVA_LANG_FLOAT -> "v";
+        case "short", CommonClassNames.JAVA_LANG_SHORT, CommonClassNames.JAVA_LANG_INTEGER -> "i";
+        case CommonClassNames.JAVA_LANG_LONG -> "l";
+        case CommonClassNames.JAVA_LANG_BOOLEAN, CommonClassNames.JAVA_LANG_BYTE -> "b";
+        case CommonClassNames.JAVA_LANG_CHARACTER -> "c";
         case CommonClassNames.JAVA_LANG_OBJECT -> "o";
         case CommonClassNames.JAVA_LANG_STRING -> "s";
         case CommonClassNames.JAVA_LANG_VOID -> "unused";
@@ -669,16 +693,6 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
         if ("map".equals(methodName) || "flatMap".equals(methodName) || "filter".equals(methodName)) {
           if (isJavaUtilMethodCall((PsiMethodCallExpression)expr)) {
-            if (Registry.is("add.past.participle.to.suggested.names")) {
-              String[] words = NameUtilCore.nameToWords(methodName);
-              if (words.length == 1) {
-                return new NamesByExprInfo(methodName, PastParticiple.pastParticiple(methodName));
-              }
-              else {
-                words[1] = PastParticiple.pastParticiple(words[1]);
-                return new NamesByExprInfo(methodName, words[0], StringUtil.join(words));
-              }
-            }
             return NamesByExprInfo.EMPTY;
           }
         }
@@ -704,7 +718,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             }
           }
           else if (words.length == 1 || useAllMethodNames) {
-            if (Registry.is("add.past.participle.to.suggested.names") && !"equals".equals(firstWord)) {
+            if (Registry.is("add.past.participle.to.suggested.names") && !"equals".equals(firstWord) && !"valueOf".equals(methodName)) {
               words[0] = PastParticiple.pastParticiple(firstWord);
               return new NamesByExprInfo(methodName, words[0], StringUtil.join(words));
             }
@@ -1012,6 +1026,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     String wordByPreposition = getWordByPreposition(name, prefix, suffix, upperCaseStyle);
     if (wordByPreposition != null && (!correctKeywords || isIdentifier(wordByPreposition))) {
       answer.add(wordByPreposition);
+    }
+    if (name.equals("hashCode")) {
+      answer.add("hash");
     }
     return answer;
   }

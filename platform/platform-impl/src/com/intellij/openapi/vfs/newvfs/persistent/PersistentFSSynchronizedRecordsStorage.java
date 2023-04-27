@@ -32,6 +32,16 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   private static final int LENGTH_SIZE = 8;
 
   static final int RECORD_SIZE = LENGTH_OFFSET + LENGTH_SIZE;
+
+  static {
+    //We use 0-th record for header fields, so record size should be big enough for header
+
+    //noinspection ConstantConditions
+    assert PersistentFSHeaders.HEADER_SIZE <= RECORD_SIZE :
+      "sizeof(storage.header)(=" + PersistentFSHeaders.HEADER_SIZE + ") > RECORD_SIZE(=" + RECORD_SIZE + ")";
+  }
+
+
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
   private <V, E extends Throwable> V read(ThrowableComputable<V, E> action) throws E {
@@ -76,7 +86,16 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     myFile = file;
     if (myFile.isNativeBytesOrder()) myPooledWriteBuffer.order(ByteOrder.nativeOrder());
     myGlobalModCount = new AtomicInteger(readGlobalModCount());
-    myRecordCount = new AtomicInteger((int)(length() / RECORD_SIZE));
+    final long length = file.length();
+
+    final int recordsCount;
+    if (length == 0) {
+      recordsCount = 0;
+    }
+    else {
+      recordsCount = (int)(length / RECORD_SIZE - 1);//first RECORD_SIZE bytes used as a storage header
+    }
+    myRecordCount = new AtomicInteger(recordsCount);
   }
 
   @Override
@@ -197,6 +216,9 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
 
   @Override
   public void setAttributeRecordId(int id, int value) throws IOException {
+    if (value < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + id + "].attributeRecordId(=" + value + ") must be >=0");
+    }
     putRecordInt(id, ATTR_REF_OFFSET, value);
   }
 
@@ -225,10 +247,11 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   }
 
   @Override
-  public void cleanRecord(int id) throws IOException {
+  public void cleanRecord(int recordId) throws IOException {
+    checkIdIsValid(recordId);
     write(() -> {
-      myRecordCount.updateAndGet(operand -> Math.max(id + 1, operand));
-      myFile.put(((long)id) * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
+      final long absoluteRecordOffset = getOffset(recordId, 0);
+      myFile.put(absoluteRecordOffset, ZEROES, 0, RECORD_SIZE);
       incrementGlobalModCount();
     });
   }
@@ -236,7 +259,7 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   @Override
   public int allocateRecord() {
     incrementGlobalModCount();
-    return myRecordCount.getAndIncrement();
+    return myRecordCount.incrementAndGet();
   }
 
   private int getRecordInt(int id, int offset) throws IOException {
@@ -301,9 +324,11 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     });
   }
 
-  private static long getOffset(int id, int offset) {
-    final long absoluteFileOffset = id * (long)RECORD_SIZE + offset;
-    assert absoluteFileOffset >= 0 : "offset(" + id + ", " + offset + ") = " + absoluteFileOffset + " must be >=0";
+  private long getOffset(final int id,
+                         final int fieldOffset) {
+    checkIdIsValid(id);
+    final long absoluteFileOffset = id * (long)RECORD_SIZE + fieldOffset;
+    assert absoluteFileOffset >= 0 : "offset(" + id + ", " + fieldOffset + ") = " + absoluteFileOffset + " must be >=0";
     return absoluteFileOffset;
   }
 
@@ -315,11 +340,21 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   }
 
   @Override
+  public int recordsCount() {
+    return myRecordCount.get();
+  }
+
+  @Override
   public void close() throws IOException {
     write(() -> {
       saveGlobalModCount();
       myFile.close();
     });
+  }
+
+  @Override
+  public void closeAndRemoveAllFiles() throws IOException {
+    myFile.closeAndRemoveAllFiles();
   }
 
   @Override
@@ -339,21 +374,31 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor operator) throws IOException {
     return read(() -> {
       myFile.force();
+      final long writtenRecordsLength = myFile.length();//could be different than actual file length
       return myFile.readChannel(ch -> {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(RECORD_SIZE * 1024);
-        if (myFile.isNativeBytesOrder()) buffer.order(ByteOrder.nativeOrder());
+        final ByteBuffer buffer = ByteBuffer.allocateDirect(RECORD_SIZE * 1024);
+        if (myFile.isNativeBytesOrder()) {
+          buffer.order(ByteOrder.nativeOrder());
+        }
         try {
-          int id = 1, limit, offset;
+          long positionInFile = RECORD_SIZE;
+          int recordId = MIN_VALID_ID;
+          int limit;
           while ((limit = ch.read(buffer)) >= RECORD_SIZE) {
-            offset = id == 1 ? RECORD_SIZE : 0; // skip header
-            for (; offset < limit; offset += RECORD_SIZE) {
-              int nameId = buffer.getInt(offset + NAME_OFFSET);
-              int flags = buffer.getInt(offset + FLAGS_OFFSET);
-              int parentId = buffer.getInt(offset + PARENT_OFFSET);
-              operator.process(id, nameId, flags, parentId, false);
-              id++;
+            int offsetInBuffer = (recordId == MIN_VALID_ID) ? RECORD_SIZE : 0; // skip header
+            for (;
+                 offsetInBuffer < limit && positionInFile < writtenRecordsLength;
+                 offsetInBuffer += RECORD_SIZE) {
+              final int nameId = buffer.getInt(offsetInBuffer + NAME_OFFSET);
+              final int flags = buffer.getInt(offsetInBuffer + FLAGS_OFFSET);
+              final int parentId = buffer.getInt(offsetInBuffer + PARENT_OFFSET);
+
+              operator.process(recordId, nameId, flags, parentId, /*corrupted: */ false);
+
+              recordId++;
+              positionInFile += RECORD_SIZE;
             }
-            buffer.position(0);
+            buffer.clear();
           }
         }
         catch (IOException ignore) {
@@ -361,5 +406,13 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
         return true;
       });
     });
+  }
+
+  private void checkIdIsValid(final int recordId) {
+    final int allocatedSoFar = myRecordCount.get();
+    if (!(FSRecords.NULL_FILE_ID < recordId && recordId <= allocatedSoFar)) {
+      throw new IndexOutOfBoundsException(
+        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + allocatedSoFar + "]");
+    }
   }
 }

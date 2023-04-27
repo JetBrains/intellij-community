@@ -14,6 +14,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -26,7 +27,7 @@ public final class TestRunnerUtil {
     if (suiteClassNames.length == 0) {
       return null;
     }
-    ArrayList<Test> result = new ArrayList<Test>();
+    ArrayList<Test> result = new ArrayList<>();
     for (String suiteClassName : suiteClassNames) {
       Test test;
       if (suiteClassName.charAt(0) == '@') {
@@ -34,7 +35,8 @@ public final class TestRunnerUtil {
         String[] classNames;
         String suiteName;
         try {
-          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)), "UTF-8"));
+          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)),
+                                                                           StandardCharsets.UTF_8));
           ArrayList<String> vector;
           try {
             suiteName = reader.readLine();
@@ -42,7 +44,7 @@ public final class TestRunnerUtil {
             reader.readLine(); //category
             reader.readLine();//filters
 
-            vector = new ArrayList<String>();
+            vector = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
               vector.add(line);

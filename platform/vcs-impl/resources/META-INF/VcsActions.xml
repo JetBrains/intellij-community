@@ -591,6 +591,8 @@
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
 
+    <action id="Vcs.ShowConsoleTab" class="com.intellij.vcs.console.ShowVcsConsoleTabAction"/>
+
     <group id="CommitView.GearActions">
       <action id="CommitView.SwitchToCommitDialog" class="com.intellij.vcs.commit.SwitchToCommitDialogAction"/>
       <group id="CommitView.ShowOnDoubleClick" popup="true" searchable="false">

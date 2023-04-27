@@ -13,7 +13,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
@@ -40,25 +39,23 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   );
   private static final CallMatcher COMPARATOR_REVERSE = instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "reversed").parameterCount(0);
   private static final Set<String> INTERESTING_NAMES =
-    ContainerUtil.set("map", "filter", "distinct", "sorted", "sequential", "parallel", "unordered", "flatMap");
-  private static final Set<String> CALLS_MAKING_SORT_USELESS = ContainerUtil.set("sorted", "anyMatch", "allMatch", "noneMatch", "count",
+    Set.of("map", "filter", "distinct", "sorted", "sequential", "parallel", "unordered", "flatMap");
+  private static final Set<String> CALLS_MAKING_SORT_USELESS = Set.of("sorted", "anyMatch", "allMatch", "noneMatch", "count",
                                                                                  "min", "max");
   private static final Map<String, String> CALLS_MAKING_SORT_USELESS_PARALLEL = Map.of("findAny", "findFirst",
                                                                                        "forEach", "forEachOrdered");
   private static final Set<String> CALLS_KEEPING_SORT_ORDER =
-    ContainerUtil.set("filter", "distinct", "boxed", "asLongStream", "asDoubleStream", "takeWhile", "dropWhile");
+    Set.of("filter", "distinct", "boxed", "asLongStream", "asDoubleStream");
   private static final Set<String> CALLS_KEEPING_ELEMENTS_DISTINCT =
-    ContainerUtil.set("filter", "boxed", "asLongStream", "limit", "skip", "sorted", "takeWhile", "dropWhile");
-  private static final Set<String> CALLS_AFFECTING_PARALLELIZATION = ContainerUtil.set("sequential", "parallel");
-  private static final Set<String> CALLS_USELESS_FOR_SINGLE_ELEMENT_STREAM = ContainerUtil.set("sorted", "distinct");
-  private static final Set<String> BOX_UNBOX_NAMES = ContainerUtil
-    .set("valueOf", "booleanValue", "byteValue", "charValue", "shortValue", "intValue", "longValue", "floatValue", "doubleValue");
-  private static final Set<String> STANDARD_STREAM_INTERMEDIATE_OPERATIONS = ContainerUtil
-    .set("asDoubleStream", "asLongStream", "boxed", "distinct", "dropWhile", "filter", "flatMap", "flatMapToDouble",
+    Set.of("filter", "boxed", "asLongStream", "limit", "skip", "sorted", "takeWhile", "dropWhile");
+  private static final Set<String> CALLS_AFFECTING_PARALLELIZATION = Set.of("sequential", "parallel");
+  private static final Set<String> CALLS_USELESS_FOR_SINGLE_ELEMENT_STREAM = Set.of("sorted", "distinct");
+  private static final Set<String> BOX_UNBOX_NAMES = Set.of("valueOf", "booleanValue", "byteValue", "charValue", "shortValue", "intValue", "longValue", "floatValue", "doubleValue");
+  private static final Set<String> STANDARD_STREAM_INTERMEDIATE_OPERATIONS = Set.of("asDoubleStream", "asLongStream", "boxed", "distinct", "dropWhile", "filter", "flatMap", "flatMapToDouble",
          "flatMapToInt", "flatMapToLong", "flatMapToObj", "limit", "map", "mapToDouble", "mapToInt", "mapToLong", "mapToObj", "onClose",
          "parallel", "peek", "sequential", "skip", "takeWhile", "unordered");
-  private static final Set<String> STANDARD_STREAM_TERMINAL_OPERATIONS = ContainerUtil
-    .set("allMatch", "anyMatch", "average", "collect", "count", "findAny", "findFirst", "forEach", "forEachOrdered", "max", "min",
+  private static final Set<String> STANDARD_STREAM_TERMINAL_OPERATIONS = Set.of
+    ("allMatch", "anyMatch", "average", "collect", "count", "findAny", "findFirst", "forEach", "forEachOrdered", "max", "min",
          "noneMatch", "reduce", "sum", "summaryStatistics", "toArray");
 
   private static final CallMatcher COLLECTOR_TO_SET =
@@ -187,7 +184,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                                    ? JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted.parallel",
                                                         furtherCallName)
                                    : JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted", furtherCallName);
-                register(call, message, additionalFix);
+                register(call, message, LocalQuickFix.notNullElements(additionalFix));
               }
             }
           }
@@ -201,7 +198,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
               Predicate<PsiMethodCallExpression> setCollector =
                 COLLECTOR_TO_SET.or(RedundantStreamOptionalCallInspection::isToCollectionSet);
               if (findSubsequentCall(call, c -> false, setCollector,
-                                     ContainerUtil.set("unordered", "parallel", "sequential", "sorted")::contains) != null) {
+                                     Set.of("unordered", "parallel", "sequential", "sorted")::contains) != null) {
                 register(call, JavaBundle.message("inspection.redundant.stream.optional.call.explanation.distinct.set"));
               }
             }
@@ -278,7 +275,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private void register(PsiMethodCallExpression call, @Nls String explanation, LocalQuickFix... additionalFixes) {
+      private void register(PsiMethodCallExpression call, @Nls String explanation, @NotNull LocalQuickFix @NotNull ... additionalFixes) {
         String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
         String message = explanation != null
                          ? JavaBundle.message("inspection.redundant.stream.optional.call.message.with.explanation", methodName, explanation)
@@ -362,7 +359,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       PsiMethodCallExpression call = tryCast(PsiUtil.skipParenthesizedExprDown(body), PsiMethodCallExpression.class);
       if (call == null) return false;
       PsiReferenceExpression methodExpression = call.getMethodExpression();
-      if (!BOX_UNBOX_NAMES.contains(methodExpression.getReferenceName())) return false;
+      String referenceName = methodExpression.getReferenceName();
+      if (referenceName == null || !BOX_UNBOX_NAMES.contains(referenceName)) return false;
       PsiExpression qualifier = methodExpression.getQualifierExpression();
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (ExpressionUtils.isReferenceTo(qualifier, parameter) && args.length > 0) return false;

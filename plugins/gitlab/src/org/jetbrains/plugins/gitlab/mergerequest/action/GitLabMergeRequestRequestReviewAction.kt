@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
+import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
+import com.intellij.collaboration.ui.codereview.list.search.SimpleSelectablePopupItemRenderer
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
@@ -23,32 +26,42 @@ internal class GitLabMergeRequestRequestReviewAction(
 ) : AbstractAction(CollaborationToolsBundle.message("review.details.action.request")) {
   init {
     scope.launch {
-      reviewFlowVm.isBusy.collect { isBusy ->
-        isEnabled = !isBusy
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManageReview) { isBusy, userCanManageReview ->
+        isEnabled = !isBusy && userCanManageReview
       }
     }
   }
 
   override fun actionPerformed(event: ActionEvent) {
-    val popupState: PopupState<JBPopup> = PopupState.forPopup()
     val parentComponent = event.source as? JComponent ?: return
     val point = RelativePoint.getSouthWestOf(parentComponent)
     scope.launch {
       val users = reviewFlowVm.getPotentialReviewers()
 
-      val selectedUser = ChooserPopupUtil.showChooserPopup(point, popupState, users) { user ->
-        ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.username, icon = avatarIconsProvider.getIcon(user, AVATAR_SIZE))
-      }
+      val selectedUser = ChooserPopupUtil.showChooserPopup(
+        point,
+        users,
+        filteringMapper = { user -> user.username },
+        renderer = SimpleSelectablePopupItemRenderer.create { reviewer ->
+          ChooserPopupUtil.SelectablePopupItemPresentation.Simple(
+            reviewer.username,
+            avatarIconsProvider.getIcon(reviewer, Avatar.Sizes.BASE),
+            null,
+            isSelected = reviewer in reviewFlowVm.reviewers.value
+          )
+        }
+      )
 
-      // TODO: implement unselect
+      // TODO: replace on CollectionDelta
       if (selectedUser != null) {
-        reviewFlowVm.setReviewers(listOf(selectedUser))
+        val reviewers = reviewFlowVm.reviewers.value
+        if (selectedUser in reviewers) {
+          reviewFlowVm.removeReviewer(selectedUser)
+        }
+        else {
+          reviewFlowVm.setReviewers(listOf(selectedUser))
+        }
       }
     }
   }
-
-  companion object {
-    private const val AVATAR_SIZE = 20
-  }
 }
-

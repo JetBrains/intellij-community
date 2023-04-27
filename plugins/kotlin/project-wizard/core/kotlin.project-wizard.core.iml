@@ -21,5 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
+    <orderEntry type="module" module-name="intellij.platform.editor" />
+    <orderEntry type="library" name="Slf4j" level="project" />
   </component>
 </module>

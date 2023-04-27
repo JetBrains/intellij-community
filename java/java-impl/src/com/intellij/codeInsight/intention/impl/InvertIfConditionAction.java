@@ -419,7 +419,10 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       endOffset = controlFlow.getSize();
     }
     while (endOffset < instructions.size() && instructions.get(endOffset) instanceof GoToInstruction &&
-           !((GoToInstruction) instructions.get(endOffset)).isReturn && !(controlFlow.getElement(endOffset) instanceof PsiBreakStatement) && !(controlFlow.getElement(endOffset) instanceof PsiContinueStatement)) {
+           !((GoToInstruction) instructions.get(endOffset)).isReturn &&
+           !(controlFlow.getElement(endOffset) instanceof PsiYieldStatement) &&
+           !(controlFlow.getElement(endOffset) instanceof PsiBreakStatement) &&
+           !(controlFlow.getElement(endOffset) instanceof PsiContinueStatement)) {
       endOffset = ((BranchingInstruction)instructions.get(endOffset)).offset;
     }
 

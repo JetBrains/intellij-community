@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.Disposable;
@@ -17,10 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -239,23 +234,67 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   private ProcessListener createEventMulticaster() {
-    final Class<ProcessListener> listenerClass = ProcessListener.class;
-    return (ProcessListener)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, new InvocationHandler() {
+    return new ProcessListener() {
       @Override
-      public Object invoke(Object object, Method method, Object[] params) throws Throwable {
+      public void startNotified(@NotNull ProcessEvent event) {
         for (ProcessListener listener : myListeners) {
           try {
-            method.invoke(listener, params);
+            listener.startNotified(event);
+          }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
           }
           catch (Throwable e) {
-            if (!isCanceledException(e)) {
-              LOG.error(e);
-            }
+            LOG.error(e);
           }
         }
-        return null;
       }
-    });
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        for (ProcessListener listener : myListeners) {
+          try {
+            listener.processTerminated(event);
+          }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
+      }
+
+      @Override
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+        for (ProcessListener listener : myListeners) {
+          try {
+            listener.processWillTerminate(event, willBeDestroyed);
+          }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
+      }
+
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        for (ProcessListener listener : myListeners) {
+          try {
+            listener.onTextAvailable(event, outputType);
+          }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
+      }
+    };
   }
 
   private static boolean isCanceledException(Throwable e) {

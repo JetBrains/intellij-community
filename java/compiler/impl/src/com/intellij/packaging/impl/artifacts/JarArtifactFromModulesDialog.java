@@ -80,12 +80,13 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
       label.setIcon(value != null ? ModuleType.get(value).getIcon() : null);
       label.setText(value != null ? value.getName() : JavaCompilerBundle.message("all.modules"));
     }));
-    new ComboboxSpeedSearch(myModuleComboBox) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(myModuleComboBox, null) {
       @Override
       protected String getElementText(Object element) {
         return element instanceof Module ? ((Module)element).getName() : "";
       }
     };
+    search.setupListeners();
   }
 
   private void updateManifestDirField() {

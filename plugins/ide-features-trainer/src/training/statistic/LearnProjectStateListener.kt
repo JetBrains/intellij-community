@@ -28,7 +28,7 @@ private class LearnProjectStateListener : ProjectManagerListener {
     val languageId = LangManager.getInstance().getLanguageId() ?: return
     if (isLearningProject(project, languageId)) {
       CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
-      removeFromRecentProjects(project)
+      RecentProjectsManagerBase.getInstanceEx().setProjectHidden(project, hidden = true)
     }
     else {
       val learnProjectState = LearnProjectState.instance
@@ -52,13 +52,7 @@ private class LearnProjectStateListener : ProjectManagerListener {
     val languageId = LangManager.getInstance().getLanguageId() ?: return
     if (isLearningProject(project, languageId)) {
       StatisticBase.isLearnProjectCloseLogged = false
-      removeFromRecentProjects(project)
     }
-  }
-
-  private fun removeFromRecentProjects(project: Project) {
-    val manager = RecentProjectsManagerBase.getInstanceEx()
-    manager.getProjectPath(project)?.let { manager.removePath(it) }
   }
 }
 

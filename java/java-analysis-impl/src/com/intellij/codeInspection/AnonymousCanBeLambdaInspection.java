@@ -89,28 +89,27 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  public static boolean hasRuntimeAnnotations(PsiModifierListOwner listOwner, @NotNull Set<String> runtimeAnnotationsToIgnore) {
+  public static boolean mustKeepAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Set<String> runtimeAnnotationsToIgnore) {
     PsiModifierList modifierList = listOwner.getModifierList();
     if (modifierList == null) return false;
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-      PsiElement target = ref != null ? ref.resolve() : null;
-      if (target instanceof PsiClass) {
-        if (runtimeAnnotationsToIgnore.contains(((PsiClass)target).getQualifiedName())) {
-          continue;
-        }
-        final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation((PsiClass)target, Retention.class.getName());
-        if (retentionAnno != null) {
-          PsiAnnotationMemberValue value = retentionAnno.findAttributeValue("value");
-          if (value instanceof PsiReferenceExpression) {
-            final PsiElement resolved = ((PsiReferenceExpression)value).resolve();
-            if (resolved instanceof PsiField && RetentionPolicy.RUNTIME.name().equals(((PsiField)resolved).getName())) {
-              final PsiClass containingClass = ((PsiField)resolved).getContainingClass();
-              if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
-                return true;
-              }
-            }
+      String fqn;
+      if (ref != null &&
+          ref.resolve() instanceof PsiClass annotationClass &&
+          ((fqn = annotationClass.getQualifiedName()) == null ||
+          !runtimeAnnotationsToIgnore.contains(fqn))) {
+        final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation(annotationClass, Retention.class.getName());
+        // Default retention is CLASS: keep it
+        if (retentionAnno == null) return true;
+        if (retentionAnno.findAttributeValue("value") instanceof PsiReferenceExpression retentionValue &&
+            retentionValue.resolve() instanceof PsiField retentionField &&
+            (RetentionPolicy.RUNTIME.name().equals(retentionField.getName()) ||
+             RetentionPolicy.CLASS.name().equals(retentionField.getName()))) {
+          final PsiClass containingClass = retentionField.getContainingClass();
+          if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
+            return true;
           }
         }
       }
@@ -180,7 +179,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
            aClass.getInitializers().length == 0 &&
            method.getBody() != null &&
            method.getDocComment() == null &&
-           !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
+           !mustKeepAnnotations(method, ignoredRuntimeAnnotations) &&
            !method.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
            !method.hasModifierProperty(PsiModifier.STRICTFP) &&
            !hasForbiddenRefsInsideBody(method, aClass);
@@ -335,8 +334,8 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
   @NotNull
   static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
-    final Collection<PsiComment> psiComments = PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class);
-    psiComments.removeIf(comment -> PsiTreeUtil.isAncestor(body, comment, false));
+    final Collection<PsiComment> psiComments = ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class),
+    comment -> !PsiTreeUtil.isAncestor(body, comment, false));
     return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());
   }
 

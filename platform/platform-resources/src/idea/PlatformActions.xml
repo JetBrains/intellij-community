@@ -201,6 +201,8 @@
     <action id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
+    <action id="EnableNewUi" class="com.intellij.ide.actions.EnableNewUiAction" icon="AllIcons.Actions.EnableNewUi"/>
+    <action id="DisableNewUi" class="com.intellij.ide.actions.DisableNewUiAction"/>
 
     <action id="SmartSelect" class="com.intellij.ide.actions.SmartSelect" use-shortcut-of="EditorSelectWord"/>
     <action id="SmartUnSelect" class="com.intellij.ide.actions.SmartUnSelect" use-shortcut-of="EditorUnSelectWord"/>
@@ -337,6 +339,11 @@
 
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction" icon="AllIcons.Actions.Refresh"/>
     <action id="ForceRefresh" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ForceRefresh"/>
+
+    <group id="TextEditorWithPreview.SplitGroup" popup="true" class="com.intellij.openapi.fileEditor.EditorSplitGroup">
+      <action id="TextEditorWithPreview.SplitVertically" class="com.intellij.openapi.fileEditor.SplitVerticallyAction"/>
+      <action id="TextEditorWithPreview.SplitHorizontally" class="com.intellij.openapi.fileEditor.SplitHorizontallyAction"/>
+    </group>
 
     <group id="Diff.KeymapGroup" searchable="false">
       <action id="Diff.ShowDiff" class="com.intellij.diff.actions.ShowDiffAction"
@@ -504,6 +511,7 @@
         <group id="PowerSaveGroup">
           <separator/>
           <action id="TogglePowerSave" class="com.intellij.ide.actions.TogglePowerSaveAction"/>
+          <action id="ToggleEssentialHighlighting" class="com.intellij.ide.actions.ToggleEssentialHighlightingAction" internal="true"/>
         </group>
         <separator/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
@@ -615,25 +623,16 @@
             <separator/>
             <action id="ToggleCompactMode" class="com.intellij.ide.actions.ToggleCompactModeAction" />
           </group>
-          <group id="ZoomIDE" class="com.intellij.ide.actions.ZoomIdeActionGroup">
-            <separator/>
-            <action id="CurrentIdeScaleAction" class="com.intellij.ide.actions.CurrentIdeScaleAction">
-              <synonym key="action.CurrentIdeScaleAction.text"/>
-            </action>
-            <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
-              <synonym key="action.ZoomInIdeAction.text"/>
-            </action>
-            <action id="ZoomOutIdeAction" class="com.intellij.ide.actions.ZoomOutIdeAction">
-              <synonym key="action.ZoomOutIdeAction.text"/>
-            </action>
-            <action id="ResetIdeScaleAction" class="com.intellij.ide.actions.ResetIdeScaleAction">
-              <synonym key="action.ResetIdeScaleAction.text"/>
-            </action>
-          </group>
+
+          <separator/>
+          <action id="SwitchIdeScaleAction" class="com.intellij.ide.actions.SwitchIdeScaleAction">
+            <synonym key="action.SwitchIdeScaleAction.text"/>
+          </action>
 
           <group id="UIToggleActions">
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
+            <action id="MainMenuAsSeparateToolbarAction" class="com.intellij.ide.actions.MainMenuAsSeparateToolbarAction"/>
             <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
             <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
             <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>
@@ -744,18 +743,15 @@
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
         <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
-        <action id="MoveWindowToNextDisplay" class="com.intellij.ide.actions.MoveWindowToNextDisplayAction"/>
-        <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
-        <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
-        <group id="StoreLayoutGroup" popup="true">
-          <group id="StoreNamedLayoutGroup" class="com.intellij.ide.actions.StoreNamedLayoutActionGroup"/>
+        <group id="LayoutsGroup" popup="true">
+          <group id="CustomLayoutsGroup" class="com.intellij.ide.actions.CustomLayoutsActionGroup" />
           <separator/>
-          <action id="StoreNewLayout" class="com.intellij.ide.actions.StoreNewLayoutAction">
-            <override-text place="MainMenu"/>
+          <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
+          <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction">
+            <synonym key="action.StoreDefaultLayout.synonym" />
           </action>
+          <action id="StoreNewLayout" class="com.intellij.ide.actions.StoreNewLayoutAction" />
         </group>
-        <group id="RestoreNamedLayoutGroup" class="com.intellij.ide.actions.RestoreNamedLayoutActionGroup" popup="true"/>
-        <group id="DeleteNamedLayoutGroup" class="com.intellij.ide.actions.DeleteNamedLayoutActionGroup" popup="true"/>
         <separator/>
         <group id="ActiveToolwindowGroup" popup="true">
           <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>
@@ -859,6 +855,7 @@
         <separator/>
         <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Help"/>
         <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction"/>
+        <action id="MeetNewUIAction" class="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUIAction"/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
         <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>
@@ -898,6 +895,16 @@
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
 
+    <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
+      <synonym key="action.ZoomInIdeAction.text"/>
+    </action>
+    <action id="ZoomOutIdeAction" class="com.intellij.ide.actions.ZoomOutIdeAction">
+      <synonym key="action.ZoomOutIdeAction.text"/>
+    </action>
+    <action id="ResetIdeScaleAction" class="com.intellij.ide.actions.ResetIdeScaleAction">
+      <synonym key="action.ResetIdeScaleAction.text"/>
+    </action>
+
     <group id="MainToolbarPopupActions" searchable="false">
       <reference id="ViewToolBar"/>
       <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
@@ -933,16 +940,18 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
-    <group id="MainToolbarLeft" searchable="false">
-      <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
-    </group>
-    <group id="MainToolbarCenter" searchable="false">
-      <!--suppress PluginXmlCapitalization -->
-      <action id="main.toolbar.Filename" class="com.intellij.openapi.wm.impl.headertoolbar.FilenameToolbarWidgetAction"/>
-    </group>
-    <group id="MainToolbarRight" searchable="false">
-      <reference ref="SearchEverywhere"/>
-      <reference ref="SettingsEntryPoint"/>
+    <group id="MainToolbarNewUI" >
+      <group id="MainToolbarLeft" searchable="false">
+        <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
+      </group>
+      <group id="MainToolbarCenter" searchable="false">
+        <!--suppress PluginXmlCapitalization -->
+        <action id="main.toolbar.Filename" class="com.intellij.openapi.wm.impl.headertoolbar.FilenameToolbarWidgetAction"/>
+      </group>
+      <group id="MainToolbarRight" searchable="false">
+        <reference ref="SearchEverywhere"/>
+        <reference ref="SettingsEntryPoint"/>
+      </group>
     </group>
 
     <group id="NavBarVcsGroup"/>
@@ -1113,6 +1122,15 @@
     </group>
 
     <group id="FileChooserToolbar">
+      <action id="FileChooser.GoBackward" class="com.intellij.openapi.fileChooser.actions.GoToHistoryAction$Backward"
+              icon="AllIcons.Actions.Back" use-shortcut-of="Back"/>
+      <action id="FileChooser.GoForward" class="com.intellij.openapi.fileChooser.actions.GoToHistoryAction$Forward"
+              icon="AllIcons.Actions.Forward" use-shortcut-of="Forward"/>
+      <action id="FileChooser.GoToParent" class="com.intellij.openapi.fileChooser.actions.GoToParentDirectoryAction"
+              icon="AllIcons.Nodes.UpFolder"/>
+      <action id="FileChooser.GoToRoot" class="com.intellij.openapi.fileChooser.actions.GoToRootDirectoryAction"
+              icon="AllIcons.Nodes.Servlet"/>
+      <separator/>
       <action id="FileChooser.GotoHome" class="com.intellij.openapi.fileChooser.actions.GotoHomeAction"
               icon="AllIcons.Nodes.HomeFolder"/>
       <action id="FileChooser.GoToWslHome" class="com.intellij.openapi.fileChooser.actions.GoToWslHomeAction"
@@ -1131,27 +1149,23 @@
       <separator/>
       <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
               icon="AllIcons.Actions.Refresh" use-shortcut-of="Synchronize"/>
-      <action id="FileChooser.ShowHidden" class="com.intellij.openapi.fileChooser.actions.ToggleVisibilityAction"
-              icon="AllIcons.Actions.ToggleVisibility"/>
-      <action id="FileChooser.TogglePathBar" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"
-              icon="AllIcons.Debugger.Console"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="FileChooserList">
-      <action id="FileChooserList.Root" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$Root"/>
-      <action id="FileChooserList.LevelUp" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$LevelUp"
-              icon="AllIcons.Nodes.UpFolder"/>
+    <group id="FileChooserSettings">
+      <action id="FileChooser.ShowHidden" class="com.intellij.openapi.fileChooser.actions.ToggleVisibilityAction"/>
+      <action id="FileChooser.TogglePathBar" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"/>
+      <action id="FileChooser.ToggleDetection" class="com.intellij.openapi.fileChooser.actions.ToggleProjectDetectionAction"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <group id="ChangeScheme">
+      <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
       <action id="ChangeColorScheme" class="com.intellij.ide.actions.QuickChangeColorSchemeAction"/>
       <action id="ChangeKeymap" class="com.intellij.ide.actions.QuickChangeKeymapAction"/>
       <action id="ChangeView" class="com.intellij.ide.actions.QuickChangeViewModeAction"/>
-      <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
       <action id="ChangeToolWindowLayout" class="com.intellij.ide.actions.QuickChangeToolWindowLayout"/>
       <action id="ChangeIdeScale" class="com.intellij.ide.actions.QuickChangeIdeScaleAction"/>
     </group>
@@ -1185,6 +1199,7 @@
         <action id="DropPluginError" internal="true" class="com.intellij.diagnostic.DropPluginErrorAction"/>
         <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
       </group>
+      <action id="SimulateFreeze" class="com.intellij.diagnostic.SimulateFreeze" />
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <group id="Internal.Trust" popup="true">
@@ -1200,7 +1215,9 @@
         <synonym text="Enter Dumb Mode"/>
       </action>
       <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
-      <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>
+      <action id="SkipWindowDeactivationEvents" class="com.intellij.internal.SkipWindowDeactivationEventsAction" internal="true">
+        <synonym text="Disable ProcessCanceledException"/>
+      </action>
       <action id="ResetGotItTooltips" internal="true" class="com.intellij.internal.ResetGotItTooltips"/>
       <action id="ListPersistentStateComponents" internal="true"
               class="com.intellij.internal.components.ListPersistentStateComponentsAction"/>
@@ -1396,6 +1413,12 @@
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ShowBlankDiffWindow" anchor="after"/>
     </group>
 
+    <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction">
+      <add-to-group group-id="RunTab.TopToolbar"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old"/>
+    </action>
+    <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction"/>
+
     <action id="IncrementWindowWidth" class="com.intellij.ide.actions.WindowAction$IncrementWidth" use-shortcut-of="ResizeToolWindowRight"/>
     <action id="DecrementWindowWidth" class="com.intellij.ide.actions.WindowAction$DecrementWidth" use-shortcut-of="ResizeToolWindowLeft"/>
     <action id="IncrementWindowHeight" class="com.intellij.ide.actions.WindowAction$IncrementHeight"
@@ -1551,6 +1574,7 @@
 
     <group id="ActivateToolWindowActions" searchable="false">
       <action id="ActivateFindToolWindow" class="com.intellij.find.actions.ActivateFindToolWindowAction"/>
+      <action id="ActivateMeetNewUIToolWindow" class="com.intellij.ide.ui.experimental.meetNewUi.ActivateMeetNewUIToolWindowAction"/>
     </group>
 
     <action class="com.intellij.diagnostic.ResetWindowsDefenderNotification" id="ResetWindowsDefenderNotification"/>
@@ -1565,6 +1589,9 @@
       <reference id="ChangeLaf"/>
       <reference id="ChangeKeymap"/>
       <reference id="ChangeView"/>
+      <separator/>
+      <reference id="EnableNewUi"/>
+      <reference id="DisableNewUi"/>
     </group>
 
     <action id="CheckSuggestedPlugins" class="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.CheckSuggestedPluginsAction"/>

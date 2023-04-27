@@ -23,6 +23,10 @@
     <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.DevKitApplicationPatcher"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
+    <registryKey key="devkit.generate.intellij.module.repository" defaultValue="false"
+                 description="Generate file with runtime module descriptors for IntelliJ project"/>
+    <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.IntelliJModuleRepositoryBuildScopeProvider"/>
+
     <xmlStructureViewBuilderProvider
       implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
 
@@ -64,7 +68,7 @@
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.IdePluginModuleBuilder"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
-    <compileServer.plugin classpath="devkit-jps.jar"/>
+    <compileServer.plugin classpath="devkit-jps.jar;devkit-runtimeModuleRepository-jps.jar"/>
 
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
     <lang.documentationProvider language="XML"
@@ -187,7 +191,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"
                      key="inspection.unsafe.return.statement.visitor.display.name"/>
-    <localInspection language="JVM" shortName="StatefulEp"
+    <localInspection language="UAST" shortName="StatefulEp"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"
@@ -229,11 +233,36 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MigrateToOptControlInspection"
                      key="inspection.migrate.to.opt.control.display.name"/>
-    <localInspection language="UAST" shortName="LightService"
+    <localInspection language="JVM" shortName="LightServiceMustBeFinal"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalInspection"
+                     key="inspection.light.service.must.be.final.display.name"/>
+    <localInspection language="JVM" shortName="MismatchedLightServiceLevelAndCtor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceInspection"
-                     key="inspection.light.service.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.MismatchedLightServiceLevelAndCtorInspection"
+                     key="inspection.mismatched.light.service.level.and.ctor.display.name"/>
+    <localInspection language="UAST" shortName="RetrievingService"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.RetrievingServiceInspection"
+                     key="inspection.retrieving.service.display.name"/>
+    <localInspection language="JVM" shortName="ExtensionClassShouldBeFinalAndPackagePrivate"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection"
+                     key="inspection.extension.class.should.be.final.and.package.private.display.name"/>
+    <localInspection language="XML" applyToDialects="false" shortName="LightServiceMigrationXML"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationXMLInspection"
+                     key="inspection.light.service.migration.display.name"/>
+    <localInspection language="JVM" shortName="LightServiceMigrationCode"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationCodeInspection"
+                     key="inspection.light.service.migration.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
@@ -274,11 +303,36 @@
                      key="inspections.action.update.thread.display.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.MissingActionUpdateThread"/>
 
-    <localInspection language="UAST" enabledByDefault="true" level="TEXT ATTRIBUTES" shortName="UsagesOfObsoleteApi"
-                     editorAttributes="DEPRECATED_ATTRIBUTES"
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="ExtensionRegisteredAsServiceOrComponent"
+                     key="inspection.extension.registered.as.service.or.component.display.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     key="jvm.inspections.usages.of.obsolete.api.display.name"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UsagesOfObsoleteApiInspection"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionRegisteredAsServiceOrComponentInspection"/>
+
+    <localInspection language="UAST" key="inspection.cancellation.check.in.loops.display.name" shortName="CancellationCheckInLoops"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspection"/>
+
+    <localInspection language="UAST" shortName="ApplicationServiceAsStaticFinalField" groupPathKey="inspections.group.path"
+                     key="inspections.application.service.as.static.final.field.display.name" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldInspection"/>
+
+    <localInspection language="UAST" enabledByDefault="false" level="ERROR"
+                     key="inspection.threading.concurrency.display.name"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ThreadingConcurrencyInspection"/>
+
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING"
+                     key="inspection.token.set.in.parser.definition.display.name"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.TokenSetInParserDefinitionInspection"/>
+
+    <localInspection language="UAST" enabledByDefault="false" level="WEAK WARNING"
+                     key="inspections.calling.method.should.be.rbc.annotated"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     shortName="CallingMethodShouldBeRequiresBlockingContext"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -402,6 +456,11 @@
 
   <extensions defaultExtensionNs="DevKit.lang">
     <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
+    <cancellationCheckProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
+    <visitorProviderForRBCInspection language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
+    <extensionClassModifiersCheckerProvider language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection$ExtensionClassModifiersCheckerProviderForJava"/>
   </extensions>
 
   <extensionPoints>
@@ -409,6 +468,21 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+    <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationCheckProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.visitorProviderForRBCInspection"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements=" org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.extensionClassModifiersCheckerProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements=" org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalAndPackagePrivateInspection$ExtensionClassModifiersCheckerProvider"/>
     </extensionPoint>
   </extensionPoints>
 

@@ -4,6 +4,7 @@
 package com.intellij.ide
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
@@ -12,7 +13,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import kotlin.time.Duration
@@ -47,12 +51,12 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
    */
   @Internal
   @OptIn(FlowPreview::class)
-  fun addIdleListener(delayInMs: Int, listener: java.lang.Runnable): () -> Unit {
+  fun addIdleListener(delayInMs: Int, listener: Runnable): AccessToken {
     val delay = delayInMs.milliseconds
     checkDelay(delay, listener)
 
     val listenerScope = coroutineScope.childScope()
-    listenerScope.launch {
+    listenerScope.launch(CoroutineName("Idle listener: ${listener.javaClass.name}")) {
       events
         .debounce(delay)
         .collect {
@@ -61,8 +65,10 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
           }
         }
     }
-    return {
-      listenerScope.cancel()
+    return object : AccessToken() {
+      override fun finish() {
+        listenerScope.cancel()
+      }
     }
   }
 
@@ -78,7 +84,7 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
    */
   @OptIn(FlowPreview::class)
   @Deprecated("Use coroutines and [events]. " +
-              "Or at least method that returns close handler: `addIdleListener(delayInMs, listener): () -> Unit`")
+              "Or at least method that returns close handler: `addIdleListener(delayInMs, listener): AccessToken`")
   fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
     val delay = timeoutMillis.toDuration(DurationUnit.MILLISECONDS)
     checkDelay(delay, runnable)
@@ -86,7 +92,7 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
     synchronized(listenerToRequest) {
       val listenerScope = coroutineScope.childScope()
       listenerToRequest.put(runnable, listenerScope)
-      listenerScope.launch {
+      listenerScope.launch(CoroutineName("Idle listener: ${runnable.javaClass.name}")) {
         events
           .debounce(delay)
           .collect {
@@ -99,7 +105,7 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
   }
 
   @Deprecated("Use coroutines and [events]. " +
-              "Or at least method that returns close handler: `addIdleListener(delayInMs, listener): () -> Unit`")
+              "Or at least method that returns close handler: `addIdleListener(delayInMs, listener): AccessToken`")
   fun removeIdleListener(runnable: Runnable) {
     synchronized(listenerToRequest) {
       val coroutineScope = listenerToRequest.remove(runnable)

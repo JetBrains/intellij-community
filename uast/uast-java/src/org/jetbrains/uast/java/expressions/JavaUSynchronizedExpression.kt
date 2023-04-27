@@ -17,7 +17,6 @@
 package org.jetbrains.uast.java.expressions
 
 import com.intellij.psi.PsiSynchronizedStatement
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UBlockExpression
 import org.jetbrains.uast.UElement
@@ -25,6 +24,7 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
+import org.jetbrains.uast.java.lazyPub
 import org.jetbrains.uast.visitor.UastVisitor
 
 @ApiStatus.Internal

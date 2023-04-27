@@ -262,7 +262,7 @@ internal const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
 abstract class Cell : BaseBuilder {
   /**
    * Sets how keen the component should be to grow in relation to other component **in the same cell**. Use `push` in addition if need.
-   * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied (see [com.intellij.ui.layout.panel])).
+   * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied.
    * Grow weight will only be compared against the weights for the same cell.
    */
   @ApiStatus.ScheduledForRemoval
@@ -534,7 +534,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @ApiStatus.Internal
   fun textFieldWithHistoryWithBrowseButton(
     getter: () -> String,
@@ -699,13 +699,9 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun placeholder(): CellBuilder<JComponent> {
-    return component(JPanel().apply {
-      minimumSize = Dimension(0, 0)
-      preferredSize = Dimension(0, 0)
-      maximumSize = Dimension(0, 0)
-    })
+    return internalPlaceholder()
   }
 
   @ApiStatus.ScheduledForRemoval
@@ -726,6 +722,16 @@ abstract class Cell : BaseBuilder {
     constraints(*constraints)
     if (comment != null) comment(comment)
     if (growPolicy != null) growPolicy(growPolicy)
+  }
+
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  internal fun internalPlaceholder(): CellBuilder<JComponent>{
+    return component(JPanel().apply {
+      minimumSize = Dimension(0, 0)
+      preferredSize = Dimension(0, 0)
+      maximumSize = Dimension(0, 0)
+    })
   }
 }
 

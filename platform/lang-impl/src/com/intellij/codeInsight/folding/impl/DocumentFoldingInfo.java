@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.formatting.visualLayer.VisualFormattingLayerService;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -23,6 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.xml.util.XmlStringUtil;
@@ -203,6 +206,10 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       final Document document = FileDocumentManager.getInstance().getDocument(myFile);
       if (document == null) return;
 
+      // IDEA-313274 Remove persisted visual formatting foldings from workspace files
+      WhiteSpaceFormattingStrategy whiteSpaceFormattingStrategy = WhiteSpaceFormattingStrategyFactory.DEFAULT_STRATEGY;
+      boolean removeVFmtZombieFoldings = VisualFormattingLayerService.shouldRemoveZombieFoldings();
+
       String date = null;
       for (final Element e : element.getChildren()) {
         String signature = e.getAttributeValue(SIGNATURE_ATT);
@@ -226,11 +233,19 @@ final class DocumentFoldingInfo implements CodeFoldingState {
             int start = Integer.valueOf(tokenizer.nextToken()).intValue();
             int end = Integer.valueOf(tokenizer.nextToken()).intValue();
             if (start < 0 || end >= document.getTextLength() || start > end) continue;
-            RangeMarker marker = document.createRangeMarker(start, end);
-            myRangeMarkers.add(marker);
             String placeholderAttributeValue = e.getAttributeValue(PLACEHOLDER_ATT);
             String placeHolderText = placeholderAttributeValue == null ? DEFAULT_PLACEHOLDER
                                                                        : XmlStringUtil.unescapeIllegalXmlChars(placeholderAttributeValue);
+
+            // IDEA-313274 Remove persisted visual formatting foldings from workspace files
+            if (removeVFmtZombieFoldings &&
+                placeHolderText.isEmpty() &&
+                whiteSpaceFormattingStrategy.check(document.getText(), start, end) >= end) {
+              continue;
+            }
+
+            RangeMarker marker = document.createRangeMarker(start, end);
+            myRangeMarkers.add(marker);
             FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
             marker.putUserData(FOLDING_INFO_KEY, fi);
           }

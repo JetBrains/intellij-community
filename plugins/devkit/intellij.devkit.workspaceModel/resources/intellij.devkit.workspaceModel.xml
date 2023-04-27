@@ -3,7 +3,6 @@
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
-    <module name="intellij.platform.workspaceModel.codegen"/>
   </dependencies>
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
   <actions>
@@ -30,5 +29,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplAbsentInspection"
                      key="inspection.workspace.absent.model.display.name"/>
+    <localInspection language="kotlin"
+                     groupBundle="messages.DevKitWorkspaceModelBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
+                     runForWholeFile="true"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.devkit.workspaceModel.WorkspaceEntityMutableFieldInspection"
+                     key="inspection.workspace.mutable.field.display.name"/>
   </extensions>
 </idea-plugin>

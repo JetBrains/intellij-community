@@ -95,7 +95,7 @@ internal class GitCommitSignatureStatusProvider : VcsCommitExternalStatusProvide
   }
 }
 
-@Service
+@Service(Service.Level.APP)
 internal class GitCommitSignatureColumnService : VcsLogExternalStatusColumnService<GitCommitSignature>() {
   override fun getDataLoader(project: Project) = GitCommitSignatureStatusProvider().createLoader(project)
 }

@@ -28,7 +28,7 @@ class JUnitAssertEqualsMayBeAssertSameInspection : AbstractBaseUastLocalInspecti
 
 private class JUnitAssertEqualsMayBeAssertSameVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
   override fun visitCallExpression(node: UCallExpression): Boolean {
-    val assertHint = UAssertHint.createAssertEqualsUHint(node) ?: return true
+    val assertHint = UAssertHint.createAssertEqualsHint(node) ?: return true
     if (!couldBeAssertSameArgument(assertHint.firstArgument)) return true
     if (!couldBeAssertSameArgument(assertHint.secondArgument)) return true
     val message = JvmAnalysisBundle.message("jvm.inspections.junit.assertequals.may.be.assertsame.problem.descriptor")

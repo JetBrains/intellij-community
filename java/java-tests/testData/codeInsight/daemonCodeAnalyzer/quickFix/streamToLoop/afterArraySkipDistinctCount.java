@@ -9,12 +9,12 @@ public class Main {
       long count = 0L;
       Set<Integer> uniqueValues = new HashSet<>();
       boolean first = true;
-      for (Integer integer : new Integer[]{1, 2, 3, 2, 3}) {
+      for (Integer i : new Integer[]{1, 2, 3, 2, 3}) {
           if (first) {
               first = false;
               continue;
           }
-          if (uniqueValues.add(integer)) {
+          if (uniqueValues.add(i)) {
               count++;
           }
       }

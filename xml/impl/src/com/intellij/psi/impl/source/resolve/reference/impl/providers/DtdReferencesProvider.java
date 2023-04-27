@@ -120,7 +120,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public LocalQuickFix[] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       if (!canHaveAdequateFix(getElement())) return LocalQuickFix.EMPTY_ARRAY;
 
       return new LocalQuickFix[] {
@@ -212,7 +212,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public LocalQuickFix[] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       if (!canHaveAdequateFix(getElement())) return LocalQuickFix.EMPTY_ARRAY;
 
       return new LocalQuickFix[] {

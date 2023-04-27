@@ -118,7 +118,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
               final Ref<Boolean> changed = Ref.create(false);
 
               if (value instanceof Color) {
-                ColorPicker.showColorPickerPopup(null, (Color)value, new ColorListener() {
+                ColorChooserService.getInstance().showPopup(null, (Color)value, new ColorListener() {
                   @Override
                   public void colorChanged(Color color, Object source) {
                     if (color != null) {
@@ -251,7 +251,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           }
         });
 
-        new TableSpeedSearch(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
+        TableSpeedSearch.installOn(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
         table.setShowGrid(false);
         TableHoverListener.DEFAULT.removeFrom(table);
         myTable = table;

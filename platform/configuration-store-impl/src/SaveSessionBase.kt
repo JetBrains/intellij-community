@@ -11,7 +11,7 @@ import org.jdom.Element
 abstract class SaveSessionBase : SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
   final override fun setState(component: Any?, componentName: String, state: Any?) {
     if (state == null) {
-      setSerializedState(componentName, null)
+      setSerializedState(componentName = componentName, element = null)
       return
     }
 
@@ -36,13 +36,13 @@ abstract class SaveSessionBase : SaveSessionProducer, SafeWriteRequestor, LargeF
 
 internal fun serializeState(state: Any): Element? {
   @Suppress("DEPRECATION")
-  when (state) {
-    is Element -> return state
+  return when (state) {
+    is Element -> state
     is JDOMExternalizable -> {
       val element = Element(FileStorageCoreUtil.COMPONENT)
       state.writeExternal(element)
-      return element
+      element
     }
-    else -> return serialize(state)
+    else -> serialize(state)
   }
 }

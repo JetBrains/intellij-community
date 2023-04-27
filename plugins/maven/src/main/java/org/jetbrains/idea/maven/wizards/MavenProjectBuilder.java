@@ -59,7 +59,7 @@ import static org.jetbrains.idea.maven.server.MavenServerManager.WRAPPED_MAVEN;
  * Do not use this project import builder directly.
  * <p>
  * Internal stable Api
- * Use {@link com.intellij.ide.actions.ImportModuleAction#doImport} to import (attach) a new project.
+ * Use {@link com.intellij.ide.actions.ImportModuleAction#createFromWizard} to import (attach) a new project.
  * Use {@link com.intellij.ide.impl.ProjectUtil#openOrImport} to open (import) a new project.
  */
 public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> implements DeprecatedProjectBuilderForImport {
@@ -386,7 +386,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     if (getParameters().myGeneralSettingsCache == null) {
       ApplicationManager.getApplication().runReadAction(() -> {
         getParameters().myGeneralSettingsCache = getDirectProjectsSettings().getGeneralSettings().clone();
-        getParameters().myGeneralSettingsCache.setUseMavenConfig(true);
         List<VirtualFile> rootFiles = getParameters().myFiles;
         if (rootFiles == null) {
           rootFiles = Collections.singletonList(LocalFileSystem.getInstance().findFileByNioFile(getRootPath()));

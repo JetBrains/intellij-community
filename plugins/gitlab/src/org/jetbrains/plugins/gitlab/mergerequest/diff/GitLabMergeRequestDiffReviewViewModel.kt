@@ -3,11 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.associateBy
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.childScope
-import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -15,6 +16,8 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 
 interface GitLabMergeRequestDiffReviewViewModel {
+  val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+
   fun getViewModelFor(change: Change): Flow<GitLabMergeRequestDiffChangeViewModel?>
 
   companion object {
@@ -29,6 +32,7 @@ class GitLabMergeRequestDiffReviewViewModelImpl(
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val projectData: GitLabProject,
+  override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   private val mrId: GitLabMergeRequestId
 ) : GitLabMergeRequestDiffReviewViewModel {
 
@@ -43,12 +47,12 @@ class GitLabMergeRequestDiffReviewViewModelImpl(
       .flatMapLatest { mr ->
         mr.changes
           .map(GitLabMergeRequestChanges::getParsedChanges)
-          .map { it.diffDataByChange.asIterable() }
+          .map { it.patchesByChange.asIterable() }
           .associateBy(
             { (change, _) -> change },
             { cs, (_, diffData) -> GitLabMergeRequestDiffChangeViewModelImpl(cs, currentUser, mr, diffData) },
             { destroy() },
-            customHashingStrategy = GitParsedChangesBundle.REVISION_COMPARISON_HASHING_STRATEGY
+            customHashingStrategy = GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY
           )
       }
 

@@ -17,7 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -43,10 +43,11 @@ public final class CsvMetricsExporter implements MetricExporter {
   private static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
 
 
-  private final @NotNull Path writeToFile;
+  private final @NotNull RollingFileSupplier writeToFileSupplier;
 
-  public CsvMetricsExporter(final @NotNull Path writeToFile) throws IOException {
-    this.writeToFile = writeToFile;
+  public CsvMetricsExporter(final @NotNull RollingFileSupplier writeToFileSupplier) throws IOException {
+    this.writeToFileSupplier = writeToFileSupplier;
+    final Path writeToFile = writeToFileSupplier.get();
 
     if (!Files.exists(writeToFile)) {
       final Path parentDir = writeToFile.getParent();
@@ -57,7 +58,7 @@ public final class CsvMetricsExporter implements MetricExporter {
       }
     }
     if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0) {
-      Files.write(writeToFile, csvHeadersLines(), CREATE, WRITE);
+      Files.write(writeToFile, MetricsExporterUtils.csvHeadersLines(), CREATE, WRITE);
     }
 
     copyHtmlPlotterToOutputDir(writeToFile.getParent());
@@ -90,9 +91,10 @@ public final class CsvMetricsExporter implements MetricExporter {
     }
 
     final CompletableResultCode result = new CompletableResultCode();
+    final Path writeToFile = writeToFileSupplier.get();
     final List<String> lines = metrics.stream()
-      .flatMap(CsvMetricsExporter::toCSVLine)
-      .toList();
+      .flatMap(MetricsExporterUtils::toCsvStream)
+      .collect(Collectors.toList());
 
     try {
       Files.write(writeToFile, lines, CREATE, APPEND);
@@ -105,30 +107,6 @@ public final class CsvMetricsExporter implements MetricExporter {
     return result;
   }
 
-  private static Stream<String> toCSVLine(final MetricData metricData) {
-    return switch (metricData.getType()) {
-      case LONG_SUM -> metricData.getLongSumData().getPoints().stream().map(
-        p ->
-          concatToCsvLine(metricData.getName(), p.getStartEpochNanos(), p.getEpochNanos(), String.valueOf(p.getValue()))
-      );
-      case DOUBLE_SUM -> metricData.getDoubleSumData().getPoints().stream().map(
-        p ->
-          concatToCsvLine(metricData.getName(), p.getStartEpochNanos(), p.getEpochNanos(), String.valueOf(p.getValue()))
-      );
-      case LONG_GAUGE -> metricData.getLongGaugeData().getPoints().stream().map(
-        p ->
-          concatToCsvLine(metricData.getName(), p.getStartEpochNanos(), p.getEpochNanos(), String.valueOf(p.getValue()))
-      );
-      case DOUBLE_GAUGE -> metricData.getDoubleGaugeData().getPoints().stream().map(
-        p ->
-          concatToCsvLine(metricData.getName(), p.getStartEpochNanos(), p.getEpochNanos(), String.valueOf(p.getValue()))
-      );
-      default -> Stream.of(
-        concatToCsvLine(metricData.getName(), -1, -1, "<metrics type " + metricData.getType() + " is not supported yet>")
-      );
-    };
-  }
-
   @Override
   public CompletableResultCode flush() {
     return CompletableResultCode.ofSuccess();
@@ -137,22 +115,5 @@ public final class CsvMetricsExporter implements MetricExporter {
   @Override
   public CompletableResultCode shutdown() {
     return CompletableResultCode.ofSuccess();
-  }
-
-  @NotNull
-  private static List<String> csvHeadersLines() {
-    return List.of(
-      "# OpenTelemetry Metrics report: .csv, 4 fields (metric name, period start-end nanoseconds, metric value)" +
-      "# See CsvMetricsExporter for details",
-      "name, startEpochNanos, endEpochNanos, value"
-    );
-  }
-
-  @NotNull
-  private static String concatToCsvLine(final String name,
-                                        final long startEpochNanos,
-                                        final long endEpochNanos,
-                                        final String value) {
-    return name + ',' + startEpochNanos + ',' + endEpochNanos + ',' + value;
   }
 }

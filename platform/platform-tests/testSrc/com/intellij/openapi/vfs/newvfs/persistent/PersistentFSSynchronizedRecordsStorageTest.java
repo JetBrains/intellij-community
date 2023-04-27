@@ -27,14 +27,6 @@ public class PersistentFSSynchronizedRecordsStorageTest
       storagePath,
       PersistentFSSynchronizedRecordsStorage.RECORD_SIZE
     );
-    final PersistentFSSynchronizedRecordsStorage storage = new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
-    //FIXME legacy implementation doesn't allocate space for header explicitly -- instead header is just 0-th record, and some
-    //      code secretly calls .allocateRecord() on a fresh storage to reserve space for a header.
-    //      Here I emulate this behavior, until it will be fixed in a regular way (i.e. storage will reserve space for
-    //      header explicitly)
-    if(storage.length() < PersistentFSHeaders.HEADER_SIZE) {
-      storage.allocateRecord();
-    }
-    return storage;
+    return new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
   }
 }

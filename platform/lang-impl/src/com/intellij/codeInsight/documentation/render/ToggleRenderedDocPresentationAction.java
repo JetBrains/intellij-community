@@ -29,7 +29,7 @@ public class ToggleRenderedDocPresentationAction extends EditorAction {
     }
 
     private static DocRenderItem getItem(@NotNull Editor editor) {
-      return DocRenderItem.getItemAroundOffset(editor, editor.getCaretModel().getOffset());
+      return DocRenderItemManager.getInstance().getItemAroundOffset(editor, editor.getCaretModel().getOffset());
     }
   }
 }

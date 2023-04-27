@@ -19,12 +19,12 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
 @ApiStatus.Internal
 public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
-  //FIXME RC: check is id=0 valid for FSRecords? Better to use 0, as all other storages use NULL_ID=0
-  public static final int NULL_ID = -1;
 
-  /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
-
+  /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
+  
   public static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
+
+  /* ================ RECORD FIELDS LAYOUT  =========================================================== */
 
   private static final int PARENT_REF_OFFSET = 0;
   private static final int PARENT_REF_SIZE = Integer.BYTES;
@@ -45,7 +45,6 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   private static final int LENGTH_SIZE = Long.BYTES;
 
   public static final int RECORD_SIZE_IN_BYTES = LENGTH_OFFSET + LENGTH_SIZE;
-
 
   /* ================ RECORD FIELDS LAYOUT end             ======================================== */
 
@@ -83,6 +82,9 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   @VisibleForTesting
   protected int loadRecordsCount(final long storageSizeBytes) throws IOException {
+    if (storageSizeBytes == 0) {
+      return 0;
+    }
     final long fullPagesOccupied = storageSizeBytes / pageSize;
     if (fullPagesOccupied == 0) {
       final long fullRecordsOnHeaderPage = (storageSizeBytes - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
@@ -258,6 +260,9 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
     @Override
     public void setAttributeRecordId(final int attributeRecordId) {
+      if (attributeRecordId < NULL_ID) {
+        throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + attributeRecordId + ") must be >=0");
+      }
       pageBuffer.putInt(recordOffsetInPage + ATTR_REF_OFFSET, attributeRecordId);
     }
 
@@ -354,8 +359,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   @Override
   public int allocateRecord() {
-    final int recordId = allocatedRecordsCount.getAndIncrement();
-    return recordId;
+    return allocatedRecordsCount.incrementAndGet();
   }
 
   // 'one field at a time' operations
@@ -363,6 +367,9 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   @Override
   public void setAttributeRecordId(final int recordId,
                                    final int recordRef) throws IOException {
+    if (recordRef < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + recordRef + ") must be >=0");
+    }
     setIntField(recordId, ATTR_REF_OFFSET, recordRef);
   }
 
@@ -569,7 +576,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   @Override
   public void cleanRecord(final int recordId) throws IOException {
-    allocatedRecordsCount.updateAndGet(allocatedRecords -> Math.max(recordId + 1, allocatedRecords));
+    checkRecordIdIsValid(recordId);
 
     //fill record with zeroes, by 4 bytes at once:
     assert RECORD_SIZE_IN_BYTES % Integer.BYTES == 0 : "RECORD_SIZE_IN_BYTES(=" + RECORD_SIZE_IN_BYTES + ") is expected to be 32-aligned";
@@ -585,7 +592,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
           final int offsetOfWord = recordOffsetOnPage + wordNo * Integer.BYTES;
           pageBuffer.putInt(offsetOfWord, 0);
         }
-        
+
         page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
       }
       finally {
@@ -597,7 +604,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   @Override
   public boolean processAllRecords(final @NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException {
     final int recordsCount = allocatedRecordsCount.get();
-    for (int recordId = 0; recordId < recordsCount; recordId++) {
+    for (int recordId = MIN_VALID_ID; recordId <= recordsCount; recordId++) {
       processor.process(
         recordId,
         getNameId(recordId),
@@ -647,20 +654,11 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   @Override
   public long length() {
-    final int recordsCount = allocatedRecordsCount.get();
-    final boolean anythingChanged = globalModCount.get() > 0;
-    if (recordsCount == 0 && !anythingChanged) {
-      //Try to mimic other implementations behavior: they return actual file size, which is 0
-      //  before first record allocated -- should be >0, since even no-record storage contains
-      //  header, but other implementations use 0-th record as header...
-      //TODO RC: it is better to have recordsCount() method
-      return 0;
-    }
     return actualDataLength();
   }
 
   public long actualDataLength() {
-    final int recordsCount = allocatedRecordsCount.get();
+    final int recordsCount = allocatedRecordsCount.get() + 1;
     return recordOffsetInFileUnchecked(recordsCount);
   }
 
@@ -679,9 +677,22 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   @Override
   public void close() throws IOException {
-    force();
+    if(!storage.isClosed()) {
+      force();
+      try {
+        storage.close();
+      }
+      catch (InterruptedException e) {
+        throw new IOException(e);
+      }
+    }
+  }
+
+  @Override
+  public void closeAndRemoveAllFiles() throws IOException {
+    close();
     try {
-      storage.close();
+      storage.closeAndRemoveAllFiles();
     }
     catch (InterruptedException e) {
       throw new IOException(e);
@@ -693,14 +704,17 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   /** Without recordId bounds checking */
   @VisibleForTesting
   protected long recordOffsetInFileUnchecked(final int recordId) {
+    //recordId is 1-based, but 0-based is more convenient for the following:
+    final int recordNo = recordId - 1;
+
     final int recordsOnHeaderPage = (pageSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
-    if (recordId < recordsOnHeaderPage) {
-      return HEADER_SIZE + recordId * (long)RECORD_SIZE_IN_BYTES;
+    if (recordNo < recordsOnHeaderPage) {
+      return HEADER_SIZE + recordNo * (long)RECORD_SIZE_IN_BYTES;
     }
 
     //as-if there were no header:
-    final int fullPages = recordId / recordsPerPage;
-    final int recordsOnLastPage = recordId % recordsPerPage;
+    final int fullPages = recordNo / recordsPerPage;
+    final int recordsOnLastPage = recordNo % recordsPerPage;
 
     //header on the first page "push out" few records:
     final int recordsExcessBecauseOfHeader = recordsPerPage - recordsOnHeaderPage;
@@ -717,9 +731,10 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   }
 
   private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
-    if (!(NULL_ID < recordId && recordId < allocatedRecordsCount.get())) {
+    final int recordsAllocatedSoFar = allocatedRecordsCount.get();
+    if (!(NULL_ID < recordId && recordId <= recordsAllocatedSoFar)) {
       throw new IndexOutOfBoundsException(
-        "recordId(=" + recordId + ") is outside of allocated IDs range [0, " + allocatedRecordsCount + ")");
+        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + recordsAllocatedSoFar + "]");
     }
   }
 

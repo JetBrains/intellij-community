@@ -14,6 +14,6 @@ public final class SpellcheckerIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, SpellcheckerIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Dictionary = load("icons/dictionary.svg", 2079766939, 2);
-  /** 16x16 */ public static final @NotNull Icon Spellcheck = load("icons/spellcheck.svg", -1198004126, 2);
+  /** 16x16 */ public static final @NotNull Icon Dictionary = load("icons/dictionary.svg", 554389779, 2);
+  /** 16x16 */ public static final @NotNull Icon Spellcheck = load("icons/spellcheck.svg", 1223565313, 2);
 }

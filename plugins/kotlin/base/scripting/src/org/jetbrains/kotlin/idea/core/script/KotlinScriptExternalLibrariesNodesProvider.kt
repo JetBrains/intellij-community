@@ -22,8 +22,6 @@ class KotlinScriptExternalLibrariesNodesProvider: ExternalLibrariesWorkspaceMode
     override fun getWorkspaceClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
 
     override fun createNode(entity: KotlinScriptEntity, project: Project, settings: ViewSettings?): AbstractTreeNode<*>? {
-        if (!scriptsAsEntities) return null
-
         val dependencies = entity.listDependencies(project)
         val path = entity.path
         val scriptFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(path))

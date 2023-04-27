@@ -46,17 +46,17 @@ public class IntentionDescriptionPanel {
   private final DescriptionEditorPane myDescriptionBrowser;
   private final List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<>();
   private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<>();
-  @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
-  @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
+  private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
+  private static final @NonNls String AFTER_TEMPLATE = "after.java.template";
   private static final float DIVIDER_PROPORTION_DEFAULT = .25f;
 
   public IntentionDescriptionPanel() {
     myDescriptionBrowser = new DescriptionEditorPane();
-    final var descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
+    var descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
     descriptionScrollPane.setBorder(null);
 
-    final JPanel examplePanel = new JPanel(new GridBagLayout());
-    final var constraint = new GridBag()
+    JPanel examplePanel = new JPanel(new GridBagLayout());
+    var constraint = new GridBag()
       .setDefaultInsets(UIUtil.LARGE_VGAP, 0, 0, 0)
       .setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultWeightY(0.5)
@@ -64,27 +64,27 @@ public class IntentionDescriptionPanel {
 
     myBeforePanel = new JPanel();
     examplePanel.add(PanelFactory.panel(myBeforePanel)
-                  .withLabel(CodeInsightBundle.message("border.title.before"))
-                  .moveLabelOnTop()
-                  .resizeX(true)
-                  .resizeY(true)
-                  .createPanel(),
-                constraint.nextLine()
+                       .withLabel(CodeInsightBundle.message("border.title.before"))
+                       .moveLabelOnTop()
+                       .resizeX(true)
+                       .resizeY(true)
+                       .createPanel(),
+                     constraint.nextLine()
     );
 
     myAfterPanel = new JPanel();
     examplePanel.add(PanelFactory.panel(myAfterPanel)
-                  .withLabel(CodeInsightBundle.message("border.title.after"))
-                  .moveLabelOnTop()
-                  .resizeX(true)
-                  .resizeY(true)
-                  .createPanel(),
-                constraint.nextLine()
+                       .withLabel(CodeInsightBundle.message("border.title.after"))
+                       .moveLabelOnTop()
+                       .resizeX(true)
+                       .resizeY(true)
+                       .createPanel(),
+                     constraint.nextLine()
     );
 
-    final OnePixelSplitter mySplitter = new OnePixelSplitter(true,
-                                                             "IntentionDescriptionPanel.VERTICAL_DIVIDER_PROPORTION",
-                                                             DIVIDER_PROPORTION_DEFAULT);
+    OnePixelSplitter mySplitter = new OnePixelSplitter(true,
+                                                       "IntentionDescriptionPanel.VERTICAL_DIVIDER_PROPORTION",
+                                                       DIVIDER_PROPORTION_DEFAULT);
     mySplitter.setFirstComponent(descriptionScrollPane);
     mySplitter.setSecondComponent(examplePanel);
     myPanel = mySplitter;
@@ -105,8 +105,9 @@ public class IntentionDescriptionPanel {
                   settings.select(configurable).doWhenDone(() -> {
                     if (searchTextField != null && search != null) searchTextField.setText(search);
                   });
-                } else {
-                  final Project project = context.getData(CommonDataKeys.PROJECT);
+                }
+                else {
+                  Project project = context.getData(CommonDataKeys.PROJECT);
                   ShowSettingsUtilImpl.showSettingsDialog(project, configId, search);
                 }
               }
@@ -123,12 +124,12 @@ public class IntentionDescriptionPanel {
     });
   }
 
-  public void reset(IntentionActionMetaData actionMetaData, String filter)  {
+  public void reset(IntentionActionMetaData actionMetaData, String filter) {
     try {
-      final TextDescriptor url = actionMetaData.getDescription();
-      final String description = StringUtil.isEmpty(url.getText()) ?
-                                 CodeInsightBundle.message("under.construction.string") :
-                                 SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(url.getText(), actionMetaData.getLoader()), filter);
+      TextDescriptor url = actionMetaData.getDescription();
+      String description = StringUtil.isEmpty(url.getText()) ?
+                           CodeInsightBundle.message("under.construction.string") :
+                           SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(url.getText(), actionMetaData.getLoader()), filter);
 
       DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, description);
 
@@ -142,13 +143,16 @@ public class IntentionDescriptionPanel {
     }
   }
 
-  public void reset(String intentionCategory)  {
+  public void reset(String intentionCategory) {
     try {
-      DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, CodeInsightBundle.message("intention.settings.category.text", intentionCategory));
+      DescriptionEditorPaneKt.readHTML(myDescriptionBrowser,
+                                       CodeInsightBundle.message("intention.settings.category.text", intentionCategory));
 
-      TextDescriptor beforeTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
+      TextDescriptor beforeTemplate =
+        new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
       showUsages(myBeforePanel, myBeforeUsagePanels, new TextDescriptor[]{beforeTemplate});
-      TextDescriptor afterTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
+      TextDescriptor afterTemplate =
+        new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
       showUsages(myAfterPanel, myAfterUsagePanels, new TextDescriptor[]{afterTemplate});
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());
@@ -158,9 +162,9 @@ public class IntentionDescriptionPanel {
     }
   }
 
-  private static void showUsages(final JPanel panel,
-                                 final List<IntentionUsagePanel> usagePanels,
-                                 final TextDescriptor @Nullable [] exampleUsages) throws IOException {
+  private static void showUsages(JPanel panel,
+                                 List<IntentionUsagePanel> usagePanels,
+                                 TextDescriptor @Nullable [] exampleUsages) throws IOException {
     GridBagConstraints gb = null;
     boolean reuse = exampleUsages != null && panel.getComponents().length == exampleUsages.length;
     if (!reuse) {
@@ -183,11 +187,11 @@ public class IntentionDescriptionPanel {
 
     if (exampleUsages != null) {
       for (int i = 0; i < exampleUsages.length; i++) {
-        final TextDescriptor exampleUsage = exampleUsages[i];
-        final String name = exampleUsage.getFileName();
-        final FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
-        final String extension = fileTypeManager.getExtension(name);
-        final FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
+        TextDescriptor exampleUsage = exampleUsages[i];
+        String name = exampleUsage.getFileName();
+        FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
+        String extension = fileTypeManager.getExtension(name);
+        FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
 
         IntentionUsagePanel usagePanel;
         if (reuse) {
@@ -219,7 +223,7 @@ public class IntentionDescriptionPanel {
   }
 
   private static void disposeUsagePanels(List<? extends IntentionUsagePanel> usagePanels) {
-    for (final IntentionUsagePanel usagePanel : usagePanels) {
+    for (IntentionUsagePanel usagePanel : usagePanels) {
       Disposer.dispose(usagePanel);
     }
     usagePanels.clear();
@@ -229,6 +233,6 @@ public class IntentionDescriptionPanel {
    * @deprecated Used in an older version of intention configuration UI.
    */
   @Deprecated
-  public void init(final int preferredWidth) {
+  public void init(int preferredWidth) {
   }
 }

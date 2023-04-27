@@ -51,7 +51,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
   // Persistent settings
   public List<String> ignoredNames = new ArrayList<>();
 
-  protected LocalQuickFix @NotNull [] createQuickFixes(String name, PsiElement problemElement) {
+  protected @NotNull LocalQuickFix @NotNull [] createQuickFixes(String name, PsiElement problemElement) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement);
     if (qf != null) {

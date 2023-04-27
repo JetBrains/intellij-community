@@ -123,7 +123,7 @@ public final class DebugReflectionUtil {
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();
       String description = entry.getValue();
-      toVisit.addLast(new BackLink<Object>(startRoot, null, null) {
+      toVisit.addLast(new BackLink<Object>(startRoot, null, "(root)", null) {
         @Override
         void print(@NotNull StringBuilder result) {
           super.print(result);
@@ -172,12 +172,14 @@ public final class DebugReflectionUtil {
         throw new RuntimeException(e);
       }
 
-      queue(value, field, backLink, queue, shouldExamineValue);
+      queue(value, field, null, backLink, queue, shouldExamineValue);
     }
     if (rootClass.isArray()) {
       try {
-        for (Object value : (Object[])root) {
-          queue(value, null, backLink, queue, shouldExamineValue);
+        Object[] objects = (Object[])root;
+        for (int i = 0; i < objects.length; i++) {
+          Object value = objects[i];
+          queue(value, null, "["+i+"]", backLink, queue, shouldExamineValue);
         }
       }
       catch (ClassCastException ignored) {
@@ -189,7 +191,7 @@ public final class DebugReflectionUtil {
           if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
           try {
             Object value = field.get(null);
-            queue(value, field, backLink, queue, shouldExamineValue);
+            queue(value, field, null, backLink, queue, shouldExamineValue);
           }
           catch (IllegalAccessException ignored) {
           }
@@ -197,8 +199,9 @@ public final class DebugReflectionUtil {
     }
   }
 
-  private static void queue(Object value,
-                            Field field,
+  private static void queue(@Nullable Object value,
+                            @Nullable Field field,
+                            @Nullable String fieldName,
                             @NotNull BackLink<?> backLink,
                             @NotNull Deque<? super BackLink<?>> queue,
                             @NotNull Predicate<Object> shouldExamineValue) {
@@ -206,7 +209,7 @@ public final class DebugReflectionUtil {
       return;
     }
     if (shouldExamineValue.test(value)) {
-      queue.addLast(new BackLink<>(value, field, backLink));
+      queue.addLast(new BackLink<>(value, field, fieldName, backLink));
     }
   }
 
@@ -217,12 +220,19 @@ public final class DebugReflectionUtil {
   public static class BackLink<V> {
     @NotNull private final V value;
     private final Field field;
+    /**
+     * human-readable field name (sometimes the Field is not available, e.g., when it's synthetic).
+     * when null, it can be computed from field.getName()
+     */
+    private final String fieldName;
     private final BackLink<?> backLink;
     private final int depth;
 
-    BackLink(@NotNull V value, @Nullable Field field, @Nullable BackLink<?> backLink) {
+    BackLink(@NotNull V value, @Nullable Field field, @Nullable String fieldName, @Nullable BackLink<?> backLink) {
       this.value = value;
       this.field = field;
+      this.fieldName = fieldName;
+      assert field != null ^ fieldName != null : "One of field/fieldName must be null and the other not-null, but got: "+field+"/"+fieldName;
       this.backLink = backLink;
       depth = backLink == null ? 0 : backLink.depth + 1;
     }
@@ -257,7 +267,7 @@ public final class DebugReflectionUtil {
       }
 
       Field field = this.field;
-      String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
+      String fieldName = this.fieldName != null ? this.fieldName : field.getDeclaringClass().getName() + "." + field.getName();
       result.append("via '").append(fieldName).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass()).append("\n");
     }
   }

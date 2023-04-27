@@ -12,7 +12,6 @@ import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.terminal.ui.TerminalWidget;
-import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,7 +23,6 @@ import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
-import com.jediterm.terminal.ui.JediTermSearchComponent;
 import com.jediterm.terminal.ui.TerminalAction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +48,9 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
+  private List<String> myShellCommand;
   private final Prompt myPrompt = new Prompt();
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
-  private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
 
   private final Alarm myVfsRefreshAlarm;
@@ -100,7 +98,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         }
       }
       if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
-        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(project);
+        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(project, getTypedShellCommand());
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
           e.consume();
         }
@@ -146,9 +144,16 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     myCommandHistoryFilePath = commandHistoryFilePath;
   }
 
-  @Nullable
-  public static String getCommandHistoryFilePath(@Nullable JBTerminalWidget terminalWidget) {
-    return terminalWidget instanceof ShellTerminalWidget ? ((ShellTerminalWidget)terminalWidget).myCommandHistoryFilePath : null;
+  public @Nullable String getCommandHistoryFilePath() {
+    return myCommandHistoryFilePath;
+  }
+
+  public void setShellCommand(@Nullable List<String> shellCommand) {
+    myShellCommand = shellCommand != null ? List.copyOf(shellCommand) : null;
+  }
+
+  public @Nullable List<String> getShellCommand() {
+    return myShellCommand;
   }
 
   @NotNull
@@ -188,7 +193,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   public void executeWithTtyConnector(@NotNull Consumer<TtyConnector> consumer) {
-    myTtyConnectorAccessor.executeWithTtyConnector(consumer);
+    asNewWidget().getTtyConnectorAccessor().executeWithTtyConnector(consumer);
   }
 
   @Override
@@ -203,7 +208,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @Override
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
     super.setTtyConnector(ttyConnector);
-    myTtyConnectorAccessor.setTtyConnector(ttyConnector);
 
     String command;
     while ((command = myPendingCommandsToExecute.poll()) != null) {
@@ -391,11 +395,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         return lineStr.substring(0, Math.min(maxCursorX, lineStr.length()));
       });
     }
-  }
-
-  @Override
-  protected @NotNull JediTermSearchComponent createSearchComponent() {
-    return new TerminalSearchSession(this).getTerminalSearchComponent();
   }
 
   public static @Nullable ShellTerminalWidget asShellJediTermWidget(@NotNull TerminalWidget widget) {

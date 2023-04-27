@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -20,9 +19,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
+
+import static java.nio.file.StandardOpenOption.READ;
 
 public final class PersistentHashMapValueStorage {
   @Nullable
@@ -324,7 +325,7 @@ public final class PersistentHashMapValueStorage {
   private long compactValuesWithoutChunks(@NotNull List<CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
     throws IOException {
     //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
-    infos.sort((info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
+    infos.sort(Comparator.comparingLong(info -> info.valueAddress));
 
     final int fileBufferLength = 256 * 1024;
     final byte[] buffer = new byte[fileBufferLength];
@@ -391,7 +392,7 @@ public final class PersistentHashMapValueStorage {
     }
 
     PriorityQueue<CompactionRecordInfo> records = new PriorityQueue<>(
-      infos.size(), (info, info2) -> Comparing.compare(info2.valueAddress, info.valueAddress));
+      infos.size(), (info, info2) -> Long.compare(info2.valueAddress, info.valueAddress));
 
     records.addAll(infos);
 
@@ -858,20 +859,20 @@ public final class PersistentHashMapValueStorage {
   }
 
   private static final class FileReader implements RAReader {
-    private final UnInterruptibleFileChannel myFile;
+    private final ResilientFileChannel fileChannel;
 
     private FileReader(Path file) throws IOException {
-      myFile = new UnInterruptibleFileChannel(file, StandardOpenOption.READ);
+      fileChannel = new ResilientFileChannel(file, READ);
     }
 
     @Override
     public void get(final long addr, final byte[] dst, final int off, final int len) throws IOException {
-      myFile.read(ByteBuffer.wrap(dst, off, len), addr);
+      fileChannel.read(ByteBuffer.wrap(dst, off, len), addr);
     }
 
     @Override
     public void dispose() throws IOException {
-      myFile.close();
+      fileChannel.close();
     }
   }
 

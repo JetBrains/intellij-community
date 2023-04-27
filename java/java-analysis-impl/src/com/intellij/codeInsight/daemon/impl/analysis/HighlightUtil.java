@@ -52,6 +52,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -97,6 +98,7 @@ public final class HighlightUtil {
     Set.of(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
 
   private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
+  public static final TokenSet BRACKET_TOKENS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
 
   static {
     ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, Set.of(PsiModifier.FINAL));
@@ -1787,30 +1789,33 @@ public final class HighlightUtil {
 
   static HighlightInfo.Builder checkRecordComponentVarArg(@NotNull PsiRecordComponent recordComponent) {
     if (recordComponent.isVarArgs() && PsiTreeUtil.getNextSiblingOfType(recordComponent, PsiRecordComponent.class) != null) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(recordComponent)
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(recordComponent)
         .descriptionAndTooltip(JavaErrorBundle.message("record.component.vararg.not.last"));
+      IntentionAction action = getFixFactory().createMakeVarargParameterLastFix(recordComponent);
+      info.registerFix(action, null, null, null, null);
+      return info;
     }
     return null;
   }
 
-  static HighlightInfo.Builder checkRecordComponentCStyleDeclaration(@NotNull PsiRecordComponent component) {
-    PsiIdentifier identifier = component.getNameIdentifier();
+  static HighlightInfo.Builder checkCStyleDeclaration(@NotNull PsiVariable variable) {
+    PsiIdentifier identifier = variable.getNameIdentifier();
     if (identifier == null) return null;
     PsiElement start = null;
     PsiElement end = null;
     for (PsiElement element = identifier.getNextSibling(); element != null; element = element.getNextSibling()) {
-      if (start == null && PsiUtil.isJavaToken(element, JavaTokenType.LBRACKET)) {
-        start = element;
-      }
-      if (PsiUtil.isJavaToken(element, JavaTokenType.RBRACKET)) {
+      if (PsiUtil.isJavaToken(element, BRACKET_TOKENS)) {
+        if (start == null) start = element;
         end = element;
       }
     }
-    if (start != null && end != null) {
+    if (start != null) {
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(component, start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())
-        .descriptionAndTooltip(JavaErrorBundle.message("record.component.cstyle.declaration"));
-      IntentionAction action = new NormalizeRecordComponentFix(component);
+        .range(variable, start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())
+        .descriptionAndTooltip(variable instanceof PsiRecordComponent
+          ? JavaErrorBundle.message("record.component.cstyle.declaration")
+          : JavaErrorBundle.message("vararg.cstyle.array.declaration"));
+      IntentionAction action = new NormalizeBracketsFix(variable);
       info.registerFix(action, null, null, null, null);
       return info;
     }
@@ -2739,16 +2744,8 @@ public final class HighlightUtil {
 
   private static boolean isThisOrSuperReference(@Nullable PsiExpression qualifierExpression, @NotNull PsiClass aClass) {
     if (qualifierExpression == null) return true;
-    PsiJavaCodeReferenceElement qualifier;
-    if (qualifierExpression instanceof PsiThisExpression) {
-      qualifier = ((PsiThisExpression)qualifierExpression).getQualifier();
-    }
-    else if (qualifierExpression instanceof PsiSuperExpression) {
-      qualifier = ((PsiSuperExpression)qualifierExpression).getQualifier();
-    }
-    else {
-      return false;
-    }
+    if (!(qualifierExpression instanceof PsiQualifiedExpression expression)) return false;
+    PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
     if (qualifier == null) return true;
     PsiElement resolved = qualifier.resolve();
     return resolved instanceof PsiClass && InheritanceUtil.isInheritorOrSelf(aClass, (PsiClass)resolved, true);

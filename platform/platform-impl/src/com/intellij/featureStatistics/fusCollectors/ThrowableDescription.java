@@ -11,15 +11,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class ThrowableDescription {
-  private static final String UNKNOWN = "unknown";
   private static final String THIRD_PARTY = "third.party";
 
-  @Nullable private final Throwable myThrowable;
+  @NotNull private final Throwable myThrowable;
   private final StackTraceElement @Nullable [] myStacktrace;
 
-  public ThrowableDescription(@Nullable Throwable throwable) {
-    myThrowable = throwable != null ? getCause(throwable) : null;
-    myStacktrace = myThrowable != null ? getStacktrace(myThrowable) : null;
+  public ThrowableDescription(@NotNull Throwable throwable) {
+    myThrowable = getCause(throwable);
+    myStacktrace = getStacktrace(myThrowable);
   }
 
   private static StackTraceElement @Nullable [] getStacktrace(@NotNull Throwable throwable) {
@@ -27,14 +26,8 @@ public final class ThrowableDescription {
   }
 
   @NotNull
-  public String getClassName() {
-    if (myThrowable == null) {
-      return UNKNOWN;
-    }
-
-    final Class<?> throwableClass = myThrowable.getClass();
-    final PluginInfo throwableLocation = PluginInfoDetectorKt.getPluginInfo(throwableClass);
-    return (throwableLocation.isSafeToReport()) ? throwableClass.getName() : THIRD_PARTY;
+  public Class<?> getClazz() {
+    return myThrowable.getClass();
   }
 
   public int getSize() {

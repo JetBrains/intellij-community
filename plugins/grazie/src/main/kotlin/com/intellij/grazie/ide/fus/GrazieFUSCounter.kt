@@ -12,40 +12,41 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
 
+private val actionInfo = listOf("accept.suggestion",
+                                "add.exception",
+                                "rule.settings:canceled",
+                                "rule.settings:unmodified",
+                                "rule.settings:changes:languages,domains,rules",
+                                "rule.settings:changes:languages,rules",
+                                "rule.settings:changes:languages,domains",
+                                "rule.settings:changes:domains,rules",
+                                "rule.settings:changes:languages",
+                                "rule.settings:changes:rules",
+                                "rule.settings:changes:domains",
+                                "rule.settings:changes:unclassified")
+
+private val GROUP = EventLogGroup("grazie.count", 7)
+
+private val RULE_FIELD = EventFields.StringValidatedByCustomRule("id", PluginInfoValidationRule::class.java)
+private val FIXES_FIELD = EventFields.Int("fixes")
+private val ACTION_INFO_FIELD = EventFields.String("info", actionInfo)
+
+private val languageSuggestedEvent = GROUP.registerEvent("language.suggested",
+                                                         EventFields.Enum("language", LanguageISO::class.java),
+                                                         EventFields.Enabled)
+private val typoFoundEvent = GROUP.registerEvent("typo.found",
+                                                 RULE_FIELD,
+                                                 FIXES_FIELD,
+                                                 EventFields.PluginInfo)
+private val quickFixInvokedEvent = GROUP.registerEvent("quick.fix.invoked",
+                                                       RULE_FIELD,
+                                                       ACTION_INFO_FIELD,
+                                                       EventFields.PluginInfo)
+
 class GrazieFUSCounter : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val actionInfo = listOf("accept.suggestion",
-                                    "add.exception",
-                                    "rule.settings:canceled",
-                                    "rule.settings:unmodified",
-                                    "rule.settings:changes:languages,domains,rules",
-                                    "rule.settings:changes:languages,rules",
-                                    "rule.settings:changes:languages,domains",
-                                    "rule.settings:changes:domains,rules",
-                                    "rule.settings:changes:languages",
-                                    "rule.settings:changes:rules",
-                                    "rule.settings:changes:domains",
-                                    "rule.settings:changes:unclassified")
-
-    private val GROUP = EventLogGroup("grazie.count", 7)
-
-    private val RULE_FIELD = EventFields.StringValidatedByCustomRule("id", PluginInfoValidationRule::class.java)
-    private val FIXES_FIELD = EventFields.Int("fixes")
-    private val ACTION_INFO_FIELD = EventFields.String("info", actionInfo)
-
-    private val languageSuggestedEvent = GROUP.registerEvent("language.suggested",
-                                                             EventFields.Enum("language", LanguageISO::class.java),
-                                                             EventFields.Enabled)
-    private val typoFoundEvent = GROUP.registerEvent("typo.found",
-                                                     RULE_FIELD,
-                                                     FIXES_FIELD,
-                                                     EventFields.PluginInfo)
-    private val quickFixInvokedEvent = GROUP.registerEvent("quick.fix.invoked",
-                                                           RULE_FIELD,
-                                                           ACTION_INFO_FIELD,
-                                                           EventFields.PluginInfo)
 
     fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
       for (language in languages) {

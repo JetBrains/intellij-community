@@ -239,15 +239,14 @@ public final class TreeState implements JDOMExternalizable {
   @NotNull
   private static String calcId(@Nullable Object userObject) {
     if (userObject == null) return "";
+    // The easiest case: the node provides an ID explicitly.
+    if (userObject instanceof PathElementIdProvider userObjectWithPathId) {
+      return userObjectWithPathId.getPathElementId();
+    }
     // There used to be a lot of code here that all started in 2005 with IDEA-29734 (back then IDEADEV-2150),
     // which later was modified many times, but in the end all it did was to invoke some slow operations on EDT
     // (IDEA-270843, IDEA-305055), and IDEA-29734 was still broken.
-    // Now it's being slowly rewritten as something more sensible and efficient.
-    if (userObject instanceof PresentableNodeDescriptor<?> nodeDescriptor) {
-      var name = StringUtil.notNullize(nodeDescriptor.getName());
-      var locationString = nodeDescriptor.getPresentation().getLocationString();
-      return locationString == null ? name : name + "@" + locationString;
-    }
+    // Now we just fall back to toString(), which MUST work fast. If that doesn't work, implement PathElementIdProvider.
     return StringUtil.notNullize(userObject.toString());
   }
 
@@ -510,6 +509,11 @@ public final class TreeState implements JDOMExternalizable {
 
     Visitor(PathElement[] elements) {
       this.elements = elements;
+    }
+
+    @Override
+    public @NotNull TreeVisitor.VisitThread visitThread() {
+      return VisitThread.BGT;
     }
 
     @NotNull

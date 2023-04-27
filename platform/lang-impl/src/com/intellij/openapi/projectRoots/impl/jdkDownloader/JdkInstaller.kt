@@ -82,7 +82,7 @@ class JdkInstaller : JdkInstallerBase() {
 
   override fun findHistoryRoots(feedItem: JdkItem): List<Path> = service<JdkInstallerStore>().findInstallations(feedItem)
 
-  override fun wslDistributionFromPath(targetDir: Path): WSLDistributionForJdkInstaller? {
+  public override fun wslDistributionFromPath(targetDir: Path): WSLDistributionForJdkInstaller? {
     val d = WslPath.getDistributionByWindowsUncPath(targetDir.toString()) ?: return null
     return wrap(d)
   }

@@ -1,12 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.*;
 import com.intellij.codeInspection.reference.RefJavaUtil;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -22,12 +26,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class MissingJavadocInspection extends LocalInspectionTool {
@@ -48,11 +50,36 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   protected static final String PRIVATE = PsiModifier.PRIVATE;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return JavadocUIUtil.INSTANCE.missingJavadocOptions(this);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_DEPRECATED_ELEMENTS", JavaBundle.message("inspection.javadoc.option.ignore.deprecated")),
+      checkbox("IGNORE_ACCESSORS", JavaBundle.message("inspection.javadoc.option.ignore.simple")),
+      checkboxPanel(
+        PACKAGE_SETTINGS.getComponent(JavaBundle.message("inspection.javadoc.option.tab.title.package"),
+                                      List.of(), List.of("@author", "@version", "@since"))
+          .prefix("PACKAGE_SETTINGS"),
+        MODULE_SETTINGS.getComponent(JavaBundle.message("inspection.javadoc.option.tab.title.module"),
+                                     List.of(), List.of("@author", "@version", "@since"))
+          .prefix("MODULE_SETTINGS"),
+        TOP_LEVEL_CLASS_SETTINGS.getComponent(JavaBundle.message("inspection.javadoc.option.tab.title"),
+                                              List.of(PUBLIC, PACKAGE_LOCAL),
+                                              List.of("@author", "@version", "@since", "@param"))
+          .prefix("TOP_LEVEL_CLASS_SETTINGS"),
+        METHOD_SETTINGS.getComponent(JavaBundle.message("inspection.javadoc.option.tab.title.method"),
+                                     List.of(PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE),
+                                     List.of("@return", "@param", NlsMessages.formatOrList(List.of("@throws", "@exception"))))
+          .prefix("METHOD_SETTINGS"),
+        FIELD_SETTINGS.getComponent(JavaBundle.message("inspection.javadoc.option.tab.title.field"),
+                                    List.of(PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE), List.of())
+          .prefix("FIELD_SETTINGS"),
+        INNER_CLASS_SETTINGS.getComponent(JavaBundle.message("inspection.javadoc.option.tab.title.inner.class"),
+                                          List.of(PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE), List.of())
+          .prefix("INNER_CLASS_SETTINGS")
+      )
+    );
   }
 
-  public static class Options {
+  public static class Options implements OptionContainer {
     public String MINIMAL_VISIBILITY = "public";
     public String REQUIRED_TAGS = "";
     public boolean ENABLED = true;
@@ -73,6 +100,30 @@ public class MissingJavadocInspection extends LocalInspectionTool {
       } else {
         REQUIRED_TAGS = REQUIRED_TAGS.replaceAll(tag, "");
       }
+    }
+
+    @Override
+    @NotNull
+    public OptionController getOptionController() {
+      return OptionController.fieldsOf(this)
+        .onPrefix("REQUIRED_TAGS", OptionController.of(tag -> isTagRequired(tag), (tag, value) -> setTagRequired(tag, (boolean)value)));
+    }
+    
+    @NotNull OptCheckbox getComponent(@NotNull @NlsContexts.Label String label,
+                                      @NotNull List<@NlsSafe String> visibility,
+                                      @NotNull List<@NlsSafe String> tags) {
+      List<OptRegularComponent> controls = new ArrayList<>();
+      if (!visibility.isEmpty()) {
+        controls.add(dropdown("MINIMAL_VISIBILITY", JavaBundle.message("inspection.missingJavadoc.label.minimalVisibility"),
+                              visibility, Function.identity(), Function.identity()));
+      }
+      if (!tags.isEmpty()) {
+        //noinspection LanguageMismatch
+        controls.add(group(JavaBundle.message("inspection.missingJavadoc.label.requiredTags"),
+                           ContainerUtil.map2Array(tags, OptRegularComponent.class, tag -> checkbox(tag, tag)))
+                       .prefix("REQUIRED_TAGS"));
+      }
+      return new OptPane(controls).asCheckbox("ENABLED", label);
     }
   }
 

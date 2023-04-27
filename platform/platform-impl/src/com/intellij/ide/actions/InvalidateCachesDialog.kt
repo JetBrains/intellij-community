@@ -10,6 +10,7 @@ import com.intellij.ui.components.Link
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.Action
@@ -82,9 +83,7 @@ class InvalidateCachesDialog(
             val defaultValue = descr.optionalCheckboxDefaultValue()
             val checkbox = checkBox(text)
               .enabled(defaultValue != null)
-              .applyToComponent {
-                isSelected = defaultValue ?: true
-              }
+              .selected(defaultValue ?: true)
               .component
             invalidatorsOptions[checkbox] = descr
           }

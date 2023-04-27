@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -136,7 +136,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     });
 
     TreeUtil.installActions(myTree);
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
     myTree.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
@@ -505,8 +505,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      final TreePath[] paths = myTree.getSelectionPaths();
-      final TreePath leadPath = myTree.getLeadSelectionPath();
+      Tree tree = myTree;
+      if (tree == null) {
+        return null;
+      }
+      final TreePath[] paths = tree.getSelectionPaths();
+      final TreePath leadPath = tree.getLeadSelectionPath();
       final AntBuildFile currentBuildFile = getCurrentBuildFile();
       return (DataProvider)id -> getSlowData(id, paths, leadPath, currentBuildFile);
     }

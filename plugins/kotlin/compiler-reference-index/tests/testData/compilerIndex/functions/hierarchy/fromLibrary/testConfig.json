@@ -6,5 +6,6 @@
         "ClosedRangeUsage.kt",
         "MyClosedFloatingPointRangeUsage.java",
         "MyClosedFloatingPointRangeUsage.kt"
-    ]
+    ],
+    "ignoreK2Compiler": "KT-57045"
 }

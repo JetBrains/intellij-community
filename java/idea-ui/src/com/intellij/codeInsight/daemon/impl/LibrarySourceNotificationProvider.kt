@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.diff.DiffContentFactory
@@ -7,6 +7,7 @@ import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
@@ -23,11 +24,11 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 class LibrarySourceNotificationProvider : EditorNotificationProvider {
-
   private companion object {
-
     private val LOG = logger<LibrarySourceNotificationProvider>()
-    private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
+
+    // Support releases (e.g. "android-30") as well as previews (e.g. "android-tiramisu")
+    private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\w+/android.jar!/.*".toRegex()
 
     private const val FIELD = SHOW_NAME or SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
     private const val METHOD = SHOW_NAME or SHOW_PARAMETERS or SHOW_RAW_TYPE
@@ -35,10 +36,7 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider {
     private const val CLASS = SHOW_NAME or SHOW_FQ_CLASS_NAMES or SHOW_EXTENDS_IMPLEMENTS or SHOW_RAW_TYPE
   }
 
-  override fun collectNotificationData(
-    project: Project,
-    file: VirtualFile,
-  ): Function<in FileEditor, out JComponent?>? {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile is PsiJavaFile) {
@@ -83,41 +81,36 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider {
   private fun <T : PsiMember> differs(srcMembers: List<T>, clsMembers: List<T>, format: (T) -> String) =
     srcMembers.size != clsMembers.size || srcMembers.map(format).sorted() != clsMembers.map(format).sorted()
 
-  private fun fields(c: PsiClass) = if (c is PsiExtensibleClass) c.ownFields else c.fields.asList()
+  private fun fields(c: PsiClass): List<PsiField> =
+    if (c is PsiExtensibleClass) c.ownFields else c.fields.asList()
 
-  private fun methods(c: PsiClass) = (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filterNot(::ignoreMethod)
+  private fun methods(c: PsiClass): List<PsiMethod> =
+    (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filterNot(::ignoreMethod)
 
-  private fun ignoreMethod(m: PsiMethod): Boolean {
+  private fun ignoreMethod(m: PsiMethod): Boolean =
     if (m.isConstructor) {
-      return m.parameterList.parametersCount == 0 // default constructor
+      m.parameterList.parametersCount == 0 // default constructor
     }
     else {
-      return m.name.contains("$\$bridge") // org.jboss.bridger.Bridger adds ACC_BRIDGE | ACC_SYNTHETIC to such methods
+      m.name.contains("$\$bridge") // org.jboss.bridger.Bridger adds ACC_BRIDGE | ACC_SYNTHETIC to such methods
     }
-  }
 
-  private fun inners(c: PsiClass) = if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
+  private fun inners(c: PsiClass): List<PsiClass> =
+    if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
 
   private fun format(f: PsiField) = formatVariable(f, FIELD, PsiSubstitutor.EMPTY)
-
   private fun format(m: PsiMethod) = formatMethod(m, PsiSubstitutor.EMPTY, METHOD, PARAMETER)
-
   private fun format(c: PsiClass) = formatClass(c, CLASS).removeSuffix(" extends java.lang.Object")
 
-  private fun logMembers(offender: PsiClass) {
-    if (!LOG.isTraceEnabled) {
-      return
+  private fun logMembers(offender: PsiClass): Unit =
+    LOG.trace {
+      val cls = offender.originalElement as? PsiClass ?: return
+      val sourceMembers = formatMembers(offender)
+      val clsMembers = formatMembers(cls)
+      val diff = Diff.linesDiff(sourceMembers.toTypedArray(), clsMembers.toTypedArray()) ?: return
+      "Class: ${cls.qualifiedName}\n${diff}"
     }
-    val cls = offender.originalElement as? PsiClass ?: return
-    val sourceMembers = formatMembers(offender)
-    val clsMembers = formatMembers(cls)
-    val diff = Diff.linesDiff(sourceMembers.toTypedArray(), clsMembers.toTypedArray()) ?: return
-    LOG.trace("Class: ${cls.qualifiedName}\n$diff")
-  }
 
-  private fun formatMembers(c: PsiClass): List<String> {
-    return fields(c).map(::format).sorted() +
-           methods(c).map(::format).sorted() +
-           inners(c).map(::format).sorted()
-  }
+  private fun formatMembers(c: PsiClass): List<String> =
+    fields(c).map(::format).sorted() + methods(c).map(::format).sorted() + inners(c).map(::format).sorted()
 }

@@ -5,10 +5,7 @@ import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.daemon.impl.DaemonListeners;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
@@ -26,7 +23,7 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -54,20 +51,15 @@ import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
-import com.siyeh.ig.fixes.CreateDefaultBranchFix;
-import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
-import com.siyeh.ig.fixes.CreateSealedClassMissingSwitchBranchesFix;
-import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.fixes.*;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
@@ -154,7 +146,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                          @NotNull PsiClassType exceptionClass,
                                                          boolean shouldThrow,
                                                          boolean showContainingClass) {
-    return shouldThrow ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass) : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
+    return shouldThrow
+           ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass)
+           : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
   }
 
   @NotNull
@@ -205,19 +199,29 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   @Nullable
-  public IntentionAction createCreateClassOrPackageFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
+  public IntentionAction createCreateClassOrPackageFix(@NotNull PsiElement context,
+                                                       @NotNull String qualifiedName,
+                                                       boolean createClass,
+                                                       String superClass) {
     return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : null, superClass);
   }
 
   @Override
   @Nullable
-  public IntentionAction createCreateClassOrInterfaceFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
+  public IntentionAction createCreateClassOrInterfaceFix(@NotNull PsiElement context,
+                                                         @NotNull String qualifiedName,
+                                                         boolean createClass,
+                                                         String superClass) {
     return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : ClassKind.INTERFACE, superClass);
   }
 
   @NotNull
   @Override
-  public IntentionAction createCreateFieldOrPropertyFix(@NotNull final PsiClass aClass, @NotNull final String name, @NotNull final PsiType type, @NotNull final PropertyMemberType targetMember, final PsiAnnotation @NotNull ... annotations) {
+  public IntentionAction createCreateFieldOrPropertyFix(@NotNull PsiClass aClass,
+                                                        @NotNull String name,
+                                                        @NotNull PsiType type,
+                                                        @NotNull PropertyMemberType targetMember,
+                                                        PsiAnnotation @NotNull ... annotations) {
     return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
   }
 
@@ -393,7 +397,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiElement element, @NotNull PsiMethod getter, boolean isSetter) {
+  public IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiElement element,
+                                                                           @NotNull PsiMethod getter,
+                                                                           boolean isSetter) {
     return new ReplaceInaccessibleFieldWithGetterSetterFix(element, getter, isSetter);
   }
 
@@ -529,7 +535,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                              @NotNull PsiElement context,
                                                                              boolean changeAllUsages,
                                                                              int minUsagesNumberToShowDialog) {
-    return new ChangeMethodSignatureFromUsageReverseOrderFix(targetMethod, expressions, substitutor, context, changeAllUsages, minUsagesNumberToShowDialog);
+    return new ChangeMethodSignatureFromUsageReverseOrderFix(targetMethod,
+                                                             expressions,
+                                                             substitutor,
+                                                             context,
+                                                             changeAllUsages,
+                                                             minUsagesNumberToShowDialog);
   }
 
   @NotNull
@@ -631,7 +642,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiTypeElement element, @NotNull String typeName, @NotNull String boxedTypeName) {
+  public IntentionAction createReplacePrimitiveWithBoxedTypeAction(@NotNull PsiTypeElement element,
+                                                                   @NotNull String typeName,
+                                                                   @NotNull String boxedTypeName) {
     return new ReplacePrimitiveWithBoxedTypeAction(element, typeName, boxedTypeName);
   }
 
@@ -649,7 +662,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createMakeVarargParameterLastFix(@NotNull PsiParameter parameter) {
+  public IntentionAction createMakeVarargParameterLastFix(@NotNull PsiVariable parameter) {
     return new MakeVarargParameterLastFix(parameter);
   }
 
@@ -682,14 +695,16 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     VirtualFile virtualFile = file.getVirtualFile();
     boolean isInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(file.getProject(), virtualFile, false);
-    return new OptimizeImportsFix(onTheFly, isInContent);
+    return new OptimizeImportsFix(onTheFly, isInContent, virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(file.getProject(), virtualFile));
   }
 
   private static final class OptimizeImportsFix implements IntentionAction {
     private final boolean myOnTheFly;
     private final boolean myInContent;
+    private final ThreeState extensionsAllowToChangeFileSilently;
 
-    private OptimizeImportsFix(boolean onTheFly, boolean isInContent) {
+    private OptimizeImportsFix(boolean onTheFly, boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
+      this.extensionsAllowToChangeFileSilently = extensionsAllowToChangeFileSilently;
       ApplicationManager.getApplication().assertIsNonDispatchThread();
       myOnTheFly = onTheFly;
       myInContent = isInContent;
@@ -709,7 +724,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      if (myOnTheFly && !timeToOptimizeImports(file, myInContent) || !(file instanceof PsiJavaFile)) {
+      if (myOnTheFly && !timeToOptimizeImports(file, myInContent, extensionsAllowToChangeFileSilently) || !(file instanceof PsiJavaFile)) {
         return false;
       }
       VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
@@ -771,7 +786,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement, boolean useElementNameAsSuffix) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createRenameToIgnoredFix(@NotNull PsiNamedElement namedElement,
+                                                                              boolean useElementNameAsSuffix) {
     return RenameToIgnoredFix.createRenameToIgnoreFix(namedElement, useElementNameAsSuffix);
   }
 
@@ -804,9 +820,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new SafeDeleteFix(element);
   }
 
-  @NotNull
   @Override
-  public List<LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
+  public @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
     return OrderEntryFix.registerFixes(reference, registrar);
   }
 
@@ -823,7 +838,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
       if (Comparing.strEqual(beforeText, afterText)) {
         LOG.error("Import optimizer hasn't optimized any imports",
                   new Throwable(file.getViewProvider().getVirtualFile().getPath()),
-                  AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
+                  CoreAttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
       }
     }
   }
@@ -874,7 +889,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return AddAnnotationAttributeNameFix.createFixes(pair);
   }
 
-  private static boolean timeToOptimizeImports(@NotNull PsiFile file, boolean isInContent) {
+  private static boolean timeToOptimizeImports(@NotNull PsiFile file, boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!CodeInsightWorkspaceSettings.getInstance(file.getProject()).isOptimizeImportsOnTheFly()) {
       return false;
@@ -887,7 +902,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     boolean errors = containsErrorsPreventingOptimize(file);
 
-    return !errors && DaemonListeners.canChangeFileSilently(file, isInContent);
+    return !errors && DaemonListeners.canChangeFileSilently(file, isInContent, extensionsAllowToChangeFileSilently);
   }
 
   private static boolean containsErrorsPreventingOptimize(@NotNull PsiFile file) {
@@ -951,7 +966,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createPushDownMethodFix() {
-    return new RunRefactoringAction(JavaRefactoringActionHandlerFactory.getInstance().createPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
+    return new RunRefactoringAction(JavaRefactoringActionHandlerFactory.getInstance().createPushDownHandler(),
+                                    JavaBundle.message("push.method.down.command.name")) {
       @NotNull
       @Override
       public Priority getPriority() {
@@ -978,6 +994,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                 @NotNull Set<String> missingCases,
                                                                 @NotNull List<String> allNames) {
     return new CreateSealedClassMissingSwitchBranchesFix(switchBlock, missingCases, allNames);
+  }
+
+  @Nullable
+  @Override
+  public IntentionAction createAddMissingRecordClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
+                                                                @NotNull PsiClass selectorType,
+                                                                @NotNull Map<PsiType, Set<List<PsiType>>> branches,
+                                                                @NotNull List<? extends PsiCaseLabelElement> elements) {
+    return CreateMissingDeconstructionRecordClassBranchesFix.create(switchBlock, selectorType, branches, elements);
   }
 
   @NotNull

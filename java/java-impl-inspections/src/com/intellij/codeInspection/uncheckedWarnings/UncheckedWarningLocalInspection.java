@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.GenerifyFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableArrayTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -50,10 +48,6 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   public boolean IGNORE_UNCHECKED_CAST;
   public boolean IGNORE_UNCHECKED_OVERRIDING;
 
-  protected LocalQuickFix @NotNull [] createFixes() {
-    return new LocalQuickFix[]{new GenerifyFileFix()};
-  }
-
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
@@ -65,8 +59,8 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     );
   }
 
-  private static LocalQuickFix @NotNull [] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, LocalQuickFix[] generifyFixes) {
-    if (itemType instanceof PsiMethodReferenceType) return generifyFixes;
+  private static @NotNull LocalQuickFix @NotNull [] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType) {
+    if (itemType instanceof PsiMethodReferenceType) return LocalQuickFix.EMPTY_ARRAY;
     LOG.assertTrue(parameter.isValid());
     final List<LocalQuickFix> result = new ArrayList<>();
     if (itemType != null) {
@@ -79,9 +73,6 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       }
     }
 
-    if (generifyFixes.length > 0) {
-      Collections.addAll(result, generifyFixes);
-    }
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
@@ -135,7 +126,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       protected void registerProblem(@NotNull @InspectionMessage String message,
                                      @Nullable PsiElement callExpression,
                                      @NotNull PsiElement psiElement,
-                                     LocalQuickFix @NotNull [] quickFixes) {
+                                     @NotNull LocalQuickFix @NotNull [] quickFixes) {
         final String rawExpression = isMethodCalledOnRawType(callExpression);
         if (rawExpression != null) {
           final String referenceName = ((PsiMethodCallExpression)callExpression).getMethodExpression().getReferenceName();
@@ -174,18 +165,16 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   private abstract class UncheckedWarningsVisitor extends JavaElementVisitor {
     private final boolean myOnTheFly;
     @NotNull private final LanguageLevel myLanguageLevel;
-    private final LocalQuickFix[] myGenerifyFixes;
 
     UncheckedWarningsVisitor(boolean onTheFly, @NotNull LanguageLevel level) {
       myOnTheFly = onTheFly;
       myLanguageLevel = level;
-      myGenerifyFixes = onTheFly ? createFixes() : LocalQuickFix.EMPTY_ARRAY;
     }
 
     protected abstract void registerProblem(@NotNull @InspectionMessage String message,
                                             PsiElement callExpression,
                                             @NotNull PsiElement psiElement,
-                                            LocalQuickFix @NotNull [] quickFixes);
+                                            @NotNull LocalQuickFix @NotNull [] quickFixes);
 
 
     @Override
@@ -223,7 +212,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
         final String description =
           JavaErrorBundle.message("generics.unchecked.cast", JavaHighlightUtil.formatType(exprType), JavaHighlightUtil
             .formatType(castType));
-        registerProblem(description, operand, expression, myGenerifyFixes);
+        registerProblem(description, operand, expression, LocalQuickFix.EMPTY_ARRAY);
       }
     }
 
@@ -235,7 +224,8 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       final String description = getUncheckedCallDescription(expression, result);
       if (description != null) {
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
-        registerProblem(description, expression, referenceNameElement != null ? referenceNameElement : expression, myGenerifyFixes);
+        registerProblem(description, expression, referenceNameElement != null ? referenceNameElement : expression,
+                        LocalQuickFix.EMPTY_ARRAY);
       }
     }
 
@@ -246,7 +236,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       final String description = getUncheckedCallDescription(callExpression, result);
       if (description != null) {
         if (IGNORE_UNCHECKED_CALL) return;
-        registerProblem(description, null, callExpression, myGenerifyFixes);
+        registerProblem(description, null, callExpression, LocalQuickFix.EMPTY_ARRAY);
       }
       else {
         if (IGNORE_UNCHECKED_ASSIGNMENT) return;
@@ -264,7 +254,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
                 final PsiType parameterType = substitutor.substitute(parameter.getType());
                 final PsiType expressionType = expression.getType();
                 if (expressionType != null) {
-                  checkRawToGenericsAssignment(expression, expression, parameterType, expressionType, () -> myGenerifyFixes);
+                  checkRawToGenericsAssignment(expression, expression, parameterType, expressionType, () -> LocalQuickFix.EMPTY_ARRAY);
                 }
               }
             }
@@ -281,7 +271,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       if (initializer == null || initializer instanceof PsiArrayInitializerExpression) return;
       final PsiType initializerType = initializer.getType();
       checkRawToGenericsAssignment(initializer, initializer, variable.getType(), initializerType,
-                                   () -> myOnTheFly ? getChangeVariableTypeFixes(variable, initializerType, myGenerifyFixes) : LocalQuickFix.EMPTY_ARRAY);
+                                   () -> myOnTheFly ? getChangeVariableTypeFixes(variable, initializerType) : LocalQuickFix.EMPTY_ARRAY);
     }
 
     @Override
@@ -294,7 +284,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       if (iteratedValue == null) return;
       final PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
       checkRawToGenericsAssignment(parameter, iteratedValue, parameterType, itemType,
-                                   () -> myOnTheFly ? getChangeVariableTypeFixes(parameter, itemType, myGenerifyFixes) : LocalQuickFix.EMPTY_ARRAY);
+                                   () -> myOnTheFly ? getChangeVariableTypeFixes(parameter, itemType) : LocalQuickFix.EMPTY_ARRAY);
     }
 
     @Override
@@ -313,7 +303,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
         if (myOnTheFly && lExpr instanceof PsiReferenceExpression) {
           PsiElement element = ((PsiReferenceExpression)lExpr).resolve();
           if (element instanceof PsiVariable) {
-            return getChangeVariableTypeFixes((PsiVariable)element, rType, myGenerifyFixes);
+            return getChangeVariableTypeFixes((PsiVariable)element, rType);
           }
         }
 
@@ -336,7 +326,8 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       if (thenExpression != null) {
         PsiType thenType = thenExpression.getType();
         if (thenType != null) {
-          checkRawToGenericsAssignment(thenExpression, thenExpression, targetType, thenType, () -> myOnTheFly ? myGenerifyFixes : LocalQuickFix.EMPTY_ARRAY);
+          checkRawToGenericsAssignment(thenExpression, thenExpression, targetType, thenType, 
+                                       () -> LocalQuickFix.EMPTY_ARRAY);
         }
       }
     }
@@ -379,7 +370,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     private void checkRawToGenericsAssignment(@NotNull PsiElement parameter,
                                               PsiExpression expression, PsiType parameterType,
                                               PsiType itemType,
-                                              final Supplier<LocalQuickFix[]> fixesSupplier) {
+                                              @NotNull Supplier<? extends @NotNull LocalQuickFix @NotNull []> fixesSupplier) {
       if (GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()) != null) return;
       if (parameterType == null || itemType == null) return;
       if (!TypeConversionUtil.isAssignable(parameterType, itemType)) return;

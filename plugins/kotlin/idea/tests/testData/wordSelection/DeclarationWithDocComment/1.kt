@@ -2,10 +2,10 @@ class C {
     fun foo() {
     }
 
-<selection><caret>    /**
+<selection><caret>    </selection>/**
      * comment
      */
-</selection>    fun bar() {
+    fun bar() {
     }
 
     fun baz() {

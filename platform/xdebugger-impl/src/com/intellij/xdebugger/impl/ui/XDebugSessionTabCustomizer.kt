@@ -9,6 +9,10 @@ interface XDebugSessionTabCustomizer {
   fun getBottomLocalsComponentProvider(): SessionTabComponentProvider? = null
 
   fun allowFramesViewCustomization(): Boolean = false
+
+  fun getDefaultFramesViewKey(): String? = null
+
+  fun forceShowNewDebuggerUi(): Boolean = false
 }
 
 interface SessionTabComponentProvider {
@@ -16,9 +20,13 @@ interface SessionTabComponentProvider {
 }
 
 fun XDebugProcess.allowFramesViewCustomization(): Boolean {
-  return (session.debugProcess as? XDebugSessionTabCustomizer)?.allowFramesViewCustomization() ?: false
+  return (this as? XDebugSessionTabCustomizer)?.allowFramesViewCustomization() ?: false
 }
 
 fun XDebugProcess.getBottomLocalsComponentProvider(): SessionTabComponentProvider? {
-  return (session.debugProcess as? XDebugSessionTabCustomizer)?.getBottomLocalsComponentProvider()
+  return (this as? XDebugSessionTabCustomizer)?.getBottomLocalsComponentProvider()
+}
+
+fun XDebugProcess.forceShowNewDebuggerUi(): Boolean {
+  return (this as? XDebugSessionTabCustomizer)?.forceShowNewDebuggerUi() ?: false
 }

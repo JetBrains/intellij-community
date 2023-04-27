@@ -244,7 +244,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
     myDirectoryMappingTable = new TableView<>();
     myDirectoryMappingTable.setShowGrid(false);
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
-    new TableSpeedSearch(myDirectoryMappingTable, info -> {
+    TableSpeedSearch.installOn(myDirectoryMappingTable, info -> {
       return info instanceof MapInfo ? MyDirectoryRenderer.getPresentablePath(myProject, ((MapInfo)info).mapping) : "";
     });
 

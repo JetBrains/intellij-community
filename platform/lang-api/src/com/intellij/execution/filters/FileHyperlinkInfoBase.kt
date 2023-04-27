@@ -7,6 +7,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectLocator
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import java.io.File
@@ -24,7 +26,9 @@ constructor(private val myProject: Project,
     val file = virtualFile
     if (file == null || !file.isValid) return null
 
-    val document = FileDocumentManager.getInstance().getDocument(file) // need to load decompiler text
+    val document = ProjectLocator.computeWithPreferredProject(file, myProject, ThrowableComputable {
+      FileDocumentManager.getInstance().getDocument(file) // need to load decompiler text
+    })
     val line = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)?.let { mapping ->
       val mappingLine = mapping.bytecodeToSource(myDocumentLine + 1) - 1
       if (mappingLine < 0) null else mappingLine

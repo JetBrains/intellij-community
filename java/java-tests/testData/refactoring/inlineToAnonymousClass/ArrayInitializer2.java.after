@@ -1,0 +1,6 @@
+class A {
+  void test() {
+    Object[] data = new Object[]{new Object()};
+  }
+
+}

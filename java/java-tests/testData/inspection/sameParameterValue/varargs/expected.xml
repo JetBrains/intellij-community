@@ -1,3 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<problems/>
-
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>43</line>
+    <problem_class>Method parameter always has the same value</problem_class>
+    <description>Actual value of parameter 'bar' is always 'null'</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>51</line>
+    <problem_class>Method parameter always has the same value</problem_class>
+    <description>Actual value of parameter 'bar' is always '[0]'</description>
+  </problem>
+</problems>

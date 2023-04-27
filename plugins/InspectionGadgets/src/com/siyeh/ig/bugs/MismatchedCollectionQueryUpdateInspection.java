@@ -66,8 +66,8 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "putAll", "remove")
     );
   private static final @NonNls Set<String> COLLECTIONS_QUERIES =
-    ContainerUtil.set("binarySearch", "disjoint", "indexOfSubList", "lastIndexOfSubList", "max", "min");
-  private static final @NonNls Set<String> COLLECTIONS_UPDATES = ContainerUtil.set("addAll", "fill", "copy", "replaceAll", "sort");
+    Set.of("binarySearch", "disjoint", "indexOfSubList", "lastIndexOfSubList", "max", "min");
+  private static final @NonNls Set<String> COLLECTIONS_UPDATES = Set.of("addAll", "fill", "copy", "replaceAll", "sort");
   private static final Set<String> COLLECTIONS_ALL =
     StreamEx.of(COLLECTIONS_QUERIES).append(COLLECTIONS_UPDATES).toImmutableSet();
   private static final Set<String> defaultQueryNames =

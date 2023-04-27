@@ -7,10 +7,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.env.PyAbstractTestProcessRunner;
-import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.PyProcessWithConsoleTestTask;
-import com.jetbrains.env.SMRootTestsCounter;
+import com.jetbrains.env.*;
 import com.jetbrains.python.testing.tox.PyToxConfiguration;
 import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
 import com.jetbrains.python.testing.tox.PyToxTestTools;
@@ -35,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Ilya.Kazakevich
  */
+@EnvTestTagsRequired(tags = "python3")
 public final class PyToxTest extends PyEnvTestCase {
   public PyToxTest() {
     super("tox");
@@ -216,7 +214,7 @@ public final class PyToxTest extends PyEnvTestCase {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
-              PyToxTestTools.setArguments(configuration, "arg1");
+              PyToxTestTools.setArguments(configuration, "--", "arg1");
             }
           };
         }

@@ -2,21 +2,19 @@
 
 package org.jetbrains.plugins.github.extensions
 
+import com.intellij.collaboration.auth.AccountManager
+import com.intellij.collaboration.auth.DefaultAccountHolder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.util.AuthData
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import git4idea.remote.GitHttpAuthDataProvider
-import git4idea.remote.hosting.GitHostingUrlUtil.match
+import git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
+import git4idea.remote.hosting.http.HostedGitHttpAuthDataProvider
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
-import org.jetbrains.plugins.github.authentication.GHAccountAuthData
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
@@ -24,73 +22,30 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefault
 
 private val LOG = logger<GHHttpAuthDataProvider>()
 
-internal class GHHttpAuthDataProvider : GitHttpAuthDataProvider {
-  override fun isSilent(): Boolean = true
+internal class GHHttpAuthDataProvider : HostedGitHttpAuthDataProvider<GithubAccount>() {
+  override val providerId: String = "GitHub Plugin"
 
-  @RequiresBackgroundThread
-  override fun getAuthData(project: Project, url: String): GHAccountAuthData? = runBlocking {
-    doGetAuthData(project, url)
+  override val accountManager: AccountManager<GithubAccount, String>
+    get() = service<GHAccountManager>()
+
+  override fun getDefaultAccountHolder(project: Project): DefaultAccountHolder<GithubAccount> {
+    return project.service<GithubProjectDefaultAccountHolder>()
   }
 
-  private suspend fun doGetAuthData(project: Project, url: String): GHAccountAuthData? {
-    val defaultAuthData = getDefaultAccountData(project, url)
-    if (defaultAuthData != null) {
-      return defaultAuthData
-    }
-
-    return getAccountsWithTokens(project, url).entries
-      .singleOrNull { it.value != null }?.let { (acc, token) ->
-        val login = getAccountDetails(acc, token!!)?.login ?: return null
-        GHAccountAuthData(acc, login, token)
-      }
+  override fun getAuthFailureManager(project: Project): HostedGitAuthenticationFailureManager<GithubAccount> {
+    return project.service<GHGitAuthenticationFailureManager>()
   }
 
-  @RequiresBackgroundThread
-  override fun getAuthData(project: Project, url: String, login: String): GHAccountAuthData? = runBlocking {
-    doGetAuthData(project, url, login)
-  }
-
-  private suspend fun doGetAuthData(project: Project, url: String, login: String): GHAccountAuthData? {
-    val defaultAuthData = getDefaultAccountData(project, url)
-    if (defaultAuthData != null && defaultAuthData.login == login) {
-      return defaultAuthData
-    }
-
-    return getAccountsWithTokens(project, url).mapNotNull { (acc, token) ->
-      if (token == null) return@mapNotNull null
-      val details = getAccountDetails(acc, token) ?: return@mapNotNull null
-      if (details.login != login) return@mapNotNull null
-      GHAccountAuthData(acc, login, token)
-    }.singleOrNull()
-  }
-
-  override fun forgetPassword(project: Project, url: String, authData: AuthData) {
-    if (authData !is GHAccountAuthData) return
-
-    project.service<GHGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
+  override suspend fun getAccountLogin(account: GithubAccount, token: String): String? {
+    return getAccountDetails(account, token)?.login
   }
 
   companion object {
-    private suspend fun getDefaultAccountData(project: Project, url: String): GHAccountAuthData? {
-      val defaultAccount = project.service<GithubProjectDefaultAccountHolder>().account ?: return null
-      val authFailureManager = project.service<GHGitAuthenticationFailureManager>()
-
-      if (match(defaultAccount.server.toURI(), url) && !authFailureManager.isAccountIgnored(url, defaultAccount)) {
-        val token = service<GHAccountManager>().findCredentials(defaultAccount) ?: return null
-        val login = getAccountDetails(defaultAccount, token)?.login ?: return null
-        return GHAccountAuthData(defaultAccount, login, token)
-      }
-      return null
-    }
-
     suspend fun getAccountsWithTokens(project: Project, url: String): Map<GithubAccount, String?> {
       val accountManager = service<GHAccountManager>()
       val authFailureManager = project.service<GHGitAuthenticationFailureManager>()
 
-      return accountManager.accountsState.value
-        .filter { match(it.server.toURI(), url) }
-        .filterNot { authFailureManager.isAccountIgnored(url, it) }
-        .associateWith { accountManager.findCredentials(it) }
+      return getAccountsWithTokens(accountManager, authFailureManager, url)
     }
 
     suspend fun getAccountDetails(account: GithubAccount, token: String): GithubAuthenticatedUser? =

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nls
 internal class IdeErrorReporter(private val project: Project) : ErrorReporter {
   val errors = ArrayList<ConfigurationErrorDescription>()
 
-  override fun reportError(message: String, file: VirtualFileUrl) {
+  override fun reportError(message: @Nls String, file: VirtualFileUrl) {
     if (FileUtil.extensionEquals(file.fileName, "iml")) {
       errors.add(ModuleLoadingErrorDescriptionBridge(message, file, project))
     }

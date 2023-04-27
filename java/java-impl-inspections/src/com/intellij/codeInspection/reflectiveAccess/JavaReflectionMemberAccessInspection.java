@@ -123,7 +123,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
           if (isDeclared && field.getContainingClass() != ownerClass.getPsiClass()) {
             LocalQuickFix fix = field.hasModifierProperty(PsiModifier.PUBLIC) ? new UseAppropriateMethodFix("getField") : null;
             holder.registerProblem(nameExpression, JavaBundle.message(
-              "inspection.reflection.member.access.field.not.in.class", fieldName, ownerClass.getPsiClass().getQualifiedName()), fix);
+              "inspection.reflection.member.access.field.not.in.class", fieldName, ownerClass.getPsiClass().getQualifiedName()), LocalQuickFix.notNullElements(fix));
             return;
           }
           if (!isDeclared && !field.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -160,7 +160,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
             return;
           }
           if (isDeclared && matchingMethod.getContainingClass() != ownerClass.getPsiClass()) {
-            LocalQuickFix fix = matchingMethod.hasModifierProperty(PsiModifier.PUBLIC) ? new UseAppropriateMethodFix("getMethod") : null;
+            LocalQuickFix[] fix = matchingMethod.hasModifierProperty(PsiModifier.PUBLIC) ? new LocalQuickFix[] {new UseAppropriateMethodFix("getMethod")} : LocalQuickFix.EMPTY_ARRAY;
             holder.registerProblem(nameExpression, JavaBundle.message(
               "inspection.reflection.member.access.method.not.in.class", methodName, ownerClass.getPsiClass().getQualifiedName()), fix);
             return;

@@ -31,7 +31,7 @@ public class IterationStateTest extends AbstractEditorTest {
     DEFAULT_BACKGROUND = colorsScheme.getDefaultBackground();
     CARET_ROW_BACKGROUND = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
     SELECTION_BACKGROUND = colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
-    assertEquals(3, ContainerUtil.set(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND).size());
+    assertEquals(3, ContainerUtil.immutableSet(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND).size());
   }
 
   public void testBlockSelection() {

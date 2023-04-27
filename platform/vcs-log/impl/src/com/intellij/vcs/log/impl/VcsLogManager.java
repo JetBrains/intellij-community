@@ -48,7 +48,7 @@ public final class VcsLogManager implements Disposable {
   private final @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 
   private final @NotNull VcsLogData myLogData;
-  private final @NotNull VcsLogColorManagerImpl myColorManager;
+  private final @NotNull VcsLogColorManager myColorManager;
   private @Nullable VcsLogTabsWatcher myTabsLogRefresher;
   private final @NotNull PostponableLogRefresher myPostponableRefresher;
   private final @NotNull VcsLogStatusBarProgress myStatusBarProgress;
@@ -72,7 +72,7 @@ public final class VcsLogManager implements Disposable {
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
-    myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
+    myColorManager = VcsLogColorManagerFactory.create(logProviders.keySet());
     myStatusBarProgress = new VcsLogStatusBarProgress(myProject, logProviders, myLogData.getProgress());
 
     if (scheduleRefreshImmediately) {
@@ -115,7 +115,7 @@ public final class VcsLogManager implements Disposable {
     return myLogData;
   }
 
-  public @NotNull VcsLogColorManagerImpl getColorManager() {
+  public @NotNull VcsLogColorManager getColorManager() {
     return myColorManager;
   }
 
@@ -276,7 +276,7 @@ public final class VcsLogManager implements Disposable {
           ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(source, throwable));
         }
         else {
-          LOG.error(throwable);
+          LOG.error(source != null ? "Vcs Log exception from " + source : throwable.getMessage(), throwable);
         }
 
         if (source == Source.Storage) {

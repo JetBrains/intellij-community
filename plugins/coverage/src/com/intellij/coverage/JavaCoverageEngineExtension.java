@@ -3,6 +3,7 @@ package com.intellij.coverage;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -52,6 +53,15 @@ public abstract class JavaCoverageEngineExtension {
                                     @NotNull final CoverageSuitesBundle suite,
                                     @NotNull final Set<File> classFiles){
     return false;
+  }
+
+  /**
+   * Return a module that contains output for the module or null in any other case.
+   * The module may differ e.g. in Kotlin multi-platform projects
+   */
+  @Nullable
+  public Module getModuleWithOutput(@NotNull Module module) {
+    return null;
   }
 
   /**

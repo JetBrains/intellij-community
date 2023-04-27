@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +54,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
         return;
       }
 
-      SlowOperations.allowSlowOperations(() -> lookup.finishLookup(finishingChar));
+      lookup.finishLookup(finishingChar);
     }
 
 
@@ -104,10 +103,8 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
         return true;
       }
 
-      List<TemplateImpl> templates = SlowOperations.allowSlowOperations(
-        () -> TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
-          TemplateActionContext.expanding(file, editor)
-        )
+      List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
+        TemplateActionContext.expanding(file, editor)
       );
       TemplateImpl template = LiveTemplateCompletionContributor.findFullMatchedApplicableTemplate(editor, offset, templates);
       if (template != null && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template)) {

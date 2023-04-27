@@ -176,6 +176,12 @@ public class JavaSelectWordTest extends SelectWordTestBase {
 
   public void testRecordParams() { doTest("java"); }
 
+  public void testWhitespaces() { doTest("java"); }
+  public void testWhitespacesAtFileStart() { doTest("java"); }
+  public void testWhitespacesAtFileEnd() { doTest("java"); }
+  public void testWhitespacesInTheMiddleOfTheLine() { doTest("java"); }
+
+
   public void testEndOfFile() throws IOException {
     VirtualFile otherFile = WriteAction.computeAndWait(() -> {
       VirtualFile res = getSourceRoot().createChildData(null, "zzzzzzzzzzzz.txt");

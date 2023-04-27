@@ -54,7 +54,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  private String myStringToFind = "";
+  private String myStringToFind = null;
   private String myStringToReplace = "";
   private boolean isSearchHighlighters;
   private boolean isReplaceState;
@@ -236,7 +236,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    */
   @NotNull
   public String getStringToFind() {
-    return myStringToFind;
+    return (myStringToFind == null) ? "" : myStringToFind;
+  }
+
+  public boolean hasStringToFind() {
+    return myStringToFind != null;
   }
 
   /**
@@ -617,7 +621,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   @Override
   public String toString() {
     return "--- FIND MODEL ---\n" +
-           "myStringToFind = '" + myStringToFind + "'\n" +
+           "myStringToFind = " + (myStringToFind == null ? "null\n" : "'" + myStringToFind + "'\n") +
            "myStringToReplace = '" + myStringToReplace + "'\n" +
            "isReplaceState = " + isReplaceState + "\n" +
            "isWholeWordsOnly = " + isWholeWordsOnly + "\n" +

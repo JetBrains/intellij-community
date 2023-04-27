@@ -79,6 +79,16 @@ public class KdocResolveTestGenerated extends AbstractReferenceResolveTest {
         runTest("testData/kdoc/resolve/ExtensionVal.kt");
     }
 
+    @TestMetadata("GenericBoundExtensionFun.kt")
+    public void testGenericBoundExtensionFun() throws Exception {
+        runTest("testData/kdoc/resolve/GenericBoundExtensionFun.kt");
+    }
+
+    @TestMetadata("GenericExtensionFun.kt")
+    public void testGenericExtensionFun() throws Exception {
+        runTest("testData/kdoc/resolve/GenericExtensionFun.kt");
+    }
+
     @TestMetadata("ImportAliasClass.kt")
     public void testImportAliasClass() throws Exception {
         runTest("testData/kdoc/resolve/ImportAliasClass.kt");

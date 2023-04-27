@@ -2,21 +2,24 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.openapi.diagnostic.DelegatingLogger
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionException
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionExceptionCause
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSessionStackTraceElement
-import com.intellij.util.ui.UIUtil
 
 internal class AgentTestLogger(logger: Logger, private val factory: AgentTestLoggerFactory) : DelegatingLogger<Logger>(logger) {
   override fun error(message: String?, t: Throwable?, vararg details: String) {
     super.error(message, t, *details)
-    factory.testSession.get()?.let {
-      val messageToTheTestRunner =
-        if (details.isNotEmpty()) message + "\n Details: \n" + details.joinToString("\n")
-        else message
-      sendToTestRunner(it, messageToTheTestRunner, t)
-    }
+    val messageToTheTestRunner =
+      if (details.isNotEmpty()) message + "\n Details: \n" + details.joinToString("\n")
+      else message
+
+    factory.testSession.get()
+      ?.let {
+        sendToTestRunner(it, messageToTheTestRunner, t)
+      }
+    ?: logger<AgentTestLogger>().warn("Couldn't send exception to the test session: '${message}'.")
   }
 
   private fun sendToTestRunner(session: RdTestSession, message: String?, t: Throwable?) {
@@ -29,7 +32,7 @@ internal class AgentTestLogger(logger: Logger, private val factory: AgentTestLog
         t?.message ->
           message ?: "There was an error of type ${t?.javaClass?.name}"
         else ->
-          listOfNotNull(message, t?.message).joinToString(": ")
+          listOf(message, t?.message).filter { !it?.trim().isNullOrEmpty() }.joinToString(": ")
       }
 
     val rdtseType = t?.javaClass?.typeName ?: "<LOG_ERROR>"
@@ -40,10 +43,7 @@ internal class AgentTestLogger(logger: Logger, private val factory: AgentTestLog
 
     val rdTestSessionException = RdTestSessionException(rdtseType, rdtseMessage, rdtseStackTrace, rdtseCause)
 
-    info("Scheduling firing ex to the test runner ${rdTestSessionException.message}")
-    UIUtil.invokeLaterIfNeeded {
-      info("Fired ex to the test runner ${rdTestSessionException.message}")
-      session.sendException.fire(rdTestSessionException)
-    }
+    info("Fired ex to the test runner ${rdTestSessionException.message}")
+    session.sendException.fire(rdTestSessionException)
   }
 }

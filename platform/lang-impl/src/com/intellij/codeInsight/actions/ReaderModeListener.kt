@@ -3,12 +3,14 @@ package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -20,7 +22,7 @@ import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
 import java.util.*
 
-internal interface ReaderModeListener : EventListener {
+interface ReaderModeListener : EventListener {
   fun modeChanged(project: Project)
 }
 
@@ -28,17 +30,18 @@ class ReaderModeSettingsListener : ReaderModeListener {
   companion object {
     @Topic.ProjectLevel
     @JvmField
-    internal val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
 
     @RequiresEdt
     fun applyToAllEditors(project: Project) {
       for (editor in FileEditorManager.getInstance(project).allEditors) {
+        if ((ClientFileEditorManager.getClientId(editor) ?: ClientId.localId) != ClientId.current) continue
         if (editor is TextEditor) {
           ReaderModeSettings.applyReaderMode(project, editor.editor, editor.file, fileIsOpenAlready = true)
         }
       }
 
-      for (editor in EditorFactory.getInstance().allEditors) {
+      for (editor in ClientEditorManager.getCurrentInstance().editors()) {
         if (editor !is EditorImpl) continue
         if (editor.getProject() != project) continue
 

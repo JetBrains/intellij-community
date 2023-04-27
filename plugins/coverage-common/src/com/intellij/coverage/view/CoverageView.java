@@ -177,7 +177,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       }
     }.installOn(myTable.getTree());
 
-    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(myTable.getTree(), false, path -> path.getLastPathComponent().toString());
+    final TreeSpeedSearch speedSearch = TreeSpeedSearch.installOn(myTable.getTree(), false, path -> path.getLastPathComponent().toString());
     speedSearch.setCanExpand(true);
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");

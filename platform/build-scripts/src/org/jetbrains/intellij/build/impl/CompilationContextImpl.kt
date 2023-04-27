@@ -227,15 +227,15 @@ class CompilationContextImpl private constructor(
     else {
       Files.createDirectories(logDir)
     }
-
+    overrideClassesOutputDirectory()
     if (!this::compilationData.isInitialized) {
       compilationData = JpsCompilationData(
         dataStorageRoot = paths.buildOutputDir.resolve(".jps-build-data"),
+        classesOutputDirectory = classesOutputDirectory,
         buildLogFile = logDir.resolve("compilation.log"),
         categoriesWithDebugLevelNullable = System.getProperty("intellij.build.debug.logging.categories", "")
       )
     }
-    overrideClassesOutputDirectory()
     for (artifact in JpsArtifactService.getInstance().getArtifacts(project)) {
       artifact.outputPath = "${paths.jpsArtifacts.resolve(PathUtilRt.getFileName(artifact.outputPath))}"
     }
@@ -248,7 +248,7 @@ class CompilationContextImpl private constructor(
     val override = options.classesOutputDirectory
     when {
       !override.isNullOrEmpty() -> classesOutputDirectory = Path.of(override)
-      options.useCompiledClassesFromProjectOutput -> require(Files.exists(classesOutputDirectory)) {
+      options.useCompiledClassesFromProjectOutput -> check(Files.exists(classesOutputDirectory)) {
         "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory $classesOutputDirectory doesn't exist"
       }
       else -> classesOutputDirectory = paths.buildOutputDir.resolve("classes")
@@ -291,7 +291,7 @@ class CompilationContextImpl private constructor(
     return enumerator.classes().roots.map { it.absolutePath }
   }
 
-  override fun notifyArtifactWasBuilt(artifactPath: Path) {
+  override fun notifyArtifactBuilt(artifactPath: Path) {
     if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP)) {
       return
     }

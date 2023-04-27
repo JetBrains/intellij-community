@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -240,7 +241,14 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
     }
 
     //ok, try any similar reference
-    return (T)ContainerUtil.find(references, isSimilar);
+    T t = (T)ContainerUtil.find(references, isSimilar);
+    if (t != null) {
+      return t;
+    }
+    return (T)Arrays.stream(references)
+      .flatMap( ref -> ref instanceof PsiReferencesWrapper ? ((PsiReferencesWrapper)ref).getReferences().stream() : Stream.of(ref))
+      .filter(isSimilar::value)
+      .findFirst().orElse(null);
   }
 
   @Override

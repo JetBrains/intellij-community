@@ -52,7 +52,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
-                                                   LocalQuickFix fix,
+                                                   @Nullable LocalQuickFix fix,
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean onTheFly) {
     LocalQuickFix[] quickFixes = fix == null ? null : new LocalQuickFix[]{fix};
@@ -64,7 +64,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    boolean onTheFly,
-                                                   LocalQuickFix @Nullable [] fixes,
+                                                   @NotNull LocalQuickFix @Nullable [] fixes,
                                                    @NotNull ProblemHighlightType highlightType) {
     return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, onTheFly, false);
   }
@@ -73,7 +73,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull @InspectionMessage String descriptionTemplate,
-                                                   LocalQuickFix @Nullable [] fixes,
+                                                   @NotNull LocalQuickFix @Nullable [] fixes,
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean onTheFly,
                                                    boolean isAfterEndOfLine) {
@@ -88,7 +88,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
                                                    @NotNull @InspectionMessage String descriptionTemplate,
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean onTheFly,
-                                                   LocalQuickFix @Nullable ... fixes) {
+                                                   @NotNull LocalQuickFix @Nullable ... fixes) {
     boolean tooltip = highlightType != ProblemHighlightType.INFORMATION;
     return new ProblemDescriptorBase(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, tooltip, onTheFly);
   }
@@ -96,11 +96,11 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @NotNull
   @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   TextRange rangeInElement,
+                                                   @Nullable TextRange rangeInElement,
                                                    @NotNull @InspectionMessage String descriptionTemplate,
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean onTheFly,
-                                                   LocalQuickFix @Nullable ... fixes) {
+                                                   @NotNull LocalQuickFix @Nullable ... fixes) {
     boolean tooltip = highlightType != ProblemHighlightType.INFORMATION;
     return new ProblemDescriptorBase(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, tooltip, onTheFly);
   }
@@ -112,7 +112,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
                                                    boolean showTooltip,
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean onTheFly,
-                                                   LocalQuickFix @Nullable ... fixes) {
+                                                   @NotNull LocalQuickFix @Nullable ... fixes) {
     return new ProblemDescriptorBase(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, showTooltip, onTheFly);
   }
 
@@ -121,9 +121,9 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @Deprecated
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull @InspectionMessage String descriptionTemplate,
-                                                   LocalQuickFix fix,
+                                                   @Nullable LocalQuickFix fix,
                                                    @NotNull ProblemHighlightType highlightType) {
-    LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
+    LocalQuickFix[] quickFixes = fix == null ? null : new LocalQuickFix[]{fix};
     return createProblemDescriptor(psiElement, descriptionTemplate, false, quickFixes, highlightType);
   }
 
@@ -132,7 +132,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @Deprecated
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull @InspectionMessage String descriptionTemplate,
-                                                   LocalQuickFix @Nullable [] fixes,
+                                                   @NotNull LocalQuickFix @Nullable [] fixes,
                                                    @NotNull ProblemHighlightType highlightType) {
     return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, false, false);
   }
@@ -142,7 +142,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @Deprecated
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull @InspectionMessage String descriptionTemplate,
-                                                   LocalQuickFix @Nullable [] fixes,
+                                                   @NotNull LocalQuickFix @Nullable [] fixes,
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean isAfterEndOfLine) {
     return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, true, isAfterEndOfLine);
@@ -155,7 +155,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
                                                    @NotNull PsiElement endElement,
                                                    @NotNull @InspectionMessage String descriptionTemplate,
                                                    @NotNull ProblemHighlightType highlightType,
-                                                   LocalQuickFix @Nullable ... fixes) {
+                                                   @NotNull LocalQuickFix @Nullable ... fixes) {
     return createProblemDescriptor(startElement, endElement, descriptionTemplate, highlightType, true, fixes);
   }
 

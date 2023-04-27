@@ -9,7 +9,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
@@ -18,6 +17,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +35,8 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.util.*;
+
+import static java.util.stream.Collectors.groupingBy;
 
 @State(name = "MavenCompilerTasksManager")
 public final class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState>,
@@ -121,39 +123,86 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
   private boolean doExecute(boolean before, CompileContext context) {
     List<MavenRunnerParameters> parametersList;
     synchronized (myStateLock) {
-      parametersList = new ArrayList<>();
-      Set<MavenCompilerTask> tasks = before ? myState.beforeCompileTasks : myState.afterCompileTasks;
+      var tasks = before ? myState.beforeCompileTasks : myState.afterCompileTasks;
 
       if (context.isRebuild()) {
         tasks = Sets.union(before ? myState.beforeRebuildTask : myState.afterRebuildTask, tasks);
       }
 
-      var mavenProjectsManager = MavenProjectsManager.getInstance(myProject);
+      var projectsManager = MavenProjectsManager.getInstance(myProject);
       var affectedModules = ReadAction.compute(() -> Set.of(context.getCompileScope().getAffectedModules()));
-      for (MavenCompilerTask each : tasks) {
-        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each.getProjectPath());
+      var taskInfos = new ArrayList<MavenTaskInfo>();
+
+      for (var task : tasks) {
+        var file = LocalFileSystem.getInstance().findFileByPath(task.getProjectPath());
         if (file == null) continue;
-        var mavenProject = mavenProjectsManager.findProject(file);
+        var mavenProject = projectsManager.findProject(file);
         if (null == mavenProject) continue;
-        var module = ReadAction.compute(() -> mavenProjectsManager.findModule(mavenProject));
+        var module = ReadAction.compute(() -> projectsManager.findModule(mavenProject));
         if (null == module) continue;
         if (!affectedModules.contains(module)) continue;
-        MavenExplicitProfiles explicitProfiles = mavenProjectsManager.getExplicitProfiles();
-        parametersList.add(new MavenRunnerParameters(true,
-                                                     file.getParent().getPath(),
-                                                     file.getName(),
-                                                     Collections.singletonList(each.getGoal()),
-                                                     explicitProfiles.getEnabledProfiles(),
-                                                     explicitProfiles.getDisabledProfiles()));
+        var rootProject = projectsManager.findRootProject(mavenProject);
+        if (null == rootProject) {
+          rootProject = mavenProject;
+        }
+        taskInfos.add(new MavenTaskInfo(task.getGoal(), file, mavenProject, rootProject));
       }
+
+      var explicitProfiles = projectsManager.getExplicitProfiles();
+      parametersList = taskInfosToParametersList(taskInfos, explicitProfiles);
     }
+
+    if (parametersList.isEmpty()) return true;
 
     return doRunTask(context, parametersList);
   }
 
+  private record MavenTaskInfo(@NotNull String goal,
+                               @NotNull VirtualFile file,
+                               MavenProject mavenProject,
+                               MavenProject rootProject) {
+    public Pair<String, MavenProject> goalAndRootProject() {
+      return new Pair<>(goal(), rootProject());
+    }
+  }
+
+  // if there are several tasks with the same goal and rootProject project, group them into one
+  private static List<MavenRunnerParameters> taskInfosToParametersList(@NotNull List<MavenTaskInfo> taskInfos,
+                                                                       MavenExplicitProfiles explicitProfiles) {
+    if (taskInfos.isEmpty()) return List.of();
+
+    var enabledProfiles = explicitProfiles.getEnabledProfiles();
+    var disabledProfiles = explicitProfiles.getDisabledProfiles();
+    List<MavenRunnerParameters> parametersList = new ArrayList<>();
+
+    Collection<List<MavenTaskInfo>> taskGroups = taskInfos.stream().collect(groupingBy(MavenTaskInfo::goalAndRootProject)).values();
+    for (var tasksInGroup : taskGroups) {
+      MavenRunnerParameters params;
+      var firstTask = tasksInGroup.get(0);
+      params = new MavenRunnerParameters(true,
+                                         firstTask.file().getParent().getPath(),
+                                         firstTask.file().getName(),
+                                         Collections.singletonList(firstTask.goal()),
+                                         enabledProfiles,
+                                         disabledProfiles);
+      if (tasksInGroup.size() > 1) {
+        var workingDirPath = firstTask.rootProject().getDirectory();
+        params.setWorkingDirPath(workingDirPath);
+        var projectsCmdOptionValues = tasksInGroup.stream()
+          .map(task -> task.mavenProject().getMavenId())
+          .map(mavenId -> mavenId.getGroupId() + ":" + mavenId.getArtifactId())
+          .toList();
+        params.setProjectsCmdOptionValues(projectsCmdOptionValues);
+      }
+      parametersList.add(params);
+    }
+
+    return parametersList;
+  }
+
   private static boolean doRunTask(CompileContext context, List<MavenRunnerParameters> parametersList) {
     try {
-      ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
+      var runner = DefaultJavaProgramRunner.getInstance();
       Executor executor = DefaultRunExecutor.getRunExecutorInstance();
 
       long executionId = ExecutionEnvironment.getNextUnusedExecutionId();

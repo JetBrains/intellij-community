@@ -84,7 +84,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
     override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
     }
 
-    override fun removeStreamProvider(clazz: Class<out StreamProvider>) {
+    override fun removeStreamProvider(aClass: Class<out StreamProvider>) {
     }
 
     override fun getStateStorage(storageSpec: Storage) = storage

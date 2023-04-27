@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderService {
 
   private static final String CLASSPATH_CONFIGURATION_NAME = "classpath";
-  private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<String, BuildScriptClasspathModelImpl>();
+  private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<>();
   private SourceSetCachedFinder mySourceSetFinder = null;
 
   @Override

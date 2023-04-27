@@ -124,11 +124,13 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
       }
     }
 
+    val targetSourcesFile = targetSources.file    // load VFS synchronously outside read action
+    val targetBinariesFile = targetBinaries.file  // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
         SyntheticLibrary.newImmutableLibrary("test",
-                                             listOf(targetSources.file),
-                                             listOf(targetBinaries.file),
+                                             listOf(targetSourcesFile),
+                                             listOf(targetBinariesFile),
                                              emptySet(),
                                              null
         )
@@ -160,12 +162,14 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
       }
     }
 
+    val additionalProjectRootsFile = additionalProjectRoots.file  // load VFS synchronously outside read action
+    val additionalRootsFile = additionalRoots.file                // load VFS synchronously outside read action
     val contributor = object : IndexableSetContributor() {
       override fun getAdditionalProjectRootsToIndex(project: Project): Set<VirtualFile> =
-        setOf(additionalProjectRoots.file)
+        setOf(additionalProjectRootsFile)
 
       override fun getAdditionalRootsToIndex(): Set<VirtualFile> =
-        setOf(additionalRoots.file)
+        setOf(additionalRootsFile)
     }
     maskIndexableSetContributors(contributor)
     assertIndexableFiles(projectFile.file, appFile.file)

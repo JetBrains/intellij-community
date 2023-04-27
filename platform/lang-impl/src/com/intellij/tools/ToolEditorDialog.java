@@ -3,7 +3,6 @@ package com.intellij.tools;
 
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -43,7 +42,6 @@ public class ToolEditorDialog extends DialogWrapper {
 
     DataContext dataContext = DataManager.getInstance().getDataContext(parent);
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
-    MacroManager.getInstance().cacheMacrosPreview(dataContext);
     setTitle(title);
 
     init();

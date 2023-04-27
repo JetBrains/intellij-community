@@ -114,7 +114,7 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
     final PyCallExpression call = as(expression, PyCallExpression.class);
     if (call != null) {
       final PyReferenceExpression callee = as(call.getCallee(), PyReferenceExpression.class);
-      return callee != null && "TypeVar".equals(callee.getReferencedName());
+      return callee != null && ("TypeVar".equals(callee.getReferencedName()) || "ParamSpec".equals(callee.getReferencedName()));
     }
 
     final PyStringLiteralExpression pyString = as(expression, PyStringLiteralExpression.class);

@@ -107,6 +107,8 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     if (existingEntity != null) return existingEntity;
 
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
+    Objects.requireNonNull(this.myFilePath, "filePath is not specified");
+    Objects.requireNonNull(this.myPathInJar, "pathInJar is not specified");
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(this.myFilePath);
 
     ExtractedDirectoryPackagingElementEntity addedEntity =

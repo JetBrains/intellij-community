@@ -4,10 +4,7 @@ package org.jetbrains.plugins.gradle.model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -23,37 +20,37 @@ public class DefaultGradleExtensions implements GradleExtensions {
   private String parentProjectPath;
 
   public DefaultGradleExtensions() {
-    extensions = new ArrayList<DefaultGradleExtension>(0);
-    conventions = new ArrayList<DefaultGradleConvention>(0);
-    gradleProperties = new ArrayList<DefaultGradleProperty>(0);
-    tasks = new ArrayList<DefaultExternalTask>(0);
-    configurations = new ArrayList<DefaultGradleConfiguration>(0);
+    extensions = new ArrayList<>(0);
+    conventions = new ArrayList<>(0);
+    gradleProperties = new ArrayList<>(0);
+    tasks = new ArrayList<>(0);
+    configurations = new ArrayList<>(0);
   }
 
   public DefaultGradleExtensions(@NotNull GradleExtensions extensions) {
     parentProjectPath = extensions.getParentProjectPath();
 
-    this.extensions = new ArrayList<DefaultGradleExtension>(extensions.getExtensions().size());
+    this.extensions = new ArrayList<>(extensions.getExtensions().size());
     for (GradleExtension extension : extensions.getExtensions()) {
       this.extensions.add(new DefaultGradleExtension(extension));
     }
 
-    conventions = new ArrayList<DefaultGradleConvention>(extensions.getConventions().size());
+    conventions = new ArrayList<>(extensions.getConventions().size());
     for (GradleConvention convention : extensions.getConventions()) {
       conventions.add(new DefaultGradleConvention(convention));
     }
 
-    gradleProperties = new ArrayList<DefaultGradleProperty>(extensions.getGradleProperties().size());
+    gradleProperties = new ArrayList<>(extensions.getGradleProperties().size());
     for (GradleProperty property : extensions.getGradleProperties()) {
       gradleProperties.add(new DefaultGradleProperty(property));
     }
 
-    tasks = new ArrayList<DefaultExternalTask>(extensions.getTasks().size());
+    tasks = new ArrayList<>(extensions.getTasks().size());
     for (ExternalTask entry : extensions.getTasks()) {
       tasks.add(new DefaultExternalTask(entry));
     }
 
-    configurations = new ArrayList<DefaultGradleConfiguration>(extensions.getConfigurations().size());
+    configurations = new ArrayList<>(extensions.getConfigurations().size());
     for (GradleConfiguration entry : extensions.getConfigurations()) {
       configurations.add(new DefaultGradleConfiguration(entry));
     }
@@ -118,12 +115,12 @@ public class DefaultGradleExtensions implements GradleExtensions {
 
     DefaultGradleExtensions that = (DefaultGradleExtensions)o;
 
-    if (extensions != null ? !extensions.equals(that.extensions) : that.extensions != null) return false;
-    if (conventions != null ? !conventions.equals(that.conventions) : that.conventions != null) return false;
-    if (gradleProperties != null ? !gradleProperties.equals(that.gradleProperties) : that.gradleProperties != null) return false;
-    if (tasks != null ? !tasks.equals(that.tasks) : that.tasks != null) return false;
-    if (configurations != null ? !configurations.equals(that.configurations) : that.configurations != null) return false;
-    if (parentProjectPath != null ? !parentProjectPath.equals(that.parentProjectPath) : that.parentProjectPath != null) return false;
+    if (!Objects.equals(extensions, that.extensions)) return false;
+    if (!Objects.equals(conventions, that.conventions)) return false;
+    if (!Objects.equals(gradleProperties, that.gradleProperties)) return false;
+    if (!Objects.equals(tasks, that.tasks)) return false;
+    if (!Objects.equals(configurations, that.configurations)) return false;
+    if (!Objects.equals(parentProjectPath, that.parentProjectPath)) return false;
 
     return true;
   }

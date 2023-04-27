@@ -10,3 +10,5 @@ class Inner {
         val MAX = 1
     }
 }
+
+// IGNORE_FIR

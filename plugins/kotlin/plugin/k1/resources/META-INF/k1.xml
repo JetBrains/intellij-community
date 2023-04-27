@@ -2,7 +2,6 @@
   <xi:include href="/META-INF/extensions/compiler.xml" /> <!-- extensions/compiler.xml comes from the Kotlin compiler -->
 
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="kotlin-idea.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="searching-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -25,12 +24,13 @@
   <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="compiler-reference-index.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlinx-serialization.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="native-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="native.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="jvm-debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="jvm-debugger-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="scripting-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="facets-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="ultimate-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
@@ -98,5 +98,7 @@
     <module name="kotlin.code-insight.live-templates-k1"/>
     <module name="kotlin.code-insight.postfix-templates-k1"/>
     <module name="kotlin.code-insight.structural-search-k1"/>
+
+    <module name="kotlin.compiler-reference-index"/>
   </content>
 </idea-plugin>

@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -479,8 +478,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsInImportedModule() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("a: int, b: int", "a: str, b: str");
-    final List<String[]> highlighted = Arrays.asList(new String[]{"a: int, "}, new String[]{"a: str, "});
+    final List<String> texts = Arrays.asList("a: str, b: str", "a: int, b: int");
+    final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int, "});
 
     feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY));
   }
@@ -498,8 +497,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedModule() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("a: int", "a: str, b: str");
-    final List<String[]> highlighted = Arrays.asList(new String[]{"a: int"}, new String[]{"a: str, "});
+    final List<String> texts = Arrays.asList("a: str, b: str", "a: int");
+    final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int"});
 
     feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY));
   }
@@ -530,8 +529,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsAndImplementationInImportedModule() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("value: str", "value: int", "value: None");
-    final List<String[]> highlighted = Arrays.asList(new String[]{"value: str"}, new String[]{"value: int"}, new String[]{"value: None"});
+    final List<String> texts = Arrays.asList("value: None", "value: int", "value: str");
+    final List<String[]> highlighted = Arrays.asList(new String[]{"value: None"}, new String[]{"value: int"}, new String[]{"value: str"});
 
     feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY,
                                                                ArrayUtilRt.EMPTY_STRING_ARRAY));
@@ -817,7 +816,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         final Map<String, PsiElement> marks = loadTest(4);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
-        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("*, a: int, b: int = ...", new String[]{"*, a: int"});
+        // non-working case PY-39461
+        //feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, b: int = ...", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int = ..., b: int", new String[]{"*, a: int"});
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int = ..., b: int = ...", new String[]{"*, a: int"});
       }
@@ -1130,6 +1130,36 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       , new String[]{"short_param: str"});
   }
 
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnClass() {
+    final Map<String, PsiElement> marks = loadTest(4);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a: int", new String[]{"b: int, "});
+    // non-working case PY-39461
+    //feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, b: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnField() {
+    final Map<String, PsiElement> marks = loadTest(4);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a: int", new String[]{"b: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, b: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
+  // PY-49946
+  public void testInitializingDataclassKwOnlyOnClassOverridingHierarchy() {
+    final Map<String, PsiElement> marks = loadTest(3);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int", new String[]{"a: int"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile());
@@ -1395,7 +1425,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       final StringBuilder wrongs = new StringBuilder();
 
       // see if highlighted matches
-      final Set<String> highlightSet = ContainerUtil.set(highlighted);
+      final Set<String> highlightSet = Set.of(highlighted);
       for (int i = 0; i < hintText.length; i++) {
         if (hintFlags[i].contains(Flag.HIGHLIGHT) && !highlightSet.contains(hintText[i])) {
           wrongs.append("Highlighted unexpected '").append(hintText[i]).append("'. ");
@@ -1408,7 +1438,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       }
 
       // see if disabled matches
-      final Set<String> disabledSet = ContainerUtil.set(disabled);
+      final Set<String> disabledSet = Set.of(disabled);
       for (int i = 0; i < hintText.length; i++) {
         if (hintFlags[i].contains(Flag.DISABLE) && !disabledSet.contains(hintText[i])) {
           wrongs.append("Highlighted a disabled '").append(hintText[i]).append("'. ");

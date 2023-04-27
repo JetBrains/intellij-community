@@ -4,10 +4,10 @@ package com.intellij.application.options.schemes;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Predicates;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.GroupedComboBoxRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collection;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -23,24 +22,42 @@ import java.util.function.Supplier;
 public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCombo.MySchemeListItem<T>> {
   public static final @NotNull Supplier<@Nls String> PROJECT_LEVEL = IdeBundle.messagePointer("scheme.project");
   public static final @NotNull Supplier<@Nls String> IDE_LEVEL = IdeBundle.messagePointer("scheme.ide");
+  private T firstProjectScheme = null;
+  private T firstIDEScheme = null;
 
   public SchemesCombo() {
-    super(new MyComboBoxModel<>());
-    setRenderer(new MyListCellRenderer());
+    super(new DefaultComboBoxModel<>());
+    setRenderer(new GroupedComboBoxRenderer<>(this) {
+      @Override
+      public void customize(@NotNull SimpleColoredComponent item, MySchemeListItem<T> value, int index, boolean isSelected, boolean hasFocus) {
+        customizeComponent(item, value, index);
+      }
+
+      @Nullable
+      @Override
+      public ListSeparator separatorFor(MySchemeListItem<T> value) {
+        if (!supportsProjectSchemes()) return null;
+        if (firstProjectScheme != null && firstProjectScheme.equals(value.getScheme()))
+          return new ListSeparator(IdeBundle.message("separator.scheme.stored.in", PROJECT_LEVEL.get()));
+        if (firstIDEScheme != null && firstIDEScheme.equals(value.getScheme()))
+          return new ListSeparator(IdeBundle.message("separator.scheme.stored.in", IDE_LEVEL.get()));
+        return null;
+      }
+    });
     setSwingPopup(false);
   }
 
   public void resetSchemes(@NotNull Collection<? extends T> schemes) {
-    final MyComboBoxModel<T> model = (MyComboBoxModel<T>)getModel();
+    final DefaultComboBoxModel<MySchemeListItem<T>> model = (DefaultComboBoxModel<MySchemeListItem<T>>)getModel();
     model.removeAllElements();
+    firstProjectScheme = null;
+    firstIDEScheme = null;
     if (supportsProjectSchemes()) {
-      model.addElement(new MySeparatorItem(PROJECT_LEVEL.get()));
-      addItems(schemes, scheme -> isProjectScheme(scheme));
-      model.addElement(new MySeparatorItem(IDE_LEVEL.get()));
-      addItems(schemes, scheme -> !isProjectScheme(scheme));
+      addItems(schemes, scheme -> scheme != null && isProjectScheme(scheme));
+      addItems(schemes, scheme -> scheme != null && !isProjectScheme(scheme));
     }
     else {
-      addItems(schemes, Predicates.alwaysTrue());
+      addItems(schemes, scheme -> scheme != null);
     }
   }
 
@@ -82,7 +99,9 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
   private void addItems(@NotNull Collection<? extends T> schemes, Predicate<? super T> filter) {
     for (T scheme : schemes) {
       if (filter.test(scheme)) {
-        ((MyComboBoxModel<T>) getModel()).addElement(new MySchemeListItem<>(scheme));
+        if (firstProjectScheme == null && isProjectScheme(scheme)) firstProjectScheme = scheme;
+        if (firstIDEScheme == null && !isProjectScheme(scheme)) firstIDEScheme = scheme;
+        ((DefaultComboBoxModel<MySchemeListItem<T>>) getModel()).addElement(new MySchemeListItem<>(scheme));
       }
     }
   }
@@ -108,77 +127,20 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     public @NlsContexts.ListItem String getPresentableText() {
       return myScheme != null ? myScheme.getDisplayName() : "";
     }
-
-    public boolean isSeparator() {
-      return false;
-    }
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<MySchemeListItem<T>> {
-    private final SeparatorWithText mySeparator = new SeparatorWithText();
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends MySchemeListItem<T>> list,
-                                                  MySchemeListItem<T> value,
-                                                  int index,
-                                                  boolean selected,
-                                                  boolean hasFocus) {
-      if (value != null && value.isSeparator()) {
-        mySeparator.setCaption(IdeBundle.message("separator.scheme.stored.in", value.getPresentableText()));
-        return mySeparator;
-      }
-      return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-    }
-
-    @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends MySchemeListItem<T>> list,
-                                         MySchemeListItem<T> value,
-                                         int index,
-                                         boolean selected,
-                                         boolean hasFocus) {
-      T scheme = value.getScheme();
-      if (scheme != null) {
-        append(value.getPresentableText(), getSchemeAttributes(scheme));
-        if (supportsProjectSchemes()) {
-          if (index == -1) {
-            append("  " + (isProjectScheme(scheme) ? PROJECT_LEVEL.get() : IDE_LEVEL.get()),
-                   SimpleTextAttributes.GRAY_ATTRIBUTES);
-          }
+  private void customizeComponent(@NotNull SimpleColoredComponent item, MySchemeListItem<T> value, int index) {
+    final var scheme = value.getScheme();
+    if (scheme != null) {
+      item.append(value.getPresentableText(), getSchemeAttributes(scheme));
+      if (supportsProjectSchemes()) {
+        if (index == -1) {
+          item.append("  " + (isProjectScheme(scheme) ? PROJECT_LEVEL.get() : IDE_LEVEL.get()),
+                      SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
-      int indent = index < 0 || scheme == null ? 0 : getIndent(scheme);
-      setIpad(JBUI.insetsLeft(indent > 0 ? indent * 10 : 0));
     }
-  }
-
-  private static class MyComboBoxModel<T extends Scheme> extends DefaultComboBoxModel<MySchemeListItem<T>> {
-    @Override
-    public void setSelectedItem(Object anObject) {
-      if (anObject instanceof SchemesCombo.MySchemeListItem && ((MySchemeListItem<?>)anObject).isSeparator()) {
-        return;
-      }
-      super.setSelectedItem(anObject);
-    }
-  }
-
-  private class MySeparatorItem extends MySchemeListItem<T> {
-
-    private final @NlsContexts.ListItem String myTitle;
-
-    MySeparatorItem(@NotNull @NlsContexts.ListItem String title) {
-      super(null);
-      myTitle = title;
-    }
-
-    @Override
-    public boolean isSeparator() {
-      return true;
-    }
-
-    @NotNull
-    @Override
-    public String getPresentableText() {
-      return myTitle;
-    }
+    int indent = index < 0 || scheme == null ? 0 : getIndent(scheme);
+    item.setIpad(JBUI.insetsLeft(indent > 0 ? indent * 10 : 0));
   }
 }

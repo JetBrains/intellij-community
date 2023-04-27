@@ -17,7 +17,7 @@ class Test {
   }
 
   String removesRedundantAssignment(String in) {
-      String s1 = null;
+      String string = null;
       String s = null;
       if (in == null) throw new NullPointerException();
       s = in;

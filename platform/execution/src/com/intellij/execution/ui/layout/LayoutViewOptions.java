@@ -11,12 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-
 public interface LayoutViewOptions {
-
   String STARTUP = "startup";
-
-  LayoutViewOptions setTitleProducer(@Nullable Producer<? extends @NotNull Pair<@Nullable Icon, @NotNull String>> titleProducer);
 
   /**
    * @deprecated use {@link #setTopLeftToolbar(ActionGroup, String)}

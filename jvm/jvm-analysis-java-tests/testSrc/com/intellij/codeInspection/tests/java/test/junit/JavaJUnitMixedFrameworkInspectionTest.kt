@@ -1,22 +1,22 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.junit.JUnitMixedFrameworkInspectionTestBase
 
 class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestBase() {
   fun `test no highlighting`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class JUnit3Test extends junit.framework.TestCase {
         public void testFoo() { }
       }      
     """.trimIndent(), fileName = "JUnit3Test")
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class JUnit4Test {
         @org.junit.Test
         public void testFoo() { }
       }
     """.trimIndent(), fileName = "JUnit4Test")
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class JUnit5Test {
         @org.junit.jupiter.api.Test
         public void testFoo() { }
@@ -28,7 +28,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
         public void beforeAll() { }
       }      
     """.trimIndent())
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class JUnit5Test extends JUnit5TestCase {
         @org.junit.jupiter.api.Test
         public void testFoo() { }
@@ -37,7 +37,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
   }
 
   fun `test highlighting junit 3 test case with junit 4 test`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.Test
         public void <warning descr="Method 'testFoo()' annotated with '@Test' inside class extending JUnit 3 TestCase">testFoo</warning>() { }
@@ -46,7 +46,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
   }
 
   fun `test highlighting junit 3 test case with junit 5 test`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.jupiter.api.Test
         public void <warning descr="Method 'testFoo()' annotated with '@Test' inside class extending JUnit 3 TestCase">testFoo</warning>() { }
@@ -55,7 +55,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
   }
 
   fun `test junit 3 test case with junit 4 test remove before each annotation quickfix`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.jupiter.api.BeforeEach
         public void do<caret>Something() { }
@@ -64,12 +64,12 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void doSomething() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@BeforeEach' annotation", testPreview = true)
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@BeforeEach' annotation")
   }
 
 
   fun `test junit 3 test case with junit 4 test remove test annotation without rename quickfix`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.Test
         public void test<caret>Foo() { }
@@ -78,11 +78,11 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation")
   }
 
   fun `test junit 3 test case with junit 4 test remove test annotation and rename quickfix`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.Test
         public void f<caret>oo() { }
@@ -91,11 +91,11 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation", testPreview = true)
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Test' annotation")
   }
 
   fun `test junit 3 test case with junit 4 test remove ignore annotation and rename quickfix`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, """
       public class MyTest extends junit.framework.TestCase {
         @org.junit.Ignore
         public void test<caret>Foo() { }
@@ -104,11 +104,11 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
       public class MyTest extends junit.framework.TestCase {
         public void _testFoo() { }
       }
-    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Ignore' annotation", testPreview = true)
+    """.trimIndent(), fileName = "MyTest", hint = "Remove '@Ignore' annotation")
   }
 
   fun `test highlighting junit 4 test case with junit 5 test`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class MyTest {
         @org.junit.jupiter.api.Test
         public void <warning descr="Method 'testFoo()' annotated with '@Test' inside class extending JUnit 4 TestCase">testFoo</warning>() { }
@@ -123,7 +123,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
   }
 
   fun `test highlighting junit 5 test case with junit 4 test`() {
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class MyTest {
         @org.junit.Test
         public void <warning descr="Method 'testFoo()' annotated with '@Test' inside class extending JUnit 5 TestCase">testFoo</warning>() { }
@@ -139,7 +139,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
 
 
   fun `test junit 5 test case with junit 4 quickfix`() {
-    myFixture.testQuickFix(ULanguage.JAVA, """
+    myFixture.testQuickFix(JvmLanguage.JAVA, """
       public class MyTest {
         @org.junit.Test
         public void test<caret>Foo() { }
@@ -173,7 +173,7 @@ class JavaJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestB
         public void beforeClass() { }
       }      
     """.trimIndent())
-    myFixture.testHighlighting(ULanguage.JAVA, """
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class MyTest extends JUnit4TestCase {
         @org.junit.jupiter.api.Test
         public void <warning descr="Method 'testFoo()' annotated with '@Test' inside class extending JUnit 4 TestCase">testFoo</warning>() { }

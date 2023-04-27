@@ -13,7 +13,10 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
-import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
+import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 import java.util.concurrent.ConcurrentLinkedQueue
 
 interface GitLabMergeRequestTimelineViewModel {
@@ -27,7 +30,10 @@ interface GitLabMergeRequestTimelineViewModel {
   sealed interface LoadingState {
     object Loading : LoadingState
     class Error(val exception: Throwable) : LoadingState
-    class Result(val items: Flow<List<GitLabMergeRequestTimelineItemViewModel>>) : LoadingState
+    class Result(
+      val mr: GitLabMergeRequest,
+      val items: Flow<List<GitLabMergeRequestTimelineItemViewModel>>
+    ) : LoadingState
   }
 }
 
@@ -51,10 +57,11 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val timelineLoadingFlow: Flow<LoadingState> = channelFlow {
     send(LoadingState.Loading)
 
-    mergeRequestFlow.collectLatest { mr ->
+    mergeRequestFlow.collectLatest { mrResult ->
       coroutineScope {
         val result = try {
-          LoadingState.Result(createItemsFlow(mr.getOrThrow()).mapToVms().stateIn(this))
+          val mr = mrResult.getOrThrow()
+          LoadingState.Result(mr, createItemsFlow(mr).mapToVms(mr).stateIn(this))
         }
         catch (ce: CancellationException) {
           throw ce
@@ -95,6 +102,9 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       }
     }.modelFlow(cs, LOG)
 
+  private val _diffRequests = MutableSharedFlow<GitLabDiscussionDiffViewModel.FullDiffRequest>()
+  val diffRequests: Flow<GitLabDiscussionDiffViewModel.FullDiffRequest> = _diffRequests.asSharedFlow()
+
   /**
    * Load all simple events and discussions and subscribe to user discussions changes
    */
@@ -132,18 +142,34 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     }
   }
 
-  private fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms() =
+  private fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms(mr: GitLabMergeRequest) =
     mapCaching(
       GitLabMergeRequestTimelineItem::id,
-      { cs, item -> createVm(cs, item) },
+      { cs, item -> cs.createItemVm(mr, item) },
       { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
     )
 
-  private fun createVm(cs: CoroutineScope, item: GitLabMergeRequestTimelineItem): GitLabMergeRequestTimelineItemViewModel =
+  private fun CoroutineScope.createItemVm(mr: GitLabMergeRequest, item: GitLabMergeRequestTimelineItem)
+    : GitLabMergeRequestTimelineItemViewModel =
     when (item) {
       is GitLabMergeRequestTimelineItem.Immutable ->
         GitLabMergeRequestTimelineItemViewModel.Immutable(item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, item.discussion)
+        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, mr, item.discussion).also {
+          handleDiffRequests(it, _diffRequests::emit)
+        }
     }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun CoroutineScope.handleDiffRequests(
+  discussion: GitLabMergeRequestTimelineItemViewModel.Discussion,
+  handler: suspend (GitLabDiscussionDiffViewModel.FullDiffRequest) -> Unit
+) {
+  launch(start = CoroutineStart.UNDISPATCHED) {
+    discussion.diffVm
+      .filterNotNull()
+      .flatMapLatest { it.showDiffRequests }
+      .collectLatest(handler)
+  }
 }

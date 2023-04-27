@@ -40,7 +40,6 @@ import org.junit.Test;
 
 import static com.intellij.openapi.roots.DependencyScope.COMPILE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin;
 
 /**
  * @author Vladislav.Soroka
@@ -104,7 +103,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     assertTasksProjectPath("adhoc", getProjectPath());
     if (isGradleNewerOrSameAs("6.8")) {
-      assertTasksProjectPath("my-app-name", getProjectPath(), ":my-app-name:");
+      /* Has to be :my-app: as this is the name of the included build (rootProject.name) is not used for path construction */
+      assertTasksProjectPath("my-app-name", getProjectPath(), ":my-app:");
       assertTasksProjectPath("my-utils", getProjectPath(), ":my-utils:");
     } else {
       assertTasksProjectPath("my-app-name", path("../my-app"));
@@ -452,8 +452,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     createProjectSubFile("project-a/settings.gradle", "rootProject.name = \"project-a\"");
 
-    String mainCompileConfiguration = isSupportedJavaLibraryPlugin(getCurrentGradleVersion()) ? "implementation" : "compile";
-    String utilCompileConfiguration = isSupportedJavaLibraryPlugin(getCurrentGradleVersion()) ? "utilImplementation" : "utilCompile";
+    String mainCompileConfiguration = isJavaLibraryPluginSupported() ? "implementation" : "compile";
+    String utilCompileConfiguration = isJavaLibraryPluginSupported() ? "utilImplementation" : "utilCompile";
     createProjectSubFile("project-a/build.gradle", script(it -> {
       it.withIdeaPlugin()
         .withJavaPlugin()
@@ -555,10 +555,17 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.1+")
   public void testSubstituteDependencyWithRootProject() throws Exception {
-    createSettingsFile("""
+    if (isGradleNewerOrSameAs("6.6")) {
+      createSettingsFile("""
+                         rootProject.name = "root-project"
+                         include 'sub-project'
+                         includeBuild('included-project') { dependencySubstitution { substitute module('my.grp:myId') using project(':') } }""");
+    } else {
+      createSettingsFile("""
                          rootProject.name = "root-project"
                          include 'sub-project'
                          includeBuild('included-project') { dependencySubstitution { substitute module('my.grp:myId') with project(':') } }""");
+    }
 
 
     createProjectSubFile("sub-project/build.gradle",
@@ -733,6 +740,28 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     importProject("");
 
     assertModules("root", "A", "AA", "AAA");
+  }
+
+  @Test
+  @TargetVersions("8.0-rc-3")
+  public void testNestedCompositeBuildsWithDuplicateNames() throws Exception {
+    createSettingsFile("""
+ rootProject.name = 'root'
+ includeBuild('doppelganger')
+ includeBuild('nested')
+""");
+
+    createProjectSubFile("nested/settings.gradle", """
+      includeBuild('doppelganger')
+      """);
+    createProjectSubFile("doppelganger/settings.gradle", "include('module')");
+    createProjectSubFile("doppelganger/module/build.gradle", "//empty");
+    createProjectSubFile("nested/doppelganger/settings.gradle", "include('module')");
+    createProjectSubFile("nested/doppelganger/module/build.gradle", "//empty");
+
+    importProject("");
+
+    assertModules("root", "nested", "doppelganger", "nested.doppelganger", "doppelganger.module", "nested.doppelganger.module");
   }
 
   @Test

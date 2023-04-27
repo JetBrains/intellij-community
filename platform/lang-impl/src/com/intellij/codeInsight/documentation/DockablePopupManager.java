@@ -175,7 +175,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     installComponentActions(toolWindow, component);
 
-    new UiNotifyConnector(component, new Activatable() {
+    UiNotifyConnector.installOn(component, new Activatable() {
       @Override
       public void showNotify() {
         restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), getAutoUpdateDefault()));

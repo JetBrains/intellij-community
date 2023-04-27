@@ -422,7 +422,7 @@ final class SliceUtil {
                                processor, actualParameterType, actualParameters, paramSeqNo, specificMethodCall.getElement());
     }
 
-    Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
+    Collection<PsiMethod> superMethods = ContainerUtil.newHashSet(method.findDeepestSuperMethods());
     superMethods.add(method);
 
     final Set<PsiReference> processed = new HashSet<>(); //usages of super method and overridden method can overlap

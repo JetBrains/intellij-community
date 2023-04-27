@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
-import com.intellij.psi.stubs.StringStubIndexExtension
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
@@ -33,6 +34,13 @@ import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.SmartList
+
+@ApiStatus.Internal
+class Fe10LibrarySourceScopeService: LibrarySourceScopeService {
+    override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> =
+        SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, project)
+
+}
 
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
@@ -89,7 +97,7 @@ object SourceNavigationHelper {
                         return ModuleInfoProvider.getInstance(project)
                             .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)
                             .map { it.binariesScope }
-                            .toList()
+                            .toSet()
                             .union()
                     }
                 }
@@ -231,12 +239,12 @@ object SourceNavigationHelper {
     private fun <T : KtNamedDeclaration> findFirstMatchingInIndex(
         entity: T,
         navigationKind: NavigationKind,
-        index: StringStubIndexExtension<T>
+        helper: KotlinStringStubIndexHelper<T>
     ): T? {
         val classFqName = entity.fqName ?: return null
         return targetScopes(entity, navigationKind).firstNotNullOfOrNull { scope ->
             ProgressManager.checkCanceled()
-            index.get(classFqName.asString(), entity.project, scope).minByOrNull { it.isExpectDeclaration() }
+            helper[classFqName.asString(), entity.project, scope].minByOrNull { it.isExpectDeclaration() }
         }
     }
 
@@ -249,7 +257,7 @@ object SourceNavigationHelper {
     ): Collection<KtNamedDeclaration> {
         val scopes = targetScopes(declaration, navigationKind)
 
-        val index: StringStubIndexExtension<out KtNamedDeclaration> = when (declaration) {
+        val helper: KotlinStringStubIndexHelper<out KtNamedDeclaration> = when (declaration) {
             is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex
             is KtProperty -> KotlinTopLevelPropertyFqnNameIndex
             else -> throw IllegalArgumentException("Neither function nor declaration: " + declaration::class.java.name)
@@ -257,7 +265,7 @@ object SourceNavigationHelper {
 
         return scopes.flatMap { scope ->
             ProgressManager.checkCanceled()
-            index.get(declaration.fqName!!.asString(), declaration.project, scope).sortedBy { it.isExpectDeclaration() }
+            helper[declaration.fqName!!.asString(), declaration.project, scope].sortedBy { it.isExpectDeclaration() }
         }
     }
 

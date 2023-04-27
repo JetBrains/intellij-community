@@ -38,7 +38,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerManager
@@ -231,9 +230,9 @@ class PythonOnboardingTourLesson :
     }
     caret(sample.startOffset)
 
-    toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
+    toggleBreakpointTask(sample, { logicalPosition }, breakpointXRange = { IntRange(13, it - 17) }, checkLine = false) {
       text(PythonLessonsBundle.message("python.onboarding.balloon.click.here"),
-           LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = JBUI.scale(20)))
+           LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = 20))
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.1",
                                        code("6.5"), code("find_average"), code("26")))
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.2"))
@@ -250,14 +249,13 @@ class PythonOnboardingTourLesson :
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
-    highlightDebugActionsToolbar(highlightInside = false, usePulsation = false)
+    highlightDebugActionsToolbar()
 
     task {
       rehighlightPreviousUi = true
       gotItStep(Balloon.Position.above, width = 0,
                 PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
                                             strong(UIBundle.message("tool.window.name.debug")),
-                                            if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
                                             strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       restoreIfModified(sample)
     }
@@ -407,7 +405,7 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.project.view.description",
                                        action("ActivateProjectToolWindow")))
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.view"),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0, cornerToPointerDistance = JBUI.scale(8)))
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0, cornerToPointerDistance = 8))
       triggerAndBorderHighlight().treeItem { tree: JTree, path: TreePath ->
         val result = path.pathCount >= 1 && path.getPathComponent(0).isToStringContains("PyCharmLearningProject")
         if (result) {
@@ -457,12 +455,19 @@ class PythonOnboardingTourLesson :
     }
 
     task {
+      val textToFind = "len()"
+      triggerOnEditorText(textToFind, centerOffset = textToFind.length - 1)
+    }
+
+    task {
       text(PythonLessonsBundle.message("python.onboarding.type.division",
-        code(" / len()")))
+                                       code(" / len()")))
       text(PythonLessonsBundle.message("python.onboarding.invoke.completion",
-        code("values"),
-        code("()"),
-        action("CodeCompletion")))
+                                       code("values"),
+                                       code("()"),
+                                       action("CodeCompletion")))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.completion.balloon", code("values")),
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerAndBorderHighlight().listItem { // no highlighting
         it.isToStringContains("values")
       }
@@ -482,9 +487,16 @@ class PythonOnboardingTourLesson :
   private fun LessonContext.contextActions() {
     val reformatMessage = PyBundle.message("QFIX.reformat.file")
     caret(",6")
+
+    task {
+      triggerOnEditorText("5,6")
+    }
+
     task("ShowIntentionActions") {
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.1"))
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.2", action(it)))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.balloon", action(it)),
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(reformatMessage)
       }
@@ -504,10 +516,17 @@ class PythonOnboardingTourLesson :
       if (PythonLessonsUtil.isPython3Installed(project)) PyPsiBundle.message("INTN.specify.return.type.in.annotation")
       else PyPsiBundle.message("INTN.specify.return.type.in.docstring")
 
-    caret("find_average")
+    caret("average")
+
+    task {
+      triggerOnEditorText("find_average", highlightBorder = true)
+    }
+
     task("ShowIntentionActions") {
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.code",
                                        code("find_average"), action(it)))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.code.balloon", action(it)),
+           LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = 50))
       triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(returnTypeMessage(project))
       }
@@ -570,7 +589,7 @@ class PythonOnboardingTourLesson :
         }
       }
       text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description",
-                                       strong("AVERAGE"), strong(PythonLessonsBundle.message("toggle.case.part"))))
+                                       code("AVERAGE"), code(PythonLessonsBundle.message("toggle.case.part"))))
       triggerAndBorderHighlight().listItem { item ->
         val value = (item as? GotoActionModel.MatchedValue)?.value
         (value as? GotoActionModel.ActionWrapper)?.action is ToggleCaseAction

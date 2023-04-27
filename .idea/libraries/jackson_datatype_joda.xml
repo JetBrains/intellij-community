@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="jackson-datatype-joda" type="repository">
-    <properties maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.14.1">
+    <properties maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.14.2">
       <exclude>
         <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
         <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
@@ -8,7 +8,7 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.14.1/jackson-datatype-joda-2.14.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.14.2/jackson-datatype-joda-2.14.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.10.8/joda-time-2.10.8.jar!/" />
     </CLASSES>
     <JAVADOC />

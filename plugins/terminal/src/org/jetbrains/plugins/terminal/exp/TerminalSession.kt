@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ConcurrencyUtil
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
@@ -26,6 +27,7 @@ class TerminalSession(private val project: Project,
   lateinit var terminalStarter: TerminalStarter
 
   private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Terminal-${sessionIndex++}")
+
   private val textBuffer: TerminalTextBuffer
   private val controller: TerminalController
   private val commandManager: ShellCommandManager
@@ -34,9 +36,10 @@ class TerminalSession(private val project: Project,
   init {
     val styleState = StyleState()
     styleState.setDefaultStyle(settings.defaultStyle)
-    textBuffer = TerminalTextBuffer(80, 24, styleState)
+    textBuffer = TerminalTextBufferEx(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
     controller = TerminalController(model, settings)
+
     commandManager = ShellCommandManager(controller)
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
@@ -61,17 +64,26 @@ class TerminalSession(private val project: Project,
   fun postResize(newSize: TermSize) {
     // it can be executed right after component is shown,
     // terminal starter can not be initialized at this point
-    if (this::terminalStarter.isInitialized) {
+    if (this::terminalStarter.isInitialized && (newSize.columns != model.width || newSize.rows != model.height)) {
+      // TODO: is it needed?
+      //myTypeAheadManager.onResize()
       terminalStarter.postResize(newSize, RequestOrigin.User)
     }
   }
 
-  fun addCommandListener(listener: ShellCommandListener, parentDisposable: Disposable) {
+  fun addCommandListener(listener: ShellCommandListener, parentDisposable: Disposable? = null) {
     commandManager.addListener(listener, parentDisposable)
   }
 
   override fun dispose() {
     terminalExecutor.shutdown()
-    terminalStarter.close()
+    // Can be disposed before session is started
+    if (this::terminalStarter.isInitialized) {
+      terminalStarter.close()
+    }
+  }
+
+  companion object {
+    val KEY: Key<TerminalSession> = Key.create("TerminalSession")
   }
 }

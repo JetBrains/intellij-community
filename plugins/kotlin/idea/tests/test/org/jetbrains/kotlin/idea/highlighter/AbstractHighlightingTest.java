@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
@@ -28,15 +29,20 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
     public static final String NO_CHECK_WEAK_WARNINGS_PREFIX = "// NO_CHECK_WEAK_WARNINGS";
     public static final String NO_CHECK_WARNINGS_PREFIX = "// NO_CHECK_WARNINGS";
     public static final String EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX = "// EXPECTED_DUPLICATED_HIGHLIGHTING";
+    public static final String ALLOW_DOC_CHANGE_PREFIX = "// ALLOW_DOC_CHANGE";
     public static final String TOOL_PREFIX = "// TOOL:";
 
     protected void checkHighlighting(@NotNull String fileText) {
         boolean checkInfos = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_INFOS_PREFIX);
         boolean checkWeakWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WEAK_WARNINGS_PREFIX);
         boolean checkWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WARNINGS_PREFIX);
+        boolean allowDocChange = InTextDirectivesUtils.isDirectiveDefined(fileText, ALLOW_DOC_CHANGE_PREFIX);
 
         KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(fileText, getProject(), getModule(), () ->
-                myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings));
+        {
+            ((CodeInsightTestFixtureImpl) myFixture).canChangeDocumentDuringHighlighting(allowDocChange);
+            return myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+        });
     }
 
     protected void doTest(String unused) throws Exception {

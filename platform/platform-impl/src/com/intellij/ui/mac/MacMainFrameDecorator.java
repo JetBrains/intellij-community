@@ -96,6 +96,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       myDispatcher.addListener(new FSAdapter() {
         @Override
         public void windowEnteringFullScreen(FullScreenEvent event) {
+          frame.setTogglingFullScreenInProgress(true);
           JRootPane rootPane = frame.getRootPane();
           if (rootPane != null && rootPane.getBorder() != null) {
             rootPane.setBorder(null);
@@ -105,6 +106,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
         @Override
         public void windowEnteredFullScreen(FullScreenEvent event) {
+          frame.setTogglingFullScreenInProgress(false);
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = frame.getRootPane();
           if (rootPane != null) {
@@ -116,7 +118,13 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         }
 
         @Override
+        public void windowExitingFullScreen(FullScreenEvent e) {
+          frame.setTogglingFullScreenInProgress(true);
+        }
+
+        @Override
         public void windowExitedFullScreen(FullScreenEvent event) {
+          frame.setTogglingFullScreenInProgress(false);
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = frame.getRootPane();
           if (!ExperimentalUI.isNewUI() || !MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
@@ -191,6 +199,15 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     }
 
     myTabsHandler.exitFullScreen();
+  }
+
+  @Override
+  public void setStoredFullScreen() {
+    myInFullScreen = true;
+    JRootPane rootPane = frame.getRootPane();
+    if (rootPane != null) {
+      rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
+    }
   }
 
   private void storeFullScreenStateIfNeeded() {

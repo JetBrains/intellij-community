@@ -1,0 +1,122 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
+
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
+import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.psi.*
+
+class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
+    override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+        if (file !is KtFile) return null
+
+        val elementsWithRedundantQualifiers = collectPossibleShortenings(file).ifEmpty { return null }
+
+        return elementsWithRedundantQualifiers
+            .map { element -> manager.createRedundantQualifierProblemDescriptor(element, isOnTheFly) }
+            .toTypedArray()
+    }
+
+    private fun collectPossibleShortenings(file: KtFile): List<KtElement> {
+        val shortenings = analyze(file) {
+            // a workaround until KT-57966 is fixed
+            file.declarations.map { declaration -> collectShortenings(declaration) }
+        }
+
+        val qualifiersToShorten = shortenings.asSequence().flatMap { it.getQualifiersToShorten() }
+        val typesToShorten = shortenings.asSequence().flatMap { it.getTypesToShorten() }
+
+        return (qualifiersToShorten + typesToShorten).mapNotNull { it.element }.toList()
+    }
+
+    /**
+     * See KTIJ-16225 and KTIJ-15232 for the details about why we have
+     * special treatment for enums.
+     */
+    context(KtAnalysisSession)
+    private fun collectShortenings(declaration: KtDeclaration): ShortenCommand =
+        collectPossibleReferenceShorteningsInElement(
+            declaration,
+            classShortenOption = { classSymbol ->
+                if (classSymbol.isEnumCompanionObject()) {
+                    ShortenOption.DO_NOT_SHORTEN
+                } else {
+                    ShortenOption.SHORTEN_IF_ALREADY_IMPORTED
+                }
+            },
+            callableShortenOption = { callableSymbol ->
+                val containingSymbol = callableSymbol.getContainingSymbol()
+
+                if (callableSymbol !is KtEnumEntrySymbol && (containingSymbol.isEnumClass() || containingSymbol.isEnumCompanionObject())) {
+                    ShortenOption.DO_NOT_SHORTEN
+                } else {
+                    ShortenOption.SHORTEN_IF_ALREADY_IMPORTED
+                }
+            },
+        )
+
+    private fun InspectionManager.createRedundantQualifierProblemDescriptor(element: KtElement, isOnTheFly: Boolean): ProblemDescriptor {
+        val qualifierToRemove = element.getQualifier()
+
+        return createProblemDescriptor(
+            element,
+            qualifierToRemove?.textRangeIn(element),
+            KotlinBundle.message("remove.redundant.qualifier.name.quick.fix.text"),
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+            isOnTheFly,
+            RemoveQualifierQuickFix,
+        )
+    }
+
+    private object RemoveQualifierQuickFix : LocalQuickFix {
+        override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.qualifier.name.quick.fix.text")
+
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val elementWithQualifier = descriptor.psiElement ?: return
+
+            when (elementWithQualifier) {
+                is KtUserType -> elementWithQualifier.deleteQualifier()
+                is KtDotQualifiedExpression -> elementWithQualifier.deleteQualifier()
+            }
+        }
+    }
+}
+
+context (KtAnalysisSession)
+private fun KtDeclarationSymbol.getContainingClassForCompanionObject(): KtNamedClassOrObjectSymbol? {
+    if (this !is KtClassOrObjectSymbol || this.classKind != KtClassKind.COMPANION_OBJECT) return null
+
+    val containingClass = getContainingSymbol() as? KtNamedClassOrObjectSymbol
+    return containingClass?.takeIf { it.companionObject == this }
+}
+
+private fun KtDeclarationSymbol?.isEnumClass(): Boolean {
+    val classSymbol = this as? KtClassOrObjectSymbol ?: return false
+    return classSymbol.classKind == KtClassKind.ENUM_CLASS
+}
+
+context (KtAnalysisSession)
+private fun KtDeclarationSymbol?.isEnumCompanionObject(): Boolean =
+  this?.getContainingClassForCompanionObject().isEnumClass()
+
+private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {
+    val selectorExpression = selectorExpression ?: return null
+    return this.replace(selectorExpression) as KtExpression
+}
+
+private fun KtElement.getQualifier(): KtElement? = when (this) {
+    is KtUserType -> qualifier
+    is KtDotQualifiedExpression -> receiverExpression
+    else -> null
+}

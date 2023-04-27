@@ -5,11 +5,13 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.ui.IconManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class ExpressionLookupItem extends LookupElement implements TypedLookupItem {
@@ -28,7 +30,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
     myPresentableText = presentableText;
     myIcon = icon;
     myLookupString = lookupStrings[0];
-    myAllLookupStrings = ContainerUtil.immutableSet(lookupStrings);
+    myAllLookupStrings = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(lookupStrings)));
   }
 
   @Nullable

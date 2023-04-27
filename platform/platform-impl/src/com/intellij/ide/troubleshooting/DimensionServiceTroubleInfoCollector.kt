@@ -8,7 +8,16 @@ import com.intellij.openapi.util.WindowStateService
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector
 import org.jdom.Element
 
-class WindowStateProjectServiceTroubleInfoCollector : GeneralTroubleInfoCollector {
+internal fun collectDimensionServiceDiagnosticsData(project: Project): String {
+  return CompositeGeneralTroubleInfoCollector.collectInfo(
+    project,
+    WindowStateProjectServiceTroubleInfoCollector(),
+    WindowStateApplicationServiceTroubleInfoCollector(),
+    DimensionServiceTroubleInfoCollector()
+  )
+}
+
+private class WindowStateProjectServiceTroubleInfoCollector : GeneralTroubleInfoCollector {
 
   override fun getTitle() = "Window State Service (per project)"
 
@@ -17,7 +26,7 @@ class WindowStateProjectServiceTroubleInfoCollector : GeneralTroubleInfoCollecto
 
 }
 
-class WindowStateApplicationServiceTroubleInfoCollector : GeneralTroubleInfoCollector {
+private class WindowStateApplicationServiceTroubleInfoCollector : GeneralTroubleInfoCollector {
 
   override fun getTitle() = "Window State Service (per app)"
 
@@ -26,7 +35,7 @@ class WindowStateApplicationServiceTroubleInfoCollector : GeneralTroubleInfoColl
 
 }
 
-class DimensionServiceTroubleInfoCollector : GeneralTroubleInfoCollector {
+private class DimensionServiceTroubleInfoCollector : GeneralTroubleInfoCollector {
 
   override fun getTitle() = "Dimension Service"
 
@@ -35,25 +44,25 @@ class DimensionServiceTroubleInfoCollector : GeneralTroubleInfoCollector {
 
 }
 
-fun Any?.serviceToTroubleshootingString(): String = when (this) {
+private fun Any?.serviceToTroubleshootingString(): String = when (this) {
   null -> "Service not found"
   is PersistentStateComponent<*> -> state.stateToTroubleshootingString()
   else -> "Service ${this.javaClass.name} is not a PersistentStateComponent"
 }
 
-fun Any?.stateToTroubleshootingString(): String = when (this) {
+private fun Any?.stateToTroubleshootingString(): String = when (this) {
   null -> "Service has no recorded state"
   is Element -> toTroubleshootingString()
   else -> "Service state is not an XML element: ${this.javaClass.name}"
 }
 
-fun Element.toTroubleshootingString(): String {
+private fun Element.toTroubleshootingString(): String {
   val buffer = StringBuilder()
   toTroubleshootingString(buffer, this, 0)
   return buffer.toString()
 }
 
-fun toTroubleshootingString(buffer: StringBuilder, element: Element, indent: Int) {
+private fun toTroubleshootingString(buffer: StringBuilder, element: Element, indent: Int) {
   buffer.append(" ".repeat(indent))
   buffer.append(element.name)
   for (attribute in element.attributes) {

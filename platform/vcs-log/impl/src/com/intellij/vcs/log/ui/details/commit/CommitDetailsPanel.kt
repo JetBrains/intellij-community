@@ -22,6 +22,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.ui.RootIcon
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.*
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.util.VcsLogUiUtil
@@ -70,20 +71,8 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
       layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().flowY())
       isOpaque = false
 
-      val metadataPanel = object: BorderLayoutPanel() {
-        init {
-          updateBorder()
-        }
-
-        override fun updateUI() {
-          super.updateUI()
-          updateBorder()
-        }
-
-        private fun updateBorder() {
-          border = JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, 0)
-        }
-      }.apply {
+      val metadataPanel = BorderLayoutPanel().apply {
+        border = JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, 0)
         isOpaque = false
         addToLeft(rootPanel)
         addToCenter(hashAndAuthorPanel)
@@ -115,7 +104,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     branchesPanel.setReferences(references.filter { it.type.isBranch })
     tagsPanel.setReferences(references.filter { !it.type.isBranch })
     if (tagsPanel.isVisible) {
-      branchesPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, 0)
+      branchesPanel.border = JBUI.Borders.emptyLeft(SIDE_BORDER - ReferencesPanel.H_GAP)
       tagsPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, 0)
     }
     else if (branchesPanel.isVisible) {
@@ -199,14 +188,6 @@ private class CommitMessagePanel(private val navigate: (CommitId) -> Unit) : Htm
   }
 
   init {
-    updateBorder()
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-    updateBorder()
-  }
-  private fun updateBorder() {
     border = JBUI.Borders.empty(CommitDetailsPanel.EXTERNAL_BORDER, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.INTERNAL_BORDER, 0)
   }
 
@@ -230,17 +211,8 @@ private class ContainingBranchesPanel : HtmlPanel() {
   private var expanded = false
 
   init {
-    updateBorder()
-    isVisible = false
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-    updateBorder()
-  }
-
-  private fun updateBorder() {
     border = JBUI.Borders.empty(0, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.EXTERNAL_BORDER, 0)
+    isVisible = false
   }
 
   override fun setBounds(x: Int, y: Int, w: Int, h: Int) {
@@ -371,7 +343,7 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
 
   fun setRoot(rootColor: CommitDetailsPanel.RootColor?) {
     if (rootColor != null) {
-      icon = JBUIScale.scaleIcon(ColorIcon(ROOT_ICON_SIZE, rootColor.color))
+      icon = RootIcon.createAndScale(rootColor.color)
       tooltipText = rootColor.root.path
     }
     else {

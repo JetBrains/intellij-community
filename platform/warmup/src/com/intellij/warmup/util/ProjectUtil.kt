@@ -4,10 +4,7 @@ package com.intellij.warmup.util
 import com.intellij.conversion.ConversionListener
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.PatchProjectUtil
-import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.impl.*
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -19,16 +16,16 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.asSafely
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.nio.file.Path
 import java.util.*
 
-private val LOG = ConsoleLog
-
 fun importOrOpenProject(args: OpenProjectArgs, indicator: ProgressIndicator): Project {
-  LOG.info("Opening project from ${args.projectDir}...")
+  WarmupLogger.logInfo("Opening project from ${args.projectDir}...")
   // most of the sensible operations would run in the same thread
   return runUnderModalProgressIfIsEdt {
     runTaskAndLogTime("open project") {
@@ -38,7 +35,7 @@ fun importOrOpenProject(args: OpenProjectArgs, indicator: ProgressIndicator): Pr
 }
 
 suspend fun importOrOpenProjectAsync(args: OpenProjectArgs, indicator: ProgressIndicator): Project {
-  LOG.info("Opening project from ${args.projectDir}...")
+  WarmupLogger.logInfo("Opening project from ${args.projectDir}...")
   // most of the sensible operations would run in the same thread
   return runTaskAndLogTime("open project") {
     importOrOpenProjectImpl(args)
@@ -50,7 +47,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
                    ?: throw RuntimeException("Project path ${args.projectDir} is not found")
 
   runTaskAndLogTime("refresh VFS") {
-    LOG.info("Refreshing VFS ${args.projectDir}...")
+    WarmupLogger.logInfo("Refreshing VFS ${args.projectDir}...")
     VfsUtil.markDirtyAndRefresh(false, true, true, args.projectDir.toFile())
   }
   yieldThroughInvokeLater()
@@ -78,6 +75,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
   callProjectConfigurators(args) {
     this.runWarmup(project)
 
+    FileBasedIndex.getInstance().asSafely<FileBasedIndexImpl>()?.changedFilesCollector?.ensureUpToDate()
     //the configuration may add more dumb tasks to complete
     //we flush the queue to avoid a deadlock between a modal progress & invokeLater
     yieldAndWaitForDumbModeEnd(project)
@@ -109,29 +107,29 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
     }
 
     errors += missingSDKs.map { "Missing JDK entry: ${it}" }
-    errors.forEach { LOG.warn(it) }
+    errors.forEach { WarmupLogger.logInfo(it) }
   }
 
-  LOG.info("Project is ready for the import")
+  WarmupLogger.logInfo("Project is ready for the import")
   return project
 }
 
 private val listener = object : ConversionListener {
 
   override fun error(message: String) {
-    LOG.warn("PROGRESS: $message")
+    WarmupLogger.logInfo("PROGRESS: $message")
   }
 
   override fun conversionNeeded() {
-    LOG.info("PROGRESS: Project conversion is needed")
+    WarmupLogger.logInfo("PROGRESS: Project conversion is needed")
   }
 
   override fun successfullyConverted(backupDir: Path) {
-    LOG.info("PROGRESS: Project was successfully converted")
+    WarmupLogger.logInfo("PROGRESS: Project was successfully converted")
   }
 
   override fun cannotWriteToFiles(readonlyFiles: List<Path>) {
-    LOG.info("PROGRESS: Project conversion failed for:\n" + readonlyFiles.joinToString("\n"))
+    WarmupLogger.logInfo("PROGRESS: Project conversion failed for:\n" + readonlyFiles.joinToString("\n"))
   }
 }
 
@@ -142,7 +140,7 @@ private suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
 
   val conversionService = ConversionService.getInstance() ?: return
   runTaskAndLogTime("convert project") {
-    LOG.info("Checking if conversions are needed for the project")
+    WarmupLogger.logInfo("Checking if conversions are needed for the project")
     val conversionResult = withContext(Dispatchers.EDT) {
       conversionService.convertSilently(projectArgs.projectDir, listener)
     }
@@ -152,7 +150,7 @@ private suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
     }
 
     if (conversionResult.conversionNotNeeded()) {
-      LOG.info("No conversions were needed")
+      WarmupLogger.logInfo("No conversions were needed")
     }
   }
 
@@ -168,7 +166,7 @@ private suspend fun callProjectConfigurators(
 
   val activeConfigurators = getAllConfigurators().filter {
     if (it.configuratorPresentableName in projectArgs.disabledConfigurators) {
-      ConsoleLog.info("Configurator ${it.configuratorPresentableName} is disabled in the settings")
+      WarmupLogger.logInfo("Configurator ${it.configuratorPresentableName} is disabled in the settings")
       false
     } else {
       true
@@ -181,7 +179,12 @@ private suspend fun callProjectConfigurators(
     for (configuration in activeConfigurators) {
       durationStep(fraction, "Configurator ${configuration.configuratorPresentableName} is in action..." /* NON-NLS */) {
         runTaskAndLogTime("Configure " + configuration.configuratorPresentableName) {
-          action(configuration)
+          try {
+            action(configuration)
+          } catch (e : CancellationException) {
+            val message = (e.message ?: e.stackTraceToString()).lines().joinToString("\n") { "[${configuration.configuratorPresentableName}]: $it" }
+            WarmupLogger.logInfo("Configurator '${configuration.configuratorPresentableName}' was cancelled with the following outcome:\n$message")
+          }
         }
       }
     }
@@ -191,5 +194,8 @@ private suspend fun callProjectConfigurators(
 }
 
 private fun getAllConfigurators() : List<WarmupConfigurator> {
-  return WarmupConfigurator.EP_NAME.extensionList + CommandLineInspectionProjectConfigurator.EP_NAME.extensionList.map(::WarmupConfiguratorOfCLIConfigurator)
+  return WarmupConfigurator.EP_NAME.extensionList +
+         CommandLineInspectionProjectConfigurator.EP_NAME.extensionList
+           .filter { it.name.startsWith("qodana").not() }
+           .map(::WarmupConfiguratorOfCLIConfigurator)
 }

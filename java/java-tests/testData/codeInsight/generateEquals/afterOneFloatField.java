@@ -7,7 +7,7 @@ class Test {
 
         final Test test = (Test) o;
 
-        if (Float.compare(test.d, d) != 0) return false;
+        if (Float.compare(d, test.d) != 0) return false;
 
         return true;
     }

@@ -9,6 +9,8 @@ import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.OffsetKey
+import com.intellij.codeInsight.completion.OffsetMap
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import java.lang.IllegalStateException
 
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
 
@@ -347,6 +350,10 @@ private fun insertLambdaSignatureTemplate(
     )
 }
 
+private operator fun OffsetMap.get(key: OffsetKey): Int? {
+    return if (containsOffset(key)) getOffset(key) else null
+}
+
 sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallableInsertHandler(callType) {
 
     class Normal(
@@ -386,15 +393,21 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
             psiDocumentManager.commitDocument(document)
             psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
 
-            val startOffset = context.startOffset
-            val element = context.file.findElementAt(startOffset) ?: return
+            // One of the offsets could become invalidated on the previous steps of insertion
+            // We try to increase our chances to find a valid offset for the element
+            val offsetMap = context.offsetMap
+            val elementOffset = offsetMap[START_OFFSET]
+                ?: offsetMap[InsertionContext.TAIL_OFFSET]?.let { it - 1 }
+                ?: throw IllegalStateException("No valid offsets found in context: $offsetMap")
+
+            val element = context.file.findElementAt(elementOffset) ?: return
 
             addArguments(context, element)
 
             // hack for KT-31902
             if (callType == CallType.DEFAULT) {
                 context.file
-                    .findElementAt(startOffset)
+                    .findElementAt(elementOffset)
                     ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
                     ?.createSmartPointer()?.let {
                         psiDocumentManager.commitDocument(document)

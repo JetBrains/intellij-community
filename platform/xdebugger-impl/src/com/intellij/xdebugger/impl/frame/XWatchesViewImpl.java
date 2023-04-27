@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.execution.ui.UIExperiment;
@@ -215,7 +215,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
               KeymapUtil.getShortcutText(new KeyboardShortcut(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE, null))
             ));
             editor.addFocusListener(new FocusChangeListener() {
-              private final Set<FocusEvent.Cause> myCauses = Set.of(
+              private static final Set<FocusEvent.Cause> myCauses = Set.of(
                 FocusEvent.Cause.UNKNOWN,
                 FocusEvent.Cause.TRAVERSAL_FORWARD,
                 FocusEvent.Cause.TRAVERSAL_BACKWARD
@@ -270,7 +270,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       });
       addToWatchesActionRef.get()
         .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE), editorComponent);
-      JComponent component = myEvaluateComboBox.getComponent();
+      JComponent component = JBUI.Panels.simplePanel(myEvaluateComboBox.getComponent());
       //component.setBackground(tree.getBackground());
       component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       if (!UIExperiment.isNewDebuggerUIEnabled()) {

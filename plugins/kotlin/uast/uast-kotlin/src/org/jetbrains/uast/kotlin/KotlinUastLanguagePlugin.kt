@@ -20,7 +20,7 @@ import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclaration
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclarationOrElement
-import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 
@@ -128,7 +128,7 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
                 KotlinConverter.convertJvmStaticMethod(element, null, requiredTypes) as Sequence<T>
             element is KtParameter -> KotlinConverter.convertParameter(element, null, requiredTypes) as Sequence<T>
             element is KtClassOrObject -> KotlinConverter.convertClassOrObject(element, null, requiredTypes) as Sequence<T>
-            element is UastFakeLightPrimaryConstructor ->
+            element is UastFakeSourceLightPrimaryConstructor ->
                 KotlinConverter.convertFakeLightConstructorAlternatives(element, null, requiredTypes) as Sequence<T>
             else -> sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
         }

@@ -453,7 +453,11 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       return;
     }
     if (listContext) {
-      if (replacements.length > 1) {
+      if (replacements.length == 1 && replacements[0] instanceof PsiExpressionListStatement statement) {
+        PsiElement[] children = statement.getExpressionList().getChildren();
+        elementParent.addRangeBefore(children[0], children[children.length - 1], elementToReplace);
+      }
+      else if (replacements.length > 1) {
         final PsiElement replacement = elementParent.addRangeBefore(replacements[0], replacements[replacements.length - 1], elementToReplace);
         copyUnmatchedElements(elementToReplace, replacement, info);
       }

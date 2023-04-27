@@ -8,7 +8,7 @@ import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionPhaseListener;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,6 +35,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompletionCommand extends PerformanceCommand {
 
@@ -86,10 +87,23 @@ public class CompletionCommand extends PerformanceCommand {
     Disposable listenerDisposable = Disposer.newDisposable();
     Ref<Span> span = new Ref<>();
     Ref<Scope> scope = new Ref<>();
+    Ref<Long> completionTimeStarted = new Ref<>();
+    AtomicBoolean lookupListenerInited = new AtomicBoolean(false);
     ApplicationManager.getApplication().getMessageBus().connect(listenerDisposable)
       .subscribe(CompletionPhaseListener.TOPIC, new CompletionPhaseListener() {
         @Override
         public void completionPhaseChanged(boolean isCompletionRunning) {
+          Editor editor = FileEditorManager.getInstance(context.getProject()).getSelectedTextEditor();
+          LookupEx lookup = LookupManager.getActiveLookup(editor);
+          if (lookup != null && !lookupListenerInited.get()) {
+            lookup.addLookupListener(new LookupListener() {
+              @Override
+              public void firstElementShown() {
+                span.get().setAttribute("firstElementShown", System.currentTimeMillis() - completionTimeStarted.get());
+              }
+            });
+            lookupListenerInited.set(true);
+          }
           if (!isCompletionRunning && !CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class) && !span.isNull()) {
             if (CompletionServiceImpl.getCurrentCompletionProgressIndicator() == null) {
               String description =
@@ -120,6 +134,7 @@ public class CompletionCommand extends PerformanceCommand {
       Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       span.set(startSpan(SPAN_NAME));
       scope.set(span.get().makeCurrent());
+      completionTimeStarted.set(System.currentTimeMillis());
       new CodeCompletionHandlerBase(getCompletionType(), true, false, true).invokeCompletion(project, editor);
     }));
     return Promises.toPromise(actionCallback);
@@ -166,7 +181,7 @@ public class CompletionCommand extends PerformanceCommand {
     private final String name;
 
     @JsonCreator
-    private CompletionVariant(String name) { this.name = name; }
+    private CompletionVariant(@JsonProperty("name") String name) { this.name = name; }
 
     private String getName() {
       return name;

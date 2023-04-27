@@ -192,7 +192,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     private DependenciesIterator(@NotNull Collection<ExternalDependency> dependencies) {
       mySeenDependencies = Collections.newSetFromMap(new IdentityHashMap<AbstractExternalDependency, Boolean>());
       myToProcess = new ArrayDeque<>(dependencies);
-      myProcessedStructure = new ArrayList<Integer>();
+      myProcessedStructure = new ArrayList<>();
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -79,6 +79,8 @@ public final class PluginManagerCore {
   static final @NonNls String EDIT = "edit";
 
   private static volatile boolean IGNORE_COMPATIBILITY = Boolean.getBoolean("idea.ignore.plugin.compatibility");
+
+  private static final boolean QODANA_PLUGINS_THIRD_PARTY_ACCEPT = Boolean.getBoolean("idea.qodana.thirdpartyplugins.accept");
 
   private static final String THIRD_PARTY_PLUGINS_FILE = "alien_plugins.txt";
   private static volatile @Nullable Boolean thirdPartyPluginsNoteAccepted = null;
@@ -454,7 +456,9 @@ public final class PluginManagerCore {
                         ).collect(Collectors.joining("\n  "));
 
     if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
-      getLogger().warn(logMessage);
+      if (!isUnitTestMode) {
+        getLogger().warn(logMessage);
+      }
       return Stream.concat(
           globalErrors.stream(),
           loadingErrors.stream()
@@ -585,7 +589,7 @@ public final class PluginManagerCore {
 
   private static void disableIncompatiblePlugins(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                                 @NotNull Map<PluginId, PluginLoadingError> errors) {
+                                                 @NotNull Map<? super PluginId, ? super PluginLoadingError> errors) {
     String selectedIds = System.getProperty("idea.load.plugins.id");
     String selectedCategory = System.getProperty("idea.load.plugins.category");
 
@@ -857,6 +861,10 @@ public final class PluginManagerCore {
 
   private static void check3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> aliens) {
     if (GraphicsEnvironment.isHeadless()) {
+      if (QODANA_PLUGINS_THIRD_PARTY_ACCEPT) {
+        thirdPartyPluginsNoteAccepted = Boolean.TRUE;
+        return;
+      }
       getLogger().info("3rd-party plugin privacy note not accepted yet; disabling plugins for this headless session");
       aliens.forEach(descriptor -> descriptor.setEnabled(false));
     }
@@ -973,26 +981,27 @@ public final class PluginManagerCore {
                                                        @NotNull Collection<String> pluginIds,
                                                        OpenOption... openOptions) throws IOException {
     NioFiles.createDirectories(path.getParent());
-    Files.write(path,
-                new TreeSet<>(pluginIds),
-                openOptions);
+    Files.write(path, new TreeSet<>(pluginIds), openOptions);
   }
 
   @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet")
   @VisibleForTesting
   public static @NotNull Set<PluginId> toPluginIds(@NotNull Collection<String> pluginIdStrings) {
-    Set<PluginId> pluginIds = pluginIdStrings.stream()
-      .map(String::trim)
-      .filter(s -> !s.isEmpty())
-      .map(PluginId::getId)
-      .collect(Collectors.toSet());
-    return Collections.unmodifiableSet(pluginIds);
+    Set<PluginId> result = new HashSet<>();
+    for (String pluginIdString : pluginIdStrings) {
+      String s = pluginIdString.trim();
+      if (!s.isEmpty()) {
+        PluginId id = PluginId.getId(s);
+        result.add(id);
+      }
+    }
+    return result;
   }
 
   private static boolean ask3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {
     String title = CoreBundle.message("third.party.plugins.privacy.note.title");
     String pluginList = descriptors.stream()
-      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + descriptor.getName() + " (" + descriptor.getVendor() + ')')
+      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + getPluginNameAndVendor(descriptor))
       .collect(Collectors.joining("<br>"));
     String text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
     String[] buttons =
@@ -1033,8 +1042,13 @@ public final class PluginManagerCore {
     return duplicateMap;
   }
 
-  private static @NotNull @Nls Supplier<String> message(@NotNull @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String key,
-                                                        Object @NotNull ... params) {
+  public static @NotNull @Nls String getPluginNameAndVendor(@NotNull IdeaPluginDescriptor descriptor) {
+    String vendor = descriptor.getVendor();
+    return vendor != null ? CoreBundle.message("plugin.name.and.vendor", descriptor.getName(), vendor)
+                          : CoreBundle.message("plugin.name.and.unknown.vendor", descriptor.getName());
+  }
+
+  private static @Nls Supplier<String> message(@PropertyKey(resourceBundle = CoreBundle.BUNDLE) String key, Object... params) {
     //noinspection Convert2Lambda
     return new Supplier<String>() {
       @Override
@@ -1140,40 +1154,25 @@ public final class PluginManagerCore {
   public static void processAllNonOptionalDependencyIds(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                         @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
                                                         @NotNull Function<? super PluginId, FileVisitResult> consumer) {
-    processAllNonOptionalDependencies(rootDescriptor,
-                                      new HashSet<>(),
-                                      pluginIdMap,
-                                      (pluginId, __) -> consumer.apply(pluginId));
-  }
-
-  @ApiStatus.Internal
-  public static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                          @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                          @NotNull Function<? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
-    return processAllNonOptionalDependencies(rootDescriptor, new HashSet<>(), pluginIdMap, consumer);
+    processAllNonOptionalDependencies(rootDescriptor, new HashSet<>(), pluginIdMap, (pluginId, __) -> consumer.apply(pluginId));
   }
 
   /**
-   * {@link FileVisitResult#SKIP_SIBLINGS} is not supported.
+   * <b>Note:</b> {@link FileVisitResult#SKIP_SIBLINGS} is not supported.
    * <p>
    * Returns {@code false} if processing was terminated because of {@link FileVisitResult#TERMINATE}, and {@code true} otherwise.
    */
   @ApiStatus.Internal
   public static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                          @NotNull Set<? super IdeaPluginDescriptorImpl> depProcessed,
                                                           @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
                                                           @NotNull Function<? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
-
-    return processAllNonOptionalDependencies(rootDescriptor,
-                                             depProcessed,
-                                             pluginIdMap,
-                                             (__, descriptor) -> consumer.apply(descriptor));
+    return processAllNonOptionalDependencies(rootDescriptor, new HashSet<>(), pluginIdMap, (__, descriptor) -> consumer.apply(descriptor));
   }
 
-  private static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                           @NotNull Set<? super IdeaPluginDescriptorImpl> depProcessed,
-                                                           @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                           @NotNull BiFunction<? super PluginId, ? super IdeaPluginDescriptorImpl, ? extends FileVisitResult> consumer) {
+  private static boolean processAllNonOptionalDependencies(IdeaPluginDescriptorImpl rootDescriptor,
+                                                           Set<? super IdeaPluginDescriptorImpl> depProcessed,
+                                                           Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                           BiFunction<PluginId, IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
     for (PluginId dependencyId : getNonOptionalDependenciesIds(rootDescriptor)) {
       IdeaPluginDescriptorImpl descriptor = pluginIdMap.get(dependencyId);
       PluginId pluginId = descriptor != null ? descriptor.getPluginId() : dependencyId;

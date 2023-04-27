@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -39,6 +39,8 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         const val SHOULD_FAIL_WITH_DIRECTIVE = "SHOULD_FAIL_WITH"
         const val FORCE_PACKAGE_FOLDER_DIRECTIVE = "FORCE_PACKAGE_FOLDER"
         const val PRIORITY_DIRECTIVE = "PRIORITY"
+        const val K1_TOOL_DIRECTIVE = "K1_TOOL:"
+        const val K2_TOOL_DIRECTIVE = "K2_TOOL:"
 
         private val quickFixesAllowedToResolveInWriteAction = AllowedToResolveUnderWriteActionData(
             IDEA_TEST_DATA_DIR.resolve("quickfix/allowResolveInWriteAction.txt").path,
@@ -48,10 +50,12 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             """.trimIndent(),
         )
 
-        private fun unwrapIntention(action: Any): Any = when (action) {
-            is IntentionActionDelegate -> unwrapIntention(action.delegate)
-            is QuickFixWrapper -> unwrapIntention(action.fix)
-            else -> action
+        private fun unwrapIntention(action: Any): Any {
+            return when (action) {
+                is IntentionActionDelegate -> unwrapIntention(action.delegate)
+                is IntentionAction -> QuickFixWrapper.unwrap(action) ?: action
+                else -> action
+            }
         }
     }
 
@@ -311,4 +315,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     protected open fun checkForUnexpectedErrors() = DirectiveBasedActionUtils.checkForUnexpectedErrors(myFixture.file as KtFile)
+
+    override val additionalToolDirectives: Array<String>
+        get() = arrayOf(if (isFirPlugin) K2_TOOL_DIRECTIVE else K1_TOOL_DIRECTIVE)
 }

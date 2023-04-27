@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -29,7 +28,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.toolbox.ChainIterable;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,25 +51,18 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   @NotNull
   public Iterable<PyElement> iterateNames() {
     if (getParent() instanceof PyFromImportStatement fromImportStatement) {
-      final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
-      ChainIterable<PyElement> chain = new ChainIterable<>();
-      for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
-        final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
-        if (source instanceof PyFile sourceFile) {
-          chain.add(filterStarImportableNames(sourceFile.iterateNames(), sourceFile));
-        }
-      }
-      return chain;
+      return StreamEx.of(fromImportStatement.resolveImportSourceCandidates())
+        .distinct()
+        .map(PyUtil::turnDirIntoInit)
+        .select(PyFile.class)
+        .flatMap(file -> StreamEx.of(file.iterateNames().iterator())
+          .filter(e -> {
+            String name = e.getName();
+            return name != null && PyUtil.isStarImportableFrom(name, file);
+          }))
+        .toImmutableList();
     }
     return Collections.emptyList();
-  }
-
-  @NotNull
-  private static Iterable<PyElement> filterStarImportableNames(@NotNull Iterable<PyElement> declaredNames, @NotNull final PyFile file) {
-    return Iterables.filter(declaredNames, input -> {
-      final String name = input != null ? input.getName() : null;
-      return name != null && PyUtil.isStarImportableFrom(name, file);
-    });
   }
 
   @Override

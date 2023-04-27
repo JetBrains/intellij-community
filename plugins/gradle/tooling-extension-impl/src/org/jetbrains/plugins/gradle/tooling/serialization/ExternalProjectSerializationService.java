@@ -36,24 +36,16 @@ public final class ExternalProjectSerializationService implements SerializationS
   @Override
   public byte[] write(ExternalProject project, Class<? extends ExternalProject> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
-    try {
+    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
       writeProject(writer, myWriteContext, project);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public ExternalProject read(byte[] object, Class<? extends ExternalProject> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return readProject(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -73,6 +65,8 @@ public final class ExternalProjectSerializationService implements SerializationS
         writer.writeInt(objectId);
         if (isAdded) {
           writeString(writer, "id", project.getId());
+          writeString(writer, "path", project.getPath());
+          writeString(writer, "identityPath", project.getIdentityPath());
           writeString(writer, "name", project.getName());
           writeString(writer, "qName", project.getQName());
           writeString(writer, "description", project.getDescription());
@@ -124,7 +118,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     writeString(writer, "name", sourceSet.getName());
     writeString(writer, "sourceCompatibility", sourceSet.getSourceCompatibility());
     writeString(writer, "targetCompatibility", sourceSet.getTargetCompatibility());
-    writeBoolean(writer,"isPreview", sourceSet.isPreview());
+    writeBoolean(writer, "isPreview", sourceSet.isPreview());
     writeFiles(writer, "artifacts", sourceSet.getArtifacts());
     writeDependencies(writer, context, sourceSet.getDependencies());
     writeSourceDirectorySets(writer, sourceSet.getSources());
@@ -395,6 +389,8 @@ public final class ExternalProjectSerializationService implements SerializationS
         public void fill(DefaultExternalProject externalProject) {
           externalProject.setExternalSystemId("GRADLE");
           externalProject.setId(assertNotNull(readString(reader, "id")));
+          externalProject.setPath(assertNotNull(readString(reader, "path")));
+          externalProject.setIdentityPath(assertNotNull(readString(reader, "identityPath")));
           externalProject.setName(assertNotNull(readString(reader, "name")));
           externalProject.setQName(assertNotNull(readString(reader, "qName")));
           externalProject.setDescription(readString(reader, "description"));
@@ -427,7 +423,7 @@ public final class ExternalProjectSerializationService implements SerializationS
 
   private static Map<String, DefaultExternalProject> readProjects(@NotNull IonReader reader,
                                                                   @NotNull final ReadContext context) {
-    Map<String, DefaultExternalProject> map = new TreeMap<String, DefaultExternalProject>();
+    Map<String, DefaultExternalProject> map = new TreeMap<>();
     reader.next();
     reader.stepIn();
     DefaultExternalProject project;
@@ -441,7 +437,7 @@ public final class ExternalProjectSerializationService implements SerializationS
   private static void readTasks(IonReader reader, DefaultExternalProject project) {
     reader.next();
     reader.stepIn();
-    Map<String, DefaultExternalTask> tasks = new HashMap<String, DefaultExternalTask>();
+    Map<String, DefaultExternalTask> tasks = new HashMap<>();
     DefaultExternalTask task;
     while ((task = readTask(reader)) != null) {
       tasks.put(task.getName(), task);
@@ -470,7 +466,7 @@ public final class ExternalProjectSerializationService implements SerializationS
                                      DefaultExternalProject project) {
     reader.next();
     reader.stepIn();
-    Map<String, DefaultExternalSourceSet> sourceSets = new HashMap<String, DefaultExternalSourceSet>();
+    Map<String, DefaultExternalSourceSet> sourceSets = new LinkedHashMap<>();
     DefaultExternalSourceSet sourceSet;
     while ((sourceSet = readSourceSet(reader, context)) != null) {
       sourceSets.put(sourceSet.getName(), sourceSet);
@@ -488,7 +484,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     sourceSet.setName(readString(reader, "name"));
     sourceSet.setSourceCompatibility(readString(reader, "sourceCompatibility"));
     sourceSet.setTargetCompatibility(readString(reader, "targetCompatibility"));
-    sourceSet.setPreview(readBoolean(reader,"isPreview"));
+    sourceSet.setPreview(readBoolean(reader, "isPreview"));
     sourceSet.setArtifacts(readFiles(reader));
     sourceSet.getDependencies().addAll(readDependencies(reader, context));
     sourceSet.setSources(readSourceDirectorySets(reader));
@@ -501,7 +497,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     reader.next();
     reader.stepIn();
     Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> map =
-      new HashMap<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>();
+      new HashMap<>();
     Map.Entry<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> entry;
     while ((entry = readSourceDirectorySet(reader)) != null) {
       map.put(entry.getKey(), entry.getValue());
@@ -529,13 +525,13 @@ public final class ExternalProjectSerializationService implements SerializationS
     directorySet.setIncludes(patternSet.getIncludes());
     directorySet.setFilters(readFilters(reader));
     reader.stepOut();
-    return new AbstractMap.SimpleEntry<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>(sourceType, directorySet);
+    return new AbstractMap.SimpleEntry<>(sourceType, directorySet);
   }
 
   private static List<DefaultExternalFilter> readFilters(IonReader reader) {
     reader.next();
     reader.stepIn();
-    List<DefaultExternalFilter> list = new ArrayList<DefaultExternalFilter>();
+    List<DefaultExternalFilter> list = new ArrayList<>();
     DefaultExternalFilter filter;
     while ((filter = readFilter(reader)) != null) {
       list.add(filter);
@@ -567,7 +563,7 @@ public final class ExternalProjectSerializationService implements SerializationS
 
   private static Collection<? extends ExternalDependency> readDependencies(IonReader reader,
                                                                            ReadContext context) {
-    List<ExternalDependency> dependencies = new ArrayList<ExternalDependency>();
+    List<ExternalDependency> dependencies = new ArrayList<>();
     reader.next();
     reader.stepIn();
     ExternalDependency dependency;
@@ -673,9 +669,9 @@ public final class ExternalProjectSerializationService implements SerializationS
   }
 
   public static class ReadContext {
-    private final IntObjectMap<DefaultExternalProject> myProjectsMap = new IntObjectMap<DefaultExternalProject>();
+    private final IntObjectMap<DefaultExternalProject> myProjectsMap = new IntObjectMap<>();
 
-    private final IntObjectMap<AbstractExternalDependency> myDependenciesMap = new IntObjectMap<AbstractExternalDependency>();
+    private final IntObjectMap<AbstractExternalDependency> myDependenciesMap = new IntObjectMap<>();
 
     public IntObjectMap<DefaultExternalProject> getProjectsMap() {
       return myProjectsMap;
@@ -688,9 +684,9 @@ public final class ExternalProjectSerializationService implements SerializationS
 
   public static class WriteContext {
     private final ObjectCollector<ExternalProject, IOException> myProjectsCollector =
-      new ObjectCollector<ExternalProject, IOException>();
+      new ObjectCollector<>();
     private final ObjectCollector<ExternalDependency, IOException> myDependenciesCollector =
-      new ObjectCollector<ExternalDependency, IOException>();
+      new ObjectCollector<>();
 
     public ObjectCollector<ExternalProject, IOException> getProjectsCollector() {
       return myProjectsCollector;

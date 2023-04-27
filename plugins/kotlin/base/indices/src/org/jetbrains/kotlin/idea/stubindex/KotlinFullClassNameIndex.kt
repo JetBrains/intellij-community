@@ -3,21 +3,30 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
-object KotlinFullClassNameIndex : KotlinStringStubIndexExtension<KtClassOrObject>(KtClassOrObject::class.java) {
-    val KEY: StubIndexKey<String, KtClassOrObject> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex")
+class KotlinFullClassNameIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtClassOrObject>(KtClassOrObject::class.java) {
+        @JvmField
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        val INSTANCE: KotlinFullClassNameIndex = KotlinFullClassNameIndex()
 
-    override fun getKey(): StubIndexKey<String, KtClassOrObject> = KEY
+        @JvmStatic
+        @Suppress("DeprecatedCallableAddReplaceWith")
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        fun getInstance(): KotlinFullClassNameIndex {
+            return KotlinFullClassNameIndex()
+        }
 
-    override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
-        return StubIndex.getElements(KEY, fqName, project, scope, KtClassOrObject::class.java)
+        override val indexKey: StubIndexKey<String, KtClassOrObject> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex")
     }
 
-    @JvmStatic
-    @Deprecated("Use KotlinFullClassNameIndex as an object.", ReplaceWith("KotlinFullClassNameIndex"))
-    fun getInstance(): KotlinFullClassNameIndex = KotlinFullClassNameIndex
+    override fun getKey(): StubIndexKey<String, KtClassOrObject> = indexKey
+
+    override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
+        return Helper[fqName, project, scope]
+    }
 }

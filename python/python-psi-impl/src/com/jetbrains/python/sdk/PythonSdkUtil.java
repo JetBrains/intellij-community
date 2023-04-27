@@ -32,6 +32,7 @@ import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.List;
@@ -69,6 +70,7 @@ public final class PythonSdkUtil {
     return PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName());
   }
 
+  @Unmodifiable
   public static List<Sdk> getAllSdks() {
     return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), PythonSdkUtil::isPythonSdk);
   }
@@ -143,7 +145,7 @@ public final class PythonSdkUtil {
 
   @Nullable
   public static Sdk findPythonSdk(@Nullable Module module) {
-    if (module == null) return null;
+    if (module == null || module.isDisposed()) return null;
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null && isPythonSdk(sdk)) return sdk;
     return PyModuleService.getInstance().findPythonSdk(module);

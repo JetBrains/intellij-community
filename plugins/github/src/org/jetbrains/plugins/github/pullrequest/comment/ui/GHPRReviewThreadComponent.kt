@@ -7,35 +7,42 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.diff.util.LineRange
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.JBDateFormat
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
@@ -50,6 +57,7 @@ object GHPRReviewThreadComponent {
   fun createForInlay(project: Project,
                      thread: GHPRReviewThreadModel,
                      reviewDataProvider: GHPRReviewDataProvider,
+                     htmlImageLoader: AsyncHtmlImageLoader,
                      avatarIconsProvider: GHAvatarIconsProvider,
                      suggestedChangeHelper: GHPRSuggestedChangeHelper,
                      ghostUser: GHUser,
@@ -57,6 +65,7 @@ object GHPRReviewThreadComponent {
     val panel = VerticalListPanel()
     val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
                                                                      reviewDataProvider,
+                                                                     htmlImageLoader,
                                                                      avatarIconsProvider,
                                                                      suggestedChangeHelper,
                                                                      INLAY_COMPONENT_TYPE)
@@ -71,19 +80,65 @@ object GHPRReviewThreadComponent {
     return panel
   }
 
-  fun createThreadDiff(thread: GHPRReviewThreadModel,
-                       diffComponentFactory: GHPRReviewThreadDiffComponentFactory,
+  fun createThreadDiff(project: Project,
+                       thread: GHPRReviewThreadModel,
                        selectInToolWindowHelper: GHPRSelectInToolWindowHelper): JComponent {
+    val vm = object : CollapsibleTimelineItemViewModel {
+      override val collapsible = MutableStateFlow(false)
 
-    val collapsibleState = MutableStateFlow(false)
-    thread.addAndInvokeStateChangeListener {
-      collapsibleState.value = thread.isResolved || thread.isOutdated
+      init {
+        thread.addAndInvokeStateChangeListener {
+          collapsible.value = thread.isResolved || thread.isOutdated
+        }
+      }
+
+      override val collapsed: Flow<Boolean> =
+        combine(thread.collapsedState, collapsible) { collapsed, collapsible ->
+          if (collapsible) collapsed else false
+        }.distinctUntilChanged()
+
+      override fun setCollapsed(collapsed: Boolean) {
+        thread.collapsedState.value = collapsed
+      }
     }
 
-    val diffComponent = diffComponentFactory.createComponent(thread.diffHunk, thread.startLine)
-    return TimelineDiffComponentFactory.wrapWithHeader(diffComponent, thread.filePath, collapsibleState, thread.collapsedState) {
-      selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath)
+
+    val scopeProvider = ActivatableCoroutineScopeProvider()
+    return Wrapper().also {
+      scopeProvider.activateWith(it)
+
+      val fileNameClickListener = flowOf(ActionListener { selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath) })
+      scopeProvider.doInScope {
+        val comp = TimelineDiffComponentFactory.createDiffWithHeader(this, vm, thread.filePath, fileNameClickListener) {
+          createDiff(thread, project)
+        }
+        it.setContent(comp)
+      }
     }
+  }
+
+  private fun createDiff(thread: GHPRReviewThreadModel, project: Project): JComponent {
+    val hunk = thread.patchHunk
+    if (hunk == null || hunk.lines.isEmpty()) {
+      return JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
+    }
+
+    val anchorLocation = thread.originalLocation
+    val startAnchorLocation = thread.originalStartLocation
+
+    val anchorLength = if (startAnchorLocation?.first == anchorLocation?.first) {
+      ((anchorLocation?.second ?: 0) - (startAnchorLocation?.second ?: 0)).coerceAtLeast(0)
+    }
+    else {
+      0
+    }
+
+    val hunkLength = anchorLength + TimelineDiffComponentFactory.DIFF_CONTEXT_SIZE
+    val truncatedHunk = PatchHunkUtil.truncateHunkBefore(hunk, hunk.lines.lastIndex - hunkLength)
+
+    val anchorRange = LineRange(truncatedHunk.lines.lastIndex - anchorLength, truncatedHunk.lines.size)
+    return TimelineDiffComponentFactory
+      .createDiffComponent(project, EditorFactory.getInstance(), truncatedHunk, anchorRange)
   }
 
   private fun getThreadActionsComponent(
@@ -217,7 +272,7 @@ object GHPRReviewThreadComponent {
         }
 
         authorsLabel.apply {
-          icon = authors.map { avatarIconsProvider.getIcon(it.avatarUrl, GHUIUtil.AVATAR_SIZE) }.nullize()?.let {
+          icon = authors.map { avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE) }.nullize()?.let {
             OverlaidOffsetIconsIcon(it)
           }
           isVisible = icon != null

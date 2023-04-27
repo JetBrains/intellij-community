@@ -51,6 +51,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -67,12 +68,10 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
   // exposed for tests
-  public static final int STORAGE_VERSION = 6;
+  public static final int STORAGE_VERSION = 7;
 
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final ConcurrentMap<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
+  private final @NotNull Project myProject;
+  private final @NotNull ConcurrentMap<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
     ConcurrentCollectionFactory.createConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY);
 
   private final AtomicBoolean changed = new AtomicBoolean();
@@ -150,7 +149,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
         }
       }
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException | CancellationException e) {
       throw e;
     }
     catch (Throwable e) {

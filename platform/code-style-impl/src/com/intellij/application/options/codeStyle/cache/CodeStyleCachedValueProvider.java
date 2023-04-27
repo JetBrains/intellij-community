@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -64,7 +66,6 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
   CodeStyleSettings tryGetSettings() {
     if (myComputationLock.tryLock()) {
       try {
-        myViewProvider.putUserData(CodeStyleCachingService.CALL_TRACE, Thread.currentThread().getStackTrace());
         return CachedValuesManager.getManager(myProject).getCachedValue(myViewProvider, this);
       }
       finally {
@@ -81,7 +82,14 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
   @Nullable
   @Override
   public Result<CodeStyleSettings> compute() {
-    CodeStyleSettings settings = myComputation.getCurrResult();
+    CodeStyleSettings settings;
+    try {
+      settings = myComputation.getCurrResult();
+    }
+    catch (ProcessCanceledException pce) {
+      myComputation.reset();
+      return new Result<>(null, ModificationTracker.EVER_CHANGED);
+    }
     if (settings != null) {
       logCached(settings);
       return new Result<>(settings, getDependencies(settings, myComputation));
@@ -221,7 +229,6 @@ final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyl
         }
       }
       finally {
-        file.putUserData(CodeStyleCachingService.CALL_TRACE, null);
         myComputationLock.unlock();
       }
     }

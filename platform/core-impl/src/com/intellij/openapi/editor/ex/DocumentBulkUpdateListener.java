@@ -26,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Use {@link DocumentListener} instead
+ * @deprecated Use {@link DocumentListener#bulkUpdateStarting(Document)}/{@link DocumentListener#bulkUpdateFinished(Document)} instead
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval

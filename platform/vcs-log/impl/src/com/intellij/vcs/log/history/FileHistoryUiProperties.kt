@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.vcs.log.impl.CommonUiProperties
@@ -11,8 +13,6 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.table.column.*
-import com.intellij.vcs.log.ui.table.column.Date
-import java.util.*
 import kotlin.collections.set
 
 @State(name = "Vcs.Log.History.Properties", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
@@ -119,8 +119,20 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
     eventDispatcher.addListener(listener)
   }
 
+  override fun addChangeListener(listener: PropertiesChangeListener, parent: Disposable) {
+    if (!eventDispatcher.hasListeners()) {
+      appSettings.addChangeListener(applicationSettingsListener)
+      Disposer.register(parent) { removeAppSettingsListenerIfNeeded() }
+    }
+    eventDispatcher.addListener(listener, parent)
+  }
+
   override fun removeChangeListener(listener: PropertiesChangeListener) {
     eventDispatcher.removeListener(listener)
+    removeAppSettingsListenerIfNeeded()
+  }
+
+  private fun removeAppSettingsListenerIfNeeded() {
     if (!eventDispatcher.hasListeners()) {
       appSettings.removeChangeListener(applicationSettingsListener)
     }

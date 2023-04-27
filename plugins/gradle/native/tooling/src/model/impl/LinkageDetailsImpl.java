@@ -27,7 +27,7 @@ public final class LinkageDetailsImpl implements LinkageDetails {
   public LinkageDetailsImpl(LinkageDetails details) {
     linkTask = new DefaultExternalTask(details.getLinkTask());
     outputLocation = details.getOutputLocation();
-    additionalArgs = new ArrayList<String>(details.getAdditionalArgs());
+    additionalArgs = new ArrayList<>(details.getAdditionalArgs());
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -33,6 +33,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -80,7 +81,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
                                                                        @NotNull PsiElement psiElement,
                                                                        int offset,
                                                                        @NotNull ShowIntentionsPass.IntentionsInfo outIntentions) {
-    if (!psiElement.isPhysical()) {
+    if (!psiElement.isPhysical() && !PlatformUtils.isFleetBackend()) {
       VirtualFile virtualFile = hostFile.getVirtualFile();
       String text = hostFile.getText();
       LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + " " +psiElement.getTextRange() +
@@ -143,18 +144,16 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
           TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
           if (range != null && range.containsOffset(offset)) {
             QuickFix[] fixes = problemDescriptor.getFixes();
-            if (fixes != null) {
-              for (int k = 0; k < fixes.length; k++) {
-                IntentionAction intentionAction = QuickFixWrapper.wrap(problemDescriptor, k);
-                HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-                String displayName = displayNames.get(shortName);
-                HighlightInfo.IntentionActionDescriptor actionDescriptor =
-                  new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
-                                                              key, null, HighlightSeverity.INFORMATION);
-                (problemDescriptor.getHighlightType() == ProblemHighlightType.ERROR
-                 ? outIntentions.errorFixesToShow
-                 : outIntentions.intentionsToShow).add(actionDescriptor);
-              }
+            for (int k = 0; k < fixes.length; k++) {
+              IntentionAction intentionAction = QuickFixWrapper.wrap(problemDescriptor, k);
+              HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+              String displayName = displayNames.get(shortName);
+              HighlightInfo.IntentionActionDescriptor actionDescriptor =
+                new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
+                                                            key, null, HighlightSeverity.INFORMATION);
+              (problemDescriptor.getHighlightType() == ProblemHighlightType.ERROR
+               ? outIntentions.errorFixesToShow
+               : outIntentions.intentionsToShow).add(actionDescriptor);
             }
           }
         }

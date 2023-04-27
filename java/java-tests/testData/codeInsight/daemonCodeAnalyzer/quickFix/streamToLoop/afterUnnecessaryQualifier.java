@@ -14,8 +14,8 @@ public class Test {
   public static void main(String[] args) {
       List<String> list = new ArrayList<>();
       for (String s : Arrays.asList("a", "b", "c")) {
-          String doProcess = doProcess(s);
-          list.add(doProcess);
+          String string = doProcess(s);
+          list.add(string);
       }
       System.out.println(list);
   }

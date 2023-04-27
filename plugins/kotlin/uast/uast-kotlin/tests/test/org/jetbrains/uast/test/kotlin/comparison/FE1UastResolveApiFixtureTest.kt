@@ -127,6 +127,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkOperatorMultiResolvable(myFixture)
     }
 
+    fun testResolveSyntheticJavaPropertyCompoundAccess() {
+        checkResolveSyntheticJavaPropertyCompoundAccess(myFixture, isK2 = false)
+    }
+
     fun testResolveSyntheticJavaPropertyAccessor() {
         checkResolveSyntheticJavaPropertyAccessor(myFixture)
     }
@@ -151,4 +155,19 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkLambdaInvoke(myFixture)
     }
 
+    fun testIsMethodCallCanBeOneOfInvoke() {
+        checkIsMethodCallCanBeOneOfInvoke(myFixture)
+    }
+
+    fun testIsMethodCallCanBeOneOfRegularMethod() {
+        checkIsMethodCallCanBeOneOfRegularMethod(myFixture)
+    }
+
+    fun testCheckIsMethodCallCanBeOneOfConstructor() {
+        checkIsMethodCallCanBeOneOfConstructor(myFixture)
+    }
+
+    fun testIsMethodCallCanBeOneOfImportAliased() {
+        checkIsMethodCallCanBeOneOfImportAliased(myFixture)
+    }
 }

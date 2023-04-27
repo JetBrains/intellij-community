@@ -16,7 +16,11 @@ class KotlinLoggingStringTemplateAsArgumentInspectionTest {
   @TestDataPath("\$CONTENT_ROOT/testData$INSPECTION_PATH")
   abstract class KotlinLoggingStringTemplateAsArgumentInspectionTestBase : LoggingStringTemplateAsArgumentInspectionTestBase() {
     override val inspection: InspectionProfileEntry
-      get() = LoggingStringTemplateAsArgumentInspection()
+      get() {
+        val loggingStringTemplateAsArgumentInspection = LoggingStringTemplateAsArgumentInspection()
+        loggingStringTemplateAsArgumentInspection.myLimitLevelType = LoggingStringTemplateAsArgumentInspection.LimitLevelType.ALL
+        return loggingStringTemplateAsArgumentInspection
+      }
 
     override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + INSPECTION_PATH
   }

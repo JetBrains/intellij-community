@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.TextRange;
@@ -112,30 +112,31 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     if (!(parent instanceof XmlAttribute)) return PsiReference.EMPTY_ARRAY;
     final String attrName = ((XmlAttribute)parent).getName();
 
-    if (VALUE_ATTR_NAME.equals(attrName)) {
-      return PsiReference.EMPTY_ARRAY;
-    } else if (NAME_ATTR_NAME.equals(attrName)) {
-      return new PsiReference[] { new NameReference(element) };
-    } else if (MEMBER_TYPES_ATTR_NAME.equals(attrName)) {
-      final List<PsiReference> result = new ArrayList<>(1);
-      final String text = element.getText();
-      int lastIndex = 1;
-      final int testLength = text.length();
-
-      for(int i = 1; i < testLength; ++i) {
-        if (Character.isWhitespace(text.charAt(i))) {
-          if (lastIndex != i) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, i) ) );
-          lastIndex = i + 1;
+    return switch (attrName) {
+      case VALUE_ATTR_NAME -> PsiReference.EMPTY_ARRAY;
+      case NAME_ATTR_NAME -> new PsiReference[]{new NameReference(element)};
+      case MEMBER_TYPES_ATTR_NAME -> {
+        final List<PsiReference> result = new ArrayList<>(1);
+        final String text = element.getText();
+        int lastIndex = 1;
+        final int testLength = text.length();
+        for (int i = 1; i < testLength; ++i) {
+          if (Character.isWhitespace(text.charAt(i))) {
+            if (lastIndex != i) result.add(new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, i)));
+            lastIndex = i + 1;
+          }
         }
+        if (lastIndex != testLength - 1) {
+          result.add(new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, testLength - 1)));
+        }
+        yield result.toArray(PsiReference.EMPTY_ARRAY);
       }
-
-      if (lastIndex != testLength - 1) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, testLength - 1) ) );
-      return result.toArray(PsiReference.EMPTY_ARRAY);
-    } else {
-      final PsiReference prefix = createSchemaPrefixReference(element);
-      final PsiReference ref = createTypeOrElementOrAttributeReference(element, prefix == null ? null : prefix.getCanonicalText());
-      return prefix == null ? new PsiReference[] {ref} : new PsiReference[] {ref, prefix};
-    }
+      default -> {
+        final PsiReference prefix = createSchemaPrefixReference(element);
+        final PsiReference ref = createTypeOrElementOrAttributeReference(element, prefix == null ? null : prefix.getCanonicalText());
+        yield prefix == null ? new PsiReference[]{ref} : new PsiReference[]{ref, prefix};
+      }
+    };
   }
 
   public static PsiReference createTypeOrElementOrAttributeReference(@NotNull final PsiElement element) {

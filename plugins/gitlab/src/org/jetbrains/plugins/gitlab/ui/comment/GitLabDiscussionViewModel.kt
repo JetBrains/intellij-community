@@ -6,10 +6,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
@@ -51,6 +48,12 @@ class GitLabDiscussionViewModelImpl(
 
   private val expandRequested = MutableStateFlow(false)
 
+  override val resolveVm: GitLabDiscussionResolveViewModel? =
+    if (discussion.resolvable) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
+
+  override val replyVm: GitLabDiscussionReplyViewModel? =
+    if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
+
   // this is NOT a good way to do this, but a proper implementation would be waaaay too convoluted
   @Volatile
   private var initialNotesSize: Int? = null
@@ -60,7 +63,7 @@ class GitLabDiscussionViewModelImpl(
     }
   }.mapCaching(
     GitLabNote::id,
-    { cs, note -> GitLabNoteViewModelImpl(cs, note) },
+    { cs, note -> GitLabNoteViewModelImpl(cs, note, getDiscussionState(discussion, note)) },
     GitLabNoteViewModelImpl::destroy
   ).combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
@@ -75,12 +78,12 @@ class GitLabDiscussionViewModelImpl(
     }
   }.modelFlow(cs, LOG)
 
-
-  override val resolveVm: GitLabDiscussionResolveViewModel? =
-    if (discussion.canResolve) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
-
-  override val replyVm: GitLabDiscussionReplyViewModel? =
-    if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun getDiscussionState(discussion: GitLabDiscussion, note: GitLabNote): Flow<GitLabDiscussionStateContainer> =
+    discussion.notes.map { it.firstOrNull()?.id == note.id }.mapLatest {
+      if (it) GitLabDiscussionStateContainer(discussion.resolved, flowOf(false))
+      else GitLabDiscussionStateContainer.DEFAULT
+    }
 
   override suspend fun destroy() {
     try {

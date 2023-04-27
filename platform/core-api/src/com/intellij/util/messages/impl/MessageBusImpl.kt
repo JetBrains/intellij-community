@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.util.messages.impl
 
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.EventDispatcher
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.*
 import com.intellij.util.messages.Topic.BroadcastDirection
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandle
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
-import java.lang.reflect.Proxy
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -127,7 +127,7 @@ open class MessageBusImpl : MessageBus {
     @Suppress("UNCHECKED_CAST")
     return publisherCache.computeIfAbsent(topic) { topic1 ->
       val aClass = topic1.listenerClass
-      Proxy.newProxyInstance(aClass.classLoader, arrayOf(aClass), createPublisher(topic1, topic1.broadcastDirection))
+      ReflectionUtil.proxy(aClass.classLoader, aClass, createPublisher(topic1, topic1.broadcastDirection))
     } as L
   }
 
@@ -398,7 +398,7 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
 }
 
 private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Throwable?): Throwable? {
-  withClientId(job.clientId).use {
+  ClientId.withClientId(job.clientId).use {
     jobQueue.current = job
     val handlers = job.handlers
     var error = prevError

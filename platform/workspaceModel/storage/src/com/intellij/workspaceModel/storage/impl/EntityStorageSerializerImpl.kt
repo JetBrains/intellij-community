@@ -84,10 +84,11 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v47"
+    const val SERIALIZER_VERSION = "v48"
   }
 
   private val interner = HashSetInterner<SerializableEntityId>()
+  private val stringInterner = Interner.createStringInterner()
   private val typeInfoInterner = HashSetInterner<TypeInfo>()
 
   @set:TestOnly
@@ -162,6 +163,8 @@ class EntityStorageSerializerImpl(
     kryo.register(ChangeEntry.ReplaceEntity::class.java)
     kryo.register(ChangeEntry.ChangeEntitySource::class.java)
     kryo.register(ChangeEntry.ReplaceAndChangeSource::class.java)
+    kryo.register(ChangeEntry.ReplaceEntity.Data::class.java)
+    kryo.register(ChangeEntry.ReplaceEntity.References::class.java)
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
       Collections.unmodifiableCollection(emptySet())
@@ -513,7 +516,7 @@ class EntityStorageSerializerImpl(
 
         val entityId2VirtualFileUrlInfo = kryo.readObject(input, Long2ObjectOpenHashMap::class.java) as Long2ObjectOpenHashMap<Any>
         val vfu2VirtualFileUrlInfo = kryo.readObject(input,
-                                                     Object2ObjectOpenCustomHashMap::class.java) as Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<String>>
+                                                     Object2ObjectOpenCustomHashMap::class.java) as Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<EntityIdWithProperty>>
         val entityId2JarDir = kryo.readObject(input, BidirectionalLongMultiMap::class.java) as BidirectionalLongMultiMap<VirtualFileUrl>
 
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
@@ -825,8 +828,9 @@ class EntityStorageSerializerImpl(
       vfu2EntityId.forEach { (key: VirtualFileUrl, value) ->
         kryo.writeObject(output, key)
         output.writeInt(value.keys.size)
-        value.forEach { (internalKey: String, internalValue) ->
-          output.writeString(internalKey)
+        value.forEach { (internalKey: EntityIdWithProperty, internalValue) ->
+          kryo.writeObject(output, internalKey.entityId.toSerializableEntityId())
+          output.writeString(internalKey.propertyName)
           kryo.writeObject(output, internalValue.toSerializableEntityId())
         }
       }
@@ -837,11 +841,12 @@ class EntityStorageSerializerImpl(
       repeat(input.readInt()) {
         val file = kryo.readObject(input, VirtualFileUrl::class.java) as VirtualFileUrl
         val size = input.readInt()
-        val data = Object2LongOpenHashMap<String>(size)
+        val data = Object2LongOpenHashMap<EntityIdWithProperty>(size)
         repeat(size) {
-          val internalKey = input.readString()
+          val internalKeyEntityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId(classCache)
+          val internalKeyPropertyName = stringInterner.intern(input.readString())
           val entityId = kryo.readObject(input, SerializableEntityId::class.java).toEntityId(classCache)
-          data.put(internalKey, entityId)
+          data.put(EntityIdWithProperty(internalKeyEntityId, internalKeyPropertyName), entityId)
         }
         vfu2EntityId.put(file, data)
       }

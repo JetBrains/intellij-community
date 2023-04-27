@@ -27,7 +27,7 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
   @NotNull
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
                                             @Nullable @InspectionMessage String message,
-                                            LocalQuickFix... fixes);
+                                            @NotNull LocalQuickFix @NotNull ... fixes);
 
   @NotNull
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
@@ -42,19 +42,19 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
                                             HighlightSeverity highlightType,
                                             @InspectionMessage String message,
-                                            LocalQuickFix... fixes);
+                                            @NotNull LocalQuickFix @NotNull ... fixes);
 
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
                                             HighlightSeverity highlightType,
                                             @InspectionMessage String message,
                                             TextRange textRange,
-                                            LocalQuickFix... fixes);
+                                            @NotNull LocalQuickFix @NotNull ... fixes);
 
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
                                             ProblemHighlightType highlightType,
                                             @InspectionMessage String message,
                                             @Nullable TextRange textRange,
-                                            LocalQuickFix... fixes);
+                                            @NotNull LocalQuickFix @NotNull ... fixes);
 
   @NotNull
   DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference);

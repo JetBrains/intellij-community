@@ -27,12 +27,16 @@ data class TestResultEntity(
   val runOrder: Int,
   val duration: Long, // in milliseconds
 
-  @JsonProperty("build_type")
-  val buildType: String,
-
   @JsonProperty("build_status_message")
   val buildStatusMessage: String,
 
   @JsonProperty("is_muted")
   val isMuted: Boolean,
+
+  @JsonProperty("bucket_id")
+  val bucketId: Int,
+
+  // total buckets number for build type
+  @JsonProperty("buckets_number")
+  val bucketsNumber: Int
 )

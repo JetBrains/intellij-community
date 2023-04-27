@@ -3,20 +3,17 @@ package com.intellij.webSymbols.completion.impl
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemInsertHandler
 
 internal class CompoundInsertHandler private constructor(val handlers: List<WebSymbolCodeCompletionItemInsertHandler>) : WebSymbolCodeCompletionItemInsertHandler {
 
-  override val priority: WebSymbol.Priority
-    get() = WebSymbol.Priority.NORMAL
-
-  override fun prepare(context: InsertionContext, item: LookupElement): Runnable {
+  override fun prepare(context: InsertionContext, item: LookupElement, completeAfterInsert: Boolean): Runnable? {
     val runnables = handlers.asSequence()
       .sortedByDescending { it.priority }
       .distinct()
-      .map { it.prepare(context, item) }
+      .mapNotNull { it.prepare(context, item, completeAfterInsert) }
       .toList()
+      .ifEmpty { return null }
 
     return Runnable {
       runnables.forEach { it.run() }

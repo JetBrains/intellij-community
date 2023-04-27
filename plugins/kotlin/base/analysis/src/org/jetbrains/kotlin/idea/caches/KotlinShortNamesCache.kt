@@ -99,7 +99,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         }
 
         val allKtClassOrObjectsProcessed = StubIndex.getInstance().processElements(
-            KotlinClassShortNameIndex.key,
+            KotlinClassShortNameIndex.indexKey,
             name,
             project,
             effectiveScope,
@@ -113,7 +113,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         }
 
         return StubIndex.getInstance().processElements(
-            KotlinFileFacadeShortNameIndex.key,
+            KotlinFileFacadeShortNameIndex.indexKey,
             name,
             project,
             effectiveScope,
@@ -182,7 +182,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     ): Boolean {
         if (disableSearch.get()) return true
         val allFunctionsProcessed = StubIndex.getInstance().processElements(
-            KotlinFunctionShortNameIndex.key,
+            KotlinFunctionShortNameIndex.indexKey,
             name,
             project,
             scope,
@@ -198,7 +198,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
 
         for (propertyName in getPropertyNamesCandidatesByAccessorName(Name.identifier(name))) {
             val allProcessed = StubIndex.getInstance().processElements(
-                KotlinPropertyShortNameIndex.key,
+                KotlinPropertyShortNameIndex.indexKey,
                 propertyName.asString(),
                 project,
                 scope,
@@ -283,7 +283,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     ): Boolean {
         if (disableSearch.get()) return true
         return StubIndex.getInstance().processElements(
-            KotlinPropertyShortNameIndex.key,
+            KotlinPropertyShortNameIndex.indexKey,
             name,
             project,
             scope,

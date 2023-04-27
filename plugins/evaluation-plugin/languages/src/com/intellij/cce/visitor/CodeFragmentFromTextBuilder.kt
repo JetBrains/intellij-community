@@ -21,12 +21,12 @@ class CodeFragmentFromTextBuilder : CodeFragmentBuilder() {
           if (curToken.isEmpty()) tokenOffset = offset
           curToken += ch
         } else {
-          codeFragment.addChild(CodeToken(curToken, tokenOffset, curToken.length))
+          codeFragment.addChild(CodeToken(curToken, tokenOffset))
           curToken = ""
         }
         offset++
       }
-      if (curToken.isNotEmpty()) codeFragment.addChild(CodeToken(curToken, tokenOffset, curToken.length))
+      if (curToken.isNotEmpty()) codeFragment.addChild(CodeToken(curToken, tokenOffset))
       offset++
     }
     return findRoot(codeFragment, rootProcessor)

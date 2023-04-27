@@ -48,7 +48,7 @@ public class IDEARemoteTestNG extends TestNG {
             try {
               if (myParam != null) {
                 for (XmlClass aClass : test.getXmlClasses()) {
-                  List<XmlInclude> includes = new ArrayList<XmlInclude>();
+                  List<XmlInclude> includes = new ArrayList<>();
                   for (XmlInclude include : aClass.getIncludedMethods()) {
                     includes.add(new XmlInclude(include.getName(), Collections.singletonList(Integer.parseInt(myParam)), 0));
                   }

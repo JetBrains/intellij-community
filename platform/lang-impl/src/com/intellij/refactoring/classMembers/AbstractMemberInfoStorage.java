@@ -16,8 +16,8 @@
 
 package com.intellij.refactoring.classMembers;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -119,7 +119,7 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
   }
 
   private Set<M> buildDuplicatedMemberInfos(C baseClass) {
-    Set<M> result = ContainerUtil.newConcurrentSet();
+    Set<M> result = ConcurrentCollectionFactory.createConcurrentSet();
     List<M> memberInfos = getIntermediateMemberInfosList(baseClass);
 
     for (int i = 0; i < memberInfos.size(); i++) {

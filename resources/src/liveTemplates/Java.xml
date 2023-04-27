@@ -116,10 +116,10 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.inst"
-            name="inst" toReformat="true" toShortenFQNames="true" value="if ($EXPR$ instanceof $TYPE$) {&#13;&#10;  $TYPE$ $VAR1$ = ($TYPE$)$EXPR$;&#13;&#10;  $END$&#13;&#10;}">
+            name="inst" toReformat="true" toShortenFQNames="true" value="if ($EXPR$ instanceof $TYPE$) {&#13;&#10;  $TYPE$ $VAR$ = ($TYPE$)$EXPR$;&#13;&#10;  $END$&#13;&#10;}">
     <variable alwaysStopAt="true" defaultValue="expr" expression="variableOfType(&quot;Object&quot;)" name="EXPR" />
-    <variable alwaysStopAt="true" defaultValue="" expression="&quot;Object&quot;" name="TYPE" />
-    <variable alwaysStopAt="true" defaultValue="" expression="suggestVariableName()" name="VAR1" />
+    <variable alwaysStopAt="true" defaultValue="" expression="subtypes(typeOfVariable(EXPR))" name="TYPE" />
+    <variable alwaysStopAt="true" defaultValue="" expression="suggestVariableName()" name="VAR" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />

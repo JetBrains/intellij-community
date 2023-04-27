@@ -258,7 +258,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   @NotNull
   @Override
   public ExternalProjectsState getState() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     for (ExternalProjectsView externalProjectsView : myProjectsViews) {
       if (externalProjectsView instanceof ExternalProjectsViewImpl) {
         final ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();

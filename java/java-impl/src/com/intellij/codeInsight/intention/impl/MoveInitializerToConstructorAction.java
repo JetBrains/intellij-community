@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -12,6 +12,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -34,9 +35,11 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
     if (super.isAvailable(project, editor, element)) {
       final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
       assert field != null;
+      PsiClass containingClass = field.getContainingClass();
+      assert containingClass != null;
+      PsiMethod[] constructors = containingClass.getConstructors();
+      if (constructors.length > 0 && ContainerUtil.all(constructors, c -> c instanceof SyntheticElement)) return false;
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
-        PsiClass containingClass = field.getContainingClass();
-        assert containingClass != null;
         PsiClassInitializer[] initializers = containingClass.getInitializers();
         PsiElement[] elements =
           Arrays.stream(containingClass.getFields())

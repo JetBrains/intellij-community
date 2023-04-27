@@ -22,7 +22,8 @@ data class HighlightingCheck(
     private val testDataDirectory: File,
     private val testLineMarkers: Boolean = true,
     private val severityLevel: HighlightSeverity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
-    private val correspondingFilePostfix: String = ""
+    private val correspondingFilePostfix: String = "",
+    private val postprocessActualTestData: (String) -> String = { it }
 ) {
 
     private val checker = CodeMetaInfoTestCase(
@@ -53,7 +54,8 @@ data class HighlightingCheck(
                     checker.checkFile(
                         file,
                         file.findCorrespondingFileInTestDir(Paths.get(projectPath), testDataDirectory, correspondingFilePostfix),
-                        project
+                        project,
+                        postprocessActualTestData
                     )
                 }
                 true

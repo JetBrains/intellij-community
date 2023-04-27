@@ -94,6 +94,11 @@ public class JBColor extends Color {
       }
 
       @Override
+      public int hashCode() {
+        return System.identityHashCode(this);
+      }
+
+      @Override
       public String toString() {
         return name;
       }
@@ -153,15 +158,11 @@ public class JBColor extends Color {
     Object value = UIManager.get("*");
 
     if (value instanceof Map<?, ?> map) {
-      Object o = UIManager.get("*cache");
-      if (!(o instanceof Map)) {
-        o = new HashMap<String, Color>();
-        UIManager.put("*cache", o);
-      }
       @SuppressWarnings("unchecked")
-      Map<String, Color> cache = (Map)o;
-      if (cache.containsKey(name)) {
-        return cache.get(name);
+      Map<String, Color> cache = (Map)UIManager.get("*cache");
+      if (cache != null && cache.containsKey(name)) {
+        Color cached = cache.get(name);
+        return cached == CACHED_NULL ? null : cached;
       }
       Color color = null;
       for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -173,11 +174,15 @@ public class JBColor extends Color {
           }
         }
       }
-      cache.put(name, color);
+      if (cache != null) {
+        cache.put(name, color == null ? CACHED_NULL : color);
+      }
       return color;
     }
     return null;
   }
+
+  private static final Color CACHED_NULL = marker("CACHED_NULL");
 
   /**
    * @deprecated use {@link CurrentTheme.Link.Foreground#ENABLED}

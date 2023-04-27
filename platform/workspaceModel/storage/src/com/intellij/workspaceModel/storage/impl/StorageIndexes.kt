@@ -269,7 +269,7 @@ internal class MutableStorageIndexes(
       (entity as SoftLinkable).updateLink(beforeSymbolicId, newSymbolicId)
 
       // Add an entry to changelog
-      builder.changeLog.addReplaceEvent(entityId, entity, originalEntityData, originalParentsData, emptyList(), emptySet(), emptyMap())
+      builder.changeLog.addReplaceDataEvent(entityId, entity, originalEntityData)
       // TODO :: Avoid updating of all soft links for the dependent entity
       builder.indexes.updateSymbolicIdIndexes(builder, entity.createEntity(builder), editingBeforeSymbolicId, entity)
     }

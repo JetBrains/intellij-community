@@ -1,6 +1,7 @@
 package com.intellij.remoteDev.downloader
 
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -8,9 +9,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
-import com.intellij.openapi.rd.util.launchUnderModalProgress
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.downloader.exceptions.CodeWithMeDownloaderExceptionHandler
 import com.intellij.remoteDev.util.UrlUtil
@@ -29,10 +30,17 @@ object CodeWithMeGuestLauncher {
 
   fun isUnattendedModeUri(uri: URI) = uri.fragmentParameters["jt"] != null
 
-  fun downloadCompatibleClientAndLaunch(lifetime: Lifetime?, project: Project?, url: String, @NlsContexts.DialogTitle product: String, onDone: (Lifetime) -> Unit) {
+  fun downloadCompatibleClientAndLaunch(
+    lifetime: Lifetime?,
+    project: Project?,
+    clientBuild: String?,
+    url: String,
+    @NlsContexts.DialogTitle product: String,
+    onDone: (Lifetime) -> Unit = {}
+  ) {
     if (!application.isDispatchThread) {
       // starting a task from background will call invokeLater, but with wrong modality, so do it ourselves
-      application.invokeLater({ downloadCompatibleClientAndLaunch(lifetime, project, url, product, onDone) }, ModalityState.any())
+      application.invokeLater({ downloadCompatibleClientAndLaunch(lifetime, project, clientBuild, url, product, onDone) }, ModalityState.any())
       return
     }
 
@@ -40,6 +48,10 @@ object CodeWithMeGuestLauncher {
 
     if (!alreadyDownloading.add(url)) {
       LOG.info("Already downloading a client for $url")
+      return
+    }
+
+    if (runAlreadyDownloadedClient(clientBuild, lifetime, project, url, onDone)) {
       return
     }
 
@@ -89,6 +101,38 @@ object CodeWithMeGuestLauncher {
       override fun onSuccess() = onDone.invoke(clientLifetime)
       override fun onCancel() = Unit
     })
+  }
+
+  private fun runAlreadyDownloadedClient(
+    clientBuild: String?,
+    aLifetime: Lifetime?,
+    project: Project?,
+    url: String,
+    onDone: (Lifetime) -> Unit
+  ): Boolean {
+    if (clientBuild == null) {
+      return false
+    }
+    if (!CodeWithMeClientDownloader.isClientDownloaded(clientBuild)) {
+      return false
+    }
+    val sessionInfo = CodeWithMeClientDownloader.createSessionInfo(clientBuild, null, true)
+    val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
+    val clientUrl = URI(sessionInfo.compatibleClientUrl)
+    val guestData = CodeWithMeClientDownloader.DownloadableFileData.build(
+      url = clientUrl,
+      tempDir = tempDir,
+      cachesDir = service<JetBrainsClientDownloaderConfigurationProvider>().clientCachesDir,
+      includeInManifest = CodeWithMeClientDownloader.getJetBrainsClientManifestFilter(sessionInfo.hostBuildNumber),
+    )
+    val lifetime = aLifetime ?: project?.createLifetime() ?: Lifetime.Eternal
+    val clientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(
+      lifetime = lifetime,
+      url = url,
+      extractedJetBrainsClientData = ExtractedJetBrainsClientData(guestData.targetPath, null, clientBuild)
+    )
+    onDone(clientLifetime)
+    return true
   }
 
   fun runDownloadedClient(lifetime: Lifetime, extractedJetBrainsClientData: ExtractedJetBrainsClientData, urlForThinClient: String,

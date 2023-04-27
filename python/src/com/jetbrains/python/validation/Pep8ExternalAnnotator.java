@@ -191,8 +191,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   private static void reportMissingInterpreter() {
     LOG.info("Found no suitable interpreter to run pycodestyle.py. Available interpreters are: [");
-    List<Sdk> allSdks = PythonSdkUtil.getAllSdks();
-    allSdks.sort(PreferredSdkComparator.INSTANCE);
+    List<Sdk> allSdks = ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), PreferredSdkComparator.INSTANCE);
     for (Sdk sdk : allSdks) {
       LOG.info("  Path: " + sdk.getHomePath() + "; Flavor: " + PythonSdkFlavor.getFlavor(sdk) + "; Remote: " + PythonSdkUtil.isRemote(sdk));
     }

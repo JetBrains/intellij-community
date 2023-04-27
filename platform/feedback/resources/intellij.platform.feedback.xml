@@ -7,6 +7,8 @@
                        key="notification.group.feedback"/>
 
     <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
+    <typedHandler implementation="com.intellij.feedback.aqua.AquaEditorTypingChecker"/>
+    <backgroundPostStartupActivity implementation="com.intellij.feedback.aqua.AquaFirstUsageLogger"/>
     <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
     <editorFactoryMouseMotionListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
 
@@ -19,13 +21,32 @@
       implementationClass="com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.feedback.localization.service.LocalizationFeedbackStartupListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.feedback.pycharmUi.state.NewUserFirstRunDateTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
+      <action id="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction"
+              class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction" internal="true"/>
+      <action id="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction"
+              class="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction" internal="true"/>
+      <action id="com.intellij.feedback.aqua.TestShowAquaOldUserFeedbackAction"
+              class="com.intellij.feedback.aqua.TestShowAquaOldUserFeedbackAction" internal="true"/>
+      <action id="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
+              class="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
+              internal="true"/>
       <action id="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction"
               class="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction" internal="true"/>
       <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               class="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
+              internal="true"/>
+      <action id="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
+              class="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>

@@ -23,10 +23,10 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
-import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.util.isSupported
-import org.jetbrains.plugins.gradle.util.waitForProjectReload
+import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleProjectReload
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
@@ -52,13 +52,13 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
   }
 
   fun loadProject() {
-    waitForProjectReload {
+    waitForAnyGradleProjectReload {
       linkAndRefreshGradleProject(projectPath, myProject)
     }
   }
 
   fun reloadProject() {
-    waitForProjectReload {
+    waitForAnyGradleProjectReload {
       val importSpec = ImportSpecBuilder(myProject, externalSystemId)
       ExternalSystemUtil.refreshProject(projectPath, importSpec)
     }
@@ -132,7 +132,11 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
 
   fun createGradleSubProject() {
-    createProjectSubFile("settings.gradle", buildSettings { setProjectName("project") })
-    createProjectSubFile("build.gradle", buildscript { withJavaPlugin() })
+    createSettingsFile {
+      setProjectName("project")
+    }
+    createBuildFile {
+      withJavaPlugin()
+    }
   }
 }

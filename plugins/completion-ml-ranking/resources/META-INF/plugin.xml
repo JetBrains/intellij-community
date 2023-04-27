@@ -48,7 +48,7 @@
   <actions>
     <action id="DumpMLCompletionFeatures"
             class="com.intellij.completion.ml.actions.MLCompletionFeaturesUtil$CopyFeaturesToClipboard">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt 0"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt 9"/>
       <add-to-group group-id="MaintenanceGroup" anchor="before" relative-to-action="DumpLookupElementWeights"/>
     </action>
   </actions>

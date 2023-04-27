@@ -92,7 +92,7 @@ public abstract class PropertyTable extends JBTable {
 
     TableHoverListener.DEFAULT.removeFrom(this);
 
-    mySpeedSearch = new TableSpeedSearch(this, (object, cell) -> {
+    mySpeedSearch = new TableSpeedSearch(this, null, (object, cell) -> {
       if (cell.column != 0) return null;
       if (object instanceof GroupProperty) return null;
       return ((Property<?>)object).getName();
@@ -103,6 +103,7 @@ public abstract class PropertyTable extends JBTable {
         repaint(PropertyTable.this.getVisibleRect());
       }
     };
+    mySpeedSearch.setupListeners();
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, false));
 
     // TODO: Updates UI after LAF updated

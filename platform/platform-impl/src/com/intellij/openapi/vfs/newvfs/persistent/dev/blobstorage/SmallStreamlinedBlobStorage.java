@@ -265,7 +265,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @Override
   public <Out> Out readRecord(final int recordId,
-                              final @NotNull Reader<Out> reader) throws IOException {
+                              final @NotNull ByteBufferReader<Out> reader) throws IOException {
     return readRecord(recordId, reader, null);
   }
 
@@ -333,7 +333,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
    */
   @Override
   public <Out> Out readRecord(final int recordId,
-                              final @NotNull Reader<Out> reader,
+                              final @NotNull ByteBufferReader<Out> reader,
                               final @Nullable IntRef redirectToIdRef) throws IOException {
     pagedStorage.lockRead();
     try {
@@ -374,13 +374,13 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @Override
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer) throws IOException {
+                           final @NotNull ByteBufferWriter writer) throws IOException {
     return writeToRecord(recordId, writer, /*expectedRecordSizeHint: */ -1);
   }
 
   @Override
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer,
+                           final @NotNull ByteBufferWriter writer,
                            final int expectedRecordSizeHint) throws IOException {
     return writeToRecord(recordId, writer, expectedRecordSizeHint, /* leaveRedirectOnRecordRelocation: */ false);
   }
@@ -408,7 +408,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
    */
   @Override
   public int writeToRecord(final int recordId,
-                           final @NotNull Writer writer,
+                           final @NotNull ByteBufferWriter writer,
                            final int expectedRecordSizeHint,
                            final boolean leaveRedirectOnRecordRelocation) throws IOException {
     //insert new record?

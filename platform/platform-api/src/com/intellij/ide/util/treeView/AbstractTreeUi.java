@@ -246,7 +246,7 @@ public class AbstractTreeUi {
       Disposer.register(getBuilder(), () -> myProgress.cancel());
     }
 
-    UiNotifyConnector uiNotify = new UiNotifyConnector(tree, new Activatable() {
+    UiNotifyConnector uiNotify = UiNotifyConnector.installOn(tree, new Activatable() {
       @Override
       public void showNotify() {
         myShowing = true;
@@ -1601,7 +1601,7 @@ public class AbstractTreeUi {
 
     Object[] passTwo = getTreeStructure().getChildElements(element);
 
-    Set<Object> two = ContainerUtil.set(passTwo);
+    Set<Object> two = ContainerUtil.newHashSet(passTwo);
 
     if (passOne.get().length != passTwo.length) {
       LOG.error(

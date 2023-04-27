@@ -12,7 +12,7 @@ import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class MultipleSelectionHtmlLesson
+class MultipleSelectionHtmlLesson(private val helpUrl: String = "multicursor.html")
   : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name")) {
 
   override val languageId: String = "HTML"
@@ -98,6 +98,6 @@ class MultipleSelectionHtmlLesson
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("multiple.selections.help.multiple.carets"),
-         LessonUtil.getHelpLink("multicursor.html")),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }

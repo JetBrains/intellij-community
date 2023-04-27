@@ -27,7 +27,7 @@ public class CompoundRootReferringObject implements ReferringObject {
   private final MemoryAgentReferenceKind[] myKinds;
 
   public CompoundRootReferringObject(MemoryAgentReferenceKind @NotNull [] kinds) {
-    myKinds = ContainerUtil.set(kinds).toArray(new MemoryAgentReferenceKind[0]);
+    myKinds = ContainerUtil.newHashSet(kinds).toArray(new MemoryAgentReferenceKind[0]);
   }
 
   @NotNull

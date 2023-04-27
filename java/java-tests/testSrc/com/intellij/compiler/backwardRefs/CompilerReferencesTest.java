@@ -14,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -50,7 +49,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     assertNotNull(referents);
     final Set<String> filesWithReferences = referents.stream().map(VirtualFile::getName).collect(Collectors.toSet());
 
-    assertEquals(filesWithReferences, ContainerUtil.set("Baz.java", "Foo.java", "FooImpl.java"));
+    assertEquals(filesWithReferences, Set.of("Baz.java", "Foo.java", "FooImpl.java"));
     myFixture.addFileToProject("SomeModification.java", "");
     assertNull(getReferentFilesForElementUnderCaret());
   }

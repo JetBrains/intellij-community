@@ -1,37 +1,117 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-use anyhow::{bail, Context, Result};
-use serde::{Deserialize, Serialize};
-use std::{env, fs, io, thread, time};
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+use std::{env, fs, thread, time};
 use std::collections::HashMap;
-use std::fs::File;
+use std::fmt::{Debug, Formatter};
+use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output, Stdio};
 use std::sync::Once;
-use log::{debug};
-use utils::{get_path_from_env_var, PathExt};
+
+use anyhow::{bail, Context, Result};
+use log::debug;
+use serde::{Deserialize, Serialize};
+use tempfile::{Builder, TempDir};
+use utils::PathExt;
 use xplat_launcher::get_config_home;
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
 
-pub struct TestEnvironment {
-    pub launcher_path: PathBuf,
-    pub test_root_dir: tempfile::TempDir
+#[derive(Clone)]
+pub enum LauncherLocation { Standard, RemoteDev }
+
+pub struct TestEnvironment<'a> {
+    pub dist_root: PathBuf,
+    pub project_dir: PathBuf,
+    launcher_path: PathBuf,
+    shared_env: &'a TestEnvironmentShared,
+    test_root_dir: TempDir,
+    to_delete: Vec<PathBuf>
 }
 
-pub fn prepare_test_env(layout_kind: &LayoutSpec) -> TestEnvironment {
-    let result = match prepare_test_env_impl(layout_kind) {
-        Ok(x) => x,
-        Err(e) => {
-            panic!("Failed to prepare test environment: {e:?}")
+impl<'a> TestEnvironment<'a> {
+    pub fn create_jbr_link(&self, link_name: &str) -> PathBuf {
+        let link = self.dist_root.join(link_name);
+        symlink(&self.shared_env.jbr_root, &link).unwrap();
+        link
+    }
+
+    pub fn create_temp_dir(&self, relative_path: &str) -> PathBuf {
+        let temp_dir = self.test_root_dir.path().join(relative_path);
+        fs::create_dir_all(&temp_dir).expect(&format!("Cannot create: {:?}", temp_dir));
+        temp_dir
+    }
+
+    pub fn create_temp_file(&self, relative_path: &str, content: &str) -> PathBuf {
+        let temp_file = self.test_root_dir.path().join(relative_path);
+        Self::create_file(&temp_file, content);
+        temp_file
+    }
+
+    pub fn create_user_config_file(&mut self, name: &str, content: &str) -> PathBuf {
+        let custom_config_dir = get_custom_config_dir();
+        self.to_delete.push(custom_config_dir.clone());
+        let config_file = custom_config_dir.join(name);
+        Self::create_file(&config_file, content);
+        config_file
+    }
+
+    pub fn create_toolbox_vm_options(&mut self, content: &str) -> PathBuf {
+        let dist_root = if cfg!(target_os = "macos") { self.dist_root.parent().unwrap() } else { &self.dist_root };
+        let vm_options_name = dist_root.file_name().unwrap().to_str().unwrap().to_string() + ".vmoptions";
+        let vm_options_file = dist_root.parent().unwrap().join(vm_options_name);
+        self.to_delete.push(vm_options_file.clone());
+        Self::create_file(&vm_options_file, content);
+        vm_options_file
+    }
+
+    fn create_file(file: &Path, content: &str) {
+        fs::create_dir_all(file.parent().unwrap())
+            .expect(&format!("Cannot create: {:?}", file));
+        OpenOptions::new().write(true).create_new(true).open(&file)
+            .expect(&format!("Cannot create {:?}", &file))
+            .write_all(content.as_bytes())
+            .expect(&format!("Cannot write {:?}", &file));
+    }
+}
+
+impl<'a> Drop for TestEnvironment<'a> {
+    fn drop(&mut self) {
+        for path in &self.to_delete {
+            debug!("Deleting {:?}", path);
+            if let Ok(metadata) = path.symlink_metadata() {
+                let result = if metadata.is_dir() { fs::remove_dir_all(&path) } else { fs::remove_file(path) };
+                result.expect(&format!("cannot delete: {:?}", path))
+            }
         }
-    };
-
-    result
+    }
 }
 
-fn prepare_test_env_impl(layout_kind: &LayoutSpec) -> Result<TestEnvironment> {
+pub fn prepare_test_env<'a>(launcher_location: LauncherLocation) -> TestEnvironment<'a> {
+    match prepare_test_env_impl(launcher_location, true) {
+        Ok(x) => x,
+        Err(e) => panic!("Failed to prepare test environment: {:?}", e),
+    }
+}
+
+pub fn prepare_no_jbr_test_env<'a>(launcher_location: LauncherLocation) -> TestEnvironment<'a> {
+    match prepare_test_env_impl(launcher_location, false) {
+        Ok(x) => x,
+        Err(e) => panic!("Failed to prepare test environment: {:?}", e),
+    }
+}
+
+struct TestEnvironmentShared {
+    launcher_path: PathBuf,
+    jbr_root: PathBuf,
+    app_jar_path: PathBuf,
+    product_info_path: PathBuf,
+    vm_options_path: PathBuf
+}
+
+fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool) -> Result<TestEnvironment<'a>> {
     INIT.call_once(|| {
         let shared = init_test_environment_once().expect("Failed to init shared test environment");
         unsafe {
@@ -39,105 +119,61 @@ fn prepare_test_env_impl(layout_kind: &LayoutSpec) -> Result<TestEnvironment> {
         }
     });
 
-    let shared = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
+    let shared_env = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
 
-    let os = env::consts::OS;
-    let product_info_relative = format!("resources/product_info_{os}.json");
-    let product_info_path = shared.project_root.join(product_info_relative);
+    let temp_dir = Builder::new().prefix("xplat_launcher_test_").tempdir().context("Failed to create temp directory")?;
 
-    // create tmp dir
-    let temp_dir = tempfile::tempdir().context(format!("Failed to create temp directory"))?;
-    let temp_dir_path = temp_dir.path();
+    let (dist_root, launcher_path) = layout_launcher(launcher_location, with_jbr, temp_dir.path(), shared_env)?;
 
-    match layout_kind.java_type {
-        JavaType::UserJRE => {
-            create_dummy_config(&shared.jbrsdk_root)?;
-            debug!("Custom user file with runtime is created. JBR is not included in layout")
-        }
-        JavaType::EnvVar => {
-            debug!("Java type don't need custom user file with runtime. JBR is not included in layout")
-        }
-        JavaType::JBR => {
-            debug!("Java type don't need custom user file with runtime. JBR is included in layout")
-        }
-    }
+    let project_dir = temp_dir.path().join("_project");
+    fs::create_dir_all(&project_dir)?;
 
-    layout_launcher(
-        layout_kind,
-        &temp_dir_path,
-        &shared.project_root,
-        &shared.jbrsdk_root,
-        &shared.intellij_app_jar_source,
-        &product_info_path,
-    )?;
+    Ok(TestEnvironment { dist_root, project_dir, launcher_path, shared_env, test_root_dir: temp_dir, to_delete: Vec::new() })
+}
 
-    let launcher_dir = resolve_launcher_dir(&temp_dir_path, layout_kind);
-    let launcher_file = resolve_launcher_filename(layout_kind);
-    env::set_current_dir(&launcher_dir)?;
-
-    let launcher_path = launcher_dir.join(launcher_file);
-
-    let result = TestEnvironment {
-        launcher_path,
-        test_root_dir: temp_dir
-    };
-
+fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     // clean environment variables
-    env::remove_var("IU_JDK");
     env::remove_var("JDK_HOME");
     env::remove_var("JAVA_HOME");
 
-    Ok(result)
-}
-
-pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let project_root = env::current_dir().expect("Failed to get project root");
+
+    let build_target = if cfg!(debug_assertions) { "debug" } else { "release" };
+    let bin_name = if cfg!(target_os = "windows") { "xplat-launcher.exe" } else { "xplat-launcher" };
+    let launcher_path = project_root.join("target").join(build_target).join(bin_name);
+    if !launcher_path.exists() {
+        bail!("Didn't find source launcher to layout, expected path: {:?}", launcher_path);
+    }
 
     // gradle_command_wrapper("clean");
     gradle_command_wrapper("fatJar");
 
-    let jbrsdk_root = get_jbrsdk_from_project_root(&project_root)?;
+    let jbr_root = get_jbr_sdk_from_project_root(&project_root)?;
 
-    let jar_path = Path::new("./resources/TestProject/build/libs/app.jar");
-    let intellij_app_jar_source = jar_path.canonicalize()?;
+    let app_jar_path = Path::new("./resources/TestProject/build/libs/app.jar").canonicalize()?;
 
-    let result = TestEnvironmentShared {
-        project_root,
-        jbrsdk_root,
-        intellij_app_jar_source
-    };
+    let product_info_path = project_root.join(format!("resources/product_info_{}.json", env::consts::OS));
+    let vm_options_path = project_root.join("resources/xplat.vmoptions");
 
-    Ok(result)
+    Ok(TestEnvironmentShared { launcher_path, jbr_root, app_jar_path, product_info_path, vm_options_path })
 }
 
-pub fn get_jbrsdk_from_project_root(project_root: &Path) -> Result<PathBuf> {
-    let gradle_jvm = project_root
-        .join("resources")
-        .join("TestProject")
-        .join("gradle-jvm");
+fn get_jbr_sdk_from_project_root(project_root: &Path) -> Result<PathBuf> {
+    let gradle_jvm = project_root.join("resources").join("TestProject").join("gradle-jvm");
 
     // TODO: remove after wrapper with https://github.com/mfilippov/gradle-jvm-wrapper/pull/31
-    let java_dir_prefix = match env::consts::OS {
-        "windows" => { "jdk" }
-        _ => { "jbrsdk" }
-    };
+    let java_dir_prefix = if cfg!(target_os = "windows") { "jdk" } else { "jbrsdk" };
 
     // jbrsdk-17.0.3-osx-x64-b469.37-f87880
-    let jbrsdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix)?;
+    let sdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix)?;
 
     // jbrsdk-17.0.3-x64-b469
-    let jbrsdk_root = get_child_dir(&jbrsdk_gradle_parent, java_dir_prefix)?;
+    let sdk_root = get_child_dir(&sdk_gradle_parent, java_dir_prefix)?;
 
-    Ok(jbrsdk_root)
+    Ok(sdk_root)
 }
 
-pub struct TestEnvironmentShared {
-    project_root: PathBuf,
-    jbrsdk_root: PathBuf,
-    intellij_app_jar_source: PathBuf
-}
-
-pub fn gradle_command_wrapper(gradle_command: &str) {
+fn gradle_command_wrapper(gradle_command: &str) {
     let current_dir = env::current_dir()
         .expect("Failed to get current dir")
         .canonicalize()
@@ -155,7 +191,7 @@ pub fn gradle_command_wrapper(gradle_command: &str) {
         .arg(gradle_command)
         .current_dir("./resources/TestProject")
         .output()
-        .expect(format!("Failed to execute gradlew :{gradle_command}").as_str());
+        .expect(&format!("Failed to execute gradlew :{gradle_command}"));
 
     command_handler(&command_to_execute);
 }
@@ -165,7 +201,7 @@ fn get_gradlew_executable_name() -> String {
     "gradlew.bat".to_string()
 }
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 fn get_gradlew_executable_name() -> String {
     "gradlew".to_string()
 }
@@ -177,230 +213,156 @@ fn command_handler(command: &Output) {
 
     if !exit_status.success() {
         let message = format!("Command didn't succeed,\n exit code: {exit_status},\n stdout: {stdout},\n stderr: {stderr}");
-        panic!("{message}")
+        panic!("{}", message)
     }
 }
 
-pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
-    let read_dir = fs::read_dir(parent)?;
-
-    for dir_entry in read_dir {
-        let dir_entry_ok = dir_entry?;
-        if dir_entry_ok
-            .file_name()
-            .to_string_lossy()
-            .starts_with(prefix)
-        {
-            return Ok(dir_entry_ok.path());
-        }
+fn get_child_dir(parent: &Path, prefix: &str) -> Result<PathBuf> {
+    let entry = fs::read_dir(parent)?
+        .map(|r| r.unwrap())
+        .find(|e| e.file_name().to_string_lossy().starts_with(prefix));
+    match entry {
+        Some(e) => Ok(e.path()),
+        None => bail!("'{}*' not found in {:?}", prefix, parent)
     }
-
-    return Err(io::Error::new(
-        io::ErrorKind::NotFound,
-        "Child dir not found",
-    ));
-}
-
-pub struct LayoutSpec {
-    pub launcher_location: LauncherLocation,
-    pub java_type: JavaType,
-}
-
-pub enum LauncherLocation {
-    MainBin,
-    MainBinRemoteDev,
-    PluginsBin,
-}
-
-pub enum JavaType {
-    EnvVar,
-    UserJRE,
-    JBR,
 }
 
 #[cfg(target_os = "linux")]
-pub fn layout_launcher(
-    layout_kind: &LayoutSpec,
+fn layout_launcher(
+    launcher_location: LauncherLocation,
+    include_jbr: bool,
     target_dir: &Path,
-    project_root: &Path,
-    jbr_absolute_path: &Path,
-    intellij_main_mock_jar: &Path,
-    product_info_absolute_path: &Path,
-) -> Result<()> {
-    // linux:
+    shared_env: &TestEnvironmentShared
+) -> Result<(PathBuf, PathBuf)> {
     // .
     // ├── bin/
-    // │   └── xplat-launcher
-    // │   └── remote-dev-server
-    // │   └── idea64.vmoptions
+    // │   └── xplat-launcher | remote-dev-server
+    // │   └── xplat64.vmoptions
     // │   └── idea.properties
     // ├── lib/
     // │   └── app.jar
-    // ├── plugins/
-    // │   └── remote-dev-server
-    // │       └── bin
-    // │           └── xplat-launcher
+    // │   └── boot-linux.jar
     // ├── jbr/
     // └── product-info.json
 
-    let launcher = &get_testing_binary_root(project_root).join("xplat-launcher");
-    if !launcher.exists() {
-        bail!("Didn't find source launcher to layout, expected path: {launcher:?}");
-    }
+    let launcher_rel_path = match launcher_location {
+        LauncherLocation::Standard => "bin/xplat-launcher",
+        LauncherLocation::RemoteDev => "bin/remote-dev-server"
+    };
 
     layout_launcher_impl(
-        layout_kind,
         target_dir,
         vec![
-            "bin/idea64.vmoptions",
             "bin/idea.properties",
-            "lib/test.jar"
+            "lib/boot-linux.jar"
         ],
         vec![
-            (launcher.as_path(), "bin/xplat-launcher"),
-            (launcher.as_path(), "bin/remote-dev-server"),
-            (launcher.as_path(), "plugins/remote-dev-server/bin/xplat-launcher"),
-            (intellij_main_mock_jar, "lib/app.jar"),
-            (product_info_absolute_path, "product-info.json"),
+            (&shared_env.launcher_path, launcher_rel_path),
+            (&shared_env.vm_options_path, "bin/xplat64.vmoptions"),
+            (&shared_env.app_jar_path, "lib/app.jar"),
+            (&shared_env.product_info_path, "product-info.json")
         ],
-        vec![
-            (jbr_absolute_path, "jbr")
-        ]
+        include_jbr,
+        &shared_env.jbr_root
     )?;
 
-    Ok(())
+    Ok((target_dir.to_path_buf(), target_dir.join(launcher_rel_path)))
 }
 
 #[cfg(target_os = "macos")]
-pub fn layout_launcher(
-    layout_kind: &LayoutSpec,
+fn layout_launcher(
+    launcher_location: LauncherLocation,
+    include_jbr: bool,
     target_dir: &Path,
-    project_root: &Path,
-    jbr_absolute_path: &Path,
-    intellij_main_mock_jar: &Path,
-    product_info_absolute_path: &Path,
-) -> Result<()> {
-    // macos:
+    shared_env: &TestEnvironmentShared
+) -> Result<(PathBuf, PathBuf)> {
     // .
     // └── Contents
     //     ├── bin/
-    //     │   └── xplat-launcher
-    //     │   └── remote-dev-server
-    //     │   └── idea.vmoptions
+    //     │   └── xplat-launcher | remote-dev-server
+    //     │   └── xplat.vmoptions
     //     │   └── idea.properties
     //     ├── Resources/
     //     │   └── product-info.json
     //     ├── lib/
     //     │   └── app.jar
-    //     ├── plugins/
-    //     │   └── remote-dev-server
-    //     │       └── bin
-    //     │           └── xplat-launcher
+    //     │   └── boot-macos.jar
     //     └── jbr/
 
-    let launcher = get_testing_binary_root(project_root).join("xplat-launcher");
-    if !launcher.exists() {
-        bail!("Didn't find source launcher to layout, expected path: {launcher:?}");
-    }
+    let launcher_rel_path = match launcher_location {
+        LauncherLocation::Standard => "bin/xplat-launcher",
+        LauncherLocation::RemoteDev => "bin/remote-dev-server"
+    };
+    let dist_root = target_dir.join("Contents");
 
     layout_launcher_impl(
-        layout_kind,
-        target_dir,
+        &dist_root,
         vec![
-            "Contents/bin/idea.vmoptions",
-            "Contents/lib/test.jar",
-            "Contents/bin/idea.properties",
+            "bin/idea.properties",
+            "lib/boot-macos.jar"
         ],
         vec![
-            (launcher.as_path(), "Contents/bin/xplat-launcher"),
-            (launcher.as_path(), "Contents/bin/remote-dev-server"),
-            (launcher.as_path(), "Contents/plugins/remote-dev-server/bin/xplat-launcher"),
-            (intellij_main_mock_jar, "Contents/lib/app.jar"),
-            (product_info_absolute_path, "Contents/Resources/product-info.json"),
+            (&shared_env.launcher_path, launcher_rel_path),
+            (&shared_env.vm_options_path, "bin/xplat.vmoptions"),
+            (&shared_env.app_jar_path, "lib/app.jar"),
+            (&shared_env.product_info_path, "Resources/product-info.json")
         ],
-        vec![
-            (jbr_absolute_path, "Contents/jbr")
-        ]
+        include_jbr,
+        &shared_env.jbr_root
     )?;
 
-    Ok(())
+    let launcher_path = dist_root.join(launcher_rel_path);
+    Ok((dist_root, launcher_path))
 }
 
 #[cfg(target_os = "windows")]
-pub fn layout_launcher(
-    layout_kind: &LayoutSpec,
+fn layout_launcher(
+    launcher_location: LauncherLocation,
+    include_jbr: bool,
     target_dir: &Path,
-    project_root: &Path,
-    jbr_absolute_path: &Path,
-    intellij_main_mock_jar: &Path,
-    product_info_absolute_path: &Path,
-) -> Result<()> {
-    // windows:
+    shared_env: &TestEnvironmentShared
+) -> Result<(PathBuf, PathBuf)> {
     // .
     // ├── bin/
-    // │   └── xplat-launcher.exe
-    // │   └── remote-dev-server.exe
-    // │   └── idea64.exe.vmoptions
+    // │   └── xplat-launcher.exe | remote-dev-server.exe
+    // │   └── xplat64.exe.vmoptions
     // │   └── idea.properties
     // ├── lib/
     // │   └── app.jar
+    // │   └── boot-windows.jar
     // ├── jbr/
-    // ├── plugins/
-    // │   └── remote-dev-server
-    // │       └── bin
-    // │           └── xplat-launcher
     // └── product-info.json
 
-    let launcher = get_testing_binary_root(project_root).join("xplat-launcher.exe");
-    if !launcher.exists() {
-        bail!("Didn't find source launcher to layout, expected path: {launcher:?}");
-    }
+    let launcher_rel_path = match launcher_location {
+        LauncherLocation::Standard => "bin\\xplat-launcher.exe",
+        LauncherLocation::RemoteDev => "bin\\remote-dev-server.exe"
+    };
 
     layout_launcher_impl(
-        layout_kind,
         target_dir,
         vec![
-            "bin/idea64.exe.vmoptions",
-            "lib/test.jar",
-            "bin/idea.properties",
+            "bin\\idea.properties",
+            "lib\\boot-windows.jar"
         ],
         vec![
-            (launcher.as_path(), "bin/xplat-launcher.exe"),
-            (launcher.as_path(), "bin/remote-dev-server.exe"),
-            (launcher.as_path(), "plugins/remote-dev-server/bin/xplat-launcher.exe"),
-            (intellij_main_mock_jar, "lib/app.jar"),
-            (product_info_absolute_path, "product-info.json"),
+            (&shared_env.launcher_path, launcher_rel_path),
+            (&shared_env.vm_options_path, "bin\\xplat64.exe.vmoptions"),
+            (&shared_env.app_jar_path, "lib\\app.jar"),
+            (&shared_env.product_info_path, "product-info.json")
         ],
-        vec![
-            (jbr_absolute_path, "jbr")
-        ]
+        include_jbr,
+        &shared_env.jbr_root
     )?;
 
-    Ok(())
-}
-
-fn get_testing_binary_root(project_root: &Path) -> PathBuf {
-    match get_path_from_env_var("XPLAT_LAUNCHER_TESTS_TARGET_BINARY_ROOT") {
-        Ok(x) => x,
-        Err(_) => {
-            let target = match cfg!(debug_assertions) {
-                true => { "debug".to_string() }
-                false => { "release".to_string() }
-            };
-
-            project_root
-                .join("target")
-                .join(target)
-        }
-    }
+    Ok((target_dir.to_path_buf(), target_dir.join(launcher_rel_path)))
 }
 
 fn layout_launcher_impl(
-    layout_kind: &LayoutSpec,
     target_dir: &Path,
     create_files: Vec<&str>,
     copy_files: Vec<(&Path, &str)>,
-    symlink_dirs: Vec<(&Path, &str)>
+    include_jbr: bool,
+    jbr_path: &Path
 ) -> Result<()> {
     for file in create_files {
         let target = &target_dir.join(file);
@@ -414,124 +376,113 @@ fn layout_launcher_impl(
         fs::copy(source, target).context(format!("Failed to copy from {source:?} to {target:?}"))?;
     }
 
-    for (source, target_relative) in symlink_dirs {
-        match layout_kind.java_type {
-            JavaType::EnvVar | JavaType::UserJRE if target_relative.contains("jbr") => break,
-            _ => {
-                let target = &target_dir.join(target_relative);
-                fs::create_dir_all(target.parent_or_err()?)?;
-                symlink(source, target).context(format!("Failed to create symlink {target:?} pointing to {source:?}"))?;
-            }
+    if include_jbr {
+        symlink(jbr_path, &target_dir.join("jbr"))?;
+    }
+
+    Ok(())
+}
+
+#[cfg(target_family = "unix")]
+fn symlink(original: &Path, link: &Path) -> Result<()> {
+    std::os::unix::fs::symlink(original, link)
+        .context(format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn symlink(original: &Path, link: &Path) -> Result<()> {
+    std::os::windows::fs::symlink_dir(original, link)
+        .context(format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
+
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
+    java_home.join("bin/java")
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
+    java_home.join("bin\\java.exe")
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
+    java_home.join("Contents/Home/bin/java")
+}
+
+fn get_custom_config_dir() -> PathBuf {
+    get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTest")
+}
+
+pub struct LauncherRunSpec {
+    location: LauncherLocation,
+    dump: bool,
+    assert_status: bool,
+    args: Vec<String>,
+    env: HashMap<String, String>
+}
+
+impl LauncherRunSpec {
+    pub fn standard() -> LauncherRunSpec {
+        LauncherRunSpec {
+            location: LauncherLocation::Standard, dump: false, assert_status: false, args: Vec::new(), env: HashMap::new()
         }
     }
 
-    Ok(())
-}
-
-#[cfg(any(target_os = "macos", target_os = "linux"))]
-fn symlink(source: &Path, target: &Path) -> Result<()> {
-    std::os::unix::fs::symlink(source, target)
-        .context(format!("Failed to create symlink {target:?} pointing to {source:?}"))?;
-
-    Ok(())
-}
-
-#[cfg(target_os = "windows")]
-fn symlink(source: &Path, target: &Path) -> Result<()> {
-    junction::create(source, target)
-        .context(format!("Failed to create junction {target:?} pointing to {source:?}"))?;
-
-    Ok(())
-}
-
-pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LayoutSpec) -> PathBuf {
-    let root = match cfg!(target_os = "macos") {
-        true => test_dir.join("Contents"),
-        false => test_dir.to_path_buf()
-    };
-
-    match layout_kind.launcher_location {
-        LauncherLocation::MainBin | LauncherLocation::MainBinRemoteDev => root.join("bin"),
-
-        LauncherLocation::PluginsBin => root.join("plugins/remote-dev-server/bin")
-    }
-}
-
-pub fn resolve_launcher_filename(layout_kind: &LayoutSpec) -> &str {
-    match layout_kind.launcher_location {
-        LauncherLocation::MainBin | LauncherLocation::PluginsBin => "xplat-launcher",
-        LauncherLocation::MainBinRemoteDev => "remote-dev-server"
-    }
-}
-
-#[cfg(target_os = "linux")]
-pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home
-        .join("bin")
-        .join("java")
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home
-        .join("bin")
-        .join("java.exe")
-}
-
-#[cfg(target_os = "macos")]
-pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home
-        .join("Contents")
-        .join("Home")
-        .join("bin")
-        .join("java")
-}
-
-#[cfg(target_os = "linux")]
-pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
-    Ok(jbr_dir.canonicalize()?)
-}
-
-#[cfg(target_os = "macos")]
-pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
-    Ok(jbr_dir.join("Contents").join("Home").canonicalize()?)
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_jbr_home(jbr_dir: &PathBuf) -> Result<PathBuf> {
-    Ok(junction::get_target(jbr_dir)?)
-}
-
-pub fn create_dummy_config(java_root: &Path) -> Result<()> {
-    let idea_config_path = get_custom_user_file_with_java_path()?;
-    let idea_config_file = idea_config_path.join("idea.jdk");
-
-    if !idea_config_file.exists() {
-        fs::create_dir_all(idea_config_path)?;
-        let idea_jdk_content = java_root.to_str().unwrap().as_bytes();
-        let mut idea_jdk_file = File::create(&idea_config_file).expect("Fail to create idea.jdk");
-        idea_jdk_file.write_all(idea_jdk_content).expect("Fail to write in idea.jdk");
+    pub fn remote_dev() -> LauncherRunSpec {
+        LauncherRunSpec {
+            location: LauncherLocation::RemoteDev, dump: false, assert_status: false, args: Vec::new(), env: HashMap::new()
+        }
     }
 
-    Ok(())
+    pub fn with_dump(&mut self) -> &mut Self {
+        self.dump = true;
+        self
+    }
+
+    pub fn assert_status(&mut self) -> &mut Self {
+        self.assert_status = true;
+        self
+    }
+
+    pub fn with_args(&mut self, args: &[&str]) -> &mut Self {
+        self.args.extend(args.iter().map(|s| s.to_string()));
+        self
+    }
+
+    pub fn with_env(&mut self, env: &HashMap<&str, &str>) -> &mut Self {
+        self.env.extend(env.iter().map(|(k, v)| (k.to_string(), v.to_string())));
+        self
+    }
 }
-
-pub fn get_custom_user_file_with_java_path() -> Result<PathBuf> {
-    let config_home_path = get_config_home()?;
-    let config_path = config_home_path
-        .join("JetBrains")
-        .join("IntelliJIdea2022.3"); //todo
-
-    Ok(config_path)
-}
-
-// TODO: test for additionalJvmArguments in product-info.json being set
-// (e.g. "-Didea.vendor.name=JetBrains")
 
 pub struct LauncherRunResult {
     pub exit_status: ExitStatus,
-    pub dump: Option<IntellijMainDumpedLaunchParameters>,
     pub stdout: String,
+    pub stderr: String,
+    dump: Option<Result<IntellijMainDumpedLaunchParameters>>,
+}
+
+impl LauncherRunResult {
+    pub fn dump(self) -> IntellijMainDumpedLaunchParameters {
+        let err_message = format!("Dump was not collected: {:?}", self);
+        match self.dump {
+            Some(result) => result.expect(&err_message),
+            None => panic!("Dump was not requested; add `.with_dump()` to the run specification")
+        }
+    }
+}
+
+impl Debug for LauncherRunResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "\n** exit code: {}\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
+            self.exit_status.code().unwrap_or(-1), self.stderr, self.stdout))
+    }
 }
 
 #[allow(non_snake_case)]
@@ -543,18 +494,73 @@ pub struct IntellijMainDumpedLaunchParameters {
     pub systemProperties: HashMap<String, String>
 }
 
-pub const TEST_OUTPUT_FILE_NAME: &str = "output.json";
+pub fn run_launcher(run_spec: &LauncherRunSpec) -> LauncherRunResult {
+    let test_env = prepare_test_env(run_spec.location.clone());
+    run_launcher_ext(&test_env, run_spec)
+}
 
-fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>, output_file: &Path) -> Result<LauncherRunResult> {
-    let stdout_file_path = test.test_root_dir.path().join("out.txt");
-    let stdout_file = File::create(&stdout_file_path)?;
-    let stdio = Stdio::from(stdout_file);
+pub fn run_launcher_ext(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> LauncherRunResult {
+    match run_launcher_impl(&test_env, &run_spec) {
+        Ok(result) => {
+            if run_spec.assert_status {
+                assert!(result.exit_status.success(), "The exit status of the launcher is not successful: {:?}", result);
+            }
+            result
+        }
+        Err(e) => {
+            panic!("Failed to get launcher run result: {:?}", e)
+        }
+    }
+}
 
-    let mut launcher_process = Command::new(&test.launcher_path)
-        .current_dir(&test.test_root_dir)
-        .args(args)
-        .stdout(stdio)
-        .envs(envs)
+fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
+    println!("Starting {:?} with args {:?}", &test_env.launcher_path, run_spec.args);
+
+    let stdout_file_path = test_env.test_root_dir.path().join("out.txt");
+    let stderr_file_path = test_env.test_root_dir.path().join("err.txt");
+    let project_dir = test_env.project_dir.to_str().unwrap();
+    let dump_file_path = test_env.test_root_dir.path().join("output.json");
+    let dump_file_path_str = dump_file_path.to_string_lossy();
+
+    let mut full_args = Vec::<&str>::new();
+    if run_spec.dump {
+        let dump_args = match run_spec.location {
+            LauncherLocation::Standard => vec!["dump-launch-parameters", "--output", &dump_file_path_str],
+            LauncherLocation::RemoteDev => vec!["dumpLaunchParameters", &project_dir, "--output", &dump_file_path_str]
+        };
+        for arg in dump_args {
+            full_args.push(arg);
+        }
+    }
+    for arg in run_spec.args.iter() {
+        full_args.push(arg);
+    }
+
+    let mut full_env = match run_spec.location {
+        LauncherLocation::Standard => HashMap::from([
+            (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
+            (xplat_launcher::VERBOSE_LOGGING_ENV_VAR, "1")
+        ]),
+        LauncherLocation::RemoteDev => HashMap::from([
+            (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
+            ("CWM_NO_PASSWORD", "1"),
+            ("CWM_HOST_PASSWORD", "1"),
+            ("REMOTE_DEV_NON_INTERACTIVE", "1"),
+            ("IJ_HOST_CONFIG_DIR", project_dir),
+            ("IJ_HOST_SYSTEM_DIR", project_dir),
+            ("IJ_HOST_LOGS_DIR", project_dir)
+        ]),
+    };
+    for (k, v) in run_spec.env.iter() {
+        full_env.insert(k, v);
+    }
+
+    let mut launcher_process = Command::new(&test_env.launcher_path)
+        .current_dir(&test_env.test_root_dir)
+        .args(full_args)
+        .stdout(Stdio::from(File::create(&stdout_file_path)?))
+        .stderr(Stdio::from(File::create(&stderr_file_path)?))
+        .envs(full_env)
         .spawn()
         .context("Failed to spawn launcher process")?;
 
@@ -573,11 +579,9 @@ fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, 
                 }
                 Some(es) => return Ok(LauncherRunResult {
                     exit_status: es,
-                    dump: match es.success() {
-                        true => Some(read_launcher_run_result(&output_file)?),
-                        false => None
-                    },
-                    stdout: fs::read_to_string(&stdout_file_path).context("can't open stdout file")?
+                    stdout: fs::read_to_string(&stdout_file_path).context("Cannot open stdout file")?,
+                    stderr: fs::read_to_string(&stderr_file_path).context("Cannot open stderr file")?,
+                    dump: if run_spec.dump { Some(read_launcher_run_result(&dump_file_path)) } else { None }
                 }),
             },
             Err(e) => {
@@ -591,167 +595,31 @@ fn run_launcher_impl(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, 
 
 fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParameters> {
     let file = File::open(path)?;
-
     let mut reader = BufReader::new(file);
     let mut text = String::new();
-    let len = reader.read_to_string(&mut text)?;
-
-    println!("read {len} bytes from {path:?}, content: {text}");
-
-    let dump: IntellijMainDumpedLaunchParameters = serde_json::from_str(text.as_str())?;
-
+    reader.read_to_string(&mut text)?;
+    let dump: IntellijMainDumpedLaunchParameters = serde_json::from_str(&text)?;
     Ok(dump)
 }
 
-/// Run launcher with command line arguments and environment variables and return `LauncherRunResult` which contains:
-/// - exit status of launched application;
-/// - dump of launch parameters;
-/// - std_out of launcher;
-pub fn run_launcher(layout_specification: &LayoutSpec) -> LauncherRunResult {
-    let test = prepare_test_env(layout_specification);
-    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
-    let output_args = ["--output", &output_file.to_string_lossy()];
-    let default_env_var: HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
+pub fn test_runtime_selection(result: LauncherRunResult, expected_rt: PathBuf) {
+    let rt_line = result.stdout.lines().into_iter()
+        .find(|line| line.contains("Resolved runtime: "))
+        .expect(&format!("The 'Resolved runtime:' line is not in the output: {}", result.stdout));
+    let resolved_rt = rt_line.split_once("Resolved runtime: ").unwrap().1;
+    let actual_rt = &resolved_rt[1..resolved_rt.len() - 1].replace("\\\\", "\\");
 
-    let result = match run_launcher_impl(&test, &output_args, default_env_var, &output_file) {
-        Ok(launcher_run_result) => launcher_run_result,
-        Err(e) => {
-            panic!("Failed to get launcher run result: {e:?}")
-        }
-    };
+    let adjusted_rt = if cfg!(target_os = "macos") { expected_rt.join("Contents/Home") } else { expected_rt };
 
-    result
+    assert_eq!(adjusted_rt.to_str().unwrap(), actual_rt, "Wrong runtime; run result: {:?}", result);
 }
 
-/// Run launcher with command line arguments and environment variables and return dump of launch parameters
-fn run_launcher_and_get_dump(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
-    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
-
-    let output_args = ["dump-launch-parameters", "--output", &output_file.to_string_lossy()];
-    let full_args = &mut output_args.to_vec();
-    full_args.append(&mut args.to_vec());
-
-    let default_env_var: HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
-    let full_env_vars: HashMap<&str, &str> = default_env_var.into_iter().chain(envs).collect();
-
-    let result = match run_launcher_impl(&test, full_args, full_env_vars, &output_file) {
-            Ok(launcher_dump) => launcher_dump,
-            Err(e) => {
-                panic!("Failed to get launcher run result: {e:?}")
-            }
-    };
-    assert!(result.exit_status.success(), "Launcher didn't exit successfully");
-    result.dump.expect("Launcher exited successfully, but there is no output")
+pub fn assert_vm_option_presence(dump: &IntellijMainDumpedLaunchParameters, vm_option: &str) {
+    assert!(dump.vmOptions.contains(&vm_option.to_string()),
+            "{:?} is not in {:?}", vm_option, dump.vmOptions);
 }
 
-pub fn run_launcher_and_get_dump_default(test: &TestEnvironment) -> IntellijMainDumpedLaunchParameters {
-    run_launcher_and_get_dump(test, &[], HashMap::from([(" ", "")]))
-}
-
-/// Run launcher and get dump, with custom command line arguments
-pub fn run_launcher_and_get_dump_with_args(test: &TestEnvironment, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
-    run_launcher_and_get_dump(test, args, HashMap::from([(" ", "")]))
-}
-
-/// Run launcher and get dump, with custom environment variables
-pub fn run_launcher_and_get_dump_with_env_vars(test: &TestEnvironment, env_vars: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
-    run_launcher_and_get_dump(test, &[], env_vars)
-}
-
-/// Run launcher and get dump, with java environment variables
-pub fn run_launcher_and_get_dump_with_java_env(test: &TestEnvironment, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
-    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let launcher_jdk = get_jbrsdk_from_project_root(&project_root).expect("Can't get jbrsdk from project root");
-
-    run_launcher_and_get_dump_with_env_vars(test, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
-}
-
-/// Run remote-development launcher with command line arguments and environment variables and return `LauncherRunResult` which contains:
-/// - exit status of launched application;
-/// - dump of launch parameters;
-/// - std_out of launcher;
-fn run_remote_dev(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> LauncherRunResult {
-    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
-
-    let default_env_var: HashMap<&str, &str> = HashMap::from([
-        (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
-        ("CWM_NO_PASSWORD", "1"),
-        ("CWM_HOST_PASSWORD", "1"),
-        ("REMOTE_DEV_NON_INTERACTIVE", "1")
-    ]);
-    let full_env_vars: HashMap<&str, &str> = default_env_var.into_iter().chain(envs).collect();
-
-    let result = match run_launcher_impl(&test, args, full_env_vars, &output_file) {
-        Ok(launcher_dump) => launcher_dump,
-        Err(e) => {
-            panic!("Failed to get launcher run result: {e:?}")
-        }
-    };
-
-    result
-}
-
-/// Run remote-dev launcher with command line arguments and environment variables and return dump of launch parameters
-fn run_remote_dev_and_get_dump(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
-    let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
-    let project_dir = &test.test_root_dir.path().to_string_lossy();
-
-    let output_args = ["dumpLaunchParameters", &project_dir, "--output", &output_file.to_string_lossy()];
-    let full_args = &mut output_args.to_vec();
-    full_args.append(&mut args.to_vec());
-
-    let launcher_run_result = run_remote_dev(test, full_args, envs);
-    assert!(launcher_run_result.exit_status.success(), "Launcher didn't exit successfully");
-
-    launcher_run_result.dump.expect("Launcher exited successfully, but there is no output")
-}
-
-pub fn run_remote_dev_and_get_dump_default(test: &TestEnvironment,) -> IntellijMainDumpedLaunchParameters {
-    run_remote_dev_and_get_dump(test, &[], HashMap::from([(" ", "")]))
-}
-
-/// Run remote-dev launcher and get dump, with custom command line arguments
-pub fn run_remote_dev_and_get_dump_with_args(test: &TestEnvironment, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
-    run_remote_dev_and_get_dump(test, args, HashMap::from([(" ", "")]))
-}
-
-/// Run remote-dev launcher and get dump, with custom environment variables
-pub fn run_remote_dev_and_get_dump_with_env_vars(test: &TestEnvironment, env_vars: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
-    run_remote_dev_and_get_dump(test, &[], env_vars)
-}
-
-/// Run remote-dev launcher and get dump, with java environment variables
-pub fn run_remote_dev_and_get_dump_with_java_env(test: &TestEnvironment, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
-    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let launcher_jdk = get_jbrsdk_from_project_root(&project_root).expect("Can't get jbrsdk from project root");
-
-    run_remote_dev_and_get_dump_with_env_vars(test, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
-}
-
-pub fn run_remote_dev_and_get_output(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> String {
-    let launcher_run_result = run_remote_dev(test, args, envs);
-
-    launcher_run_result.stdout
-}
-
-pub fn run_remote_dev_and_get_output_default(test: &TestEnvironment,) -> String {
-    run_remote_dev_and_get_output(test, &[], HashMap::from([(" ", "")]))
-}
-
-/// Run remote-dev launcher and get std_out, with custom command line arguments
-pub fn run_remote_dev_and_get_output_with_args(test: &TestEnvironment, args: &[&str]) -> String {
-    run_remote_dev_and_get_output(test, args, HashMap::from([(" ", "")]))
-}
-
-/// Run remote-dev launcher and get std_out, with custom environment variables
-pub fn run_remote_dev_and_get_output_with_env_vars(test: &TestEnvironment, env_vars: HashMap<&str, &str>) -> String {
-    run_remote_dev_and_get_output(test, &[], env_vars)
-}
-
-/// Run remote-dev launcher and get std_out, with java environment variables
-pub fn run_remote_dev_and_get_output_with_java_env(test: &TestEnvironment, java_env_var: &str) -> String {
-    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let launcher_jdk = get_jbrsdk_from_project_root(&project_root).expect("Can't get jbrsdk from project root");
-
-    run_remote_dev_and_get_output_with_env_vars(test, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
+pub fn assert_vm_option_absence(dump: &IntellijMainDumpedLaunchParameters, vm_option: &str) {
+    assert!(!dump.vmOptions.contains(&vm_option.to_string()),
+            "{:?} should not be in {:?}", vm_option, dump.vmOptions);
 }

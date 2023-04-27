@@ -34,6 +34,7 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -214,7 +215,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     ContentEntry e = getContentRootFor(url);
     if (e == null) return;
     if (e.getUrl().equals(url.getUrl())) return;
-    e.addExcludeFolder(url.getUrl(), getMavenExternalSource());
+    e.addExcludeFolder(url.getUrl(), true);
   }
 
   @Override
@@ -494,7 +495,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   public static ProjectModelExternalSource getMavenExternalSource() {
-    return ExternalProjectSystemRegistry.getInstance().getSourceById(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID);
+    return ExternalProjectSystemRegistry.getInstance().getSourceById(SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID);
   }
 
   @Nullable

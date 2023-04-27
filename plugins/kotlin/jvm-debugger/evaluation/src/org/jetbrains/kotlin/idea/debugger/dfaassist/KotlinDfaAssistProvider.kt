@@ -11,7 +11,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
-import com.intellij.debugger.engine.dfaassist.DfaHint
+import com.intellij.xdebugger.impl.dfaassist.DfaHint
 import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement

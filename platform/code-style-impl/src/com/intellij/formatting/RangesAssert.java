@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
-import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -57,7 +57,7 @@ class RangesAssert {
     }
 
     Throwable t = problematicLanguageClass != null ? PluginException.createByClass("", null, problematicLanguageClass) : null;
-    LOG.error(messageBuffer.toString(), t, AttachmentFactory.createContext(buffer));
+    LOG.error(messageBuffer.toString(), t, AttachmentFactory.createContext(buffer.toString()));
   }
 
   public boolean checkChildRange(@NotNull TextRange parentRange, @NotNull TextRange childRange, @NotNull FormattingDocumentModel model) {

@@ -35,10 +35,17 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   }
 
   @Override
-  protected boolean validClass(PsiClass parentClass, Editor editor) {
-    if (parentClass.isInterface() || parentClass.isRecord()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(
-        JavaRefactoringBundle.message(parentClass.isRecord() ? "cannot.introduce.field.in.record" : "cannot.introduce.field.in.interface"));
+  protected boolean validClass(PsiClass parentClass, PsiExpression selectedExpr, Editor editor) {
+    if (parentClass.isInterface()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("cannot.introduce.field.in.interface"));
+      CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
+      return false;
+    }
+    else if (parentClass.isRecord()) {
+      final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(selectedExpr, parentClass);
+      boolean declareStatic = staticParentElement != null;
+      if (declareStatic) return true;
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("cannot.introduce.field.in.record"));
       CommonRefactoringUtil.showErrorHint(parentClass.getProject(), editor, message, getRefactoringNameText(), getHelpID());
       return false;
     }
@@ -78,6 +85,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
       enteredName = activeIntroducer.getInputName();
       replaceAll = activeIntroducer.isReplaceAllOccurrences();
       type = ((AbstractJavaInplaceIntroducer)activeIntroducer).getType();
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       IntroduceFieldDialog.ourLastInitializerPlace = ((InplaceIntroduceFieldPopup)activeIntroducer).getInitializerPlace();
     }
 
@@ -104,8 +112,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
       myInplaceIntroduceFieldPopup =
         new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurrences, expr,
                                        new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurrences), editor,
-                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll,
-                                       expr != null ? createOccurrenceManager(expr, parentClass) : null, project);
+                                       allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, project);
       if (myInplaceIntroduceFieldPopup.startInplaceIntroduceTemplate()) {
         return null;
       }

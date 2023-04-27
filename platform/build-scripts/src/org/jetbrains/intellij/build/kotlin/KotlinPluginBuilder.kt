@@ -8,12 +8,13 @@ import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.consumeDataByPrefix
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
-
 import java.nio.file.Path
-import java.util.function.BiConsumer
 import java.util.regex.Pattern
 
 object KotlinPluginBuilder {
@@ -182,10 +183,11 @@ object KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
-    "kotlin.code-insight.line-markers-k2",
     "kotlin.refactorings.common",
     "kotlin.refactorings.k2",
     "kotlin.refactorings.rename.k2",
+    "kotlin.performanceExtendedPlugin",
+    "kotlin.bundled-compiler-plugins-support",
   )
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -274,14 +276,13 @@ object KotlinPluginBuilder {
           "kotlin-ultimate.javascript.nodeJs",
           "kotlin-ultimate.ultimate-plugin",
           "kotlin-ultimate.ultimate-native",
-          "kotlin.performanceExtendedPlugin",
         ))
       }
 
       val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
       spec.withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
 
-      spec.withPatch(BiConsumer { patcher, context ->
+      spec.withPatch { patcher, context ->
         val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
         val jars = library.getFiles(JpsOrderRootType.COMPILED)
         if (jars.size != 1) {
@@ -291,7 +292,7 @@ object KotlinPluginBuilder {
         consumeDataByPrefix(jars[0].toPath(), "META-INF/extensions/") { name, data ->
           patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
         }
-      })
+      }
 
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       spec.withProjectLibrary("kotlinc.kotlin-compiler-ir")
@@ -304,7 +305,7 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("kotlinx-collections-immutable", LibraryPackMode.STANDALONE_MERGED)
       spec.withProjectLibrary("javax-inject", LibraryPackMode.STANDALONE_MERGED)
 
-      spec.withGeneratedResources(BiConsumer { targetDir, context ->
+      spec.withGeneratedResources { targetDir, context ->
         val distLibName = "kotlinc.kotlin-dist"
         val library = context.project.libraryCollection.findLibrary(distLibName)!!
         val jars = library.getFiles(JpsOrderRootType.COMPILED)
@@ -312,7 +313,7 @@ object KotlinPluginBuilder {
           throw IllegalStateException("$distLibName is expected to have only one jar")
         }
         Decompressor.Zip(jars[0]).extract(targetDir.resolve("kotlinc"))
-      })
+      }
 
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
@@ -323,7 +324,9 @@ object KotlinPluginBuilder {
             val library = context.project.libraryCollection.libraries
               .firstOrNull { it.name.startsWith("kotlinc.kotlin-jps-plugin-classpath") && it.type is JpsRepositoryLibraryType }
 
-            val kotlinVersion = library?.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.version ?: KOTLIN_COOP_DEV_VERSION
+            val kotlinVersion = System.getProperty("force.override.kotlin.compiler.version")
+                                ?: library?.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.version
+                                ?: KOTLIN_COOP_DEV_VERSION
 
             val version = "${major}-${kotlinVersion}-${kind}${minor}"
             context.messages.info("version: $version")

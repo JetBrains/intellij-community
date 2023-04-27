@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
@@ -184,7 +185,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             additionalRunTasks: Collection<ExternalSystemRunTask>? = null
         ): KotlinFacet {
 
-            val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(mainModuleNode)
+            val compilerVersion = KotlinGradleFacade.getInstance()?.findKotlinPluginVersion(mainModuleNode)
             // ?: return null TODO: Fix in CLion or our plugin KT-27623
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
@@ -195,7 +196,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 
             val platform = TargetPlatform(platformKinds)
 
-            val compilerArguments = kotlinSourceSet.lazyCompilerArguments?.value
+            val compilerArguments = kotlinSourceSet.compilerArguments?.get()
             // Used ID is the same as used in org/jetbrains/kotlin/idea/configuration/KotlinGradleSourceSetDataService.kt:280
             // because this DataService was separated from KotlinGradleSourceSetDataService for MPP projects only
             val id = if (compilerArguments?.multiPlatform == true) GradleConstants.SYSTEM_ID.id else null
@@ -211,17 +212,9 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
 
-            val defaultCompilerArguments = kotlinSourceSet.lazyDefaultCompilerArguments?.value
             if (compilerArguments != null) {
-                applyCompilerArgumentsToFacet(
-                    compilerArguments,
-                    defaultCompilerArguments,
-                    kotlinFacet,
-                    modelsProvider
-                )
+                applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
             }
-
-            adjustClasspath(kotlinFacet, kotlinSourceSet.lazyDependencyClasspath.value)
 
             kotlinFacet.noVersionAutoAdvance()
 
@@ -244,10 +237,10 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 }
 
                 if (kotlinSourceSet.isTestModule) {
-                    testOutputPath = (kotlinSourceSet.lazyCompilerArguments?.value as? K2JSCompilerArguments)?.outputFile
+                    testOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
                     productionOutputPath = null
                 } else {
-                    productionOutputPath = (kotlinSourceSet.lazyCompilerArguments?.value as? K2JSCompilerArguments)?.outputFile
+                    productionOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
                     testOutputPath = null
                 }
             }

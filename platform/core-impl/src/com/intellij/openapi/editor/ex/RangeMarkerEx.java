@@ -17,12 +17,11 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.Segment;
-import org.jetbrains.annotations.NotNull;
 
-public interface RangeMarkerEx extends RangeMarker, Segment {
-  void documentChanged(@NotNull DocumentEvent e);
-
+public interface RangeMarkerEx extends RangeMarker {
+  /**
+   * @return identifier unique across all live range markers.
+   * Must not be called for the disposed range marker.
+   */
   long getId();
 }

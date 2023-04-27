@@ -5,12 +5,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.helpers.ReentrantReadWriteLockUsageMonitor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
@@ -27,6 +29,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.absolute
 import kotlin.io.path.listDirectoryEntries
@@ -39,11 +42,16 @@ import kotlin.io.path.relativeTo
  * This means index storages, vfs storages and other plugin specific storages are included.
  */
 object StorageDiagnosticData {
+  private val MONITOR_STORAGE_LOCK = SystemProperties.getBooleanProperty("vfs.storage-lock.enable-diagnostic", true)
+
   private const val fileNamePrefix = "storage-diagnostic-"
   private const val onShutdownFileNameSuffix = "on-shutdown-"
 
   private const val maxFiles = 10
   private const val dumpPeriodInMinutes = 1L
+
+  @Volatile
+  private var regularDumpHandle: Future<*>? = null
 
   @JvmStatic
   fun dumpPeriodically() {
@@ -54,13 +62,19 @@ object StorageDiagnosticData {
       1,
     )
 
-    executor.scheduleWithFixedDelay(Runnable {
+    regularDumpHandle = executor.scheduleWithFixedDelay(Runnable {
       dump(onShutdown = false)
     }, dumpPeriodInMinutes, dumpPeriodInMinutes, TimeUnit.MINUTES)
   }
 
   @JvmStatic
   fun dumpOnShutdown() {
+    //Since we know it is a shutdown -> cancel regular stats dumping:
+    val regularDumpHandleLocalCopy = regularDumpHandle
+    if (regularDumpHandleLocalCopy != null) {
+      regularDumpHandleLocalCopy.cancel(false)
+      regularDumpHandle = null
+    }
     dump(onShutdown = true)
   }
 
@@ -73,6 +87,10 @@ object StorageDiagnosticData {
       val stats = getStorageDataStatistics()
       val file = getDumpFile(sessionLocalDateTime, onShutdown)
       IndexDiagnosticDumperUtils.writeValue(file, stats)
+    }
+    catch (e: AlreadyDisposedException){
+      //e.g. IDEA-313757
+      thisLogger().info("Can't collect storage statistics: ${e.message} -- probably, already a shutdown?")
     }
     catch (e: Exception) {
       thisLogger().error(e)
@@ -224,11 +242,19 @@ object StorageDiagnosticData {
 
   //TODO RC: i'd think it is better to setup such monitoring in apt. component itself, because be
   //         observable is the responsibility of component, the same way as logging is. But:
-  //         a) FilePageCache module hasn't dependency on the monitoring module now
-  //         b) here we already have monitoring of FilePageCache, so better to keep old/new
-  //            monitoring in one place for a while
+  //         a) FilePageCache module (intellij.platform.util) has no dependency on the monitoring module now
+  //         b) we already have monitoring of FilePageCache here, so better to keep old/new monitoring in one
+  //            place for a while
   private fun setupReportingToOpenTelemetry() {
     val otelMeter = TraceManager.getMeter("storage")
+
+    if (MONITOR_STORAGE_LOCK) {
+      ReentrantReadWriteLockUsageMonitor(
+        StorageLockContext.defaultContextLock(),
+        "StorageLockContext",
+        otelMeter
+      )
+    }
 
     val uncachedFileAccess = otelMeter.counterBuilder("FilePageCache.uncachedFileAccess").buildObserver()
     val maxRegisteredFiles = otelMeter.gaugeBuilder("FilePageCache.maxRegisteredFiles").ofLongs().buildObserver()
@@ -257,11 +283,18 @@ object StorageDiagnosticData {
       .setDescription("Cache capacity, configured on application startup")
       .ofLongs().buildObserver()
 
-    val directBufferAllocatorHits = otelMeter.counterBuilder("DirectByteBufferAllocator.hits").buildObserver();
-    val directBufferAllocatorMisses = otelMeter.counterBuilder("DirectByteBufferAllocator.misses").buildObserver();
-    val directBufferAllocatorReclaimed = otelMeter.counterBuilder("DirectByteBufferAllocator.reclaimed").buildObserver();
-    val directBufferAllocatorDisposed = otelMeter.counterBuilder("DirectByteBufferAllocator.disposed").buildObserver();
-    val directBufferAllocatorTotalSizeCached = otelMeter.counterBuilder("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes").buildObserver();
+    val directBufferAllocatorHits = otelMeter.counterBuilder("DirectByteBufferAllocator.hits").buildObserver()
+    val directBufferAllocatorMisses = otelMeter.counterBuilder("DirectByteBufferAllocator.misses").buildObserver()
+    val directBufferAllocatorReclaimed = otelMeter.counterBuilder("DirectByteBufferAllocator.reclaimed").buildObserver()
+    val directBufferAllocatorDisposed = otelMeter.counterBuilder("DirectByteBufferAllocator.disposed").buildObserver()
+    val directBufferAllocatorTotalSizeCached = otelMeter.gaugeBuilder("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes")
+      .ofLongs()
+      .setUnit("bytes")
+      .buildObserver()
+    val directBufferAllocatorTotalSizeAllocated = otelMeter.gaugeBuilder("DirectByteBufferAllocator.totalSizeOfBuffersAllocatedInBytes")
+      .ofLongs()
+      .setUnit("bytes")
+      .buildObserver()
 
     otelMeter.batchCallback(
       {
@@ -290,7 +323,9 @@ object StorageDiagnosticData {
           directBufferAllocatorMisses.record(bufferAllocatorStats.misses.toLong())
           directBufferAllocatorReclaimed.record(bufferAllocatorStats.reclaimed.toLong())
           directBufferAllocatorDisposed.record(bufferAllocatorStats.disposed.toLong())
-          directBufferAllocatorTotalSizeCached.record(bufferAllocatorStats.totalSizeOfBuffersCachedInBytes.toLong())
+
+          directBufferAllocatorTotalSizeCached.record(bufferAllocatorStats.totalSizeOfBuffersCachedInBytes)
+          directBufferAllocatorTotalSizeAllocated.record(bufferAllocatorStats.totalSizeOfBuffersAllocatedInBytes)
         }
         catch (_: AlreadyDisposedException) {
 
@@ -303,7 +338,7 @@ object StorageDiagnosticData {
 
       directBufferAllocatorHits, directBufferAllocatorMisses,
       directBufferAllocatorReclaimed, directBufferAllocatorDisposed,
-      directBufferAllocatorTotalSizeCached
+      directBufferAllocatorTotalSizeAllocated, directBufferAllocatorTotalSizeCached
     )
   }
 }

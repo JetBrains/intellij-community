@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -10,6 +10,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Set;
 
 public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
@@ -43,8 +44,8 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "intellij.test", "test", "org.apache.maven.plugins", "org.codehaus.mojo",
-                             "org.codehaus.plexus");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "intellij.test", "test", "org.apache.maven.plugins", "org.codehaus.mojo",
+                                    "org.codehaus.plexus");
   }
 
   @Test 
@@ -63,9 +64,9 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
-                             "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
-                             "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
+                                    "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
+                                    "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
   }
 
   @Test 
@@ -85,7 +86,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
+
+    if (mavenVersionIsOrMoreThan("3.9.0")) {
+      assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1");
+    }
+    else {
+      assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
+    }
   }
 
   @Test 
@@ -130,20 +137,22 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                          </plugins>
                        </build>
                        """);
+    Set<String> variants = getDependencyCompletionVariants(myProjectPom, info -> info.getGroupId() + ":" + info.getArtifactId());
 
-    assertDependencyCompletionVariantsInclude(myProjectPom,
-                                    "org.apache.maven.plugins:maven-clean-plugin:2.5",
-                                    "org.apache.maven.plugins:maven-compiler-plugin",
-                                    "org.apache.maven.plugins:maven-deploy-plugin:2.7",
-                                    "org.apache.maven.plugins:maven-eclipse-plugin:2.4",
-                                    "org.apache.maven.plugins:maven-install-plugin:2.4",
-                                    "org.apache.maven.plugins:maven-jar-plugin:2.4",
-                                    "org.apache.maven.plugins:maven-resources-plugin:2.6",
-                                    "org.apache.maven.plugins:maven-site-plugin:3.3",
-                                    "org.apache.maven.plugins:maven-surefire-plugin",
-                                    "org.apache.maven.plugins:maven-war-plugin:2.1-alpha-1",
-                                    "org.codehaus.mojo:build-helper-maven-plugin:1.0",
-                                    "test:project:1");
+
+    assertContain(variants,
+                  "org.apache.maven.plugins:maven-clean-plugin",
+                  "org.apache.maven.plugins:maven-compiler-plugin",
+                  "org.apache.maven.plugins:maven-deploy-plugin",
+                  "org.apache.maven.plugins:maven-eclipse-plugin",
+                  "org.apache.maven.plugins:maven-install-plugin",
+                  "org.apache.maven.plugins:maven-jar-plugin",
+                  "org.apache.maven.plugins:maven-resources-plugin",
+                  "org.apache.maven.plugins:maven-site-plugin",
+                  "org.apache.maven.plugins:maven-surefire-plugin",
+                  "org.apache.maven.plugins:maven-war-plugin",
+                  "org.codehaus.mojo:build-helper-maven-plugin",
+                  "test:project");
   }
 
   @Test 
@@ -162,7 +171,12 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1");
+    if (mavenVersionIsOrMoreThan("3.9.0")) {
+      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1");
+    }
+    else {
+      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1");
+    }
   }
 
   @Test 
@@ -179,10 +193,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                          </plugins>
                        </build>
                        """);
+    var pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin");
 
-    String pluginPath = "plugins/org/apache/maven/plugins/maven-compiler-plugin/3.1/maven-compiler-plugin-3.1.pom";
+    String pluginPath =
+      "plugins/org/apache/maven/plugins/maven-compiler-plugin/" + pluginVersion + "/maven-compiler-plugin-" + pluginVersion + ".pom";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertNotNull("file: " + filePath + " not exists!", f);
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
@@ -934,7 +951,17 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    assertDocumentation("Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
+    if (mavenVersionIsOrMoreThan("3.9.0")) {
+      assertDocumentation("""
+          Type: <b>java.lang.String</b><br>Default Value: <b>1.7</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i><p>The -source argument for the Java compiler.</p>
+
+          <b>NOTE: </b>Since 3.8.0 the default value has changed from 1.5 to 1.6.
+          Since 3.9.0 the default value has changed from 1.6 to 1.7</i>""");
+    }
+    else {
+      assertDocumentation(
+        "Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
+    }
   }
 
   @Test 

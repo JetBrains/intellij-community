@@ -13,6 +13,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.util.IconUtil
 import org.intellij.lang.annotations.Language
 import training.dsl.TaskContext
 import training.dsl.TaskTextProperties
@@ -165,7 +166,7 @@ class LessonManager {
   }
 
   fun setRestoreNotification(notification: TaskContext.RestoreNotification) {
-    val message = RegularTextPart(" ${notification.message} ", isBold = true)
+    val message = RegularTextPart("${notification.message} ", isBold = true)
     val restoreLink = LinkTextPart(notification.restoreLinkText) {
       notification.callback()
       currentLessonExecutor?.taskInvokeLater {
@@ -185,8 +186,10 @@ class LessonManager {
 
   private fun setNotification(textParts: List<TextPart>) {
     clearRestoreMessage()
-    val warningIconPart = IconTextPart(AllIcons.General.NotificationWarning)
-    val allParts = mutableListOf<TextPart>(warningIconPart).also { it.addAll(textParts) }
+    val icon = IconUtil.scale(AllIcons.General.NotificationWarning, learnPanel, 0.66f)
+    val warningIconPart = IconTextPart(icon)
+    val spacePart = RegularTextPart(" ")
+    val allParts = mutableListOf(warningIconPart, spacePart).also { it.addAll(textParts) }
     learnPanel?.addMessages(TextParagraph(allParts), LessonMessagePane.MessageProperties(LessonMessagePane.MessageState.RESTORE))
   }
 

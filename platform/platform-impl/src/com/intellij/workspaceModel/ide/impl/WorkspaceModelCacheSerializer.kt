@@ -16,11 +16,13 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.exists
 
 class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
@@ -28,6 +30,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
                                                                                 ::collectExternalCacheVersions)
 
   internal fun loadCacheFromFile(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): EntityStorage? {
+    val start = System.currentTimeMillis()
     val cacheFileAttributes = file.basicAttributesIfExists() ?: return null
 
     val invalidateCachesMarkerFileAttributes = invalidateGlobalCachesMarkerFile.basicAttributesIfExists()
@@ -40,8 +43,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
 
     LOG.debug("Loading cache from $file")
 
-    val start = System.currentTimeMillis()
-    return serializer.deserializeCache(file)
+    val cache = serializer.deserializeCache(file)
       .onSuccess {
         if (it != null) {
           LOG.debug("Loaded cache from $file in ${System.currentTimeMillis() - start}ms")
@@ -51,10 +53,15 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
         LOG.warn("Could not deserialize cache from $file", it)
       }
       .getOrNull()
+
+    loadCacheFromFileTimeMs.addAndGet(System.currentTimeMillis() - start)
+    return cache
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
   internal fun saveCacheToFile(storage: EntityStorageSnapshot, file: Path, userPreProcessor: Boolean = false) {
+    val start = System.currentTimeMillis()
+
     LOG.debug("Saving Workspace model cache to $file")
     val dir = file.parent
     Files.createDirectories(dir)
@@ -76,6 +83,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
     finally {
       Files.deleteIfExists(tmpFile)
     }
+    saveCacheToFileTimeMs.addAndGet(System.currentTimeMillis() - start)
   }
 
   private fun cachePreProcess(storage: EntityStorage): EntityStorageSnapshot {
@@ -114,6 +122,29 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
 
     fun collectExternalCacheVersions(): Map<String, String> {
       return WORKSPACE_MODEL_CACHE_VERSION_EP.extensionList.associate { it.getId() to it.getVersion() }
+    }
+
+    private val loadCacheFromFileTimeMs: AtomicLong = AtomicLong()
+    private val saveCacheToFileTimeMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val loadCacheFromFileTimeGauge = meter.gaugeBuilder("workspaceModel.load.cache.from.file.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val saveCacheToFileTimeGauge = meter.gaugeBuilder("workspaceModel.save.cache.to.file.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          loadCacheFromFileTimeGauge.record(loadCacheFromFileTimeMs.get())
+          saveCacheToFileTimeGauge.record(saveCacheToFileTimeMs.get())
+        },
+        loadCacheFromFileTimeGauge, saveCacheToFileTimeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
     }
   }
 }

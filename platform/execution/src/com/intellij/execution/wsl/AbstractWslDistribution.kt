@@ -51,4 +51,10 @@ interface AbstractWslDistribution {
   @ApiStatus.Experimental
   fun getUNCRootPath(): Path
 
+  /**
+   * Unique distrib id
+   */
+  @get:NlsSafe
+  val msId: String
+
 }

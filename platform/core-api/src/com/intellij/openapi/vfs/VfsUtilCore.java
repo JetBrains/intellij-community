@@ -437,7 +437,7 @@ public class VfsUtilCore {
    * @see VirtualFile#toNioPath()
    */
   public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
-    return ContainerUtil.map2List(files, file -> virtualToIoFile(file));
+    return ContainerUtil.map(files, file -> virtualToIoFile(file));
   }
 
   public static @NotNull String toIdeaUrl(@NotNull String url) {

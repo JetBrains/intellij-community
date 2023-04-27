@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
@@ -8,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -28,7 +28,7 @@ import java.util.Set;
 @Service(Service.Level.PROJECT)
 @ApiStatus.Experimental
 public final class DumbModeProgressTitle {
-  private final Set<ProgressWindow> myWindowSet = ContainerUtil.newConcurrentSet();
+  private final Set<ProgressWindow> myWindowSet = ConcurrentCollectionFactory.createConcurrentSet();
   private final Collection<@ProgressTitle @NotNull String> mySubProcessTitles = Collections.synchronizedSet(new LinkedHashSet<>());
 
   @NotNull

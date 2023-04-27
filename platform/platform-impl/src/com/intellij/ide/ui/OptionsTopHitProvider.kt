@@ -8,6 +8,8 @@ import com.intellij.ide.ui.OptionsSearchTopHitProvider.ApplicationLevelProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ProjectLevelProvider
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -17,9 +19,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.util.text.Matcher
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.annotations.VisibleForTesting
@@ -99,37 +99,44 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
     }
   }
 
-  internal class Activity : ProjectActivity {
-    private val appJob: Job
+  @Service(Service.Level.APP)
+  private class PreloadService(cs: CoroutineScope) {
 
-    init {
-      val app = ApplicationManager.getApplication()
-      if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-        throw ExtensionNotApplicableException.create()
-      }
-
-      @Suppress("DEPRECATION")
-      appJob = app.coroutineScope.launch {
-        // for application
-        runActivity("cache options in application") {
-          val topHitCache = TopHitCache.getInstance()
-          for (extension in SearchTopHitProvider.EP_NAME.filterableLazySequence()) {
-            val aClass = extension.implementationClass ?: continue
-            if (ApplicationLevelProvider::class.java.isAssignableFrom(aClass)) {
+    private val appJob: Job = cs.launch(start = CoroutineStart.LAZY) {
+      // for application
+      runActivity("cache options in application") {
+        val topHitCache = TopHitCache.getInstance()
+        for (extension in SearchTopHitProvider.EP_NAME.filterableLazySequence()) {
+          val aClass = extension.implementationClass ?: continue
+          if (ApplicationLevelProvider::class.java.isAssignableFrom(aClass)) {
+            kotlin.coroutines.coroutineContext.ensureActive()
+            val provider = extension.instance as ApplicationLevelProvider? ?: continue
+            if (provider.preloadNeeded()) {
               kotlin.coroutines.coroutineContext.ensureActive()
-              val provider = extension.instance as ApplicationLevelProvider? ?: continue
-              if (provider.preloadNeeded()) {
-                kotlin.coroutines.coroutineContext.ensureActive()
-                topHitCache.getCachedOptions(provider = provider, project = null, pluginDescriptor = extension.pluginDescriptor)
-              }
+              topHitCache.getCachedOptions(provider = provider, project = null, pluginDescriptor = extension.pluginDescriptor)
             }
           }
         }
       }
     }
 
-    override suspend fun execute(project: Project) {
+    suspend fun join() {
       appJob.join()
+    }
+  }
+
+  internal class Activity : ProjectActivity {
+
+    init {
+      val app = ApplicationManager.getApplication()
+      if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+        throw ExtensionNotApplicableException.create()
+      }
+    }
+
+    override suspend fun execute(project: Project) {
+      // wait for app-level routine
+      ApplicationManager.getApplication().service<PreloadService>().join()
       // for given project
       runActivity("cache options in project") {
         val topHitCache = TopHitCache.getInstance(project)

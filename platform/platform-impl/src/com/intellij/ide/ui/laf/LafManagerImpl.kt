@@ -76,6 +76,7 @@ import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 import javax.swing.*
@@ -84,8 +85,6 @@ import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.UIResource
 import javax.swing.plaf.metal.DefaultMetalTheme
 import javax.swing.plaf.metal.MetalLookAndFeel
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
 private const val WINDOW_ALPHA = "Window.alpha"
@@ -253,7 +252,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       else {
         val laf = findLaf(currentLaf.className)
         if (laf != null) {
-          val needUninstall = StartupUiUtil.isUnderDarcula()
+          val needUninstall = StartupUiUtil.isUnderDarcula
           // setup default LAF or one specified by readExternal
           doSetLaF(lookAndFeelInfo = laf, installEditorScheme = false)
           updateWizardLAF(needUninstall)
@@ -306,7 +305,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       return
     }
 
-    val currentIsDark = StartupUiUtil.isUnderDarcula() ||
+    val currentIsDark = StartupUiUtil.isUnderDarcula ||
                         (myCurrentLaf is UIThemeBasedLookAndFeelInfo && (myCurrentLaf as UIThemeBasedLookAndFeelInfo).theme.isDark)
     var expectedLaf: LookAndFeelInfo?
     if (systemIsDark) {
@@ -337,7 +336,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       return
     }
 
-    if (StartupUiUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula) {
       DarculaInstaller.install()
     }
     else if (wasUnderDarcula) {
@@ -538,9 +537,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (!isFirstSetup && installEditorScheme) {
       if (processChangeSynchronously) {
         updateEditorSchemeIfNecessary(oldLaf, true)
+        shadowInstance.fireUISettingsChanged()
+        ActionToolbarImpl.updateAllToolbarsImmediately()
       }
       else {
-        ApplicationManager.getApplication().invokeLater { updateEditorSchemeIfNecessary(oldLaf, false) }
+        ApplicationManager.getApplication().invokeLater {
+          updateEditorSchemeIfNecessary(oldLaf, false)
+          shadowInstance.fireUISettingsChanged()
+          ActionToolbarImpl.updateAllToolbarsImmediately()
+        }
       }
     }
     isFirstSetup = false
@@ -645,7 +650,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     settingsUtils.setCurrentIdeScale(1f) // need to temporarily reset this to correctly apply new size values
     UISettings.getInstance().fireUISettingsChanged()
-    setCurrentLookAndFeel(currentLookAndFeel!!)
+    setCurrentLookAndFeel(currentLookAndFeel!!, true)
     updateUI()
     settingsUtils.setCurrentIdeScale(ideScale)
     UISettings.getInstance().fireUISettingsChanged()
@@ -672,7 +677,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // main toolbar
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonSizeKey(), cmSize(34, 34))
       defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSizeKey(), 16)
-      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarFontKey(), Supplier { JBFont.medium() })
+      defaults.put(JBUI.CurrentTheme.Toolbar.experimentalToolbarFontKey(), Supplier { JBFont.medium().asUIResource() })
       defaults.put(JBUI.CurrentTheme.TitlePane.buttonPreferredSizeKey(), cmSize(44, 34))
       // tool window stripes
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), cmSize(32, 32))
@@ -681,23 +686,50 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // Run Widget
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
-      defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorFontKey(), Supplier { JBFont.medium() })
+      defaults.put(JBUI.CurrentTheme.RunWidget.configurationSelectorFontKey(), Supplier { JBFont.medium().asUIResource() })
       // trees
       defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), 22)
       // lists
-      defaults.put("List.rowHeight", 24)
+      defaults.put("List.rowHeight", 22)
+      // popups
+      defaults.put(JBUI.CurrentTheme.Popup.headerInsetsKey(), cmInsets(8, 10, 8, 10))
+      defaults.put(JBUI.CurrentTheme.Advertiser.borderInsetsKey(), cmInsets(4, 20, 5, 20))
+      defaults.put(JBUI.CurrentTheme.BigPopup.advertiserBorderInsetsKey(), cmInsets(4, 20, 5, 20))
+      defaults.put(JBUI.CurrentTheme.CompletionPopup.Advertiser.borderInsetsKey(), cmInsets(2, 12, 2, 8))
+      defaults.put(JBUI.CurrentTheme.CompletionPopup.selectionInnerInsetsKey(), cmInsets(0, 2, 0, 2))
+      defaults.put(JBUI.CurrentTheme.FindPopup.scopesPanelInsetsKey(), cmInsets(1, 20))
+      defaults.put(JBUI.CurrentTheme.FindPopup.bottomPanelInsetsKey(), cmInsets(1, 18))
+      defaults.put(JBUI.CurrentTheme.ComplexPopup.headerInsetsKey(), cmInsets(10, 20, 8, 15))
+      defaults.put(JBUI.CurrentTheme.ComplexPopup.textFieldInputInsetsKey(), cmInsets(4, 2))
+      defaults.put(
+        JBUI.CurrentTheme.ComplexPopup.innerBorderInsetsKey(),
+        JBUI.CurrentTheme.ComplexPopup.innerBorderInsets().withTopAndBottom(2)
+      )
+      defaults.put(JBUI.CurrentTheme.TabbedPane.tabHeightKey(), 36)
       // status bar
       defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), cmInsets(4, 8, 3, 8))
       defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), cmInsets(1, 0, 1, 4))
-      defaults.put(JBUI.CurrentTheme.StatusBar.fontKey(), Supplier { JBFont.medium() })
+      defaults.put(JBUI.CurrentTheme.StatusBar.fontKey(), Supplier { JBFont.medium().asUIResource() })
       // separate navbar
       defaults.put(JBUI.CurrentTheme.NavBar.itemInsetsKey(), cmInsets(2))
+      // editor search/replace
+      defaults.put(JBUI.CurrentTheme.Editor.SearchField.borderInsetsKey(), cmInsets(3, 10, 3, 8))
+      defaults.put(JBUI.CurrentTheme.Editor.SearchToolbar.borderInsetsKey(), cmInsets(0))
+      defaults.put(JBUI.CurrentTheme.Editor.ReplaceToolbar.borderInsetsKey(), cmInsets(1, 0))
+      defaults.put(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsetsKey(), cmInsets(3))
       // editor tabs
-      defaults.put("EditorTabs.tabInsets", cmInsets(1, 12, 1, 8))
-      defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium() })
+      defaults.put(JBUI.CurrentTheme.EditorTabs.tabInsetsKey(), cmInsets(-2, 4, -2, 4))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.verticalTabInsetsKey(), cmInsets(2, 8, 1, 6))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsRightKey(), cmInsets(0))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsLeftKey(), cmInsets(0))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.tabContentInsetsActionsNoneKey(), cmInsets(0))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium().asUIResource() })
       // toolwindows
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
-      defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), Supplier { JBFont.medium() })
+      defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), Supplier { JBFont.medium().asUIResource() })
+      // run, debug tabs
+      defaults.put(JBUI.CurrentTheme.DebuggerTabs.tabHeightKey(), 32)
+      defaults.put(JBUI.CurrentTheme.DebuggerTabs.fontKey(), Supplier { JBFont.medium().asUIResource() })
       // VCS log
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 24)
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
@@ -710,7 +742,12 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private fun cmInsets(all: Int): Insets = Insets(all, all, all, all)
 
   @Suppress("UseDPIAwareInsets")
+  private fun cmInsets(topAndBottom: Int, leftAndRight: Int): Insets = Insets(topAndBottom, leftAndRight, topAndBottom, leftAndRight)
+
+  @Suppress("UseDPIAwareInsets")
   private fun cmInsets(top: Int, left: Int, bottom: Int, right: Int): Insets = Insets(top, left, bottom, right)
+
+  private fun JBInsets.withTopAndBottom(topAndBottom: Int) = JBInsets(topAndBottom, unscaled.left, topAndBottom, unscaled.right)
 
   private fun updateEditorSchemeIfNecessary(oldLaf: LookAndFeelInfo?, processChangeSynchronously: Boolean) {
     if (oldLaf is TempUIThemeBasedLookAndFeelInfo || myCurrentLaf is TempUIThemeBasedLookAndFeelInfo) {
@@ -721,7 +758,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         return
       }
     }
-    val dark = StartupUiUtil.isUnderDarcula()
+    val dark = StartupUiUtil.isUnderDarcula
     val editorColorManager = EditorColorsManager.getInstance()
     val current = editorColorManager.globalScheme
     val wasUITheme = oldLaf is UIThemeBasedLookAndFeelInfo
@@ -742,8 +779,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         (editorColorManager as EditorColorsManagerImpl).setGlobalScheme(scheme, processChangeSynchronously)
       }
     }
-    shadowInstance.fireUISettingsChanged()
-    ActionToolbarImpl.updateAllToolbarsImmediately()
   }
 
   /**
@@ -752,6 +787,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
    */
   override fun updateUI() {
     val uiDefaults = UIManager.getLookAndFeelDefaults()
+    uiDefaults.put("*cache", ConcurrentHashMap<String, Color>()) // for JBColor
     uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI::class.java.name)
     fixPopupWeight()
     fixMenuIssues(uiDefaults)
@@ -839,7 +875,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     val laf = if (myCurrentLaf == null) null else lookAndFeelReference
     val lafDefaults = myStoredDefaults.get(laf)
     if (lafDefaults != null) {
-      for (resource in StartupUiUtil.ourPatchableFontResources) {
+      for (resource in StartupUiUtil.patchableFontResources) {
         defaults.put(resource, lafDefaults.get(resource))
       }
     }
@@ -851,7 +887,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     var lafDefaults = myStoredDefaults.get(laf)
     if (lafDefaults == null) {
       lafDefaults = HashMap()
-      for (resource in StartupUiUtil.ourPatchableFontResources) {
+      for (resource in StartupUiUtil.patchableFontResources) {
         lafDefaults.put(resource, defaults.get(resource))
       }
       myStoredDefaults.put(laf, lafDefaults)
@@ -873,7 +909,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   override fun setAutodetect(value: Boolean) {
+    if (autodetect == value) {
+      return
+    }
+
     autodetect = value
+
+    // Notify autodetect is changed
+    notifyLookAndFeelChanged()
+
     if (autodetect) {
       detectAndSyncLaf()
     }
@@ -1004,8 +1048,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     override fun actionPerformed(e: AnActionEvent) {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("preferred.theme.text"), lafGroups, e.dataContext,
                                                                       true, null, Int.MAX_VALUE)
-      HelpTooltip.setMasterPopup(e.inputEvent.component, popup)
-      val component = e.inputEvent.component
+      val component = e.inputEvent!!.component
+      HelpTooltip.setMasterPopup(component, popup)
       if (component is ActionButtonComponent) {
         popup.showUnderneathOf(component)
       }
@@ -1017,8 +1061,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     private val lafGroups: ActionGroup
       get() {
         val allLaFs =
-          if (ExperimentalUI.isNewUI()) getLafListForTargetUI(TargetUIType.NEW) + getLafListForTargetUI(TargetUIType.CLASSIC)
-          else getLafListForTargetUI(TargetUIType.CLASSIC)
+          if (ExperimentalUI.isNewUI()) {
+            getLafListForTargetUI(TargetUIType.NEW) +
+            getLafListForTargetUI(TargetUIType.CLASSIC) +
+            getLafListForTargetUI(TargetUIType.UNSPECIFIED)
+          }
+          else{
+            getLafListForTargetUI(TargetUIType.CLASSIC) +
+            getLafListForTargetUI(TargetUIType.UNSPECIFIED)
+          }
 
         val lightLaFs = ArrayList<LookAndFeelInfo>()
         val darkLaFs = ArrayList<LookAndFeelInfo>()

@@ -12,7 +12,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.ExecutionUiService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -160,9 +160,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return acquire(target, configuration, null);
   }
 
+  @RequiresBackgroundThread
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration, @Nullable ProgressIndicator indicator)
     throws Exception {
-    ExecutionUiService.getInstance().assertTimeConsuming();
 
     EntryPoint inProcess = acquireInProcess(target, configuration);
     if (inProcess != null) return inProcess;
@@ -568,31 +568,38 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     }
 
-    void startBeat() {
+    void startBeat() throws RemoteException, NotBoundException {
+      var watchdog = getWatchdog();
+      var pulseTimeoutMillis = watchdog.getPulseTimeoutMillis();
       myFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-        try {
-          if (live) {
-            IdeaWatchdog watchdog = getWatchdog();
-            watchdog.ping();
-          }
+        beat();
+      }, pulseTimeoutMillis, pulseTimeoutMillis, TimeUnit.MILLISECONDS);
+      Disposer.register(ApplicationManager.getApplication(), () -> stopBeat());
+    }
+
+    public boolean beat() {
+      try {
+        if (live) {
+          IdeaWatchdog watchdog = getWatchdog();
+          return watchdog.ping();
         }
-        catch (Exception ignore) {
-          live = false;
-          myFuture.cancel(false);
-        }
-        catch (Throwable t) {
-          live = false;
-          myFuture.cancel(false);
-          LOG.error(t);
-        }
-      }, IdeaWatchdog.PULSE_TIMEOUT, IdeaWatchdog.PULSE_TIMEOUT, TimeUnit.MILLISECONDS);
-      Disposer.register(ApplicationManager.getApplication(), () -> myFuture.cancel(false));
+      }
+      catch (Exception ignore) {
+        live = false;
+        stopBeat();
+      }
+      catch (Throwable t) {
+        live = false;
+        stopBeat();
+        LOG.error(t);
+      }
+      return false;
     }
 
     @TestOnly
     public void kill(int exitCode) {
       try {
-        getWatchdog().dieNow(exitCode);
+        getWatchdog().dieNowTestOnly(exitCode);
       }
       catch (RemoteException | NotBoundException ignore) {
       }

@@ -512,6 +512,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/assignmentExpression/bitOperationPriorityComments.java");
         }
 
+        @TestMetadata("compoundAssignmentOnPrimitives.java")
+        public void testCompoundAssignmentOnPrimitives() throws Exception {
+            runTest("testData/newJ2k/assignmentExpression/compoundAssignmentOnPrimitives.java");
+        }
+
         @TestMetadata("compoundAssignmentPriority.java")
         public void testCompoundAssignmentPriority() throws Exception {
             runTest("testData/newJ2k/assignmentExpression/compoundAssignmentPriority.java");
@@ -1124,6 +1129,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("Arrays.java")
+        public void testArrays() throws Exception {
+            runTest("testData/newJ2k/collections/Arrays.java");
+        }
+
         @TestMetadata("common.java")
         public void testCommon() throws Exception {
             runTest("testData/newJ2k/collections/common.java");
@@ -1550,6 +1560,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("AssignFieldInsideSetter2.java")
         public void testAssignFieldInsideSetter2() throws Exception {
             runTest("testData/newJ2k/detectProperties/AssignFieldInsideSetter2.java");
+        }
+
+        @TestMetadata("callPropertySetterWithoutArguments.java")
+        public void testCallPropertySetterWithoutArguments() throws Exception {
+            runTest("testData/newJ2k/detectProperties/callPropertySetterWithoutArguments.java");
         }
 
         @TestMetadata("CannotDropOnlySetter.java")
@@ -2664,6 +2679,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/function/overrideAndOpen.java");
         }
 
+        @TestMetadata("overrideExtensionFunction.java")
+        public void testOverrideExtensionFunction() throws Exception {
+            runTest("testData/newJ2k/function/overrideExtensionFunction.java");
+        }
+
         @TestMetadata("overrideObject.java")
         public void testOverrideObject() throws Exception {
             runTest("testData/newJ2k/function/overrideObject.java");
@@ -3555,6 +3575,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("cloneable2.java")
         public void testCloneable2() throws Exception {
             runTest("testData/newJ2k/javaStandardMethods/cloneable2.java");
+        }
+
+        @TestMetadata("notAvailableInAny.java")
+        public void testNotAvailableInAny() throws Exception {
+            runTest("testData/newJ2k/javaStandardMethods/notAvailableInAny.java");
         }
     }
 
@@ -4906,6 +4931,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/postProcessing/MapGetOrDefault.java");
         }
 
+        @TestMetadata("mutablePropertyAnnotatedWithJpaColumn.java")
+        public void testMutablePropertyAnnotatedWithJpaColumn() throws Exception {
+            runTest("testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaColumn.java");
+        }
+
         @TestMetadata("NotIs.java")
         public void testNotIs() throws Exception {
             runTest("testData/newJ2k/postProcessing/NotIs.java");
@@ -5553,6 +5583,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeCastExpression/beforeDot.java");
         }
 
+        @TestMetadata("byteCasts.java")
+        public void testByteCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/byteCasts.java");
+        }
+
         @TestMetadata("castNullObject.java")
         public void testCastNullObject() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/castNullObject.java");
@@ -5568,9 +5603,19 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeCastExpression/charCasts.java");
         }
 
+        @TestMetadata("doubleCasts.java")
+        public void testDoubleCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/doubleCasts.java");
+        }
+
         @TestMetadata("extendsWildcardCast.java")
         public void testExtendsWildcardCast() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/extendsWildcardCast.java");
+        }
+
+        @TestMetadata("floatCasts.java")
+        public void testFloatCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/floatCasts.java");
         }
 
         @TestMetadata("fooCast.java")
@@ -5583,14 +5628,29 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeCastExpression/intCast.java");
         }
 
+        @TestMetadata("intCasts.java")
+        public void testIntCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/intCasts.java");
+        }
+
         @TestMetadata("ktij-17648.java")
         public void testKtij_17648() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/ktij-17648.java");
         }
 
+        @TestMetadata("longCasts.java")
+        public void testLongCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/longCasts.java");
+        }
+
         @TestMetadata("primitiveType.java")
         public void testPrimitiveType() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/primitiveType.java");
+        }
+
+        @TestMetadata("shortCasts.java")
+        public void testShortCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/shortCasts.java");
         }
 
         @TestMetadata("simpleGenericCast.java")

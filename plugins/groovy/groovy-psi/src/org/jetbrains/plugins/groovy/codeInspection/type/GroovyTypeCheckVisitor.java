@@ -67,7 +67,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     public void registerProblem(@NotNull PsiElement highlightElement,
                                 @NotNull ProblemHighlightType highlightType,
                                 @NotNull String message,
-                                LocalQuickFix @NotNull ... fixes) {
+                                @NotNull LocalQuickFix @NotNull ... fixes) {
       GroovyTypeCheckVisitor.this.registerError(highlightElement, message, fixes, highlightType);
     }
   };
@@ -327,7 +327,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   protected void registerError(@NotNull PsiElement location,
                                @InspectionMessage @NotNull String description,
-                               LocalQuickFix @Nullable [] fixes,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
     if (FileTypeInspectionDisablerKt.isTypecheckingDisabled(location.getContainingFile())) {
       return;

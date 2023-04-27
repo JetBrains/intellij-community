@@ -177,8 +177,12 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return allContents.filter { predicate.test(it) }
   }
 
+  override fun findContent(tabName: String): Content? {
+    return findContents { it.tabName == tabName }.firstOrNull()
+  }
+
   private fun getContentToolWindowId(tabName: String): String? {
-    val content = findContents { it.tabName == tabName }.firstOrNull() ?: return null
+    val content = findContent(tabName) ?: return null
     return content.resolveToolWindowId()
   }
 
@@ -210,6 +214,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     INCOMING(ChangesViewContentManager.INCOMING, 30),
     SHELF(ChangesViewContentManager.SHELF, 40),
     BRANCHES(ChangesViewContentManager.BRANCHES, 50),
+    CONSOLE(ChangesViewContentManager.CONSOLE, 60),
     OTHER(null, 100),
     LAST(null, Integer.MAX_VALUE)
   }
@@ -290,6 +295,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     val ORDER_WEIGHT_KEY = Key.create<Int>("ChangesView.ContentOrderWeight")
 
     const val LOCAL_CHANGES: @NonNls String = "Local Changes"
+    const val CONSOLE: @NonNls String = "Console"
     const val REPOSITORY: @NonNls String = "Repository"
     const val INCOMING: @NonNls String = "Incoming"
     const val SHELF: @NonNls String = "Shelf"

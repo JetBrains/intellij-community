@@ -17,12 +17,12 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.testFramework.*
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer
+import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.storage.DummyParentEntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
@@ -124,7 +124,7 @@ class ReloadProjectTest {
 
   @Test
   fun `reload facet in module with custom storage`() = runBlocking {
-    CustomModuleRootsSerializer.EP_NAME.point.registerExtension(SampleCustomModuleRootsSerializer(), disposable.disposable)
+    BaseIdeSerializationContext.CUSTOM_MODULE_ROOTS_SERIALIZER_EP.point.registerExtension(SampleCustomModuleRootsSerializer(), disposable.disposable)
     registerFacetType(MockFacetType(), disposable.disposable)
     loadProjectAndCheckResults("facet-in-module-with-custom-storage/initial") { project ->
       val module = ModuleManager.getInstance(project).modules.single()

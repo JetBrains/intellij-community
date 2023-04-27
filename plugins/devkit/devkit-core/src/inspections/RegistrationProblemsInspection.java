@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.CommonBundle;
@@ -28,6 +28,10 @@ import org.jetbrains.uast.UElement;
 import java.util.Set;
 
 public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
+
+  public RegistrationProblemsInspection() {
+    super(UClass.class);
+  }
 
   @Override
   public ProblemDescriptor @Nullable [] checkClass(@NotNull UClass uClass, @NotNull InspectionManager manager, boolean isOnTheFly) {

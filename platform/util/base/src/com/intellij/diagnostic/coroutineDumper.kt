@@ -9,13 +9,25 @@ import kotlinx.coroutines.debug.CoroutineInfo
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.debug.internal.DebugCoroutineInfo
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
+import kotlinx.coroutines.debug.internal.SUSPENDED
 import kotlinx.coroutines.internal.ScopeCoroutine
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+@Internal
+const val COROUTINE_DUMP_HEADER: @NonNls String = "---------- Coroutine dump ----------"
+internal const val COROUTINE_DUMP_HEADER_STRIPPED: @NonNls String = "---------- Coroutine dump (stripped) ----------"
+
+@Internal
+fun isCoroutineDumpHeader(line: String): Boolean {
+  return line == COROUTINE_DUMP_HEADER || line == COROUTINE_DUMP_HEADER_STRIPPED
+}
 
 fun enableCoroutineDump() {
   runCatching {
@@ -24,8 +36,11 @@ fun enableCoroutineDump() {
   }
 }
 
+/**
+ * @param stripDump whether to remove stackframes from coroutine dump that have no useful debug information.
+ */
 @JvmOverloads
-fun dumpCoroutines(scope: CoroutineScope? = null): String? {
+fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true): String? {
   if (!DebugProbes.isInstalled) {
     return null
   }
@@ -33,7 +48,7 @@ fun dumpCoroutines(scope: CoroutineScope? = null): String? {
   val outputStream = ByteArrayOutputStream()
   PrintStream(BufferedOutputStream(outputStream), true, charset).use { out ->
     val jobTree = jobTree(scope).toList()
-    dumpCoroutines(jobTree, out)
+    dumpCoroutines(jobTree, out, stripDump)
   }
   return outputStream.toString(charset)
 }
@@ -64,8 +79,17 @@ fun dumpCoroutines(scope: CoroutineScope? = null): String? {
  * It's possible to compute the required mapping from [Job] to [CoroutineInfo],
  * but [CoroutineInfo.lastObservedStackTrace] doesn't enhance the trace with dump of last thread,
  * which is crucial for detecting stuck [runBlocking] coroutines.
+ *
+ * @param stripDump if set to true, will omit stackframes that does not provide useful debug information, but come up frequently in traces.
+ *                  Examples of such stackframes:
+ * ```
+ * at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:148)
+ * at kotlinx.coroutines.channels.AbstractChannel.receiveCatching-JP2dKIU(AbstractChannel.kt:633)
+ * at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:51)
+ * at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:123)
+ * ```
  */
-private fun dumpCoroutines(jobTree: List<JobTreeNode>, out: PrintStream) {
+private fun dumpCoroutines(jobTree: List<JobTreeNode>, out: PrintStream, stripDump: Boolean) {
   for ((job: Job, info: DebugCoroutineInfo?, level: Int) in jobTree) {
     if (level == 0) {
       out.println()
@@ -103,8 +127,7 @@ private fun dumpCoroutines(jobTree: List<JobTreeNode>, out: PrintStream) {
     out.println() // -- header line end
 
     if (info !== null) {
-      val trace = DebugProbesImpl.enhanceStackTraceWithThreadDump(info, info.lastObservedStackTrace)
-      for (stackFrame in trace) {
+      for (stackFrame in traceToDump(info, stripDump)) {
         out.println("$indent\tat $stackFrame")
       }
     }
@@ -167,4 +190,12 @@ private suspend fun SequenceScope<JobTreeNode>.jobTree(
   for (child in job.children) {
     jobTree(child, jobToStack, nextLevel)
   }
+}
+
+private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<StackTraceElement> {
+  val trace = info.lastObservedStackTrace
+  if (stripTrace && info.state == SUSPENDED) {
+    return stripCoroutineTrace(trace)
+  }
+  return DebugProbesImpl.enhanceStackTraceWithThreadDump(info, trace)
 }

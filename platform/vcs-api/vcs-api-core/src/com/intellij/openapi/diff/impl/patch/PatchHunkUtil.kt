@@ -2,8 +2,7 @@
 package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.diff.util.Range
-import com.intellij.openapi.diff.impl.patch.PatchHunk
-import com.intellij.openapi.diff.impl.patch.PatchLine
+import com.intellij.diff.util.Side
 
 object PatchHunkUtil {
 
@@ -77,9 +76,115 @@ object PatchHunkUtil {
     return ranges
   }
 
+  /**
+   * @param diffFile if [true] will return index of the line in diff file (with header and no-newline comments), else - in [PatchHunk]
+   */
+  fun findHunkLineIndex(hunk: PatchHunk, locationInDiff: Pair<Side, Int>, diffFile: Boolean = false): Int? {
+    val (side, fileLineIndex) = locationInDiff
+    val sideFileLineIndex = fileLineIndex - side.select(hunk.startLineBefore, hunk.startLineAfter)
+    var sideFileLineCounter = 0
+
+    // +1 for header
+    var hunkLineIndex = if (diffFile) 1 else 0
+
+    var lastMatchedLineWithNewline: Int? = null
+    for (line in hunk.lines) {
+      if (line.type == PatchLine.Type.ADD && side == Side.RIGHT ||
+          line.type == PatchLine.Type.REMOVE && side == Side.LEFT ||
+          line.type == PatchLine.Type.CONTEXT) {
+        if (sideFileLineCounter == sideFileLineIndex) return hunkLineIndex
+        sideFileLineCounter++
+        //potentially a comment on a newline
+        if (sideFileLineCounter == sideFileLineIndex && !line.isSuppressNewLine) lastMatchedLineWithNewline = hunkLineIndex
+      }
+      hunkLineIndex += if (diffFile && line.isSuppressNewLine) 2 else 1
+    }
+    return lastMatchedLineWithNewline
+  }
+
+  fun findDiffFileLineIndex(patch: TextFilePatch, locationInDiff: Pair<Side, Int>): Int? {
+    val (hunk, offset) = findHunkWithOffset(patch, locationInDiff) ?: return null
+    val hunkLineIndex = findHunkLineIndex(hunk, locationInDiff, true) ?: return null
+
+    // header included in offset
+    return offset + (hunkLineIndex - 1)
+  }
+
+  private fun findHunkWithOffset(patch: TextFilePatch, locationInDiff: Pair<Side, Int>): Pair<PatchHunk, Int>? {
+    val (side, lineIndex) = locationInDiff
+    var diffLineCounter = 0
+    for (hunk in patch.hunks) {
+      // +1 for header
+      diffLineCounter++
+      val range = getRange(hunk)
+      val start = side.select(range.start1, range.start2)
+      val end = side.select(range.end1, range.end2)
+
+      if (lineIndex in start..end) {
+        return hunk to diffLineCounter
+      }
+
+      val hunkLinesCount = hunk.lines.size + hunk.lines.count { it.isSuppressNewLine }
+      diffLineCounter += hunkLinesCount
+    }
+    return null
+  }
+
   fun createPatchFromHunk(filePath: String, diffHunk: String): String {
     return """--- a/$filePath
 +++ b/$filePath
 """ + diffHunk
+  }
+
+  fun truncateHunkBefore(hunk: PatchHunk, hunkLineIndex: Int): PatchHunk {
+    if (hunkLineIndex <= 0) return hunk
+    val lines = hunk.lines
+
+    var startLineBefore: Int = hunk.startLineBefore
+    var startLineAfter: Int = hunk.startLineAfter
+
+    for (i in 0 until hunkLineIndex) {
+      val line = lines[i]
+      when (line.type) {
+        PatchLine.Type.CONTEXT -> {
+          startLineBefore++
+          startLineAfter++
+        }
+        PatchLine.Type.ADD -> startLineAfter++
+        PatchLine.Type.REMOVE -> startLineBefore++
+      }
+    }
+    val truncatedLines = lines.subList(hunkLineIndex, lines.size)
+    return PatchHunk(startLineBefore, hunk.endLineBefore, startLineAfter, hunk.endLineAfter).apply {
+      for (line in truncatedLines) {
+        addLine(line)
+      }
+    }
+  }
+
+  fun truncateHunkAfter(hunk: PatchHunk, hunkLineIndex: Int): PatchHunk {
+    val lines = hunk.lines
+    if (hunkLineIndex > lines.size - 1) return hunk
+
+    var endLineBefore: Int = hunk.endLineBefore
+    var endLineAfter: Int = hunk.endLineAfter
+
+    for (i in lines.size - 1 downTo hunkLineIndex) {
+      val line = lines[i]
+      when (line.type) {
+        PatchLine.Type.CONTEXT -> {
+          endLineBefore--
+          endLineAfter--
+        }
+        PatchLine.Type.ADD -> endLineAfter--
+        PatchLine.Type.REMOVE -> endLineBefore--
+      }
+    }
+    val truncatedLines = lines.subList(0, hunkLineIndex + 1)
+    return PatchHunk(hunk.startLineBefore, endLineBefore, hunk.startLineAfter, endLineAfter).apply {
+      for (line in truncatedLines) {
+        addLine(line)
+      }
+    }
   }
 }

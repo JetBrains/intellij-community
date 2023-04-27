@@ -83,6 +83,15 @@ public interface EditorSettings {
   boolean isVirtualSpace();
   void setVirtualSpace(boolean allow);
 
+  int getVerticalScrollOffset();
+  void setVerticalScrollOffset(int val);
+  int getVerticalScrollJump();
+  void setVerticalScrollJump(int val);
+  int getHorizontalScrollOffset();
+  void setHorizontalScrollOffset(int val);
+  int getHorizontalScrollJump();
+  void setHorizontalScrollJump(int val);
+
   boolean isCaretInsideTabs();
   void setCaretInsideTabs(boolean allow);
 

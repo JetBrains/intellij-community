@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.FlushingDaemon;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
@@ -41,6 +43,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   private ChangeList myChangeList;
   private LocalHistoryFacade myVcs;
   private IdeaGateway myGateway;
+  private ScheduledFuture<?> myFlusherTask;
 
   private @Nullable LocalHistoryEventDispatcher myEventDispatcher;
 
@@ -83,6 +86,9 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
         }
       }
     });
+    myFlusherTask = FlushingDaemon.everyFiveSeconds(() -> {
+      myChangeList.force();
+    });
     isInitialized.set(true);
   }
 
@@ -121,11 +127,19 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   private void doDispose() {
     if (!isInitialized.getAndSet(false)) return;
 
+    myFlusherTask.cancel(false);
+    myFlusherTask = null;
+
+    // TODO(vadim.salavatov): purging at disposal might affect shutdown time, maybe we should move it to init()?
+    purgeObsolete(); // flushes in the end
+    myChangeList.close();
+    LocalHistoryLog.LOG.debug("Local history storage successfully closed.");
+  }
+
+  private void purgeObsolete() {
     long period = myDaysToKeep * 1000L * 60L * 60L * 24L;
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
-    myChangeList.close();
-    LocalHistoryLog.LOG.debug("Local history storage successfully closed.");
   }
 
   @TestOnly

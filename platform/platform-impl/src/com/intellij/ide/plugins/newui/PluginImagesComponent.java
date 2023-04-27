@@ -164,7 +164,9 @@ public class PluginImagesComponent extends JPanel {
   }
 
   private void loadImages(@NotNull IdeaPluginDescriptor descriptor, @NotNull Object state) {
-    if (!(descriptor instanceof PluginNode node) || node.getExternalPluginIdForScreenShots() == null) {
+    if (!(descriptor instanceof PluginNode node) ||
+        node.getExternalPluginIdForScreenShots() == null ||
+        ApplicationManager.getApplication().isHeadlessEnvironment()) {
       handleImages(state, null);
       return;
     }

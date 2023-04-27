@@ -42,7 +42,7 @@ internal class ConstructorParameterResolver {
 
     if (isLightService(expectedType)) {
       throw PluginException(
-        "Do not use constructor injection for light services (requestorClass=$requestorClass, requestedService=$expectedType)", pluginId
+        "Constructor injection for light services is not supported (requestorClass=$requestorClass, requestedService=$expectedType)", pluginId
       )
     }
 
@@ -60,7 +60,7 @@ internal class ConstructorParameterResolver {
 
   private fun handleUnsatisfiedDependency(componentManager: ComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>, pluginId: PluginId): Any? {
     val extension = componentManager.extensionArea.findExtensionByClass(expectedType) ?: return null
-    val message = "Do not use constructor injection to get extension instance (requestorClass=${requestorClass.name}, extensionClass=${expectedType.name})"
+    val message = doNotUseConstructorInjectionsMessage("requestorClass=${requestorClass.name}, extensionClass=${expectedType.name}")
     val app = componentManager.getApplication()
     @Suppress("SpellCheckingInspection")
     if (app != null && app.isUnitTestMode && pluginId.idString != "org.jetbrains.kotlin" && pluginId.idString != "Lombook Plugin") {

@@ -18,7 +18,7 @@ sealed interface DistributionFileEntry {
   fun changePath(newFile: Path): DistributionFileEntry
 }
 
-interface LibraryFileEntry : DistributionFileEntry {
+sealed interface LibraryFileEntry : DistributionFileEntry {
   val libraryFile: Path?
   val size: Int
 }
@@ -28,12 +28,13 @@ interface LibraryFileEntry : DistributionFileEntry {
  */
 internal class ModuleLibraryFileEntry(override val path: Path,
                                       @JvmField val moduleName: String,
+                                      @JvmField val libraryName: String,
                                       override val libraryFile: Path?,
                                       override val size: Int) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
     get() = "module-library-file"
 
-  override fun changePath(newFile: Path) = ModuleLibraryFileEntry(newFile, moduleName, libraryFile, size)
+  override fun changePath(newFile: Path) = ModuleLibraryFileEntry(newFile, moduleName, libraryName, libraryFile, size)
 }
 
 /**
@@ -75,5 +76,5 @@ class ModuleOutputEntry(
   override val type: String
     get() = "module-output"
 
-  override fun changePath(newFile: Path) = ModuleOutputEntry(newFile, moduleName, size, reason)
+  override fun changePath(newFile: Path) = ModuleOutputEntry(path = newFile, moduleName = moduleName, size = size, reason = reason)
 }

@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,16 +41,16 @@ public final class TestNGXmlSuiteHelper {
                                 XmlSuite xmlSuite) {
     XmlTest xmlTest = new XmlTest(xmlSuite);
     xmlTest.setName(name);
-    List<XmlClass> xmlClasses = new ArrayList<XmlClass>();
+    List<XmlClass> xmlClasses = new ArrayList<>();
     int idx = 0;
     for (String className : map.keySet()) {
       final XmlClass xmlClass = new XmlClass(className, idx++, false);
       final Map<String, List<String>> collection = map.get(className);
       if (collection != null) {
-        final ArrayList<XmlInclude> includedMethods = new ArrayList<XmlInclude>();
+        final ArrayList<XmlInclude> includedMethods = new ArrayList<>();
         int mIdx = 0;
         for (String methodName : collection.keySet()) {
-          final List<Integer> includes = new ArrayList<Integer>();
+          final List<Integer> includes = new ArrayList<>();
           for (String include : collection.get(methodName)) {
             try {
               includes.add(Integer.parseInt(include));
@@ -80,13 +81,9 @@ public final class TestNGXmlSuiteHelper {
 
   public static void writeToFile(Logger logger, File xmlFile, String content) {
     try {
-      OutputStream stream = new FileOutputStream(xmlFile, false);
-      try {
-        byte[] text = content.getBytes("UTF-8");
+      try (OutputStream stream = new FileOutputStream(xmlFile, false)) {
+        byte[] text = content.getBytes(StandardCharsets.UTF_8);
         stream.write(text, 0, text.length);
-      }
-      finally {
-        stream.close();
       }
     }
     catch (IOException e) {

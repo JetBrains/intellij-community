@@ -21,7 +21,7 @@ internal class PackagePartLookupElementFactory {
             .withInsertHandler(PackagePartInsertionHandler)
             .withIcon(AllIcons.Nodes.Package)
             .letIf(!packagePartFqName.parent().isRoot) {
-                it.appendTailText("(${packagePartFqName.asString()})", true)
+                it.appendTailText(" (${packagePartFqName.asString()})", true)
             }
     }
 }

@@ -50,7 +50,7 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
   override fun commit() = Unit
   override fun dispose() = Unit
 
-  companion object : ModuleExtensionBridgeFactory<LanguageLevelModuleExtensionBridge> {
+  class Factory : ModuleExtensionBridgeFactory<LanguageLevelModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
                                  diff: MutableEntityStorage?): LanguageLevelModuleExtensionBridge {

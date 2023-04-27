@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtSecondaryConstructor
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "constructor B()"
 open class B {
     <caret>constructor() {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -28,14 +28,14 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
     });
   }
 
-  public static int getPriorityWeight(@NotNull IntentionActionWithTextCaching action){
+  public static int getPriorityWeight(@NotNull IntentionActionWithTextCaching action) {
     IntentionAction nonDelegatedAction = findNonDelegatedAction(action.getAction());
     Priority priority = nonDelegatedAction instanceof PriorityAction ? ((PriorityAction)nonDelegatedAction).getPriority() : null;
     return getPriorityWeight(priority);
   }
 
   public static int getWeight(@NotNull CachedIntentions context, @NotNull IntentionActionWithTextCaching action) {
-    final int group = context.getGroup(action).getPriority();
+    int group = context.getGroup(action).getPriority();
     IntentionAction nonDelegatedAction = findNonDelegatedAction(action.getAction());
     if (nonDelegatedAction instanceof PriorityAction) {
       return group + getPriorityWeight(((PriorityAction)nonDelegatedAction).getPriority());

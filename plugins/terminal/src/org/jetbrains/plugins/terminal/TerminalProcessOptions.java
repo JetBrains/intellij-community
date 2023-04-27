@@ -2,8 +2,13 @@
 package org.jetbrains.plugins.terminal;
 
 import com.jediterm.core.util.TermSize;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link ShellStartupOptions} instead
+ */
+@Deprecated(forRemoval = true)
 public class TerminalProcessOptions {
 
   private final String myWorkingDirectory;
@@ -24,5 +29,9 @@ public class TerminalProcessOptions {
 
   public @Nullable TermSize getInitialTermSize() {
     return myInitialTermSize;
+  }
+
+  public @NotNull ShellStartupOptions toStartupOptions() {
+    return new ShellStartupOptions.Builder().workingDirectory(myWorkingDirectory).initialTermSize(myInitialTermSize).build();
   }
 }

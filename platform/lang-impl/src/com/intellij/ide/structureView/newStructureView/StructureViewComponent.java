@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.ide.structureView.symbol.DelegatingPsiElementWithSymbolPointer;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.FileStructurePopup;
@@ -228,7 +229,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     TreeUtil.installActions(getTree());
 
-    new TreeSpeedSearch(getTree(), false, treePath -> {
+    TreeSpeedSearch.installOn(getTree(), false, treePath -> {
       Object userObject = TreeUtil.getLastUserObject(treePath);
       return userObject != null ? FileStructurePopup.getSpeedSearchText(userObject) : null;
     });
@@ -738,6 +739,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (selectedElements[0] instanceof Navigatable) {
         return selectedElements[0];
       }
+    }
+    if (CommonDataKeys.SYMBOLS.is(dataId)) {
+      return getSelectedValues(selection)
+        .filter(DelegatingPsiElementWithSymbolPointer.class)
+        .filterMap(it -> it.getSymbolPointer().dereference())
+        .toList();
     }
     return null;
   }

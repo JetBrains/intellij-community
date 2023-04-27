@@ -1,11 +1,11 @@
-// "Make 'a' implement 'b'" "true"
+// "Make 'a' implement 'b'" "true-preview"
 interface b<T> {
     void f(T t);
 }
 
 class a implements b<Integer> {
     public void f(Integer integer) {
-        
+        <caret>
     }
 }
 

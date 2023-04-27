@@ -30,7 +30,8 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
   private var myNoHeaders = false
 
   // region Filters
-  private var myLanguages: Set<Language> = emptySet()
+  // null means no filtering -- settings for all languages should be written
+  private var myLanguages: Set<Language>? = null
   private var myPropertyKinds: Set<EditorConfigPropertyKind> = EnumSet.allOf(EditorConfigPropertyKind::class.java)
   // endregion
 
@@ -123,7 +124,8 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
   @Throws(IOException::class)
   private fun writeLangSection(mapper: LanguageCodeStylePropertyMapper, pattern: String?): Boolean {
     val language = mapper.language
-    if (language in myLanguages) {
+    val languages = myLanguages
+    if (languages == null || language in languages) {
       val optionValueList = getKeyValuePairs(mapper)
       if (!optionValueList.isEmpty()) {
         if (pattern != null && !myNoHeaders) {

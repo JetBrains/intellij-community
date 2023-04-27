@@ -1,18 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.devServer
 
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.intellij.diagnostic.telemetry.useWithScope2
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.TraceManager
+import org.jetbrains.intellij.build.closeKtorClient
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.exists
 
 @Serializable
 internal data class Configuration(@JvmField val products: Map<String, ProductConfiguration>)
@@ -22,62 +25,56 @@ internal data class ProductConfiguration(@JvmField val modules: List<String>, @J
 
 private const val PRODUCTS_PROPERTIES_PATH = "build/dev-build.json"
 
-internal class BuildServer(homePath: Path, productionClassOutput: Path) {
-  private val configuration: Configuration
+@Suppress("SpellCheckingInspection")
+fun getIdeSystemProperties(runDir: Path): Map<String, String> {
+  // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
+  val libDir = runDir.resolve("lib")
+  return mapOf(
+    "jna.boot.library.path" to "$libDir/jna/${JvmArchitecture.currentJvmArch.dirName}",
+    "pty4j.preferred.native.folder" to "$libDir/pty4j",
+    // require bundled JNA dispatcher lib
+    "jna.nosys" to "true",
+    "jna.noclasspath" to "true",
+  )
+}
 
-  private val platformPrefixToPluginBuilder = ConcurrentHashMap<String, Deferred<IdeBuilder>>()
-
-  init {
-    // for compatibility with local runs and runs on CI
-    System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
-
-    val jsonFormat = Json { isLenient = true }
-    configuration = jsonFormat.decodeFromString(Configuration.serializer(), Files.readString(homePath.resolve(PRODUCTS_PROPERTIES_PATH)))
-  }
-
-  // not synchronized version
-  suspend fun buildProductInProcess(isServerMode: Boolean, request: BuildRequest): IdeBuilder {
+suspend fun buildProductInProcess(request: BuildRequest) {
+  TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope2 {
     val platformPrefix = request.platformPrefix
-    return buildProduct(productConfiguration = getProductConfiguration(platformPrefix), request = request, isServerMode = isServerMode)
-  }
-
-  suspend fun checkOrCreateIdeBuilder(request: BuildRequest): IdeBuilder {
-    platformPrefixToPluginBuilder.get(request.platformPrefix)?.let {
-      return checkChangesIfNeeded(it)
-    }
-
-    val ideBuilderDeferred = CompletableDeferred<IdeBuilder>()
-    platformPrefixToPluginBuilder.putIfAbsent(request.platformPrefix, ideBuilderDeferred)?.let {
-      ideBuilderDeferred.cancel()
-      return checkChangesIfNeeded(it)
-    }
-
+    val configuration = createConfiguration(homePath = request.homePath, productionClassOutput = request.productionClassOutput)
+    val productConfiguration = getProductConfiguration(configuration, platformPrefix)
     try {
-      return buildProductInProcess(isServerMode = true, request = request)
+      buildProduct(productConfiguration = productConfiguration, request = request)
     }
-    catch (e: Throwable) {
-      ideBuilderDeferred.completeExceptionally(e)
-      throw e
+    finally {
+      // otherwise, a thread leak in tests
+      if (!request.keepHttpClient) {
+        withContext(NonCancellable) {
+          closeKtorClient()
+        }
+      }
     }
   }
+}
 
-  private fun getProductConfiguration(platformPrefix: String): ProductConfiguration {
-    return configuration.products.get(platformPrefix) ?: throw ConfigurationException(
-      "No production configuration for platform prefix `$platformPrefix` please add to `$PRODUCTS_PROPERTIES_PATH` if needed"
-    )
+private fun createConfiguration(productionClassOutput: Path, homePath: Path): Configuration {
+  // for compatibility with local runs and runs on CI
+  System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
+  var projectPropertiesPath = homePath.resolve(PRODUCTS_PROPERTIES_PATH)
+  // Handle Rider repository layout
+  if (!projectPropertiesPath.exists() && homePath.parent?.parent?.resolve(".dotnet-products.root.marker")?.exists() == true) {
+    val riderSpecificProjectPropertiesPath = homePath.parent.resolve("ultimate").resolve(PRODUCTS_PROPERTIES_PATH)
+    if (riderSpecificProjectPropertiesPath.exists()) {
+      projectPropertiesPath = riderSpecificProjectPropertiesPath
+    }
   }
+  return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
+}
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private suspend fun checkChangesIfNeeded(ideBuilderDeferred: Deferred<IdeBuilder>): IdeBuilder {
-    if (ideBuilderDeferred.isActive) {
-      return ideBuilderDeferred.await()
-    }
-    else {
-      val ideBuilder = ideBuilderDeferred.getCompleted()
-      ideBuilder.checkChanged()
-      return ideBuilder
-    }
-  }
+private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration {
+  return configuration.products.get(platformPrefix) ?: throw ConfigurationException(
+    "No production configuration for platform prefix `$platformPrefix` please add to `$PRODUCTS_PROPERTIES_PATH` if needed"
+  )
 }
 
 internal class ConfigurationException(message: String) : RuntimeException(message)

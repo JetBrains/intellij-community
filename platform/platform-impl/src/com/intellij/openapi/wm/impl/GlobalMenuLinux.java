@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,12 +35,13 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
@@ -53,6 +55,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 interface GlobalMenuLib extends Library {
   void runMainLoop(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
@@ -146,10 +149,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   private static final GlobalMenuLib.JRunnable ourUpdateAllRoots;
   private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceAppeared;
   private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceVanished;
-  private static final Map<Long, GlobalMenuLinux> ourInstances = new ConcurrentHashMap<>();
+  private static final Set<GlobalMenuLinux> ourInstances = ConcurrentHashMap.newKeySet();
   private static boolean ourIsServiceAvailable = false;
 
-  private final long myXid;
+  private AtomicLong myXid = new AtomicLong(0);
   private final @NotNull JFrame myFrame;
   private List<MenuItemInternal> myRoots;
   private Pointer myWindowHandle;
@@ -190,7 +193,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
           return;
         }
 
-        for (GlobalMenuLinux gml : ourInstances.values()) {
+        for (GlobalMenuLinux gml : ourInstances) {
           gml._updateRoots();
         }
       };
@@ -205,7 +208,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         LOG.info("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
         ourIsServiceAvailable = false;
         final boolean isMainMenuVisible = UISettings.getInstance().getShowMainMenu();
-        for (GlobalMenuLinux gml : ourInstances.values()) {
+        for (GlobalMenuLinux gml : ourInstances) {
           gml.myWindowHandle = null;
           if (isMainMenuVisible) {
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -240,7 +243,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            for (GlobalMenuLinux gml : ourInstances.values()) {
+            for (GlobalMenuLinux gml : ourInstances) {
               gml.toggle(enabled);
             }
             enabled = !enabled;
@@ -249,14 +252,26 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  public static @Nullable GlobalMenuLinux create(@NotNull JFrame frame) {
-    final long xid = _getX11WindowXid(frame);
-    return xid == 0 ? null : new GlobalMenuLinux(xid, frame);
+  public static @NotNull GlobalMenuLinux create(@NotNull JFrame frame) {
+    return new GlobalMenuLinux(frame);
   }
 
-  private GlobalMenuLinux(long xid, @NotNull JFrame frame) {
-    LOG.info("created instance of GlobalMenuLinux for xid=0x" + Long.toHexString(xid));
-    myXid = xid;
+  private GlobalMenuLinux(@NotNull JFrame frame) {
+    assert ourLib != null;
+    LOG.info("created instance of GlobalMenuLinux for frame: " + frame);
+
+    final long xid = _getX11WindowXid(frame);
+    myXid.set(xid);
+    if (xid == 0) {
+      frame.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentShown(ComponentEvent e) {
+          frame.removeComponentListener(this);
+          myXid.set(_getX11WindowXid(frame));
+        }
+      });
+    }
+
     myFrame = frame;
     myOnWindowReleased = () -> {
       // exec at glib-thread
@@ -268,7 +283,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       }
       if (myIsDisposed) {
-        ourInstances.remove(myXid);
+        ourInstances.remove(this);
       }
     };
 
@@ -287,7 +302,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         final Window wndParent = src instanceof Window ? (Window)src : SwingUtilities.windowForComponent(src);
         final char eventChar = Character.toUpperCase(event.getKeyChar());
 
-        for (GlobalMenuLinux gml : ourInstances.values()) {
+        for (GlobalMenuLinux gml : ourInstances) {
           if (gml.myFrame == wndParent) {
             List<MenuItemInternal> currentRoots = gml.myRoots;
             if (currentRoots == null) return false;
@@ -306,21 +321,25 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       }, this);
     }
 
-    ourInstances.put(myXid, this);
+    ourInstances.add(this);
   }
 
   @Override
   public void dispose() {
     // exec at EDT
-    if (ourLib == null || myIsDisposed) {
+    if (myIsDisposed) {
       return;
     }
 
     myIsDisposed = true;
 
     if (myWindowHandle != null) {
-      _trace("dispose frame, scheduled destroying of GlobalMenuLinux for xid=0x%X", myXid);
+      _trace("scheduled destroying of GlobalMenuLinux for frame %s | xid=0x%X", myFrame, myXid);
       ourLib.releaseWindowOnMainLoop(myWindowHandle, myOnWindowReleased);
+    }
+    else {
+      _trace("scheduled destroying of unused GlobalMenuLinux for frame %s | xid=0x%X", myFrame, myXid);
+      ourLib.execOnMainLoop(myOnWindowReleased);
     }
   }
 
@@ -403,11 +422,15 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     if (myIsRootsUpdated || !myIsEnabled || myIsDisposed) {
       return;
     }
+    if (myXid.get() == 0) {
+      LOG.debug("can´t update roots of frame " + myFrame + " because xid == 0");
+      return;
+    }
 
     myIsRootsUpdated = true;
 
     if (myWindowHandle == null) {
-      myWindowHandle = ourLib.registerWindow(myXid, this);
+      myWindowHandle = ourLib.registerWindow(myXid.get(), this);
       if (myWindowHandle == null) {
         LOG.error("AppMenu-service can't register xid " + myXid);
         return;
@@ -437,6 +460,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   public void toggle(boolean enabled) {
     if (ourLib == null || myIsDisposed) {
+      return;
+    }
+    if (myXid.get() == 0) {
+      LOG.debug("can´t toggle global-menu of frame " + myFrame + " because xid == 0");
       return;
     }
 
@@ -703,31 +730,48 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         if (TRACE_SKIPPED_EVENT) _trace("skipped fill-event for item '%s', use cached (too frequent fill-events)", String.valueOf(mi.txt));
       }
       else {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          // ETD-start
-          final JMenuItem jmi = mi.jitem;
-          if (jmi == null) {
-            if (TRACE_HIERARCHY_MISMATCHES) {
-              _trace(
-                "corresponding (opening) swing item is null, event source: " + mi + ", swing menu hierarchy:\n" + _dumpSwingHierarchy());
-            }
-            return;
-          }
-          if (!(jmi instanceof ActionMenu am)) {
-            LOG.debug("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
-                      jmi.getClass().getName() +
-                      ", event source: " +
-                      mi);
-            return;
-          }
+        final int retriesCount = 3;
+        int tryNumer = 0;
+        for (; tryNumer < retriesCount; ++tryNumer) {
+          try {
+            ApplicationManager.getApplication().invokeAndWait(() -> {
+              // ETD-start
+              final JMenuItem jmi = mi.jitem;
+              if (jmi == null) {
+                if (TRACE_HIERARCHY_MISMATCHES) {
+                  _trace(
+                    "corresponding (opening) swing item is null, event source: " +
+                    mi +
+                    ", swing menu hierarchy:\n" +
+                    _dumpSwingHierarchy());
+                }
+                return;
+              }
+              if (!(jmi instanceof ActionMenu am)) {
+                LOG.debug("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
+                          jmi.getClass().getName() +
+                          ", event source: " +
+                          mi);
+                return;
+              }
 
-          mi.lastFilledMs = timeMs;
+              mi.lastFilledMs = timeMs;
 
-          am.removeAll();
-          am.fillMenu();
-          _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2,
-                        stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
-        });
+              am.removeAll();
+              am.fillMenu();
+              _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2,
+                            stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
+            });
+            break;
+          } catch (ProcessCanceledException e) {
+          }
+        }
+        if (tryNumer >= retriesCount) {
+          // clear cached children of menuitem (just for insurance)
+          mi.clearChildrenSwingRefs();
+          mi.children.forEach(k -> k.position = -1);
+          LOG.debug("Menu group wasn't expanded in 3 attempts, will do nothing..");
+        }
 
         // glib main-loop thread
         final long elapsedMs = System.currentTimeMillis() - timeMs;

@@ -265,7 +265,7 @@ public class MacWinTabsHandler {
     parent.repaint();
   }
 
-  private static void handleFullScreenResize(@NotNull Window window) {
+  protected static void handleFullScreenResize(@NotNull Window window) {
     try {
       Object cPlatformWindow = MacUtil.getPlatformWindow(window);
       if (cPlatformWindow != null) {

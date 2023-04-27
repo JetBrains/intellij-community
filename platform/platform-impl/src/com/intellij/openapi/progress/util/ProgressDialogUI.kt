@@ -30,7 +30,7 @@ import javax.swing.*
 
 internal class ProgressDialogUI : Disposable {
   val panel: JPanel = JPanel()
-  private val myTitlePanel = TitlePanel()
+  private val titlePanel = TitlePanel()
   private val textLabel = JLabel(" ")
   private val detailsLabel = JBLabel("")
   val progressBar: JProgressBar = JProgressBar()
@@ -38,13 +38,13 @@ internal class ProgressDialogUI : Disposable {
   val backgroundButton: JButton = JButton()
 
   init {
-    myTitlePanel.setActive(true)
+    titlePanel.setActive(true)
     detailsLabel.componentStyle = UIUtil.ComponentStyle.REGULAR
     if (SystemInfoRt.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, detailsLabel)
     }
     detailsLabel.foreground = UIUtil.getContextHelpForeground()
-    progressBar.putClientProperty("html.disable", java.lang.Boolean.FALSE)
+    progressBar.putClientProperty("html.disable", false)
     progressBar.maximum = 100
     cancelButton.text = CommonBundle.getCancelButtonText()
     DialogUtil.registerMnemonic(cancelButton, '&')
@@ -80,7 +80,7 @@ internal class ProgressDialogUI : Disposable {
     ))
 
     panel.layout = GridLayoutManager(2, 1, JBInsets.emptyInsets(), -1, -1, false, false)
-    panel.add(myTitlePanel, gridConstraints(row = 0))
+    panel.add(titlePanel, gridConstraints(row = 0))
     panel.add(progressAndButtonPanel, gridConstraints(
       row = 1, fill = FILL_BOTH, HSizePolicy = SIZE_POLICY_DEFAULT, VSizePolicy = SIZE_POLICY_DEFAULT
     ))
@@ -93,18 +93,18 @@ internal class ProgressDialogUI : Disposable {
       backgroundButton.isOpaque = false
     }
 
-    val moveListener = object : WindowMoveListener(myTitlePanel) {
+    val moveListener = object : WindowMoveListener(titlePanel) {
       override fun getView(component: Component): Component {
         return SwingUtilities.getAncestorOfClass(DialogWrapperDialog::class.java, component)
       }
     }
-    myTitlePanel.addMouseListener(moveListener)
-    myTitlePanel.addMouseMotionListener(moveListener)
+    titlePanel.addMouseListener(moveListener)
+    titlePanel.addMouseMotionListener(moveListener)
   }
 
   override fun dispose() {
     UIUtil.disposeProgress(progressBar)
-    UIUtil.dispose(myTitlePanel)
+    UIUtil.dispose(titlePanel)
     UIUtil.dispose(backgroundButton)
     UIUtil.dispose(cancelButton)
   }
@@ -136,7 +136,7 @@ internal class ProgressDialogUI : Disposable {
 
   fun updateTitle(title: @ProgressTitle String?) {
     EDT.assertIsEdt()
-    myTitlePanel.setText(title?.takeIf(String::isNotEmpty) ?: " ")
+    titlePanel.setText(title?.takeIf(String::isNotEmpty) ?: " ")
   }
 
   fun updateProgress(state: ProgressState) {

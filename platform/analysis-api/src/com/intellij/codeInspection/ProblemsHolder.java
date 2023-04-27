@@ -41,14 +41,14 @@ public class ProblemsHolder {
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @InspectionMessage String descriptionTemplate,
-                              LocalQuickFix @Nullable ... fixes) {
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @InspectionMessage String descriptionTemplate,
                               @NotNull ProblemHighlightType highlightType,
-                              LocalQuickFix @Nullable ... fixes) {
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
   }
 
@@ -104,7 +104,7 @@ public class ProblemsHolder {
   public void registerProblemForReference(@NotNull PsiReference reference,
                                           @NotNull ProblemHighlightType highlightType,
                                           @NotNull @InspectionMessage String descriptionTemplate,
-                                          LocalQuickFix @Nullable ... fixes) {
+                                          @NotNull LocalQuickFix @Nullable ... fixes) {
     ProblemDescriptor descriptor = myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(),
                                                                      descriptionTemplate, highlightType, myOnTheFly, fixes);
     registerProblem(descriptor);
@@ -156,7 +156,7 @@ public class ProblemsHolder {
   public void registerProblem(@NotNull PsiElement psiElement,
                               @Nullable TextRange rangeInElement,
                               @NotNull @InspectionMessage String descriptionTemplate,
-                              LocalQuickFix @Nullable ... fixes) {
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement, fixes);
   }
 
@@ -174,7 +174,7 @@ public class ProblemsHolder {
                               @NotNull @InspectionMessage String descriptionTemplate,
                               @NotNull ProblemHighlightType highlightType,
                               @Nullable TextRange rangeInElement,
-                              LocalQuickFix @Nullable ... fixes) {
+                              @NotNull LocalQuickFix @Nullable ... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, descriptionTemplate, highlightType, myOnTheFly, fixes));
   }
 

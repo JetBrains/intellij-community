@@ -4,6 +4,7 @@
 package com.intellij.diagnostic.telemetry
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
@@ -36,6 +37,8 @@ class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
   private val traceUrl = "${(if (endpoint == "true") "http://127.0.0.1:4318/" else endpoint).removeSuffix("/")}/v1/traces"
 
   override suspend fun export(spans: Collection<SpanData>) {
+    //checking whether the spans are exported from rem dev backend
+    if (System.getProperty("rdct.diagnostic.otlp") != null) return
     val item = TraceRequestMarshaler.create(spans)
     try {
       httpClient.post(traceUrl) {
@@ -49,6 +52,16 @@ class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
     }
     catch (e: Throwable) {
       Logger.getInstance(OtlpSpanExporter::class.java).error("Failed to export opentelemetry spans (url=$traceUrl)", e)
+    }
+  }
+
+  suspend fun exportBackendData(receivedBytes: Collection<Byte>) {
+    Logger.getInstance(OtlpSpanExporter::class.java).runAndLogException {
+      httpClient.post(traceUrl) {
+        setBody(OutputStreamContent(contentType = Protobuf, contentLength = receivedBytes.size.toLong(), body = {
+          this.write(receivedBytes.toByteArray())
+        }))
+      }
     }
   }
 }

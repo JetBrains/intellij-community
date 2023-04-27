@@ -13,6 +13,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @deprecated Prefer using {@link AsyncChangesTreeImpl} instead.
+ */
+@Deprecated
 public abstract class ChangesTreeImpl<T> extends ChangesTree {
   @NotNull private final List<T> myChanges = new ArrayList<>();
   @NotNull private final Class<T> myClazz;
@@ -70,7 +74,6 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
   public Collection<T> getIncludedChanges() {
     return VcsTreeModelData.included(this).userObjects(myClazz);
   }
-
 
   public static class Changes extends ChangesTreeImpl<Change> {
     public Changes(@NotNull Project project,

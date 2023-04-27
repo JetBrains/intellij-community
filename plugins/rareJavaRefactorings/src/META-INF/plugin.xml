@@ -5,7 +5,7 @@
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.platform</depends>
   <description>
-    Provides "Remove Middle Man", "Replace Temp with Query" and "Wrap Method Return Value" refactorings
+    Provides the "Convert Raw Types to Generics", "Remove Middle Man", "Replace Temp with Query" and "Wrap Method Return Value" refactorings
   </description>
   <vendor>JetBrains</vendor>
   <actions>
@@ -14,6 +14,8 @@
       <action id="RemoveMiddleman" class="com.intellij.refactoring.actions.RemoveMiddlemanAction"/>
       <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>
       <action id="WrapReturnValue" class="com.intellij.refactoring.wrapreturnvalue.WrapReturnValueAction"/>
+      <separator/>
+      <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
     </group>
   </actions>
   <resource-bundle>messages.JavaRareRefactoringsBundle</resource-bundle>

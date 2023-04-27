@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -156,7 +157,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
     myContentPanel.setTitle(createTitles());
 
-    new UiNotifyConnector(getComponent(), new Activatable() {
+    UiNotifyConnector.installOn(getComponent(), new Activatable() {
       @Override
       public void showNotify() {
         myMarkupUpdater.scheduleUpdate();
@@ -1305,11 +1306,14 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     @NotNull private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("UnifiedDiffViewer.MarkupUpdater", 300, true, myPanel, this);
 
-    @NotNull private ProgressIndicator myUpdateIndicator = new EmptyProgressIndicator();
-    private boolean mySuspended;
+    @NotNull private volatile ProgressIndicator myUpdateIndicator = new EmptyProgressIndicator();
+    private volatile boolean mySuspended;
 
     private MarkupUpdater(@NotNull List<? extends DocumentContent> contents) {
       Disposer.register(UnifiedDiffViewer.this, this);
+
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(EditorColorsManager.TOPIC, scheme -> resetMarkup());
 
       MyMarkupModelListener markupListener = new MyMarkupModelListener();
       for (DocumentContent content : contents) {
@@ -1337,16 +1341,27 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       scheduleUpdate();
     }
 
-    @RequiresEdt
-    public void scheduleUpdate() {
+    public void resetMarkup() {
+      // erase old highlighting to make sure text is readable if markup update is slow
+      myEditor.setHighlighter(DiffUtil.createEmptyEditorHighlighter());
+      UnifiedEditorRangeHighlighter.erase(myProject, myEditor.getDocument());
+
+      scheduleUpdate();
+
+      // NB: flush request might be overwritten by another 'scheduleUpdate()'
+      // Ex: if XLineBreakpointImpl is updating its markers after us, triggering our MarkupModelListener
+      // This will delay re-highlighting by 300ms causing blinking
+      myUpdateQueue.sendFlush();
+    }
+
+    void scheduleUpdate() {
       if (myProject == null) return;
       if (mySuspended) return;
-      if (!getComponent().isShowing()) return;
       myUpdateIndicator.cancel();
-
       myUpdateQueue.queue(new Update("update") {
         @Override
         public void run() {
+          if (!getComponent().isShowing()) return;
           if (myStateIsOutOfDate || !myModel.isValid()) return;
 
           myUpdateIndicator.cancel();
@@ -1392,7 +1407,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       }
 
       @Override
-      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         scheduleUpdate();
       }
 

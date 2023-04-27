@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.ui.AppUIUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.io.systemIndependentPath
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
@@ -97,8 +99,12 @@ internal class OpenFileHttpService : RestService() {
       }
     }
 
-    if (apiRequest.file == null) {
+    val requestedFile = apiRequest.file
+    if (requestedFile == null) {
       return parameterMissedErrorMessage("file")
+    }
+    if (PathUtilRt.startsWithSeparatorSeparator(FileUtil.toSystemIndependentName(requestedFile))) {
+      return "UNC paths are not supported"
     }
 
     val promise = openFile(apiRequest, context, request) ?: return null
@@ -151,11 +157,12 @@ internal class OpenFileHttpService : RestService() {
     queue.cancelSession(refreshSessionId)
     val mainTask = OpenFileTask(FileUtil.toCanonicalPath(systemIndependentPath, '/'), request)
     requests.offer(mainTask)
+    val clientId = ClientId.ownerId
     val session = queue.createSession(true, true, {
       while (true) {
         val task = requests.poll() ?: break
         task.promise.catchError {
-          if (openRelativePath(task.path, task.request)) {
+          if (openRelativePath(task.path, task.request, clientId)) {
             task.promise.setResult(null)
           }
           else {
@@ -196,6 +203,12 @@ private fun navigate(project: Project?, file: VirtualFile, request: OpenFileRequ
 }
 
 // path must be normalized
+private fun openRelativePath(path: String, request: OpenFileRequest, clientId: ClientId): Boolean {
+  ClientId.withClientId(clientId) {
+    return openRelativePath(path, request)
+  }
+}
+
 private fun openRelativePath(path: String, request: OpenFileRequest): Boolean {
   var virtualFile: VirtualFile? = null
   var project: Project? = null

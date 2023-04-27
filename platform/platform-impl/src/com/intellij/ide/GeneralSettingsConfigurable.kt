@@ -23,9 +23,6 @@ private val myChkReopenLastProject: CheckboxDescriptor
   get() = CheckboxDescriptor(IdeUICustomization.getInstance().projectMessage("checkbox.reopen.last.project.on.startup"), model::isReopenLastProject)
 private val myConfirmExit: CheckboxDescriptor
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), model::isConfirmExit)
-private val mySkipWelcomeScreen
-  get() = CheckboxDescriptor(IdeBundle.message("checkbox.skip.welcome.screen"),
-                             { !model.isShowWelcomeScreen }, { model.isShowWelcomeScreen = !it })
 private val myChkSyncOnFrameActivation
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), model::isSyncOnFrameActivation)
 private val myChkSaveOnFrameDeactivation
@@ -97,11 +94,6 @@ private class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<
           }.layout(RowLayout.INDEPENDENT)
         }.bind(getter = {  model.confirmOpenNewProject2 ?: GeneralSettings.defaultConfirmNewProject()  }, setter = { model.confirmOpenNewProject2 = it })
 
-        if (PlatformUtils.isDataSpell()) {
-          row {
-            checkBox(mySkipWelcomeScreen)
-          }
-        }
         row(IdeUICustomization.getInstance().projectMessage("settings.general.default.directory")) {
           textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
                                       .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) })
