@@ -39,11 +39,9 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
   private val skippedModulePaths: Set<Pair<String, String>> = setOf(
     "intellij.platform.workspaceModel.storage.tests" to
-      "com/intellij/workspaceModel/storage",
+      "com/intellij/platform/workspaceModel/storage/tests",
     "intellij.platform.workspaceModel.storage.testEntities" to
-      "com/intellij/workspaceModel/storage/entities/unknowntypes/test/api",
-    "intellij.platform.workspaceModel.storage.testEntities" to
-      "com/intellij/workspaceModel/storage/entities/model/api",
+      "com/intellij/platform/workspaceModel/storage/testEntities/entities",
     "intellij.platform.workspaceModel.storage" to
       "com/intellij/workspaceModel/storage"
   )

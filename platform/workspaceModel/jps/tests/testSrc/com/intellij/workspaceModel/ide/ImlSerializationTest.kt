@@ -2,23 +2,23 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.SampleEntity2
+import com.intellij.platform.workspaceModel.storage.tests.SerializationRoundTripChecker
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.SerializationRoundTripChecker
-import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import junit.framework.Assert.assertTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import kotlin.system.measureTimeMillis
+import kotlin.test.assertTrue
 
 class ImlSerializationTest {
   @Rule
@@ -46,8 +46,8 @@ class ImlSerializationTest {
 
     checkSerializationSize(bytes, expectedSize, 2_000)
 
-    assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
-               "v48" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
+    assertTrue("v48" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
+               "This assertion is a reminder. Have you updated the serializer? Update the serializer version!")
   }
 
   @Test
@@ -74,7 +74,7 @@ class ImlSerializationTest {
     // Maybe you've added a new field to the entity store structure. Recheck if you really want this field to be included.
     val leftBound = expectedSize - precision
     val rightBound = expectedSize + precision
-    assertTrue("Expected size: $expectedSize, precision: $precision, real size: ${bytes.size}", bytes.size in leftBound..rightBound)
+    assertTrue(bytes.size in leftBound..rightBound, "Expected size: $expectedSize, precision: $precision, real size: ${bytes.size}")
   }
 
   private fun loadProjectAndCheck(projectFile: File): ByteArray {

@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
@@ -144,8 +145,6 @@ class WorkspaceCacheTest {
     val modules = WorkspaceModel.getInstance(project2).currentSnapshot.entities(ModuleEntity::class.java).toList()
     assertFalse(modules.any { it.name == "MyTestModule" })
   }
-
-  object MySource: EntitySource
 
   private fun prepareProject(): LoadedProjectData {
     val projectFile = projectFile("moduleAdded/after")

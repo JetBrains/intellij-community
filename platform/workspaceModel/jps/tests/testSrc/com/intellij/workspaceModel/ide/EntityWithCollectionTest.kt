@@ -2,14 +2,14 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.CollectionFieldEntity
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.entities.test.api.CollectionFieldEntity
-import com.intellij.workspaceModel.storage.entities.test.api.MySource
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule

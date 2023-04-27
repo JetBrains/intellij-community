@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.storage.tests.checkConsistency
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
@@ -15,7 +16,6 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
