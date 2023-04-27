@@ -6,26 +6,28 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class SslKeyStore extends DelegateKeyStore {
   public static final String SSL_DEFERRED_KEY_LOADING = "sslDeferredKeyLoading";
+  public static final String SSL_DEFERRED_CA_LOADING = "sslDeferredCaLoading";
   public static final String NAME = "idea-key-store";
-  private static final Map<PrivateKey, X509Certificate> ourAutoAdded = new LinkedHashMap<>();
+  private static final List<KeyEntry> ourAdded = new ArrayList<>();
+  private int myAdded;
   static {
     ourProvider.setProperty("KeyStore." + NAME, SslKeyStore.class.getName());
   }
 
   public SslKeyStore() {
     super("PKCS12");
-    loadUserCert();
   }
 
   public static void setDefault() {
@@ -35,40 +37,57 @@ public final class SslKeyStore extends DelegateKeyStore {
     }
   }
 
-  private static void loadUserCert() {
-    String certPath = System.getProperty(SslUtil.SSL_CLIENT_CERT_PATH);
-    String keyPath = System.getProperty(SslUtil.SSL_CLIENT_KEY_PATH);
-    if (certPath != null && keyPath != null) {
-      try {
-        loadKey(certPath, keyPath, null);
-      }
-      catch (Exception e) {
-        throw new IllegalStateException(e);
-      }
+  @Nullable
+  public static PrivateKey getUserKey() {
+    return ourAdded.isEmpty() ? null : ourAdded.get(0).key;
+  }
+
+  public static void loadKey(@NotNull String alias,
+                             @NotNull String clientKeyPath,
+                             @Nullable String clientCertPath,
+                             @Nullable char[] password) {
+    try {
+      PrivateKey key = SslUtil.readPrivateKey(clientKeyPath, password);
+      List<X509Certificate> certificates = clientCertPath == null ? null : SslUtil.loadCertificates(clientCertPath);
+      ourAdded.add(new KeyEntry(alias, key, certificates == null ? null : certificates.toArray(new Certificate[0])));
+    }
+    catch (Exception e) {
+      throw new IllegalStateException(e);
     }
   }
 
-  public static void loadKey(@NotNull String clientCertPath,
-                             @NotNull String clientKeyPath,
-                             @Nullable char[] password) throws CertificateException, IOException {
-    PrivateKey key = SslUtil.readPrivateKey(clientKeyPath, password);
-    if (ourAutoAdded.containsKey(key)) return;
-    X509Certificate cert = SslUtil.readCertificate(clientCertPath);
-    ourAutoAdded.put(key, cert);
+
+  @Override
+  protected void validate(KeyStore keyStore) {
+    super.validate(keyStore);
+    for (int i = myAdded, sz = ourAdded.size(); i < sz; ++i) {
+      KeyEntry entry = ourAdded.get(i);
+      if (entry.certChain != null) {
+        try {
+          keyStore.setKeyEntry(entry.alias, entry.key, null, entry.certChain);
+        }
+        catch (KeyStoreException e) {
+          throw new IllegalStateException(e);
+        }
+      }
+      myAdded = i + 1;
+    }
   }
 
   @Override
   public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
-    delegate.load(null, null);
-    int i = 0;
-    for (Map.Entry<PrivateKey, X509Certificate> entry : ourAutoAdded.entrySet()) {
-      try {
-        delegate.setKeyEntry("user-provided-key" + (i == 0 ? "" : "#" + i), entry.getKey(), null, new Certificate[]{entry.getValue()});
-      }
-      catch (KeyStoreException e) {
-        throw new IllegalStateException();
-      }
-      ++i;
+    super.engineLoad(null, null);
+  }
+
+  private static class KeyEntry {
+    private final String alias;
+    private final PrivateKey key;
+    private final Certificate[] certChain;
+
+    private KeyEntry(@NotNull String alias, @NotNull PrivateKey key, @Nullable Certificate[] certChain) {
+      this.alias = alias;
+      this.key = key;
+      this.certChain = certChain;
     }
   }
 }

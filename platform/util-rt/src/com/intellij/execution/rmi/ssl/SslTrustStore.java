@@ -1,17 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -20,6 +23,9 @@ public final class SslTrustStore extends DelegateKeyStore {
   static {
     ourProvider.setProperty("KeyStore." + NAME, SslTrustStore.class.getName());
   }
+
+  private static final List<Pair<String, ? extends Certificate>> ourAdded = new ArrayList<>();
+  private int myAdded;
 
   public SslTrustStore() {
     super(KeyStore.getDefaultType());
@@ -34,15 +40,29 @@ public final class SslTrustStore extends DelegateKeyStore {
 
   @Override
   public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
-    delegate.load(null, null);
-    appendUserItems(delegate);
+    super.engineLoad(null, null);
   }
 
-  private static void appendUserCert(KeyStore keyStore, String alias, String path) {
+  @Override
+  protected void validate(KeyStore keyStore) {
+    super.validate(keyStore);
+    for (int i = myAdded, sz = ourAdded.size(); i < sz; ++i) {
+      Pair<String, ? extends Certificate> cert = ourAdded.get(i);
+      try {
+        keyStore.setCertificateEntry(cert.first, cert.second);
+      }
+      catch (KeyStoreException e) {
+        throw new IllegalStateException(e);
+      }
+      myAdded = i + 1;
+    }
+  }
+
+  public static void appendUserCert(@NotNull String alias, @NotNull String path) {
     try {
       List<X509Certificate> certs = SslUtil.loadCertificates(path);
       for (int i = 0; i < certs.size(); i++) {
-        keyStore.setCertificateEntry(i == 0 ? alias : alias + "-" + i, certs.get(i));
+        ourAdded.add(Pair.create(i == 0 ? alias : alias + "-" + i, certs.get(i)));
       }
     }
     catch (Exception e) {
@@ -50,7 +70,7 @@ public final class SslTrustStore extends DelegateKeyStore {
     }
   }
 
-  private static void appendUserTrustStore(KeyStore keyStore, String path, char[] password) {
+  public static void appendUserTrustStore(@NotNull String path, char[] password) {
     try {
       File file = new File(path);
       if (!file.exists()) return;
@@ -62,28 +82,11 @@ public final class SslTrustStore extends DelegateKeyStore {
         String alias = aliases.nextElement();
         Certificate certificate = tmpStore.getCertificate(alias);
         if (certificate == null) continue;
-        keyStore.setCertificateEntry(alias, certificate);
+        ourAdded.add(Pair.create(alias, certificate));;
       }
     }
     catch (Exception e) {
       throw new IllegalStateException(e);
-    }
-  }
-
-  private static void appendUserItems(KeyStore keyStore) {
-    String userCert = System.getProperty(SslUtil.SSL_CA_CERT_PATH);
-    if (!StringUtilRt.isEmpty(userCert)) {
-      appendUserCert(keyStore, "user-provided-ca", userCert);
-    }
-    String trustStores = System.getProperty(SslUtil.SSL_TRUST_STORE_PATHS);
-    if (!StringUtilRt.isEmpty(trustStores)) {
-      String[] storesPaths = trustStores.split(File.pathSeparator);
-      for (String path : storesPaths) {
-        String pass = "changeit";
-        char[] chars = new char[pass.length()];
-        pass.getChars(0, pass.length(), chars, 0);
-        appendUserTrustStore(keyStore, path, chars);
-      }
     }
   }
 }

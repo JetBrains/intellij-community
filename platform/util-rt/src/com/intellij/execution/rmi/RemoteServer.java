@@ -175,19 +175,28 @@ public class RemoteServer {
 
   private static void setupSSL() {
     setupDisabledAlgorithms();
-    boolean caCert = System.getProperty(SslUtil.SSL_CA_CERT_PATH) != null;
-    boolean clientCert = System.getProperty(SslUtil.SSL_CLIENT_CERT_PATH) != null;
-    boolean clientKey = System.getProperty(SslUtil.SSL_CLIENT_KEY_PATH) != null;
+    String caCertPath = System.getProperty(SslUtil.SSL_CA_CERT_PATH);
+    boolean caCert = caCertPath != null;
+    String clientCertPath = System.getProperty(SslUtil.SSL_CLIENT_CERT_PATH);
+    String clientKeyPath = System.getProperty(SslUtil.SSL_CLIENT_KEY_PATH);
+    boolean clientKey = clientKeyPath != null;
     boolean deferred = "true".equals(System.getProperty(SslKeyStore.SSL_DEFERRED_KEY_LOADING));
+    boolean deferredCa = "true".equals(System.getProperty(SslKeyStore.SSL_DEFERRED_CA_LOADING));
     boolean useFactory = "true".equals(System.getProperty(SslUtil.SSL_USE_FACTORY));
     if (useFactory) {
-      if (caCert || clientCert && clientKey) {
+      if (caCert || clientKey) {
         Security.setProperty("ssl.SocketFactory.provider", SslSocketFactory.class.getName());
       }
     }
     else {
-      if (caCert) SslTrustStore.setDefault();
-      if (clientCert && clientKey || deferred) SslKeyStore.setDefault();
+      if (caCert || deferredCa) SslTrustStore.setDefault();
+      if (clientKey || deferred) SslKeyStore.setDefault();
+    }
+    if (caCert) {
+      SslTrustStore.appendUserCert("user-provided-ca", caCertPath);
+    }
+    if (clientKey) {
+      SslKeyStore.loadKey("user-provided-key", clientKeyPath, clientCertPath, null);
     }
   }
 
