@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
 use log::{debug, warn};
-use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, get_path_from_user_config, is_executable, jvm_property, PathExt};
+use utils::{canonical_non_unc, get_path_from_env_var, get_path_from_user_config, is_executable, jvm_property, PathExt};
 
 use crate::{get_config_home, LaunchConfiguration, ProductInfo, ProductInfoLaunchField};
 
@@ -101,11 +101,8 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 }
 
 impl DefaultLaunchConfiguration {
-    pub fn new(args: Vec<String>) -> Result<Self> {
-        let current_exe = get_current_exe();
-        debug!("Executable path: {current_exe:?}");
-
-        let (ide_home, product_info_file) = find_ide_home(&current_exe)?;
+    pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Self> {
+        let (ide_home, product_info_file) = find_ide_home(exe_path)?;
         debug!("IDE home dir: {ide_home:?}");
 
         let config_home = get_config_home()?;
@@ -400,5 +397,5 @@ fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
         candidate = candidate.parent_or_err()?;
     }
 
-    bail!("Cannot find a directory with a product descriptor.\nPlease try to reinstall the IDE.")
+    bail!("Cannot find a directory with a product descriptor")
 }

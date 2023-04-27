@@ -6,15 +6,16 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use log::{debug, info};
-use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var};
+use utils::{canonical_non_unc, get_path_from_env_var};
 
 use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_logs_home, LaunchConfiguration};
 use crate::docker::is_running_in_docker;
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
+    launcher_name: String,
     config_dir: PathBuf,
     system_dir: PathBuf,
     logs_dir: Option<PathBuf>,
@@ -48,7 +49,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     }
 
     fn prepare_for_launch(&self) -> Result<PathBuf> {
-        init_env_vars()?;
+        init_env_vars(&self.launcher_name)?;
         let project_trust_file = self.init_project_trust_file_if_needed()?;
         debug!("Project trust file is: {:?}", project_trust_file);
 
@@ -139,20 +140,20 @@ impl DefaultLaunchConfiguration {
 }
 
 impl RemoteDevLaunchConfiguration {
-    pub fn new(args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
+    pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
         let (project_path, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
 
         // required for the most basic launch (e.g. showing help)
         // as there may be nothing on user system and we'll crash
         Self::setup_font_config()?;
 
-        let default_cfg = DefaultLaunchConfiguration::new(default_cfg_args)?;
+        let default_cfg = DefaultLaunchConfiguration::new(exe_path, default_cfg_args)?;
 
         match project_path {
-            Some(path) => {
-                let configuration = Self::create(&path, default_cfg)?;
+            Some(project_path) => {
+                let configuration = Self::create(exe_path, &project_path, default_cfg)?;
                 Ok(Box::new(configuration))
-            },
+            }
             None => Ok(Box::new(default_cfg))
         }
     }
@@ -240,7 +241,7 @@ impl RemoteDevLaunchConfiguration {
         return Ok(project_path);
     }
 
-    fn create(project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
+    fn create(exe_path: &Path, project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
         // prevent opening of 2 backends for the same directory via symlinks
         let canonical_project_path = canonical_non_unc(project_path)?;
 
@@ -252,7 +253,6 @@ impl RemoteDevLaunchConfiguration {
             .replace("/", "_")
             .replace("\\", "_")
             .replace(":", "_");
-
         debug!("Per-project config dir name: '{per_project_config_dir_name}'");
 
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
@@ -260,8 +260,13 @@ impl RemoteDevLaunchConfiguration {
         let logs_dir = default.prepare_host_logs_dir(&per_project_config_dir_name)?;
         let ij_starter_command = default.args[0].to_string();
 
+        let launcher_name = exe_path.file_name()
+            .ok_or(anyhow!("Invalid executable path: {exe_path:?}"))?
+            .to_string_lossy().to_string();
+
         let config = RemoteDevLaunchConfiguration {
             default,
+            launcher_name,
             config_dir,
             system_dir,
             logs_dir,
@@ -549,13 +554,12 @@ fn print_help() {
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
-fn init_env_vars() -> Result<()> {
-    let remote_dev_launcher_name_for_usage = get_remote_dev_launcher_name_for_usage()?;
+fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
     let remote_dev_env_var_values = vec![
         ("IDEA_RESTART_VIA_EXIT_CODE", "88"),
         ("ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER", "false"),
         ("ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE", "false"),
-        ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", &remote_dev_launcher_name_for_usage),
+        ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", launcher_name_for_usage)
     ];
 
     for (key, value) in remote_dev_env_var_values {
@@ -591,17 +595,6 @@ fn create_trust_file(trust_file_path: &PathBuf) -> Result<()> {
     debug!("File '{:?}' has been created", file);
 
     Ok(())
-}
-
-fn get_remote_dev_launcher_name_for_usage() -> Result<String>{
-    let current_exe = get_current_exe();
-    let remote_dev_launcher_name_for_usage_with_exit_code_check = current_exe.file_name()
-        .context("Failed to get current filename")?.to_os_string();
-
-    let result = remote_dev_launcher_name_for_usage_with_exit_code_check.into_string()
-        .expect("Failed to convert current executable name to string");
-
-    Ok(result)
 }
 
 fn escape_for_idea_properties(path: &Path) -> String {

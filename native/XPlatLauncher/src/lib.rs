@@ -32,12 +32,12 @@ variant_size_differences
 )]
 
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use log::{debug, error, LevelFilter, warn};
 use serde::{Deserialize, Serialize};
-use utils::{get_current_exe, jvm_property};
+use utils::jvm_property;
 
 #[cfg(target_os = "windows")]
 use {
@@ -56,8 +56,12 @@ mod remote_dev;
 mod default;
 mod docker;
 
-const CANNOT_START_TITLE: &'static str = "Cannot start the IDE";
-const SUPPORT_CONTACT: &'static str = "For support, please refer to https://jb.gg/ide/critical-startup-errors";
+pub const DEBUG_MODE_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
+
+const ERROR_TITLE: &'static str = "Cannot start the IDE";
+const ERROR_FOOTER: &'static str =
+    "Please try to reinstall the IDE.\n\
+    For support, please refer to https://jb.gg/ide/critical-startup-errors";
 
 #[cfg(target_os = "windows")]
 const CLASS_PATH_SEPARATOR: &'static str = ";";
@@ -65,35 +69,31 @@ const CLASS_PATH_SEPARATOR: &'static str = ";";
 const CLASS_PATH_SEPARATOR: &'static str = ":";
 
 pub fn main_lib() {
-    let remote_dev = is_remote_dev();
-    let show_error_ui = env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR).is_err() && !remote_dev;
-    let verbose = env::var(VERBOSE_LOGGING_ENV_VAR).is_ok() || remote_dev;
-    if let Err(e) = main_impl(remote_dev, verbose) {
-        let text = format!("{:?}\n\n{}", e, SUPPORT_CONTACT);
-        if show_error_ui {
-            ui::show_fail_to_start_message(CANNOT_START_TITLE, text.as_str())
-        } else if verbose {
-            error!("{:?}", e);
+    let debug_mode = env::var(DEBUG_MODE_ENV_VAR).is_ok();
+
+    if let Err(e) = main_impl(debug_mode) {
+        if debug_mode || is_remote_dev_safe() {
+            eprintln!("\n=== {ERROR_TITLE} ===\n{e:?}");
         } else {
-            eprintln!("{}\n{}", CANNOT_START_TITLE, text);
+            ui::show_fail_to_start_message(ERROR_TITLE, &format!("{:?}\n\n{}", e, ERROR_FOOTER))
         }
         std::process::exit(1);
     }
 }
 
-fn is_remote_dev() -> bool {
-    let exe_path = get_current_exe();
-    if let Some(exe_name_value) = exe_path.file_name() {
-        exe_name_value.to_string_lossy().starts_with("remote-dev-server")
-    } else if let Some(exe_name_value) = env::args_os().next() {
-        exe_name_value.to_string_lossy().starts_with("remote-dev-server")
-    } else {
-        false
-    }
+fn is_remote_dev_safe() -> bool {
+    env::current_exe().map_or(false, |p| is_remote_dev_executable(&p))
 }
 
-fn main_impl(remote_dev: bool, verbose: bool) -> Result<()> {
-    let level = if verbose { LevelFilter::Debug } else { LevelFilter::Error };
+fn is_remote_dev_executable(name: &Path) -> bool {
+    name.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server")
+}
+
+fn main_impl(debug_mode: bool) -> Result<()> {
+    let exe_path = env::current_exe().context("Cannot get the executable path")?;
+    let remote_dev = is_remote_dev_executable(&exe_path);
+
+    let level = if debug_mode || remote_dev { LevelFilter::Debug } else { LevelFilter::Error };
     mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
 
@@ -111,7 +111,7 @@ fn main_impl(remote_dev: bool, verbose: bool) -> Result<()> {
     }));
 
     debug!("** Preparing launch configuration");
-    let configuration = get_configuration(remote_dev).context("Cannot detect a launch configuration")?;
+    let configuration = get_configuration(remote_dev, &exe_path).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
     let java_home = configuration.prepare_for_launch().context("Cannot find a runtime")?;
@@ -158,20 +158,18 @@ pub trait LaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
-fn get_configuration(is_remote_dev: bool) -> Result<Box<dyn LaunchConfiguration>> {
+fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn LaunchConfiguration>> {
+    debug!("executable={exe_path:?}");
     let cmd_args: Vec<String> = env::args().collect();
     debug!("args={:?}", &cmd_args);
 
     if is_remote_dev {
-        RemoteDevLaunchConfiguration::new(cmd_args)
+        RemoteDevLaunchConfiguration::new(exe_path, cmd_args)
     } else {
-        let configuration = DefaultLaunchConfiguration::new(cmd_args[1..].to_vec())?;
+        let configuration = DefaultLaunchConfiguration::new(exe_path, cmd_args[1..].to_vec())?;
         Ok(Box::new(configuration))
     }
 }
-
-pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
-pub const VERBOSE_LOGGING_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
 
 fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<Vec<String>> {
     let mut vm_options = configuration.get_vm_options()?;

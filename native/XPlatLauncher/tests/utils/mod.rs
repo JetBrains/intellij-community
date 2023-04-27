@@ -538,11 +538,9 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
 
     let mut full_env = match run_spec.location {
         LauncherLocation::Standard => HashMap::from([
-            (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
-            (xplat_launcher::VERBOSE_LOGGING_ENV_VAR, "1")
+            (xplat_launcher::DEBUG_MODE_ENV_VAR, "1")
         ]),
         LauncherLocation::RemoteDev => HashMap::from([
-            (xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"),
             ("CWM_NO_PASSWORD", "1"),
             ("CWM_HOST_PASSWORD", "1"),
             ("REMOTE_DEV_NON_INTERACTIVE", "1"),

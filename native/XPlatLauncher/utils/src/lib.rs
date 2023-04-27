@@ -35,10 +35,6 @@ pub fn is_executable(_path: &Path) -> Result<bool> {
     Ok(true)
 }
 
-pub fn get_current_exe() -> PathBuf {
-    env::current_exe().expect("Failed to get current executable path")
-}
-
 pub fn get_path_from_env_var(env_var_name: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
     let env_var = env::var(env_var_name);
     debug!("${env_var_name} = {env_var:?}");
