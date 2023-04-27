@@ -68,7 +68,8 @@ abstract class AsyncChangesTree : ChangesTree {
     return size
   }
 
-  override fun shouldShowBusyIconIfNeeded(): Boolean = true
+  var shouldShowBusyIconIfNeeded: Boolean = true
+  override fun shouldShowBusyIconIfNeeded(): Boolean = shouldShowBusyIconIfNeeded
 
   override fun rebuildTree() {
     requestRefresh()

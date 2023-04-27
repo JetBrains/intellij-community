@@ -13,7 +13,6 @@ abstract class AsyncChangesBrowserBase(project: Project,
   : ChangesBrowserBase(project, showCheckboxes, highlightProblems) {
 
   protected abstract val changesTreeModel: AsyncChangesTreeModel
-  protected var updateBusySpinner: Boolean = true
 
   override fun createTreeList(project: Project,
                               showCheckboxes: Boolean,
@@ -47,11 +46,5 @@ abstract class AsyncChangesBrowserBase(project: Project,
 
     override val changesTreeModel: AsyncChangesTreeModel
       get() = browser.changesTreeModel
-
-    override fun setPaintBusy(paintBusy: Boolean) {
-      if (browser.updateBusySpinner) {
-        super.setPaintBusy(paintBusy)
-      }
-    }
   }
 }
