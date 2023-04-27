@@ -298,26 +298,26 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
-    Model result = MavenModelConverter.toNativeModel(model);
+    Model result = Maven3ModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);
 
     PathTranslator pathTranslator = new DefaultPathTranslator();
     pathTranslator.alignToBaseDirectory(result, basedir);
 
-    return MavenModelConverter.convertModel(result, null);
+    return Maven3ModelConverter.convertModel(result, null);
   }
 
   public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) throws RemoteException {
-    Model result = MavenModelConverter.toNativeModel(model);
-    new DefaultModelInheritanceAssembler().assembleModelInheritance(result, MavenModelConverter.toNativeModel(parentModel));
-    return MavenModelConverter.convertModel(result, null);
+    Model result = Maven3ModelConverter.toNativeModel(model);
+    new DefaultModelInheritanceAssembler().assembleModelInheritance(result, Maven3ModelConverter.toNativeModel(parentModel));
+    return Maven3ModelConverter.convertModel(result, null);
   }
 
   public static ProfileApplicationResult applyProfiles(MavenModel model,
                                                        File basedir,
                                                        MavenExplicitProfiles explicitProfiles,
                                                        Collection<String> alwaysOnProfiles) throws RemoteException {
-    Model nativeModel = MavenModelConverter.toNativeModel(model);
+    Model nativeModel = Maven3ModelConverter.toNativeModel(model);
 
     Collection<String> enabledProfiles = explicitProfiles.getEnabledProfiles();
     Collection<String> disabledProfiles = explicitProfiles.getDisabledProfiles();
@@ -379,7 +379,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       new DefaultProfileInjector().injectProfile(nativeModel, each, null, null);
     }
 
-    return new ProfileApplicationResult(MavenModelConverter.convertModel(nativeModel, null),
+    return new ProfileApplicationResult(Maven3ModelConverter.convertModel(nativeModel, null),
                                         new MavenExplicitProfiles(collectProfilesIds(activatedProfiles),
                                                                   collectProfilesIds(deactivatedProfiles))
     );
@@ -710,7 +710,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     MavenWorkspaceMap map = myWorkspaceMap;
     if (map == null) return false;
 
-    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(MavenModelConverter.createMavenId(a));
+    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(Maven3ModelConverter.createMavenId(a));
     if (resolved == null) return false;
 
     a.setResolved(true);
@@ -889,7 +889,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
         //noinspection unchecked
         final List<DependencyNode> dependencyNodes = rootNode == null ? Collections.emptyList() : rootNode.getChildren();
-        model = MavenModelConverter.convertModel(
+        model = Maven3ModelConverter.convertModel(
           mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
           mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), getLocalRepositoryFile());
       }
@@ -920,7 +920,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     Collection<String> activatedProfiles = collectActivatedProfiles(mavenProject);
 
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, MavenModelConverter.convertToMap(mavenProject.getModel()), holder,
+      new MavenServerExecutionResult.ProjectData(model, Maven3ModelConverter.convertToMap(mavenProject.getModel()), holder,
                                                  activatedProfiles);
     return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
   }
@@ -938,8 +938,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     folders.setSources(mavenProject.getCompileSourceRoots());
     folders.setTestSources(mavenProject.getTestCompileSourceRoots());
-    folders.setResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
-    folders.setTestResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
+    folders.setResources(Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
+    folders.setTestResources(Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
 
     return new MavenGoalExecutionResult(true, file, folders, problems);
   }
@@ -1001,7 +1001,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         .resolveTransitively(toResolve, project, Collections.EMPTY_MAP, myLocalRepository, convertRepositories(remoteRepositories),
                              getComponent(ArtifactMetadataSource.class)).getArtifacts();
 
-      return MavenModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
+      return Maven3ModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
     catch (Exception e) {
       MavenServerGlobals.getLogger().info(e);
@@ -1066,7 +1066,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       for (org.sonatype.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
         if (!Objects.equals(artifact.getArtifactId(), pluginId.getArtifactId()) ||
             !Objects.equals(artifact.getGroupId(), pluginId.getGroupId())) {
-          artifacts.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
+          artifacts.add(Maven3ModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
         }
       }
 
@@ -1102,7 +1102,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
     Artifact resolved = doResolve(createArtifact(info), convertRepositories(remoteRepositories));
-    return MavenModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
+    return Maven3ModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
   }
 
   private Artifact doResolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {

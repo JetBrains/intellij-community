@@ -304,7 +304,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
         if (a == null) continue;
 
         a.repository = getRepositoryPathOrUrl(index);
-        result.add(MavenModelConverter.convertArtifactInfo(a));
+        result.add(Maven3ModelConverter.convertArtifactInfo(a));
       }
       return result;
     }
@@ -332,7 +332,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
       ArchetypeCatalog archetypeCatalog = source.getArchetypeCatalog(new Properties());
 
       for (Archetype each : archetypeCatalog.getArchetypes()) {
-        result.add(MavenModelConverter.convertArchetype(each));
+        result.add(Maven3ModelConverter.convertArchetype(each));
       }
     }
     catch (ArchetypeDataSourceException e) {

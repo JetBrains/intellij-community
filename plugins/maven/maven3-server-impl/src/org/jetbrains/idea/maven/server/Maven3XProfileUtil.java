@@ -41,7 +41,7 @@ public final class Maven3XProfileUtil {
                                                        File basedir,
                                                        MavenExplicitProfiles explicitProfiles,
                                                        Collection<String> alwaysOnProfiles) {
-    Model nativeModel = MavenModelConverter.toNativeModel(model);
+    Model nativeModel = Maven3ModelConverter.toNativeModel(model);
 
     Collection<String> enabledProfiles = explicitProfiles.getEnabledProfiles();
     Collection<String> disabledProfiles = explicitProfiles.getDisabledProfiles();
@@ -103,7 +103,7 @@ public final class Maven3XProfileUtil {
       new DefaultProfileInjector().injectProfile(nativeModel, each, null, null);
     }
 
-    return new ProfileApplicationResult(MavenModelConverter.convertModel(nativeModel, null),
+    return new ProfileApplicationResult(Maven3ModelConverter.convertModel(nativeModel, null),
                                         new MavenExplicitProfiles(collectProfilesIds(activatedProfiles),
                                                                   collectProfilesIds(deactivatedProfiles))
     );
@@ -111,11 +111,11 @@ public final class Maven3XProfileUtil {
 
   @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
-    Model result = MavenModelConverter.toNativeModel(model);
+    Model result = Maven3ModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);
     org.apache.maven.project.path.PathTranslator pathTranslator = new DefaultPathTranslator();
     pathTranslator.alignToBaseDirectory(result, basedir);
-    return MavenModelConverter.convertModel(result, null);
+    return Maven3ModelConverter.convertModel(result, null);
   }
 
   static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {

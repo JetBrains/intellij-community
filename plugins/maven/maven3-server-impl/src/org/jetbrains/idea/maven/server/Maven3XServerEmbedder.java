@@ -350,9 +350,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) throws RemoteException {
-    Model result = MavenModelConverter.toNativeModel(model);
-    new DefaultModelInheritanceAssembler().assembleModelInheritance(result, MavenModelConverter.toNativeModel(parentModel));
-    return MavenModelConverter.convertModel(result, null);
+    Model result = Maven3ModelConverter.toNativeModel(model);
+    new DefaultModelInheritanceAssembler().assembleModelInheritance(result, Maven3ModelConverter.toNativeModel(parentModel));
+    return Maven3ModelConverter.convertModel(result, null);
   }
 
   @Override
@@ -802,7 +802,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenWorkspaceMap map = myWorkspaceMap;
     if (map == null) return false;
 
-    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(MavenModelConverter.createMavenId(a));
+    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(Maven3ModelConverter.createMavenId(a));
     if (resolved == null) return false;
 
     a.setResolved(true);
@@ -1055,7 +1055,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
         //noinspection unchecked
         final List<DependencyNode> dependencyNodes = rootNode == null ? Collections.emptyList() : rootNode.getChildren();
-        model = MavenModelConverter.convertModel(
+        model = Maven3ModelConverter.convertModel(
           mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
           mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), getLocalRepositoryFile());
       }
@@ -1086,7 +1086,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     Collection<String> activatedProfiles = Maven3XProfileUtil.collectActivatedProfiles(mavenProject);
 
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, MavenModelConverter.convertToMap(mavenProject.getModel()), holder,
+      new MavenServerExecutionResult.ProjectData(model, Maven3ModelConverter.convertToMap(mavenProject.getModel()), holder,
                                                  activatedProfiles);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
@@ -1104,8 +1104,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     folders.setSources(mavenProject.getCompileSourceRoots());
     folders.setTestSources(mavenProject.getTestCompileSourceRoots());
-    folders.setResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
-    folders.setTestResources(MavenModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
+    folders.setResources(Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
+    folders.setTestResources(Maven3ModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
 
     return new MavenGoalExecutionResult(true, file, folders, problems);
   }
@@ -1155,7 +1155,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       else if (problemTransferArtifact != null) {
         myConsoleWrapper.error("[server] Maven transfer artifact problem: " + problemTransferArtifact);
         String message = getRootMessage(each);
-        MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
+        MavenArtifact mavenArtifact = Maven3ModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
         collector.add(MavenProjectProblem.createRepositoryProblem(path, message, true, mavenArtifact));
       }
       else {
@@ -1202,7 +1202,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       for (Exception exception : result.getResolutionErrors(unresolvedDependency)) {
         String message = getRootMessage(exception);
         Artifact artifact = RepositoryUtils.toArtifact(unresolvedDependency.getArtifact());
-        MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(artifact, getLocalRepositoryFile());
+        MavenArtifact mavenArtifact = Maven3ModelConverter.convertArtifact(artifact, getLocalRepositoryFile());
         problems.add(MavenProjectProblem.createUnresolvedArtifactProblem(path, message, true, mavenArtifact));
         break;
       }
@@ -1257,7 +1257,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         String message = getRootMessage(e);
         MavenProjectProblem problem;
         if (transferArtifact != null) {
-          MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(transferArtifact, getLocalRepositoryFile());
+          MavenArtifact mavenArtifact = Maven3ModelConverter.convertArtifact(transferArtifact, getLocalRepositoryFile());
           problem = MavenProjectProblem.createRepositoryProblem("", message, true, mavenArtifact);
         }
         else {
@@ -1287,7 +1287,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         .resolveTransitively(toResolve, project, Collections.emptyMap(), myLocalRepository, convertRepositories(remoteRepositories),
                              getComponent(ArtifactMetadataSource.class)).getArtifacts();
 
-      return MavenModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
+      return Maven3ModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
     catch (Exception e) {
       MavenServerGlobals.getLogger().info(e);
@@ -1310,7 +1310,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       .resolveTransitively(toResolve, project, Collections.emptyMap(), myLocalRepository, convertRepositories(remoteRepositories),
                            getComponent(ArtifactMetadataSource.class)).getArtifacts();
 
-    return MavenModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
+    return Maven3ModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
   }
 
   @NotNull
@@ -1410,7 +1410,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       for (org.eclipse.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
         if (!Objects.equals(artifact.getArtifactId(), plugin.getArtifactId()) ||
             !Objects.equals(artifact.getGroupId(), plugin.getGroupId())) {
-          artifacts.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
+          artifacts.add(Maven3ModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
         }
       }
 
@@ -1456,7 +1456,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       if (reader != null) {
         try {
           Model model = reader.read(file, inputOptions);
-          return MavenModelConverter.convertModel(model, null);
+          return Maven3ModelConverter.convertModel(model, null);
         }
         catch (Exception e) {
           MavenServerGlobals.getLogger().warn(e);
@@ -1498,7 +1498,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
     Artifact resolved = doResolve(createArtifact(info), convertRepositories(remoteRepositories));
-    return MavenModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
+    return Maven3ModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
   }
 
   private Artifact doResolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {

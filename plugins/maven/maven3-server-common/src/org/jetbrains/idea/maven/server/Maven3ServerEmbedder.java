@@ -54,7 +54,7 @@ import java.util.logging.Logger;
 
 import static org.apache.maven.archetype.source.CatalogArchetypeDataSource.ARCHETYPE_CATALOG_PROPERTY;
 import static org.apache.maven.archetype.source.RemoteCatalogArchetypeDataSource.REPOSITORY_PROPERTY;
-import static org.jetbrains.idea.maven.server.MavenModelConverter.convertRemoteRepositories;
+import static org.jetbrains.idea.maven.server.Maven3ModelConverter.convertRemoteRepositories;
 
 /**
  * @author Vladislav.Soroka
@@ -271,7 +271,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     for (MavenRemoteRepository each : repositories) {
       try {
         ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
-        result.add(ProjectUtils.buildArtifactRepository(MavenModelConverter.toNativeRepository(each), factory, container));
+        result.add(ProjectUtils.buildArtifactRepository(Maven3ModelConverter.toNativeRepository(each), factory, container));
       }
       catch (InvalidRepositoryException e) {
         MavenServerGlobals.getLogger().warn(e);
@@ -471,7 +471,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   private static ArrayList<MavenArchetype> getArchetypes(ArchetypeCatalog archetypeCatalog) {
     ArrayList<MavenArchetype> result = new ArrayList<>(archetypeCatalog.getArchetypes().size());
     for (Archetype each : archetypeCatalog.getArchetypes()) {
-      result.add(MavenModelConverter.convertArchetype(each));
+      result.add(Maven3ModelConverter.convertArchetype(each));
     }
     return result;
   }
