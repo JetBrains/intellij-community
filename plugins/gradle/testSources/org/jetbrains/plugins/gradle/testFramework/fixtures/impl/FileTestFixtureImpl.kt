@@ -3,11 +3,12 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
-import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.*
@@ -22,6 +23,7 @@ import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.XmlSerializer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
@@ -65,9 +67,9 @@ internal class FileTestFixtureImpl(
     val oldState = readFixtureState()
     dumpFixtureState()
 
-    repairFixtureCaches(oldState)
+    runBlocking(Dispatchers.Default) {
+      repairFixtureCaches(oldState)
 
-    runBlocking {
       configureFixtureCaches(configuration)
     }
 
@@ -101,7 +103,7 @@ internal class FileTestFixtureImpl(
     }
   }
 
-  private fun repairFixtureCaches(state: State) {
+  private suspend fun repairFixtureCaches(state: State) {
     val isInitialized = state.isInitialized ?: false
     val errors = state.errors ?: emptyList()
     val snapshots = state.snapshots ?: emptyMap()
@@ -114,8 +116,8 @@ internal class FileTestFixtureImpl(
     }
   }
 
-  private fun invalidateFixtureCaches() {
-    runWriteActionAndWait {
+  private suspend fun invalidateFixtureCaches() {
+    writeAction {
       root.deleteChildrenRecursively { it != fixtureStateFile }
     }
   }
@@ -136,10 +138,8 @@ internal class FileTestFixtureImpl(
   }
 
   private fun writeFixtureState(state: State) {
-    runWriteActionAndWait {
-      val element = XmlSerializer.serialize(state)
-      JDOMUtil.write(element, fixtureStateFile.toNioPath())
-    }
+    val element = XmlSerializer.serialize(state)
+    JDOMUtil.write(element, fixtureStateFile.toNioPath())
   }
 
   private fun createFixtureConfiguration(): Configuration {

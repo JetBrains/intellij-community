@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
-import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
@@ -12,6 +12,7 @@ import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
+import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESListenerLeakTracker
@@ -55,9 +56,11 @@ abstract class GradleBaseTestCase {
 
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     fileFixture.setUp()
-    runWriteActionAndWait {
-      testRoot = fileFixture.findOrCreateDir(testInfo.testClass.get().simpleName)
-        .createDirectory(testInfo.testMethod.get().name)
+    runBlocking {
+      writeAction {
+        testRoot = fileFixture.findOrCreateDir(testInfo.testClass.get().simpleName)
+          .createDirectory(testInfo.testMethod.get().name)
+      }
     }
 
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
