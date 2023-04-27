@@ -51,9 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -66,7 +64,7 @@ import static org.jetbrains.idea.maven.server.MavenModelConverter.convertRemoteR
 /**
  * @author Vladislav.Soroka
  */
-public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements MavenServerEmbedder {
+public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
 
   public interface RunnableThrownRemote {
     void run() throws RemoteException;
@@ -76,7 +74,6 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
   private static final Pattern PROPERTY_PATTERN = Pattern.compile("\"-D([\\S&&[^=]]+)(?:=([^\"]+))?\"|-D([\\S&&[^=]]+)(?:=(\\S+))?");
   protected final MavenServerSettings myServerSettings;
-  protected final Map<String, LongRunningTask> myLongRunningTasks = new ConcurrentHashMap<>();
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
     myServerSettings = settings;
@@ -130,7 +127,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
 
 
-    List<ProjectBuildingResult> buildingResults = new ArrayList<ProjectBuildingResult>();
+    List<ProjectBuildingResult> buildingResults = new ArrayList<>();
 
     final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
@@ -142,7 +139,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       }
       else {
         try {
-          buildingResults = builder.build(new ArrayList<File>(files), false, projectBuildingRequest);
+          buildingResults = builder.build(new ArrayList<>(files), false, projectBuildingRequest);
         }
         catch (ProjectBuildingException e) {
           for (ProjectBuildingResult result : e.getResults()) {
@@ -281,7 +278,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
     File baseDir = MavenServerUtil.findMavenBasedir(workingDir);
 
-    Map<String, String> result = new HashMap<String, String>();
+    Map<String, String> result = new HashMap<>();
     readConfigFiles(baseDir, result);
     return result.isEmpty() ? Collections.emptyMap() : result;
   }
@@ -318,7 +315,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   @NotNull
   protected List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
     PlexusContainer container = getContainer();
-    List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
+    List<ArtifactRepository> result = new ArrayList<>();
     for (MavenRemoteRepository each : repositories) {
       try {
         ArtifactRepositoryFactory factory = getComponent(ArtifactRepositoryFactory.class);
@@ -448,8 +445,8 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      return new HashSet<MavenRemoteRepository>(
-        convertRemoteRepositories(convertRepositories(new ArrayList<MavenRemoteRepository>(repositories))));
+      return new HashSet<>(
+        convertRemoteRepositories(convertRepositories(new ArrayList<>(repositories))));
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -502,7 +499,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
         request.addRemoteRepository(repository);
       }
 
-      final Map<String, String> result = new HashMap<String, String>();
+      final Map<String, String> result = new HashMap<>();
       final AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
       executeWithMavenSession(request, (Runnable)() -> {
         MavenArtifactRepository artifactRepository = null;
@@ -540,7 +537,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   @NotNull
   private static ArrayList<MavenArchetype> getArchetypes(ArchetypeCatalog archetypeCatalog) {
-    ArrayList<MavenArchetype> result = new ArrayList<MavenArchetype>(archetypeCatalog.getArchetypes().size());
+    ArrayList<MavenArchetype> result = new ArrayList<>(archetypeCatalog.getArchetypes().size());
     for (Archetype each : archetypeCatalog.getArchetypes()) {
       result.add(MavenModelConverter.convertArchetype(each));
     }
@@ -552,7 +549,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
    * adapted from {@link DefaultMaven#getLifecycleParticipants(Collection)}
    */
   private Collection<AbstractMavenLifecycleParticipant> getLifecycleParticipants(Collection<MavenProject> projects) {
-    Collection<AbstractMavenLifecycleParticipant> lifecycleListeners = new LinkedHashSet<AbstractMavenLifecycleParticipant>();
+    Collection<AbstractMavenLifecycleParticipant> lifecycleListeners = new LinkedHashSet<>();
 
     ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     try {
@@ -564,7 +561,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
         warn("Failed to lookup lifecycle participants", e);
       }
 
-      Collection<ClassLoader> scannedRealms = new HashSet<ClassLoader>();
+      Collection<ClassLoader> scannedRealms = new HashSet<>();
 
       for (MavenProject project : projects) {
         ClassLoader projectRealm = project.getClassRealm();
@@ -588,72 +585,4 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
     return lifecycleListeners;
   }
-
-  @NotNull
-  @Override
-  public LongRunningTaskStatus getLongRunningTaskStatus(@NotNull String longRunningTaskId, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-
-    LongRunningTask task = myLongRunningTasks.get(longRunningTaskId);
-
-    if (null == task) return new LongRunningTaskStatus(0, 0);
-
-    return new LongRunningTaskStatus(task.getTotalRequests(), task.getFinishedRequests());
-  }
-
-  @Override
-  public boolean cancelLongRunningTask(@NotNull String longRunningTaskId, MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    LongRunningTask task = myLongRunningTasks.get(longRunningTaskId);
-
-    if (null == task) return false;
-
-    task.cancel();
-    return true;
-  }
-
-  protected class LongRunningTask implements AutoCloseable {
-    @NotNull private final String myId;
-    private final AtomicInteger myFinishedRequests = new AtomicInteger(0);
-    private final AtomicInteger myTotalRequests;
-    private final AtomicBoolean isCanceled = new AtomicBoolean(false);
-
-    protected LongRunningTask(@NotNull String id, int totalRequests) {
-      myId = id;
-      myTotalRequests = new AtomicInteger(totalRequests);
-
-      myLongRunningTasks.put(myId, this);
-    }
-
-    public void incrementFinishedRequests() {
-      myFinishedRequests.incrementAndGet();
-    }
-
-    private int getFinishedRequests() {
-      return myFinishedRequests.get();
-    }
-
-    private int getTotalRequests() {
-      return myTotalRequests.get();
-    }
-
-    public void updateTotalRequests(int newValue) {
-      myTotalRequests.set(newValue);
-    }
-
-    private void cancel() {
-      isCanceled.set(true);
-    }
-
-    public boolean isCanceled() {
-      return isCanceled.get();
-    }
-
-    @Override
-    public void close() {
-      myLongRunningTasks.remove(myId);
-    }
-  }
-
 }
