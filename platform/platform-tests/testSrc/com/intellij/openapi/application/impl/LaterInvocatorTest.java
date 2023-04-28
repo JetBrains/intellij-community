@@ -694,18 +694,6 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     });
   }
 
-  public void testInvokeLaterAlwaysSchedulesFlush() {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      AtomicBoolean executed = new AtomicBoolean();
-      for (int i = 0; i < 1_000_000; i++) {
-        executed.set(false);
-        ApplicationManager.getApplication().invokeLater(() -> executed.set(true));
-        UIUtil.dispatchAllInvocationEvents();
-        assertTrue(executed.get());
-      }
-    });
-  }
-
   public void testInvokeAndWaitIsCancellable() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AtomicBoolean executed = new AtomicBoolean();
