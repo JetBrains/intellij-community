@@ -56,11 +56,17 @@ class TransferSettingsView(private val config: TransferSettingsConfiguration, pr
       if (previousSelected == selectedValue) return@addListSelectionListener
       previousSelected = selectedValue
       val view = cachedViews.getOrPut(selectedValue) {
-        TransferSettingsRightPanelChooser(selectedValue, config).select()
+        val chooser = (selectedValue as? IdeVersion)?.let { it.provider.getRightPanel(it, config) }
+                      ?: TransferSettingsRightPanelChooser(selectedValue, config)
+        chooser.select().apply {
+          onStateChange {
+            (selectedValue as? IdeVersion)?.let { it1 -> config.controller.updateCheckboxes(it1) }
+          }
+        }
       }
       contentPanel.apply {
         removeAll()
-        add(view.getComponent(), "grow, push, span")
+        add(view.getComponent(), "grow, push, span, wmax 100%")
         revalidate()
         repaint()
       }

@@ -8,6 +8,7 @@ import com.intellij.ide.customize.transferSettings.models.SimpleActionDescriptor
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import javax.swing.KeyStroke
 
+// TODO get demo shortcuts from keymap manager
 object KnownKeymaps {
   private val VSCodeDemo = listOf(
     SimpleActionDescriptor("SearchEverywhere", IdeBundle.message("transfersettings.label.search.everywhere"), KeyboardShortcut.fromString("shift ctrl A")),
@@ -44,5 +45,5 @@ object KnownKeymaps {
   val VSMac: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.visual.studio.for.mac"), "com.intellij.plugins.visualstudioformackeymap",
                                          "Visual Studio for Mac", BundledKeymap.fromManager("\$default"), VSMacDemo)
   val VisualStudio2022: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.visual.studio"), "com.intellij.plugins.visualstudio2022keymap",
-                                                    "Visual Studio 2022", BundledKeymap.fromManager("\$default"), VSMacDemo)
+                                                    "Visual Studio 2022", BundledKeymap.fromManager("\$default"), VisualStudio2022Demo)
 }

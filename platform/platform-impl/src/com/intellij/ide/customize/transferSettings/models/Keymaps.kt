@@ -52,7 +52,8 @@ class PatchedKeymap(var parent: com.intellij.ide.customize.transferSettings.mode
 
 data class KeyBinding(
   @NlsSafe val actionId: String,
-  val shortcuts: List<KeyboardShortcut>
+  val shortcuts: List<KeyboardShortcut>,
+  @NlsSafe val originalId: String? = null
 ) {
   override fun toString(): String {
     return "$actionId: ${shortcuts}\n"

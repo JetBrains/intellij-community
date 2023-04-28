@@ -40,7 +40,7 @@ data class SettingsPreferences(
     }
   }
 
-  fun toList(settings: Settings): List<Pair<SettingsPreferencesKind, Boolean>> {
+  fun toAssociatedList(settings: Settings): List<Pair<SettingsPreferencesKind, Boolean>> {
     return listOf(
       SettingsPreferencesKind.Laf to laf,
       SettingsPreferencesKind.SyntaxScheme to syntaxScheme,
@@ -50,5 +50,13 @@ data class SettingsPreferences(
     )
   }
 
-  fun toListOfTrue(settings: Settings): List<SettingsPreferencesKind> = toList(settings).filter { it.second }.map { it.first }
+  fun toAssociatedListUi(settings: Settings): List<Pair<SettingsPreferencesKind, Boolean>> {
+    return listOf(
+      SettingsPreferencesKind.Keymap to keymap,
+      SettingsPreferencesKind.RecentProjects to (recentProjects && settings.recentProjects.isNotEmpty()),
+      SettingsPreferencesKind.Plugins to (plugins && settings.plugins.any { !it.isHidden })
+    )
+  }
+
+  fun toListOfTrue(settings: Settings): List<SettingsPreferencesKind> = toAssociatedList(settings).filter { it.second }.map { it.first }
 }
