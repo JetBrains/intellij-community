@@ -621,32 +621,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter,
                                     boolean canImpactGutterSize, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
+    EdtInvocationManager.invokeLaterIfNeeded(() -> {
+      if (isDisposed() || myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
 
-    if (canImpactGutterSize) {
-      updateGutterSize();
-    }
+      if (canImpactGutterSize) {
+        updateGutterSize();
+      }
 
-    if (myDocumentChangeInProgress) return;
+      if (myDocumentChangeInProgress) return;
 
-    int textLength = myDocument.getTextLength();
-    int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
-    int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), 0, textLength);
+      int textLength = myDocument.getTextLength();
+      int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
+      int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), start, textLength);
 
-    if (myGutterComponent.getCurrentAccessibleLine() != null &&
-        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer())) {
-      escapeGutterAccessibleLine(start, end);
-    }
-    int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
-    int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
-    if (start != end && (fontStyleChanged || foregroundColorChanged)) {
-      myView.invalidateRange(start, end, fontStyleChanged);
-    }
-    if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
-      repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-    }
+      if (myGutterComponent.getCurrentAccessibleLine() != null &&
+          AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer())) {
+        escapeGutterAccessibleLine(start, end);
+      }
+      int startLine = myDocument.getLineNumber(start);
+      int endLine = myDocument.getLineNumber(end);
+      if (start != end && (fontStyleChanged || foregroundColorChanged)) {
+        myView.invalidateRange(start, end, fontStyleChanged);
+      }
+      if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of batch folding operation everything is repainted
+        repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+      }
 
-    updateCaretCursor();
+      updateCaretCursor();
+    });
   }
 
   private void onInlayUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
@@ -3568,7 +3570,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean isHighlighterAvailable(@NotNull RangeHighlighter highlighter) {
-    return myHighlightingFilter == null || myHighlightingFilter.test(highlighter);
+    Predicate<? super RangeHighlighter> filter = myHighlightingFilter;
+    return filter == null || filter.test(highlighter);
   }
 
   private boolean hasBlockInlay(@NotNull Point point) {

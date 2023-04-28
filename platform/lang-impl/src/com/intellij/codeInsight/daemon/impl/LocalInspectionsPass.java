@@ -98,29 +98,29 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
-    if (toolWrappers.isEmpty()) {
-      return;
+    if (!toolWrappers.isEmpty()) {
+      Consumer<InspectionRunner.InspectionContext> afterInsideProcessedCallback = context -> {
+        InspectionRunner.InspectionProblemHolder holder = context.holder;
+        holder.applyIncrementally = false; // do not apply incrementally outside visible range
+        advanceProgress(1);
+      };
+      Consumer<InspectionRunner.InspectionContext> afterOutsideProcessedCallback = __ -> advanceProgress(1);
+      BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> applyIncrementallyCallback = (descriptor, wrapper) -> {
+        addDescriptorIncrementally(descriptor, wrapper);
+        return true;
+      };
+      InspectionRunner runner =
+        new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true, progress, myIgnoreSuppressed,
+                             myProfileWrapper, mySuppressedElements);
+      List<? extends InspectionRunner.InspectionContext> contexts = runner.inspect(toolWrappers, true,
+                                                                                   applyIncrementallyCallback,
+                                                                                   afterInsideProcessedCallback,
+                                                                                   afterOutsideProcessedCallback,
+                                                                                   wrapper -> !wrapper.getTool().isSuppressedFor(myFile));
+      ProgressManager.checkCanceled();
+      myInfos = createHighlightsFromContexts(contexts);
     }
-    Consumer<InspectionRunner.InspectionContext> afterInsideProcessedCallback = context -> {
-      InspectionRunner.InspectionProblemHolder holder = context.holder;
-      holder.applyIncrementally = false; // do not apply incrementally outside visible range
-      advanceProgress(1);
-    };
-    Consumer<InspectionRunner.InspectionContext> afterOutsideProcessedCallback = __ -> advanceProgress(1);
-    BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> applyIncrementallyCallback = (descriptor, wrapper) -> {
-      addDescriptorIncrementally(descriptor, wrapper);
-      return true;
-    };
-    InspectionRunner runner =
-      new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true, progress, myIgnoreSuppressed,
-                           myProfileWrapper, mySuppressedElements);
-    List<? extends InspectionRunner.InspectionContext> contexts = runner.inspect(toolWrappers, true,
-                                                                                 applyIncrementallyCallback,
-                                                                                 afterInsideProcessedCallback,
-                                                                                 afterOutsideProcessedCallback,
-                                                                                 wrapper -> !wrapper.getTool().isSuppressedFor(myFile));
-    ProgressManager.checkCanceled();
-    myInfos = createHighlightsFromContexts(contexts);
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myInfos, getColorsScheme(), getId());
   }
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes(){
@@ -207,13 +207,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<HighlightInfo> newInfos = new ArrayList<>(2);
     createHighlightsForDescriptor(newInfos, emptyActionRegistered, file, tool, severity, descriptor, psiElement);
     for (HighlightInfo info : newInfos) {
-      myHighlightingSession.queueHighlightInfo(info, myRestrictRange, getId());
+      myHighlightingSession.addInfoIncrementally(info, myRestrictRange, getId());
     }
   }
 
   @Override
   protected void applyInformationWithProgress() {
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myInfos, getColorsScheme(), getId());
   }
 
   private @NotNull List<HighlightInfo> createHighlightsFromContexts(@NotNull List<? extends InspectionRunner.InspectionContext> contexts) {

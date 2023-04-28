@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -20,8 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.TransferToEDTQueue;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +42,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   @NotNull
   private final CanISilentlyChange.Result myCanChangeFileSilently;
   private volatile boolean myIsEssentialHighlightingOnly;
-  private final Long2ObjectMap<RangeMarker> myRange2markerCache = new Long2ObjectOpenHashMap<>();
-  private final TransferToEDTQueue<Runnable> myEDTQueue;
+  private final Long2ObjectMap<RangeMarker> myRange2markerCache = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
   private volatile boolean myInContent;
   private volatile ThreeState extensionsAllowToChangeFileSilently;
 
@@ -60,22 +58,9 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     myDocument = ReadAction.compute(() -> psiFile.getOriginalFile().getViewProvider().getDocument());
     myVisibleRange = visibleRange;
     myCanChangeFileSilently = canChangeFileSilently;
-    myEDTQueue = new TransferToEDTQueue<>("Apply highlighting results", runnable -> {
-      runnable.run();
-      return true;
-    }, __ -> myProject.isDisposed() || getProgressIndicator().isCanceled(), 50) {
-      @Override
-      protected void schedule(@NotNull Runnable updateRunnable) {
-        ApplicationManager.getApplication().invokeLater(updateRunnable);
-      }
-    };
   }
 
   private static final Key<ConcurrentMap<PsiFile, HighlightingSession>> HIGHLIGHTING_SESSION = Key.create("HIGHLIGHTING_SESSION");
-
-  void applyInEDT(@NotNull Runnable runnable) {
-    myEDTQueue.offer(runnable);
-  }
 
   boolean canChangeFileSilently() {
     return myCanChangeFileSilently.canIReally(myInContent, extensionsAllowToChangeFileSilently);
@@ -189,27 +174,13 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return myEditorColorsScheme;
   }
 
-  void queueHighlightInfo(@NotNull HighlightInfo info,
-                          @NotNull TextRange restrictedRange,
-                          int groupId) {
-    applyInEDT(() ->
-      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(getPsiFile(), getDocument(), restrictedRange,
-                                                                 info, getColorsScheme(), groupId, myRange2markerCache));
-  }
-
-  void queueDisposeHighlighter(@NotNull HighlightInfo info) {
-    RangeHighlighterEx highlighter = info.getHighlighter();
-    if (highlighter == null) return;
-    // that highlighter may have been reused for another info
-    applyInEDT(() -> {
-      Object actualInfo = highlighter.getErrorStripeTooltip();
-      if (actualInfo == info && info.getHighlighter() == highlighter) highlighter.dispose();
-    });
+  void addInfoIncrementally(@NotNull HighlightInfo info, @NotNull TextRange restrictedRange, int groupId) {
+    BackgroundUpdateHighlightersUtil.addHighlighterToEditorIncrementally(getPsiFile(), getDocument(), restrictedRange,
+                                                                         info, getColorsScheme(), groupId, myRange2markerCache);
   }
 
   void waitForHighlightInfosApplied() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myEDTQueue.drain();
   }
 
   static void clearProgressIndicator(@NotNull DaemonProgressIndicator indicator) {

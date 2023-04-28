@@ -40,7 +40,15 @@ internal class HighlightingWatcher(
   }
 
   override fun afterAdded(highlighter: RangeHighlighterEx) {
-    getProblem(highlighter)?.let { listener.problemAppeared(it) }
+    val problem = getProblem(highlighter)
+    if (problem != null) {
+      EdtInvocationManager.invokeLaterIfNeeded {
+        if (!disposed) {
+          listener.problemAppeared(problem)
+        }
+      }
+    }
+    problem?.let {  }
   }
 
   override fun beforeRemoved(highlighter: RangeHighlighterEx) {
@@ -48,14 +56,21 @@ internal class HighlightingWatcher(
     if (problem != null) {
       EdtInvocationManager.invokeLaterIfNeeded {
         if (!disposed) {
-          problem.let { listener.problemDisappeared(it) }
+          listener.problemDisappeared(problem)
         }
       }
     }
   }
 
   override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
-    findProblem(highlighter)?.let { listener.problemUpdated(it) }
+    val problem = getProblem(highlighter)
+    if (problem != null) {
+      EdtInvocationManager.invokeLaterIfNeeded {
+        if (!disposed) {
+          listener.problemUpdated(problem)
+        }
+      }
+    }
   }
 
   fun update() {

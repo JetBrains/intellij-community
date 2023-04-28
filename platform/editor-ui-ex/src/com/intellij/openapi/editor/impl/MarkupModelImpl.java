@@ -17,7 +17,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -123,17 +122,17 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   // NB: Can return invalid highlighters
   @Override
   public RangeHighlighter @NotNull [] getAllHighlighters() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myCachedHighlighters == null) {
+    RangeHighlighter[] cachedHighlighters = myCachedHighlighters;
+    if (cachedHighlighters == null) {
       int size = myHighlighterTree.size() + myHighlighterTreeForLines.size();
       if (size == 0) return RangeHighlighter.EMPTY_ARRAY;
       List<RangeHighlighterEx> list = new ArrayList<>(size);
       CommonProcessors.CollectProcessor<RangeHighlighterEx> collectProcessor = new CommonProcessors.CollectProcessor<>(list);
       myHighlighterTree.processAll(collectProcessor);
       myHighlighterTreeForLines.processAll(collectProcessor);
-      myCachedHighlighters = list.toArray(RangeHighlighter.EMPTY_ARRAY);
+      myCachedHighlighters = cachedHighlighters = list.toArray(RangeHighlighter.EMPTY_ARRAY);
     }
-    return myCachedHighlighters;
+    return cachedHighlighters;
   }
 
   @NotNull
@@ -154,7 +153,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @NotNull
   private RangeHighlighterEx addRangeHighlighter(@NotNull RangeHighlighterImpl highlighter,
                                                  @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myCachedHighlighters = null;
     if (changeAttributesAction != null) {
       highlighter.changeAttributesNoEvents(changeAttributesAction);
@@ -166,7 +164,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
                                       @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     byte changeStatus = ((RangeHighlighterImpl)highlighter).changeAttributesNoEvents(changeAttributesAction);
     if (BitUtil.isSet(changeStatus, RangeHighlighterImpl.CHANGED_MASK)) {
       fireAttributesChanged(highlighter, 
@@ -182,10 +179,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                   boolean greedyToLeft,
                                   boolean greedyToRight,
                                   int layer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     treeFor(marker).addInterval(marker, start, end, greedyToLeft, greedyToRight, false, layer);
   }
 
+  @NotNull
   RangeHighlighterTree treeFor(RangeHighlighter marker) {
     return marker.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myHighlighterTree : myHighlighterTreeForLines;
   }
@@ -213,17 +210,14 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public void removeHighlighter(@NotNull RangeHighlighter segmentHighlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myCachedHighlighters = null;
     if (!segmentHighlighter.isValid()) return;
 
-    boolean removed = treeFor(segmentHighlighter).removeInterval((RangeHighlighterEx)segmentHighlighter);
-    LOG.assertTrue(removed);
+    treeFor(segmentHighlighter).removeInterval((RangeHighlighterEx)segmentHighlighter);
   }
 
   @Override
   public void removeAllHighlighters() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     for (RangeHighlighter highlighter : getAllHighlighters()) {
       highlighter.dispose();
     }
@@ -251,7 +245,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, @NotNull final TextAttributes textAttributes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     ((RangeHighlighterEx)highlighter).setTextAttributes(textAttributes);
   }
 
@@ -293,7 +286,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public boolean containsHighlighter(@NotNull final RangeHighlighter highlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     Processor<RangeHighlighterEx> equalId = h -> h.getId() != ((RangeHighlighterEx)highlighter).getId();
     return highlighter.isValid() && !treeFor(highlighter).processOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), equalId);
   }

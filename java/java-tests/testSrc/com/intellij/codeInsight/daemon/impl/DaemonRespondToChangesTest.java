@@ -2073,23 +2073,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         run.set(true);
       }
     };
-    ExternalLanguageAnnotators.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, annotator);
+    ExternalLanguageAnnotators.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, annotator, getTestRootDisposable());
 
-    try {
-      long start = System.currentTimeMillis();
-      List<HighlightInfo> errors = filter(CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), new int[0], false),
-                                          HighlightSeverity.ERROR);
-      long elapsed = System.currentTimeMillis() - start;
+    long start = System.currentTimeMillis();
+    List<HighlightInfo> errors = filter(CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), new int[0], false),
+                                        HighlightSeverity.ERROR);
+    long elapsed = System.currentTimeMillis() - start;
 
-      assertEquals(0, errors.size());
-      if (!run.get()) {
-        fail(ThreadDumper.dumpThreadsToString());
-      }
-      assertTrue("Elapsed: "+elapsed, elapsed >= SLEEP);
+    assertEquals(0, errors.size());
+    if (!run.get()) {
+      fail(ThreadDumper.dumpThreadsToString());
     }
-    finally {
-      ExternalLanguageAnnotators.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, annotator);
-    }
+    assertTrue("Elapsed: "+elapsed, elapsed >= SLEEP);
   }
 
   public void testModificationInExcludedFileDoesNotCauseRehighlight() {
@@ -3451,5 +3446,72 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  public void testHighlightInfoMustImmediatelyShowItselfOnScreenRightAfterCreationInBGT() {
+    Runnable commentHighlighted = () -> {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+
+      // assert markup is updated as soon as the HighlightInfo is created
+      List<HighlightInfo> highlightsFromMarkup = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
+      MyHighlightCommentVisitor.assertHighlighted(highlightsFromMarkup);
+    };
+    HighlightVisitor visitor = new MyHighlightCommentVisitor(commentHighlighted);
+    myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
+    @Language("JAVA")
+    String text = """
+      class X {
+        void f(boolean b) {
+          if (b) {
+            // xxx
+          }
+        }
+      }
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
+
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    MyHighlightCommentVisitor.assertHighlighted(infos);
+  }
+
+  private static class MyHighlightCommentVisitor implements HighlightVisitor {
+    private final Runnable commentHighlighted;
+    private HighlightInfoHolder myHolder;
+
+    private MyHighlightCommentVisitor(@NotNull Runnable commentHighlighted) {
+      this.commentHighlighted = commentHighlighted;
+    }
+
+    @Override
+    public boolean suitableForFile(@NotNull PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void visit(@NotNull PsiElement element) {
+      if (element instanceof PsiComment) {
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element.getTextRange()).description("MY2: CMT").create());
+        commentHighlighted.run();
+      }
+    }
+
+    @Override
+    public boolean analyze(@NotNull PsiFile file,
+                           boolean updateWholeFile,
+                           @NotNull HighlightInfoHolder holder,
+                           @NotNull Runnable action) {
+      myHolder = holder;
+      action.run();
+      return true;
+    }
+
+    @Override
+    public @NotNull HighlightVisitor clone() {
+      return new MyHighlightCommentVisitor(commentHighlighted);
+    }
+
+    private static void assertHighlighted(List<? extends HighlightInfo> infos) {
+      assertTrue("HighlightInfo is missing. All available infos are: "+infos, ContainerUtil.exists(infos, info -> info.getDescription().equals("MY2: CMT")));
+    }
+  }
 }
 

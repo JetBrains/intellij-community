@@ -16,7 +16,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -157,7 +156,7 @@ public class HighlightInfo implements Segment {
 
   @Nullable("null means it the same as highlighter")
   private RangeMarker fixMarker;
-  volatile RangeHighlighterEx highlighter; // modified in EDT only
+  volatile RangeHighlighterEx highlighter;
   @Nullable
   final PsiElement psiElement;
   /**
@@ -359,11 +358,7 @@ public class HighlightInfo implements Segment {
     return highlighter;
   }
 
-  /**
-   * Modified only in EDT.
-   */
   public void setHighlighter(@Nullable RangeHighlighterEx highlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     this.highlighter = highlighter;
   }
 

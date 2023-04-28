@@ -45,16 +45,14 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     if (document == null) return;
     long modificationStamp = document.getModificationStamp();
     TextRange priorityIntersection = priorityRange.intersection(restrictRange);
-    List<? extends HighlightInfo> infoCopy = new ArrayList<>(infos);
+    List<HighlightInfo> infoCopy = new ArrayList<>(infos);
     TextEditorHighlightingPass showAutoImportPass = editor == null ? null : getOrCreateShowAutoImportPass(editor, psiFile, session.getProgressIndicator());
-    ((HighlightingSessionImpl)session).applyInEDT(() -> {
-      if (modificationStamp != document.getModificationStamp()) return;
-      if (priorityIntersection != null) {
-        MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
-
-        UpdateHighlightersUtil.setHighlightersInRange(document, priorityIntersection, infoCopy, (MarkupModelEx)markupModel, groupId, session);
-      }
-      if (editor != null && !editor.isDisposed()) {
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    if (priorityIntersection != null) {
+      BackgroundUpdateHighlightersUtil.setHighlightersInRange(document, priorityIntersection, infoCopy, markupModel, groupId, session);
+    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (editor != null && !editor.isDisposed() && modificationStamp == document.getModificationStamp()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
           showAutoImportHints(session.getProgressIndicator(), showAutoImportPass);
@@ -65,7 +63,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     });
   }
 
-  void showAutoImportHints(@NotNull ProgressIndicator progressIndicator, @Nullable TextEditorHighlightingPass showAutoImportPass) {
+  private void showAutoImportHints(@NotNull ProgressIndicator progressIndicator, @Nullable TextEditorHighlightingPass showAutoImportPass) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (showAutoImportPass != null) {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> showAutoImportPass.doApplyInformationToEditor(), progressIndicator);
@@ -111,18 +109,15 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     Project project = psiFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
-    long modificationStamp = document.getModificationStamp();
-    ((HighlightingSessionImpl)session).applyInEDT(() -> {
-      if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
-
-      UpdateHighlightersUtil.setHighlightersOutsideRange(document, infos,
-                                                         restrictedRange,
-                                                         priorityRange,
-                                                         groupId, session);
-      if (editor != null) {
-        repaintErrorStripeAndIcon(editor, project, psiFile);
-      }
-    });
+    BackgroundUpdateHighlightersUtil.setHighlightersOutsideRange(document, infos, restrictedRange, priorityRange, groupId, session);
+    if (editor != null) {
+      long modificationStamp = document.getModificationStamp();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!project.isDisposed() && !editor.isDisposed() && modificationStamp != document.getModificationStamp()) {
+          repaintErrorStripeAndIcon(editor, project, psiFile);
+        }
+      });
+    }
   }
 
   @Override
@@ -137,6 +132,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                    long range,
                                                    @Nullable List<? extends HighlightInfo> infos,
                                                    @NotNull HighlightingSession session) {
+    List<RangeHighlighterEx> toRemove = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range), existing -> {
       if (existing.getGroup() == Pass.UPDATE_ALL && range == existing.getVisitingTextRange()) {
         if (infos != null) {
@@ -144,14 +140,17 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
             if (existing.equalsByActualOffset(created)) return true;
           }
         }
-        RangeHighlighterEx highlighter = existing.highlighter;
+        RangeHighlighterEx highlighter = existing.getHighlighter();
         if (highlighter != null && UpdateHighlightersUtil.shouldRemoveHighlighter(highlighter, session)) {
-          // seems that highlight info 'existing' is going to disappear; remove it earlier
-          ((HighlightingSessionImpl)session).queueDisposeHighlighter(existing);
+          // it seems that highlight info 'existing' is going to disappear; remove it earlier
+          toRemove.add(highlighter);
         }
       }
       return true;
     });
+    for (RangeHighlighterEx highlighter : toRemove) {
+      highlighter.dispose();
+    }
   }
 
   @Override
@@ -160,7 +159,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                               @NotNull TextRange priorityRange,
                               @NotNull TextRange restrictedRange,
                               int groupId) {
-    ((HighlightingSessionImpl)session).queueHighlightInfo(info, restrictedRange, groupId);
+    ((HighlightingSessionImpl)session).addInfoIncrementally(info, restrictedRange, groupId);
   }
 
   @Override

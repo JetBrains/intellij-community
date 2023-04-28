@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
@@ -32,7 +31,6 @@ final class HighlightersRecycler {
 
   @Nullable // null means no highlighter found in the cache
   RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     TextRange range = new TextRange(startOffset, endOffset);
     Collection<RangeHighlighter> collection = incinerator.get(range);
     for (RangeHighlighter highlighter : collection) {
@@ -47,7 +45,6 @@ final class HighlightersRecycler {
 
   @NotNull
   Collection<? extends RangeHighlighter> forAllInGarbageBin() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return incinerator.values();
   }
 }
