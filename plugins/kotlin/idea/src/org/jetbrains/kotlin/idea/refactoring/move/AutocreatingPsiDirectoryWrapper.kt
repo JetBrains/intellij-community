@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.psi.PsiDirectory
 import com.intellij.refactoring.MoveDestination
-import org.jetbrains.kotlin.idea.core.getPackage
+import org.jetbrains.kotlin.idea.base.util.getPackage
 
 sealed class AutocreatingPsiDirectoryWrapper {
     class ByPsiDirectory(private val psiDirectory: PsiDirectory) : AutocreatingPsiDirectoryWrapper() {

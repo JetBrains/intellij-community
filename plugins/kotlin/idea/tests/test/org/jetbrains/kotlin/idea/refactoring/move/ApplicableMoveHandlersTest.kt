@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.move
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.core.getPackage
+import org.jetbrains.kotlin.idea.base.util.getPackage
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
