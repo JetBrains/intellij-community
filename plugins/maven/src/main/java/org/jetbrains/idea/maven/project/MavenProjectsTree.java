@@ -103,8 +103,7 @@ public final class MavenProjectsTree {
     return myProjectLocator;
   }
 
-  @Nullable
-  public static MavenProjectsTree read(Project project, Path file) throws IOException {
+  public static @Nullable MavenProjectsTree read(Project project, Path file) throws IOException {
     MavenProjectsTree result = new MavenProjectsTree(project);
 
     try (DataInputStream in = new DataInputStream(new BufferedInputStream(PathKt.inputStream(file)))) {
@@ -194,8 +193,7 @@ public final class MavenProjectsTree {
     }
   }
 
-  @NotNull
-  public List<String> getManagedFilesPaths() {
+  public @NotNull List<String> getManagedFilesPaths() {
     synchronized (myStateLock) {
       return new ArrayList<>(myManagedFilesPaths);
     }
@@ -924,8 +922,7 @@ public final class MavenProjectsTree {
     }
   }
 
-  @NotNull
-  public static Collection<String> getFilterExclusions(MavenProject mavenProject) {
+  public static @NotNull Collection<String> getFilterExclusions(MavenProject mavenProject) {
     Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
     if (config == null) {
       return Collections.emptySet();
@@ -999,12 +996,10 @@ public final class MavenProjectsTree {
 
           @Override
           public void flush() {
-
           }
 
           @Override
           public void close() {
-
           }
         };
 
@@ -1050,24 +1045,20 @@ public final class MavenProjectsTree {
     return withReadLock(() -> new ArrayList<>(myVirtualFileToProjectMapping.keySet()));
   }
 
-  @NotNull
-  private MavenProject findOrCreateProject(VirtualFile f) {
+  private @NotNull MavenProject findOrCreateProject(VirtualFile f) {
     var mavenProject = findProject(f);
     return null == mavenProject ? new MavenProject(f) : mavenProject;
   }
 
-  @Nullable
-  public MavenProject findProject(VirtualFile f) {
+  public @Nullable MavenProject findProject(VirtualFile f) {
     return withReadLock(() -> myVirtualFileToProjectMapping.get(f));
   }
 
-  @Nullable
-  public MavenProject findProject(MavenId id) {
+  public @Nullable MavenProject findProject(MavenId id) {
     return withReadLock(() -> myMavenIdToProjectMapping.get(id));
   }
 
-  @Nullable
-  public MavenProject findProject(MavenArtifact artifact) {
+  public @Nullable MavenProject findProject(MavenArtifact artifact) {
     return findProject(artifact.getMavenId());
   }
 
@@ -1086,8 +1077,7 @@ public final class MavenProjectsTree {
     return withReadLock(() -> myModuleToAggregatorMapping.get(project));
   }
 
-  @NotNull
-  public MavenProject findRootProject(@NotNull MavenProject project) {
+  public @NotNull MavenProject findRootProject(@NotNull MavenProject project) {
     return withReadLock(() -> {
       MavenProject rootProject = project;
       while (true) {
@@ -1098,10 +1088,6 @@ public final class MavenProjectsTree {
         rootProject = aggregator;
       }
     });
-  }
-
-  public boolean isRootProject(@NotNull MavenProject project) {
-    return withReadLock(() -> myModuleToAggregatorMapping.get(project) == null);
   }
 
   public List<MavenProject> getModules(MavenProject aggregator) {
@@ -1305,8 +1291,7 @@ public final class MavenProjectsTree {
       fireProjectsUpdated(updated, mavenProjects);
     }
 
-    @NotNull
-    private List<Pair<MavenProject, MavenProjectChanges>> mapToListWithPairs() {
+    private @NotNull List<Pair<MavenProject, MavenProjectChanges>> mapToListWithPairs() {
       ArrayList<Pair<MavenProject, MavenProjectChanges>> result = new ArrayList<>(updatedProjectsWithChanges.size());
       for (Map.Entry<MavenProject, MavenProjectChanges> entry : updatedProjectsWithChanges.entrySet()) {
         entry.getKey().getProblems(); // need for fill problem cache

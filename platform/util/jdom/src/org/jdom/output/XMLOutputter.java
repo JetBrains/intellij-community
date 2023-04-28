@@ -178,10 +178,9 @@ public class XMLOutputter implements Cloneable {
    * @param list <code>List</code> of nodes.
    * @param out  <code>OutputStream</code> to use.
    */
-  public void output(List list, OutputStream out)
-    throws IOException {
+  public void output(List list, OutputStream out) throws IOException {
     Writer writer = makeWriter(out);
-    output(list, writer);  // output() flushes
+    printContentRange(writer, list, 0, list.size(), 0, new NamespaceStack());
   }
 
   /**
@@ -329,24 +328,8 @@ public class XMLOutputter implements Cloneable {
    * @param out     <code>Writer</code> to use.
    */
   public void output(Element element, Writer out) throws IOException {
-    // If this is the root element, we could pre-initialize the
-    // namespace stack with the namespaces
+    // If this is the root element, we could pre-initialize the namespace stack with the namespaces
     printElement(out, element, 0, new NamespaceStack());
-    out.flush();
-  }
-
-  /**
-   * This will handle printing out a list of nodes.
-   * This can be useful for printing the content of an element that
-   * contains HTML, like "&lt;description&gt;JDOM is
-   * &lt;b&gt;fun&gt;!&lt;/description&gt;".
-   *
-   * @param list <code>List</code> of nodes.
-   * @param out  <code>Writer</code> to use.
-   */
-  public void output(List list, Writer out)
-    throws IOException {
-    printContentRange(out, list, 0, list.size(), 0, new NamespaceStack());
     out.flush();
   }
 
@@ -433,7 +416,7 @@ public class XMLOutputter implements Cloneable {
   public String outputString(DocType doctype) {
     StringWriter out = new StringWriter();
     try {
-      output(doctype, out);  // output() flushes
+      printDocType(out, doctype);
     }
     catch (IOException ignored) {
     }
@@ -450,7 +433,8 @@ public class XMLOutputter implements Cloneable {
   public String outputString(Element element) {
     StringWriter out = new StringWriter();
     try {
-      output(element, out);  // output() flushes
+      // If this is the root element, we could pre-initialize the namespace stack with the namespaces
+      printElement(out, element, 0, new NamespaceStack());
     }
     catch (IOException ignored) {
     }
@@ -466,7 +450,7 @@ public class XMLOutputter implements Cloneable {
   public String outputString(List list) {
     StringWriter out = new StringWriter();
     try {
-      output(list, out);  // output() flushes
+      printContentRange(out, list, 0, list.size(), 0, new NamespaceStack());
     }
     catch (IOException ignored) {
     }
@@ -483,7 +467,7 @@ public class XMLOutputter implements Cloneable {
   public String outputString(CDATA cdata) {
     StringWriter out = new StringWriter();
     try {
-      output(cdata, out);  // output() flushes
+      printCDATA(out, cdata);
     }
     catch (IOException ignored) {
     }
@@ -500,7 +484,7 @@ public class XMLOutputter implements Cloneable {
   public String outputString(Text text) {
     StringWriter out = new StringWriter();
     try {
-      output(text, out);  // output() flushes
+      printText(out, text);
     }
     catch (IOException ignored) {
     }
@@ -518,7 +502,6 @@ public class XMLOutputter implements Cloneable {
     StringWriter out = new StringWriter();
     try {
       printEntityRef(out, entity);
-      out.flush();
     }
     catch (IOException ignored) {
     }
@@ -538,7 +521,7 @@ public class XMLOutputter implements Cloneable {
   private void printDeclaration(Writer out, String encoding) throws IOException {
     // Only print the declaration if it's not being omitted
     if (!userFormat.omitDeclaration) {
-      // Assume 1.0 version
+      // assume 1.0 version
       out.write("<?xml version=\"1.0\"");
       if (!userFormat.omitEncoding) {
         out.write(" encoding=\"" + encoding + "\"");
@@ -558,8 +541,7 @@ public class XMLOutputter implements Cloneable {
    * @param docType <code>Document</code> whose declaration to write.
    * @param out     <code>Writer</code> to use.
    */
-  private void printDocType(Writer out, DocType docType)
-    throws IOException {
+  private void printDocType(Writer out, DocType docType) throws IOException {
 
     String publicID = docType.getPublicID();
     String systemID = docType.getSystemID();
@@ -597,8 +579,7 @@ public class XMLOutputter implements Cloneable {
    * @param comment <code>Comment</code> to write.
    * @param out     <code>Writer</code> to use.
    */
-  private static void printComment(Writer out, Comment comment)
-    throws IOException {
+  private static void printComment(Writer out, Comment comment) throws IOException {
     out.write("<!--");
     out.write(comment.getText());
     out.write("-->");
@@ -613,8 +594,7 @@ public class XMLOutputter implements Cloneable {
    * @param entity <code>EntityRef</code> to output.
    * @param out    <code>Writer</code> to use.
    */
-  private static void printEntityRef(Writer out, EntityRef entity)
-    throws IOException {
+  private static void printEntityRef(Writer out, EntityRef entity) throws IOException {
     out.write("&");
     out.write(entity.getName());
     out.write(";");
@@ -674,9 +654,7 @@ public class XMLOutputter implements Cloneable {
    * @param level      <code>int</code> level of indention.
    * @param namespaces <code>List</code> stack of Namespaces in scope.
    */
-  private void printElement(Writer out, Element element,
-                            int level, NamespaceStack namespaces)
-    throws IOException {
+  private void printElement(Writer out, Element element, int level, NamespaceStack namespaces) throws IOException {
 
     List<Attribute> attributes = element.getAttributes();
     List<Content> content = element.getContent();
@@ -684,8 +662,7 @@ public class XMLOutputter implements Cloneable {
     // Check for xml:space and adjust format settings
     String space = null;
     if (attributes != null) {
-      space = element.getAttributeValue("space",
-                                        Namespace.XML_NAMESPACE);
+      space = element.getAttributeValue("space", Namespace.XML_NAMESPACE);
     }
 
     Format previousFormat = currentFormat;
@@ -780,9 +757,7 @@ public class XMLOutputter implements Cloneable {
    * @param level      <code>int</code> level of indentation.
    * @param namespaces <code>List</code> stack of Namespaces in scope.
    */
-  private void printContentRange(Writer out, List content,
-                                 int start, int end, int level,
-                                 NamespaceStack namespaces)
+  private void printContentRange(Writer out, List<Content> content, int start, int end, int level, NamespaceStack namespaces)
     throws IOException {
     boolean firstNode; // Flag for 1st node in content
     Object next;       // Node we're about to print
@@ -1099,7 +1074,6 @@ public class XMLOutputter implements Cloneable {
   // Determine if a Object is all whitespace
   private static boolean isAllWhitespace(Object obj) {
     String str;
-
     if (obj instanceof String) {
       str = (String)obj;
     }
