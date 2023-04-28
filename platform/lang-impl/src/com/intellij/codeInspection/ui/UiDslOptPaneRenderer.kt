@@ -373,7 +373,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             throw IllegalStateException("Component does not implement ")
           }
           // TODO: Get a parent somehow or update API
-          cell(extension.render(component, JPanel()))
+          cell(extension.render(component, JPanel(), context.controller))
         }
 
         is OptCheckboxPanel, is OptGroup, is OptHorizontalStack, is OptSeparator, is OptTabSet -> { throw IllegalStateException("Unsupported nested component: ${component.javaClass}") }

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.options.CustomComponentExtension;
 import com.intellij.codeInspection.options.OptCustom;
+import com.intellij.codeInspection.options.OptionController;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,10 +16,26 @@ public abstract class CustomComponentExtensionWithSwingRenderer<T> extends Custo
   protected CustomComponentExtensionWithSwingRenderer(@NotNull String id) {
     super(id);
   }
-  
-  public final @NotNull JComponent render(@NotNull OptCustom control, @Nullable Component parent) {
-    return render(deserializeData(control.data()), parent);
+
+  /**
+   * Render the custom component
+   * 
+   * @param control original control
+   * @param parent parent Swing component
+   * @param controller context option controller
+   * @return the rendered JComponent
+   */
+  public final @NotNull JComponent render(@NotNull OptCustom control, @Nullable Component parent, @NotNull OptionController controller) {
+    return render(deserializeData(control.data()), parent, controller);
   }
-  
-  abstract public @NotNull JComponent render(T data, @Nullable Component parent);
+
+  /**
+   * Render the custom component
+   *
+   * @param data       component data
+   * @param parent     parent Swing component
+   * @param controller context option controller
+   * @return the rendered JComponent
+   */
+  abstract public @NotNull JComponent render(T data, @Nullable Component parent, @NotNull OptionController controller);
 }

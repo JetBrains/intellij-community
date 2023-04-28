@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -41,14 +41,14 @@ public class OptCustomTest extends LightPlatform4TestCase {
         }
 
         @Override
-        public @NotNull JComponent render(String data, @Nullable Component parent) {
+        public @NotNull JComponent render(String data, @Nullable Component parent, @NotNull OptionController controller) {
           return new JLabel(data);
         }
       }, getTestRootDisposable());
     CustomComponentExtension.EP_NAME.getPoint().registerExtension(
       new CustomComponentExtensionWithSwingRenderer<Void>("y") {
         @Override
-        public @NotNull JComponent render(Void data, @Nullable Component parent) {
+        public @NotNull JComponent render(Void data, @Nullable Component parent, @NotNull OptionController controller) {
           return new JButton("3");
         }
       }, getTestRootDisposable());
