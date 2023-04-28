@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40;
 
-import com.intellij.maven.server.m40.utils.Maven40ModelConverter;
 import com.intellij.maven.server.m40.utils.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -1259,16 +1258,37 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return new HashSet<>(repositories);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public MavenServerPullProgressIndicator customizeAndGetProgressIndicator(@Nullable MavenWorkspaceMap workspaceMap,
                                                                            boolean alwaysUpdateSnapshots,
-                                                                           @Nullable Properties userProperties,
-                                                                           MavenToken token) throws RemoteException {
+                                                                           @Nullable Properties userProperties, MavenToken token)
+    throws RemoteException {
     MavenServerUtil.checkToken(token);
 
-    // TODO: implement
-    return null;
+    try {
+      // TODO: implement
+      //customizeComponents(workspaceMap);
+
+      myWorkspaceMap = workspaceMap;
+      myUserProperties = userProperties;
+      myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
+      myBuildStartTime = new Date();
+      myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
+
+      myConsoleWrapper.setWrappee(myCurrentIndicator);
+      try {
+        UnicastRemoteObject.exportObject(myCurrentIndicator, 0);
+      }
+      catch (RemoteException e) {
+        throw new RuntimeException(e);
+      }
+
+      return myCurrentIndicator;
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
   }
 
   @NotNull
