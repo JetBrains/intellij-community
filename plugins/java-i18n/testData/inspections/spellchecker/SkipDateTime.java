@@ -9,7 +9,8 @@ class Main {
 
   public static void main(String[] args) {
     System.out.println("1");
-
+    new String("<TYPO descr="Typo: In word 'CONASTANT'">CONASTANT</TYPO>");
+    Integer.valueOf("<TYPO descr="Typo: In word 'CONASTANT'">CONASTANT</TYPO>");
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat(" CONASTANT");
     SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("   CONASTANT");
 
