@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 import com.intellij.collaboration.async.mapCaching
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
@@ -20,8 +19,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -30,6 +28,7 @@ private typealias NewDiscussionsFlow = Flow<Map<DiffLineLocation, NewGitLabNoteV
 
 interface GitLabMergeRequestDiffChangeViewModel {
   val discussions: DiscussionsFlow
+  val draftDiscussions: DiscussionsFlow
   val newDiscussions: NewDiscussionsFlow
 
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
@@ -52,6 +51,13 @@ class GitLabMergeRequestDiffChangeViewModelImpl(
       GitLabDiscussion::id,
       { cs, disc -> GitLabMergeRequestDiffDiscussionViewModelImpl(cs, diffData, currentUser, disc) },
       GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
+    ).modelFlow(cs, LOG)
+
+  override val draftDiscussions: DiscussionsFlow = mergeRequest.standaloneDraftNotes
+    .mapCaching(
+      GitLabNote::id,
+      { cs, note -> GitLabMergeRequestDiffDraftDiscussionViewModel(cs, diffData, note) },
+      GitLabMergeRequestDiffDraftDiscussionViewModel::destroy
     ).modelFlow(cs, LOG)
 
 

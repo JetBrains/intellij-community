@@ -53,6 +53,13 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
         project, inlayCs, reviewVm.avatarIconsProvider, it
       )
     }
+    val draftDiscussions = changeVmFlow.flatMapLatest { it?.draftDiscussions ?: flowOf(emptyList()) }
+    viewer.controlInlaysIn(cs, draftDiscussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
+      val inlayCs = this
+      GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
+        project, inlayCs, reviewVm.avatarIconsProvider, it
+      )
+    }
 
     val newDiscussions = changeVmFlow.flatMapLatest { changeVm ->
       if (changeVm == null) return@flatMapLatest flowOf(emptyList())

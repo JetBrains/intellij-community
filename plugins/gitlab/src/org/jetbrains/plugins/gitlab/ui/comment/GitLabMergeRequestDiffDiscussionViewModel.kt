@@ -11,10 +11,7 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel.NoteItem
 
 interface GitLabMergeRequestDiffDiscussionViewModel : DiffMapped {
@@ -86,20 +83,11 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override val location: Flow<DiffLineLocation?> = discussion.firstNote().flatMapLatest {
-    if (it == null) return@flatMapLatest flowOf(null)
-    it.position.map { position ->
-      if (position !is GitLabNotePosition.Text) return@map null
-
-      if ((position.filePathBefore != null && !diffData.contains(position.parentSha, position.filePathBefore)) &&
-          (position.filePathAfter != null && !diffData.contains(position.sha, position.filePathAfter))) return@map null
-
-      val (side, lineIndex) = position.location
-      // context should be mapped to the left side
-      val commitSha = side.select(position.parentSha, position.sha)!!
-
-      diffData.mapLine(commitSha, lineIndex, side)
-    }
-  }.distinctUntilChanged()
+    it?.position ?: flowOf(null)
+  }.distinctUntilChanged().map {
+    if (it == null) return@map null
+    mapToLocation(diffData, it)
+  }
 
   private fun GitLabMergeRequestDiscussion.firstNote(): Flow<GitLabMergeRequestNote?> =
     notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
@@ -112,4 +100,49 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
       // ignore, cuz we don't want to cancel the invoker
     }
   }
+}
+
+class GitLabMergeRequestDiffDraftDiscussionViewModel(
+  parentCs: CoroutineScope,
+  diffData: GitTextFilePatchWithHistory,
+  note: GitLabMergeRequestDraftNote
+) : GitLabMergeRequestDiffDiscussionViewModel {
+
+  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+
+  override val id: String = note.id
+
+  override val notes: Flow<List<NoteItem>> = flowOf(
+    listOf(NoteItem.Note(GitLabNoteViewModelImpl(cs, note, flowOf(true))))
+  )
+
+  override val location: Flow<DiffLineLocation?> = note.position.map {
+    if (it == null) return@map null
+    mapToLocation(diffData, it)
+  }
+
+  override val resolveVm: GitLabDiscussionResolveViewModel? = null
+  override val replyVm: GitLabDiscussionReplyViewModel? = null
+
+  override suspend fun destroy() {
+    try {
+      cs.coroutineContext[Job]!!.cancelAndJoin()
+    }
+    catch (e: CancellationException) {
+      // ignore, cuz we don't want to cancel the invoker
+    }
+  }
+}
+
+private fun mapToLocation(diffData: GitTextFilePatchWithHistory, position: GitLabNotePosition): DiffLineLocation? {
+  if (position !is GitLabNotePosition.Text) return null
+
+  if ((position.filePathBefore != null && !diffData.contains(position.parentSha, position.filePathBefore)) &&
+      (position.filePathAfter != null && !diffData.contains(position.sha, position.filePathAfter))) return null
+
+  val (side, lineIndex) = position.location
+  // context should be mapped to the left side
+  val commitSha = side.select(position.parentSha, position.sha)!!
+
+  return diffData.mapLine(commitSha, lineIndex, side)
 }
