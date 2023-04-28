@@ -8,7 +8,6 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.IdeEventQueue.Companion.getInstance
 import com.intellij.ide.KeyboardAwareFocusOwner
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
@@ -21,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeyMapBundle
@@ -31,7 +31,7 @@ import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
-import com.intellij.openapi.project.DumbService.Companion.getInstance
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
@@ -286,7 +286,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     val focusedWindow = focusManager.focusedWindow
     val isModalContext = focusedWindow != null && isModalContext(focusedWindow)
     @Suppress("DEPRECATION")
-    val dataContext = (ApplicationManager.getApplication()?.getServiceIfCreated(DataManager::class.java) ?: return false).dataContext
+    val dataContext = (ApplicationManager.getApplication()?.serviceIfCreated<DataManager>() ?: return false).dataContext
     context.dataContext = dataContext
     context.focusOwner = focusOwner
     context.isModalContext = isModalContext
@@ -413,7 +413,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     if (InputEvent.ALT_DOWN_MASK == e.modifiersEx && (!SystemInfoRt.isMac || Registry.`is`("ide.mac.alt.mnemonic.without.ctrl", true))) {
       // the ignoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics
-      if ((KeyEvent.KEY_TYPED == e.id && !getInstance().isInputMethodEnabled) || hasMnemonicInWindow(focusOwner, e)) {
+      if ((KeyEvent.KEY_TYPED == e.id && !IdeEventQueue.getInstance().isInputMethodEnabled) || hasMnemonicInWindow(focusOwner, e)) {
         ignoreNextKeyTypedEvent = true
         return false
       }
@@ -443,7 +443,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   }
 
   private fun waitSecondStroke(chosenAction: AnAction, presentation: Presentation) {
-    set(getSecondStrokeMessage(chosenAction = chosenAction, presentation = presentation), context.project)
+    set(text = getSecondStrokeMessage(chosenAction = chosenAction, presentation = presentation), project = context.project)
     secondStrokeTimeout.cancelAllRequests()
     secondStrokeTimeout.addRequest(secondStrokeTimeoutRunnable, Registry.intValue("actionSystem.secondKeystrokeTimeout"))
     state = KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE
@@ -492,7 +492,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
       finally {
         if (Registry.`is`("actionSystem.fixLostTyping", true)) {
-          getInstance().doWhenReady { getInstance().keyEventDispatcher.resetState() }
+          IdeEventQueue.getInstance().doWhenReady { IdeEventQueue.getInstance().keyEventDispatcher.resetState() }
         }
       }
     }
@@ -511,7 +511,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   fun processAction(e: InputEvent,
                     place: String,
                     context: DataContext,
-                    actions: List<AnAction?>,
+                    actions: List<AnAction>,
                     processor: ActionProcessor,
                     presentationFactory: PresentationFactory,
                     shortcut: Shortcut): Boolean {
@@ -521,7 +521,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     val wrappedContext = Utils.wrapDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
-    val dumb = project != null && getInstance(project).isDumb
+    val dumb = project != null && DumbService.getInstance(project).isDumb
     fireBeforeShortcutTriggered(shortcut = shortcut, actions = actions, context = context)
     val wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList<AnAction>()
     val indicator = if (Registry.`is`("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate", true)) {
@@ -843,14 +843,14 @@ private fun doPerformActionInner(e: InputEvent,
                                  action: AnAction,
                                  actionEvent: AnActionEvent) {
   processor.onUpdatePassed(e, action, actionEvent)
-  val eventCount = getInstance().eventCount
+  val eventCount = IdeEventQueue.getInstance().eventCount
   // this is not true for test data contexts
   if (context is EdtDataContext) {
     context.setEventCount(eventCount)
   }
 
   ActionUtil.performDumbAwareWithCallbacks(action, actionEvent) {
-    LOG.assertTrue(eventCount == getInstance().eventCount, "Event counts do not match: $eventCount != ${getInstance().eventCount}")
+    LOG.assertTrue(eventCount == IdeEventQueue.getInstance().eventCount, "Event counts do not match: $eventCount != ${IdeEventQueue.getInstance().eventCount}")
     (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity { processor.performAction(e, action, actionEvent) }
   }
 }
@@ -864,7 +864,7 @@ private fun showDumbModeBalloonLater(project: Project?, message: @Nls String, re
                                                     if (expired.value(null)) {
                                                       return@invokeLater
                                                     }
-                                                    getInstance(project).showDumbModeActionBalloon(message, retryRunnable)
+                                                    DumbService.getInstance(project).showDumbModeActionBalloon(message, retryRunnable)
                                                   }, Conditions.or(expired, project.disposed))
 }
 
@@ -884,13 +884,13 @@ private fun getActionUnavailableMessage(actions: List<AnAction>): @Nls String {
   }
 }
 
-private fun fireBeforeShortcutTriggered(shortcut: Shortcut, actions: List<AnAction?>, context: DataContext) {
+private fun fireBeforeShortcutTriggered(shortcut: Shortcut, actions: List<AnAction>, context: DataContext) {
   try {
     ApplicationManager.getApplication().messageBus.syncPublisher(AnActionListener.TOPIC)
       .beforeShortcutTriggered(shortcut, Collections.unmodifiableList(actions), context)
   }
-  catch (ex: Exception) {
-    LOG.error(ex)
+  catch (e: Exception) {
+    LOG.error(e)
   }
 }
 
@@ -900,7 +900,7 @@ private val CMD_ENTER = KeyboardShortcut.fromString("meta ENTER")
 
 private fun isControlEnterOnDialog(component: Component?, sc: Shortcut): Boolean {
   return ((CONTROL_ENTER == sc || SystemInfoRt.isMac && CMD_ENTER == sc)
-          && !getInstance().isPopupActive && DialogWrapper.findInstance(component) != null)
+          && !IdeEventQueue.getInstance().isPopupActive && DialogWrapper.findInstance(component) != null)
 }
 
 // see PlatformActions.xml
