@@ -3641,7 +3641,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public @NotNull Rectangle getTextLocation(TextHitInfo offset) {
       if (isDisposed()) return new Rectangle();
-      Point caret = logicalPositionToXY(getCaretModel().getLogicalPosition());
+      Point caret = logicalPositionToXY(getCaretModel().getPrimaryCaret().getLogicalPosition());
       Rectangle r = new Rectangle(caret, new Dimension(1, getLineHeight()));
       Point p = getLocationOnScreen(getContentComponent());
       r.translate(p.x, p.y);
