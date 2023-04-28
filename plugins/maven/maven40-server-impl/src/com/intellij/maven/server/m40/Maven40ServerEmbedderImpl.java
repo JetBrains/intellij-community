@@ -1384,6 +1384,18 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
+  @Override
+  public void release(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      myContainer.dispose();
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+
 
 
 
@@ -1425,6 +1437,24 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       }
 
       return myCurrentIndicator;
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  @Override
+  public void reset(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      if (myCurrentIndicator != null) {
+        UnicastRemoteObject.unexportObject(myCurrentIndicator, false);
+      }
+      myCurrentIndicator = null;
+      myConsoleWrapper.setWrappee(null);
+
+      // TODO: implement
+      //resetCustomizedComponents();
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -1483,19 +1513,4 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return null;
   }
 
-  @Override
-  public void reset(MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-
-  }
-
-  @Override
-  public void release(MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-
-  }
 }
