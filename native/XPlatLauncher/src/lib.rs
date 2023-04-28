@@ -60,9 +60,9 @@ pub mod docker;
 pub const DEBUG_MODE_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
 
 #[cfg(target_os = "windows")]
-const CLASS_PATH_SEPARATOR: &'static str = ";";
+const CLASS_PATH_SEPARATOR: &str = ";";
 #[cfg(target_family = "unix")]
-const CLASS_PATH_SEPARATOR: &'static str = ":";
+const CLASS_PATH_SEPARATOR: &str = ":";
 
 pub fn main_lib() {
     let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from(env::args().next().unwrap()));
@@ -98,16 +98,16 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     let configuration = get_configuration(remote_dev, &exe_path).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
-    let java_home = configuration.prepare_for_launch().context("Cannot find a runtime")?;
-    debug!("Resolved runtime: {java_home:?}");
+    let jre_home = configuration.prepare_for_launch().context("Cannot find a runtime")?;
+    debug!("Resolved runtime: {jre_home:?}");
 
-    debug!("** Collecting VM options");
+    debug!("** Collecting JVM options");
     let vm_options = get_full_vm_options(&configuration).context("Cannot collect JVM options")?;
     debug!("VM options: {vm_options:?}");
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-    let result = java::run_jvm_and_event_loop(&java_home, vm_options, args.to_vec());
+    let result = java::run_jvm_and_event_loop(jre_home, vm_options, args.to_vec());
 
     log::logger().flush();
 

@@ -22,8 +22,8 @@ use {
     native_dialog::{MessageDialog, MessageType}
 };
 
-const ERROR_TITLE: &'static str = "Cannot start the IDE";
-const ERROR_FOOTER: &'static str =
+const ERROR_TITLE: &str = "Cannot start the IDE";
+const ERROR_FOOTER: &str =
     "Please try to reinstall the IDE.\n\
     For support, please refer to https://jb.gg/ide/critical-startup-errors";
 

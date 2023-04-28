@@ -153,7 +153,7 @@ mod tests {
         let expected_rt = test.create_jbr_link("_prod_jdk_jbr");
         let env = HashMap::from([("XPLAT_JDK", expected_rt.to_str().unwrap())]);
 
-        let result = run_launcher_ext(&test, LauncherRunSpec::standard().assert_status().with_env(&env));
+        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_env(&env).assert_status());
         test_runtime_selection(result, expected_rt);
     }
 
@@ -172,7 +172,7 @@ mod tests {
         let expected_rt = test.create_jbr_link("_jdk_home_jbr");
         let env = HashMap::from([("JDK_HOME", expected_rt.to_str().unwrap())]);
 
-        let result = run_launcher_ext(&test, LauncherRunSpec::standard().assert_status().with_env(&env));
+        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_env(&env).assert_status());
         test_runtime_selection(result, expected_rt);
     }
 
@@ -182,14 +182,14 @@ mod tests {
         let expected_rt = test.create_jbr_link("_java_home_jbr");
         let env = HashMap::from([("JAVA_HOME", expected_rt.to_str().unwrap())]);
 
-        let result = run_launcher_ext(&test, LauncherRunSpec::standard().assert_status().with_env(&env));
+        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_env(&env).assert_status());
         test_runtime_selection(result, expected_rt);
     }
 
     #[test]
     #[cfg(target_family = "unix")]
     fn async_profiler_loading() {
-        let result = run_launcher(LauncherRunSpec::standard().assert_status().with_args(&["async-profiler"]));
+        let result = run_launcher(LauncherRunSpec::standard().with_args(&["async-profiler"]).assert_status());
         assert!(result.stdout.contains("version="), "Profiler version is missing from the output: {:?}", result);
     }
 
