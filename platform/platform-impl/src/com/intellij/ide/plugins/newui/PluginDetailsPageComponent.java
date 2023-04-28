@@ -1033,7 +1033,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       mySize.setVisible(size != null);
 
       myRequiredPlugins.setText(IdeBundle.message("plugins.configurable.required.plugins.0",
-                                                  StringUtil.join(ContainerUtil.map(requiredPluginNames, x -> " • " + x), "\n")));
+                                                  StringUtil.join(ContainerUtil.map(requiredPluginNames, x -> "    • " + x), "\n")));
       myRequiredPlugins.setVisible(!requiredPluginNames.isEmpty());
     }
     else {
