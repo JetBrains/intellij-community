@@ -371,8 +371,9 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         val project = element.project
         val containingClass = element.containingClassOrObject as KtClass
         if (element is KtClassOrObject) {
-            val nameSuggestions =
-                if (traverseOuterInstanceReferences(element, true)) getNameSuggestionsForOuterInstance(element) else emptyList()
+            val nameSuggestions = if (KotlinMoveRefactoringSupport.getInstance().traverseOuterInstanceReferences(element, true)) {
+                getNameSuggestionsForOuterInstance(element)
+            } else emptyList()
             val outerInstanceName = nameSuggestions.firstOrNull()
             var movedClass: KtClassOrObject? = null
             val mover = object : KotlinMover {

@@ -27,8 +27,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.core.getPackage
@@ -48,7 +46,6 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.*
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
-import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
@@ -352,73 +349,9 @@ fun postProcessMoveUsages(
 
 var KtFile.updatePackageDirective: Boolean? by UserDataProperty(Key.create("UPDATE_PACKAGE_DIRECTIVE"))
 
-@JvmOverloads
-fun traverseOuterInstanceReferences(
-    member: KtNamedDeclaration,
-    stopAtFirst: Boolean,
-    body: (OuterInstanceReferenceUsageInfo) -> Unit = {}
-): Boolean {
-    if (member is KtObjectDeclaration || member is KtClass && !member.isInner()) return false
-
-    val context = member.analyzeWithContent()
-    val containingClassOrObject = member.containingClassOrObject ?: return false
-    val outerClassDescriptor = containingClassOrObject.unsafeResolveToDescriptor() as ClassDescriptor
-    var found = false
-    member.accept(
-        object : PsiRecursiveElementWalkingVisitor() {
-            private fun getOuterInstanceReference(element: PsiElement): OuterInstanceReferenceUsageInfo? {
-                return when (element) {
-                    is KtThisExpression -> {
-                        val descriptor = context[BindingContext.REFERENCE_TARGET, element.instanceReference]
-                        val isIndirect = when {
-                            descriptor == outerClassDescriptor -> false
-                            descriptor?.isAncestorOf(outerClassDescriptor, true) ?: false -> true
-                            else -> return null
-                        }
-                        OuterInstanceReferenceUsageInfo.ExplicitThis(element, isIndirect)
-                    }
-                    is KtSimpleNameExpression -> {
-                        val resolvedCall = element.getResolvedCall(context) ?: return null
-                        val dispatchReceiver = resolvedCall.dispatchReceiver as? ImplicitReceiver
-                        val extensionReceiver = resolvedCall.extensionReceiver as? ImplicitReceiver
-                        var isIndirect = false
-                        val isDoubleReceiver = when (outerClassDescriptor) {
-                            dispatchReceiver?.declarationDescriptor -> extensionReceiver != null
-                            extensionReceiver?.declarationDescriptor -> dispatchReceiver != null
-                            else -> {
-                                isIndirect = true
-                                when {
-                                    dispatchReceiver?.declarationDescriptor?.isAncestorOf(outerClassDescriptor, true) ?: false ->
-                                        extensionReceiver != null
-                                    extensionReceiver?.declarationDescriptor?.isAncestorOf(outerClassDescriptor, true) ?: false ->
-                                        dispatchReceiver != null
-                                    else -> return null
-                                }
-                            }
-                        }
-                        OuterInstanceReferenceUsageInfo.ImplicitReceiver(resolvedCall.call.callElement, isIndirect, isDoubleReceiver)
-                    }
-                    else -> null
-                }
-            }
-
-            override fun visitElement(element: PsiElement) {
-                getOuterInstanceReference(element)?.let {
-                    body(it)
-                    found = true
-                    if (stopAtFirst) stopWalking()
-                    return
-                }
-                super.visitElement(element)
-            }
-        }
-    )
-    return found
-}
-
 fun collectOuterInstanceReferences(member: KtNamedDeclaration): List<OuterInstanceReferenceUsageInfo> {
     val result = SmartList<OuterInstanceReferenceUsageInfo>()
-    traverseOuterInstanceReferences(member, false) { result += it }
+    KotlinMoveRefactoringSupport.getInstance().traverseOuterInstanceReferences(member, false) { result += it }
     return result
 }
 
