@@ -22,34 +22,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenExecutionResult {
+public class Maven3ExecutionResult {
   private File myPomFile;
   private final MavenProject myMavenProject;
   private final List<Exception> myExceptions;
   private final List<ModelProblem> myModelProblems;
   private final DependencyResolutionResult myDependencyResolutionResult;
 
-  public MavenExecutionResult(@Nullable MavenProject mavenProject, List<Exception> exceptions) {
+  public Maven3ExecutionResult(@Nullable MavenProject mavenProject, List<Exception> exceptions) {
     this(mavenProject, null, exceptions, Collections.emptyList());
   }
 
-  public MavenExecutionResult(List<Exception> exceptions) {
+  public Maven3ExecutionResult(List<Exception> exceptions) {
     this(null, null, exceptions, Collections.emptyList());
   }
 
-  public MavenExecutionResult(@Nullable File pomFile, List<Exception> exceptions) {
+  public Maven3ExecutionResult(@Nullable File pomFile, List<Exception> exceptions) {
     this(null, null, exceptions, Collections.emptyList());
     myPomFile = pomFile;
   }
 
-  public MavenExecutionResult(@Nullable MavenProject mavenProject,
-                              @Nullable DependencyResolutionResult dependencyResolutionResult,
-                              @NotNull List<Exception> exceptions,
-                              @NotNull List<ModelProblem> modelProblems) {
+  public Maven3ExecutionResult(@Nullable MavenProject mavenProject,
+                               @Nullable DependencyResolutionResult dependencyResolutionResult,
+                               @NotNull List<Exception> exceptions,
+                               @NotNull List<ModelProblem> modelProblems) {
     myMavenProject = mavenProject;
     myModelProblems = modelProblems;
     if (mavenProject != null) {

@@ -66,7 +66,6 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 import org.sonatype.aether.RepositorySystemSession;
@@ -261,10 +260,10 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return result;
   }
 
-  private static MavenExecutionResult handleException(Throwable e) {
+  private static Maven3ExecutionResult handleException(Throwable e) {
     if (e instanceof Error) throw (Error)e;
 
-    return new MavenExecutionResult(Collections.singletonList((Exception)e));
+    return new Maven3ExecutionResult(Collections.singletonList((Exception)e));
   }
 
   private static Collection<String> collectActivatedProfiles(MavenProject mavenProject)
@@ -606,7 +605,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     throws RemoteException {
     DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
-    Collection<MavenExecutionResult> results = doResolveProject(
+    Collection<Maven3ExecutionResult> results = doResolveProject(
       task,
       files,
       new ArrayList<>(activeProfiles),
@@ -624,17 +623,17 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private Collection<MavenExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                            @NotNull Collection<File> files,
-                                                            @NotNull List<String> activeProfiles,
-                                                            @NotNull List<String> inactiveProfiles,
-                                                            final List<ResolutionListener> listeners) throws RemoteException {
+  private Collection<Maven3ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
+                                                             @NotNull Collection<File> files,
+                                                             @NotNull List<String> activeProfiles,
+                                                             @NotNull List<String> inactiveProfiles,
+                                                             final List<ResolutionListener> listeners) throws RemoteException {
     File file = files.size() == 1 ? files.iterator().next() : null;
     MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    Collection<MavenExecutionResult> executionResults = new ArrayList<MavenExecutionResult>();
+    Collection<Maven3ExecutionResult> executionResults = new ArrayList<Maven3ExecutionResult>();
 
     executeWithMavenSession(request, (Runnable)() -> {
       try {
@@ -661,7 +660,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
             for (ModelProblem problem : buildingResult.getProblems()) {
               exceptions.add(problem.getException());
             }
-            MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
+            Maven3ExecutionResult mavenExecutionResult = new Maven3ExecutionResult(buildingResult.getPomFile(), exceptions);
             executionResults.add(mavenExecutionResult);
             continue;
           }
@@ -692,7 +691,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
             }
 
             project.setArtifacts(artifacts);
-            executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, buildingResult.getProblems()));
+            executionResults.add(new Maven3ExecutionResult(project, dependencyResolutionResult, exceptions, buildingResult.getProblems()));
           }
 
           task.incrementFinishedRequests();
@@ -874,7 +873,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(@Nullable File file, MavenExecutionResult result, DependencyNode rootNode)
+  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven3ExecutionResult result, DependencyNode rootNode)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     Set<MavenId> unresolvedArtifacts = new HashSet<MavenId>();
@@ -926,7 +925,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, MavenExecutionResult result)
+  private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, Maven3ExecutionResult result)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
 
@@ -1171,7 +1170,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       if (task.isCanceled()) break;
       File file = request.file();
       MavenExplicitProfiles profiles = request.profiles();
-      MavenExecutionResult result =
+      Maven3ExecutionResult result =
         doExecute(file, new ArrayList<>(profiles.getEnabledProfiles()), new ArrayList<>(profiles.getDisabledProfiles()), goal);
       results.add(createEmbedderExecutionResult(file, result));
       task.incrementFinishedRequests();
@@ -1179,15 +1178,15 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return results;
   }
 
-  private MavenExecutionResult doExecute(@NotNull final File file,
-                                         @NotNull final List<String> activeProfiles,
-                                         @NotNull final List<String> inactiveProfiles,
-                                         @NotNull final String goal) throws RemoteException {
+  private Maven3ExecutionResult doExecute(@NotNull final File file,
+                                          @NotNull final List<String> activeProfiles,
+                                          @NotNull final List<String> inactiveProfiles,
+                                          @NotNull final String goal) throws RemoteException {
     MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, goal);
 
     org.apache.maven.execution.MavenExecutionResult executionResult = safeExecute(request, getComponent(Maven.class));
 
-    return new MavenExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
+    return new Maven3ExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
   }
 
   private org.apache.maven.execution.MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) throws RemoteException {

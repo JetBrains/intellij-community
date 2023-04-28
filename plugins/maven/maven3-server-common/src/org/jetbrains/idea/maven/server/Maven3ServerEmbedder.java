@@ -42,7 +42,7 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
-import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
+import org.jetbrains.idea.maven.server.embedder.Maven3ExecutionResult;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
@@ -224,10 +224,10 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     }
   }
 
-  protected MavenExecutionResult resolveMvn2CompatResult(MavenProject project,
-                                                         List<Exception> exceptions,
-                                                         List<ResolutionListener> listeners,
-                                                         ArtifactRepository localRepository) {
+  protected Maven3ExecutionResult resolveMvn2CompatResult(MavenProject project,
+                                                          List<Exception> exceptions,
+                                                          List<ResolutionListener> listeners,
+                                                          ArtifactRepository localRepository) {
     ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
     resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
     resolutionRequest.setArtifact(project.getArtifact());
@@ -243,14 +243,14 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
 
     project.setArtifacts(result.getArtifacts());
-    return new MavenExecutionResult(project, exceptions);
+    return new Maven3ExecutionResult(project, exceptions);
   }
 
   protected void addMvn2CompatResults(MavenProject project,
                                       List<Exception> exceptions,
                                       List<ResolutionListener> listeners,
                                       ArtifactRepository localRepository,
-                                      Collection<MavenExecutionResult> executionResults) {
+                                      Collection<Maven3ExecutionResult> executionResults) {
     executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, localRepository));
   }
 

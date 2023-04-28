@@ -74,7 +74,6 @@ import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
@@ -330,12 +329,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return result;
   }
 
-  private static MavenExecutionResult handleException(Exception e) {
-    return new MavenExecutionResult(Collections.singletonList(e));
+  private static Maven3ExecutionResult handleException(Exception e) {
+    return new Maven3ExecutionResult(Collections.singletonList(e));
   }
 
-  private static MavenExecutionResult handleException(MavenProject mavenProject, Exception e) {
-    return new MavenExecutionResult(mavenProject, Collections.singletonList(e));
+  private static Maven3ExecutionResult handleException(MavenProject mavenProject, Exception e) {
+    return new Maven3ExecutionResult(mavenProject, Collections.singletonList(e));
   }
 
   private static List<Exception> filterExceptions(List<Throwable> list) {
@@ -556,7 +555,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     try {
       final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
-      Collection<MavenExecutionResult> results = doResolveProject(
+      Collection<Maven3ExecutionResult> results = doResolveProject(
         task,
         files,
         new ArrayList<>(activeProfiles),
@@ -579,17 +578,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private Collection<MavenExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                            @NotNull final Collection<File> files,
-                                                            @NotNull final List<String> activeProfiles,
-                                                            @NotNull final List<String> inactiveProfiles,
-                                                            final List<ResolutionListener> listeners) throws RemoteException {
+  private Collection<Maven3ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
+                                                             @NotNull final Collection<File> files,
+                                                             @NotNull final List<String> activeProfiles,
+                                                             @NotNull final List<String> inactiveProfiles,
+                                                             final List<ResolutionListener> listeners) throws RemoteException {
     final File file = !files.isEmpty() ? files.iterator().next() : null;
     final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    final Collection<MavenExecutionResult> executionResults = new ArrayList<>();
+    final Collection<Maven3ExecutionResult> executionResults = new ArrayList<>();
     Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();
 
     executeWithMavenSession(request, (Runnable)() -> {
@@ -622,7 +621,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             for (ModelProblem problem : buildingResult.getProblems()) {
               exceptions.add(problem.getException());
             }
-            executionResults.add(new MavenExecutionResult(buildingResult.getPomFile(), exceptions));
+            executionResults.add(new Maven3ExecutionResult(buildingResult.getPomFile(), exceptions));
             continue;
           }
 
@@ -642,12 +641,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
         task.updateTotalRequests(buildingResultsToResolveDependencies.size());
         boolean runInParallel = canResolveDependenciesInParallel();
-        Collection<MavenExecutionResult> execResults =
+        Collection<Maven3ExecutionResult> execResults =
           MavenServerParallelRunner.execute(
             runInParallel,
             buildingResultsToResolveDependencies.entrySet(), entry -> {
-              if (task.isCanceled()) return new MavenExecutionResult(Collections.emptyList());
-              MavenExecutionResult result = resolveBuildingResult(repositorySession, addUnresolved, entry.getKey(), entry.getValue());
+              if (task.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());
+              Maven3ExecutionResult result = resolveBuildingResult(repositorySession, addUnresolved, entry.getKey(), entry.getValue());
               task.incrementFinishedRequests();
               return result;
             }
@@ -664,10 +663,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private MavenExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
-                                                     boolean addUnresolved,
-                                                     ProjectBuildingResult buildingResult,
-                                                     List<Exception> exceptions) {
+  private Maven3ExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
+                                                      boolean addUnresolved,
+                                                      ProjectBuildingResult buildingResult,
+                                                      List<Exception> exceptions) {
     MavenProject project = buildingResult.getProject();
     try {
       List<ModelProblem> modelProblems = new ArrayList<>();
@@ -680,7 +679,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
       project.setArtifacts(artifacts);
 
-      return new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems);
+      return new Maven3ExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems);
     }
     catch (Exception e) {
       return handleException(project, e);
@@ -1038,7 +1037,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(@Nullable File file, MavenExecutionResult result, DependencyNode rootNode)
+  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven3ExecutionResult result, DependencyNode rootNode)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
@@ -1091,7 +1090,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, MavenExecutionResult result)
+  private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, Maven3ExecutionResult result)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
 
@@ -1622,7 +1621,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     org.apache.maven.execution.MavenExecutionResult executionResult = safeExecute(mavenExecutionRequest, getComponent(Maven.class));
 
-    MavenExecutionResult result = new MavenExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
+    Maven3ExecutionResult result = new Maven3ExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
     return createEmbedderExecutionResult(file, result);
   }
 
