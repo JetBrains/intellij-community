@@ -83,6 +83,11 @@
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
     </action>
+    <action id="Terminal.CopyOutput" class="org.jetbrains.plugins.terminal.action.CopyTerminalOutputAction" />
+
+    <group id="Terminal.PopupMenu">
+      <reference ref="Terminal.CopyOutput"/>
+    </group>
   </actions>
 
 </idea-plugin>

@@ -1,9 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -40,6 +44,10 @@ object TerminalUiUtils {
       additionalColumnsCount = 0
       isBlockCursor = true
     }
+
+    editor.installPopupHandler(object:ContextMenuPopupHandler() {
+      override fun getActionGroup(event: EditorMouseEvent) =
+        ActionManager.getInstance().getAction("Terminal.PopupMenu") as ActionGroup})
     return editor
   }
 
