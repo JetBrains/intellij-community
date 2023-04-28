@@ -193,7 +193,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     val haveBranches = traverseNodesAndExpand()
     if (haveBranches) {
       selectPreferred()
-      traverseNodesAndExpand()
       expandPreviouslyExpandedBranches()
     }
     val model = tree.model
