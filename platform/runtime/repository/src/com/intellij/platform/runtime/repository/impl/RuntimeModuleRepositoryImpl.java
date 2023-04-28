@@ -8,67 +8,140 @@ import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
-  private final Map<RuntimeModuleId, RuntimeModuleDescriptor> myModulesDescriptors;
+  private final Map<RuntimeModuleId, ResolveResult> myResolveResults;
+  private final Map<String, RawRuntimeModuleDescriptor> myRawDescriptors;
+  private final Path myBasePath;
+  private final Map<String, RuntimeModuleId> myInternedModuleIds;
 
-  public RuntimeModuleRepositoryImpl(Map<RuntimeModuleId, RuntimeModuleDescriptor> modulesDescriptors) {
-    myModulesDescriptors = modulesDescriptors;
-  }
-
-  @TestOnly
   public RuntimeModuleRepositoryImpl(@NotNull Map<String, RawRuntimeModuleDescriptor> descriptorMap, @NotNull Path basePath) {
-    myModulesDescriptors = createDescriptors(descriptorMap, basePath);
+    myRawDescriptors = descriptorMap;
+    myBasePath = basePath;
+    myResolveResults = new ConcurrentHashMap<>();
+    myInternedModuleIds = new ConcurrentHashMap<>();
   }
 
-  @Nullable
   @Override
-  public RuntimeModuleDescriptor findModule(@NotNull RuntimeModuleId moduleId) {
-    return myModulesDescriptors.get(moduleId);
+  public @NotNull ResolveResult resolveModule(@NotNull RuntimeModuleId moduleId) {
+    ResolveResult result = myResolveResults.get(moduleId);
+    if (result == null) {
+      result = resolveModule(moduleId, new LinkedHashMap<>());
+    }
+    return result;
   }
 
-  @NotNull
-  public static Map<RuntimeModuleId, RuntimeModuleDescriptor> createDescriptors(@NotNull Map<String, RawRuntimeModuleDescriptor> rawData,
-                                                                                @NotNull Path basePath) {
-    Map<RuntimeModuleId, RuntimeModuleDescriptor> result = new HashMap<>(rawData.size());
-    Map<RuntimeModuleId, ArrayList<RuntimeModuleDescriptor>> dependenciesMap = new HashMap<>(rawData.size());
-    for (Map.Entry<String, RawRuntimeModuleDescriptor> entry : rawData.entrySet()) {
-      ArrayList<RuntimeModuleDescriptor> dependencies = new ArrayList<>();
-      RuntimeModuleId id = RuntimeModuleId.raw(entry.getKey());
-      dependenciesMap.put(id, dependencies);
-      List<String> resourcePaths = entry.getValue().getResourcePaths();
-      result.put(id, new RuntimeModuleDescriptorImpl(id, basePath, resourcePaths, dependencies));
-    }
+  private @NotNull ResolveResult resolveModule(@NotNull RuntimeModuleId moduleId, @NotNull Map<RuntimeModuleId, RuntimeModuleDescriptorImpl> dependencyPath) {
+    ResolveResult cached = myResolveResults.get(moduleId);
+    if (cached != null) return cached;
 
-    for (Map.Entry<RuntimeModuleId, RuntimeModuleDescriptor> entry : result.entrySet()) {
-      RuntimeModuleId id = entry.getKey();
-      List<RuntimeModuleDescriptor> dependencyList = dependenciesMap.get(id);
-      RawRuntimeModuleDescriptor data = rawData.get(id.getStringId());
-      for (String dependency : data.getDependencies()) {
-        RuntimeModuleDescriptor depDescriptor = result.get(RuntimeModuleId.raw(dependency));
-        if (depDescriptor == null) {
-          throw new MalformedRepositoryException("Cannot find module '" + dependency + "' referenced from module '" + id.getStringId() + "'");
-        }
-        dependencyList.add(depDescriptor);
+    RawRuntimeModuleDescriptor rawDescriptor = myRawDescriptors.get(moduleId.getStringId());
+    if (rawDescriptor == null) {
+      List<RuntimeModuleId> failedPath = new ArrayList<>(dependencyPath.size() + 1);
+      failedPath.addAll(dependencyPath.keySet());
+      failedPath.add(moduleId);
+      return new FailedResolveResult(failedPath);
+    }
+    
+    List<String> rawDependencies = rawDescriptor.getDependencies();
+    List<RuntimeModuleDescriptor> resolvedDependencies = new ArrayList<>(rawDependencies.size());
+    RuntimeModuleDescriptorImpl descriptor = new RuntimeModuleDescriptorImpl(moduleId, myBasePath, rawDescriptor.getResourcePaths(), resolvedDependencies);
+    dependencyPath.put(moduleId, descriptor);
+    for (String dependency : rawDependencies) {
+      RuntimeModuleId dependencyId = myInternedModuleIds.computeIfAbsent(dependency, RuntimeModuleId::raw);
+      RuntimeModuleDescriptor circularDependency = dependencyPath.get(dependencyId);
+      if (circularDependency != null) {
+        //the circularDependency instance isn't fully constructed, but it's ok given that RuntimeModuleDescriptorImpl's constructor just stores the passed values 
+        resolvedDependencies.add(circularDependency);
+        continue;
+      }
+      
+      ResolveResult result = resolveModule(dependencyId, dependencyPath);
+      RuntimeModuleDescriptor module = result.getResolvedModule();
+      if (module != null) {
+        resolvedDependencies.add(module);
+      }
+      else {
+        return result;
       }
     }
+    dependencyPath.remove(moduleId);
+    SuccessfulResolveResult result = new SuccessfulResolveResult(descriptor);
+    myResolveResults.put(moduleId, result);
     return result;
   }
 
   @Override
   @NotNull
   public RuntimeModuleDescriptor getModule(@NotNull RuntimeModuleId moduleId) {
-    RuntimeModuleDescriptor dependency = findModule(moduleId);
-    if (dependency == null) {
-      throw new MalformedRepositoryException("Cannot find module '" + moduleId.getStringId() + "' in " + this);
+    ResolveResult result = resolveModule(moduleId);
+    RuntimeModuleDescriptor module = result.getResolvedModule();
+    if (module != null) {
+      return module;
     }
-    return dependency;
+    List<RuntimeModuleId> failedDependencyPath = result.getFailedDependencyPath();
+    String message;
+    if (failedDependencyPath.size() == 1) {
+      message = "Cannot find module '" + failedDependencyPath.get(0).getStringId() + "'";
+    }
+    else {
+      List<RuntimeModuleId> reversed = new ArrayList<>(failedDependencyPath.subList(0, failedDependencyPath.size() - 1));
+      Collections.reverse(reversed);
+      message = "Cannot resolve module '" + moduleId.getStringId() + "': module '" + failedDependencyPath.get(failedDependencyPath.size() - 1).getStringId() + "' (" +
+                reversed.stream().map(id -> " <- '" + id.getStringId() + "'").collect(Collectors.joining()).trim() + ") is not found";
+    }
+    throw new MalformedRepositoryException(message);
+  }
+
+  @Override
+  public @NotNull List<Path> getModuleResourcePaths(@NotNull RuntimeModuleId moduleId) {
+    RawRuntimeModuleDescriptor rawDescriptor = myRawDescriptors.get(moduleId.getStringId());
+    if (rawDescriptor == null) {
+      throw new MalformedRepositoryException("Cannot find module '" + moduleId.getStringId() + "'");
+    }
+    //todo improve this to reuse the computed paths if the module is resolved later
+    return new RuntimeModuleDescriptorImpl(moduleId, myBasePath, rawDescriptor.getResourcePaths(), Collections.emptyList()).getResourceRootPaths();
+  }
+
+
+  private static final class SuccessfulResolveResult implements ResolveResult {
+    private final RuntimeModuleDescriptor myResolved;
+
+    private SuccessfulResolveResult(@NotNull RuntimeModuleDescriptor resolved) {
+      myResolved = resolved;
+    }
+
+    @Override
+    public @NotNull RuntimeModuleDescriptor getResolvedModule() {
+      return myResolved;
+    }
+
+    @Override
+    public @NotNull List<RuntimeModuleId> getFailedDependencyPath() {
+      return Collections.emptyList();
+    }
+  }
+  
+  private static final class FailedResolveResult implements ResolveResult {
+    private final List<RuntimeModuleId> myFailedDependencyPath;
+
+    private FailedResolveResult(@NotNull List<RuntimeModuleId> failedDependencyPath) {
+      myFailedDependencyPath = failedDependencyPath; 
+    }
+
+    @Override
+    public @Nullable RuntimeModuleDescriptor getResolvedModule() {
+      return null;
+    }
+
+    @Override
+    public @NotNull List<RuntimeModuleId> getFailedDependencyPath() {
+      return myFailedDependencyPath;
+    }
   }
 }
