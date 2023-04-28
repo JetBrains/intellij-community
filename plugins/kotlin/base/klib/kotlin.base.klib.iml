@@ -13,6 +13,5 @@
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
   </component>
 </module>

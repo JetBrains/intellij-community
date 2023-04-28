@@ -8,6 +8,9 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idePlatformKindTooling"
             interface="org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idePlatformKindResolution"
+            interface="org.jetbrains.kotlin.caches.resolve.IdePlatformKindResolution"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -35,9 +38,14 @@
     />
   </extensions>
 
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JsIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind"/>
+
+    <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.JvmPlatformKindResolution"/>
+    <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.JsPlatformKindResolution"/>
+    <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.CommonPlatformKindResolution"/>
   </extensions>
 </idea-plugin>

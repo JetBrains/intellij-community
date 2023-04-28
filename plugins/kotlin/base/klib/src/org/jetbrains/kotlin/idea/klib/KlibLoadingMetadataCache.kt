@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.klib
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import java.io.IOException
 import java.util.*
 
-@Service
 class KlibLoadingMetadataCache {
     // Use special CacheKey class instead of VirtualFile for cache keys. Certain types of VirtualFiles (for example, obtained from JarFileSystem)
     // do not compare path (url) and modification stamp in equals() method.

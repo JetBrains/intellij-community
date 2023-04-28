@@ -28,7 +28,6 @@
   <xi:include href="highlighting-k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="scripting-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="native.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="facets-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <xi:include href="extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
