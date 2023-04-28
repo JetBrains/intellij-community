@@ -101,7 +101,7 @@ fun createDataDigest(): MessageDigest {
 @JvmOverloads
 fun Element.digest(messageDigest: MessageDigest = createDataDigest()): ByteArray {
   val digestOut = DigestOutputStream(messageDigest)
-  serializeElementToBinary(this, digestOut)
+  serializeElementToBinary(element = this, out = digestOut)
   return digestOut.digest()
 }
 

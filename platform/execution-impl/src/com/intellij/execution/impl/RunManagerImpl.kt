@@ -4,6 +4,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.*
+import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.execution.*
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
 import com.intellij.execution.compound.CompoundRunConfiguration
@@ -86,7 +87,8 @@ interface RunConfigurationTemplateProvider {
 }
 
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
-open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
+open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) :
+  RunManagerEx(), PersistentStateComponent<Element>, Disposable, SettingsSavingComponent {
   companion object {
     const val CONFIGURATION: String = "configuration"
     const val NAME_ATTR: String = "name"
@@ -211,6 +213,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
                                                                                       streamProvider = sharedStreamProvider ?: schemeManagerIprProvider)
 
+  @Suppress("unused")
   internal val dotIdeaRunConfigurationsPath: String
     get() = FileUtil.toSystemIndependentName(projectSchemeManager.rootDirectory.path)
 
@@ -623,8 +626,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
 
   internal fun isFileContainsRunConfiguration(file: VirtualFile): Boolean {
-    val runConfigs = lock.read { rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path)) }
-    return runConfigs.isNotEmpty()
+    return lock.read { rcInArbitraryFileManager.hasRunConfigsFromFile(file.path) }
   }
 
   internal fun selectConfigurationStoredInFile(file: VirtualFile) {
@@ -649,6 +651,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       }
     }
 
+  override suspend fun save() {
+    rcInArbitraryFileManager.saveRunConfigs(lock)
+  }
+
   override fun getState(): Element {
     if (!isFirstLoadState.get()) {
       lock.read {
@@ -664,8 +670,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     workspaceSchemeManager.save()
 
     lock.read {
-      rcInArbitraryFileManager.saveRunConfigs()
-
       workspaceSchemeManagerProvider.writeState(element)
 
       if (idToSettings.size > 1) {
@@ -763,7 +767,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   protected open fun onFirstLoadingStarted() {
     SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(
       object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
-
         override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
           extension.configurationTypes
         }
@@ -1401,8 +1404,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
 const val PROJECT_RUN_MANAGER_COMPONENT_NAME = "ProjectRunConfigurationManager"
 
+@Service(Service.Level.PROJECT)
 @State(name = PROJECT_RUN_MANAGER_COMPONENT_NAME, useLoadedStateAsExisting = false /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */)
-internal class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
+private class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
   val lastLoadedState = AtomicReference<Element>()
 
   override fun getState(): Element? {
