@@ -267,7 +267,7 @@ impl DefaultLaunchConfiguration {
         match get_path_from_env_var(&env_var_name, Some(false)) {
             Ok(path) => {
                 debug!("Custom VM options file: {:?}", path);
-                read_vm_options(&path, vm_options)?;
+                vm_options.extend(read_vm_options(&path)?);
                 let path_string = path.to_str().expect(&format!("Inconvertible path: {:?}", path));
                 vm_options.push(jvm_property!("jb.vmOptionsFile", path_string));
                 return Ok(());
@@ -275,20 +275,14 @@ impl DefaultLaunchConfiguration {
             Err(e) => { debug!("Failed: {}", e.to_string()); }
         }
 
-
         debug!("[2] Reading main VM options file: {:?}", self.vm_options_path);
-        let mut dist_vm_options = Vec::with_capacity(50);
-        read_vm_options(&self.vm_options_path, &mut dist_vm_options)?;
-        debug!("{} lines", dist_vm_options.len());
+        let dist_vm_options = read_vm_options(&self.vm_options_path)?;
 
         debug!("[3] Looking for user VM options file");
         let (user_vm_options, vm_options_path) = match self.get_user_vm_options_file() {
             Ok(path) => {
                 debug!("Reading user VM options file: {:?}", path);
-                let mut user_vm_options = Vec::with_capacity(50);
-                read_vm_options(&path, &mut user_vm_options)?;
-                debug!("{} lines", user_vm_options.len());
-                (user_vm_options, path)
+                (read_vm_options(&path)?, path)
             }
             Err(e) => {
                 debug!("Failed: {}", e.to_string());
@@ -359,15 +353,19 @@ fn get_bin_java_path(java_home: &Path) -> PathBuf {
     java_home.join("Contents/Home/bin/java")
 }
 
-fn read_vm_options(path: &Path, vm_options: &mut Vec<String>) -> Result<()> {
+fn read_vm_options(path: &Path) -> Result<Vec<String>> {
     let file = File::open(path)?;
-    let error = format!("Cannot read: {:?}", path);
-    BufReader::new(file).lines()
-        .map(|l| l.expect(&error).trim().to_string())
-        .filter(|l| !(l.is_empty() || l.starts_with("#")))
-        .for_each(|l| vm_options.push(l));
 
-    Ok(())
+    let mut vm_options = Vec::with_capacity(50);
+    for line in BufReader::new(file).lines() {
+        let line = line.with_context(|| format!("Cannot read: {:?}", path))?.trim().to_string();
+        if !(line.is_empty() || line.starts_with("#")) {
+            vm_options.push(line);
+        }
+    }
+    debug!("{} line(s)", vm_options.len());
+
+    Ok(vm_options)
 }
 
 fn is_gc_vm_option(s: &str) -> bool {
