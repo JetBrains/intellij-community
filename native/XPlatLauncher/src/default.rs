@@ -7,9 +7,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
 use log::{debug, warn};
-use utils::{canonical_non_unc, get_path_from_env_var, get_path_from_user_config, is_executable, jvm_property, PathExt};
 
-use crate::{get_config_home, LaunchConfiguration, ProductInfo, ProductInfoLaunchField};
+use crate::*;
 
 const IDE_HOME_LOOKUP_DEPTH: usize = 5;
 

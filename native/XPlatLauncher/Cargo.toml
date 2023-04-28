@@ -18,7 +18,6 @@ serde_json = "1.0.79"
 jni = "0.21.1"
 jni-sys = "0.3.0"
 libloading = "0.8.0"
-utils = { version = "0.1.0", path = "utils" }
 anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]

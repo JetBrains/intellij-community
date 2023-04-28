@@ -13,8 +13,8 @@ use anyhow::{bail, Context, Result};
 use log::debug;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, TempDir};
-use utils::PathExt;
-use xplat_launcher::get_config_home;
+
+use xplat_launcher::{get_config_home, PathExt};
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -364,14 +364,14 @@ fn layout_launcher_impl(
     include_jbr: bool,
     jbr_path: &Path
 ) -> Result<()> {
-    for file in create_files {
-        let target = &target_dir.join(file);
+    for target_rel_path in create_files {
+        let target = &target_dir.join(target_rel_path);
         fs::create_dir_all(target.parent_or_err()?)?;
         File::create(target).context(format!("Failed to create file {target:?}"))?;
     }
 
-    for (source, target_relative) in copy_files {
-        let target = &target_dir.join(target_relative);
+    for (source, target_rel_path) in copy_files {
+        let target = &target_dir.join(target_rel_path);
         fs::create_dir_all(target.parent_or_err()?)?;
         fs::copy(source, target).context(format!("Failed to copy from {source:?} to {target:?}"))?;
     }

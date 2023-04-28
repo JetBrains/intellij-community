@@ -22,8 +22,17 @@ use {
     native_dialog::{MessageDialog, MessageType}
 };
 
-pub fn show_fail_to_start_message(title: &str, text: &str) {
-    show_alert_impl(title, text)
+const ERROR_TITLE: &'static str = "Cannot start the IDE";
+const ERROR_FOOTER: &'static str =
+    "Please try to reinstall the IDE.\n\
+    For support, please refer to https://jb.gg/ide/critical-startup-errors";
+
+pub fn show_error(gui: bool, error: anyhow::Error) {
+    if gui {
+        show_alert_impl(ERROR_TITLE, &format!("{:?}\n\n{}", error, ERROR_FOOTER));
+    } else {
+        eprintln!("\n=== {ERROR_TITLE} ===\n{error:?}");
+    }
 }
 
 #[cfg(target_os = "windows")]

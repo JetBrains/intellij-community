@@ -9,7 +9,6 @@ macro_use_extern_crate,
 meta_variable_misuse,
 missing_abi,
 missing_copy_implementations,
-missing_debug_implementations,
 non_ascii_idents,
 noop_method_call,
 pointer_structural_match,
@@ -34,10 +33,9 @@ variant_size_differences
 use std::env;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use log::{debug, error, LevelFilter, warn};
 use serde::{Deserialize, Serialize};
-use utils::jvm_property;
 
 #[cfg(target_os = "windows")]
 use {
@@ -46,22 +44,20 @@ use {
     windows::Win32::UI::Shell
 };
 
+#[cfg(target_family = "unix")]
+use std::os::unix::fs::PermissionsExt;
+
 use crate::default::DefaultLaunchConfiguration;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
 
-mod mini_logger;
-mod ui;
-mod java;
-mod remote_dev;
-mod default;
-mod docker;
+pub mod mini_logger;
+pub mod ui;
+pub mod default;
+pub mod remote_dev;
+pub mod java;
+pub mod docker;
 
 pub const DEBUG_MODE_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
-
-const ERROR_TITLE: &'static str = "Cannot start the IDE";
-const ERROR_FOOTER: &'static str =
-    "Please try to reinstall the IDE.\n\
-    For support, please refer to https://jb.gg/ide/critical-startup-errors";
 
 #[cfg(target_os = "windows")]
 const CLASS_PATH_SEPARATOR: &'static str = ";";
@@ -69,32 +65,20 @@ const CLASS_PATH_SEPARATOR: &'static str = ";";
 const CLASS_PATH_SEPARATOR: &'static str = ":";
 
 pub fn main_lib() {
-    let debug_mode = env::var(DEBUG_MODE_ENV_VAR).is_ok();
+    let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from(env::args().next().unwrap()));
+    let remote_dev = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
+    let debug_mode = remote_dev || env::var(DEBUG_MODE_ENV_VAR).is_ok();
 
-    if let Err(e) = main_impl(debug_mode) {
-        if debug_mode || is_remote_dev_safe() {
-            eprintln!("\n=== {ERROR_TITLE} ===\n{e:?}");
-        } else {
-            ui::show_fail_to_start_message(ERROR_TITLE, &format!("{:?}\n\n{}", e, ERROR_FOOTER))
-        }
+    if let Err(e) = main_impl(exe_path, remote_dev, debug_mode) {
+        ui::show_error(!debug_mode, e);
         std::process::exit(1);
     }
 }
 
-fn is_remote_dev_safe() -> bool {
-    env::current_exe().map_or(false, |p| is_remote_dev_executable(&p))
-}
-
-fn is_remote_dev_executable(name: &Path) -> bool {
-    name.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server")
-}
-
-fn main_impl(debug_mode: bool) -> Result<()> {
-    let exe_path = env::current_exe().context("Cannot get the executable path")?;
-    let remote_dev = is_remote_dev_executable(&exe_path);
-
-    let level = if debug_mode || remote_dev { LevelFilter::Debug } else { LevelFilter::Error };
+fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()> {
+    let level = if debug_mode { LevelFilter::Debug } else { LevelFilter::Error };
     mini_logger::init(level).expect("Cannot initialize the logger");
+    debug!("Executable: {exe_path:?}");
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
 
     // lets the panic on JVM thread crash the launcher (or not?)
@@ -130,6 +114,11 @@ fn main_impl(debug_mode: bool) -> Result<()> {
     result
 }
 
+#[macro_export]
+macro_rules! jvm_property {
+    ( $name:expr, $value:expr ) => { format!("-D{}={}", $name, $value) }
+}
+
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfo {
@@ -150,18 +139,15 @@ pub struct ProductInfoLaunchField {
 
 pub trait LaunchConfiguration {
     fn get_args(&self) -> &[String];
-
     fn get_vm_options(&self) -> Result<Vec<String>>;
     fn get_properties_file(&self) -> Result<PathBuf>;
     fn get_class_path(&self) -> Result<Vec<String>>;
-
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
 fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn LaunchConfiguration>> {
-    debug!("executable={exe_path:?}");
     let cmd_args: Vec<String> = env::args().collect();
-    debug!("args={:?}", &cmd_args);
+    debug!("Args: {:?}", &cmd_args);
 
     if is_remote_dev {
         RemoteDevLaunchConfiguration::new(exe_path, cmd_args)
@@ -264,29 +250,65 @@ fn get_user_home() -> Result<PathBuf> {
     env::home_dir().context("Cannot detect a user home directory")
 }
 
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-pub fn is_running_in_docker() -> Result<bool> {
-    docker::is_running_in_docker()
+pub fn get_path_from_env_var(env_var_name: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
+    let env_var = env::var(env_var_name);
+    debug!("${env_var_name} = {env_var:?}");
+    get_path_from_user_config(&env_var?, expecting_dir)
 }
 
-#[cfg(target_os = "linux")]
-pub fn is_docker_env_file_exist(home_path: Option<PathBuf>) -> Result<bool> {
-    docker::is_docker_env_file_exist(home_path)
+pub fn get_path_from_user_config(config_raw: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
+    let config_value = config_raw.trim();
+    if config_value.is_empty() {
+        bail!("Empty path");
+    }
+
+    let path = PathBuf::from(config_value);
+    if let Some(expecting_dir) = expecting_dir {
+        if expecting_dir && !path.is_dir() {
+            bail!("Not a directory: {:?}", path);
+        } else if !expecting_dir && !path.is_file() {
+            bail!("Not a file: {:?}", path);
+        }
+    }
+
+    Ok(path)
 }
 
-#[cfg(target_os = "linux")]
-pub fn is_docker_init_file_exist(home_path: Option<PathBuf>) -> Result<bool> {
-    docker::is_docker_init_file_exist(home_path)
-}
-
-#[cfg(target_os = "linux")]
-pub fn is_control_group_matches_docker(cgroup_path: Option<PathBuf>) -> bool {
-    docker::is_control_group_matches_docker(cgroup_path)
-        .expect("Unable to detect Docker environment by cgroup file.")
+#[cfg(target_family = "unix")]
+pub fn is_executable(path: &Path) -> Result<bool> {
+    let metadata = path.metadata()?;
+    Ok(metadata.is_file() && (metadata.permissions().mode() & 0o111 != 0))
 }
 
 #[cfg(target_os = "windows")]
-pub fn is_service_present(service_name: &str) -> bool {
-    docker::is_service_present(service_name)
-        .expect("Unable to detect Docker environment by getting windows service 'cexecsvc'.")
+pub fn is_executable(_path: &Path) -> Result<bool> {
+    Ok(true)
+}
+
+#[cfg(target_os = "windows")]
+pub fn canonical_non_unc(path: &Path) -> Result<String> {
+    let canonical = path.canonicalize()?;
+    let os_str = canonical.as_os_str().to_string_lossy().to_string();
+    let stripped_unc = os_str.strip_prefix("\\\\?\\").unwrap().to_string();
+    Ok(stripped_unc)
+}
+
+#[cfg(target_family = "unix")]
+pub fn canonical_non_unc(path: &Path) -> Result<String> {
+    let canonical = path.canonicalize()?;
+    let os_str = canonical.as_os_str().to_string_lossy().to_string();
+    Ok(os_str)
+}
+
+pub trait PathExt {
+    fn parent_or_err(&self) -> Result<PathBuf>;
+}
+
+impl PathExt for Path {
+    fn parent_or_err(&self) -> Result<PathBuf> {
+        match self.parent() {
+            Some(path) => Ok(path.to_path_buf()),
+            None => bail!("No parent dir for '{self:?}'")
+        }
+    }
 }

@@ -6,16 +6,16 @@ pub mod utils;
 mod tests {
     #[cfg(target_os = "linux")]
     use {
-        std::fs::{File, create_dir_all},
+        std::fs::{create_dir_all, File},
         std::io::Write,
         std::path::PathBuf,
         log::info,
-        crate::utils::*,
-        xplat_launcher::{is_control_group_matches_docker, is_docker_env_file_exist, is_docker_init_file_exist}
+        xplat_launcher::docker::{is_control_group_matches_docker, is_docker_env_file_exist, is_docker_init_file_exist},
+        crate::utils::*
     };
 
     #[cfg(target_os = "windows")]
-    use xplat_launcher::is_service_present;
+    use xplat_launcher::docker::is_service_present;
 
     #[cfg(target_os = "linux")]
     const TEST_CLASS_DIR_NAME: &str = "DockerTestData";
@@ -101,7 +101,7 @@ mod tests {
 
         create_cgroup_file(&cgroup_dir, content);
 
-        assert!(is_control_group_matches_docker(Some(cgroup_dir)));
+        assert!(is_control_group_matches_docker(Some(cgroup_dir)).unwrap());
     }
 
     #[test]
@@ -123,19 +123,19 @@ mod tests {
 
         create_cgroup_file(&cgroup_dir, cgroup_content);
 
-        assert!(!is_control_group_matches_docker(Some(cgroup_dir)));
+        assert!(!is_control_group_matches_docker(Some(cgroup_dir)).unwrap());
     }
 
     #[test]
     #[cfg(target_os = "windows")]
     fn is_service_present_service_exist() {
-        assert!(is_service_present("Dnscache"));
+        assert!(is_service_present("Dnscache").unwrap());
     }
 
     #[test]
     #[cfg(target_os = "windows")]
     fn is_service_present_service_not_exist() {
-        assert!(!is_service_present("ServiceDoesNotExist"));
+        assert!(!is_service_present("ServiceDoesNotExist").unwrap());
     }
 
     #[test]
