@@ -3,16 +3,21 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.async.mapCaching
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
+import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionViewModel.NoteItem
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel.NoteItem
 
-interface GitLabDiscussionViewModel {
+interface GitLabMergeRequestDiffDiscussionViewModel : DiffMapped {
   val id: String
   val notes: Flow<List<NoteItem>>
 
@@ -34,13 +39,14 @@ interface GitLabDiscussionViewModel {
   }
 }
 
-private val LOG = logger<GitLabDiscussionViewModel>()
+private val LOG = logger<GitLabMergeRequestDiffDiscussionViewModel>()
 
-class GitLabDiscussionViewModelImpl(
+class GitLabMergeRequestDiffDiscussionViewModelImpl(
   parentCs: CoroutineScope,
+  diffData: GitTextFilePatchWithHistory,
   currentUser: GitLabUserDTO,
-  discussion: GitLabDiscussion
-) : GitLabDiscussionViewModel {
+  discussion: GitLabMergeRequestDiscussion
+) : GitLabMergeRequestDiffDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
@@ -77,6 +83,26 @@ class GitLabDiscussionViewModelImpl(
       )
     }
   }.modelFlow(cs, LOG)
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val location: Flow<DiffLineLocation?> = discussion.firstNote().flatMapLatest {
+    if (it == null) return@flatMapLatest flowOf(null)
+    it.position.map { position ->
+      if (position !is GitLabNotePosition.Text) return@map null
+
+      if ((position.filePathBefore != null && !diffData.contains(position.parentSha, position.filePathBefore)) &&
+          (position.filePathAfter != null && !diffData.contains(position.sha, position.filePathAfter))) return@map null
+
+      val (side, lineIndex) = position.location
+      // context should be mapped to the left side
+      val commitSha = side.select(position.parentSha, position.sha)!!
+
+      diffData.mapLine(commitSha, lineIndex, side)
+    }
+  }.distinctUntilChanged()
+
+  private fun GitLabMergeRequestDiscussion.firstNote(): Flow<GitLabMergeRequestNote?> =
+    notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
 
   override suspend fun destroy() {
     try {
