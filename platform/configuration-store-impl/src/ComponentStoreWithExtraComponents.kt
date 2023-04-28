@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -11,6 +12,8 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 // A way to remove obsolete component data.
 internal val OBSOLETE_STORAGE_EP = ExtensionPointName<ObsoleteStorageBean>("com.intellij.obsoleteStorage")
@@ -27,8 +30,10 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       else if (instance is @Suppress("DEPRECATION") com.intellij.openapi.components.SettingsSavingComponent) {
         result.add(object : SettingsSavingComponent {
           override suspend fun save() {
-            blockingContext {
-              instance.save()
+            withContext(Dispatchers.EDT) {
+              blockingContext {
+                instance.save()
+              }
             }
           }
         })
