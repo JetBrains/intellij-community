@@ -129,7 +129,7 @@ public final class DaemonListeners implements Disposable {
     EditorFactory editorFactory = EditorFactory.getInstance();
     EditorEventMulticasterEx eventMulticaster = (EditorEventMulticasterEx)editorFactory.getEventMulticaster();
     eventMulticaster.addDocumentListener(new DocumentListener() {
-      // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
+      // clearing highlighters before changing the document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
       public void beforeDocumentChange(@NotNull DocumentEvent e) {
         Document document = e.getDocument();

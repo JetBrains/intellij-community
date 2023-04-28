@@ -429,7 +429,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Does not actually convert to title case, but just capitalizes all words.
+   * Does not actually convert to a title case, but just capitalizes all words.
    * This is probably not correct for any language.
    * For actual (English) title case see {@link #wordsToBeginFromUpperCase(String)}.
    */
@@ -1221,7 +1221,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to answer if given symbol is white space, tabulation or line feed.
+   * True if given symbol is white space, tabulation or line feed.
    *
    * @param c symbol to check
    * @return {@code true} if given symbol is white space, tabulation or line feed; {@code false} otherwise
@@ -1382,7 +1382,7 @@ public class StringUtil extends StringUtilRt {
    * @param text text to get word ranges in.
    * @param separatorsSet if not null, only these characters will be considered as separators (i.e., not a part of word).
    *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine whether a symbol is part of word.
-   * @return ranges ranges of words in passed text.
+   * @return ranges of words in passed text.
    */
   @Contract(pure = true)
   public static @NotNull List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
@@ -1658,7 +1658,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Find position of the first character accepted by given filter.
+   * Find the position of the first character accepted by given filter.
    *
    * @param s      the string to search
    * @param filter search filter
@@ -1767,7 +1767,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to answer if target symbol is contained at given char sequence at {@code [start; end)} interval.
+   * True if the target symbol {@code c} is contained in the given sequence at {@code [start; end)} interval.
    *
    * @param s     target char sequence to check
    * @param start start offset to use within the given char sequence (inclusive)
@@ -1899,7 +1899,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to retrieve index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
+   * return the index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
    *
    * @param s     target text
    * @param c     target symbol which last occurrence we want to check
@@ -2470,7 +2470,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Splits string by lines. If several line separators are in a row corresponding empty lines
+   * Splits string by lines.
+   * If several line separators are in a row, corresponding empty lines
    * are also added to result if {@code excludeEmptyStrings} is {@code false}.
    *
    * @param string String to split
@@ -2784,7 +2785,7 @@ public class StringUtil extends StringUtilRt {
    * Equivalent for {@code getShortName(fqName).equals(shortName)}, but could be faster.
    *
    * @param fqName    fully-qualified name (dot-separated)
-   * @param shortName a short name, must not contain dots
+   * @param shortName a short name, which must not contain dots
    * @return true if specified short name is a short name of fully-qualified name
    */
   public static boolean isShortNameOf(@NotNull String fqName, @NotNull String shortName) {
