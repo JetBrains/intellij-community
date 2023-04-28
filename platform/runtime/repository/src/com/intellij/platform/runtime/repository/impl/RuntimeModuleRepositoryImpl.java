@@ -10,9 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   private final Map<RuntimeModuleId, RuntimeModuleDescriptor> myModulesDescriptors;
@@ -42,11 +44,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
       RuntimeModuleId id = RuntimeModuleId.raw(entry.getKey());
       dependenciesMap.put(id, dependencies);
       List<String> resourcePaths = entry.getValue().getResourcePaths();
-      List<ResourceRoot> resourceRoots = new ArrayList<>(resourcePaths.size());
-      for (String path : resourcePaths) {
-        resourceRoots.add(createResourceRoot(basePath, path));
-      }
-      result.put(id, new RuntimeModuleDescriptorImpl(id, resourceRoots, dependencies));
+      result.put(id, new RuntimeModuleDescriptorImpl(id, basePath, resourcePaths, dependencies));
     }
 
     for (Map.Entry<RuntimeModuleId, RuntimeModuleDescriptor> entry : result.entrySet()) {
@@ -72,28 +70,5 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
       throw new MalformedRepositoryException("Cannot find module '" + moduleId.getStringId() + "' in " + this);
     }
     return dependency;
-  }
-
-  private static ResourceRoot createResourceRoot(Path baseDir, String relativePath) {
-    Path root = convertToAbsolute(baseDir, relativePath);
-    if (Files.isRegularFile(root)) {
-      return new JarResourceRoot(root);
-    }
-    return new DirectoryResourceRoot(root);
-  }
-
-  private static Path convertToAbsolute(Path baseDir, String relativePath) {
-    if (relativePath.startsWith("$")) {
-      return ResourcePathMacros.resolve(relativePath);
-    }
-    Path root = baseDir;
-    while (relativePath.startsWith("../")) {
-      relativePath = relativePath.substring(3);
-      root = root.getParent();
-    }
-    if (!relativePath.isEmpty()) {
-      root = root.resolve(relativePath);
-    }
-    return root;
   }
 }

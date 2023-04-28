@@ -61,12 +61,12 @@ class RepositoryTest {
       "\$PROJECT_DIR$/../foo.jar",
     )
     for (path in incorrectPaths) {
-      assertThrows(MalformedRepositoryException::class.java, {
-        createRepository(
-          tempDirectory.rootPath,
-          RawRuntimeModuleDescriptor("ij.foo", listOf(path), emptyList())
-        )
-      }, "Path $path is incorrect")
+      val repository = createRepository(
+        tempDirectory.rootPath,
+        RawRuntimeModuleDescriptor("ij.foo", listOf(path), emptyList())
+      )
+      val module = repository.getModule(RuntimeModuleId.raw("ij.foo"))
+      assertThrows(MalformedRepositoryException::class.java, { module.resourceRootPaths }, "Path $path is incorrect")
     }
   }
 
