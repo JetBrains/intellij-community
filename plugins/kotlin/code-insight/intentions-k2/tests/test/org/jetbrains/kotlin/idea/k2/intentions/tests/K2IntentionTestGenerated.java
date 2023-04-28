@@ -4006,4 +4006,142 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw")
+    public static class ConvertBinaryExpressionWithDemorgansLaw extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("complexNegation1.kt")
+        public void testComplexNegation1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/complexNegation1.kt");
+        }
+
+        @TestMetadata("complexNegation2.kt")
+        public void testComplexNegation2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/complexNegation2.kt");
+        }
+
+        @TestMetadata("conjunctionNegation1.kt")
+        public void testConjunctionNegation1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/conjunctionNegation1.kt");
+        }
+
+        @TestMetadata("conjunctionNegation2.kt")
+        public void testConjunctionNegation2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/conjunctionNegation2.kt");
+        }
+
+        @TestMetadata("disjunctionNegation1.kt")
+        public void testDisjunctionNegation1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/disjunctionNegation1.kt");
+        }
+
+        @TestMetadata("disjunctionNegation2.kt")
+        public void testDisjunctionNegation2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/disjunctionNegation2.kt");
+        }
+
+        @TestMetadata("dontAddRedundantParenthesis.kt")
+        public void testDontAddRedundantParenthesis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/dontAddRedundantParenthesis.kt");
+        }
+
+        @TestMetadata("doubleNegation.kt")
+        public void testDoubleNegation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/doubleNegation.kt");
+        }
+
+        @TestMetadata("hasBreak.kt")
+        public void testHasBreak() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasBreak.kt");
+        }
+
+        @TestMetadata("hasContinue.kt")
+        public void testHasContinue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasContinue.kt");
+        }
+
+        @TestMetadata("hasNothing.kt")
+        public void testHasNothing() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasNothing.kt");
+        }
+
+        @TestMetadata("hasReturn.kt")
+        public void testHasReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasReturn.kt");
+        }
+
+        @TestMetadata("hasThrow.kt")
+        public void testHasThrow() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasThrow.kt");
+        }
+
+        @TestMetadata("hasThrow2.kt")
+        public void testHasThrow2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasThrow2.kt");
+        }
+
+        @TestMetadata("inapplicableOperator.kt")
+        public void testInapplicableOperator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/inapplicableOperator.kt");
+        }
+
+        @TestMetadata("inapplicableTriple.kt")
+        public void testInapplicableTriple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/inapplicableTriple.kt");
+        }
+
+        @TestMetadata("invertNegatedIsEmpty.kt")
+        public void testInvertNegatedIsEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/invertNegatedIsEmpty.kt");
+        }
+
+        @TestMetadata("invertNegatedIsNotEmpty.kt")
+        public void testInvertNegatedIsNotEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/invertNegatedIsNotEmpty.kt");
+        }
+
+        @TestMetadata("longMixedExpression.kt")
+        public void testLongMixedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/longMixedExpression.kt");
+        }
+
+        @TestMetadata("mixedExpression.kt")
+        public void testMixedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/mixedExpression.kt");
+        }
+
+        @TestMetadata("noNegationPrefix1.kt")
+        public void testNoNegationPrefix1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/noNegationPrefix1.kt");
+        }
+
+        @TestMetadata("noNegationPrefix2.kt")
+        public void testNoNegationPrefix2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/noNegationPrefix2.kt");
+        }
+
+        @TestMetadata("noNegationPrefix3.kt")
+        public void testNoNegationPrefix3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/noNegationPrefix3.kt");
+        }
+
+        @TestMetadata("noNegationPrefix4.kt")
+        public void testNoNegationPrefix4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/noNegationPrefix4.kt");
+        }
+
+        @TestMetadata("nonstandardPrefixOperator.kt")
+        public void testNonstandardPrefixOperator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/nonstandardPrefixOperator.kt");
+        }
+
+        @TestMetadata("retainedParens.kt")
+        public void testRetainedParens() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/retainedParens.kt");
+        }
+    }
 }
