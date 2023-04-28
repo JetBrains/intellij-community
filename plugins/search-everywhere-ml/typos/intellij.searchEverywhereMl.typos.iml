@@ -16,13 +16,13 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module-library">
       <library name="ai.grazie.spell.gec.engine.local" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local-jvm:0.2.145-lucene-9-1" />
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local-jvm:0.2.149-lucene-9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.2.145-lucene-9-1/gec-spell-engine-local-jvm-0.2.145-lucene-9-1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.2.149-lucene-9/gec-spell-engine-local-jvm-0.2.149-lucene-9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.2.145-lucene-9-1/gec-spell-engine-local-jvm-0.2.145-lucene-9-1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.2.149-lucene-9/gec-spell-engine-local-jvm-0.2.149-lucene-9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
