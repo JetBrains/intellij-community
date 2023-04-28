@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.maven3;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.maven4;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo;
@@ -26,20 +26,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static org.jetbrains.idea.maven.server.MavenServerManager.BUNDLED_MAVEN_3;
+import static org.jetbrains.idea.maven.server.MavenServerManager.BUNDLED_MAVEN_4;
 
-final class Maven3Support implements MavenVersionAwareSupportExtension {
+final class Maven4Support implements MavenVersionAwareSupportExtension {
   @Override
   public boolean isSupportedByExtension(@Nullable File mavenHome) {
     String version = MavenUtil.getMavenVersion(mavenHome);
-    return StringUtil.compareVersionNumbers(version, "3") >= 0 && StringUtil.compareVersionNumbers(version, "4") < 0;
+    return StringUtil.compareVersionNumbers(version, "4") >= 0;
   }
 
   @Override
   public @Nullable File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
-    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
-        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.3.title"), mavenHome)) {
+    if (StringUtil.equals(BUNDLED_MAVEN_4, mavenHome) ||
+        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.4.title"), mavenHome)) {
       return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
     }
     return null;
@@ -47,21 +47,22 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
 
   @Override
   public @Nullable String asMavenHome(DistributionInfo distribution) {
-    if (distribution instanceof Bundled3DistributionInfo) return BUNDLED_MAVEN_3;
+    if (distribution instanceof Bundled4DistributionInfo) return BUNDLED_MAVEN_4;
     return null;
   }
 
   @Override
   public @Nullable DistributionInfo asDistributionInfo(String mavenHome) {
-    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
-      return new Bundled3DistributionInfo(MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion());
+    if (StringUtil.equals(BUNDLED_MAVEN_4, mavenHome)) {
+      return new Bundled4DistributionInfo(MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion());
     }
     return null;
   }
 
   @Override
   public @NotNull List<String> supportedBundles() {
-    return Collections.singletonList(BUNDLED_MAVEN_3);
+    return List.of();
+    //return Collections.singletonList(BUNDLED_MAVEN_4);
   }
 
   @Override
@@ -91,18 +92,9 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(PathUtil.getJarPathForClass(MavenServer.class)));
 
-    classpath.add(new File(root, "maven3-server-common.jar"));
-    addDir(classpath, new File(root, "maven3-server-lib"), f -> true);
+    //addDir(classpath, new File(root, "maven4-server-lib"), f -> true);
 
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-      classpath.add(new File(root, "maven30-server.jar"));
-    }
-    else {
-      classpath.add(new File(root, "maven3-server.jar"));
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-        classpath.add(new File(root, "maven36-server.jar"));
-      }
-    }
+    classpath.add(new File(root, "maven40-server.jar"));
   }
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
@@ -112,18 +104,8 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
     File parentFile = MavenUtil.getMavenPluginParentFile();
-    classpath.add(new File(root, "intellij.maven.server.m3.common"));
-    addDir(classpath, new File(parentFile, "maven3-server-common/lib"), f -> true);
 
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-      classpath.add(new File(root, "intellij.maven.server.m30.impl"));
-    }
-    else {
-      classpath.add(new File(root, "intellij.maven.server.m3.impl"));
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-        classpath.add(new File(root, "intellij.maven.server.m36.impl"));
-      }
-    }
+    classpath.add(new File(root, "intellij.maven.server.m40"));
   }
 
   private static void addMavenLibs(List<File> classpath, File mavenHome) {

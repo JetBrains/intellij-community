@@ -530,6 +530,7 @@
     <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.wsl.WslMavenRemoteProcessSupportFactory"/>
     <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.wsl.WslRemotePathTransformFactory"/>
     <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven3.Maven3Support"/>
+    <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven4.Maven4Support"/>
 
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerConfigurator"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenCompilerConfigurator"/>

@@ -175,8 +175,11 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
                                                () -> {
                                                  final String resolvedMavenHome = resolveMavenHome(data.getMavenHome());
                                                  final String mavenHome = ObjectUtils.chooseNotNull(resolvedMavenHome, data.getMavenHome());
+                                                 if (MavenServerManager.BUNDLED_MAVEN_4.equals(mavenHome)) {
+                                                   return MavenProjectBundle.message("maven.bundled.version.4.title");
+                                                 }
                                                  if (MavenServerManager.BUNDLED_MAVEN_3.equals(mavenHome)) {
-                                                   return MavenProjectBundle.message("maven.bundled.version.title");
+                                                   return MavenProjectBundle.message("maven.bundled.version.3.title");
                                                  }
                                                  if (MavenServerManager.WRAPPED_MAVEN.equals(mavenHome)) {
                                                    return MavenProjectBundle.message("maven.wrapper.version.title");

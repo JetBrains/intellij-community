@@ -18,6 +18,7 @@ import java.util.function.Predicate;
 public interface MavenServerManager extends Disposable {
   String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
   String BUNDLED_MAVEN_3 = "Bundled (Maven 3)";
+  String BUNDLED_MAVEN_4 = "Bundled (Maven 4)";
   String WRAPPED_MAVEN = "Use Maven wrapper";
 
   Collection<MavenServerConnector> getAllConnectors();
