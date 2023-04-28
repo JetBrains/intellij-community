@@ -591,7 +591,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     final Collection<Maven3ExecutionResult> executionResults = new ArrayList<>();
     Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();
 
-    executeWithMavenSession(request, (Runnable)() -> {
+    executeWithMavenSession(request, () -> {
       try {
         MavenSession mavenSession = getComponent(LegacySupport.class).getSession();
         RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
