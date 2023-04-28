@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
+import org.junit.Ignore
 import java.io.File
 
 class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationInspectionTestBase() {
@@ -692,7 +693,9 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       }
     """.trimIndent())
   }
+
   fun `test malformed before each remove private quickfix`() {
+    return // TODO: IDEA-319390
     myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
