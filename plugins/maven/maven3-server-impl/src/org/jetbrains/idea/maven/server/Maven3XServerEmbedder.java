@@ -1263,34 +1263,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private List<MavenArtifact> doResolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
-                                                    @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
-
-    try {
-      Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
-      for (MavenArtifactInfo each : artifacts) {
-        toResolve.add(createArtifact(each));
-      }
-
-      Artifact project = getComponent(ArtifactFactory.class).createBuildArtifact("temp", "temp", "666", "pom");
-
-      Set<Artifact> res = getComponent(ArtifactResolver.class)
-        .resolveTransitively(toResolve, project, Collections.emptyMap(), myLocalRepository, convertRepositories(remoteRepositories),
-                             getComponent(ArtifactMetadataSource.class)).getArtifacts();
-
-      return Maven3ModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
-    }
-    catch (Exception e) {
-      MavenServerGlobals.getLogger().info(e);
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @NotNull
   private List<MavenArtifact> doResolveTransitivelyWithError(@NotNull List<MavenArtifactInfo> artifacts,
                                                              @NotNull List<MavenRemoteRepository> remoteRepositories)
     throws RemoteException, ArtifactResolutionException, ArtifactNotFoundException {
-    Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
+    Set<Artifact> toResolve = new LinkedHashSet<>();
     for (MavenArtifactInfo each : artifacts) {
       toResolve.add(createArtifact(each));
     }
@@ -1301,7 +1277,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       .resolveTransitively(toResolve, project, Collections.emptyMap(), myLocalRepository, convertRepositories(remoteRepositories),
                            getComponent(ArtifactMetadataSource.class)).getArtifacts();
 
-    return Maven3ModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
+    return Maven3ModelConverter.convertArtifacts(res, new HashMap<>(), getLocalRepositoryFile());
   }
 
   @NotNull
