@@ -24,11 +24,11 @@ import org.eclipse.aether.transfer.TransferResource;
 import java.io.File;
 import java.rmi.RemoteException;
 
-public class TransferListenerAdapter implements TransferListener {
+public class Maven3TransferListenerAdapter implements TransferListener {
 
   protected final MavenServerProgressIndicator myIndicator;
 
-  public TransferListenerAdapter(MavenServerProgressIndicator indicator) {
+  public Maven3TransferListenerAdapter(MavenServerProgressIndicator indicator) {
     myIndicator = indicator;
   }
 

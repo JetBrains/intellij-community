@@ -598,7 +598,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         if (repositorySession instanceof DefaultRepositorySystemSession) {
           DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
           myImporterSpy.setIndicator(myCurrentIndicator);
-          session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+          session.setTransferListener(new Maven3TransferListenerAdapter(myCurrentIndicator));
 
           if (myWorkspaceMap != null) {
             session.setWorkspaceReader(new Workspace3Reader(myWorkspaceMap));
@@ -1330,7 +1330,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenServerUtil.checkToken(token);
 
     MavenExecutionRequest request = createRequest(null, null, null, null);
-    request.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+    request.setTransferListener(new Maven3TransferListenerAdapter(myCurrentIndicator));
 
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     RepositorySystemSession session = maven.newRepositorySession(request);
