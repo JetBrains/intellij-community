@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.util.BooleanFunction;
@@ -104,6 +104,7 @@ public final class Iterators {
       return Collections.emptyList();
     }
     if (parts.size() == 1) {
+      //noinspection unchecked
       return (Iterable<T>)parts.iterator().next();
     }
     return flat((Iterable<? extends Iterable<? extends T>>)parts);
@@ -155,18 +156,8 @@ public final class Iterators {
   }
 
   public static <I> Iterator<I> asIterator(final Iterable<? extends I> from) {
-    final Iterator<? extends I> it = from.iterator();
-    return new BaseIterator<I>() {
-      @Override
-      public boolean hasNext() {
-        return it.hasNext();
-      }
-
-      @Override
-      public I next() {
-        return it.next();
-      }
-    };
+    //noinspection unchecked
+    return from == null? Collections.<I>emptyIterator() : (Iterator<I>)from.iterator();
   }
 
   public static <T> Iterable<T> asIterable(final T elem) {
@@ -313,6 +304,29 @@ public final class Iterators {
         return Collections.emptyIterator();
       }
     }));
+  }
+
+  public static <T> Iterable<T> unique(final Iterable<? extends T> it) {
+    return isEmptyCollection(it)? Collections.<T>emptyList() : new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return unique(it.iterator());
+      }
+    };
+  }
+
+  public static <T> Iterator<T> unique(final Iterator<? extends T> it) {
+    return filter(it, new BooleanFunction<T>() {
+      private Set<T> processed;
+      @Override
+      public boolean fun(T t) {
+        if (processed == null) {
+          processed = new HashSet<>();
+        }
+        return processed.add(t);
+      }
+    });
   }
 
   @SuppressWarnings("unchecked")
