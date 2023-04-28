@@ -201,7 +201,6 @@ open class JBTabsImpl(private var project: Project?,
   internal var uiDecorator: UiDecorator? = null
   private var paintFocus = false
   private var hideTabs = false
-  private var hideTopPanel = false
   private var isRequestFocusOnLastFocusedComponent = false
   private var listenerAdded = false
   @JvmField
@@ -2521,7 +2520,7 @@ open class JBTabsImpl(private var project: Project?,
 
   override fun getIndexOf(tabInfo: TabInfo?): Int = getVisibleInfos().indexOf(tabInfo)
 
-  override fun isHideTabs(): Boolean = hideTabs || hideTopPanel
+  override fun isHideTabs(): Boolean = hideTabs || isHideTopPanel
 
   override fun setHideTabs(hideTabs: Boolean) {
     if (isHideTabs == hideTabs) {
