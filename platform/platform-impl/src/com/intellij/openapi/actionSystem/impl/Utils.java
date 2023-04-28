@@ -140,7 +140,7 @@ public final class Utils {
   @ApiStatus.Internal
   public static @Nullable Object getRawDataIfCached(@NotNull DataContext dataContext, @NotNull String dataId) {
     return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
-           dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached(dataId) : null;
+           dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached$intellij_platform_ide_impl(dataId) : null;
   }
 
   static void clearAllCachesAndUpdates() {

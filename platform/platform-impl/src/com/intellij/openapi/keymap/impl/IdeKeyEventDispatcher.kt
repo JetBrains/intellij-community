@@ -507,13 +507,13 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
                          shortcut = context.shortcut)
   }
 
-  fun processAction(e: InputEvent,
-                    place: String,
-                    context: DataContext,
-                    actions: List<AnAction>,
-                    processor: ActionProcessor,
-                    presentationFactory: PresentationFactory,
-                    shortcut: Shortcut): Boolean {
+  internal fun processAction(e: InputEvent,
+                             place: String,
+                             context: DataContext,
+                             actions: List<AnAction>,
+                             processor: ActionProcessor,
+                             presentationFactory: PresentationFactory,
+                             shortcut: Shortcut): Boolean {
     if (actions.isEmpty()) {
       return false
     }

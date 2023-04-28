@@ -267,7 +267,7 @@ public final class IdeMouseEventDispatcher {
     ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (actionManager != null && !actions.isEmpty()) {
       DataContext context = DataManager.getInstance().getDataContext(component);
-      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction(
+      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction$intellij_platform_ide_impl(
         event, place, context, actions,
         newActionProcessor(modifiers), myPresentationFactory, shortcut);
     }
