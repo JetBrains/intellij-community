@@ -13,7 +13,8 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 5 OLD`(gradleVersion: GradleVersion) {
     testJunit5Project(gradleVersion) {
-      writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT5_TEST)
+      writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT5_TEST)
+      writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)
 
       executeTasks(":test")
       assertTestTreeView {
@@ -22,11 +23,8 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
           assertNode("test") {
             assertPsiLocation("TestCase", "test")
           }
-          assertNode("successful test") {
+          assertNode("successful_test") {
             assertPsiLocation("TestCase", "successful_test")
-          }
-          assertNode("pretty test") {
-            assertPsiLocation("TestCase", "ugly_test")
           }
           assertNode("parametrized_test [1] 1, first") {
             assertPsiLocation("TestCase", "parametrized_test", "[1]")
@@ -34,11 +32,47 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
           assertNode("parametrized_test [2] 2, second") {
             assertPsiLocation("TestCase", "parametrized_test", "[2]")
           }
+          assertNode("dynamic_test dynamic first") {
+            assertPsiLocation("TestCase", "dynamic_test", "[1]")
+          }
+          assertNode("dynamic_test dynamic second") {
+            assertPsiLocation("TestCase", "dynamic_test", "[2]")
+          }
+        }
+        assertNode("DisplayNameTestCase") {
+          assertPsiLocation("DisplayNameTestCase")
+          assertNode("test") {
+            assertPsiLocation("DisplayNameTestCase", "test")
+          }
+          assertNode("successful test") {
+            assertPsiLocation("DisplayNameTestCase", "successful_test")
+          }
+          assertNode("pretty test") {
+            assertPsiLocation("DisplayNameTestCase", "ugly_test")
+          }
+          assertNode("parametrized_test [1] 1, first") {
+            assertPsiLocation("DisplayNameTestCase", "parametrized_test", "[1]")
+          }
+          assertNode("parametrized_test [2] 2, second") {
+            assertPsiLocation("DisplayNameTestCase", "parametrized_test", "[2]")
+          }
           assertNode("ugly_parametrized_test [1] 3, third") {
-            assertPsiLocation("TestCase", "ugly_parametrized_test", "[1]")
+            assertPsiLocation("DisplayNameTestCase", "ugly_parametrized_test", "[1]")
           }
           assertNode("ugly_parametrized_test [2] 4, fourth") {
-            assertPsiLocation("TestCase", "ugly_parametrized_test", "[2]")
+            assertPsiLocation("DisplayNameTestCase", "ugly_parametrized_test", "[2]")
+          }
+          assertNode("dynamic_test dynamic first") {
+            assertPsiLocation("DisplayNameTestCase", "dynamic_test", "[1]")
+          }
+          assertNode("dynamic_test dynamic second") {
+            assertPsiLocation("DisplayNameTestCase", "dynamic_test", "[2]")
+          }
+          assertNode("ugly_dynamic_test dynamic first") {
+            assertPsiLocation("DisplayNameTestCase", "ugly_dynamic_test", "[1]")
+          }
+          assertNode("ugly_dynamic_test dynamic second") {
+            assertPsiLocation("DisplayNameTestCase", "ugly_dynamic_test", "[2]")
           }
         }
       }
@@ -50,7 +84,8 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 5`(gradleVersion: GradleVersion) {
     testJunit5Project(gradleVersion) {
-      writeText("src/test/java/org/example/TestCase.java", JAVA_PARAMETRISED_JUNIT5_TEST)
+      writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT5_TEST)
+      writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)
 
       executeTasks(":test")
       assertTestTreeView {
@@ -59,17 +94,11 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
           assertNode("test") {
             assertPsiLocation("TestCase", "test")
           }
-          assertNode("successful test") {
+          assertNode("successful_test") {
             assertPsiLocation("TestCase", "successful_test")
           }
-          assertNode("pretty test") {
-            assertPsiLocation("TestCase", "ugly_test")
-          }
-          assertNode("parametrized test") {
-            if (isTestLauncherSupported()) {
-              // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
-              assertPsiLocation("TestCase", "parametrized_test")
-            }
+          assertNode("parametrized_test") {
+            assertPsiLocation("TestCase", "parametrized_test")
             assertNode("[1] 1, first") {
               assertPsiLocation("TestCase", "parametrized_test", "[1]")
             }
@@ -77,16 +106,73 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
               assertPsiLocation("TestCase", "parametrized_test", "[2]")
             }
           }
+          assertNode("dynamic_test") {
+            assertPsiLocation("TestCase", "dynamic_test")
+            assertNode("dynamic first") {
+              assertPsiLocation("TestCase", "dynamic_test", "[1]")
+            }
+            assertNode("dynamic second") {
+              assertPsiLocation("TestCase", "dynamic_test", "[2]")
+            }
+          }
+        }
+        assertNode("DisplayNameTestCase") {
+          assertPsiLocation("DisplayNameTestCase")
+          assertNode("test") {
+            assertPsiLocation("DisplayNameTestCase", "test")
+          }
+          assertNode("successful test") {
+            assertPsiLocation("DisplayNameTestCase", "successful_test")
+          }
+          assertNode("pretty test") {
+            assertPsiLocation("DisplayNameTestCase", "ugly_test")
+          }
+          assertNode("parametrized test") {
+            if (isTestLauncherSupported()) {
+              // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
+              assertPsiLocation("DisplayNameTestCase", "parametrized_test")
+            }
+            assertNode("[1] 1, first") {
+              assertPsiLocation("DisplayNameTestCase", "parametrized_test", "[1]")
+            }
+            assertNode("[2] 2, second") {
+              assertPsiLocation("DisplayNameTestCase", "parametrized_test", "[2]")
+            }
+          }
           assertNode("pretty parametrized test") {
             if (isTestLauncherSupported()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
-              assertPsiLocation("TestCase", "ugly_parametrized_test")
+              assertPsiLocation("DisplayNameTestCase", "ugly_parametrized_test")
             }
             assertNode("[1] 3, third") {
-              assertPsiLocation("TestCase", "ugly_parametrized_test", "[1]")
+              assertPsiLocation("DisplayNameTestCase", "ugly_parametrized_test", "[1]")
             }
             assertNode("[2] 4, fourth") {
-              assertPsiLocation("TestCase", "ugly_parametrized_test", "[2]")
+              assertPsiLocation("DisplayNameTestCase", "ugly_parametrized_test", "[2]")
+            }
+          }
+          assertNode("dynamic test") {
+            if (isTestLauncherSupported()) {
+              // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
+              assertPsiLocation("DisplayNameTestCase", "dynamic_test")
+            }
+            assertNode("dynamic first") {
+              assertPsiLocation("DisplayNameTestCase", "dynamic_test", "[1]")
+            }
+            assertNode("dynamic second") {
+              assertPsiLocation("DisplayNameTestCase", "dynamic_test", "[2]")
+            }
+          }
+          assertNode("pretty dynamic test") {
+            if (isTestLauncherSupported()) {
+              // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
+              assertPsiLocation("DisplayNameTestCase", "ugly_dynamic_test")
+            }
+            assertNode("dynamic first") {
+              assertPsiLocation("DisplayNameTestCase", "ugly_dynamic_test", "[1]")
+            }
+            assertNode("dynamic second") {
+              assertPsiLocation("DisplayNameTestCase", "ugly_dynamic_test", "[2]")
             }
           }
         }
@@ -196,15 +282,50 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
 
   companion object {
 
-    private val JAVA_PARAMETRISED_JUNIT5_TEST = """
+    private val JAVA_JUNIT5_TEST = """
       |package org.example;
       |
       |import org.junit.jupiter.api.*;
       |import org.junit.jupiter.params.ParameterizedTest;
       |import org.junit.jupiter.params.provider.CsvSource;
       |
-      |@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+      |import java.util.Arrays;
+      |import java.util.List;
+      |
       |public class TestCase {
+      |
+      |    @Test
+      |    public void test() {}
+      |
+      |    @Test
+      |    public void successful_test() {}
+      |
+      |    @ParameterizedTest
+      |    @CsvSource({"1, 'first'", "2, 'second'"})
+      |    public void parametrized_test(int value, String name) {}
+      |
+      |    @TestFactory
+      |    public List<DynamicTest> dynamic_test() {
+      |        return Arrays.asList(
+      |            DynamicTest.dynamicTest("dynamic first", () -> {}),
+      |            DynamicTest.dynamicTest("dynamic second", () -> {})
+      |        );
+      |    }
+      |}
+    """.trimMargin()
+
+    private val JAVA_DISPLAY_NAME_JUNIT5_TEST = """
+      |package org.example;
+      |
+      |import org.junit.jupiter.api.*;
+      |import org.junit.jupiter.params.ParameterizedTest;
+      |import org.junit.jupiter.params.provider.CsvSource;
+      |
+      |import java.util.Arrays;
+      |import java.util.List;
+      |
+      |@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+      |public class DisplayNameTestCase {
       |
       |    @Test
       |    public void test() {}
@@ -224,6 +345,23 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       |    @DisplayName("pretty parametrized test")
       |    @CsvSource({"3, 'third'", "4, 'fourth'"})
       |    public void ugly_parametrized_test(int value, String name) {}
+      |
+      |    @TestFactory
+      |    public List<DynamicTest> dynamic_test() {
+      |        return Arrays.asList(
+      |            DynamicTest.dynamicTest("dynamic first", () -> {}),
+      |            DynamicTest.dynamicTest("dynamic second", () -> {})
+      |        );
+      |    }
+      |
+      |    @TestFactory
+      |    @DisplayName("pretty dynamic test")
+      |    public List<DynamicTest> ugly_dynamic_test() {
+      |        return Arrays.asList(
+      |            DynamicTest.dynamicTest("dynamic first", () -> {}),
+      |            DynamicTest.dynamicTest("dynamic second", () -> {})
+      |        );
+      |    }
       |}
     """.trimMargin()
 

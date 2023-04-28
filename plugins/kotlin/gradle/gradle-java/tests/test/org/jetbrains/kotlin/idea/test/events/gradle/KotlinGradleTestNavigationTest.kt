@@ -13,7 +13,8 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 5 OLD`(gradleVersion: GradleVersion) {
         testKotlinJunit5Project(gradleVersion) {
-            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS)
+            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_JUNIT5_TEST)
+            writeText("src/test/kotlin/org/example/DisplayNameTestCase.kt", KOTLIN_DISPLAY_NAME_JUNIT5_TEST)
 
             executeTasks(":test")
             assertTestTreeView {
@@ -25,20 +26,41 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                     assertNode("successful test") {
                         assertPsiLocation("TestCase", "successful test")
                     }
-                    assertNode("pretty test") {
-                        assertPsiLocation("TestCase", "ugly test")
-                    }
                     assertNode("parametrized test [1] 1, first") {
                         assertPsiLocation("TestCase", "parametrized test", "[1]")
                     }
                     assertNode("parametrized test [2] 2, second") {
                         assertPsiLocation("TestCase", "parametrized test", "[2]")
                     }
+                    assertNode("dynamic test dynamic first") {
+                        assertPsiLocation("TestCase", "dynamic test", "[1]")
+                    }
+                    assertNode("dynamic test dynamic second") {
+                        assertPsiLocation("TestCase", "dynamic test", "[2]")
+                    }
+                }
+                assertNode("DisplayNameTestCase") {
+                    assertPsiLocation("DisplayNameTestCase")
+                    assertNode("test") {
+                        assertPsiLocation("DisplayNameTestCase", "test")
+                    }
+                    assertNode("successful test") {
+                        assertPsiLocation("DisplayNameTestCase", "successful test")
+                    }
+                    assertNode("pretty test") {
+                        assertPsiLocation("DisplayNameTestCase", "ugly test")
+                    }
                     assertNode("ugly parametrized test [1] 3, third") {
-                        assertPsiLocation("TestCase", "ugly parametrized test", "[1]")
+                        assertPsiLocation("DisplayNameTestCase", "ugly parametrized test", "[1]")
                     }
                     assertNode("ugly parametrized test [2] 4, fourth") {
-                        assertPsiLocation("TestCase", "ugly parametrized test", "[2]")
+                        assertPsiLocation("DisplayNameTestCase", "ugly parametrized test", "[2]")
+                    }
+                    assertNode("ugly dynamic test dynamic first") {
+                        assertPsiLocation("DisplayNameTestCase", "ugly dynamic test", "[1]")
+                    }
+                    assertNode("ugly dynamic test dynamic second") {
+                        assertPsiLocation("DisplayNameTestCase", "ugly dynamic test", "[2]")
                     }
                 }
             }
@@ -50,7 +72,8 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 5`(gradleVersion: GradleVersion) {
         testKotlinJunit5Project(gradleVersion) {
-            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS)
+            writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_JUNIT5_TEST)
+            writeText("src/test/kotlin/org/example/DisplayNameTestCase.kt", KOTLIN_DISPLAY_NAME_JUNIT5_TEST)
 
             executeTasks(":test")
             assertTestTreeView {
@@ -62,14 +85,8 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                     assertNode("successful test") {
                         assertPsiLocation("TestCase", "successful test")
                     }
-                    assertNode("pretty test") {
-                        assertPsiLocation("TestCase", "ugly test")
-                    }
                     assertNode("parametrized test") {
-                        if (isTestLauncherSupported()) {
-                            // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
-                            assertPsiLocation("TestCase", "parametrized test")
-                        }
+                        assertPsiLocation("TestCase", "parametrized test")
                         assertNode("[1] 1, first") {
                             assertPsiLocation("TestCase", "parametrized test", "[1]")
                         }
@@ -77,16 +94,49 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                             assertPsiLocation("TestCase", "parametrized test", "[2]")
                         }
                     }
+                    assertNode("dynamic test") {
+                        assertPsiLocation("TestCase", "dynamic test")
+                        assertNode("dynamic first") {
+                            assertPsiLocation("TestCase", "dynamic test", "[1]")
+                        }
+                        assertNode("dynamic second") {
+                            assertPsiLocation("TestCase", "dynamic test", "[2]")
+                        }
+                    }
+                }
+                assertNode("DisplayNameTestCase") {
+                    assertPsiLocation("DisplayNameTestCase")
+                    assertNode("test") {
+                        assertPsiLocation("DisplayNameTestCase", "test")
+                    }
+                    assertNode("successful test") {
+                        assertPsiLocation("DisplayNameTestCase", "successful test")
+                    }
+                    assertNode("pretty test") {
+                        assertPsiLocation("DisplayNameTestCase", "ugly test")
+                    }
                     assertNode("pretty parametrized test") {
                         if (isTestLauncherSupported()) {
                             // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
-                            assertPsiLocation("TestCase", "ugly parametrized test")
+                            assertPsiLocation("DisplayNameTestCase", "ugly parametrized test")
                         }
                         assertNode("[1] 3, third") {
-                            assertPsiLocation("TestCase", "ugly parametrized test", "[1]")
+                            assertPsiLocation("DisplayNameTestCase", "ugly parametrized test", "[1]")
                         }
                         assertNode("[2] 4, fourth") {
-                            assertPsiLocation("TestCase", "ugly parametrized test", "[2]")
+                            assertPsiLocation("DisplayNameTestCase", "ugly parametrized test", "[2]")
+                        }
+                    }
+                    assertNode("pretty dynamic test") {
+                        if (isTestLauncherSupported()) {
+                            // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
+                            assertPsiLocation("DisplayNameTestCase", "ugly dynamic test")
+                        }
+                        assertNode("dynamic first") {
+                            assertPsiLocation("DisplayNameTestCase", "ugly dynamic test", "[1]")
+                        }
+                        assertNode("dynamic second") {
+                            assertPsiLocation("DisplayNameTestCase", "ugly dynamic test", "[2]")
                         }
                     }
                 }
@@ -170,7 +220,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
 
     companion object {
 
-        private val KOTLIN_CLASS_WITH_PARAMETRISED_JUNIT5_TESTS = """
+        private val KOTLIN_JUNIT5_TEST = """
             |package org.example
             |
             |import org.junit.jupiter.api.*
@@ -185,18 +235,52 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
             |    @Test
             |    fun `successful test`() = Unit
             |
+            |    @ParameterizedTest
+            |    @CsvSource("1, 'first'", "2, 'second'")
+            |    fun `parametrized test`(value: Int, name: String?) = Unit
+            |
+            |    @TestFactory
+            |    fun `dynamic test`(): List<DynamicTest> {
+            |        return listOf(
+            |            DynamicTest.dynamicTest("dynamic first") {},
+            |            DynamicTest.dynamicTest("dynamic second") {}
+            |        )
+            |    }
+            |}
+        """.trimMargin()
+
+        private val KOTLIN_DISPLAY_NAME_JUNIT5_TEST = """
+            |package org.example
+            |
+            |import org.junit.jupiter.api.*
+            |import org.junit.jupiter.params.ParameterizedTest
+            |import org.junit.jupiter.params.provider.CsvSource
+            |
+            |class DisplayNameTestCase {
+            |
+            |    @Test
+            |    fun test() = Unit
+            |
+            |    @Test
+            |    fun `successful test`() = Unit
+            |
             |    @Test
             |    @DisplayName("pretty test")
             |    fun `ugly test`() = Unit
             |
             |    @ParameterizedTest
-            |    @CsvSource("1, 'first'", "2, 'second'")
-            |    fun `parametrized test`(value: Int, name: String?) = Unit
-            |
-            |    @ParameterizedTest
             |    @DisplayName("pretty parametrized test")
             |    @CsvSource("3, 'third'", "4, 'fourth'")
             |    fun `ugly parametrized test`(value: Int, name: String?) = Unit
+            |
+            |    @TestFactory
+            |    @DisplayName("pretty dynamic test")
+            |    fun `ugly dynamic test`(): List<DynamicTest> {
+            |        return listOf(
+            |            DynamicTest.dynamicTest("dynamic first") {},
+            |            DynamicTest.dynamicTest("dynamic second") {}
+            |        )
+            |    }
             |}
         """.trimMargin()
 
