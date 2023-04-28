@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.google.common.collect.Lists;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.diagnostic.telemetry.ScopesExtensionsKt;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -73,7 +73,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.VFS;
 import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
 import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
@@ -107,7 +106,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private ScheduledFuture<?> myCleaningFuture;
   private final ReadWriteLock SHELVED_FILES_LOCK = new ReentrantReadWriteLock(true);
   @Nullable private Set<VirtualFile> myShelvingFiles;
-  private final Tracer myTracer = ScopesExtensionsKt.tracer(VFS);
+  private final Tracer myTracer = TraceManager.INSTANCE.getTracer("vcs");
 
   public static ShelveChangesManager getInstance(@NotNull Project project) {
     return project.getService(ShelveChangesManager.class);

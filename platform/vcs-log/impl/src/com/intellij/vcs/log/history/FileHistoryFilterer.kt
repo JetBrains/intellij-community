@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
-import com.intellij.diagnostic.telemetry.tracer
-import com.intellij.vcs.log.data.util.VCS
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -132,7 +131,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
       val start = System.currentTimeMillis()
-      VCS.tracer().spanBuilder("computing history").useWithScope { scope ->
+      TraceManager.getTracer("vcs").spanBuilder("computing history").useWithScope { scope ->
         val isInitial = commitCount == CommitCountStage.INITIAL
 
         val indexDataGetter = index.dataGetter
@@ -293,7 +292,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
       if (fileHistory.unmatchedAdditionsDeletions.isEmpty()) return MultiMap.empty()
 
-      VCS.tracer().spanBuilder("collecting renames").useWithScope {
+      TraceManager.getTracer("vcs").spanBuilder("collecting renames").useWithScope {
         val handler = logProviders[root]?.fileHistoryHandler ?: return MultiMap.empty()
 
         val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull { ad ->

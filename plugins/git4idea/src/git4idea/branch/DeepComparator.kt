@@ -1,9 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
-import com.intellij.vcs.log.data.util.VCS
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.diagnostic.telemetry.computeWithSpan
-import com.intellij.diagnostic.telemetry.tracer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -358,7 +357,7 @@ class DeepComparator(private val project: Project,
   }
 
   private inline fun <R> recordSpan(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
-    return computeWithSpan(VCS.tracer(), actionName) { span ->
+    return computeWithSpan(TraceManager.getTracer("vcs"), actionName) { span ->
       span.setAttribute("rootName", root.name)
       block()
     }

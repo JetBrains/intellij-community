@@ -43,7 +43,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.INDEXES;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -435,7 +434,7 @@ public final class PersistentFSConnection {
       super("VFSFlusher",
             scheduler, FLUSHING_PERIOD_MS,
             MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
-            TraceManager.getMeter(INDEXES)
+            TraceManager.INSTANCE.getMeter("indexes")
       );
     }
 

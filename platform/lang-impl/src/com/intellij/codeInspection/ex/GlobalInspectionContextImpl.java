@@ -10,7 +10,6 @@ import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
-import com.intellij.codeInsight.util.HighlightVisitorScopeKt;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
@@ -24,7 +23,7 @@ import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.diagnostic.telemetry.IJTracer;
-import com.intellij.diagnostic.telemetry.ScopesExtensionsKt;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.ProblemGroup;
@@ -85,7 +84,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.*;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL_SIMPLE;
 import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenActivityFinished;
@@ -275,7 +273,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
-    IJTracer tracer = ScopesExtensionsKt.tracer(HighlightVisitorScope);
+    IJTracer tracer = TraceManager.INSTANCE.getTracer("highlightVisitor");
     runToolsSpan = tracer.spanBuilder("globalInspections").setNoParent().startSpan();
     myInspectionStartedTimestamp = System.currentTimeMillis();
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();

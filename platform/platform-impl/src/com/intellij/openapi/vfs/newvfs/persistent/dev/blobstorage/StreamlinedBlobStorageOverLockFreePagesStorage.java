@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.STORAGE;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout.ActualRecords.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage.RecordLayout.OFFSET_BUCKET;
 
@@ -1558,7 +1557,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorage implements Streamlin
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TraceManager.getMeter(STORAGE);
+    final Meter meter = TraceManager.INSTANCE.getMeter("storage");
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();

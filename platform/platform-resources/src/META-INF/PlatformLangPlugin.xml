@@ -47,7 +47,6 @@
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
   <xi:include href="/META-INF/LangExtensions.xml"/>
-  <xi:include href="/META-INF/OTelExtensions.xml"/>
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 

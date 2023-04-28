@@ -2,6 +2,7 @@
 package git4idea.log;
 
 import com.intellij.diagnostic.telemetry.IJTracer;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,12 +50,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.tracer;
 import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
 import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
-import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
 import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 
 public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
@@ -80,7 +79,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
-  @NotNull private final IJTracer myTracer = tracer(VCS);
+  @NotNull private final IJTracer myTracer = TraceManager.INSTANCE.getTracer("vcs");
 
   public GitLogProvider(@NotNull Project project) {
     myProject = project;

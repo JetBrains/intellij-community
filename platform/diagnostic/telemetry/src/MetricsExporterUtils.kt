@@ -13,12 +13,7 @@ import java.nio.file.Path
 import java.util.stream.Stream
 
 @ApiStatus.Internal
-object OpenTelemetryUtils {
-  //flags
-  const val RDCT_TRACING_DIAGNOSTIC_FLAG = "rdct.diagnostic.otlp"
-  const val IDEA_DIAGNOSTIC_OTLP = "idea.diagnostic.opentelemetry.otlp"
-  const val RDCT_CONN_METRICS_DIAGNOSTIC_FLAG = "rdct.connection.metrics.enabled"
-  const val RDCT_LUX_METRICS_DIAGNOSTIC_FLAG = "lux.metrics.enabled"
+object MetricsExporterUtils {
 
   @JvmStatic
   fun toCsvStream(metricData: MetricData): Stream<String> {

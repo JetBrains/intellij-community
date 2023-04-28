@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.EDT;
 import static java.util.concurrent.TimeUnit.HOURS;
 
 /**
@@ -83,7 +82,7 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
 
 
   public OtelReportingEventWatcher() {
-    this(TraceManager.getMeter(EDT));
+    this(TraceManager.INSTANCE.getMeter("EDT"));
   }
 
   public OtelReportingEventWatcher(final @NotNull Meter meter) {

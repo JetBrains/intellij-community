@@ -2,7 +2,7 @@
 package com.intellij.diagnostic.opentelemetry
 
 import com.intellij.diagnostic.FreezeProfiler
-import com.intellij.diagnostic.telemetry.OpenTelemetryUtils
+import com.intellij.diagnostic.telemetry.MetricsExporterUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
@@ -65,9 +65,9 @@ private fun collectOpenTelemetryReports(): List<Attachment> {
 }
 
 private fun listMetricsFiles(): List<Path> {
-  val metricsReportingPath = OpenTelemetryUtils.metricsReportingPath()
+  val metricsReportingPath = MetricsExporterUtils.metricsReportingPath()
   metricsReportingPath ?: return emptyList()
 
-  val fileLimiterForMetrics = OpenTelemetryUtils.setupFileLimiterForMetrics(metricsReportingPath)
+  val fileLimiterForMetrics = MetricsExporterUtils.setupFileLimiterForMetrics(metricsReportingPath)
   return fileLimiterForMetrics.listExistentFiles()
 }

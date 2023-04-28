@@ -2,7 +2,7 @@
 
 package com.intellij.diagnostic.telemetry
 
-import com.intellij.diagnostic.telemetry.OpenTelemetryUtils.csvHeadersLines
+import com.intellij.diagnostic.telemetry.MetricsExporterUtils.csvHeadersLines
 import java.io.File
 import java.util.zip.GZIPOutputStream
 import kotlin.collections.ArrayList

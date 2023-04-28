@@ -58,7 +58,7 @@ public final class CsvMetricsExporter implements MetricExporter {
       }
     }
     if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0) {
-      Files.write(writeToFile, OpenTelemetryUtils.csvHeadersLines(), CREATE, WRITE);
+      Files.write(writeToFile, MetricsExporterUtils.csvHeadersLines(), CREATE, WRITE);
     }
 
     copyHtmlPlotterToOutputDir(writeToFile.getParent());
@@ -93,7 +93,7 @@ public final class CsvMetricsExporter implements MetricExporter {
     final CompletableResultCode result = new CompletableResultCode();
     final Path writeToFile = writeToFileSupplier.get();
     final List<String> lines = metrics.stream()
-      .flatMap(OpenTelemetryUtils::toCsvStream)
+      .flatMap(MetricsExporterUtils::toCsvStream)
       .collect(Collectors.toList());
 
     try {

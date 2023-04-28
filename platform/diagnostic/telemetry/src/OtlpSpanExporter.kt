@@ -38,7 +38,7 @@ class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
 
   override suspend fun export(spans: Collection<SpanData>) {
     //checking whether the spans are exported from rem dev backend
-    if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null) return
+    if (System.getProperty("rdct.diagnostic.otlp") != null) return
     val item = TraceRequestMarshaler.create(spans)
     try {
       httpClient.post(traceUrl) {

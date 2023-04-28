@@ -4,14 +4,15 @@
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.telemetry.*
+import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.startup.StartupManagerEx
-import com.intellij.ide.util.StartupManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -55,7 +56,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<StartupManagerImpl>()
-private val tracer by lazy { StartupManager.tracer() }
+private val tracer by lazy { TraceManager.getTracer("startupManager") }
 
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5-seconds delay after project opening.

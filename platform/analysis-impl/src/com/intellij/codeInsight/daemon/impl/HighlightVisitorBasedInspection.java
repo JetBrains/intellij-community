@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 
@@ -130,7 +129,7 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
 
     String fileName = file.getName();
     List<HighlightInfo> result = new ArrayList<>();
-    IJTracer tracer = TraceManager.INSTANCE.getTracer(HighlightVisitorScope.toString(), true);
+    IJTracer tracer = TraceManager.INSTANCE.getTracer("highlightVisitor", true);
 
     for (TextEditorHighlightingPass pass : gpasses) {
       runWithSpan(tracer, pass.getClass().getSimpleName(), span -> {

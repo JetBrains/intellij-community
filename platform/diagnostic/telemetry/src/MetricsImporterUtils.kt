@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.telemetry
 
-import com.intellij.diagnostic.telemetry.OpenTelemetryUtils.csvHeadersLines
 import com.intellij.openapi.diagnostic.Logger
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.metrics.data.LongPointData
@@ -35,7 +34,7 @@ object MetricsImporterUtils {
     val meters = HashMap<String, MutableList<LongPointData>>()
 
     metricsCsvPath.bufferedReader().useLines { lines ->
-      for (line in lines.drop(csvHeadersLines().size)) {
+      for (line in lines.drop(MetricsExporterUtils.csvHeadersLines().size)) {
         if (line.trim().isEmpty()) continue
 
         try {

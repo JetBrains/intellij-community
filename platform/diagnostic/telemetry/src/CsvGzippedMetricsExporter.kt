@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.telemetry
 
-import com.intellij.diagnostic.telemetry.OpenTelemetryUtils.toCsvStream
+import com.intellij.diagnostic.telemetry.MetricsExporterUtils.toCsvStream
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -16,8 +16,8 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
-class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter {
-  private var writeToFile: Path = fileToWrite.toPath()
+class CsvGzippedMetricsExporter(writeToFile: Path) : MetricExporter {
+  private var fileToWrite: File = writeToFile.toFile()
   private val storage = LinesStorage(fileToWrite)
 
   init {
@@ -63,7 +63,7 @@ class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter 
     try {
       val fileSize = fileToWrite.length()
       if (fileSize > 10 * 1024 * 1024) {
-        val newPath = generatePathForConnectionMetrics()
+        val newPath = generateFileForConnectionMetrics()
         fileToWrite = newPath.toFile()
         initFileCreating(newPath)
         storage.updateDestFile(fileToWrite)
@@ -88,7 +88,7 @@ class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter 
   companion object {
     val logger = Logger.getInstance(CsvGzippedMetricsExporter::class.java)
 
-    fun generatePathForConnectionMetrics(): Path {
+    fun generateFileForConnectionMetrics(): Path {
       val connectionMetricsPath = "open-telemetry-connection-metrics.csv.gz"
       val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(connectionMetricsPath).toAbsolutePath()
       val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.rdct.metrics.max-files-to-keep", 14)
@@ -96,7 +96,7 @@ class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter 
       return generatePath(pathResolvedAgainstLogDir, maxFilesToKeep)
     }
 
-    fun generatePathForLuxMetrics(): Path {
+    fun generateFileForLuxMetrics(): Path {
       val luxMetricsPath = "open-telemetry-lux-metrics.csv.gz"
       val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(luxMetricsPath).toAbsolutePath()
       val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.lux.metrics.max-files-to-keep", 14)

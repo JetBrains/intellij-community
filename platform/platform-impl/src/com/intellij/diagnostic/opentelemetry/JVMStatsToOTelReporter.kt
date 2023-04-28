@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.opentelemetry
 
-import com.intellij.diagnostic.telemetry.JVM
-import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.TraceManager.getMeter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -26,7 +25,7 @@ class JVMStatsToOTelReporter : ProjectActivity {
     private var batchCallback: BatchCallback? = null
 
     init {
-      val otelMeter = TraceManager.getMeter(JVM)
+      val otelMeter = getMeter("JVM")
 
       val usedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.usedHeapBytes").ofLongs().buildObserver()
       val maxHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.maxHeapBytes").ofLongs().buildObserver()
