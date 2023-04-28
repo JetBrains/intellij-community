@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodCallUsageInfo extends UsageInfo {
-  private static final Logger LOG = Logger.getInstance(MethodCallUsageInfo.class);
   private final boolean myToChangeArguments;
   private final boolean myToCatchExceptions;
+  private final boolean myVarArgCall;
   private final PsiMethod myReferencedMethod;
   private final PsiSubstitutor mySubstitutor;
 
@@ -34,29 +21,38 @@ public class MethodCallUsageInfo extends UsageInfo {
     return myToChangeArguments;
   }
 
-  public MethodCallUsageInfo(final PsiElement ref, boolean isToChangeArguments, boolean isToCatchExceptions) {
+  public boolean isVarArgCall() {
+    return myVarArgCall;
+  }
+
+  public MethodCallUsageInfo(final @NotNull PsiElement ref, boolean isToChangeArguments, boolean isToCatchExceptions) {
     super(ref);
     myToChangeArguments = isToChangeArguments;
     myToCatchExceptions = isToCatchExceptions;
-    final JavaResolveResult resolveResult = resolveMethod(ref);
-    myReferencedMethod = (PsiMethod)resolveResult.getElement();
+    PsiCall call = getCall(ref);
+    if (call == null) {
+      throw new IllegalArgumentException("Unknown reference: " + ref.getClass());
+    }
+    myVarArgCall = MethodCallUtils.isVarArgCall(call);
+    JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    if (resolveResult == null || !(resolveResult.getElement() instanceof PsiMethod method)) {
+      throw new IllegalArgumentException("Cannot resolve call to a method " + call);
+    }
+    myReferencedMethod = method;
     mySubstitutor = resolveResult.getSubstitutor();
   }
 
-  private static JavaResolveResult resolveMethod(final PsiElement ref) {
-    if (ref instanceof PsiEnumConstant) return ((PsiEnumConstant)ref).resolveMethodGenerics();
-    if (ref instanceof PsiCallExpression) {
-      return ((PsiCallExpression)ref).resolveMethodGenerics();
+  private static PsiCall getCall(final PsiElement ref) {
+    if (ref instanceof PsiCall call) {
+      return call;
     }
     PsiElement parent = ref.getParent();
-    if (parent instanceof PsiCall) {
-      return ((PsiCall)parent).resolveMethodGenerics();
+    if (parent instanceof PsiCall call) {
+      return call;
     }
     else if (parent instanceof PsiAnonymousClass) {
-      return ((PsiNewExpression)parent.getParent()).resolveMethodGenerics();
+      return (PsiCall) parent.getParent();
     }
-    LOG.error("Unknown reference");
-
     return null;
   }
 

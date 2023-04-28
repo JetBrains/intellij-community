@@ -177,13 +177,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         final MethodCallUsageInfo methodCallInfo = ((MethodReferenceUsageInfo)usage).createMethodCallInfo();
         if (methodCallInfo != null) {
           processMethodUsage(methodCallInfo.getElement(), javaChangeInfo, methodCallInfo.isToChangeArguments(),
-                             methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod(), methodCallInfo.getSubstitutor(), usages);
+                             methodCallInfo.isToCatchExceptions(), methodCallInfo.isVarArgCall(), 
+                             methodCallInfo.getReferencedMethod(), methodCallInfo.getSubstitutor(), usages);
           return true;
         }
       }
       else if (usage instanceof final MethodCallUsageInfo methodCallInfo) {
         processMethodUsage(methodCallInfo.getElement(), javaChangeInfo, methodCallInfo.isToChangeArguments(),
-                           methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod(), methodCallInfo.getSubstitutor(), usages);
+                           methodCallInfo.isToCatchExceptions(), methodCallInfo.isVarArgCall(), 
+                           methodCallInfo.getReferencedMethod(), methodCallInfo.getSubstitutor(), usages);
         return true;
       }
       else if (usage instanceof ChangeSignatureParameterUsageInfo) {
@@ -203,7 +205,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         return true;
       }
       else if (element instanceof PsiEnumConstant enumConstant) {
-        fixActualArgumentsList(enumConstant.getArgumentList(), javaChangeInfo, true, PsiSubstitutor.EMPTY);
+        fixActualArgumentsList(enumConstant.getArgumentList(), javaChangeInfo, true, PsiSubstitutor.EMPTY, false);
         return true;
       }
       else if (!(usage instanceof OverriderUsageInfo) && !(usage instanceof UnresolvableCollisionUsageInfo)) {
@@ -258,7 +260,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         final PsiExpressionList argumentList = ((PsiNewExpression)parent).getArgumentList();
         final PsiClass baseClass = changeInfo.getMethod().getContainingClass();
         final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
-        fixActualArgumentsList(argumentList, changeInfo, true, substitutor);
+        fixActualArgumentsList(argumentList, changeInfo, true, substitutor, false);
       }
     }
   }
@@ -280,14 +282,18 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     final PsiClass aClass = constructor.getContainingClass();
     final PsiClass baseClass = changeInfo.getMethod().getContainingClass();
     final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
-    processMethodUsage(callExpression.getMethodExpression(), changeInfo, true, false, callee, substitutor, usages);
+    processMethodUsage(callExpression.getMethodExpression(), changeInfo, 
+                       true, false, changeInfo.wasVararg(), callee, substitutor, usages);
   }
 
   private static void processMethodUsage(PsiElement ref,
-                                  JavaChangeInfo changeInfo,
-                                  boolean toChangeArguments,
-                                  boolean toCatchExceptions,
-                                  PsiMethod callee, PsiSubstitutor substitutor, final UsageInfo[] usages) throws IncorrectOperationException {
+                                         JavaChangeInfo changeInfo,
+                                         boolean toChangeArguments,
+                                         boolean toCatchExceptions,
+                                         boolean varArgCall, 
+                                         PsiMethod callee, 
+                                         PsiSubstitutor substitutor,
+                                         final UsageInfo[] usages) throws IncorrectOperationException {
     if (changeInfo.isNameChanged()) {
       if (ref instanceof PsiJavaCodeReferenceElement) {
         PsiElement last = ((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
@@ -309,7 +315,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
 
-      fixActualArgumentsList(list, changeInfo, toInsertDefaultValue, substitutor);
+      fixActualArgumentsList(list, changeInfo, toInsertDefaultValue, substitutor, varArgCall);
     }
 
     if (toCatchExceptions) {
@@ -454,7 +460,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   private static void fixActualArgumentsList(PsiExpressionList list,
                                              JavaChangeInfo changeInfo,
                                              boolean toInsertDefaultValue,
-                                             PsiSubstitutor substitutor) throws IncorrectOperationException {
+                                             PsiSubstitutor substitutor,
+                                             boolean varArgCall) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(list.getProject());
     if (changeInfo.isParameterSetOrOrderChanged()) {
       if (changeInfo instanceof JavaChangeInfoImpl javaChangeInfo && javaChangeInfo.isPropagationEnabled) {
@@ -472,7 +479,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
       else {
         final PsiExpression[] args = list.getExpressions();
-        final int nonVarargCount = getNonVarargCount(changeInfo, args);
+        final int nonVarargCount = varArgCall ? getNonVarargCount(changeInfo, args) : args.length;
         final int varargCount = args.length - nonVarargCount;
         if (varargCount<0) return;
         PsiExpression[] newVarargInitializers = null;
@@ -492,7 +499,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           }
           newArgsLength = newVarargInitializers == null ? newParameters.length : newNonVarargCount + newVarargInitializers.length;
         }
-        else if (changeInfo.isRetainsVarargs()) {
+        else if (changeInfo.isRetainsVarargs() && varArgCall) {
           newNonVarargCount = newParameters.length - 1;
           newArgsLength = newNonVarargCount + varargCount;
         }
@@ -506,7 +513,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
 
         String[] oldVarargs = null;
-        if (changeInfo.wasVararg() && !changeInfo.isRetainsVarargs()) {
+        if (varArgCall && changeInfo.wasVararg() && !changeInfo.isRetainsVarargs()) {
           oldVarargs = new String[varargCount];
           for (int i = nonVarargCount; i < args.length; i++) {
             oldVarargs[i - nonVarargCount] = args[i].getText();

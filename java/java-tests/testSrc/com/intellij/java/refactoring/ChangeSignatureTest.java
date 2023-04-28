@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -670,6 +670,40 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       ParameterInfoImpl.create(1).withType(PsiTypes.longType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.booleanType()).withName("c"),
       ParameterInfoImpl.createNew().withType(PsiTypes.shortType()).withName("d"),
+    }, false);
+  }
+  
+  public void testVarargToArray() { // IDEA-318626
+    doTest(null, null, null, method -> new ParameterInfoImpl[] {
+      ParameterInfoImpl.create(0).withName("x"),
+      ParameterInfoImpl.create(1).withName("args").withType(method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType())
+    }, false);
+  }
+
+  public void testEnumVarargToArray() {
+    doTest(null, null, null, method -> new ParameterInfoImpl[] {
+      ParameterInfoImpl.create(0).withName("x"),
+      ParameterInfoImpl.create(1).withName("args").withType(method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType())
+    }, false);
+  }
+
+  public void testDefCtorVarargToArray() {
+    doTest(null, null, null, method -> new ParameterInfoImpl[] {
+      ParameterInfoImpl.create(0).withName("args").withType(method.getParameterList().getParameter(0).getType().getDeepComponentType().createArrayType())
+    }, false);
+  }
+
+  public void testArrayToVararg() { // IDEA-318626
+    doTest(null, null, null, method -> new ParameterInfoImpl[] {
+      ParameterInfoImpl.create(0).withName("x"),
+      ParameterInfoImpl.create(1).withName("args").withType(new PsiEllipsisType(method.getParameterList().getParameter(1).getType().getDeepComponentType()))
+    }, false);
+  }
+  
+  public void testVarargToArrayReorder() { // IDEA-318626
+    doTest(null, null, null, method -> new ParameterInfoImpl[] {
+      ParameterInfoImpl.create(1).withName("args").withType(method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType()),
+      ParameterInfoImpl.create(0).withName("x")
     }, false);
   }
 
