@@ -39,7 +39,8 @@ internal class SearchEverywhereMlExperiment {
 
     SearchEverywhereTabWithMl.CLASSES to Experiment(
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
-      3 to ExperimentType.NO_ML
+      3 to ExperimentType.NO_ML,
+      4 to ExperimentType.NO_ML_FEATURES
     ),
 
     SearchEverywhereTabWithMl.ALL to Experiment(
@@ -73,7 +74,7 @@ internal class SearchEverywhereMlExperiment {
   }
 
   internal enum class ExperimentType {
-    NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL
+    NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, NO_ML_FEATURES
   }
 
   private class Experiment(vararg experiments: Pair<Int, ExperimentType>) {
