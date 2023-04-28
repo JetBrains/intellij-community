@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -180,5 +180,18 @@ public class DelegateKeyStore extends KeyStoreSpi {
   @Override
   public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
     delegate.load(stream, password);
+  }
+
+
+  @Nullable
+  protected static KeyStore loadKeyStore(@NotNull String path, char[] password)
+    throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+    File file = new File(path);
+    if (!file.exists()) return null;
+    KeyStore tmpStore = KeyStore.getInstance(KeyStore.getDefaultType());
+    try (InputStream stream = new FileInputStream(file)) {
+      tmpStore.load(stream, password);
+    }
+    return tmpStore;
   }
 }

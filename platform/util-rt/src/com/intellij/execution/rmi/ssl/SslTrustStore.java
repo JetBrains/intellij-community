@@ -90,12 +90,8 @@ public final class SslTrustStore extends DelegateKeyStore {
 
   public static int appendUserTrustStore(@NotNull String path, char[] password) {
     try {
-      File file = new File(path);
-      if (!file.exists()) return 0;
-      KeyStore tmpStore = KeyStore.getInstance(KeyStore.getDefaultType());
-      try (InputStream stream = new FileInputStream(file)) {
-        tmpStore.load(stream, password);
-      }
+      KeyStore tmpStore = loadKeyStore(path, password);
+      if (tmpStore == null) return 0;
       int cnt = 0;
       for (Enumeration<String> aliases = tmpStore.aliases(); aliases.hasMoreElements(); ) {
         String alias = aliases.nextElement();

@@ -1,19 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 public final class SslKeyStore extends DelegateKeyStore {
@@ -38,7 +39,7 @@ public final class SslKeyStore extends DelegateKeyStore {
   }
 
   @Nullable
-  public static PrivateKey getUserKey() {
+  public static Key getUserKey() {
     return ourAdded.isEmpty() ? null : ourAdded.get(0).key;
   }
 
@@ -79,12 +80,32 @@ public final class SslKeyStore extends DelegateKeyStore {
     super.engineLoad(null, null);
   }
 
+  public static int appendUserKeyStore(@NotNull String path, char[] password) {
+    try {
+      KeyStore tmpStore = loadKeyStore(path, password);
+      if (tmpStore == null) return 0;
+      int cnt = 0;
+      for (Enumeration<String> aliases = tmpStore.aliases(); aliases.hasMoreElements(); ) {
+        String alias = aliases.nextElement();
+        Key key = tmpStore.getKey(alias, null);
+        if (key == null) continue;
+        Certificate[] certChain = tmpStore.getCertificateChain(alias);
+        ourAdded.add(new KeyEntry(alias, key, certChain));
+        ++cnt;
+      }
+      return cnt;
+    }
+    catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   private static class KeyEntry {
     private final String alias;
-    private final PrivateKey key;
+    private final Key key;
     private final Certificate[] certChain;
 
-    private KeyEntry(@NotNull String alias, @NotNull PrivateKey key, @Nullable Certificate[] certChain) {
+    private KeyEntry(@NotNull String alias, @NotNull Key key, @Nullable Certificate[] certChain) {
       this.alias = alias;
       this.key = key;
       this.certChain = certChain;
