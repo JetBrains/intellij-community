@@ -8,14 +8,14 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RemoteNativeMavenProjectHolder implements NativeMavenProjectHolder {
-  private static final Map<Integer, Reference<RemoteNativeMavenProjectHolder>> myMap = new HashMap<Integer, Reference<RemoteNativeMavenProjectHolder>>();
+public class RemoteNativeMaven3ProjectHolder implements NativeMavenProjectHolder {
+  private static final Map<Integer, Reference<RemoteNativeMaven3ProjectHolder>> myMap = new HashMap<Integer, Reference<RemoteNativeMaven3ProjectHolder>>();
 
   private final MavenProject myMavenProject;
 
-  public RemoteNativeMavenProjectHolder(@NotNull MavenProject mavenProject) {
+  public RemoteNativeMaven3ProjectHolder(@NotNull MavenProject mavenProject) {
     myMavenProject = mavenProject;
-    myMap.put(getId(), new WeakReference<RemoteNativeMavenProjectHolder>(this));
+    myMap.put(getId(), new WeakReference<RemoteNativeMaven3ProjectHolder>(this));
   }
 
   @Override
@@ -25,8 +25,8 @@ public class RemoteNativeMavenProjectHolder implements NativeMavenProjectHolder 
 
   @NotNull
   public static MavenProject findProjectById(int id) {
-    Reference<RemoteNativeMavenProjectHolder> reference = myMap.get(id);
-    RemoteNativeMavenProjectHolder result = reference == null ? null : reference.get();
+    Reference<RemoteNativeMaven3ProjectHolder> reference = myMap.get(id);
+    RemoteNativeMaven3ProjectHolder result = reference == null ? null : reference.get();
     if (result == null) {
       throw new RuntimeException("NativeMavenProjectHolder not found for id: " + id);
     }

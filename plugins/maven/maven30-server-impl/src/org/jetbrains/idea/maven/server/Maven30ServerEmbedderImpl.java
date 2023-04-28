@@ -908,7 +908,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       collectProblems(mavenProject.getFile(), Collections.singleton(e), problems);
     }
 
-    RemoteNativeMavenProjectHolder holder = new RemoteNativeMavenProjectHolder(mavenProject);
+    RemoteNativeMaven3ProjectHolder holder = new RemoteNativeMaven3ProjectHolder(mavenProject);
     try {
       UnicastRemoteObject.exportObject(holder, 0);
     }
@@ -1038,7 +1038,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       mavenPlugin.setGroupId(pluginId.getGroupId());
       mavenPlugin.setArtifactId(pluginId.getArtifactId());
       mavenPlugin.setVersion(pluginId.getVersion());
-      MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
+      MavenProject project = RemoteNativeMaven3ProjectHolder.findProjectById(nativeMavenProjectId);
 
       Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(pluginId.getGroupId() + ':' + pluginId.getArtifactId());
       if (pluginFromProject != null) {
