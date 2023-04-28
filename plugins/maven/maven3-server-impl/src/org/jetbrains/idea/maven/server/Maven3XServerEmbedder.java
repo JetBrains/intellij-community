@@ -519,7 +519,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
+      return Maven3EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);

@@ -549,7 +549,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                      MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-    return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
+    return Maven3EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
   }
 
   @Override

@@ -25,7 +25,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public final class MavenEffectivePomDumper {
+public final class Maven3EffectivePomDumper {
 
   /**
    * The POM XSD URL
