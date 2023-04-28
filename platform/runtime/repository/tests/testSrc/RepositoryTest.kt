@@ -22,8 +22,8 @@ class RepositoryTest {
       RawRuntimeModuleDescriptor("ij.platform.util.rt", emptyList(), emptyList()),
       RawRuntimeModuleDescriptor("ij.platform.util", emptyList(), listOf("ij.platform.util.rt")),
     )
-    val util = repository.getModule(RuntimeModuleId.module("ij.platform.util"))
-    val utilRt = repository.getModule(RuntimeModuleId.module("ij.platform.util.rt"))
+    val util = repository.getModule(RuntimeModuleId.raw("ij.platform.util"))
+    val utilRt = repository.getModule(RuntimeModuleId.raw("ij.platform.util.rt"))
     assertEquals(listOf(utilRt), util.dependencies)
   }
 
@@ -34,9 +34,9 @@ class RepositoryTest {
       RawRuntimeModuleDescriptor("ij.foo", listOf("foo.jar"), emptyList()),
       RawRuntimeModuleDescriptor("ij.bar", listOf("../bar/bar.jar"), emptyList()),
     )
-    val foo = repository.getModule(RuntimeModuleId.module("ij.foo"))
+    val foo = repository.getModule(RuntimeModuleId.raw("ij.foo"))
     assertEquals(listOf(tempDirectory.rootPath.resolve("foo.jar")), foo.resourceRootPaths)
-    val bar = repository.getModule(RuntimeModuleId.module("ij.bar"))
+    val bar = repository.getModule(RuntimeModuleId.raw("ij.bar"))
     assertEquals(listOf(tempDirectory.rootPath.parent.resolve("bar/bar.jar")), bar.resourceRootPaths)
   }
 
@@ -47,9 +47,9 @@ class RepositoryTest {
       RawRuntimeModuleDescriptor("ij.foo", listOf("\$PROJECT_DIR$/foo.jar"), emptyList()),
       RawRuntimeModuleDescriptor("ij.bar", listOf("\$MAVEN_REPOSITORY$/bar/bar.jar"), emptyList()),
     )
-    val foo = repository.getModule(RuntimeModuleId.module("ij.foo"))
+    val foo = repository.getModule(RuntimeModuleId.raw("ij.foo"))
     assertEquals(listOf(Path.of("foo.jar").toAbsolutePath()), foo.resourceRootPaths)
-    val bar = repository.getModule(RuntimeModuleId.module("ij.bar"))
+    val bar = repository.getModule(RuntimeModuleId.raw("ij.bar"))
     assertEquals(listOf(IntelliJProjectConfiguration.getLocalMavenRepo().resolve("bar/bar.jar")), bar.resourceRootPaths)
   }
 
