@@ -1466,17 +1466,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
-      return resolve(task, requests);
+      return doResolveArtifacts(task, requests);
     }
   }
 
   @NotNull
-  private List<MavenArtifact> resolve(@NotNull LongRunningTask task, @NotNull Collection<MavenArtifactResolutionRequest> requests) {
+  private List<MavenArtifact> doResolveArtifacts(@NotNull LongRunningTask task, @NotNull Collection<MavenArtifactResolutionRequest> requests) {
     try {
       List<MavenArtifact> artifacts = new ArrayList<>();
       for (MavenArtifactResolutionRequest request : requests) {
         if (task.isCanceled()) break;
-        MavenArtifact artifact = doResolve(request.getArtifactInfo(), request.getRemoteRepositories());
+        MavenArtifact artifact = doResolveArtifact(request.getArtifactInfo(), request.getRemoteRepositories());
         artifacts.add(artifact);
         task.incrementFinishedRequests();
       }
@@ -1487,14 +1487,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
-    Artifact resolved = doResolve(createArtifact(info), convertRepositories(remoteRepositories));
+  private MavenArtifact doResolveArtifact(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
+    Artifact resolved = doResolveArtifact(createArtifact(info), convertRepositories(remoteRepositories));
     return Maven3ModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
   }
 
-  private Artifact doResolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {
+  private Artifact doResolveArtifact(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {
     try {
-      return resolve(artifact, remoteRepositories);
+      return tryResolveArtifact(artifact, remoteRepositories);
     }
     catch (Exception e) {
       MavenServerGlobals.getLogger().info(e);
@@ -1502,14 +1502,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return artifact;
   }
 
-  private Artifact resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
+  private Artifact tryResolveArtifact(@NotNull Artifact artifact, @NotNull List<ArtifactRepository> repos)
     throws
     ArtifactResolutionException,
     ArtifactNotFoundException,
     RemoteException,
     org.eclipse.aether.resolution.ArtifactResolutionException {
 
-    final String mavenVersion = getMavenVersion();
+    String mavenVersion = getMavenVersion();
     myImporterSpy.setIndicator(myCurrentIndicator);
     // org.eclipse.aether.RepositorySystem.newResolutionRepositories() method doesn't exist in aether-api-0.9.0.M2.jar used before maven 3.2.5
     // see https://youtrack.jetbrains.com/issue/IDEA-140208 for details
@@ -1528,7 +1528,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return artifact;
     }
     else {
-      final MavenExecutionRequest request =
+      MavenExecutionRequest request =
         createRequest(null, null, null, null);
       for (ArtifactRepository artifactRepository : repos) {
         request.addRemoteRepository(artifactRepository);
@@ -1541,13 +1541,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
       // do not use request.getRemoteRepositories() here,
       // it can be broken after DefaultMaven#newRepositorySession => MavenRepositorySystem.injectMirror invocation
-      final RemoteRepositoryManager remoteRepositoryManager = getComponent(RemoteRepositoryManager.class);
-      final org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
+      RemoteRepositoryManager remoteRepositoryManager = getComponent(RemoteRepositoryManager.class);
+      org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
       List<RemoteRepository> repositories = RepositoryUtils.toRepos(repos);
       repositories =
         remoteRepositoryManager.aggregateRepositories(repositorySystemSession, new ArrayList<RemoteRepository>(), repositories, false);
 
-      final ArtifactResult artifactResult = repositorySystem.resolveArtifact(
+      ArtifactResult artifactResult = repositorySystem.resolveArtifact(
         repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact), repositories, null));
 
       return RepositoryUtils.toArtifact(artifactResult.getArtifact());
