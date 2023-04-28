@@ -22,7 +22,7 @@ use {
 };
 
 #[cfg(target_os = "windows")]
-use utils::{canonical_non_unc, PathExt};
+use crate::{canonical_non_unc, PathExt};
 
 #[derive(Clone)]
 pub struct JvmLaunchParameters {
