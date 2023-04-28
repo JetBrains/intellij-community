@@ -122,8 +122,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
   companion object {
     /**
-     * @return `true` if and only if the `component` represents
-     * modal context.
+     * @return `true` if and only if the `component` represents modal context.
      * @throws IllegalArgumentException if `component` is `null`.
      */
     @JvmStatic
