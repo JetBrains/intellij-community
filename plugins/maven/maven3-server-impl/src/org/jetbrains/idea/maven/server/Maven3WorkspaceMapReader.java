@@ -28,13 +28,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public class Workspace3Reader implements WorkspaceReader {
+public class Maven3WorkspaceMapReader implements WorkspaceReader {
 
   private final WorkspaceRepository myRepository = new WorkspaceRepository();
 
   private final MavenWorkspaceMapWrapper myWorkspaceMap;
 
-  public Workspace3Reader(MavenWorkspaceMap workspaceMap) {
+  public Maven3WorkspaceMapReader(MavenWorkspaceMap workspaceMap) {
     myWorkspaceMap = new MavenWorkspaceMapWrapper(workspaceMap);
   }
 

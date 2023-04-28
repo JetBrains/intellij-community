@@ -601,7 +601,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           session.setTransferListener(new Maven3TransferListenerAdapter(myCurrentIndicator));
 
           if (myWorkspaceMap != null) {
-            session.setWorkspaceReader(new Workspace3Reader(myWorkspaceMap));
+            session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap));
           }
 
           session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
