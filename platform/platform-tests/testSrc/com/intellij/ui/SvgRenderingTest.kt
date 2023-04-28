@@ -368,6 +368,47 @@ class SvgRenderingTest {
   }
 
   @Test
+  fun filer3() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+
+    @Language("HTML")
+    val svg = """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16px" height="16px" viewBox="0 0 16 16" version="1.1">
+          <defs>
+              <filter id="alpha" filterUnits="objectBoundingBox" x="0%" y="0%" width="100%" height="100%">
+                  <feColorMatrix type="matrix" in="SourceGraphic" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/>
+              </filter>
+              <mask id="mask0">
+                  <g filter="url(#alpha)">
+                      <rect x="0" y="0" width="16" height="16" style="fill:rgb(0%,0%,0%);fill-opacity:0.2;stroke:none;"/>
+                  </g>
+              </mask>
+              <clipPath id="clip1">
+                  <rect x="0" y="0" width="16" height="16"/>
+              </clipPath>
+              <g id="surface5" clip-path="url(#clip1)">
+                  <path style=" stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 0.640625 1.28125 C 0.289062 1.28125 0 1.566406 0 1.921875 L 0 14.273438 C 0 14.625 0.289062 14.910156 0.640625 14.910156 L 1.34375 14.910156 L 13.953125 1.28125 Z M 0.640625 1.28125 "/>
+              </g>
+          </defs>
+          <g id="surface1">
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(62.7451%,63.137257%,63.529414%);fill-opacity:1;" d="M 0 14.335938 C 0 14.65625 0.257812 14.945312 0.574219 14.945312 L 15.390625 14.945312 C 15.710938 14.945312 16 14.6875 16 14.335938 L 16 3.742188 L 0 3.742188 Z M 0 14.335938 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(47.843137%,47.843137%,47.843137%);fill-opacity:1;" d="M 15.390625 1.28125 L 0.574219 1.28125 C 0.257812 1.28125 0 1.566406 0 1.886719 L 0 3.710938 L 16 3.710938 L 16 1.886719 C 16 1.566406 15.742188 1.28125 15.390625 1.28125 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,44.705883%,77.64706%);fill-opacity:1;" d="M 1.183594 4.832031 L 7.710938 4.832031 L 7.710938 8.992188 L 1.183594 8.992188 Z M 1.183594 4.832031 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,44.705883%,77.64706%);fill-opacity:1;" d="M 1.183594 9.566406 L 7.710938 9.566406 L 7.710938 13.726562 L 1.183594 13.726562 Z M 1.183594 9.566406 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(100%,100%,100%);fill-opacity:1;" d="M 8.289062 4.832031 L 14.785156 4.832031 L 14.785156 8.992188 L 8.289062 8.992188 Z M 8.289062 4.832031 "/>
+              <path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,44.705883%,77.64706%);fill-opacity:1;" d="M 8.289062 9.566406 L 14.785156 9.566406 L 14.785156 13.726562 L 8.289062 13.726562 Z M 8.289062 9.566406 "/>
+              <use xlink:href="#surface5" mask="url(#mask0)"/>
+          </g>
+      </svg>
+    """.trimIndent()
+    val image = renderSvg(svg.byteInputStream(), scale = 2f)
+
+    val goldImage = loadOrSaveGoldSnapshot(image, "filter3")
+    ImageComparator.compareAndAssert(null, image, goldImage, null)
+  }
+
+  @Test
   fun base64EncodedPng() {
     assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
 
