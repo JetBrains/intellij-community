@@ -160,7 +160,8 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       IntervalTreeImpl<T> tree = getTree();
       tree.assertUnderWriteLock();
       processAliveKeys(markerEx -> {
-        tree.beforeRemove(markerEx);
+        tree.beforeRemove(markerEx, this);
+        tree.setNode(markerEx, null);
         return true;
       });
     }
@@ -174,7 +175,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       }
       finally {
         l.unlock();
-        getTree().afterRemove(toInvalidate);
+        getTree().fireAfterRemoved(toInvalidate);
       }
     }
   }
@@ -195,7 +196,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     }
     finally {
       l.writeLock().unlock();
-      afterRemove(toInvalidate);
+      fireAfterRemoved(toInvalidate);
     }
   }
 
@@ -384,9 +385,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   @Override
-  public boolean removeInterval(@NotNull T interval) {
-    ((RangeMarkerImpl)interval).storeOffsetsBeforeDying();
-    return super.removeInterval(interval);
+  void beforeRemove(@NotNull T markerEx, @NotNull IntervalNode<T> node) {
+    super.beforeRemove(markerEx, node);
+    ((RangeMarkerImpl)markerEx).storeOffsetsBeforeDying(node);
   }
 
   void copyRangeMarkersTo(@NotNull DocumentImpl document, int tabSize) {
