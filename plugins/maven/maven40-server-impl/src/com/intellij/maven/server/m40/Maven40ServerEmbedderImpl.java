@@ -1261,6 +1261,83 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
+  @NotNull
+  @Override
+  public List<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
+                                                    @NotNull Collection<MavenGoalExecutionRequest> requests,
+                                                    @NotNull String goal,
+                                                    MavenToken token)
+    throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try (LongRunningTask task = new LongRunningTask(longRunningTaskId, requests.size())) {
+      return executeGoal(task, requests, goal);
+    }
+  }
+
+  private List<MavenGoalExecutionResult> executeGoal(@NotNull LongRunningTask task,
+                                                     @NotNull Collection<MavenGoalExecutionRequest> requests,
+                                                     @NotNull String goal)
+    throws RemoteException {
+    try {
+      List<MavenGoalExecutionResult> results = new ArrayList<>();
+      for (MavenGoalExecutionRequest request : requests) {
+        if (task.isCanceled()) break;
+        MavenGoalExecutionResult result = doExecute(request, goal);
+        results.add(result);
+        task.incrementFinishedRequests();
+      }
+      return results;
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  private MavenGoalExecutionResult doExecute(@NotNull MavenGoalExecutionRequest request, @NotNull String goal) throws RemoteException {
+    File file = request.file();
+    MavenExplicitProfiles profiles = request.profiles();
+    List<String> activeProfiles = new ArrayList<>(profiles.getEnabledProfiles());
+    List<String> inactiveProfiles = new ArrayList<>(profiles.getDisabledProfiles());
+    MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles, goal);
+
+    Maven maven = getComponent(Maven.class);
+    MavenExecutionResult executionResult = maven.execute(mavenExecutionRequest);
+
+    Maven40ExecutionResult result = new Maven40ExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
+    return createEmbedderExecutionResult(file, result);
+  }
+
+  @NotNull
+  private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, Maven40ExecutionResult result)
+    throws RemoteException {
+    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
+
+    collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
+
+    MavenGoalExecutionResult.Folders folders = new MavenGoalExecutionResult.Folders();
+    MavenProject mavenProject = result.getMavenProject();
+    if (mavenProject == null) return new MavenGoalExecutionResult(false, file, folders, problems);
+
+    folders.setSources(mavenProject.getCompileSourceRoots());
+    folders.setTestSources(mavenProject.getTestCompileSourceRoots());
+    folders.setResources(Maven40ModelConverter.convertResources(mavenProject.getModel().getBuild().getResources()));
+    folders.setTestResources(Maven40ModelConverter.convertResources(mavenProject.getModel().getBuild().getTestResources()));
+
+    return new MavenGoalExecutionResult(true, file, folders, problems);
+  }
+
+  private static List<Exception> filterExceptions(List<Throwable> list) {
+    for (Throwable throwable : list) {
+      if (!(throwable instanceof Exception)) {
+        throw new RuntimeException(throwable);
+      }
+    }
+
+    return (List<Exception>)((List)list);
+  }
+
+
+
 
 
 
@@ -1323,18 +1400,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public MavenArtifactResolveResult resolveArtifactsTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                                  @NotNull List<MavenRemoteRepository> remoteRepositories,
                                                                  MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public List<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
-                                                    @NotNull Collection<MavenGoalExecutionRequest> requests,
-                                                    @NotNull String goal,
-                                                    MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
 
     // TODO: implement

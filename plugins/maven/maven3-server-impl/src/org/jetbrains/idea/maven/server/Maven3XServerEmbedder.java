@@ -1588,15 +1588,15 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     List<String> inactiveProfiles = new ArrayList<>(profiles.getDisabledProfiles());
     MavenExecutionRequest mavenExecutionRequest = createRequest(file, activeProfiles, inactiveProfiles, goal);
 
-    org.apache.maven.execution.MavenExecutionResult executionResult = safeExecute(mavenExecutionRequest, getComponent(Maven.class));
+    MavenExecutionResult executionResult = safeExecute(mavenExecutionRequest, getComponent(Maven.class));
 
     Maven3ExecutionResult result = new Maven3ExecutionResult(executionResult.getProject(), filterExceptions(executionResult.getExceptions()));
     return createEmbedderExecutionResult(file, result);
   }
 
-  private org.apache.maven.execution.MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) throws RemoteException {
+  private MavenExecutionResult safeExecute(MavenExecutionRequest request, Maven maven) throws RemoteException {
     MavenLeakDetector detector = new MavenLeakDetector().mark();
-    org.apache.maven.execution.MavenExecutionResult result = maven.execute(request);
+    MavenExecutionResult result = maven.execute(request);
     detector.check();
     return result;
   }
