@@ -735,6 +735,30 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     Objects.requireNonNull(document.getText());
   }
 
+  public void testMustBeAbleForFileAccidentallyLoadedInUTF16ToReloadBackToUtf8() throws IOException {
+    VirtualFile file = createTempFile("txt", NO_BOM, "xxx", StandardCharsets.UTF_8);
+    file.setCharset(StandardCharsets.UTF_8);
+    UIUtil.dispatchAllInvocationEvents();
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    String oldText = document.getText();
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
+
+    // yeah, it was not safe to reload in utf16
+    assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToReloadIn(file, document.getText(), file.contentsToByteArray(), StandardCharsets.UTF_16BE));
+    // but it happened
+    EncodingUtil.reloadIn(file, StandardCharsets.UTF_16BE, getProject());
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals(StandardCharsets.UTF_16BE, file.getCharset());
+    assertEquals(CharsetToolkit.UTF16BE_BOM, file.getBOM());
+
+    // and back
+    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToReloadIn(file, document.getText(), file.contentsToByteArray(), StandardCharsets.UTF_8));
+    EncodingUtil.reloadIn(file, StandardCharsets.UTF_8, getProject());
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
+    assertEquals(oldText,  document.getText());
+  }
+
   private void globalUndo() {
     UndoManager myManager = UndoManager.getInstance(getProject());
     assertTrue("undo is not available", myManager.isUndoAvailable(null));
