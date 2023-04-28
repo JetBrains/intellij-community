@@ -16,13 +16,10 @@
 package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class MavenModelBase implements Serializable {
-  private Properties myProperties;
+  private Map<String, String> myProperties;
   private List<MavenPlugin> myPlugins = Collections.emptyList();
   private List<MavenArtifact> myExtensions = Collections.emptyList();
   private List<MavenArtifact> myDependencies = Collections.emptyList();
@@ -32,12 +29,27 @@ public class MavenModelBase implements Serializable {
   private List<String> myModules;
 
   public Properties getProperties() {
-    if (myProperties == null) myProperties = new Properties();
-    return myProperties;
+    if (myProperties == null) myProperties = new HashMap<>();
+    Properties properties = new Properties();
+    for (Map.Entry<String, String> entry : myProperties.entrySet()) {
+      properties.setProperty(entry.getKey(), entry.getValue());
+    }
+    return properties;
+  }
+
+  public void setProperties(Map<String, String> properties) {
+    myProperties = properties;
   }
 
   public void setProperties(Properties properties) {
-    myProperties = properties;
+    if (null == properties) return;
+    myProperties = new HashMap<>();
+    Enumeration<?> propertyNames = properties.propertyNames();
+    while (propertyNames.hasMoreElements()) {
+      String key = propertyNames.nextElement().toString();
+      String value = properties.getProperty(key);
+      myProperties.put(key, value);
+    }
   }
 
   public List<MavenPlugin> getPlugins() {
@@ -45,7 +57,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setPlugins(List<MavenPlugin> plugins) {
-    myPlugins = new ArrayList<MavenPlugin>(plugins);
+    myPlugins = new ArrayList<>(plugins);
   }
 
   public List<MavenArtifact> getExtensions() {
@@ -53,7 +65,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setExtensions(List<MavenArtifact> extensions) {
-    myExtensions = new ArrayList<MavenArtifact>(extensions);
+    myExtensions = new ArrayList<>(extensions);
   }
 
   public List<MavenArtifact> getDependencies() {
@@ -61,7 +73,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setDependencies(List<MavenArtifact> dependencies) {
-    myDependencies = new ArrayList<MavenArtifact>(dependencies);
+    myDependencies = new ArrayList<>(dependencies);
   }
 
   public List<MavenArtifactNode> getDependencyTree() {
@@ -69,7 +81,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setDependencyTree(List<MavenArtifactNode> dependencyTree) {
-    myDependencyTree = new ArrayList<MavenArtifactNode>(dependencyTree);
+    myDependencyTree = new ArrayList<>(dependencyTree);
   }
 
   public List<MavenRemoteRepository> getRemoteRepositories() {
@@ -77,7 +89,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setRemoteRepositories(List<MavenRemoteRepository> remoteRepositories) {
-    myRemoteRepositories = new ArrayList<MavenRemoteRepository>(remoteRepositories);
+    myRemoteRepositories = new ArrayList<>(remoteRepositories);
   }
 
   public List<String> getModules() {
@@ -85,6 +97,6 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setModules(List<String> modules) {
-    myModules = new ArrayList<String>(modules);
+    myModules = new ArrayList<>(modules);
   }
 }
