@@ -557,7 +557,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
    * quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
   @Override
-  public final void exit(boolean force, boolean exitConfirmed, boolean restart) {
+  public final void exit(boolean force, boolean exitConfirmed, boolean restart, int exitCode) {
     int flags = SAVE;
     if (force) {
       flags |= FORCE_EXIT;
@@ -565,19 +565,29 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     if (exitConfirmed) {
       flags |= EXIT_CONFIRMED;
     }
-    exit(flags, restart, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    exit(flags, restart, ArrayUtilRt.EMPTY_STRING_ARRAY, exitCode);
+  }
+
+  @Override
+  public final void exit(boolean force, boolean exitConfirmed, boolean restart) {
+    exit(force, exitConfirmed, restart, 0);
   }
 
   public void restart(int flags, String @NotNull [] beforeRestart) {
-    exit(flags, true, beforeRestart);
+    exit(flags, true, beforeRestart, 0);
+  }
+
+  @Override
+  public final void exit(int flags, int exitCode) {
+    exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY, exitCode);
   }
 
   @Override
   public final void exit(int flags) {
-    exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY);
+    exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY, 0);
   }
 
-  private void exit(int flags, boolean restart, String @NotNull [] beforeRestart) {
+  private void exit(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
     if (!BitUtil.isSet(flags, FORCE_EXIT) &&
         (myExitInProgress || (!BitUtil.isSet(flags, EXIT_CONFIRMED) && getDefaultModalityState() != ModalityState.NON_MODAL))) {
       return;
@@ -585,10 +595,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     myExitInProgress = true;
     if (isDispatchThread()) {
-      doExit(flags, restart, beforeRestart);
+      doExit(flags, restart, beforeRestart, exitCode);
     }
     else {
-      invokeLater(() -> doExit(flags, restart, beforeRestart), ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(flags, restart, beforeRestart, exitCode), ModalityState.NON_MODAL);
     }
   }
 
@@ -597,7 +607,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return myExitInProgress;
   }
 
-  private void doExit(int flags, boolean restart, String @NotNull [] beforeRestart) {
+  private void doExit(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
     IJTracer tracer = TelemetryTracer.Companion.getInstance().getTracer(new com.intellij.platform.diagnostic.telemetry.Scope("exitApp", null));
     Span exitSpan = tracer.spanBuilder("application.exit").startSpan();
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
@@ -669,7 +679,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       }
 
       IdeaLogger.dropFrequentExceptionsCaches();
-      int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
           Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
@@ -677,7 +686,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         catch (Throwable t) {
           LOG.error("Restart failed", t);
           StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), t);
-          exitCode = AppExitCodes.RESTART_FAILED;
+          if(exitCode == 0) {
+            exitCode = AppExitCodes.RESTART_FAILED;
+          }
         }
       }
       scope.close();

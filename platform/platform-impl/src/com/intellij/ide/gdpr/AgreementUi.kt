@@ -273,7 +273,7 @@ private class AgreementUi(@NlsSafe private val htmlText: String,
         exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)
       }
       else {
-        application.exit(true, true, false)
+        application.exit(true, true, false, AppExitCodes.PRIVACY_POLICY_REJECTION)
       }
     }
   }
