@@ -169,7 +169,7 @@ class MoveKotlinDeclarationsProcessor(
                     .search(lightElement, searchScope)
                     .mapNotNullTo(ArrayList()) { ref ->
                         if (foundReferences.add(ref) && elementsToMove.none { it.isAncestor(ref.element) }) {
-                            createMoveUsageInfoIfPossible(ref, lightElement, addImportToOriginalFile = true, isInternal = false)
+                            KotlinMoveUsage.createIfPossible(ref, lightElement, addImportToOriginalFile = true, isInternal = false)
                         } else null
                     }
 

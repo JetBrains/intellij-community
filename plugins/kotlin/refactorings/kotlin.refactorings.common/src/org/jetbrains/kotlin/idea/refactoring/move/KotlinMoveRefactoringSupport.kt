@@ -5,6 +5,8 @@ import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 interface KotlinMoveRefactoringSupport {
     companion object {
@@ -13,4 +15,8 @@ interface KotlinMoveRefactoringSupport {
     }
 
     fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): Collection<PsiReference>
+
+    fun isExtensionRef(expr: KtSimpleNameExpression): Boolean
+
+    fun isQualifiable(callableReferenceExpression: KtCallableReferenceExpression): Boolean
 }

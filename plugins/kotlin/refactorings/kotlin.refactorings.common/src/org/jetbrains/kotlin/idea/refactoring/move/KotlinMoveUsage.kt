@@ -3,13 +3,15 @@ package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 
@@ -110,6 +112,48 @@ sealed interface KotlinMoveUsage {
     ) {
         override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
             return Qualifiable(refExpr, refExpr.mainReference, referencedElement, isInternal)
+        }
+    }
+
+    companion object {
+        fun createIfPossible(
+            reference: PsiReference,
+            referencedElement: PsiElement,
+            addImportToOriginalFile: Boolean,
+            isInternal: Boolean
+        ): UsageInfo? {
+            val element = reference.element
+
+            fun createQualifiable() = Qualifiable(element, reference, referencedElement, isInternal)
+
+            if (element !is KtSimpleNameExpression) return createQualifiable()
+
+            if (element.getStrictParentOfType<KtSuperExpression>() != null) return null
+            val containingFile = element.containingFile ?: return null
+
+            fun createUnQualifiable() = Unqualifiable(
+                element, reference, referencedElement, containingFile, addImportToOriginalFile, isInternal
+            )
+
+            fun createCallableReference() = Deferred.CallableReference(
+                element, reference, referencedElement, containingFile, addImportToOriginalFile, isInternal
+            )
+
+            if (KotlinMoveRefactoringSupport.getInstance().isExtensionRef(element) &&
+                reference.element.getNonStrictParentOfType<KtImportDirective>() == null
+            ) return Unqualifiable(
+                element, reference, referencedElement, containingFile, addImportToOriginalFile, isInternal
+            )
+
+            element.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference }?.let { callable ->
+                if (callable.receiverExpression != null) {
+                    return if (KotlinMoveRefactoringSupport.getInstance().isQualifiable(callable)) createCallableReference() else null
+                }
+                val target = referencedElement.unwrapped
+                if (target is KtDeclaration && target.parent is KtFile) return createUnQualifiable()
+                if (target is PsiMember && target.containingClass == null) return createUnQualifiable()
+            }
+            return createQualifiable()
         }
     }
 }

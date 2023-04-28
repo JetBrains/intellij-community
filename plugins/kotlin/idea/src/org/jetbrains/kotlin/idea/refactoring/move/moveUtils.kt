@@ -22,12 +22,10 @@ import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
@@ -47,13 +45,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.*
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
-import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
@@ -106,7 +101,7 @@ fun KtElement.processInternalReferencesToUpdateOnPackageNameChange(
         if (descriptor is ClassDescriptor && descriptor.isInner && refExpr.parent is KtCallExpression) return null
 
         val isCallable = descriptor is CallableDescriptor
-        val isExtension = isCallable && refExpr.isExtensionRef(bindingContext)
+        val isExtension = isCallable && KotlinMoveRefactoringSupport.getInstance().isExtensionRef(refExpr)
         val isCallableReference = isCallableReference(refExpr.mainReference)
 
         val declaration by lazy {
@@ -159,7 +154,7 @@ fun KtElement.processInternalReferencesToUpdateOnPackageNameChange(
         val declarationNotNull = declaration ?: return null
 
         if (isExtension || containerFqName != null || isImported) return {
-            createMoveUsageInfoIfPossible(it.mainReference, declarationNotNull, addImportToOriginalFile = false, isInternal = true)
+            KotlinMoveUsage.createIfPossible(it.mainReference, declarationNotNull, addImportToOriginalFile = false, isInternal = true)
         }
 
         return null
@@ -203,65 +198,6 @@ class ImplicitCompanionAsDispatchReceiverUsageInfo(
     callee: KtSimpleNameExpression,
     val companionDescriptor: ClassDescriptor
 ) : UsageInfo(callee)
-
-fun createMoveUsageInfoIfPossible(
-    reference: PsiReference,
-    referencedElement: PsiElement,
-    addImportToOriginalFile: Boolean,
-    isInternal: Boolean
-): UsageInfo? {
-    val element = reference.element
-    return when (getReferenceKind(reference, referencedElement)) {
-        ReferenceKind.QUALIFIABLE -> KotlinMoveUsage.Qualifiable(
-            element, reference, referencedElement, isInternal
-        )
-        ReferenceKind.UNQUALIFIABLE -> KotlinMoveUsage.Unqualifiable(
-            element, reference, referencedElement, element.containingFile!!, addImportToOriginalFile, isInternal
-        )
-        ReferenceKind.CALLABLE_REFERENCE -> KotlinMoveUsage.Deferred.CallableReference(
-            element, reference, referencedElement, element.containingFile!!, addImportToOriginalFile, isInternal
-        )
-        else -> null
-    }
-}
-
-private enum class ReferenceKind {
-    QUALIFIABLE,
-    UNQUALIFIABLE,
-    CALLABLE_REFERENCE,
-    IRRELEVANT
-}
-
-private fun KtSimpleNameExpression.isExtensionRef(bindingContext: BindingContext? = null): Boolean {
-    val resolvedCall = getResolvedCall(bindingContext ?: analyze(BodyResolveMode.PARTIAL)) ?: return false
-    if (resolvedCall is VariableAsFunctionResolvedCall) {
-        return resolvedCall.variableCall.candidateDescriptor.isExtension || resolvedCall.functionCall.candidateDescriptor.isExtension
-    }
-    return resolvedCall.candidateDescriptor.isExtension
-}
-
-private fun getReferenceKind(reference: PsiReference, referencedElement: PsiElement): ReferenceKind {
-    val target = referencedElement.unwrapped
-    val element = reference.element as? KtSimpleNameExpression ?: return ReferenceKind.QUALIFIABLE
-
-    if (element.getStrictParentOfType<KtSuperExpression>() != null) return ReferenceKind.IRRELEVANT
-
-    if (element.isExtensionRef() &&
-        reference.element.getNonStrictParentOfType<KtImportDirective>() == null
-    ) return ReferenceKind.UNQUALIFIABLE
-
-    element.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference }?.let {
-        val receiverExpression = it.receiverExpression
-        if (receiverExpression != null) {
-            val lhs = it.analyze(BodyResolveMode.PARTIAL)[BindingContext.DOUBLE_COLON_LHS, receiverExpression]
-            return if (lhs is DoubleColonLHS.Type) ReferenceKind.CALLABLE_REFERENCE else ReferenceKind.IRRELEVANT
-        }
-        if (target is KtDeclaration && target.parent is KtFile) return ReferenceKind.UNQUALIFIABLE
-        if (target is PsiMember && target.containingClass == null) return ReferenceKind.UNQUALIFIABLE
-    }
-
-    return ReferenceKind.QUALIFIABLE
-}
 
 private fun isCallableReference(reference: PsiReference): Boolean {
     return reference is KtSimpleNameReference
