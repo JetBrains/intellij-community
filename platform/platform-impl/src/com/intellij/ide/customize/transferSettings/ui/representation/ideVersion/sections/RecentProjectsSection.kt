@@ -4,44 +4,47 @@ package com.intellij.ide.customize.transferSettings.ui.representation.ideVersion
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
+import com.intellij.ide.customize.transferSettings.models.RecentPathInfo
 import com.intellij.ide.customize.transferSettings.models.SettingsPreferencesKind
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import javax.swing.ScrollPaneConstants
 
 class RecentProjectsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.RecentProjects, AllIcons.TransferSettings.RecentProjects) {
   private val recentProjects get() = ideVersion.settings.recentProjects
   override fun getContent(): JComponent {
-    if (recentProjects.size > 5) {
-      withMoreLabel {
-        panel {
-          recentProjects.drop(5).forEach { info ->
-            row {
-              info.info.displayName?.let { it1: @NlsSafe String -> label(it1) }
-            }
-          }
-        }
+    if (recentProjects.size > LIMIT) {
+      withMoreLabel(IdeBundle.message("transfersettings.projects.and.n.more", recentProjects.size - LIMIT)) {
+        Wrapper(JBScrollPane(getPopupScrollContent()).apply {
+          verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+          horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+          border = JBUI.Borders.empty()
+        })
       }
     }
     return panel {
       row {
-        mutableLabel(createString())
+        mutableLabel(createString(recentProjects.take(LIMIT)))
       }
     }
   }
 
-  private fun createString(): @Nls String = StringBuilder().run {
-    append(recentProjects.take(5).mapNotNull { it.info.displayName }.joinToString { it })
-    if (recentProjects.size > 5) {
-      append(" ")
-      append(IdeBundle.message("transfersettings.projects.and.n.more", recentProjects.size-5))
+  private fun getPopupScrollContent() = panel {
+    row {
+      text(createString(recentProjects.drop(LIMIT)))
     }
-    toString() // NON-NLS because it's localised
   }
 
-  override val name: String
-    get() = "Recent Projects"
+  private fun createString(pr: List<RecentPathInfo>): @Nls String = pr.mapNotNull { it.info.displayName }.joinToString { it }
 
-  override fun worthShowing(): Boolean = ideVersion.settings.recentProjects.isNotEmpty()
+  override val name: String
+    get() = "${recentProjects.size} Recent Projects"
+
+  override fun worthShowing(): Boolean = recentProjects.isNotEmpty()
 }

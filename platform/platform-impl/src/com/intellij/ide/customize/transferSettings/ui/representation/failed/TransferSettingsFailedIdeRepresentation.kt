@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsController
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRepresentationPanel
+import com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.TransferSettingsIdeRepresentationListener
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -18,6 +19,11 @@ class TransferSettingsFailedIdeRepresentation(private val ide: FailedIdeVersion,
   override fun block() {
     // nothing to block
   }
+
+  override fun onStateChange(action: TransferSettingsIdeRepresentationListener) {
+
+  }
+
   override fun getComponent(): JComponent = panel {
     row {
       icon(AllIcons.General.Warning).align(AlignY.TOP).customize(UnscaledGaps(right = 5))

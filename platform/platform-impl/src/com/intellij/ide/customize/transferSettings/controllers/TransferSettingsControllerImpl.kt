@@ -15,6 +15,10 @@ class TransferSettingsControllerImpl : TransferSettingsController {
   private val eventDispatcher = EventDispatcher.create(TransferSettingsListener::class.java)
   private var previouslySelected: BaseIdeVersion? = null
 
+  override fun updateCheckboxes(ideVersion: IdeVersion) {
+    eventDispatcher.multicaster.checkboxesUpdated(ideVersion)
+  }
+
   override fun performImport(project: Project?, ideVersion: IdeVersion, withPlugins: Boolean, pi: ProgressIndicator) {
     eventDispatcher.multicaster.importStarted(ideVersion, ideVersion.settings)
     val performer = getImportPerformer()

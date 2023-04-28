@@ -13,21 +13,22 @@ import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
 class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.Plugins, AllIcons.TransferSettings.PluginsAndFeatures) {
+  private val plugins = ideVersion.settings.plugins.filter { !it.isHidden }
   override val name: String = "Plugins and Features"
-  override fun worthShowing(): Boolean = ideVersion.settings.plugins.isNotEmpty()
+  override fun worthShowing(): Boolean = plugins.isNotEmpty()
 
   override fun getContent(): JComponent {
-    if (ideVersion.settings.plugins.size > 3) {
-      withMoreLabel {
+    if (plugins.size > LIMIT) {
+      withMoreLabel("and ${plugins.size - LIMIT} more") {
         return@withMoreLabel panel {
-          for (plugin in ideVersion.settings.plugins.drop(3)) {
+          for (plugin in plugins.drop(LIMIT)) {
             createPluginRow(plugin, this)
           }
         }
       }
     }
     return panel {
-      for (plugin in ideVersion.settings.plugins) {
+      for (plugin in plugins.take(LIMIT)) {
         createPluginRow(plugin, this)
       }
     }
