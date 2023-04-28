@@ -47,7 +47,8 @@ class LoadedGitLabDiscussion(
   private val project: GitLabProjectCoordinates,
   private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
   private val mr: GitLabMergeRequest,
-  discussionData: GitLabDiscussionDTO
+  discussionData: GitLabDiscussionDTO,
+  draftNotes: Flow<List<GitLabMergeRequestDraftNote>>
 ) : GitLabMergeRequestDiscussion {
   init {
     require(discussionData.notes.isNotEmpty()) { "Discussion with empty notes" }
@@ -94,7 +95,9 @@ class LoadedGitLabDiscussion(
         { cs, note -> MutableGitLabMergeRequestNote(cs, api, project, mr, noteEvents::emit, note) },
         MutableGitLabMergeRequestNote::destroy,
         MutableGitLabMergeRequestNote::update
-      )
+      ).combine(draftNotes) { notes, draftNotes ->
+        notes + draftNotes
+      }
       .modelFlow(cs, LOG)
 
   override val canAddNotes: Boolean = mr.userPermissions.value.createNote

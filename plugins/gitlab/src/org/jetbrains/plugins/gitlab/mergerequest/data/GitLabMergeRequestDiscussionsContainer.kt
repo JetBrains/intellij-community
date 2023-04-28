@@ -73,7 +73,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .mapFiltered { !it.notes.first().system }
       .mapCaching(
         GitLabDiscussionDTO::id,
-        { cs, disc -> LoadedGitLabDiscussion(cs, api, project, { discussionEvents.emit(it) }, mr, disc) },
+        { cs, disc -> LoadedGitLabDiscussion(cs, api, project, { discussionEvents.emit(it) }, mr, disc, getDiscussionDraftNotes(disc.id)) },
         LoadedGitLabDiscussion::destroy
       )
       .modelFlow(cs, LOG)
@@ -121,6 +121,15 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     ).modelFlow(cs, LOG)
 
   private data class DraftNoteWithAuthor(val note: GitLabMergeRequestDraftNoteRestDTO, val author: GitLabUserDTO)
+
+  private fun getDiscussionDraftNotes(discussionGid: String): Flow<List<GitLabMergeRequestDraftNote>> =
+    draftNotesData.mapFiltered {
+      it.note.discussionId != null && discussionGid.endsWith(it.note.discussionId)
+    }.mapCaching(
+      { it.note.id },
+      { cs, (note, author) -> GitLabMergeRequestDraftNoteImpl(cs, api, project, mr, draftNotesEvents::emit, note, author) },
+      GitLabMergeRequestDraftNoteImpl::destroy
+    )
 
   private suspend fun loadNonEmptyDiscussions(): List<GitLabDiscussionDTO> =
     ApiPageUtil.createGQLPagesFlow {
