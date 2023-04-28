@@ -15,7 +15,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.take
 import org.junit.After
 import org.junit.ClassRule
 import org.junit.Rule
@@ -93,7 +94,7 @@ class WorkspaceModelAsyncTest {
     val application = ApplicationManager.getApplication()
     assertEquals(false, application.isWriteAccessAllowed)
 
-    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object: WorkspaceModelChangeListener {
+    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         assertEquals(true, application.isWriteAccessAllowed)
         val entityChange = event.getAllChanges().single()
@@ -115,7 +116,7 @@ class WorkspaceModelAsyncTest {
     val application = ApplicationManager.getApplication()
     assertEquals(false, application.isWriteAccessAllowed)
 
-    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object: WorkspaceModelChangeListener {
+    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         assertEquals(true, application.isWriteAccessAllowed)
         val entityChange = event.getAllChanges().single()

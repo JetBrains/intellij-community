@@ -36,7 +36,7 @@ class AbstractEntitiesTest {
 
     val anotherMiddleEntity = builder.addMiddleEntity("second")
     builder.modifyEntity(leftEntity) {
-      
+
     }
     builder.modifyEntity(leftEntity) {
       this.children = listOf(anotherMiddleEntity)

@@ -23,7 +23,7 @@ class VirtualFileIndexTest {
   @Rule
   @JvmField
   var application = ApplicationRule()
-  
+
   @Rule
   @JvmField
   var temporaryDirectoryRule = TemporaryDirectory()
@@ -31,9 +31,9 @@ class VirtualFileIndexTest {
   @Rule
   @JvmField
   var disposableRule = DisposableRule()
-  
+
   val manager = VirtualFileUrlManagerImpl()
-  
+
   @Test
   fun `property test`() {
     PropertyChecker.checkScenarios {
@@ -52,7 +52,7 @@ class VirtualFileIndexTest {
       }
     }
   }
-  
+
   private inner class AddValue(private val index: VirtualFileIndex.MutableVirtualFileIndex) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val (pointer, id, prop) = generateData(env)
@@ -96,7 +96,8 @@ class VirtualFileIndexTest {
     }
   }
 
-  private inner class ToImmutable(private val index: VirtualFileIndex.MutableVirtualFileIndex, private val immutables: MutableList<VirtualFileIndex>) : ImperativeCommand {
+  private inner class ToImmutable(private val index: VirtualFileIndex.MutableVirtualFileIndex,
+                                  private val immutables: MutableList<VirtualFileIndex>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       immutables.forEach {
         it.assertConsistency()
@@ -134,7 +135,7 @@ class VirtualFileIndexTest {
 
     manager.fromPath(file.toString())
   }
-  
+
   internal val entityIdGenerator = Generator.from { env ->
     val clazz: Class<out WorkspaceEntity> = env.generate<Class<out WorkspaceEntity>>(Generator.sampledFrom(
       ModuleEntity::class.java,
@@ -144,7 +145,7 @@ class VirtualFileIndexTest {
       ArtifactEntity::class.java,
     ))
     val id = env.generate(Generator.integers(0, 100))
-    
+
     createEntityId(id, ClassToIntConverter.INSTANCE.getInt(clazz))
   }
 

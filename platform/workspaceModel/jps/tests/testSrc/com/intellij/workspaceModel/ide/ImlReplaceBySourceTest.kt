@@ -9,8 +9,6 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
-import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
-import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity
@@ -30,6 +28,7 @@ class ImlReplaceBySourceTest {
   val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
+
   @Before
   fun setUp() {
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
@@ -107,6 +106,7 @@ class ImlReplaceBySourceTest {
     // Changes 1 & 2 handle source roots ordering [ModuleSerializersFactory.SourceRootOrderEntry]
     @Suppress("USELESS_IS_CHECK")
     val sourceRootChange = changes.filterIsInstance<EntityChange.Added<SourceRootEntity>>().single { it.entity is SourceRootEntity }
+
     @Suppress("USELESS_IS_CHECK")
     val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootPropertiesEntity>>().single { it.entity is JavaSourceRootPropertiesEntity }
     Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url, sourceRootChange.entity.url.url)

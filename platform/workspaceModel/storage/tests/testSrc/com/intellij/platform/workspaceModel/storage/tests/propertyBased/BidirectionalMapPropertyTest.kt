@@ -28,7 +28,8 @@ class BidirectionalMapPropertyTest {
     }
   }
 
-  private class AddValues(val optimizedMap: BidirectionalMap<Int, Int>, val originalMap: OriginalBidirectionalMap<Int, Int>) : ImperativeCommand {
+  private class AddValues(val optimizedMap: BidirectionalMap<Int, Int>,
+                          val originalMap: OriginalBidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       for (i in 1..env.generateValue(Generator.integers(2, 10), null)) {
         val key = env.generateValue(Generator.integers(-20, 20), null)
@@ -43,14 +44,16 @@ class BidirectionalMapPropertyTest {
     }
   }
 
-  private class GetValues(val optimizedMap: BidirectionalMap<Int, Int>, val originalMap: OriginalBidirectionalMap<Int, Int>) : ImperativeCommand {
+  private class GetValues(val optimizedMap: BidirectionalMap<Int, Int>,
+                          val originalMap: OriginalBidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectElement(env, originalMap.keys.toList()) ?: return
       Assert.assertEquals(originalMap[key], optimizedMap[key])
     }
   }
 
-  private class RemoveKey(val optimizedMap: BidirectionalMap<Int, Int>, val originalMap: OriginalBidirectionalMap<Int, Int>) : ImperativeCommand {
+  private class RemoveKey(val optimizedMap: BidirectionalMap<Int, Int>,
+                          val originalMap: OriginalBidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectElement(env, originalMap.keys.toList()) ?: return
 
@@ -61,7 +64,8 @@ class BidirectionalMapPropertyTest {
     }
   }
 
-  private class RemoveValue(val optimizedMap: BidirectionalMap<Int, Int>, val originalMap: OriginalBidirectionalMap<Int, Int>) : ImperativeCommand {
+  private class RemoveValue(val optimizedMap: BidirectionalMap<Int, Int>,
+                            val originalMap: OriginalBidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val value = selectElement(env, originalMap.values.toList()) ?: return
 

@@ -13,14 +13,14 @@ class MoveEntitiesBetweenStoragesTest {
       it addEntity SampleEntity(false, "to copy", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
                                 SampleEntitySource("test"))
     }.toSnapshot()
-    
+
     val target = createEmptyBuilder().also {
       it.addEntity(snapshot.singleSampleEntity())
     }.toSnapshot()
     val entity = target.singleSampleEntity()
     assertEquals("to copy", entity.stringProperty)
   }
-  
+
   @Test
   fun `move entity with child`() {
     val snapshot = createEmptyBuilder().also {
@@ -32,7 +32,7 @@ class MoveEntitiesBetweenStoragesTest {
         optionalParent = parent
       }
     }.toSnapshot()
-    
+
     val target = createEmptyBuilder().also {
       it.addEntity(snapshot.entities(XParentEntity::class.java).single())
     }.toSnapshot()
@@ -54,7 +54,7 @@ class MoveEntitiesBetweenStoragesTest {
         parent2 = childEntity
       }
     }.toSnapshot()
-    
+
     val target = createEmptyBuilder().also {
       it.addEntity(snapshot.entities(XParentEntity::class.java).single())
     }.toSnapshot()

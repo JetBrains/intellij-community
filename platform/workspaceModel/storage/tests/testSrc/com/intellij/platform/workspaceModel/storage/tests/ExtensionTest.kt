@@ -1,11 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.storage.tests
 
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.AttachedEntity
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.MainEntity
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.child
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

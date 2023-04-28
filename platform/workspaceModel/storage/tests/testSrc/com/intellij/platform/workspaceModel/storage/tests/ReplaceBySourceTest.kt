@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.storage.tests
 
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.toBuilder
@@ -637,7 +637,8 @@ class ReplaceBySourceTest {
 
     thisStateCheck {
       parentEntity assert ReplaceState.Relabel(anotherParent.base.id)
-      parentEntity.childOne!! assert ReplaceState.Relabel(anotherParent.childOne!!.base.id, setOf(ParentsRef.TargetRef(parentEntity.base.id)))
+      parentEntity.childOne!! assert ReplaceState.Relabel(anotherParent.childOne!!.base.id,
+                                                          setOf(ParentsRef.TargetRef(parentEntity.base.id)))
     }
 
     replaceWithCheck {
@@ -900,7 +901,8 @@ class ReplaceBySourceTest {
 
     thisStateCheck {
       thisRoot assert ReplaceState.NoChange(replaceRoot.base.id)
-      thisRoot.children.single() assert ReplaceState.Relabel(replaceRoot.children.single().base.id, setOf(ParentsRef.TargetRef(thisRoot.base.id)))
+      thisRoot.children.single() assert ReplaceState.Relabel(replaceRoot.children.single().base.id,
+                                                             setOf(ParentsRef.TargetRef(thisRoot.base.id)))
     }
 
     replaceWithCheck {
@@ -1051,14 +1053,14 @@ class ReplaceBySourceTest {
     builder add TreeMultiparentRootEntity("data", AnotherSource) {
       this.children = listOf(
         TreeMultiparentLeafEntity("data", MySource) {
-          this.children = listOf(TreeMultiparentLeafEntity ("internal", MySource))
+          this.children = listOf(TreeMultiparentLeafEntity("internal", MySource))
         }
       )
     }
     replacement add TreeMultiparentRootEntity("data", AnotherSource) {
       this.children = listOf(
         TreeMultiparentLeafEntity("data", AnotherSource) {
-          this.children = listOf(TreeMultiparentLeafEntity ("internal", MySource))
+          this.children = listOf(TreeMultiparentLeafEntity("internal", MySource))
         }
       )
     }
@@ -1088,7 +1090,7 @@ class ReplaceBySourceTest {
     val replaceWithEntity = replacement add TreeMultiparentRootEntity("data", AnotherSource) {
       this.children = listOf(
         TreeMultiparentLeafEntity("data", AnotherSource) {
-          this.children = listOf(TreeMultiparentLeafEntity ("internal", MySource))
+          this.children = listOf(TreeMultiparentLeafEntity("internal", MySource))
         }
       )
     }
@@ -1109,13 +1111,15 @@ class ReplaceBySourceTest {
     thisStateCheck {
       leafsStructure assert ReplaceState.NoChange(replaceWithEntity.base.id)
       leafsStructure.children.single() assert ReplaceState.NoChange(replaceWithEntity.children.single().base.id)
-      internalChild assert ReplaceState.Relabel(replaceWithEntity.children.single().children.single().base.id, setOf(ParentsRef.TargetRef(leafsStructure.children.single().base.id)))
+      internalChild assert ReplaceState.Relabel(replaceWithEntity.children.single().children.single().base.id,
+                                                setOf(ParentsRef.TargetRef(leafsStructure.children.single().base.id)))
     }
 
     replaceWithCheck {
       replaceWithEntity assert ReplaceWithState.NoChange(leafsStructure.base.id)
       replaceWithEntity.children.single() assert ReplaceWithState.NoChange(leafsStructure.children.single().base.id)
-      replaceWithEntity.children.single().children.single() assert ReplaceWithState.Relabel(leafsStructure.children.single().children.single().base.id)
+      replaceWithEntity.children.single().children.single() assert ReplaceWithState.Relabel(
+        leafsStructure.children.single().children.single().base.id)
     }
   }
 
@@ -1780,13 +1784,15 @@ class ReplaceBySourceTest {
 
     val anotherBuilder = builder.toSnapshot().toBuilder()
 
-    assertNull(builder.entities (ChainedEntity::class.java).single { it.entitySource == MySource }.parent)
-    assertNotEquals(AnotherSource, builder.entities (ChainedEntity::class.java).single { it.entitySource == AnotherSource }.parent!!.entitySource)
+    assertNull(builder.entities(ChainedEntity::class.java).single { it.entitySource == MySource }.parent)
+    assertNotEquals(AnotherSource,
+                    builder.entities(ChainedEntity::class.java).single { it.entitySource == AnotherSource }.parent!!.entitySource)
 
     builder.replaceBySource({ true }, anotherBuilder)
 
-    assertNull(builder.entities (ChainedEntity::class.java).single { it.entitySource == MySource }.parent)
-    assertNotEquals(AnotherSource, builder.entities (ChainedEntity::class.java).single { it.entitySource == AnotherSource }.parent!!.entitySource)
+    assertNull(builder.entities(ChainedEntity::class.java).single { it.entitySource == MySource }.parent)
+    assertNotEquals(AnotherSource,
+                    builder.entities(ChainedEntity::class.java).single { it.entitySource == AnotherSource }.parent!!.entitySource)
   }
 
 

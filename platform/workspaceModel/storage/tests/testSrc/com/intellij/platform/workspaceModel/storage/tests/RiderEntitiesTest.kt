@@ -88,7 +88,9 @@ class RiderEntitiesTest {
     val newBuilder = snapshot.toBuilder()
     val anotherBuilder = snapshot.toBuilder()
 
-    var existingProjectModelEntity = anotherBuilder.entities(ProjectModelTestEntity::class.java).single { it.descriptor.data.contains("left") }
+    var existingProjectModelEntity = anotherBuilder.entities(ProjectModelTestEntity::class.java).single {
+      it.descriptor.data.contains("left")
+    }
     assertNotNull(existingProjectModelEntity.contentRoot)
     anotherBuilder.modifyEntity(existingProjectModelEntity) {
       this.descriptor = DescriptorInstance("project model data left")

@@ -2,10 +2,10 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity

@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.lang.IllegalStateException
 
 class CircularDependencyProhibitedTest {
   @Test

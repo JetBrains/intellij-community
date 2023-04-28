@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspaceModel.storage.tests
 
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.SourceEntity
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl

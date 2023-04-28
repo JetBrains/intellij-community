@@ -69,7 +69,7 @@ class MutableEntityCollectionTest {
     }
 
     makeOperationOnListAndCheck(builder, "/user/foo.txt", removeOperation = true) { entity, vfu ->
-      entity.fileProperty.removeIf{ it == vfu.single() }
+      entity.fileProperty.removeIf { it == vfu.single() }
     }
 
     makeOperationOnListAndCheck(builder, "/user/opt/app/a.txt", removeOperation = true) { entity, vfu ->
@@ -77,7 +77,7 @@ class MutableEntityCollectionTest {
     }
 
     makeReplaceOnListOperationAndCheck(builder, listOf("/user/a.txt", "/user/f.txt"), listOf("/user/c.txt")) { entity, vfu ->
-      entity.fileProperty.retainAll(listOf(virtualFileManager.fromUrl ("/user/c.txt")))
+      entity.fileProperty.retainAll(listOf(virtualFileManager.fromUrl("/user/c.txt")))
     }
 
     makeReplaceOnListOperationAndCheck(builder, listOf("/user/c.txt"), listOf("/user/e.txt")) { entity, vfu ->
@@ -152,7 +152,7 @@ class MutableEntityCollectionTest {
     //}
 
     makeReplaceOnSetOperationAndCheck(builder, listOf("/user/b.txt", "/user/opt/app/a.txt"), listOf("/user/c.txt")) { entity, vfu ->
-      entity.fileProperty.retainAll(listOf(virtualFileManager.fromUrl ("/user/c.txt")))
+      entity.fileProperty.retainAll(listOf(virtualFileManager.fromUrl("/user/c.txt")))
     }
 
     // TODO:: Not supported
@@ -189,7 +189,8 @@ class MutableEntityCollectionTest {
     vfuForAction.forEach {
       if (removeOperation) {
         assertFalse(virtualFiles.contains(it))
-      } else {
+      }
+      else {
         assertTrue(virtualFiles.contains(it))
       }
     }
@@ -224,7 +225,7 @@ class MutableEntityCollectionTest {
   }
 
   private fun makeReplaceOnSetOperationAndCheck(builder: MutableEntityStorageImpl, oldUrls: List<String>, newUrls: List<String>,
-                                                 operation: (SetVFUEntity.Builder, Set<VirtualFileUrl>) -> Unit) {
+                                                operation: (SetVFUEntity.Builder, Set<VirtualFileUrl>) -> Unit) {
     val entity = builder.entities(SetVFUEntity::class.java).single()
     val vfuForAction = oldUrls.map { virtualFileManager.fromUrl(it) }.toSet()
 
@@ -256,7 +257,8 @@ class MutableEntityCollectionTest {
     vfuForAction.forEach {
       if (removeOperation) {
         assertFalse(virtualFiles.contains(it))
-      } else {
+      }
+      else {
         assertTrue(virtualFiles.contains(it))
       }
     }

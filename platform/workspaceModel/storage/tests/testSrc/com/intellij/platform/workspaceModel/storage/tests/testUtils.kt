@@ -10,8 +10,6 @@ import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMult
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.*
 import org.junit.Assert
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.function.Executable
 import java.nio.file.Files
 import java.util.function.BiPredicate
 import kotlin.reflect.full.memberProperties
@@ -67,7 +65,8 @@ object SerializationRoundTripChecker {
       val expectedEntities = expectedEntityFamily.entities
       val actualEntities = actualEntityFamily.entities
 
-      assertOrderedEquals(expectedEntities, actualEntities) { a, b -> a == null && b == null || a != null && b != null && a.equalsIgnoringEntitySource(b) }
+      assertOrderedEquals(expectedEntities,
+                          actualEntities) { a, b -> a == null && b == null || a != null && b != null && a.equalsIgnoringEntitySource(b) }
     }
 
     // Assert refs

@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.storage.tests.impl
 
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl

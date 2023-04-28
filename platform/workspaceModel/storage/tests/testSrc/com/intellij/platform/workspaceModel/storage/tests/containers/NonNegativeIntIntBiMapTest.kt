@@ -14,8 +14,8 @@ class NonNegativeIntIntBiMapTest {
     map.putAll(intArrayOf(1), 10)
     map.putAll(intArrayOf(1), 20)
 
-    assertArrayEquals(intArrayOf(1), map.getKeys (20).toArray())
-    assertArrayEquals(intArrayOf(), map.getKeys (10).toArray())
+    assertArrayEquals(intArrayOf(1), map.getKeys(20).toArray())
+    assertArrayEquals(intArrayOf(), map.getKeys(10).toArray())
   }
 
   @Test
@@ -25,7 +25,7 @@ class NonNegativeIntIntBiMapTest {
     map.putAll(intArrayOf(1), 10)
     map.putAll(intArrayOf(2), 10)
 
-    assertArrayEquals(intArrayOf(1, 2), map.getKeys (10).toArray())
+    assertArrayEquals(intArrayOf(1, 2), map.getKeys(10).toArray())
 
     assertEquals(10, map.get(1))
     assertEquals(10, map.get(2))

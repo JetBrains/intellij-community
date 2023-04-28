@@ -18,6 +18,7 @@ import kotlin.test.fail
 class GeneratedCodeVersionsTest {
   private var prev_api = 0
   private var prev_impl = 0
+
   @Before
   fun setUp() {
     prev_api = CodeGeneratorVersions.API_VERSION
@@ -99,16 +100,14 @@ interface SuperSimpleEntity : WorkspaceEntity {
 }
 
 
-
 @GeneratedCodeApiVersion(1000001)
 @GeneratedCodeImplVersion(1000002)
-open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
+open class SuperSimpleEntityImpl : SuperSimpleEntity, WorkspaceEntityBase() {
 
 
-
-
-  class Builder(result: SuperSimpleEntityData?): ModifiableWorkspaceEntityBase<SuperSimpleEntity, SuperSimpleEntityData>(result), SuperSimpleEntity.Builder {
-    constructor(): this(SuperSimpleEntityData())
+  class Builder(result: SuperSimpleEntityData?) : ModifiableWorkspaceEntityBase<SuperSimpleEntity, SuperSimpleEntityData>(
+    result), SuperSimpleEntity.Builder {
+    constructor() : this(SuperSimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -183,8 +182,6 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
     }
-
-
 
 
     override fun connectionIdList(): List<ConnectionId> {

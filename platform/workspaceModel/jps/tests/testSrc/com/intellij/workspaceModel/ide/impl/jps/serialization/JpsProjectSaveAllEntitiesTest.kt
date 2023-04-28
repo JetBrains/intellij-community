@@ -8,10 +8,10 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.ClassRule
@@ -25,6 +25,7 @@ class JpsProjectSaveAllEntitiesTest {
   val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
+
   @Before
   fun setUp() {
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)

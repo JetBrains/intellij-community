@@ -67,7 +67,7 @@ class ImlSerializationTest {
     serializationRoundTrip(builder)
   }
 
-  private fun checkSerializationSize(bytes: ByteArray, expectedSize: Int, precision:Int) {
+  private fun checkSerializationSize(bytes: ByteArray, expectedSize: Int, precision: Int) {
 
     // At the moment serialization size varies from time to time. I don't know the reason for that, but you should check this test if
     //   the serialization size changes a lot.

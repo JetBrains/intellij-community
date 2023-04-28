@@ -68,7 +68,7 @@ class ModuleBridgesTest {
   @Rule
   @JvmField
   val projectModel = ProjectModelRule()
-  
+
   private lateinit var project: Project
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
@@ -122,7 +122,8 @@ class ModuleBridgesTest {
         rootModel.commit()
 
         assertArrayEquals(arrayOf(temp.toVirtualFileUrl(virtualFileManager).url), m.rootManager.contentRootUrls)
-      } finally {
+      }
+      finally {
         modulesModifiableModel.dispose()
       }
     }
@@ -287,17 +288,19 @@ class ModuleBridgesTest {
     val projectModel = WorkspaceModel.getInstance(project)
 
     project.messageBus.connect(disposableRule.disposable).subscribe(WorkspaceModelTopics.CHANGED,
-      object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          val moduleBridge = event.storageAfter.resolve(ModuleId("name"))!!.findModule(event.storageAfter)
-          assertNotNull(moduleBridge)
-        }
+                                                                    object : WorkspaceModelChangeListener {
+                                                                      override fun beforeChanged(event: VersionedStorageChange) {
+                                                                        val moduleBridge = event.storageAfter.resolve(
+                                                                          ModuleId("name"))!!.findModule(event.storageAfter)
+                                                                        assertNotNull(moduleBridge)
+                                                                      }
 
-        override fun changed(event: VersionedStorageChange) {
-          val moduleBridge = event.storageAfter.resolve(ModuleId("name"))!!.findModule(event.storageAfter)
-          assertNotNull(moduleBridge)
-        }
-      }
+                                                                      override fun changed(event: VersionedStorageChange) {
+                                                                        val moduleBridge = event.storageAfter.resolve(
+                                                                          ModuleId("name"))!!.findModule(event.storageAfter)
+                                                                        assertNotNull(moduleBridge)
+                                                                      }
+                                                                    }
     )
 
     projectModel.updateProjectModel {
@@ -425,7 +428,9 @@ class ModuleBridgesTest {
 
     val module = projectModel.createModule()
 
-    val modifiableModel = ApplicationManager.getApplication().runReadAction<ModifiableRootModel> { ModuleRootManager.getInstance(module).modifiableModel }
+    val modifiableModel = ApplicationManager.getApplication().runReadAction<ModifiableRootModel> {
+      ModuleRootManager.getInstance(module).modifiableModel
+    }
     val moduleExtension = modifiableModel.getModuleExtension(TestModuleExtension::class.java)
     moduleExtension.languageLevel = LanguageLevel.JDK_1_5
     runWriteActionAndWait { modifiableModel.commit() }
@@ -484,7 +489,8 @@ class ModuleBridgesTest {
     )
     builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
-        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.symbolicId, false, ModuleDependencyItem.DependencyScope.COMPILE)
+        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.symbolicId, false,
+                                                          ModuleDependencyItem.DependencyScope.COMPILE)
       ).toMutableList()
     }
 

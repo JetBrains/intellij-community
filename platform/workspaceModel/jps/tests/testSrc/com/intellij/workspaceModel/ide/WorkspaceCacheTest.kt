@@ -19,7 +19,6 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
-import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
@@ -84,12 +83,13 @@ class WorkspaceCacheTest {
     val project = loadProject(prepareProject().projectDir)
     val cache = WorkspaceModelCache.getInstance(project) as WorkspaceModelCacheImpl
     cache.saveCacheNow()
-    assertFalse("Cache for unloaded entities must not be created if no entities are unloaded", cache.getUnloadedEntitiesCacheFilePath().exists())
-    
+    assertFalse("Cache for unloaded entities must not be created if no entities are unloaded",
+                cache.getUnloadedEntitiesCacheFilePath().exists())
+
     runBlocking {
       ModuleManager.getInstance(project).setUnloadedModules(listOf("newModule"))
     }
-    
+
     cache.saveCacheNow()
     assertTrue(cache.getUnloadedEntitiesCacheFilePath().exists())
   }
@@ -194,6 +194,8 @@ class WorkspaceCacheTest {
     private fun cacheFileName(): String {
       return "test_caching_" + RandomStringUtils.randomAlphabetic(5) + ".data"
     }
-    private val WORKSPACE_MODEL_CACHE_VERSION_EP = ExtensionPointName.create<WorkspaceModelCacheVersion>("com.intellij.workspaceModel.cache.version")
+
+    private val WORKSPACE_MODEL_CACHE_VERSION_EP = ExtensionPointName.create<WorkspaceModelCacheVersion>(
+      "com.intellij.workspaceModel.cache.version")
   }
 }

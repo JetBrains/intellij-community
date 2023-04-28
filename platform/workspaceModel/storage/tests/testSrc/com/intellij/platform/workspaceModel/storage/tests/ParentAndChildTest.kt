@@ -46,7 +46,8 @@ class ParentAndChildTest {
   @Test
   fun `parent with child in builder`() {
     val entity = ParentEntity("ParentData", MySource) {
-      child = ChildEntity("ChildData", MySource)    }
+      child = ChildEntity("ChildData", MySource)
+    }
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
@@ -100,7 +101,8 @@ class ParentAndChildTest {
   @Test
   fun `get parent from child`() {
     val entity = ParentEntity("ParentData", MySource) {
-      child = ChildEntity("ChildData", MySource)    }
+      child = ChildEntity("ChildData", MySource)
+    }
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)

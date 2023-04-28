@@ -5,7 +5,6 @@ package com.intellij.platform.workspaceModel.storage.tests
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import junit.framework.TestCase.*
-import kotlinx.coroutines.NonCancellable.children
 import org.junit.Test
 
 class AddChildrenTest {

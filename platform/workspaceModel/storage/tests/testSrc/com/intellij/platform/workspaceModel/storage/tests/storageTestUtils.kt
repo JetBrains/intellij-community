@@ -4,8 +4,8 @@ package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 
 fun EntityStorage.checkConsistency() {

@@ -32,50 +32,55 @@ class WorkspaceModelPerformanceTest {
     @RegisterExtension
     @JvmField
     val ourProjectModel = ClassLevelProjectModelExtension()
-    
+
     private lateinit var ourProjectRoot: VirtualFileUrl
     private var disposerDebugMode = true
 
     @BeforeAll
     @JvmStatic
     fun initProject() {
-      val fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!.toVirtualFileUrl(VirtualFileUrlManager.getInstance(ourProjectModel.project))
+      val fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!.toVirtualFileUrl(
+        VirtualFileUrlManager.getInstance(ourProjectModel.project))
       ourProjectRoot = fsRoot.append(WorkspaceModelPerformanceTest::class.java.simpleName)
       val builder = MutableEntityStorage.create()
       for (i in 1..100) {
         val libRoot = ourProjectRoot.append("lib$i")
         val classesRoot = LibraryRoot(libRoot.append("classes"), LibraryRootTypeId.COMPILED)
         val sourcesRoot = LibraryRoot(libRoot.append("sources"), LibraryRootTypeId.SOURCES)
-        builder.addEntity(LibraryEntity("lib$i", LibraryTableId.ProjectLibraryTableId, listOf(classesRoot, sourcesRoot), NonPersistentEntitySource))
+        builder.addEntity(
+          LibraryEntity("lib$i", LibraryTableId.ProjectLibraryTableId, listOf(classesRoot, sourcesRoot), NonPersistentEntitySource))
       }
 
       for (i in 1..100) {
         val contentRoot = ourProjectRoot.append("module$i")
         val srcRoot = contentRoot.append("src")
         val dependentModules = if (i > 10) 1..10 else IntRange.EMPTY
-        val dependentLibraries = (1 .. 10).toList() + (if (i > 10) listOf(i) else emptyList()) 
+        val dependentLibraries = (1..10).toList() + (if (i > 10) listOf(i) else emptyList())
         val dependencies = listOf(
           listOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency),
-          dependentModules.map { 
-            ModuleDependencyItem.Exportable.ModuleDependency(ModuleId("module$it"), false, ModuleDependencyItem.DependencyScope.COMPILE, false) 
+          dependentModules.map {
+            ModuleDependencyItem.Exportable.ModuleDependency(ModuleId("module$it"), false, ModuleDependencyItem.DependencyScope.COMPILE,
+                                                             false)
           },
-          dependentLibraries.map { 
-            ModuleDependencyItem.Exportable.LibraryDependency(LibraryId("lib$it", LibraryTableId.ProjectLibraryTableId), false, ModuleDependencyItem.DependencyScope.COMPILE)
+          dependentLibraries.map {
+            ModuleDependencyItem.Exportable.LibraryDependency(LibraryId("lib$it", LibraryTableId.ProjectLibraryTableId), false,
+                                                              ModuleDependencyItem.DependencyScope.COMPILE)
           }
         ).flatten()
         builder addEntity ModuleEntity("module$i", dependencies, NonPersistentEntitySource) {
           contentRoots = listOf(ContentRootEntity(contentRoot, emptyList(), NonPersistentEntitySource) {
-            sourceRoots = listOf(SourceRootEntity(srcRoot, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, NonPersistentEntitySource))
+            sourceRoots = listOf(
+              SourceRootEntity(srcRoot, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, NonPersistentEntitySource))
           })
         }
       }
-      
+
       runWriteActionAndWait {
         WorkspaceModel.getInstance(ourProjectModel.project).updateProjectModel {
           it.addDiff(builder)
         }
       }
-      
+
       ApplicationManagerEx.setInStressTest(true)
       disposerDebugMode = Disposer.isDebugMode()
       Disposer.setDebugMode(false)
@@ -104,7 +109,7 @@ class WorkspaceModelPerformanceTest {
       }
     }.warmupIterations(15).assertTiming()
   }
-  
+
   @Test
   fun `add remove project library`() {
     PlatformTestUtil.startPerformanceTest("Adding and removing a project library 30 times", 125) {
@@ -118,7 +123,7 @@ class WorkspaceModelPerformanceTest {
       }
     }.warmupIterations(15).assertTiming()
   }
-  
+
   @Test
   fun `add remove module library`() {
     val module = ourProjectModel.moduleManager.findModuleByName("module50")!!
@@ -158,7 +163,7 @@ class WorkspaceModelPerformanceTest {
       assertTrue(count > 0)
     }.warmupIterations(5).assertTiming()
   }
-  
+
   @Test
   fun `process order entries`() {
     PlatformTestUtil.startPerformanceTest("Iterate through order entries of all modules 1000 times", 60) {
@@ -170,5 +175,5 @@ class WorkspaceModelPerformanceTest {
       }
       assertTrue(count > 0)
     }.warmupIterations(5).assertTiming()
-  } 
+  }
 }

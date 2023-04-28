@@ -9,6 +9,7 @@ import org.junit.Test
 
 class VirtualFileUrlManagerTest {
   private lateinit var virtualFileManager: VirtualFileUrlManagerImpl
+
   @Before
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()

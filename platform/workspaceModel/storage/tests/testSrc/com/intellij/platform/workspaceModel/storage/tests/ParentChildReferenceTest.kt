@@ -10,10 +10,13 @@ import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class ParentChildReferenceTest {
-  
+
   companion object {
-    private val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentEntity::class.java, ChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    private val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentMultipleEntity::class.java, ChildMultipleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    private val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentEntity::class.java, ChildEntity::class.java,
+                                                                        ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    private val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentMultipleEntity::class.java,
+                                                                           ChildMultipleEntity::class.java,
+                                                                           ConnectionId.ConnectionType.ONE_TO_MANY, false)
   }
 
   @Test
