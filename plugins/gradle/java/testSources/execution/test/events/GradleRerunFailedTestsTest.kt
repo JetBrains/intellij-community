@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
@@ -28,7 +27,7 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
           assertNode("test2")
         }
       }
-      Assertions.assertTrue(performRerunFailedTestsAction())
+      rerunFailedTests()
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test2")
@@ -69,7 +68,7 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
           assertNode("test2")
         }
       }
-      Assertions.assertTrue(performRerunFailedTestsAction())
+      rerunFailedTests()
       assertTestTreeView {
         assertNode("SubTestCase1") {
           assertNode("test2")
@@ -85,7 +84,7 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
           assertNode("test4")
         }
       }
-      Assertions.assertTrue(performRerunFailedTestsAction())
+      rerunFailedTests()
       assertTestTreeView {
         assertNode("SubTestCase2") {
           assertNode("test2")
