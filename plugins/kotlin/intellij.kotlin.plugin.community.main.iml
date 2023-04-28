@@ -74,6 +74,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common-k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" exported="" />
