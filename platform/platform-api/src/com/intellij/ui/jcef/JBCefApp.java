@@ -540,9 +540,11 @@ public final class JBCefApp {
     private final int myGPUCrashLimit;
     private int myGPUCrashCounter = 0;
     private boolean myNotificationShown = false;
+    private final String myArgs;
 
     MyCefAppHandler(String @Nullable [] args, boolean trackGPUCrashes) {
       super(args);
+      myArgs = Arrays.toString(args);
       myGPUCrashLimit = trackGPUCrashes ? Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10) : -1;
     }
 
@@ -559,6 +561,12 @@ public final class JBCefApp {
         f.registerCustomScheme(registrar);
       }
       ourSourceSchemeHandlerFactory.registerCustomScheme(registrar);
+    }
+
+    @Override
+    public void stateHasChanged(CefApp.CefAppState state) {
+      if (state.equals(CefApp.CefAppState.INITIALIZED))
+        LOG.info(String.format("jcef version: %s | cmd args: %s", CefApp.getInstance().getVersion().getJcefVersion(), myArgs));
     }
 
     @Override
