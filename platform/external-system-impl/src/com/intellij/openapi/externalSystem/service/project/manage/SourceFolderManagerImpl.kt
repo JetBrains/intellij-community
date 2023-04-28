@@ -345,7 +345,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
    */
   private object UrlPrefixFactory : AbstractPrefixTreeFactory<String, String>() {
     override fun convertToList(element: String): List<String> {
-      return element.removeSuffix(File.separator).split(File.separator)
+      return element.removeSuffix("/").split("/")  // Android Studio: work around IDEA-318834
     }
   }
 }
