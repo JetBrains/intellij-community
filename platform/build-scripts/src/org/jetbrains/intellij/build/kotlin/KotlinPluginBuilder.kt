@@ -238,11 +238,6 @@ object KotlinPluginBuilder {
     )
   }
 
-  // weird groovy bug - remove method once AppCodeProperties will be converted to kotlin
-  fun kotlinPluginAcKmm(): PluginLayout {
-    return kotlinPlugin(KotlinPluginKind.AC_KMM, KotlinUltimateSources.WITH_ULTIMATE_MODULES)
-  }
-
   @JvmStatic
   fun kotlinPlugin(kind: KotlinPluginKind, ultimateSources: KotlinUltimateSources): PluginLayout {
     return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) { spec ->
@@ -371,9 +366,6 @@ object KotlinPluginBuilder {
               "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
               "<plugin id=\"com.intellij.modules.androidstudio\"/>"
             )
-          KotlinPluginKind.AC_KMM ->
-            replace(text, "<plugin id=\"com.intellij.java\"/>", "<plugin id=\"com.intellij.kotlinNative.platformDeps\"/>\n" +
-                                                                "<plugin id=\"com.intellij.modules.appcode\"/>")
           else -> throw IllegalStateException("Unknown kind = $kind")
         }
       }
@@ -419,10 +411,5 @@ object KotlinPluginBuilder {
 
   enum class KotlinPluginKind {
     IJ, AS, MI,
-
-    // AppCode KMM plugin
-    AC_KMM {
-      override fun toString() = "AC"
-    }
   }
 }
