@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -158,6 +159,7 @@ class TerminalCompletionContributor : CompletionContributor() {
       .withTypeText(item.description, true)
       .withInsertHandler { context, element ->
         val value = element.lookupString
+        val editor = context.editor
         if (isSingleCharParameter(value) && lookup != null) {
           // Suppose we have the command 'ls -al' and want to add '-d' parameter
           // Because of the platform implementation it replaced the whole parameters string with '-d'.
@@ -166,11 +168,17 @@ class TerminalCompletionContributor : CompletionContributor() {
           //  but I failed to find the other way how to obtain prefix + user typings string
           val prefix = lookup.itemPattern(element)
           val toInsert = prefix + value.removePrefix("-")
-          val editor = context.editor
           val startOffset = context.startOffset
           editor.document.replaceString(startOffset, startOffset + value.length, toInsert)
           editor.caretModel.moveToOffset(startOffset + toInsert.length)
         }
+
+        if (!isSingleCharParameter(value) && !value.endsWith("/")) {
+          val offset = editor.caretModel.offset
+          editor.document.insertString(offset, " ")
+          editor.caretModel.moveToOffset(offset + 1)
+        }
+        AutoPopupController.getInstance(context.project).scheduleAutoPopup(editor)
       }
   }
 

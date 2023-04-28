@@ -41,6 +41,8 @@
                          id="terminalDown" order="first"/>
     <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEscapeHandler"
                          id="terminalEscape" order="first"/>
+    <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
+                  id="terminalCompletionAutoPopup" order="first"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCharFilter"
                        id="terminal" order="first"/>
     <completion.contributor language="TEXT" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCompletionContributor"
