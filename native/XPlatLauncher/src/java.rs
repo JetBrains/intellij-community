@@ -1,4 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 use std::{env, mem, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
@@ -8,12 +9,6 @@ use anyhow::{anyhow, bail, Context, Result};
 use jni::errors::Error;
 use jni::objects::{JObject, JValue};
 use log::{debug, error, info};
-
-#[cfg(target_os = "linux")]
-use {
-    std::thread::sleep,
-    std::time::Duration
-};
 
 #[cfg(target_os = "macos")]
 use {
