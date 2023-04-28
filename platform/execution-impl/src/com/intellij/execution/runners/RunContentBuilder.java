@@ -91,6 +91,7 @@ public final class RunContentBuilder extends RunTab {
     ExecutionConsole console = myExecutionResult.getExecutionConsole();
     RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
     AnAction[] consoleActionsToMerge;
+    AnAction[] additionalActionsToMerge;
     Content consoleContent = null;
     if (console != null) {
       if (console instanceof ExecutionConsoleEx) {
@@ -110,15 +111,22 @@ public final class RunContentBuilder extends RunTab {
       consoleActionsToMerge = ((TerminalExecutionConsole)console).createConsoleActions();
       // clear console toolbar actions to remove the console toolbar
       consoleContent.setActions(new DefaultActionGroup(), ActionPlaces.RUNNER_TOOLBAR, console.getComponent());
+      additionalActionsToMerge = AnAction.EMPTY_ARRAY;
+    }
+    else if (consoleContent != null && myUi.getContentManager().getContentCount() == 1 && console instanceof RunContentActionsContributor contributor) {
+      consoleActionsToMerge = contributor.getActions();
+      additionalActionsToMerge = contributor.getAdditionalActions();
+      contributor.hideOriginalActions();
     }
     else {
       consoleActionsToMerge = AnAction.EMPTY_ARRAY;
+      additionalActionsToMerge = AnAction.EMPTY_ARRAY;
     }
 
     AnAction[] restartActions = contentDescriptor.getRestartActions();
-    initToolbars(restartActions, consoleActionsToMerge);
+    initToolbars(restartActions, consoleActionsToMerge, additionalActionsToMerge);
     CustomActionsListener.subscribe(this, () -> {
-      DefaultActionGroup updatedToolbar = createActionToolbar(restartActions, consoleActionsToMerge);
+      DefaultActionGroup updatedToolbar = createActionToolbar(restartActions, consoleActionsToMerge, additionalActionsToMerge);
       toolbar.removeAll();
       toolbar.addAll(updatedToolbar.getChildren(null));
     });
@@ -136,8 +144,8 @@ public final class RunContentBuilder extends RunTab {
     return contentDescriptor;
   }
 
-  private void initToolbars(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions) {
-    toolbar = createActionToolbar(restartActions, consoleActions);
+  private void initToolbars(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions, AnAction @NotNull [] additionalActions) {
+    toolbar = createActionToolbar(restartActions, consoleActions, additionalActions);
     if (UIExperiment.isNewDebuggerUIEnabled()) {
       var isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical");
 
@@ -227,7 +235,7 @@ public final class RunContentBuilder extends RunTab {
   }
 
   @NotNull
-  private DefaultActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions) {
+  private DefaultActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions, AnAction @NotNull [] additionalActions) {
     boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
@@ -283,6 +291,11 @@ public final class RunContentBuilder extends RunTab {
                                 actionGroup, moreGroup);
       moreGroup.addSeparator();
       moreGroup.add(new CreateAction());
+
+      if (additionalActions.length > 0) {
+        moreGroup.addSeparator();
+        moreGroup.addAll(additionalActions);
+      }
 
       actionGroup.add(moreGroup);
     }
