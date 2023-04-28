@@ -13,12 +13,12 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Named("Intellij Idea Maven Importer Spy")
+@Named("Intellij Idea Maven 3 Importer Spy")
 @Singleton
-public class MavenImporterSpy extends AbstractEventSpy {
+public class Maven3ImporterSpy extends AbstractEventSpy {
 
   private volatile MavenServerProgressIndicator myIndicator;
-  private Set<String> downloadedArtifacts = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+  private final Set<String> downloadedArtifacts = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   @Override
   public void onEvent(Object o) throws Exception {

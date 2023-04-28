@@ -126,7 +126,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull private final RepositorySystem myRepositorySystem;
 
-  @NotNull private final MavenImporterSpy myImporterSpy;
+  @NotNull private final Maven3ImporterSpy myImporterSpy;
 
   private final AtomicReference<ProjectDependenciesResolver> myDependenciesResolver = new AtomicReference<>();
 
@@ -268,11 +268,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     myRepositorySystem = getComponent(RepositorySystem.class);
 
-    MavenImporterSpy importerSpy = getComponentIfExists(MavenImporterSpy.class);
+    Maven3ImporterSpy importerSpy = getComponentIfExists(Maven3ImporterSpy.class);
 
     if (importerSpy == null) {
-      importerSpy = new MavenImporterSpy();
-      myContainer.addComponent(importerSpy, MavenImporterSpy.class.getName());
+      importerSpy = new Maven3ImporterSpy();
+      myContainer.addComponent(importerSpy, Maven3ImporterSpy.class.getName());
     }
     myImporterSpy = importerSpy;
   }
