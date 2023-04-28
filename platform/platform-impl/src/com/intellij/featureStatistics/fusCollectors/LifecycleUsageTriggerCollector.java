@@ -135,7 +135,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
       final ThrowableDescription description = new ThrowableDescription(throwable);
       List<EventPair<?>> data = new ArrayList<>();
       data.add(EventFields.PluginInfo.with(pluginId == null ? getPlatformPlugin() : getPluginInfoById(pluginId)));
-      data.add(errorField.with(description.getClazz()));
+      data.add(errorField.with(description.getThrowableClass()));
 
       if (memoryErrorKind != null) {
         data.add(memoryErrorKindField.with(memoryErrorKind));

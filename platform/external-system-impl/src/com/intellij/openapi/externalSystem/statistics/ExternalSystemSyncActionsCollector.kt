@@ -89,7 +89,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
 
       val pluginId = PluginUtil.getInstance().findPluginId(throwable)
       data.add(EventFields.PluginInfo.with(if (pluginId == null) platformPlugin else getPluginInfoById(pluginId)))
-      data.add(errorField.with(description.clazz))
+      data.add(errorField.with(description.throwableClass))
       if (ourErrorsRateThrottle.tryPass(System.currentTimeMillis())) {
         data.add(errorHashField.with(framesHash))
       }

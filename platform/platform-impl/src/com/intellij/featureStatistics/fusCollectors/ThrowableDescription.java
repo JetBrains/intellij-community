@@ -26,7 +26,7 @@ public final class ThrowableDescription {
   }
 
   @NotNull
-  public Class<?> getClazz() {
+  public Class<?> getThrowableClass() {
     return myThrowable.getClass();
   }
 

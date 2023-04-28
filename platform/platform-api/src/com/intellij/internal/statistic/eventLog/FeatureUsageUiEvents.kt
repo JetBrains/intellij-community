@@ -19,11 +19,11 @@ interface FeatureUsageUiEvents {
 
   fun logResetConfigurable(configurable: Configurable)
 
-  fun logShowDialog(clazz: Class<*>)
+  fun logShowDialog(dialogClass: Class<*>)
 
-  fun logCloseDialog(clazz: Class<*>, exitCode: Int)
+  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int)
 
-  fun logClickOnHelpDialog(clazz: Class<*>)
+  fun logClickOnHelpDialog(dialogClass: Class<*>)
 }
 
 object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
@@ -36,12 +36,12 @@ object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
   override fun logResetConfigurable(configurable: Configurable) {
   }
 
-  override fun logShowDialog(clazz: Class<*>) {
+  override fun logShowDialog(dialogClass: Class<*>) {
   }
 
-  override fun logCloseDialog(clazz: Class<*>, exitCode: Int) {
+  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int) {
   }
 
-  override fun logClickOnHelpDialog(clazz: Class<*>) {
+  override fun logClickOnHelpDialog(dialogClass: Class<*>) {
   }
 }
