@@ -7,6 +7,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTestBase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
@@ -20,6 +22,10 @@ abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
     }
 
     override fun isFirPlugin() = true
+
+    override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
 
     override fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR) {

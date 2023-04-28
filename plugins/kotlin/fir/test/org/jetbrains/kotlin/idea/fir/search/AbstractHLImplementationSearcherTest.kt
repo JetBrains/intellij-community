@@ -8,7 +8,9 @@ import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -16,6 +18,9 @@ import java.nio.file.Paths
 
 abstract class AbstractHLImplementationSearcherTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin(): Boolean = true
+    override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
 
     fun doTest(testFilePath: String) {
         myFixture.configureByFile(testFilePath) as KtFile
