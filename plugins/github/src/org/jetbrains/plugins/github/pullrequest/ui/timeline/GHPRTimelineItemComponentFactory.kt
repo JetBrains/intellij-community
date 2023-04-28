@@ -417,7 +417,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   private fun createThreadTagsPanel(thread: GHPRReviewThreadModel): JPanel {
     val outdatedLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.outdated.tag"))
     val resolvedLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
-    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(GithubBundle.message("pull.request.review.comment.pending"))
+    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.pending.tag"))
 
     val tagsPanel = HorizontalListPanel(Title.HORIZONTAL_GAP).apply {
       isOpaque = false
