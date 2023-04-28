@@ -694,7 +694,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @SuppressWarnings({"unchecked"})
-  private <T> T getComponent(Class<T> clazz) {
+  public <T> T getComponent(Class<T> clazz) {
     try {
       return (T)myContainer.lookup(clazz.getName());
     }
@@ -784,10 +784,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return result;
   }
 
-  private MavenExecutionRequest createRequest(@Nullable File file,
-                                              @Nullable List<String> activeProfiles,
-                                              @Nullable List<String> inactiveProfiles,
-                                              @Nullable String goal)
+  public MavenExecutionRequest createRequest(@Nullable File file,
+                                             @Nullable List<String> activeProfiles,
+                                             @Nullable List<String> inactiveProfiles,
+                                             @Nullable String goal)
     throws RemoteException {
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
@@ -863,7 +863,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return new ArrayList<>(result);
   }
 
-  private void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
+  public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     SessionScope sessionScope = getComponent(SessionScope.class);
     sessionScope.enter();
@@ -1245,6 +1245,22 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
+  @Nullable
+  @Override
+  public String evaluateEffectivePom(@NotNull File file,
+                                     @NotNull List<String> activeProfiles,
+                                     @NotNull List<String> inactiveProfiles,
+                                     MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      return Maven40EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+
 
 
 
@@ -1307,18 +1323,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public MavenArtifactResolveResult resolveArtifactsTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                                  @NotNull List<MavenRemoteRepository> remoteRepositories,
                                                                  MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public String evaluateEffectivePom(@NotNull File file,
-                                     @NotNull List<String> activeProfiles,
-                                     @NotNull List<String> inactiveProfiles,
-                                     MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
 
     // TODO: implement
