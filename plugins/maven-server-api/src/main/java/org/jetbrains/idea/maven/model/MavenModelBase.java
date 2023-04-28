@@ -16,10 +16,13 @@
 package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
 
 public class MavenModelBase implements Serializable {
-  private Map<String, String> myProperties;
+  private Properties myProperties;
   private List<MavenPlugin> myPlugins = Collections.emptyList();
   private List<MavenArtifact> myExtensions = Collections.emptyList();
   private List<MavenArtifact> myDependencies = Collections.emptyList();
@@ -29,27 +32,12 @@ public class MavenModelBase implements Serializable {
   private List<String> myModules;
 
   public Properties getProperties() {
-    if (myProperties == null) myProperties = new HashMap<>();
-    Properties properties = new Properties();
-    for (Map.Entry<String, String> entry : myProperties.entrySet()) {
-      properties.setProperty(entry.getKey(), entry.getValue());
-    }
-    return properties;
-  }
-
-  public void setProperties(Map<String, String> properties) {
-    myProperties = properties;
+    if (myProperties == null) myProperties = new Properties();
+    return myProperties;
   }
 
   public void setProperties(Properties properties) {
-    if (null == properties) return;
-    myProperties = new HashMap<>();
-    Enumeration<?> propertyNames = properties.propertyNames();
-    while (propertyNames.hasMoreElements()) {
-      String key = propertyNames.nextElement().toString();
-      String value = properties.getProperty(key);
-      myProperties.put(key, value);
-    }
+    myProperties = properties;
   }
 
   public List<MavenPlugin> getPlugins() {
