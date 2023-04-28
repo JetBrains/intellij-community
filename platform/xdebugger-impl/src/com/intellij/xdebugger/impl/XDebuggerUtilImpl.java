@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -424,34 +423,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return XSourcePositionImpl.createByOffset(file, offset);
   }
 
-  @NotNull
-  public static Collection<XSourcePosition> getAllCaretsPositions(@NotNull Project project, DataContext context) {
-    Editor editor = getEditor(project, context);
-    if (editor == null) {
-      return Collections.emptyList();
-    }
-
-    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    List<XSourcePosition> res = new SmartList<>();
-
-    Integer line = XLineBreakpointManager.BREAKPOINT_LINE_KEY.getData(context);
-    if (line != null) {
-      XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
-      res.add(position);
-      return res;
-    }
-
-    for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      XSourcePositionImpl position = XSourcePositionImpl.createByOffset(file, caret.getOffset());
-      if (position != null) {
-        res.add(position);
-      }
-    }
-    return res;
-  }
-
   @Nullable
-  private static Editor getEditor(@NotNull Project project, DataContext context) {
+  public static Editor getEditor(@NotNull Project project, DataContext context) {
     Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (editor == null) {
       @Nullable FileEditor fileEditor = context.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
