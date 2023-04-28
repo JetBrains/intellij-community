@@ -724,10 +724,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private Set<Artifact> resolveArtifacts(final DependencyResolutionResult dependencyResolutionResult, boolean addUnresolvedNodes) {
-    final Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<Dependency, Artifact>();
+  private Set<Artifact> resolveArtifacts(DependencyResolutionResult dependencyResolutionResult, boolean addUnresolvedNodes) {
+    final Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<>();
     Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
-    Set<Dependency> addedDependencies = Collections.newSetFromMap(new IdentityHashMap<Dependency, Boolean>());
+    Set<Dependency> addedDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
     resolveConflicts(dependencyResolutionResult, winnerDependencyMap);
 
     if (dependencyResolutionResult.getDependencyGraph() != null) {
