@@ -2,8 +2,9 @@
 use std::{env, mem, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
+use std::thread::JoinHandle;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use jni::errors::Error;
 use jni::objects::{JObject, JValue};
 use log::{debug, error, info};
@@ -36,9 +37,9 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
 
     // JNI docs says that JVM should not be created on primordial thread
     // See Chapter 5: The Invocation API
-    let _join_handle = thread::spawn(move || {
+    let join_handle = thread::spawn(move || {
+        debug!("Trying to spin up VM and call IntelliJ main from non-primordial thread");
         unsafe {
-            debug!("Trying to spin up VM and call IntelliJ main from non-primordial thread");
             match intellij_main_thread(&java_home, vm_options, args) {
                 Ok(_) => {
                     info!("JVM thread has exited.");
@@ -54,13 +55,11 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
         }
     });
 
-    // Using the primordial thread as at least Mac OS X needs it for GUI loop according to JBR
-    // https://github.com/JetBrains/JetBrainsRuntime/blob/363650bbf48789e4c5f68840b66372442d3e481f/src/java.base/macosx/native/libjli/java_md_macosx.c#L328
-    unsafe {
-        run_event_loop()?
-    };
-
-    return Ok(());
+    // macOS reserves the primordial thread for the GUI event loop
+    match run_event_loop(join_handle) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(anyhow!("JVM thread panicked: {e:?}"))
+    }
 }
 
 unsafe fn intellij_main_thread(java_home: &Path, vm_options: Vec<String>, args: Vec<String>) -> Result<()> {
@@ -270,14 +269,15 @@ fn get_jni_vm_opts(opts: Vec<String>) -> Result<Vec<jni_sys::JavaVMOption>> {
 }
 
 #[cfg(target_os = "windows")]
-unsafe fn run_event_loop() -> Result<()> {
-    loop {
-
-    }
+fn run_event_loop(join_handle: JoinHandle<()>) -> thread::Result<()> {
+    debug!("Joining the JVM thread");
+    join_handle.join()
 }
 
 #[cfg(target_os = "macos")]
-unsafe fn run_event_loop() -> Result<()> {
+fn run_event_loop(_join_handle: JoinHandle<()>) -> thread::Result<()> {
+    debug!("Running CoreFoundation event loop on primordial thread");
+
     #[allow(non_snake_case)]
     let FOREVER = 1e20;
 
@@ -310,7 +310,7 @@ unsafe fn run_event_loop() -> Result<()> {
         };
 
         if result == kCFRunLoopRunFinished {
-            info!("Core foundation loop has exited");
+            info!("CoreFoundation event loop is finished");
             break;
         }
     }
@@ -319,16 +319,7 @@ unsafe fn run_event_loop() -> Result<()> {
 }
 
 #[cfg(target_os = "linux")]
-unsafe fn run_event_loop() -> Result<()> {
-    debug!("Running event loop on primordial thread");
-    // TODO: proper run loop so that we can exit
-    loop {
-        sleep(Duration::from_secs(1))
-
-        // let r = intellij_main_call.load(Ordering::Relaxed);
-        // match &*r {
-        //     Ok(_) => { sleep(Duration::from_secs(1)) }
-        //     Err(e) => { return Err(LauncherError::OtherError(OtherLauncherError{message: format!("{e:?}").to_string()}));}
-        // }
-    }
+fn run_event_loop(join_handle: JoinHandle<()>) -> thread::Result<()> {
+    debug!("Joining the JVM thread");
+    join_handle.join()
 }
