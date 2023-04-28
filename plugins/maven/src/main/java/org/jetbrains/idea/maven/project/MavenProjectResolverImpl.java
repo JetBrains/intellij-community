@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -10,6 +12,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
@@ -59,7 +62,13 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
       catch (Throwable t) {
         MavenConfigParseException cause = findParseException(t);
         if (cause != null) {
-          MavenLog.LOG.warn("Cannot parse maven config", cause);
+          BuildIssue buildIssue = MavenConfigBuildIssue.INSTANCE.getIssue(cause);
+          if (buildIssue != null) {
+            MavenProjectsManager.getInstance(myProject).getSyncConsole().addBuildIssue(buildIssue, MessageEvent.Kind.ERROR);
+          }
+          else {
+            throw t;
+          }
         }
         else {
           MavenLog.LOG.warn("Error in maven config parsing", t);
