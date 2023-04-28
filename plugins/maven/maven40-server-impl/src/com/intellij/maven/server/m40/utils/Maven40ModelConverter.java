@@ -8,14 +8,132 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.model.*;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.jdom.Element;
+import org.jdom.IllegalNameException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.MavenServerGlobals;
 
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
 
 public class Maven40ModelConverter {
+  @NotNull
+  public static MavenModel convertModel(Model model, File localRepository) {
+    if(model.getBuild() == null) {
+      model.setBuild(new Build());
+    }
+    Build build = model.getBuild();
+    return convertModel(model,
+                        asSourcesList(build.getSourceDirectory()),
+                        asSourcesList(build.getTestSourceDirectory()),
+                        Collections.emptyList(),
+                        //Collections.emptyList(),
+                        Collections.emptyList(),
+                        localRepository);
+  }
+
+  @NotNull
+  public static MavenModel convertModel(Model model,
+                                        List<String> sources,
+                                        List<String> testSources,
+                                        Collection<? extends Artifact> dependencies,
+                                        //Collection<? extends DependencyNode> dependencyTree,
+                                        Collection<? extends Artifact> extensions,
+                                        File localRepository) {
+    MavenModel result = new MavenModel();
+    result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
+
+    Parent parent = model.getParent();
+    if (parent != null) {
+      result.setParent(new MavenParent(new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion()),
+                                       parent.getRelativePath()));
+    }
+    result.setPackaging(model.getPackaging());
+    result.setName(model.getName());
+    result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
+    result.setPlugins(convertPlugins(model));
+
+    Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
+    result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
+    result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
+    //result.setDependencyTree(convertDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
+
+    result.setRemoteRepositories(convertRepositories(model.getRepositories()));
+    result.setProfiles(convertProfiles(model.getProfiles()));
+    result.setModules(model.getModules());
+
+    convertBuild(result.getBuild(), model.getBuild(), sources, testSources);
+    return result;
+  }
+
+  public static List<MavenPlugin> convertPlugins(Model mavenModel) {
+    List<MavenPlugin> result = new ArrayList<MavenPlugin>();
+    Build build = mavenModel.getBuild();
+
+    if (build != null) {
+      List<Plugin> plugins = build.getPlugins();
+      if (plugins != null) {
+        for (Plugin each : plugins) {
+          result.add(convertPlugin(false, each));
+        }
+      }
+    }
+
+    return result;
+  }
+
+  private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin) {
+    List<MavenPlugin.Execution> executions = new ArrayList<>(plugin.getExecutions().size());
+    for (PluginExecution each : plugin.getExecutions()) {
+      executions.add(convertExecution(each));
+    }
+
+    List<MavenId> deps = new ArrayList<>(plugin.getDependencies().size());
+    for (Dependency each : plugin.getDependencies()) {
+      deps.add(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()));
+    }
+
+    return new MavenPlugin(plugin.getGroupId(),
+                           plugin.getArtifactId(),
+                           plugin.getVersion(),
+                           isDefault,
+                           "true".equals(plugin.getExtensions()),
+                           convertConfiguration(plugin.getConfiguration()),
+                           executions, deps);
+  }
+
+  public static MavenPlugin.Execution convertExecution(PluginExecution execution) {
+    return new MavenPlugin.Execution(execution.getId(), execution.getPhase(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
+  }
+
+  private static Element convertConfiguration(Object config) {
+    return config == null ? null : xppToElement((Xpp3Dom)config);
+  }
+
+  protected static Element xppToElement(Xpp3Dom xpp) {
+    Element result;
+    try {
+      result = new Element(xpp.getName());
+    }
+    catch (IllegalNameException e) {
+      MavenServerGlobals.getLogger().info(e);
+      return null;
+    }
+
+    Xpp3Dom[] children = xpp.getChildren();
+    if (children == null || children.length == 0) {
+      result.setText(xpp.getValue());
+    }
+    else {
+      for (Xpp3Dom each : children) {
+        Element child = xppToElement(each);
+        if (child != null) result.addContent(child);
+      }
+    }
+    return result;
+  }
 
   private static List<String> asSourcesList(String directory) {
     return directory == null ? Collections.emptyList() : Collections.singletonList(directory);

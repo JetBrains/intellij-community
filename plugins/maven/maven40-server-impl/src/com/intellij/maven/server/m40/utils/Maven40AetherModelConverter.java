@@ -3,25 +3,22 @@ package com.intellij.maven.server.m40.utils;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.*;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Parent;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
-import org.jdom.Element;
-import org.jdom.IllegalNameException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.MavenServerGlobals;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.util.*;
 
 /**
- * {@link Maven40AetherModelConverter} provides adapted methods of {@link Maven3ModelConverter} for aether models conversion
+ * {@link Maven40AetherModelConverter} provides adapted methods of {@link Maven40ModelConverter} for aether models conversion
  *
  * @author Vladislav.Soroka
  */
@@ -115,73 +112,6 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     result.setScope(dependency.getScope());
     result.setOptional(dependency.isOptional());
     return result;
-  }
-
-  public static List<MavenPlugin> convertPlugins(Model mavenModel) {
-    List<MavenPlugin> result = new ArrayList<MavenPlugin>();
-    Build build = mavenModel.getBuild();
-
-    if (build != null) {
-      List<Plugin> plugins = build.getPlugins();
-      if (plugins != null) {
-        for (Plugin each : plugins) {
-          result.add(convertPlugin(false, each));
-        }
-      }
-    }
-
-    return result;
-  }
-
-  private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin) {
-    List<MavenPlugin.Execution> executions = new ArrayList<MavenPlugin.Execution>(plugin.getExecutions().size());
-    for (PluginExecution each : plugin.getExecutions()) {
-      executions.add(convertExecution(each));
-    }
-
-    List<MavenId> deps = new ArrayList<MavenId>(plugin.getDependencies().size());
-    for (org.apache.maven.model.Dependency each : plugin.getDependencies()) {
-      deps.add(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()));
-    }
-
-    return new MavenPlugin(plugin.getGroupId(),
-                           plugin.getArtifactId(),
-                           plugin.getVersion(),
-                           isDefault,
-                           "true".equals(plugin.getExtensions()),
-                           convertConfiguration(plugin.getConfiguration()),
-                           executions, deps);
-  }
-
-  private static Element convertConfiguration(Object config) {
-    return config == null ? null : xppToElement((Xpp3Dom)config);
-  }
-
-  private static Element xppToElement(Xpp3Dom xpp) {
-    Element result;
-    try {
-      result = new Element(xpp.getName());
-    }
-    catch (IllegalNameException e) {
-      MavenServerGlobals.getLogger().info(e);
-      return null;
-    }
-
-    Xpp3Dom[] children = xpp.getChildren();
-    if (children == null || children.length == 0) {
-      result.setText(xpp.getValue());
-    }
-    else {
-      for (Xpp3Dom each : children) {
-        Element child = xppToElement(each);
-        if (child != null) result.addContent(child);
-      }
-    }
-    return result;
-  }
-
-  public static MavenPlugin.Execution convertExecution(PluginExecution execution) {
-    return new MavenPlugin.Execution(execution.getId(), execution.getPhase(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
   }
 
 }

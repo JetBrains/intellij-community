@@ -19,10 +19,9 @@ import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.model.building.ModelBuildingException;
-import org.apache.maven.model.building.ModelBuildingRequest;
-import org.apache.maven.model.building.ModelProblem;
+import org.apache.maven.model.building.*;
 import org.apache.maven.model.interpolation.ModelInterpolator;
+import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.ProjectDependenciesResolver;
@@ -1337,6 +1336,54 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
+  @Override
+  @Nullable
+  public MavenModel readModel(File file, MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    try {
+      Map<String, Object> inputOptions = new HashMap<String, Object>();
+      inputOptions.put(ModelProcessor.SOURCE, new FileModelSource(file));
+
+      ModelReader reader = null;
+      if (!StringUtilRt.endsWithIgnoreCase(file.getName(), "xml")) {
+        try {
+          Object polyglotManager = myContainer.lookup("org.sonatype.maven.polyglot.PolyglotModelManager");
+          if (polyglotManager != null) {
+            Method getReaderFor = polyglotManager.getClass().getMethod("getReaderFor", Map.class);
+            reader = (ModelReader)getReaderFor.invoke(polyglotManager, inputOptions);
+          }
+        }
+        catch (ComponentLookupException ignore) {
+        }
+        catch (Throwable e) {
+          MavenServerGlobals.getLogger().warn(e);
+        }
+      }
+
+      if (reader == null) {
+        try {
+          reader = myContainer.lookup(ModelReader.class);
+        }
+        catch (ComponentLookupException ignore) {
+        }
+      }
+      if (reader != null) {
+        try {
+          Model model = reader.read(file, inputOptions);
+          return Maven40ModelConverter.convertModel(model, null);
+        }
+        catch (Exception e) {
+          MavenServerGlobals.getLogger().warn(e);
+        }
+      }
+    }
+    catch (Exception e) {
+      MavenServerGlobals.getLogger().warn(e);
+    }
+    return null;
+  }
+
+
 
 
 
@@ -1400,15 +1447,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public MavenArtifactResolveResult resolveArtifactsTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                                  @NotNull List<MavenRemoteRepository> remoteRepositories,
                                                                  MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public MavenModel readModel(File file, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
 
     // TODO: implement
