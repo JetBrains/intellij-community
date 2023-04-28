@@ -151,13 +151,19 @@ internal open class FirCallableCompletionContributor(
         val implicitReceivers = scopeContext.implicitReceivers
         val implicitReceiversTypes = implicitReceivers.map { it.type }
 
-        val availableNonExtensions = collectNonExtensionsFromScopeContext(
+        val availableLocalAndMemberNonExtensions = collectLocalAndMemberNonExtensionsFromScopeContext(
             scopeContext,
             visibilityChecker,
             scopeNameFilter,
             excludeEnumEntries,
         ) { filter(it) }
         val extensionsWhichCanBeCalled = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker)
+        val availableStaticAndTopLevelNonExtensions = collectStaticAndTopLevelNonExtensionsFromScopeContext(
+            scopeContext,
+            visibilityChecker,
+            scopeNameFilter,
+            excludeEnumEntries,
+        ) { filter(it) }
 
         // TODO: consider relying on tower resolver when populating callable entries. For example
         //  val Int.foo : ...
@@ -175,7 +181,7 @@ internal open class FirCallableCompletionContributor(
         //   Number.foo -> (this as Number).foo
         //   String.foo -> this@test.foo
         //
-        availableNonExtensions.forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
+        availableLocalAndMemberNonExtensions.forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
 
         extensionsWhichCanBeCalled.forEach { (signatureWithScopeKind, applicabilityResult) ->
             val signature = signatureWithScopeKind.signature
@@ -183,6 +189,8 @@ internal open class FirCallableCompletionContributor(
                 yield(createCallableWithMetadata(signature, signatureWithScopeKind.scopeKind, options = it))
             }
         }
+        availableStaticAndTopLevelNonExtensions.forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
+
 
         if (shouldCompleteTopLevelCallablesFromIndex) {
             val topLevelCallables = indexHelper.getTopLevelCallables(scopeNameFilter)
