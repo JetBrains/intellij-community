@@ -20,5 +20,6 @@
     <orderEntry type="library" name="kotlinc.lombok-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.assignment-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.parcelize-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinc.scripting-compiler-plugin" level="project" />
   </component>
 </module>

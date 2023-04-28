@@ -228,6 +228,7 @@ object KotlinPluginBuilder {
     "kotlinc.noarg-compiler-plugin",
     "kotlinc.sam-with-receiver-compiler-plugin",
     "kotlinc.assignment-compiler-plugin",
+    "kotlinc.scripting-compiler-plugin",
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
     "kotlinc.lombok-compiler-plugin",
