@@ -22,21 +22,29 @@ class WaitJpsBuildCommand(text: String, line: Int) : PlaybackCommandCoroutineAda
 
   companion object {
     const val PREFIX = CMD_PREFIX + "waitJpsBuild"
+    val ARGS_PATTERN = Regex("([0-9])*([ms,s,m])")
+    val POSSIBLE_VALUES = mapOf(
+      Pair("ms", ChronoUnit.MILLIS),
+      Pair("s", ChronoUnit.SECONDS),
+      Pair("m", ChronoUnit.MINUTES)
+    )
 
     @Suppress("TestOnlyProblems")
     suspend fun waitJpsProjectLoaded(project: Project, waitTimeout: Int, chronoUnit: ChronoUnit, actionCallback: ActionCallback) {
       val jpsLoadingManager = JpsProjectLoadingManager.Companion.getInstance(project)
-      if (jpsLoadingManager is JpsProjectLoadingManagerImpl && !jpsLoadingManager.isProjectLoaded()) {
-        val ref: Ref<Boolean> = Ref.create(false)
-        withTimeout(Duration.of(waitTimeout.toLong(), chronoUnit)) {
-          project.messageBus.connect().subscribe<JpsProjectLoadedListener>(LOADED, object : JpsProjectLoadedListener {
-            override fun loaded() {
-              ref.set(true)
-            }
-          })
-        }
-        if (!ref.get()) {
-          actionCallback.reject("Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}")
+      if(jpsLoadingManager is JpsProjectLoadingManagerImpl) {
+        if (!jpsLoadingManager.isProjectLoaded()) {
+          val ref: Ref<Boolean> = Ref.create(false)
+          withTimeout(Duration.of(waitTimeout.toLong(), chronoUnit)) {
+            project.messageBus.connect().subscribe<JpsProjectLoadedListener>(LOADED, object : JpsProjectLoadedListener {
+              override fun loaded() {
+                ref.set(true)
+              }
+            })
+          }
+          if (!ref.get()) {
+            actionCallback.reject("Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}")
+          }
         }
       }
       else {
@@ -46,8 +54,8 @@ class WaitJpsBuildCommand(text: String, line: Int) : PlaybackCommandCoroutineAda
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val (timeout, timeunit) = extractCommandArgument(CollectAllFilesCommand.PREFIX).split(",")
-    waitJpsProjectLoaded(context.project, timeout.toInt(), ChronoUnit.valueOf(timeunit.uppercase()), ActionCallbackProfilerStopper())
+    val (initial, timeout, timeunit) = ARGS_PATTERN.find(extractCommandArgument(PREFIX))!!.groupValues
+    waitJpsProjectLoaded(context.project, timeout.toInt(), POSSIBLE_VALUES[timeunit]!!, ActionCallbackProfilerStopper())
   }
 
 }
