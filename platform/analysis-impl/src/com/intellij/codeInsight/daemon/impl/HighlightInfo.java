@@ -575,6 +575,7 @@ public class HighlightInfo implements Segment {
                         @Nullable HighlightDisplayKey key);
 
     @NotNull
+    @ApiStatus.Experimental
     default Builder registerFix(@NotNull ModCommandAction action,
                         @Nullable List<? extends IntentionAction> options,
                         @Nullable @Nls String displayName,
