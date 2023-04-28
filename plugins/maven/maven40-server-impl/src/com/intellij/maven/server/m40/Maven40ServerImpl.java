@@ -9,6 +9,7 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 public class Maven40ServerImpl extends MavenServerBase {
@@ -16,10 +17,17 @@ public class Maven40ServerImpl extends MavenServerBase {
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
 
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
+    try {
+      Maven40ServerEmbedderImpl result = new Maven40ServerEmbedderImpl(settings);
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (MavenCoreInitializationException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
   }
 
   @Override
