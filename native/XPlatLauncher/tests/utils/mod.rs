@@ -14,7 +14,7 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, TempDir};
 
-use xplat_launcher::{get_config_home, PathExt};
+use xplat_launcher::{DEBUG_MODE_ENV_VAR, get_config_home, PathExt};
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -538,7 +538,7 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
 
     let mut full_env = match run_spec.location {
         LauncherLocation::Standard => HashMap::from([
-            (xplat_launcher::DEBUG_MODE_ENV_VAR, "1")
+            (DEBUG_MODE_ENV_VAR, "1")
         ]),
         LauncherLocation::RemoteDev => HashMap::from([
             ("CWM_NO_PASSWORD", "1"),
