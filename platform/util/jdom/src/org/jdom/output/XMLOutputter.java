@@ -76,23 +76,9 @@ public class XMLOutputter implements Cloneable {
   // For xml:space="preserve"
   private static final Format preserveFormat = Format.getRawFormat();
 
-  // What's currently in use
   @SuppressWarnings("WeakerAccess")
   protected Format currentFormat = userFormat;
 
-  /**
-   * Whether output escaping is enabled for the being processed
-   * Element - default is <code>true</code>
-   */
-  private boolean escapeOutput = true;
-
-  // * * * * * * * * * * Constructors * * * * * * * * * *
-  // * * * * * * * * * * Constructors * * * * * * * * * *
-
-  /**
-   * This will create an <code>XMLOutputter</code> with the default
-   * {@link Format} matching {@link Format#getRawFormat}.
-   */
   public XMLOutputter() {
   }
 
@@ -287,30 +273,23 @@ public class XMLOutputter implements Cloneable {
    * @throws IOException - if there's any problem writing.
    */
   public void output(Document doc, Writer out) throws IOException {
-
     printDeclaration(out, userFormat.encoding);
 
     // Print out root element, as well as any root level
     // comments and processing instructions,
     // starting with no indentation
-    List content = doc.getContent();
+    List<Content> content = doc.getContent();
     int size = content.size();
     for (int i = 0; i < size; i++) {
-      Object obj = content.get(i);
-
+      Content obj = content.get(i);
       if (obj instanceof Element) {
-        printElement(out, doc.getRootElement(), 0,
-                     createNamespaceStack());
+        printElement(out, doc.getRootElement(), 0, new NamespaceStack());
       }
       else if (obj instanceof DocType) {
         printDocType(out, doc.getDocType());
         // Always print line separator after declaration, helps the
         // output look better and is semantically inconsequential
         writeLineSeparator(out);
-      }
-      else {
-        // XXX if we get here then we have a illegal content, for
-        //     now we'll just ignore it
       }
 
       newline(out);
@@ -350,27 +329,9 @@ public class XMLOutputter implements Cloneable {
    * @param out     <code>Writer</code> to use.
    */
   public void output(Element element, Writer out) throws IOException {
-    // If this is the root element we could pre-initialize the
+    // If this is the root element, we could pre-initialize the
     // namespace stack with the namespaces
-    printElement(out, element, 0, createNamespaceStack());
-    out.flush();
-  }
-
-  /**
-   * This will handle printing out an <code>{@link
-   * Element}</code>'s content only, not including its tag, and
-   * attributes.  This can be useful for printing the content of an
-   * element that contains HTML, like "&lt;description&gt;JDOM is
-   * &lt;b&gt;fun&gt;!&lt;/description&gt;".
-   *
-   * @param element <code>Element</code> to output.
-   * @param out     <code>Writer</code> to use.
-   */
-  public void outputElementContent(Element element, Writer out)
-    throws IOException {
-    List content = element.getContent();
-    printContentRange(out, content, 0, content.size(),
-                      0, createNamespaceStack());
+    printElement(out, element, 0, new NamespaceStack());
     out.flush();
   }
 
@@ -386,7 +347,7 @@ public class XMLOutputter implements Cloneable {
   public void output(List list, Writer out)
     throws IOException {
     printContentRange(out, list, 0, list.size(),
-                      0, createNamespaceStack());
+                      0, new NamespaceStack());
     out.flush();
   }
 
@@ -445,9 +406,6 @@ public class XMLOutputter implements Cloneable {
     out.flush();
   }
 
-  // * * * * * * * * * * Output to a String * * * * * * * * * *
-  // * * * * * * * * * * Output to a String * * * * * * * * * *
-
   /**
    * Return a string representing a document.  Uses an internal
    * StringWriter. Warning: a String is Unicode, which may not match
@@ -458,7 +416,8 @@ public class XMLOutputter implements Cloneable {
   public String outputString(Document doc) {
     StringWriter out = new StringWriter();
     try {
-      output(doc, out);  // output() flushes
+      // output() flushes
+      output(doc, out);
     }
     catch (IOException ignored) {
     }
@@ -556,10 +515,11 @@ public class XMLOutputter implements Cloneable {
    *
    * @param entity <code>EntityRef</code> to format.
    */
-  public String outputString(EntityRef entity) {
+  public static String outputString(EntityRef entity) {
     StringWriter out = new StringWriter();
     try {
-      output(entity, out);  // output() flushes
+      printEntityRef(out, entity);
+      out.flush();
     }
     catch (IOException ignored) {
     }
@@ -654,7 +614,7 @@ public class XMLOutputter implements Cloneable {
    * @param entity <code>EntityRef</code> to output.
    * @param out    <code>Writer</code> to use.
    */
-  private void printEntityRef(Writer out, EntityRef entity)
+  private static void printEntityRef(Writer out, EntityRef entity)
     throws IOException {
     out.write("&");
     out.write(entity.getName());
@@ -719,8 +679,8 @@ public class XMLOutputter implements Cloneable {
                             int level, NamespaceStack namespaces)
     throws IOException {
 
-    List attributes = element.getAttributes();
-    List content = element.getContent();
+    List<Attribute> attributes = element.getAttributes();
+    List<Content> content = element.getContent();
 
     // Check for xml:space and adjust format settings
     String space = null;
@@ -885,8 +845,7 @@ public class XMLOutputter implements Cloneable {
    * @param end     index of last content node (exclusive).
    * @param out     <code>Writer</code> to use.
    */
-  private void printTextRange(Writer out, List content, int start, int end
-  ) throws IOException {
+  private void printTextRange(Writer out, List content, int start, int end) throws IOException {
     String previous; // Previous text printed
     Object node;     // Next node to print
     String next;     // Next text to print
@@ -913,8 +872,7 @@ public class XMLOutputter implements Cloneable {
           next = "&" + ((EntityRef)node).getValue() + ";";
         }
         else {
-          throw new IllegalStateException("Should see only " +
-                                          "CDATA, Text, or EntityRef");
+          throw new IllegalStateException("Should see only CDATA, Text, or EntityRef");
         }
 
         // This may save a little time
@@ -996,8 +954,7 @@ public class XMLOutputter implements Cloneable {
     for (int i = 0; i < attributes.size(); i++) {
       Attribute attribute = attributes.get(i);
       Namespace ns = attribute.getNamespace();
-      if ((ns != Namespace.NO_NAMESPACE) &&
-          (ns != Namespace.XML_NAMESPACE)) {
+      if ((ns != Namespace.NO_NAMESPACE) && (ns != Namespace.XML_NAMESPACE)) {
         printNamespace(out, ns, namespaces);
       }
 
@@ -1168,7 +1125,7 @@ public class XMLOutputter implements Cloneable {
   // Determine if a string starts with a XML whitespace.
   private static boolean startsWithWhite(String str) {
     if ((str != null) &&
-        (str.length() > 0) &&
+        (!str.isEmpty()) &&
         Verifier.isXMLWhitespace(str.charAt(0))) {
       return true;
     }
@@ -1177,9 +1134,7 @@ public class XMLOutputter implements Cloneable {
 
   // Determine if a string ends with a XML whitespace.
   private static boolean endsWithWhite(String str) {
-    if ((str != null) &&
-        (str.length() > 0) &&
-        Verifier.isXMLWhitespace(str.charAt(str.length() - 1))) {
+    if ((str != null) && (!str.isEmpty()) && Verifier.isXMLWhitespace(str.charAt(str.length() - 1))) {
       return true;
     }
     return false;
@@ -1239,7 +1194,7 @@ public class XMLOutputter implements Cloneable {
             // Make sure what we are escaping is not the
             // Beginning of a multi-byte character.
             if (Verifier.isHighSurrogate((char)ch)) {
-              // This is a the high of a surrogate pair
+              // This is the high of a surrogate pair
               i++;
               if (i < str.length()) {
                 char low = str.charAt(i);
@@ -1300,6 +1255,11 @@ public class XMLOutputter implements Cloneable {
    * @throws IllegalArgumentException if an entity can not be escaped
    */
   public String escapeElementEntities(String str) {
+    /**
+     * Whether output escaping is enabled for the being processed
+     * Element - default is <code>true</code>
+     */
+    boolean escapeOutput = true;
     if (!escapeOutput) return str;
 
     StringBuilder buffer;
@@ -1448,17 +1408,6 @@ public class XMLOutputter implements Cloneable {
   }
 
   /**
-   * Factory for making new NamespaceStack objects.  The NamespaceStack
-   * created is actually an inner class extending the package protected
-   * NamespaceStack, as a way to make NamespaceStack "friendly" toward
-   * subclassers.
-   */
-  private static NamespaceStack createNamespaceStack() {
-    // actually returns a XMLOutputter.NamespaceStack (see below)
-    return new NamespaceStack();
-  }
-
-  /**
    * Our own null subclass of NamespaceStack.  This plays a little
    * trick with Java access protection.  We want subclasses of
    * XMLOutputter to be able to override protected methods that
@@ -1472,7 +1421,7 @@ public class XMLOutputter implements Cloneable {
   // Support method to print a name without using elt.getQualifiedName()
   // and thus avoiding a StringBuffer creation and memory churn
   private static void printQualifiedName(Writer out, Element e) throws IOException {
-    if (e.getNamespace().getPrefix().length() == 0) {
+    if (e.getNamespace().getPrefix().isEmpty()) {
       out.write(e.getName());
     }
     else {
@@ -1495,13 +1444,4 @@ public class XMLOutputter implements Cloneable {
       out.write(a.getName());
     }
   }
-
-  // * * * * * * * * * * Deprecated methods * * * * * * * * * *
-
-  /* The methods below here are deprecations of protected methods.  We
-   * don't usually deprecate protected methods, so they're commented out.
-   * They're left here in case this mass deprecation causes people trouble.
-   * Since we're getting close to 1.0 it's actually better for people to
-   * raise issues early though.
-   */
 }

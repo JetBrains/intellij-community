@@ -549,8 +549,8 @@ public final class JDOMUtil {
   public static @NotNull String escapeText(@NotNull String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
     StringBuilder buffer = null;
     for (int i = 0; i < text.length(); i++) {
-      final char ch = text.charAt(i);
-      final String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
+      char ch = text.charAt(i);
+      String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
       buffer = XmlStringUtil.appendEscapedSymbol(text, buffer, i, quotation, ch);
     }
     // If there were any entities, return the escaped characters
