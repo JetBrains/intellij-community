@@ -19,6 +19,7 @@ import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
@@ -45,9 +46,11 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
+import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -675,6 +678,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return myDependenciesResolver.updateAndGet(value -> value == null ? createDependenciesResolver() : value);
   }
 
+  // TODO: useCustomDependenciesResolver
   @NotNull
   protected ProjectDependenciesResolver createDependenciesResolver() {
     return getComponent(ProjectDependenciesResolver.class);
@@ -1131,10 +1135,115 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
 
+  @Override
+  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
+                                                       MavenToken token)
+    throws RemoteException {
+    MavenServerUtil.checkToken(token);
+
+    MavenExecutionRequest request = createRequest(null, null, null, null);
+    request.setTransferListener(new Maven40TransferListenerAdapter(myCurrentIndicator));
+
+    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+    RepositorySystemSession session = maven.newRepositorySession(request);
+    myImporterSpy.setIndicator(myCurrentIndicator);
+
+    List<PluginResolutionData> resolutions = new ArrayList<>();
+
+    for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
+      MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
+      int nativeMavenProjectId = pluginResolutionRequest.getNativeMavenProjectId();
+
+      String groupId = mavenPluginId.getGroupId();
+      String artifactId = mavenPluginId.getArtifactId();
+
+      MavenProject project = RemoteNativeMaven40ProjectHolder.findProjectById(nativeMavenProjectId);
+      List<RemoteRepository> remoteRepos = project.getRemotePluginRepositories();
+
+      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(groupId + ':' + artifactId);
+      List<org.apache.maven.model.Dependency> pluginDependencies =
+        null == pluginFromProject ? Collections.emptyList() : pluginFromProject.getDependencies();
+
+      PluginResolutionData resolution = new PluginResolutionData(mavenPluginId, pluginDependencies, remoteRepos);
+      resolutions.add(resolution);
+    }
+
+    boolean runInParallel = false;//canResolveDependenciesInParallel();
+    List<PluginResolutionResponse> results =
+      MavenServerParallelRunner.execute(runInParallel, resolutions, resolution ->
+        resolvePlugin(resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
+      );
+
+    return results;
+  }
+
+  private static class PluginResolutionData {
+    MavenId mavenPluginId;
+    List<org.apache.maven.model.Dependency> pluginDependencies;
+    List<RemoteRepository> remoteRepos;
+
+    private PluginResolutionData(MavenId mavenPluginId,
+                                 List<org.apache.maven.model.Dependency> pluginDependencies,
+                                 List<RemoteRepository> remoteRepos) {
+      this.mavenPluginId = mavenPluginId;
+      this.pluginDependencies = pluginDependencies;
+      this.remoteRepos = remoteRepos;
+    }
+  }
+
+  @NotNull
+  private PluginResolutionResponse resolvePlugin(MavenId mavenPluginId,
+                                                 List<org.apache.maven.model.Dependency> pluginDependencies,
+                                                 List<RemoteRepository> remoteRepos,
+                                                 RepositorySystemSession session) {
+    List<MavenArtifact> artifacts = new ArrayList<>();
+
+    try {
+      Plugin plugin = new Plugin();
+      plugin.setGroupId(mavenPluginId.getGroupId());
+      plugin.setArtifactId(mavenPluginId.getArtifactId());
+      plugin.setVersion(mavenPluginId.getVersion());
+      plugin.setDependencies(pluginDependencies);
+
+      PluginDependenciesResolver pluginDependenciesResolver = getPluginDependenciesResolver();
+
+      org.eclipse.aether.artifact.Artifact pluginArtifact =
+        pluginDependenciesResolver.resolve(plugin, remoteRepos, session);
+
+      DependencyNode node = pluginDependenciesResolver
+        .resolve(plugin, pluginArtifact, null, remoteRepos, session);
+
+      PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
+      node.accept(nlg);
 
 
+      for (org.eclipse.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
+        if (!Objects.equals(artifact.getArtifactId(), plugin.getArtifactId()) ||
+            !Objects.equals(artifact.getGroupId(), plugin.getGroupId())) {
+          artifacts.add(Maven40ModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
+        }
+      }
 
+      return new PluginResolutionResponse(mavenPluginId, true, artifacts);
+    }
+    catch (Exception e) {
+      MavenServerGlobals.getLogger().warn(e);
+      return new PluginResolutionResponse(mavenPluginId, false, artifacts);
+    }
+  }
 
+  @NotNull
+  private PluginDependenciesResolver getPluginDependenciesResolver() {
+    PluginDependenciesResolver dependenciesResolver = myPluginDependenciesResolver.get();
+    if (dependenciesResolver != null) return dependenciesResolver;
+    return myPluginDependenciesResolver.updateAndGet(value -> value == null ? createPluginDependenciesResolver() : value);
+  }
+
+  // TODO: useCustomDependenciesResolver
+  @NotNull
+  protected PluginDependenciesResolver createPluginDependenciesResolver() {
+    return getComponent(PluginDependenciesResolver.class);
+  }
 
 
 
@@ -1156,15 +1265,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                                            boolean alwaysUpdateSnapshots,
                                                                            @Nullable Properties userProperties,
                                                                            MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return null;
-  }
-
-  @Override
-  public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
-                                                       MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
 
     // TODO: implement
