@@ -346,8 +346,7 @@ public class XMLOutputter implements Cloneable {
    */
   public void output(List list, Writer out)
     throws IOException {
-    printContentRange(out, list, 0, list.size(),
-                      0, new NamespaceStack());
+    printContentRange(out, list, 0, list.size(), 0, new NamespaceStack());
     out.flush();
   }
 

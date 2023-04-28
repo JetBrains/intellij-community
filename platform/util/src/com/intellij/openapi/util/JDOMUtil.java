@@ -490,13 +490,22 @@ public final class JDOMUtil {
     try {
       xmlOutputter.output(document, writer);
     }
-    catch (NullPointerException ex) {
-      getLogger().error(ex);
+    catch (NullPointerException e) {
+      getLogger().error(e);
       printDiagnostics(document.getRootElement(), "");
     }
   }
 
+  private static final @NotNull Format DEFAULT_FORMAT = Format.getCompactFormat()
+    .setIndent("  ")
+    .setTextMode(Format.TextMode.TRIM)
+    .setLineSeparator("\n");
+
   public static @NotNull Format createFormat(@Nullable String lineSeparator) {
+    if (lineSeparator == null || lineSeparator.equals("\n")) {
+      return DEFAULT_FORMAT;
+    }
+
     return Format.getCompactFormat()
       .setIndent("  ")
       .setTextMode(Format.TextMode.TRIM)
@@ -505,7 +514,7 @@ public final class JDOMUtil {
 
   @ApiStatus.Internal
   public static @NotNull XMLOutputter createOutputter(String lineSeparator) {
-    return new MyXMLOutputter(createFormat(lineSeparator));
+    return new MyXMLOutputter(lineSeparator);
   }
 
   /**
@@ -560,8 +569,8 @@ public final class JDOMUtil {
   }
 
   private static final class MyXMLOutputter extends XMLOutputter {
-    private MyXMLOutputter(@NotNull Format format) {
-      super(format);
+    private MyXMLOutputter(@NotNull String lineSeparator) {
+      super(createFormat(lineSeparator));
     }
 
     @Override
