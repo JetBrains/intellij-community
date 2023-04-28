@@ -184,17 +184,6 @@ public class XMLOutputter implements Cloneable {
   }
 
   /**
-   * Print out a <code>{@link CDATA}</code> node.
-   *
-   * @param cdata <code>CDATA</code> to output.
-   * @param out   <code>OutputStream</code> to use.
-   */
-  public void output(CDATA cdata, OutputStream out) throws IOException {
-    Writer writer = makeWriter(out);
-    output(cdata, writer);  // output() flushes
-  }
-
-  /**
    * Print out a <code>{@link Text}</code> node.  Perfoms
    * the necessary entity escaping and whitespace stripping.
    *
@@ -373,8 +362,7 @@ public class XMLOutputter implements Cloneable {
    * @param pi  <code>ProcessingInstruction</code> to output.
    * @param out <code>Writer</code> to use.
    */
-  public void output(ProcessingInstruction pi, Writer out)
-    throws IOException {
+  public void output(ProcessingInstruction pi, Writer out) throws IOException {
   }
 
   /**
@@ -655,7 +643,6 @@ public class XMLOutputter implements Cloneable {
    * @param namespaces <code>List</code> stack of Namespaces in scope.
    */
   private void printElement(Writer out, Element element, int level, NamespaceStack namespaces) throws IOException {
-
     List<Attribute> attributes = element.getAttributes();
     List<Content> content = element.getContent();
 

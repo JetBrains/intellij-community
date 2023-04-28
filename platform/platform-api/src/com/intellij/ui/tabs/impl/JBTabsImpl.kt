@@ -500,10 +500,9 @@ open class JBTabsImpl(private var project: Project?,
   @Deprecated("override {@link JBTabsImpl#createMultiRowLayout()} instead", ReplaceWith("createMultiRowLayout()"))
   protected open fun createTableLayout() = createMultiRowLayout()
 
-  override fun setNavigationActionBinding(prevActionId: String, nextActionId: String): JBTabs {
+  override fun setNavigationActionBinding(prevActionId: String, nextActionId: String) {
     nextAction?.reconnect(nextActionId)
     prevAction?.reconnect(prevActionId)
-    return this
   }
 
   fun setHovered(label: TabLabel?) {
@@ -535,11 +534,6 @@ open class JBTabsImpl(private var project: Project?,
     get() = false
 
   fun supportsCompression(): Boolean = supportCompression
-
-  override fun setNavigationActionsEnabled(enabled: Boolean): JBTabs {
-    navigationActionsEnabled = enabled
-    return this
-  }
 
   fun addNestedTabs(tabs: JBTabsImpl, parentDisposable: Disposable) {
     nestedTabs.add(tabs)
@@ -981,7 +975,7 @@ open class JBTabsImpl(private var project: Project?,
               }
 
               var clickToUnpin = false
-              if (tabInfo.isPinned()) {
+              if (tabInfo.isPinned) {
                 if (tabAction != null) {
                   val component = tabInfo.getComponent()
                   val wasShowing = UIUtil.isShowing(component)
@@ -1267,14 +1261,16 @@ open class JBTabsImpl(private var project: Project?,
       return ActionCallback.REJECTED
     }
     isMouseInsideTabsArea = false //temporary state to make selection fully visible (scrolled in view)
-    return if (mySelectionChangeHandler != null) {
-      mySelectionChangeHandler!!.execute(info, requestFocus, object : ActiveRunnable() {
+    if (mySelectionChangeHandler != null) {
+      return mySelectionChangeHandler!!.execute(info, requestFocus, object : ActiveRunnable() {
         override fun run(): ActionCallback {
           return executeSelectionChange(info, requestFocus, requestFocusInWindow)
         }
       })
     }
-    else executeSelectionChange(info, requestFocus, requestFocusInWindow)
+    else {
+      return executeSelectionChange(info, requestFocus, requestFocusInWindow)
+    }
   }
 
   private fun executeSelectionChange(info: TabInfo, requestFocus: Boolean, requestFocusInWindow: Boolean): ActionCallback {
