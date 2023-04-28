@@ -204,108 +204,6 @@ class ImplicitCompanionAsDispatchReceiverUsageInfo(
     val companionDescriptor: ClassDescriptor
 ) : UsageInfo(callee)
 
-interface KotlinMoveUsage {
-    val isInternal: Boolean
-
-    fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo?
-}
-
-class UnqualifiableMoveRenameUsageInfo(
-    element: PsiElement,
-    reference: PsiReference,
-    referencedElement: PsiElement,
-    val originalFile: PsiFile,
-    val addImportToOriginalFile: Boolean,
-    override val isInternal: Boolean
-) : MoveRenameUsageInfo(
-    element,
-    reference,
-    reference.rangeInElement.startOffset,
-    reference.rangeInElement.endOffset,
-    referencedElement,
-    false
-), KotlinMoveUsage {
-    override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
-        return UnqualifiableMoveRenameUsageInfo(
-            refExpr,
-            refExpr.mainReference,
-            referencedElement,
-            originalFile,
-            addImportToOriginalFile,
-            isInternal
-        )
-    }
-}
-
-class QualifiableMoveRenameUsageInfo(
-    element: PsiElement,
-    reference: PsiReference,
-    referencedElement: PsiElement,
-    override val isInternal: Boolean
-) : MoveRenameUsageInfo(
-    element,
-    reference,
-    reference.rangeInElement.startOffset,
-    reference.rangeInElement.endOffset,
-    referencedElement,
-    false
-),
-    KotlinMoveUsage {
-    override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
-        return QualifiableMoveRenameUsageInfo(refExpr, refExpr.mainReference, referencedElement, isInternal)
-    }
-}
-
-interface DeferredKotlinMoveUsage : KotlinMoveUsage {
-    fun resolve(newElement: PsiElement): UsageInfo?
-}
-
-class CallableReferenceMoveRenameUsageInfo(
-  element: PsiElement,
-  reference: PsiReference,
-  referencedElement: PsiElement,
-  val originalFile: PsiFile,
-  private val addImportToOriginalFile: Boolean,
-  override val isInternal: Boolean
-) : MoveRenameUsageInfo(
-    element,
-    reference,
-    reference.rangeInElement.startOffset,
-    reference.rangeInElement.endOffset,
-    referencedElement,
-    false
-), DeferredKotlinMoveUsage {
-    override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
-        return CallableReferenceMoveRenameUsageInfo(
-            refExpr,
-            refExpr.mainReference,
-            referencedElement,
-            originalFile,
-            addImportToOriginalFile,
-            isInternal
-        )
-    }
-
-    override fun resolve(newElement: PsiElement): UsageInfo? {
-        val target = newElement.unwrapped
-        val element = element ?: return null
-        val reference = reference ?: return null
-        val referencedElement = referencedElement ?: return null
-        if (target != null && target.isTopLevelKtOrJavaMember()) {
-            element.getStrictParentOfType<KtCallableReferenceExpression>()?.receiverExpression?.delete()
-            return UnqualifiableMoveRenameUsageInfo(
-                element,
-                reference,
-                referencedElement,
-                element.containingFile!!,
-                addImportToOriginalFile,
-                isInternal
-            )
-        }
-        return QualifiableMoveRenameUsageInfo(element, reference, referencedElement, isInternal)
-    }
-}
-
 fun createMoveUsageInfoIfPossible(
     reference: PsiReference,
     referencedElement: PsiElement,
@@ -314,13 +212,13 @@ fun createMoveUsageInfoIfPossible(
 ): UsageInfo? {
     val element = reference.element
     return when (getReferenceKind(reference, referencedElement)) {
-        ReferenceKind.QUALIFIABLE -> QualifiableMoveRenameUsageInfo(
+        ReferenceKind.QUALIFIABLE -> KotlinMoveUsage.Qualifiable(
             element, reference, referencedElement, isInternal
         )
-        ReferenceKind.UNQUALIFIABLE -> UnqualifiableMoveRenameUsageInfo(
+        ReferenceKind.UNQUALIFIABLE -> KotlinMoveUsage.Unqualifiable(
             element, reference, referencedElement, element.containingFile!!, addImportToOriginalFile, isInternal
         )
-        ReferenceKind.CALLABLE_REFERENCE -> CallableReferenceMoveRenameUsageInfo(
+        ReferenceKind.CALLABLE_REFERENCE -> KotlinMoveUsage.Deferred.CallableReference(
             element, reference, referencedElement, element.containingFile!!, addImportToOriginalFile, isInternal
         )
         else -> null
@@ -441,12 +339,12 @@ private fun postProcessMoveUsage(
     val newElement = mapToNewOrThis(oldElement, oldToNewElementsMapping)
 
     when (usage) {
-        is DeferredKotlinMoveUsage -> {
+        is KotlinMoveUsage.Deferred -> {
             val newUsage = usage.resolve(newElement) ?: return
             postProcessMoveUsage(newUsage, oldToNewElementsMapping, nonCodeUsages, shorteningMode)
         }
 
-        is UnqualifiableMoveRenameUsageInfo -> {
+        is KotlinMoveUsage.Unqualifiable -> {
             val file = with(usage) {
                 if (addImportToOriginalFile) originalFile else mapToNewOrThis(
                     originalFile,
