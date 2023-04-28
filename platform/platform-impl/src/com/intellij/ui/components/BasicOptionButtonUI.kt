@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTION_TOOLTIP
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
+import com.intellij.ui.util.width
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.scale
@@ -258,6 +259,11 @@ open class BasicOptionButtonUI : OptionButtonUI() {
             }
           }
         })
+        if (ExperimentalUI.isNewUI()) {
+          _optionButton?.let {
+            setMinimumSize(Dimension(it.width - it.insets.width, 0))
+          }
+        }
         show(showPopupBelowLocation)
       }
     }
@@ -404,7 +410,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.BGT
     }
 
     override fun actionPerformed(event: AnActionEvent) {
@@ -417,7 +423,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     @JvmStatic
     fun createUI(c: JComponent): BasicOptionButtonUI = BasicOptionButtonUI()
 
-    fun paintBackground(g: Graphics, c: JComponent) {
+    internal fun paintBackground(g: Graphics, c: JComponent) {
       if (c.isOpaque) {
         g.color = c.background
         g.fillRect(0, 0, c.width, c.height)

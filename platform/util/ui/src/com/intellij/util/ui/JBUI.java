@@ -458,6 +458,20 @@ public final class JBUI {
       public static @NotNull Color disabledOutlineColor() {
         return JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", Gray.xCF));
       }
+
+      public static final class Split {
+        public static final class Default {
+          public static @NotNull Color borderColor() {
+            return JBColor.namedColor("Button.Split.default.borderColor",
+                                      JBColor.namedColor("Blue8", 0x88ADF7).getRGB(),
+                                      JBColor.namedColor("Blue10", 0x83ACFC).getRGB());
+          }
+
+          public static @NotNull Color iconColor() {
+            return JBColor.namedColor("Button.Split.default.iconColor", JBColor.namedColor("Grey14", 0xFFFFFF));
+          }
+        }
+      }
     }
 
     public interface SegmentedButton {

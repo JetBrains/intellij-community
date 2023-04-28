@@ -105,6 +105,14 @@
       "description": "Used in tool buttons bars and the navigation bar"
     },
     {
+      "key": "Button.Split.default.borderColor",
+      "description": "Separator color for default split button"
+    },
+    {
+      "key": "Button.Split.default.iconColor",
+      "description": "Chevron arrow color for default split button"
+    },
+    {
       "key": "ComboPopup.border",
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
