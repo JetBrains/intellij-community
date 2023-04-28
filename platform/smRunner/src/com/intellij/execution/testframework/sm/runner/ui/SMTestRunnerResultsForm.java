@@ -660,7 +660,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       // else color will be according failed/passed tests
     }
 
-    myTreeView.setAccessibleStatus(myStatusLine.getStateText());
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myTreeView.setAccessibleStatus(myStatusLine.getStateText());
+    });
   }
 
   private boolean isUndefined() {
