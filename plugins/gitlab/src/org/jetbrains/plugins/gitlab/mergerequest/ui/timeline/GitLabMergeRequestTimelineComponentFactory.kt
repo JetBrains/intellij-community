@@ -36,6 +36,7 @@ import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
@@ -160,7 +161,7 @@ object GitLabMergeRequestTimelineComponentFactory {
           withHeader(createTitleTextPane(immutatebleItem.actor, immutatebleItem.date))
         }
       }
-      is GitLabMergeRequestTimelineItemViewModel.Discussion -> {
+      is GitLabMergeRequestTimelineDiscussionViewModel -> {
         GitLabMergeRequestTimelineDiscussionComponentFactory.create(project, cs, avatarIconsProvider, item)
       }
     }

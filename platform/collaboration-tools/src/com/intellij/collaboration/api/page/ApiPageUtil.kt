@@ -3,9 +3,12 @@ package com.intellij.collaboration.api.page
 
 import com.intellij.collaboration.api.data.GraphQLRequestPagination
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
+import com.intellij.collaboration.api.util.LinkHttpHeaderValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.fold
+import java.net.URI
+import java.net.http.HttpResponse
 
 object ApiPageUtil {
   fun <T> createGQLPagesFlow(loader: suspend (GraphQLRequestPagination) -> GraphQLPagedResponseDataDTO<T>?): Flow<List<T>> =
@@ -22,6 +25,19 @@ object ApiPageUtil {
           else {
             null
           }
+        }
+      }
+    }
+
+  fun <T> createPagesFlowByLinkHeader(initialURI: URI, request: suspend (URI) -> HttpResponse<T>): Flow<T> =
+    flow {
+      var loadPage: (suspend () -> HttpResponse<T>)? = { request(initialURI) }
+      while (loadPage != null) {
+        val response: HttpResponse<T> = loadPage()
+        val linkHeader = response.headers().firstValue(LinkHttpHeaderValue.HEADER_NAME).orElse(null)?.let(LinkHttpHeaderValue::parse)
+        emit(response.body())
+        loadPage = linkHeader?.nextLink?.let {
+          { request(URI(it)) }
         }
       }
     }

@@ -12,16 +12,18 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.addDiffNote
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.addNote
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiscussions
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 
 interface GitLabMergeRequestDiscussionsContainer {
   val discussions: Flow<Collection<GitLabMergeRequestDiscussion>>
   val systemNotes: Flow<Collection<GitLabNote>>
+  val standaloneDraftNotes: Flow<Collection<GitLabMergeRequestDraftNote>>
 
   val canAddNotes: Boolean
 
@@ -87,11 +89,49 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       )
       .modelFlow(cs, LOG)
 
+  private val draftNotesEvents = MutableSharedFlow<GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>>()
+
+  private val draftNotesData = channelFlow {
+    // we shouldn't get another user's draft notes
+    val currentUser = api.getCurrentUser(project.serverPath) ?: error("Unable to load current user")
+    val draftNotes = loadDraftNotes().toMutableList()
+    launch(start = CoroutineStart.UNDISPATCHED) {
+      draftNotesEvents.collectLatest { e ->
+        when (e) {
+          is GitLabNoteEvent.Added -> draftNotes.add(e.note)
+          is GitLabNoteEvent.Deleted -> draftNotes.removeIf { it.id.toString() == e.noteId }
+          is GitLabNoteEvent.Changed -> {
+            draftNotes.clear()
+            draftNotes.addAll(e.notes)
+          }
+        }
+        send(draftNotes.map { DraftNoteWithAuthor(it, currentUser) })
+      }
+    }
+    send(draftNotes.map { DraftNoteWithAuthor(it, currentUser) })
+  }
+
+  override val standaloneDraftNotes: Flow<Collection<GitLabMergeRequestDraftNote>> =
+    draftNotesData.mapFiltered {
+      it.note.discussionId == null
+    }.mapCaching(
+      { it.note.id },
+      { cs, (note, author) -> GitLabMergeRequestDraftNoteImpl(cs, api, project, mr, draftNotesEvents::emit, note, author) },
+      GitLabMergeRequestDraftNoteImpl::destroy
+    ).modelFlow(cs, LOG)
+
+  private data class DraftNoteWithAuthor(val note: GitLabMergeRequestDraftNoteRestDTO, val author: GitLabUserDTO)
+
   private suspend fun loadNonEmptyDiscussions(): List<GitLabDiscussionDTO> =
     ApiPageUtil.createGQLPagesFlow {
       api.loadMergeRequestDiscussions(project, mr.id, it)
     }.map { discussions ->
       discussions.filter { it.notes.isNotEmpty() }
+    }.foldToList()
+
+  private suspend fun loadDraftNotes(): List<GitLabMergeRequestDraftNoteRestDTO> =
+    ApiPageUtil.createPagesFlowByLinkHeader(getMergeRequestDraftNotesUri(project, mr.id)) {
+      api.loadMergeRequestDraftNotes(it)
     }.foldToList()
 
   override suspend fun addNote(body: String) {

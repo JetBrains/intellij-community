@@ -3,6 +3,7 @@ package com.intellij.collaboration.api.json
 
 import com.intellij.collaboration.api.HttpApiHelper
 import com.intellij.collaboration.api.httpclient.ByteArrayProducingBodyPublisher
+import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.readSuccessResponseWithLogging
 import com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
 import com.intellij.openapi.diagnostic.Logger
@@ -16,6 +17,10 @@ interface JsonHttpApiHelper {
   fun jsonBodyPublisher(uri: URI, body: Any): HttpRequest.BodyPublisher
   suspend fun <T> loadJsonValue(request: HttpRequest, clazz: Class<T>): HttpResponse<out T>
   suspend fun <T> loadJsonList(request: HttpRequest, clazz: Class<T>): HttpResponse<out List<T>>
+
+  fun HttpRequest.Builder.withJsonContent(): HttpRequest.Builder = apply {
+    header(HttpClientUtil.CONTENT_TYPE_HEADER, HttpClientUtil.CONTENT_TYPE_JSON)
+  }
 }
 
 @ApiStatus.Experimental

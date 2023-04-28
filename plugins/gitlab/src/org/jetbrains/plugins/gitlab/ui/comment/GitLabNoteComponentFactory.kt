@@ -75,6 +75,9 @@ object GitLabNoteComponentFactory {
           null
         }
       }
+      if (vm.isDraft) {
+        add(CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.pending.tag")))
+      }
     }
   }
 

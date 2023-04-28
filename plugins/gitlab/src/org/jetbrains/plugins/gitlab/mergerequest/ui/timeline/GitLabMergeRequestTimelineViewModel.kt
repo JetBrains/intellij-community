@@ -109,14 +109,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
    * Load all simple events and discussions and subscribe to user discussions changes
    */
   private fun CoroutineScope.createItemsFlow(mr: GitLabMergeRequest): Flow<List<GitLabMergeRequestTimelineItem>> {
-    val simpleEventsRequest = async(Dispatchers.IO) {
+    val simpleEvents = flow {
       val vms = ConcurrentLinkedQueue<GitLabMergeRequestTimelineItem>()
-      launch {
-        mr.systemNotes.first()
-          .map { GitLabMergeRequestTimelineItem.SystemNote(it) }
-          .also { vms.addAll(it) }
-      }
-
       launch {
         mr.getStateEvents()
           .map { GitLabMergeRequestTimelineItem.StateEvent(it) }
@@ -134,11 +128,15 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
           .map { GitLabMergeRequestTimelineItem.MilestoneEvent(it) }
           .also { vms.addAll(it) }
       }
-      vms
-    }
+      emit(vms)
+    }.flowOn(Dispatchers.IO)
 
-    return mr.discussions.map { discussions ->
-      (simpleEventsRequest.await() + discussions.map(GitLabMergeRequestTimelineItem::UserDiscussion)).sortedBy { it.date }
+    return combine(simpleEvents, mr.systemNotes, mr.discussions, mr.standaloneDraftNotes) { events, systemNotes, discussions, draftNotes ->
+      (events +
+       systemNotes.map { GitLabMergeRequestTimelineItem.SystemNote(it) } +
+       discussions.map(GitLabMergeRequestTimelineItem::UserDiscussion)
+      ).sortedBy { it.date } +
+      draftNotes.map(GitLabMergeRequestTimelineItem::DraftNote)
     }
   }
 
@@ -156,18 +154,22 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
         GitLabMergeRequestTimelineItemViewModel.Immutable(item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
         GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, mr, item.discussion).also {
-          handleDiffRequests(it, _diffRequests::emit)
+          handleDiffRequests(it.diffVm, _diffRequests::emit)
+        }
+      is GitLabMergeRequestTimelineItem.DraftNote ->
+        GitLabMergeRequestTimelineItemViewModel.DraftDiscussion(cs, currentUser, mr, item.note).also {
+          handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun CoroutineScope.handleDiffRequests(
-  discussion: GitLabMergeRequestTimelineItemViewModel.Discussion,
+  diffVm: Flow<GitLabDiscussionDiffViewModel?>,
   handler: suspend (GitLabDiscussionDiffViewModel.FullDiffRequest) -> Unit
 ) {
   launch(start = CoroutineStart.UNDISPATCHED) {
-    discussion.diffVm
+    diffVm
       .filterNotNull()
       .flatMapLatest { it.showDiffRequests }
       .collectLatest(handler)

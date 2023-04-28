@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 
 sealed interface GitLabNotePosition {
@@ -30,6 +31,7 @@ sealed interface GitLabNotePosition {
   companion object {
     private val LOG = logger<GitLabNotePosition>()
 
+    @Suppress("DuplicatedCode")
     fun from(position: GitLabNoteDTO.Position): GitLabNotePosition? {
       if (position.diffRefs.baseSha == null) {
         LOG.warn("Missing merge base in note position: $position")
@@ -38,6 +40,30 @@ sealed interface GitLabNotePosition {
 
       val parentSha = position.diffRefs.baseSha
       val sha = position.diffRefs.headSha
+
+      return when (position.positionType) {
+        "text" -> {
+          val location = if (position.oldLine != null) {
+            DiffLineLocation(Side.LEFT, position.oldLine - 1)
+          }
+          else {
+            DiffLineLocation(Side.RIGHT, position.newLine!! - 1)
+          }
+          Text(parentSha, sha, position.oldPath, position.newPath, location)
+        }
+        else -> Image(parentSha, sha, position.oldPath, position.newPath)
+      }
+    }
+
+    @Suppress("DuplicatedCode")
+    fun from(position: GitLabMergeRequestDraftNoteRestDTO.Position): GitLabNotePosition? {
+      if (position.baseSha == null) {
+        LOG.warn("Missing merge base in note position: $position")
+        return null
+      }
+
+      val parentSha = position.baseSha
+      val sha = position.headSha ?: return null
 
       return when (position.positionType) {
         "text" -> {

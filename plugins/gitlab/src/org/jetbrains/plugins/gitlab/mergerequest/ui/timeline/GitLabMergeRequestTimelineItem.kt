@@ -6,13 +6,14 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import java.util.*
 
 sealed interface GitLabMergeRequestTimelineItem {
 
   val id: String
-  val date: Date
+  val date: Date?
 
   sealed interface Immutable : GitLabMergeRequestTimelineItem {
     val actor: GitLabUserDTO
@@ -47,9 +48,16 @@ sealed interface GitLabMergeRequestTimelineItem {
   ) : Immutable {
     override val id: String = note.id
     override val actor: GitLabUserDTO = note.author
-    override val date: Date = note.createdAt
+    override val date: Date? = note.createdAt
 
     val content: String = note.body.value
+  }
+
+  class DraftNote(
+    val note: GitLabMergeRequestNote
+  ) : GitLabMergeRequestTimelineItem {
+    override val id: String = note.id
+    override val date: Date? = note.createdAt
   }
 
   class UserDiscussion(

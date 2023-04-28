@@ -11,17 +11,15 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNotePositionMapping
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import java.util.*
 
 interface GitLabNoteViewModel {
   val id: String
   val author: GitLabUserDTO
-  val createdAt: Date
+  val createdAt: Date?
+  val isDraft: Boolean
 
   val discussionState: Flow<GitLabDiscussionStateContainer>
 
@@ -43,7 +41,8 @@ class GitLabNoteViewModelImpl(
 
   override val id: String = note.id
   override val author: GitLabUserDTO = note.author
-  override val createdAt: Date = note.createdAt
+  override val createdAt: Date? = note.createdAt
+  override val isDraft: Boolean = note is GitLabMergeRequestDraftNote
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, note) else null
