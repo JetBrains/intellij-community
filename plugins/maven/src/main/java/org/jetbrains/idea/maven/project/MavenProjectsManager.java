@@ -1075,6 +1075,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
       if (toResolve.isEmpty()) {
         result.setResult(Collections.emptyList());
+        myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
+          .importFinished(Collections.emptyList(), Collections.emptyList());
         fireProjectImportCompleted();
         return;
       }
@@ -1086,6 +1088,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         }
         else {
           result.setResult(Collections.emptyList());
+          myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
+            .importFinished(Collections.emptyList(), Collections.emptyList());
           fireProjectImportCompleted();
         }
       };
@@ -1493,6 +1497,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       each.importAndResolveScheduled();
     }
   }
+
 
   private void fireProjectImportCompleted() {
     for (Listener each : myManagerListeners) {
