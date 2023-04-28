@@ -42,7 +42,6 @@ import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.PluginDescriptorCache;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.*;
-import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.settings.Settings;
@@ -345,12 +344,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
 
     return (List<Exception>)((List)list);
-  }
-
-  public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) throws RemoteException {
-    Model result = Maven3ModelConverter.toNativeModel(model);
-    new DefaultModelInheritanceAssembler().assembleModelInheritance(result, Maven3ModelConverter.toNativeModel(parentModel));
-    return Maven3ModelConverter.convertModel(result, null);
   }
 
   @Override

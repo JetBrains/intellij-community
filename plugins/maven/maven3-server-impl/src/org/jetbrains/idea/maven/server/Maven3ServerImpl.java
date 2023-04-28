@@ -59,7 +59,7 @@ public class Maven3ServerImpl extends MavenServerBase {
   public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
+      return Maven3ModelInheritanceAssembler.assembleInheritance(model, parentModel);
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);

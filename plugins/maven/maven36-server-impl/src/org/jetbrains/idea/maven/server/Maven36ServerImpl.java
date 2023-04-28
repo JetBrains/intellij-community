@@ -62,7 +62,7 @@ public class Maven36ServerImpl extends MavenServerBase {
   public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
+      return Maven3ModelInheritanceAssembler.assembleInheritance(model, parentModel);
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
