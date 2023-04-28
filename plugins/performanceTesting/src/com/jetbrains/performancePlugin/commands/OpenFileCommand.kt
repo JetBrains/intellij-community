@@ -7,15 +7,15 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
+import com.sampullara.cli.Args
+import com.sampullara.cli.Argument
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
@@ -25,13 +25,13 @@ import org.jetbrains.annotations.SystemIndependent
 
 /**
  * Command opens file.
- * Example: %openFile MyClass.php
+ * Example: %openFile -file <filename from the root of the project> [-suppressError <true|false>] [-timeout <in seconds>] [WARMUP]
  */
-class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
-    const val PREFIX: @NonNls String = CMD_PREFIX + "openFile"
+    const val NAME: @NonNls String = "openFile"
+    const val PREFIX: @NonNls String = "$CMD_PREFIX$NAME"
     const val SPAN_NAME: @NonNls String = "firstCodeAnalysis"
-    const val SUPPRESS_ERROR: @NonNls String = "SUPPRESS_ERROR"
 
     @JvmStatic
     fun findFile(filePath: String, project: Project): VirtualFile? {
@@ -41,17 +41,25 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
         else -> project.guessProjectDir()?.findFileByRelativePath(filePath)
       }
     }
+
+    internal class Options(@field:Argument var timeout: Long = 0L,
+                           @field:Argument var suppressErrors: Boolean = false,
+                           @field:Argument(required = true) var file: String = "")
+  }
+
+  override fun getName(): String {
+    return NAME
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val params = text.split(' ', limit = 4)
-    val filePath = params[1]
-    val timeout = if (params.size > 2) params[2].toLong() else 0
-    val suppressErrors = text.contains(SUPPRESS_ERROR)
+    val myOptions = Options().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
+    val filePath = myOptions.file
+    val timeout = myOptions.timeout
+    val suppressErrors = myOptions.suppressErrors
+
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
     val connection = project.messageBus.simpleConnect()
-    val span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
     val spanRef = Ref<Span>()
     val scopeRef = Ref<Scope>()
     val projectPath = project.basePath
@@ -59,7 +67,7 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
     if (suppressErrors) {
       job.suppressErrors()
     }
-    spanRef.set(span.startSpan())
+    spanRef.set(startSpan(SPAN_NAME))
     scopeRef.set(spanRef.get().makeCurrent())
     setFilePath(projectPath = projectPath, span = spanRef.get(), file = file)
 
