@@ -239,15 +239,17 @@ class KotlinUFunctionCallExpression(
      * ```
      * The call `collectAliasedNamesForName(ktFile, listOf("c")` will return `["foo"]`
      */
-    private fun collectAliasedNamesForName(ktFile: KtFile, actualNames: Collection<String>): Set<String> =
-        buildSet {
-            for (importDirective in ktFile.importDirectives) {
-                val importedName = importDirective.importedFqName?.pathSegments()?.lastOrNull()?.asString()
-                if (importedName in actualNames) {
-                    importDirective.aliasName?.let(::add)
-                }
+    private fun collectAliasedNamesForName(
+        ktFile: KtFile,
+        actualNames: Collection<String>,
+    ): Set<String> = buildSet {
+        for (importDirective in ktFile.importDirectives) {
+            val importedName = importDirective.importedFqName?.pathSegments()?.lastOrNull()?.asString() ?: continue
+            if (importedName in actualNames) {
+                importDirective.aliasName?.let(::add)
             }
         }
+    }
 
 
     private fun isMethodNameOneOfWithoutConsideringImportAliases(names: Collection<String>): Boolean {
