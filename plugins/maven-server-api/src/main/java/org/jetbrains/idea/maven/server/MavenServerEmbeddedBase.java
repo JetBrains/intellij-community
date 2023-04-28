@@ -43,7 +43,7 @@ public abstract class MavenServerEmbeddedBase extends MavenRemoteObject implemen
     private final AtomicInteger myTotalRequests;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    protected LongRunningTask(@NotNull String id, int totalRequests) {
+    public LongRunningTask(@NotNull String id, int totalRequests) {
       myId = id;
       myTotalRequests = new AtomicInteger(totalRequests);
 

@@ -120,7 +120,10 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     }
     else {
       classpath.add(new File(root, "intellij.maven.server.m3.impl"));
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+      if (StringUtil.compareVersionNumbers(mavenVersion, "4.0") >= 0) {
+        classpath.add(new File(root, "intellij.maven.server.m40"));
+      }
+      else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
         classpath.add(new File(root, "intellij.maven.server.m36.impl"));
       }
     }

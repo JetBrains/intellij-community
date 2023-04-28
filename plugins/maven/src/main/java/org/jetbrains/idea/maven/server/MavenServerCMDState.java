@@ -44,6 +44,7 @@ public class MavenServerCMDState extends CommandLineState {
 
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
   @NonNls private static final String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
+  @NonNls private static final String MAIN_CLASS40 = "com.intellij.maven.server.m40.RemoteMavenServer40";
   @NonNls private static final String MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS =
     "org.jetbrains.idea.maven.server.RemoteMavenServerThrowsExceptionForTests";
 
@@ -212,6 +213,9 @@ public class MavenServerCMDState extends CommandLineState {
     if (setupThrowMainClass && MavenUtil.isMavenUnitTestModeEnabled()) {
       setupThrowMainClass = false;
       params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
+    }
+    else if (StringUtil.compareVersionNumbers(mavenVersion, "4.0") >= 0) {
+      params.setMainClass(MAIN_CLASS40);
     }
     else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
       params.setMainClass(MAIN_CLASS36);

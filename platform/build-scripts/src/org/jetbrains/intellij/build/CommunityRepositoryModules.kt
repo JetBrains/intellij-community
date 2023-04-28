@@ -98,6 +98,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.maven.server.m30.impl", "maven30-server.jar")
       spec.withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
       spec.withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
+      spec.withModule("intellij.maven.server.m40", "maven40-server.jar")
       spec.withModule("intellij.maven.errorProne.compiler")
       spec.withModule("intellij.maven.server.indexer", "maven-server-indexer.jar")
       /*
@@ -133,11 +134,15 @@ object CommunityRepositoryModules {
 
       spec.withArtifact("maven-event-listener", "")
       spec.doNotCopyModuleLibrariesAutomatically(listOf(
-        "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl",
+        "intellij.maven.artifactResolver.common",
+        "intellij.maven.artifactResolver.m3",
+        "intellij.maven.artifactResolver.m31",
+        "intellij.maven.server.m3.common",
+        "intellij.maven.server.m3.impl",
         "intellij.maven.server.m30.impl",
-        "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
-        "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31",
-        "intellij.maven.server.indexer"
+        "intellij.maven.server.m36.impl",
+        "intellij.maven.server.m40",
+        "intellij.maven.server.indexer",
       ))
       spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
