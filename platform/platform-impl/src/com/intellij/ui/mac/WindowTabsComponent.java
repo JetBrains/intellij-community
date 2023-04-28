@@ -173,6 +173,14 @@ public final class WindowTabsComponent extends JBTabsImpl {
       }
 
       @Override
+      public void setTabActions(ActionGroup group) {
+        super.setTabActions(group);
+        if (myActionPanel != null) {
+          myActionPanel.setBorder(JBUI.Borders.emptyLeft(6));
+        }
+      }
+
+      @Override
       protected boolean isTabActionsOnTheRight() {
         return false;
       }
