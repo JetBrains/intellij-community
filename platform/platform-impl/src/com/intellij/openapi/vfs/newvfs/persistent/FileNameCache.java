@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.diagnostic.telemetry.PlatformScopesKt.VFS;
+
 @ApiStatus.Internal
 public final class FileNameCache {
   @SuppressWarnings("unchecked") private static final IntSLRUCache<CharSequence>[] ourNameCache = new IntSLRUCache[16];
@@ -160,7 +162,7 @@ public final class FileNameCache {
   }
 
   private static void setupReportingToOpenTelemetry() {
-    final Meter meter = TraceManager.INSTANCE.getMeter("vfs");
+    final Meter meter = TraceManager.getMeter(VFS);
 
     var queriesCounter = meter.counterBuilder("FileNameCache.queries").buildObserver();
     var fastMissesCounter = meter.counterBuilder("FileNameCache.fastMisses").buildObserver();

@@ -53,6 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import static com.intellij.diagnostic.telemetry.PlatformScopesKt.EDT;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -87,7 +88,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   static {
     LOG.info("OTel monitoring for NonBlockingReadAction is " + (ENABLE_OTEL_MONITORING ? "enabled" : "disabled"));
     if (ENABLE_OTEL_MONITORING) {
-      Meter meter = TraceManager.INSTANCE.getMeter("EDT");
+      Meter meter = TraceManager.getMeter(EDT);
       MONITOR = new OTelMonitor(meter);
     }
     else {

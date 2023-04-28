@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
-import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.vcs.log.data.util.VCS
 import com.intellij.diagnostic.telemetry.computeWithSpan
+import com.intellij.diagnostic.telemetry.tracer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -96,7 +97,7 @@ fun getIncorrectCommits(project: Project, root: VirtualFile): Set<Hash> {
 private fun getIncorrectCommitsFromIndex(dataManager: VcsLogData,
                                          dataGetter: IndexDataGetter,
                                          root: VirtualFile): Set<Hash> {
-  computeWithSpan(TraceManager.getTracer("vcs"), "getting incorrect merges from index") { span ->
+  computeWithSpan(VCS.tracer(), "getting incorrect merges from index") { span ->
     span.setAttribute("rootName", root.name)
 
     val commits = dataGetter.filter(listOf(MAGIC_FILTER)).asSequence()
@@ -106,7 +107,7 @@ private fun getIncorrectCommitsFromIndex(dataManager: VcsLogData,
 
 @Throws(VcsException::class)
 fun getIncorrectCommitsFromGit(project: Project, root: VirtualFile): MutableSet<Hash> {
-  return computeWithSpan(TraceManager.getTracer("vcs"), "getting incorrect merges from git") { span ->
+  return computeWithSpan(VCS.tracer(), "getting incorrect merges from git") { span ->
     span.setAttribute("rootName", root.name)
 
     val filterParameters = mutableListOf<String>()

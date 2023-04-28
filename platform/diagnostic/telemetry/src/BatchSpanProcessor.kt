@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.telemetry
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.metrics.LongCounter
@@ -21,11 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.LongAdder
 import java.util.function.BiFunction
+import kotlin.collections.ArrayList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
+import kotlinx.coroutines.launch
 
 private val SPAN_PROCESSOR_TYPE_LABEL = AttributeKey.stringKey("spanProcessorType")
 private val SPAN_PROCESSOR_DROPPED_LABEL = AttributeKey.booleanKey("dropped")
@@ -143,7 +145,7 @@ class BatchSpanProcessor(
               spanExporter.shutdown()
             }
             catch (e: Throwable) {
-              Logger.getInstance(BatchSpanProcessor::class.java.name).error("Failed to shutdown", e)
+              LOG.error("Failed to shutdown", e)
             }
           }
         }
@@ -165,7 +167,7 @@ class BatchSpanProcessor(
       }
       else {
         result.fail()
-        Logger.getInstance(BatchSpanProcessor::class.java.name).error("Failed to flush", error)
+        LOG.error("Failed to flush", error)
       }
     })
     return result
@@ -260,10 +262,14 @@ class BatchSpanProcessor(
       throw e
     }
     catch (e: Throwable) {
-      Logger.getInstance(BatchSpanProcessor::class.java.name).error("Failed to export", e)
+      LOG.error("Failed to export", e)
     }
     finally {
       batch.clear()
     }
+  }
+
+  companion object {
+    val LOG = logger<BatchSpanProcessor>()
   }
 }
