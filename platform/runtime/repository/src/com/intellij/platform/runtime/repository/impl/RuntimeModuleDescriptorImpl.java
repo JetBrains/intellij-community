@@ -9,8 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
   private final RuntimeModuleId myId;
@@ -68,5 +67,22 @@ class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
       }
     }
     return null;
+  }
+
+  @Override
+  @NotNull
+  public List<Path> getModuleClasspath() {
+    Set<Path> classpath = new LinkedHashSet<>();
+    collectDependencies(this, new LinkedHashSet<>(), classpath);
+    return List.copyOf(classpath);
+  }
+
+  private static void collectDependencies(RuntimeModuleDescriptor module, Set<RuntimeModuleId> visited, Set<Path> classpath) {
+    if (visited.add(module.getModuleId())) {
+      classpath.addAll(module.getResourceRootPaths());
+      for (RuntimeModuleDescriptor dep : module.getDependencies()) {
+        collectDependencies(dep, visited, classpath);
+      }
+    }
   }
 }

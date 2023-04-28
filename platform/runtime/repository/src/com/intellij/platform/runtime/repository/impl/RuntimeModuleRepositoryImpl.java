@@ -74,22 +74,6 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     return dependency;
   }
 
-  @Override
-  public @NotNull List<Path> getModuleClasspath(@NotNull RuntimeModuleId moduleId) {
-    List<Path> classpath = new ArrayList<>();
-    collectDependencies(getModule(moduleId), new LinkedHashSet<>(), classpath);
-    return classpath;
-  }
-
-  private static void collectDependencies(RuntimeModuleDescriptor module, Set<RuntimeModuleId> visited, List<Path> classpath) {
-    if (visited.add(module.getModuleId())) {
-      classpath.addAll(module.getResourceRootPaths());
-      for (RuntimeModuleDescriptor dep : module.getDependencies()) {
-        collectDependencies(dep, visited, classpath);
-      }
-    }
-  }
-
   private static ResourceRoot createResourceRoot(Path baseDir, String relativePath) {
     Path root = convertToAbsolute(baseDir, relativePath);
     if (Files.isRegularFile(root)) {

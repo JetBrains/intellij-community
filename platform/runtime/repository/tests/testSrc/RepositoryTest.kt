@@ -69,4 +69,17 @@ class RepositoryTest {
       }, "Path $path is incorrect")
     }
   }
+
+  @Test
+  fun `module classpath`() {
+    val repository = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor("ij.foo", listOf("foo.jar"), emptyList()),
+      RawRuntimeModuleDescriptor("ij.bar", listOf("bar.jar"), listOf("ij.foo")),
+      RawRuntimeModuleDescriptor("ij.baz", listOf("baz.jar"), listOf("ij.foo")),
+      RawRuntimeModuleDescriptor("ij.main", emptyList(), listOf("ij.bar", "ij.baz")),
+    )
+    val classpath = repository.getModule(RuntimeModuleId.raw("ij.main")).moduleClasspath
+    assertEquals(listOf("bar.jar", "foo.jar", "baz.jar").map { tempDirectory.rootPath.resolve(it) }, classpath)
+  }
 }

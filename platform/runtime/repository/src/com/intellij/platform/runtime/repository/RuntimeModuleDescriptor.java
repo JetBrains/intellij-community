@@ -38,4 +38,9 @@ public interface RuntimeModuleDescriptor {
    */
   @Nullable
   InputStream readFile(@NotNull String relativePath) throws IOException;
+
+  /**
+   * Returns paths to resource roots of this module and its dependencies (including transitive) which contain *.class files. 
+   */
+  @NotNull List<Path> getModuleClasspath();
 }

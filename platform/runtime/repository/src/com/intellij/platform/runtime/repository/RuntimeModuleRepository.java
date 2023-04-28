@@ -9,8 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents the set of available modules. 
@@ -34,9 +33,4 @@ public interface RuntimeModuleRepository {
    * Returns the module by the given {@code moduleId} or throws an exception if there is no module with such ID in the repository.
    */
   @NotNull RuntimeModuleDescriptor getModule(@NotNull RuntimeModuleId moduleId);
-
-  /**
-   * Returns list of directories and JAR files containing classes of {@code moduleId} and its direct and transitive dependencies.
-   */
-  @NotNull List<Path> getModuleClasspath(@NotNull RuntimeModuleId moduleId);
 }
