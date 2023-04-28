@@ -51,6 +51,8 @@ import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
@@ -70,6 +72,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.im.InputMethodRequests;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -124,6 +127,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // Remove JTextComponent's mouse/focus listeners added in its ctor.
     for (MouseListener l : getMouseListeners()) removeMouseListener(l);
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
+
+    setupEditorSwingCaretUpdatesCourierIfRequired();
   }
 
   @Override
@@ -345,6 +350,242 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   public String toString() {
     return "EditorComponent file=" + myEditor.getVirtualFile();
   }
+
+
+  // -----------------------------------------------------------------------------------------------
+  // Fixes behavior of JTextComponent caret API.
+  // Without this, changes of caret(s) position(s) are not reported to the caret listeners added
+  //   via JTextComponent.addCaretListener.
+  // This is required for proper working of JBR-2041.
+  // -----------------------------------------------------------------------------------------------
+  private EditorSwingCaretUpdatesCourier myEditorSwingCaretUpdatesCourier = null;
+
+  @RequiresEdt
+  private boolean setupEditorSwingCaretUpdatesCourierIfRequired() {
+    if ((myEditorSwingCaretUpdatesCourier != null) || (myEditor == null) || (myEditor.isDisposed()) ) {
+      return false;
+    }
+
+    if (ArrayUtil.isEmpty(getCaretListeners())) {
+      return false;
+    }
+
+    myEditorSwingCaretUpdatesCourier = EditorSwingCaretUpdatesCourier.create(this);
+
+    return true;
+  }
+
+  @Override
+  public void addCaretListener(javax.swing.event.CaretListener listener) {
+    super.addCaretListener(listener);
+    setupEditorSwingCaretUpdatesCourierIfRequired();
+  }
+
+  @Override
+  public void removeCaretListener(javax.swing.event.CaretListener listener) {
+    super.removeCaretListener(listener);
+  }
+
+
+  /**
+   * How it works:<br>
+   * 1. if {@link #beforeAllCaretsAction} gets called, then {@link #fireCaretUpdate} will be called ONLY at {@link #afterAllCaretsAction}
+   *    will have been called (if the primary caret position will have been changed)<br>
+   * 2. otherwise, if any of {@link #documentChanged}, {@link #caretPositionChanged}, {@link #caretAdded}, {@link #caretRemoved} gets called,
+   *    {@link #fireCaretUpdate} will be called as well (again, if the primary caret position will have been changed)
+   *
+   * <p/>
+   *
+   * Why we need all these listeners:<br>
+   * -  if we don't install {@link CaretListener}, we'll miss some caret updates which arrive outside of {@link CaretActionListener} events,
+   *    e.g. the test {@link com.intellij.openapi.editor.impl.EditorComponentCaretListenerTest#testCaretNotificationsCausedByUndo testCaretNotificationsCausedByUndo}
+   *    won't get a notification after pasting a text into the editor;<br>
+   * -  if we don't install {@link CaretActionListener}, we'll sometimes get incorrect position for {@link javax.swing.event.CaretEvent#getMark()},
+   *    because position of the caret can be updated a bit earlier than the selection.
+   *    E.g. the test {@link com.intellij.openapi.editor.impl.EditorComponentCaretListenerTest#testCaretNotificationsOfSelectionMovementsWithoutTextModificationsFromTopLeft testCaretNotificationsOfSelectionMovementsWithoutTextModificationsFromTopLeft}
+   *    will get the wrong position of the selection at the first moving of the caret to the right;<br>
+   * -  if we don't install {@link DocumentListener}, we'll miss caret movements caused by document changes. See {@link CaretListener#caretPositionChanged} for more info.
+   *    E.g. the test {@link com.intellij.openapi.editor.impl.EditorComponentCaretListenerTest#testCaretNotificationsCausedByUndo testCaretNotificationsCausedByUndo}
+   *    won't get a notification after undoing the pasting
+   */
+  private class EditorSwingCaretUpdatesCourier implements CaretListener, CaretActionListener, DocumentListener {
+    /** true if {@link #beforeAllCaretsAction} has been called, but {@link #afterAllCaretsAction} - has still not */
+    private boolean isInsideCaretsAction = false;
+    private @NotNull WeakReference<Caret> myLastKnownPrimaryCaret;
+    private int myPrimaryCaretLastKnownDot;
+    private int myPrimaryCaretLastKnownMark;
+
+    @RequiresEdt
+    private static @Nullable EditorSwingCaretUpdatesCourier create(@NotNull EditorComponentImpl parent) {
+      if ( (parent.myEditor == null) || (parent.myEditor.isDisposed()) ) {
+        return null;
+      }
+
+      return parent.new EditorSwingCaretUpdatesCourier();
+    }
+
+    /** Don't use it directly, use {@link #create(EditorComponentImpl)} instead */
+    @RequiresEdt
+    private EditorSwingCaretUpdatesCourier() {
+      assert(myEditor != null);
+      assert(!myEditor.isDisposed());
+
+      final @NotNull var caretModel = myEditor.getCaretModel();
+      final @NotNull var primaryCaret = caretModel.getPrimaryCaret();
+
+      myLastKnownPrimaryCaret = new WeakReference<>(primaryCaret);
+      myPrimaryCaretLastKnownDot = primaryCaret.getOffset();
+      myPrimaryCaretLastKnownMark = primaryCaret.getLeadSelectionOffset();
+
+      caretModel.addCaretActionListener(this, myEditor.getDisposable());
+      caretModel.addCaretListener(this, myEditor.getDisposable());
+      myEditor.getDocument().addDocumentListener(this, myEditor.getDisposable());
+    }
+
+
+    // ---- CaretActionListener ----
+
+    @Override
+    @RequiresEdt
+    public void beforeAllCaretsAction() {
+      isInsideCaretsAction = true;
+    }
+
+    @Override
+    @RequiresEdt
+    public void afterAllCaretsAction() {
+      isInsideCaretsAction = false;
+
+      final var currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+
+    // ---- CaretListener ----
+
+    @Override
+    @RequiresEdt
+    public void caretPositionChanged(@NotNull CaretEvent event) {
+      if (isInsideCaretsAction) {
+        return;
+      }
+
+      final Caret changedCaret = event.getCaret();
+      final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+
+      if (changedCaret != currentPrimaryCaret) {
+        // Filter out changes of secondary carets
+        return;
+      }
+
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+    @Override
+    @RequiresEdt
+    public void caretAdded(@NotNull CaretEvent event) {
+      // Adding a caret may cause a change of the primary caret instance
+
+      if (isInsideCaretsAction) {
+        return;
+      }
+
+      final Caret addedCaret = event.getCaret();
+      final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+
+      if (addedCaret != currentPrimaryCaret) {
+        // The added caret hasn't become primary, so we're not interested in its position
+        return;
+      }
+
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+    @Override
+    @RequiresEdt
+    public void caretRemoved(@NotNull CaretEvent event) {
+      // Removing a caret may cause a switching of the primary caret
+
+      if (isInsideCaretsAction) {
+        return;
+      }
+
+      final var currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+
+      if (myLastKnownPrimaryCaret.refersTo(currentPrimaryCaret)) {
+        // The removal of a caret didn't cause a switching of the primary caret, so its position isn't supposed to have changed
+        return;
+      }
+
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+
+    // ---- DocumentListener ----
+    // TODO: replace by com.intellij.openapi.editor.event.BulkAwareDocumentListener.Simple
+
+    @Override
+    @RequiresEdt
+    public void documentChanged(@NotNull DocumentEvent event) {
+      if (isInsideCaretsAction) {
+        return;
+      }
+
+      final Caret currentPrimaryCaret = myEditor.getCaretModel().getPrimaryCaret();
+
+      primaryCaretPositionPossiblyChanged(currentPrimaryCaret);
+    }
+
+
+    // ---- implementation details ----
+
+    @RequiresEdt // if you're going to remove this requirement, don't forget to make access to the fields thread-safe
+    private void primaryCaretPositionPossiblyChanged(final @NotNull Caret currentPrimaryCaret) {
+      final int currentPrimaryCaretDot = currentPrimaryCaret.getOffset();
+      final int currentPrimaryCaretMark = currentPrimaryCaret.getLeadSelectionOffset();
+
+      if (!myLastKnownPrimaryCaret.refersTo(currentPrimaryCaret)) {
+        myLastKnownPrimaryCaret.clear();
+        myLastKnownPrimaryCaret = new WeakReference<>(currentPrimaryCaret);
+      }
+
+      if (currentPrimaryCaretDot < 0) {
+        LOG.error(
+          "currentPrimaryCaretDot < 0",
+          String.format("currentPrimaryCaretDot == %d", currentPrimaryCaretDot),
+          String.format("currentPrimaryCaret == %s", currentPrimaryCaret)
+        );
+      }
+      else if (currentPrimaryCaretMark < 0) { // I don't think it worth adding almost the same error twice, so it's an else-if
+        LOG.error(
+          "currentPrimaryCaretMark < 0",
+          String.format("currentPrimaryCaretMark == %d", currentPrimaryCaretMark),
+          String.format("currentPrimaryCaret == %s", currentPrimaryCaret)
+        );
+      }
+
+      if ((myPrimaryCaretLastKnownDot == currentPrimaryCaretDot) && (myPrimaryCaretLastKnownMark == currentPrimaryCaretMark)) {
+        // The position hasn't changed
+        return;
+      }
+
+      myPrimaryCaretLastKnownDot = currentPrimaryCaretDot;
+      myPrimaryCaretLastKnownMark = currentPrimaryCaretMark;
+
+      fireCaretUpdate(new javax.swing.event.CaretEvent(EditorComponentImpl.this) {
+        @Override
+        public int getDot() {
+          return currentPrimaryCaretDot;
+        }
+
+        @Override
+        public int getMark() {
+          return currentPrimaryCaretMark;
+        }
+      });
+    }
+  }
+
 
   // -----------------------------------------------------------------------------------------------
   // Accessibility/screen reader support for the editor
