@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -27,7 +26,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 import org.jetbrains.kotlin.resolve.descriptorUtil.parents
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.lang.System.currentTimeMillis
 
 
 fun KtElement.getInternalReferencesToUpdateOnPackageNameChange(containerChangeInfo: MoveContainerChangeInfo): List<UsageInfo> {
@@ -153,28 +151,3 @@ class ImplicitCompanionAsDispatchReceiverUsageInfo(
     val companionDescriptor: ClassDescriptor
 ) : UsageInfo(callee)
 
-internal fun logFusForMoveRefactoring(
-    numberOfEntities: Int,
-    entity: KotlinMoveRefactoringFUSCollector.MovedEntity,
-    destination: KotlinMoveRefactoringFUSCollector.MoveRefactoringDestination,
-    isDefault: Boolean,
-    body: Runnable
-) {
-    val timeStarted = currentTimeMillis()
-
-    var succeeded = false
-    try {
-        body.run()
-        succeeded = true
-    } finally {
-        KotlinMoveRefactoringFUSCollector.log(
-            timeStarted = timeStarted,
-            timeFinished = currentTimeMillis(),
-            numberOfEntities = numberOfEntities,
-            destination = destination,
-            isDefault = isDefault,
-            entity = entity,
-            isSucceeded = succeeded,
-        )
-    }
-}

@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.core.CollectingNameValidator;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings;
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRefactoringSupport;
 import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilKt;
-import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilsKt;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtClassBody;
@@ -282,7 +281,7 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
 
         saveOpenInEditorOption();
 
-        MoveUtilsKt.logFusForMoveRefactoring(
+        MoveUtilKt.logFusForMoveRefactoring(
                 modelResult.getElementsCount(),
                 modelResult.getEntityToMove(),
                 modelResult.getDestination(),

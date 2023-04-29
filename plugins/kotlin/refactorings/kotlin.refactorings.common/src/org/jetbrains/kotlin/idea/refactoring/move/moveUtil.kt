@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.util.getPackage
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -263,4 +264,29 @@ fun <T> List<KtNamedDeclaration>.mapWithReadActionInProcess(
     }
     ProgressManager.getInstance().run(task)
     return result
+}
+
+fun logFusForMoveRefactoring(
+    numberOfEntities: Int,
+    entity: KotlinMoveRefactoringFUSCollector.MovedEntity,
+    destination: KotlinMoveRefactoringFUSCollector.MoveRefactoringDestination,
+    isDefault: Boolean,
+    body: Runnable
+) {
+    val timeStarted = System.currentTimeMillis()
+    var succeeded = false
+    try {
+        body.run()
+        succeeded = true
+    } finally {
+        KotlinMoveRefactoringFUSCollector.log(
+            timeStarted = timeStarted,
+            timeFinished = System.currentTimeMillis(),
+            numberOfEntities = numberOfEntities,
+            destination = destination,
+            isDefault = isDefault,
+            entity = entity,
+            isSucceeded = succeeded,
+        )
+    }
 }
