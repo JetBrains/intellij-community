@@ -58,9 +58,9 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertContentRoots("project", getProjectPath());
 
     assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project", "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -97,9 +97,9 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     assertModules("project");
     assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project", "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -161,7 +161,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                     """);
 
     assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -182,7 +182,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                     """);
 
     assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -355,7 +355,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project", "src/main/java");
     assertTestSources("project", "src/test/java");
     assertResources("project");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -379,7 +379,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project", "src/main/java");
     assertTestSources("project", "src/test/java");
     assertResources("project");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -420,8 +420,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     assertSources("project", "src/main/java");
     assertTestSources("project", "src/test/java");
-    assertResources("project", "src/main/resources");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultResources("project");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -462,7 +462,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project");
 
     assertSources("project", "src/main/java", "src1", "src2");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -502,7 +502,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project");
 
     assertSources("project", "extraResources", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -544,7 +544,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project");
 
     assertTestSources("project", "extraTestResources", "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -584,7 +584,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project");
 
     assertSources("project", "relativePath", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -624,7 +624,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project");
 
     assertSources("project", "src/main/java", "target/src");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -692,7 +692,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     resolveFoldersAndImport();
     assertSources("m1", "src/foo", "src/main/java");
-    assertResources("m1", "src/main/resources");
+    assertDefaultResources("m1");
   }
 
   @Test
@@ -819,9 +819,9 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project");
 
     assertSources("project", "src/main/java", "src1", "src2");
-    assertResources("project", "resources1", "resources2", "src/main/resources");
+    assertDefaultResources("project", "resources1", "resources2");
     assertTestSources("project", "src/test/java", "test1", "test2");
-    assertTestResources("project", "src/test/resources", "test-resources1", "test-resources2");
+    assertDefaultTestResources("project", "test-resources1", "test-resources2");
   }
 
   @Test
@@ -892,13 +892,13 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   "src/main/java",
                   "target/generated-sources/src1",
                   "target/generated-sources/src2");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
 
     assertTestSources("project",
                       "src/test/java",
                       "target/generated-test-sources/test1",
                       "target/generated-test-sources/test2");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -1040,7 +1040,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -1061,7 +1061,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources/com");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -1083,7 +1083,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -1105,7 +1105,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
 
@@ -1129,7 +1129,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertTestSources("project",
                       "src/test/java",
                       "target/generated-test-sources");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -1149,7 +1149,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                     """);
 
     assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
 
@@ -1172,7 +1172,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   "target/generated-sources/A1/B1",
                   "target/generated-sources/A1/B2",
                   "target/generated-sources/A2");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -1191,7 +1191,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
 
@@ -1213,12 +1213,12 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "targetCustom/generated-sources/src");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
 
     assertTestSources("project",
                       "src/test/java",
                       "targetCustom/generated-test-sources/test");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -1272,12 +1272,12 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources/main/src");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
 
     assertTestSources("project",
                       "src/test/java",
                       "target/generated-test-sources/test/src");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -1295,9 +1295,9 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                     """);
 
     assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project", "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
 
     assertExcludes("project", "target");
   }
@@ -1656,12 +1656,12 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources/baz");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
 
     assertTestSources("project",
                       "src/test/java",
                       "target/generated-test-sources/bazz");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -1725,7 +1725,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertExcludes("project", "target");
 
     assertSources("project", "target/src/main");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
   }
 
   @Test
@@ -1745,7 +1745,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "target/generated-sources/baz");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -1809,7 +1809,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                       "src/main/java");
       }
 
-      assertResources("project", "src/main/resources");
+      assertDefaultResources("project");
       if (shouldKeepGeneratedFolders) {
         assertTestSources("project",
                           "src/test/java",
@@ -1821,7 +1821,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                           "src/test/java",
                           "test-anno");
       }
-      assertTestResources("project", "src/test/resources");
+      assertDefaultTestResources("project");
     };
 
     testAssertions.accept(true);
@@ -1923,13 +1923,13 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   "src/main/java",
                   "target/generated-sources/annotations",
                   "target/generated-sources/foo");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
 
     assertTestSources("project",
                       "src/test/java",
                       "target/generated-test-sources/foo",
                       "target/generated-test-sources/test-annotations");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test

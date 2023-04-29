@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +15,8 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RunWith(Parameterized.class)
@@ -92,6 +96,36 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   }
 
   protected boolean mavenVersionIsOrMoreThan(String version) {
-    return VersionComparatorUtil.compare(version, getActualVersion(myMavenVersion)) <= 0;
+    return StringUtil.compareVersionNumbers(version, getActualVersion(myMavenVersion)) <= 0;
+  }
+
+  private List<String> defaultResources() {
+    if (StringUtil.compareVersionNumbers(getActualVersion(myMavenVersion), "4.0") >= 0) {
+      return List.of("src/main/resources", "src/main/resources-filtered");
+    }
+    return List.of("src/main/resources");
+  }
+
+  private List<String> defaultTestResources() {
+    if (StringUtil.compareVersionNumbers(getActualVersion(myMavenVersion), "4.0") >= 0) {
+      return List.of("src/test/resources", "src/test/resources-filtered");
+    }
+    return List.of("src/test/resources");
+  }
+
+  protected void assertDefaultResources(String moduleName, String... additionalSources) {
+    var expectedList = new ArrayList<String>();
+    expectedList.addAll(defaultResources());
+    expectedList.addAll(Arrays.asList(additionalSources));
+    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    assertResources(moduleName, expectedSources);
+  }
+
+  protected void assertDefaultTestResources(String moduleName, String... additionalSources) {
+    var expectedList = new ArrayList<String>();
+    expectedList.addAll(defaultTestResources());
+    expectedList.addAll(Arrays.asList(additionalSources));
+    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    assertTestResources(moduleName, expectedSources);
   }
 }
