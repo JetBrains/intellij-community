@@ -8,6 +8,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
@@ -48,11 +49,12 @@ private val LOG: Logger
 
 @Service(Service.Level.PROJECT)
 class VcsProjectLog(private val project: Project, private val coroutineScope: CoroutineScope) {
-  private val uiProperties: VcsLogTabsProperties
-  val tabsManager: VcsLogTabsManager
-  private val errorHandler: VcsProjectLogErrorHandler
+  private val uiProperties = project.service<VcsLogProjectTabsProperties>()
+  internal val tabManager: VcsLogTabsManager
 
-  private val lazyVcsLogManager = LazyVcsLogManager()
+  private val lazyVcsLogManager = LazyVcsLogManager(project = project,
+                                                    uiProperties = uiProperties,
+                                                    errorHandler = VcsProjectLogErrorHandler(this))
 
   private val disposeStarted = AtomicBoolean(false)
 
@@ -72,9 +74,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   internal val busConnection: SimpleMessageBusConnection = project.messageBus.connect(coroutineScope)
 
   init {
-    uiProperties = project.getService(VcsLogProjectTabsProperties::class.java)
-    tabsManager = VcsLogTabsManager(project = project, uiProperties = uiProperties, busConnection = busConnection)
-    errorHandler = VcsProjectLogErrorHandler(this)
+    tabManager = VcsLogTabsManager(project = project, uiProperties = uiProperties, busConnection = busConnection)
 
     @Suppress("SSBasedInspection") val shutdownTask = Runnable {
       runBlocking {
@@ -139,7 +139,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   @RequiresEdt
   fun openLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi? {
     val logManager = logManager ?: return null
-    return tabsManager.openAnotherLogTab(manager = logManager, filters = filters, location = location)
+    return tabManager.openAnotherLogTab(manager = logManager, filters = filters, location = location)
   }
 
   @CalledInAny
@@ -214,40 +214,6 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
       val logManager = lazyVcsLogManager.getValue(logProviders)
       initialize(logManager = logManager, force = forceInit)
       return logManager
-    }
-  }
-
-  private inner class LazyVcsLogManager {
-    @Volatile
-    var cached: VcsLogManager? = null
-      private set
-
-    suspend fun getValue(logProviders: Map<VirtualFile, VcsLogProvider>): VcsLogManager {
-      var result = cached
-      if (result == null) {
-        LOG.debug("Creating Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}")
-        result = VcsLogManager(project, uiProperties, logProviders, false) { s, t ->
-          errorHandler.recreateOnError(s, t)
-        }
-        cached = result
-        withContext(Dispatchers.EDT + modality()) {
-          project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(result)
-        }
-      }
-      return result
-    }
-
-    @RequiresEdt
-    fun dropValue(): VcsLogManager? {
-      ApplicationManager.getApplication().assertIsDispatchThread()
-      val oldValue = cached
-      if (oldValue != null) {
-        cached = null
-        LOG.debug("Disposing Vcs Log for ${VcsLogUtil.getProvidersMapText(oldValue.dataManager.logProviders)}")
-        project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
-        return oldValue
-      }
-      return null
     }
   }
 
@@ -398,5 +364,40 @@ private suspend fun initialize(logManager: VcsLogManager, force: Boolean) {
     if (logManager.isLogVisible) {
       logManager.scheduleInitialization()
     }
+  }
+}
+
+private class LazyVcsLogManager(private val project: Project,
+                                private val uiProperties: VcsLogProjectTabsProperties,
+                                private val errorHandler: VcsProjectLogErrorHandler) {
+  @Volatile
+  var cached: VcsLogManager? = null
+    private set
+
+  suspend fun getValue(logProviders: Map<VirtualFile, VcsLogProvider>): VcsLogManager {
+    cached?.let {
+      return it
+    }
+
+    LOG.debug { "Creating Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}" }
+    val result = VcsLogManager(project, uiProperties, logProviders, false) { s, t ->
+      errorHandler.recreateOnError(s, t)
+    }
+    cached = result
+    val publisher = project.messageBus.syncPublisher(VcsProjectLog.VCS_PROJECT_LOG_CHANGED)
+    withContext(Dispatchers.EDT + modality()) {
+      publisher.logCreated(result)
+    }
+    return result
+  }
+
+  @RequiresEdt
+  fun dropValue(): VcsLogManager? {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val oldValue = cached ?: return null
+    cached = null
+    LOG.debug { "Disposing Vcs Log for ${VcsLogUtil.getProvidersMapText(oldValue.dataManager.logProviders)}" }
+    project.messageBus.syncPublisher(VcsProjectLog.VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
+    return oldValue
   }
 }

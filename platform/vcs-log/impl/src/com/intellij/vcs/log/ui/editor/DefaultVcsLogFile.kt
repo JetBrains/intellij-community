@@ -40,7 +40,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
     VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
       val projectLog = VcsProjectLog.getInstance(project)
-      val tabsManager = projectLog.tabsManager
+      val tabsManager = projectLog.tabManager
 
       try {
         val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogTabLocation.EDITOR, filters)
