@@ -16,10 +16,7 @@
 package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class MavenModelBase implements Serializable {
   private Properties myProperties;
@@ -36,8 +33,16 @@ public class MavenModelBase implements Serializable {
     return myProperties;
   }
 
-  public void setProperties(Properties properties) {
-    myProperties = properties;
+  public void setProperties(Properties newProperties) {
+    Properties properties = getProperties();
+    properties.clear();
+    if (null == newProperties) return;
+    Enumeration<?> newPropertyNames = newProperties.propertyNames();
+    while (newPropertyNames.hasMoreElements()) {
+      String key = newPropertyNames.nextElement().toString();
+      String value = newProperties.getProperty(key);
+      properties.put(key, value);
+    }
   }
 
   public List<MavenPlugin> getPlugins() {
