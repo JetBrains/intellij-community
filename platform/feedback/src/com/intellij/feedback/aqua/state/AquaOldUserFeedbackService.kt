@@ -2,21 +2,22 @@
 package com.intellij.feedback.aqua.state
 
 import com.intellij.openapi.components.*
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
 @State(name = "AquaOldUserFeedbackInfoState", storages = [Storage("AquaOldUserFeedbackService.xml")])
-class AquaOldUserFeedbackService : PersistentStateComponent<AquaNewUserInfoState> {
+class AquaOldUserFeedbackService : PersistentStateComponent<AquaOldUserInfoState> {
   companion object {
     @JvmStatic
     fun getInstance(): AquaOldUserFeedbackService = service()
   }
 
-  private var state = AquaNewUserInfoState()
+  private var state = AquaOldUserInfoState()
 
-  override fun getState(): AquaNewUserInfoState = state
+  override fun getState(): AquaOldUserInfoState = state
 
-  override fun loadState(state: AquaNewUserInfoState) {
+  override fun loadState(state: AquaOldUserInfoState) {
     this.state = state
   }
 }
@@ -25,4 +26,6 @@ class AquaOldUserFeedbackService : PersistentStateComponent<AquaNewUserInfoState
 data class AquaOldUserInfoState(
   var numberNotificationShowed: Int = 0,
   var feedbackSent: Boolean = false,
+  var userTypedInEditor: Boolean = false,
+  var firstUsageTime: LocalDateTime? = null
 )
