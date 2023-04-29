@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
@@ -29,4 +30,6 @@ interface KotlinMoveRefactoringSupport {
         stopAtFirst: Boolean,
         body: (OuterInstanceReferenceUsageInfo) -> Unit = {}
     ): Boolean
+
+    fun addDelayedImportRequest(elementToImport: PsiElement, file: KtFile)
 }

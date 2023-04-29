@@ -63,6 +63,7 @@ internal class K1MoveRefactoringSupport : KotlinMoveRefactoringSupport {
                         }
                         OuterInstanceReferenceUsageInfo.ExplicitThis(element, isIndirect)
                     }
+
                     is KtSimpleNameExpression -> {
                         val resolvedCall = element.getResolvedCall(context) ?: return null
                         val dispatchReceiver = resolvedCall.dispatchReceiver as? ImplicitReceiver
@@ -86,6 +87,7 @@ internal class K1MoveRefactoringSupport : KotlinMoveRefactoringSupport {
                         }
                         OuterInstanceReferenceUsageInfo.ImplicitReceiver(resolvedCall.call.callElement, isIndirect, isDoubleReceiver)
                     }
+
                     else -> null
                 }
             }
@@ -101,5 +103,9 @@ internal class K1MoveRefactoringSupport : KotlinMoveRefactoringSupport {
             }
         })
         return found
+    }
+
+    override fun addDelayedImportRequest(elementToImport: PsiElement, file: KtFile) {
+        org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest(elementToImport, file)
     }
 }
