@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40;
 
+import com.intellij.maven.server.m40.utils.Maven40ProfileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
@@ -42,9 +43,12 @@ public class Maven40ServerImpl extends MavenServerBase {
   @Override
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return model;
+    try {
+      return Maven40ProfileUtil.interpolateAndAlignModel(model, basedir);
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
   }
 
   @Override
