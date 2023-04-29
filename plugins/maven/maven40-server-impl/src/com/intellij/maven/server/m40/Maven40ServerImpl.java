@@ -52,7 +52,7 @@ public class Maven40ServerImpl extends MavenServerBase {
     MavenServerUtil.checkToken(token);
 
     // TODO: implement
-    return null;
+    return model;
   }
 
   @Override
