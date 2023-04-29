@@ -1739,6 +1739,7 @@ public final class PluginManagerConfigurable
                         @NotNull String showAllQuery,
                         @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
                         @NotNull Predicate<? super PluginsGroup> showAllPredicate) {
+    LOG.info("Marketplace tab: '" + name + "' group load started");
     PluginsGroup group = new PluginsGroup(name, type);
 
     int i = 0;
@@ -1757,6 +1758,7 @@ public final class PluginManagerConfigurable
     if (!group.descriptors.isEmpty()) {
       groups.add(group);
     }
+    LOG.info("Marketplace tab: '" + name + "' group load finished");
   }
 
   private void addGroupViaLightDescriptor(@NotNull List<? super PluginsGroup> groups,
