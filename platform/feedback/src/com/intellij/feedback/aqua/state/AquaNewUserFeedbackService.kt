@@ -6,17 +6,17 @@ import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
 @State(name = "AquaNewUserFeedbackInfoState", storages = [Storage("AquaNewUserFeedbackService.xml")])
-class AquaNewUserFeedbackService : PersistentStateComponent<AquaOldUserInfoState> {
+class AquaNewUserFeedbackService : PersistentStateComponent<AquaNewUserInfoState> {
   companion object {
     @JvmStatic
     fun getInstance(): AquaNewUserFeedbackService = service()
   }
 
-  private var state = AquaOldUserInfoState()
+  private var state = AquaNewUserInfoState()
 
-  override fun getState(): AquaOldUserInfoState = state
+  override fun getState(): AquaNewUserInfoState = state
 
-  override fun loadState(state: AquaOldUserInfoState) {
+  override fun loadState(state: AquaNewUserInfoState) {
     this.state = state
   }
 }
@@ -25,4 +25,5 @@ class AquaNewUserFeedbackService : PersistentStateComponent<AquaOldUserInfoState
 data class AquaNewUserInfoState(
   var numberNotificationShowed: Int = 0,
   var feedbackSent: Boolean = false,
+  var userTypedInEditor: Boolean = false,
 )
