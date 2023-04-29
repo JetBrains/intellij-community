@@ -1738,7 +1738,7 @@ public final class PluginManagerConfigurable
                         @NotNull PluginsGroupType type,
                         @NotNull String showAllQuery,
                         @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
-                        @NotNull Predicate<? super PluginsGroup> predicate) {
+                        @NotNull Predicate<? super PluginsGroup> showAllPredicate) {
     PluginsGroup group = new PluginsGroup(name, type);
 
     int i = 0;
@@ -1746,7 +1746,7 @@ public final class PluginManagerConfigurable
       group.descriptors.add(iterator.next());
     }
 
-    if (predicate.test(group)) {
+    if (showAllPredicate.test(group)) {
       group.rightAction = new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"),
                                           null,
                                           myMarketplaceTab.mySearchListener,
