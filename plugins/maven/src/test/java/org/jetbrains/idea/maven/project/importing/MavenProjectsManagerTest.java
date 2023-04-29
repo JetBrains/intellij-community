@@ -41,7 +41,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -1051,10 +1050,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                     """);
 
     assertSources("project", "src/main/java", "src1", "src2");
-    assertResources("project", "res1", "res2", "src/main/resources");
+    assertDefaultResources("project", "res1", "res2");
 
     assertTestSources("project", "src/test/java", "test1", "test2");
-    assertTestResources("project", "src/test/resources", "testres1", "testres2");
+    assertDefaultTestResources("project", "testres1", "testres2");
   }
 
   @Test
