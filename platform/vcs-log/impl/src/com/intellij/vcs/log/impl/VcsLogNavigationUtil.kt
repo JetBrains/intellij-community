@@ -83,14 +83,13 @@ object VcsLogNavigationUtil {
    * - Otherwise try main log tab.
    * - Otherwise create a new tab without filters and show commit there.
    */
-  private suspend fun showCommitInLogTab(project: Project, hash: Hash, root: VirtualFile,
-                                         requestFocus: Boolean, predicate: (MainVcsLogUi) -> Boolean): MainVcsLogUi? {
-    val logInitFuture = VcsProjectLog.waitWhenLogIsReady(project)
-    if (!logInitFuture.isDone) {
-      withContext(Dispatchers.IO) {
-        logInitFuture.get()
-      }
-    }
+  private suspend fun showCommitInLogTab(project: Project,
+                                         hash: Hash,
+                                         root: VirtualFile,
+                                         requestFocus: Boolean,
+                                         predicate: (MainVcsLogUi) -> Boolean): MainVcsLogUi? {
+    VcsProjectLog.waitWhenLogIsReady(project)
+
     val manager = VcsProjectLog.getInstance(project).logManager ?: return null
     val isLogUpToDate = manager.isLogUpToDate
     if (!manager.containsCommit(hash, root)) {
@@ -101,7 +100,7 @@ object VcsLogNavigationUtil {
 
     val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return null
     if (!window.isVisible) {
-      suspendCancellableCoroutine<Unit> { continuation ->
+      suspendCancellableCoroutine { continuation ->
         window.activate { continuation.resumeWith(Result.success(Unit)) }
       }
     }
@@ -141,12 +140,10 @@ object VcsLogNavigationUtil {
     return null
   }
 
-  private suspend fun MainVcsLogUi.showCommit(hash: Hash, root: VirtualFile,
-                                              requestFocus: Boolean): Boolean {
-    val jumpResult = jumpToCommitInternal(hash, root, true, requestFocus).await()
-    return when (jumpResult) {
+  private suspend fun MainVcsLogUi.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
+    return when (jumpToCommitInternal(hash, root, true, requestFocus).await()) {
       JumpResult.SUCCESS -> true
-      null, JumpResult.COMMIT_NOT_FOUND -> {
+      JumpResult.COMMIT_NOT_FOUND -> {
         LOG.warn("Commit $hash for $root not found in $this")
         false
       }

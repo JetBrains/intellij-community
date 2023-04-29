@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -13,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.TabGroupId
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogUi
@@ -31,14 +31,14 @@ import java.util.*
 
 class VcsLogTabsManager internal constructor(private val project: Project,
                                              private val uiProperties: VcsLogProjectTabsProperties,
-                                             parent: Disposable) {
+                                             busConnection: SimpleMessageBusConnection) {
   private var isLogDisposing = false
 
   // for statistics
   val tabs: Collection<String> get() = uiProperties.tabs.keys
 
   init {
-    project.messageBus.connect(parent).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, object : ProjectLogListener {
+    busConnection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, object : ProjectLogListener {
       override fun logCreated(manager: VcsLogManager) {
         isLogDisposing = false
         val savedTabs = uiProperties.tabs

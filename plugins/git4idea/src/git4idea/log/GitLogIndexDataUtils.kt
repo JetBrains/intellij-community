@@ -16,12 +16,10 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.PersistentUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
 
-@ApiStatus.Internal
-object GitLogIndexDataUtils {
+internal object GitLogIndexDataUtils {
   private val LOG = logger<GitIndexUtil>()
 
   internal fun extractLogDataFromArchive(project: Project, virtualFile: VirtualFile) {
@@ -63,8 +61,7 @@ object GitLogIndexDataUtils {
     }.queue()
   }
 
-  internal fun createArchiveWithLogData(project: Project,
-                                        outputArchiveDir: Path) {
+  internal fun createArchiveWithLogData(project: Project, outputArchiveDir: Path) {
     VcsProjectLog.getInstance(project).runOnDisposedLog {
       val runnable = Runnable {
         val logId = PersistentUtil.calcLogId(project, VcsProjectLog.getLogProviders(project))
