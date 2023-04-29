@@ -108,11 +108,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -142,11 +142,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -176,11 +176,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -248,11 +248,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
 
     GreclipseIdeaCompilerSettings compilerSettings = myProject.getService(GreclipseIdeaCompilerSettings.class);
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar).getPath(), compilerSettings.getState().greclipsePath);
@@ -315,11 +315,11 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertSources("project",
                   "src/main/groovy",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test/groovy",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
 
     GreclipseIdeaCompilerSettings compilerSettings = myProject.getService(GreclipseIdeaCompilerSettings.class);
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar).getPath(), compilerSettings.getState().greclipsePath);
@@ -391,12 +391,12 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                   "src/foo1",
                   "src/foo2",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test-foo1",
                       "src/test-foo2",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -465,12 +465,12 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                   "src/foo1",
                   "src/foo2",
                   "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project",
                       "src/test-foo1",
                       "src/test-foo2",
                       "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test
@@ -583,8 +583,8 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
       assertTestSources("project",
                         "src/test/java");
     }
-    assertResources("project", "src/main/resources");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultResources("project");
+    assertDefaultTestResources("project");
 
     assertExcludes("project", "target");
   }
@@ -648,8 +648,8 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
       assertTestSources("project",
                         "src/test/java");
     }
-    assertResources("project", "src/main/resources");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultResources("project");
+    assertDefaultTestResources("project");
 
     assertExcludes("project", "target");
   }
@@ -836,17 +836,17 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                     "src/main/groovy",
                     "src/main/java",
                     "target/generated-sources/xxx");
-      assertResources("project", "src/main/resources");
+      assertDefaultResources("project");
       assertTestSources("project", "src/test/groovy", "src/test/java");
-      assertTestResources("project", "src/test/resources");
+      assertDefaultTestResources("project");
     }
     else {
       assertSources("project",
                     "src/main/java",
                     "target/generated-sources/xxx");
-      assertResources("project", "src/main/resources");
+      assertDefaultResources("project");
       assertTestSources("project", "src/test/java");
-      assertTestResources("project", "src/test/resources");
+      assertDefaultTestResources("project");
     }
 
     assertExcludes("project", "target");
