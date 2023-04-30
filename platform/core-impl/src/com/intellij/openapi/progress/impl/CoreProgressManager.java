@@ -387,6 +387,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   // from any: bg
   private void runAsynchronously(@NotNull Task.Backgroundable task) {
+    if (LOG.isDebugEnabled()) LOG.debug("CoreProgressManager#runAsynchronously, " + task, new Throwable());
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runProcessWithProgressAsynchronously(task);
     }
@@ -426,6 +427,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Deprecated
   protected void startTask(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
     try {
+      if (LOG.isDebugEnabled()) LOG.debug("Starting task '" + task + "' under progress: " + indicator, new Throwable());
       task.run(indicator);
     }
     finally {
@@ -507,6 +509,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // ASSERT IS EDT->UI bg or calling if can't
   // NEW: no assert; bg or calling ...
   protected boolean runProcessWithProgressSynchronously(@NotNull Task task) {
+    if (LOG.isDebugEnabled()) LOG.debug("CoreProgressManager#runProcessWithProgressSynchronously, " + task, new Throwable());
     Ref<Throwable> exceptionRef = new Ref<>();
     Runnable taskContainer = () -> {
       try {
@@ -547,6 +550,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public void runProcessWithProgressInCurrentThread(@NotNull Task task,
                                                     @NotNull ProgressIndicator progressIndicator,
                                                     @NotNull ModalityState modalityState) {
+    if (LOG.isDebugEnabled()) LOG.debug("CoreProgressManager#runProcessWithProgressInCurrentThread, " + task, new Throwable());
     if (progressIndicator instanceof Disposable) {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
