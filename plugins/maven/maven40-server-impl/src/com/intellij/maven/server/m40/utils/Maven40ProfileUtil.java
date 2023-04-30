@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
-import org.apache.maven.model.Model;
-import org.apache.maven.model.Profile;
+import org.apache.maven.model.*;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblemCollector;
@@ -10,6 +9,7 @@ import org.apache.maven.model.building.ModelProblemCollectorRequest;
 import org.apache.maven.model.interpolation.StringVisitorModelInterpolator;
 import org.apache.maven.model.path.DefaultPathTranslator;
 import org.apache.maven.model.path.DefaultUrlNormalizer;
+import org.apache.maven.model.path.PathTranslator;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenModel;
@@ -56,7 +56,8 @@ public final class Maven40ProfileUtil {
     DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
     StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer);
     result = doInterpolate(interpolator, result, basedir);
-    //pathTranslator.alignToBaseDirectory(result, basedir);
+    MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
+    myPathTranslator.alignToBaseDirectory(result, basedir);
     return Maven40ModelConverter.convertModel(result, null);
   }
 
@@ -88,6 +89,63 @@ public final class Maven40ProfileUtil {
       MavenServerGlobals.getLogger().error(e);
     }
     return result;
+  }
+
+  private static class MyDefaultPathTranslator {
+    private final PathTranslator myPathTranslator;
+
+    private MyDefaultPathTranslator(PathTranslator pathTranslator) {
+      myPathTranslator = pathTranslator;
+    }
+
+    private String alignToBaseDirectory(String path, File basedir) {
+      return myPathTranslator.alignToBaseDirectory(path, basedir);
+    }
+
+    /**
+     * adapted from {@link org.apache.maven.project.path.DefaultPathTranslator#alignToBaseDirectory(Model, File)}
+     */
+    private void alignToBaseDirectory(Model model, File basedir) {
+      if (basedir == null) {
+        return;
+      }
+
+      Build build = model.getBuild();
+
+      if (build != null) {
+        build.setDirectory(alignToBaseDirectory(build.getDirectory(), basedir));
+
+        build.setSourceDirectory(alignToBaseDirectory(build.getSourceDirectory(), basedir));
+
+        build.setTestSourceDirectory(alignToBaseDirectory(build.getTestSourceDirectory(), basedir));
+
+        for (Resource resource : build.getResources()) {
+          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
+        }
+
+        for (Resource resource : build.getTestResources()) {
+          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
+        }
+
+        if (build.getFilters() != null) {
+          List<String> filters = new ArrayList<>();
+          for (String filter : build.getFilters()) {
+            filters.add(alignToBaseDirectory(filter, basedir));
+          }
+          build.setFilters(filters);
+        }
+
+        build.setOutputDirectory(alignToBaseDirectory(build.getOutputDirectory(), basedir));
+
+        build.setTestOutputDirectory(alignToBaseDirectory(build.getTestOutputDirectory(), basedir));
+      }
+
+      Reporting reporting = model.getReporting();
+
+      if (reporting != null) {
+        reporting.setOutputDirectory(alignToBaseDirectory(reporting.getOutputDirectory(), basedir));
+      }
+    }
   }
 }
 
