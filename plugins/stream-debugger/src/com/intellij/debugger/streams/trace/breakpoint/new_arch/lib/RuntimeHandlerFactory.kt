@@ -8,6 +8,10 @@ import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
  * @author Shumaf Lovpache
  */
 interface RuntimeHandlerFactory {
+  /**
+   * Source call handler doesn't accept any information about the source call, because in general
+   * we can't determine source call (for ex. we can get stream as return value from user code)
+   */
   fun getForSource(): RuntimeSourceCallHandler
   fun getForIntermediate(call: IntermediateStreamCall): RuntimeIntermediateCallHandler
   fun getForTermination(call: TerminatorStreamCall): RuntimeTerminalCallHandler

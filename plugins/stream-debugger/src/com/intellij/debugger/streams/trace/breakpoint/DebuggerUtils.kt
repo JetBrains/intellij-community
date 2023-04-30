@@ -14,7 +14,7 @@ private val LOG = logger<DebuggerUtils>()
 object DebuggerUtils {
   // Used to load StreamDebuggerUtils from support lib into debuggee VM
   const val STREAM_DEBUGGER_UTILS_CLASS_NAME = "com.intellij.debugger.stream.rt.StreamDebuggerUtils"
-  const val STREAM_DEBUGGER_UTILS_CLASS_FILE = "/classes/compiled/StreamDebuggerUtils.class"
+  const val STREAM_DEBUGGER_UTILS_CLASS_FILE = "com/intellij/debugger/stream/rt/StreamDebuggerUtils.class"
 
   fun findVmMethod(evaluationContext: EvaluationContextImpl, signature: MethodSignature): Method? {
     val fqClassName = signature.containingClass

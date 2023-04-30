@@ -2,7 +2,7 @@
 package com.intellij.debugger.streams.trace.breakpoint.new_arch
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.sun.jdi.ObjectReference
+import com.sun.jdi.Value
 
 /**
  * @author Shumaf Lovpache
@@ -12,9 +12,10 @@ interface BeforeCallTransformer {
   /**
    * Fires before method representing previous chain operator returns
    * (so, it fires before next operation call)
-   * [evaluationContextImpl] evaluation context for current breakpoint hit
-   * [chainInstance] stream chain instance as operator result
+   *
+   * @param[evaluationContextImpl] evaluation context for current breakpoint hit
+   * @param[value] stream chain instance as operator result
    * @return transformed chain
    */
-  fun beforeCall(evaluationContextImpl: EvaluationContextImpl, chainInstance: ObjectReference): ObjectReference
+  fun beforeCall(evaluationContextImpl: EvaluationContextImpl, value: Value?): Value?
 }

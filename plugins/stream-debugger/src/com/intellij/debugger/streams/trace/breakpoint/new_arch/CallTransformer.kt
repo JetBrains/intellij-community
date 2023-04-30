@@ -12,8 +12,9 @@ interface CallTransformer {
   /**
    * Fires immediately after method representing chain operator was called
    * This hook can be used for ex. to change predicate in filter operator
-   * [evaluationContextImpl] evaluation context for current breakpoint hit
-   * [arguments] list of arguments passed to operator
+   *
+   * @param[evaluationContextImpl] evaluation context for current breakpoint hit
+   * @param[arguments] list of arguments passed to operator
    * @return transformed arguments list
    */
   fun transformArguments(evaluationContextImpl: EvaluationContextImpl, arguments: List<Value?>): List<Value?>

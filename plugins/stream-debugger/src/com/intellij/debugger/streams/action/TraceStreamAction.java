@@ -11,6 +11,7 @@ import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.breakpoint.*;
+import com.intellij.debugger.streams.trace.breakpoint.new_arch.lib.BreakpointTracingSupport;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.ui.ChooserOption;
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
@@ -157,8 +158,8 @@ public final class TraceStreamAction extends AnAction {
       tracingEngine = EVALUATE_EXPRESSION_TRACER;
     }
 
-    switch (tracingEngine) {
-      case METHOD_BREAKPOINTS_TRACER:
+    return switch (tracingEngine) {
+      case METHOD_BREAKPOINTS_TRACER -> {
         final PsiManager psiManager = PsiManager.getInstance(project);
         final XSourcePosition currentPosition = session.getCurrentPosition();
         if (currentPosition == null) {
@@ -168,14 +169,23 @@ public final class TraceStreamAction extends AnAction {
         if (currentFile == null) {
           throw new DebuggerLocationNotFoundException("Cannot find current file PSI representation");
         }
-        final BreakpointResolver breakpointResolver = new JavaBreakpointResolver(currentFile);
-        return new MethodBreakpointTracer(session, breakpointResolver, resultInterpreter);
-      case EVALUATE_EXPRESSION_TRACER:
+        final BreakpointTracingSupport breakpointTracingSupport = provider.getBreakpointTracingSupport();
+        if (breakpointTracingSupport == null) {
+          LOG.warn(String.format("Breakpoint based tracing not supported for language %s. Falling back to evaluate expression tracer", provider.getLanguageId()));
+          final TraceExpressionBuilder expressionBuilder = provider.getExpressionBuilder(project);
+          yield new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
+        }
+        final BreakpointResolver breakpointResolver = breakpointTracingSupport
+          .getBreakpointResolverFactory()
+          .getBreakpointResolver(currentFile);
+        yield new MethodBreakpointTracer(session, breakpointTracingSupport, breakpointResolver, resultInterpreter);
+      }
+      case EVALUATE_EXPRESSION_TRACER -> {
         final TraceExpressionBuilder expressionBuilder = provider.getExpressionBuilder(project);
-        return new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
-      default:
-        throw new LibraryNotSupportedException("Unknown tracing method: " + tracingEngine);
-    }
+        yield new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
+      }
+      default -> throw new LibraryNotSupportedException("Unknown tracing method: " + tracingEngine);
+    };
   }
 
   private static final class MyStreamChainChooser extends ElementChooserImpl<StreamChainOption> {

@@ -18,24 +18,18 @@ import com.intellij.debugger.streams.trace.breakpoint.DebuggerUtils.STREAM_DEBUG
 import com.intellij.debugger.streams.trace.breakpoint.TracerUtils.tryExtractExceptionMessage
 import com.intellij.debugger.streams.trace.breakpoint.ex.BreakpointPlaceNotFoundException
 import com.intellij.debugger.streams.trace.breakpoint.ex.BreakpointTracingException
-import com.intellij.debugger.streams.trace.breakpoint.interceptor.*
 import com.intellij.debugger.streams.trace.breakpoint.new_arch.JDIMethodBreakpointFactory
 import com.intellij.debugger.streams.trace.breakpoint.new_arch.StreamTracingManager
 import com.intellij.debugger.streams.trace.breakpoint.new_arch.StreamTracingManagerImpl
-import com.intellij.debugger.streams.trace.breakpoint.new_arch.lib.RuntimeIntermediateCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.new_arch.lib.BreakpointTracingSupport
 import com.intellij.debugger.streams.trace.breakpoint.new_arch.lib.RuntimeHandlerFactory
-import com.intellij.debugger.streams.trace.breakpoint.new_arch.lib.RuntimeSourceCallHandler
-import com.intellij.debugger.streams.trace.breakpoint.new_arch.lib.RuntimeTerminalCallHandler
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.StreamChain
-import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.CommonClassNames
 import com.intellij.xdebugger.XDebugSession
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
-import com.sun.jdi.Value
 
 private val LOG = logger<MethodBreakpointTracer>()
 
@@ -43,6 +37,7 @@ private val LOG = logger<MethodBreakpointTracer>()
  * @author Shumaf Lovpache
  */
 class MethodBreakpointTracer(private val session: XDebugSession,
+                             private val breakpointTracingSupport: BreakpointTracingSupport,
                              private val breakpointResolver: BreakpointResolver,
                              private val resultInterpreter: TraceResultInterpreter) : StreamTracer {
   override fun trace(chain: StreamChain, callback: TracingCallback) {
@@ -65,49 +60,7 @@ class MethodBreakpointTracer(private val session: XDebugSession,
         val evalContextFactory: EvaluationContextFactory = DefaultEvaluationContextFactory(evalContext.classLoader!!)
         val objectStorage: ObjectStorage = DisableCollectionObjectStorage()
         val valueManager: ValueManager = createValueManager(objectStorage)
-
-        // TODO: temp stub
-        val handlerFactory: RuntimeHandlerFactory = object: RuntimeHandlerFactory {
-          override fun getForSource(): RuntimeSourceCallHandler = object: RuntimeSourceCallHandler {
-            override fun afterCall(evaluationContextImpl: EvaluationContextImpl, chainInstance: ObjectReference): ObjectReference {
-              return chainInstance
-            }
-          }
-
-          override fun getForIntermediate(call: IntermediateStreamCall) = object: RuntimeIntermediateCallHandler {
-            override val result: Value?
-              get() = null
-
-            override fun beforeCall(evaluationContextImpl: EvaluationContextImpl, chainInstance: ObjectReference): ObjectReference {
-              return chainInstance
-            }
-
-            override fun transformArguments(evaluationContextImpl: EvaluationContextImpl, arguments: List<Value?>): List<Value?> {
-              return arguments
-            }
-
-            override fun afterCall(evaluationContextImpl: EvaluationContextImpl, chainInstance: ObjectReference): ObjectReference {
-              return chainInstance
-            }
-          }
-
-          override fun getForTermination(call: TerminatorStreamCall) = object: RuntimeTerminalCallHandler {
-            override val result: Value?
-              get() = null
-
-            override fun beforeCall(evaluationContextImpl: EvaluationContextImpl, chainInstance: ObjectReference): ObjectReference {
-              return chainInstance
-            }
-
-            override fun transformArguments(evaluationContextImpl: EvaluationContextImpl, arguments: List<Value?>): List<Value?> {
-              return arguments
-            }
-
-            override fun afterCall(evaluationContextImpl: EvaluationContextImpl, chainInstance: ObjectReference): ObjectReference {
-              return chainInstance
-            }
-          }
-        }
+        val handlerFactory: RuntimeHandlerFactory = breakpointTracingSupport.createRuntimeHandlerFactory(valueManager)
 
         val breakpointFactory: com.intellij.debugger.streams.trace.breakpoint.new_arch.MethodBreakpointFactory = JDIMethodBreakpointFactory()
         val tracingManager: StreamTracingManager = StreamTracingManagerImpl(breakpointFactory, breakpointResolver, evalContextFactory,

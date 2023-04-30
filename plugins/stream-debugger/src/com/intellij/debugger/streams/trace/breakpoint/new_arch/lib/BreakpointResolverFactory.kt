@@ -7,6 +7,6 @@ import com.intellij.psi.PsiFile
 /**
  * @author Shumaf Lovpache
  */
-interface BreakpointResolverFactory {
+fun interface BreakpointResolverFactory {
   fun getBreakpointResolver(psiFile: PsiFile): BreakpointResolver
 }

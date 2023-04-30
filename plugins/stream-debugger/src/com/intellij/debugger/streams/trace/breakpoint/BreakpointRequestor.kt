@@ -31,7 +31,7 @@ abstract class MethodBreakpointRequestor(project: Project, private val method: M
 
     val currentExecutingMethod = event.location().method()
 
-    // isSuspended == true because isSuspended has nullable type Boolean?
+    // isSuspended == true instead of isSuspended because isSuspended has nullable type Boolean?
     if (context.thread?.isSuspended == true && currentExecutingMethod.equalBySignature(method)) {
       try {
         invokeCallback(this, context, event)

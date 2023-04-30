@@ -16,15 +16,11 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.CommonClassNames.JAVA_LANG_THROWABLE
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
+import com.sun.jdi.ArrayReference
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
-import com.sun.jdi.VoidValue
-import com.sun.jdi.request.EventRequest
-import com.sun.jdi.request.ExceptionRequest
-import com.sun.jdi.request.MethodEntryRequest
-import com.sun.jdi.request.MethodExitRequest
-import com.sun.jdi.request.StepRequest
+import com.sun.jdi.request.*
 
 class StreamTracingManagerImpl(private val breakpointFactory: MethodBreakpointFactory,
                                private val breakpointResolver: BreakpointResolver,
@@ -144,11 +140,9 @@ class StreamTracingManagerImpl(private val breakpointFactory: MethodBreakpointFa
     // create exit request first to be able to activate it in entry request
     val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { suspendContext, _, value ->
       enableNextBreakpoint(callOrder)
-      transformIfObjectReference(value) {
-        val context = evalContextFactory.createContext(checkSuspendContext(suspendContext))
-        val nextTransformer = getNextCallTransformer(callOrder)
-        nextTransformer.beforeCall(context, handler.afterCall(context, it))
-      }
+      val context = evalContextFactory.createContext(checkSuspendContext(suspendContext))
+      val nextTransformer = getNextCallTransformer(callOrder)
+      nextTransformer.beforeCall(context, handler.afterCall(context, value))
     }
     val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { suspendContext, _, args ->
       exitRequest.enable()
@@ -166,9 +160,7 @@ class StreamTracingManagerImpl(private val breakpointFactory: MethodBreakpointFa
       val context = evalContextFactory.createContext(checkSuspendContext(suspendContext))
       val stepOutRequest = createStepOutRequest(context.suspendContext)
       stepOutRequest.enable()
-      transformIfObjectReference(value) {
-        handler.afterCall(context, it)
-      }
+      handler.afterCall(context, value)
     }
     val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { suspendContext, _, args ->
       exitRequest.enable()
@@ -178,7 +170,7 @@ class StreamTracingManagerImpl(private val breakpointFactory: MethodBreakpointFa
     return StreamCallRuntimeInfo(handler, entryRequest, exitRequest)
   }
 
-  private fun transformIfObjectReference(value: Value?, transformer: (ObjectReference) -> ObjectReference): Value? {
+  private fun transformIfObjectReference(value: Value?, transformer: (ObjectReference) -> Value?): Value? {
     return if (value != null && value is ObjectReference) {
       transformer(value)
     }
@@ -213,18 +205,23 @@ class StreamTracingManagerImpl(private val breakpointFactory: MethodBreakpointFa
   // TODO: move to separate class
   private fun getFormattedResult(evaluationContext: EvaluationContextImpl): Value {
     return valueManager.watch(evaluationContext) {
-      val infoArray = array(intermediateOperationsBreakpoints.map { it.handler.result })
+      val infos = intermediateOperationsBreakpoints.map { it.handler.result(evaluationContext) }.toMutableList()
       val streamResult = if (exceptionInstance != null) {
         array(JAVA_LANG_THROWABLE, 1).apply {
           setValue(0, exceptionInstance)
         }
-      } else {
-        val streamResult = terminalOperationBreakpoint?.handler?.result
-        if (streamResult is VoidValue) {
-          array(CommonClassNames.JAVA_LANG_OBJECT, 1)
-        } else {
-          array(streamResult)
-        }
+      }
+      else {
+        val streamResult = terminalOperationBreakpoint?.handler?.result(evaluationContext)
+        val resultArray = streamResult as ArrayReference
+        infos.add(resultArray.getValue(0))
+        resultArray.getValue(1)
+      }
+      val infoArray = if (infos.isNotEmpty()) {
+        array(infos)
+      }
+      else {
+        array(CommonClassNames.JAVA_LANG_OBJECT, 0)
       }
       array(
         infoArray,

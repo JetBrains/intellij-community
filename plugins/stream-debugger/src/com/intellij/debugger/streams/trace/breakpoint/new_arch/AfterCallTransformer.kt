@@ -2,7 +2,7 @@
 package com.intellij.debugger.streams.trace.breakpoint.new_arch
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.sun.jdi.ObjectReference
+import com.sun.jdi.Value
 
 /**
  * @author Shumaf Lovpache
@@ -11,9 +11,10 @@ import com.sun.jdi.ObjectReference
 interface AfterCallTransformer {
   /**
    * Fires before method representing chain operator returns
-   * [evaluationContextImpl] evaluation context for current breakpoint hit
-   * [chainInstance] stream chain instance as operator result
-   * @return transformed chain
+   *
+   * @param[evaluationContextImpl] evaluation context for current breakpoint hit
+   * @param[value] value returned from terminal operation
+   * @return transformed value
    */
-  fun afterCall(evaluationContextImpl: EvaluationContextImpl, chainInstance: ObjectReference): ObjectReference
+  fun afterCall(evaluationContextImpl: EvaluationContextImpl, value: Value?): Value?
 }

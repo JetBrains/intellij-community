@@ -10,9 +10,11 @@ import com.sun.jdi.request.ExceptionRequest
 import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.request.MethodExitRequest
 
-// JDI does not provide mirror for null
-// null in debugee VM == null in JDI
-// So you should return same value as passed if you don't want to modify
+/**
+ * JDI does not provide mirror for `null`.
+ * `null` in debugee VM == `null` in JDI
+ * So you should return same value as passed if you don't want to modify
+ * */
 typealias ReturnValueTransformer = (SuspendContext, Method, Value?) -> Value?
 typealias ArgumentsTransformer = (SuspendContext, Method, List<Value?>) -> List<Value?>
 typealias ExceptionHandler = (SuspendContext, Location?, ObjectReference) -> Unit
@@ -23,21 +25,21 @@ typealias ExceptionHandler = (SuspendContext, Location?, ObjectReference) -> Uni
  */
 interface MethodBreakpointFactory {
   /**
-   * @return [MethodEntryRequest] disabled method enter request for passed method
+   * @return disabled method enter request for passed method
    * @throws MethodNotFoundException
    */
   fun createMethodEntryBreakpoint(evaluationContext: EvaluationContextImpl, signature: MethodSignature,
                                   transformer: ArgumentsTransformer): MethodEntryRequest
 
   /**
-   * @return [MethodEntryRequest] disabled method exit request for passed method
+   * @return disabled method exit request for passed method
    * @throws MethodNotFoundException
    */
   fun createMethodExitBreakpoint(evaluationContext: EvaluationContextImpl, signature: MethodSignature,
                                  transformer: ReturnValueTransformer): MethodExitRequest
 
   /**
-   * @return [ExceptionRequest] disabled method exit request for specified exception type
+   * @return disabled method exit request for specified exception type
    */
   fun createExceptionBreakpoint(evaluationContext: EvaluationContextImpl,
                                 exceptionType: ReferenceType? = null,
