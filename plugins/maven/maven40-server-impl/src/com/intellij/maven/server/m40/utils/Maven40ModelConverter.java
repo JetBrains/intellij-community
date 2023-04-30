@@ -15,7 +15,8 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
 
 import java.io.File;
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class Maven40ModelConverter {
@@ -282,6 +283,9 @@ public class Maven40ModelConverter {
     catch (IllegalAccessException e) {
       throw new RuntimeException(e);
     }
+    catch (InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static boolean isNativeToString(String toStringResult, Object o) {
@@ -289,25 +293,30 @@ public class Maven40ModelConverter {
     return (toStringResult.startsWith(className) && toStringResult.startsWith("@", className.length()));
   }
 
-  private static void doConvert(Object object, String prefix, Map<String, String> result) throws IllegalAccessException {
-    for (Field each : ReflectionUtilRt.collectFields(object.getClass())) {
-      Class<?> type = each.getType();
+  private static void doConvert(Object object, String prefix, Map<String, String> result)
+    throws IllegalAccessException, InvocationTargetException {
+    for (Method each : ReflectionUtilRt.collectGetters(object.getClass())) {
+      Class<?> type = each.getReturnType();
       if (shouldSkip(type)) continue;
 
       each.setAccessible(true);
-      Object value = each.get(object);
+      Object value = each.invoke(object);
 
       if (value != null) {
-        String name = prefix + each.getName();
+        String key = each.getName().substring(3);
+        String name = prefix + key.substring(0, 1).toLowerCase() + key.substring(1);
 
-        String sValue = String.valueOf(value);
-        if (!isNativeToString(sValue, value)) {
-          result.put(name, sValue);
+        if (value instanceof String || value.getClass().isPrimitive()) {
+          String sValue = String.valueOf(value);
+          if (!isNativeToString(sValue, value)) {
+            result.put(name, sValue);
+          }
         }
-
-        Package pack = type.getPackage();
-        if (pack != null && Model.class.getPackage().getName().equals(pack.getName())) {
-          doConvert(value, name + ".", result);
+        else {
+          Package pack = type.getPackage();
+          if (pack != null && pack.getName().startsWith("org.apache.maven")) {
+            doConvert(value, name + ".", result);
+          }
         }
       }
     }
