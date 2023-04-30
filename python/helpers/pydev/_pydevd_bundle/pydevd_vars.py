@@ -581,7 +581,7 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
             return format % value
         except TypeError:
             return ("%" + DEFAULT_DF_FORMAT) % value
-    xml += array_data_to_xml(rows, cols, lambda r: (get_formatted_value(r, c) for c in range(cols)), "%s")
+    xml += array_data_to_xml(rows, cols, lambda r: (get_formatted_value(r, c) for c in range(cols)))
     return xml
 
 
@@ -762,16 +762,16 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 
     xml += header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
 
-    xml += array_data_to_xml(rows, cols, formatted_row_elements, format)
+    xml += array_data_to_xml(rows, cols, formatted_row_elements)
     return xml
 
 
-def array_data_to_xml(rows, cols, get_row, format):
+def array_data_to_xml(rows, cols, get_row):
     xml = "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
     for row in range(rows):
         xml += "<row index=\"%s\"/>\n" % row
         for value in get_row(row):
-            xml += var_to_xml(value, '', format=format)
+            xml += var_to_xml(value, '')
     return xml
 
 
