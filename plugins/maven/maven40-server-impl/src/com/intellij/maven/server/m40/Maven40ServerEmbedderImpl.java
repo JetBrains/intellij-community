@@ -426,9 +426,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     Collection<String> activatedProfiles = Maven40ProfileUtil.collectActivatedProfiles(mavenProject);
 
+    Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, Maven40ModelConverter.convertToMap(mavenProject.getModel()), holder,
-                                                 activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, mavenModelMap, holder, activatedProfiles);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 

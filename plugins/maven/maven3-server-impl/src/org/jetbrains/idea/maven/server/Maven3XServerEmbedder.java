@@ -1076,9 +1076,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     Collection<String> activatedProfiles = Maven3XProfileUtil.collectActivatedProfiles(mavenProject);
 
+    Map<String, String> mavenModelMap = Maven3ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, Maven3ModelConverter.convertToMap(mavenProject.getModel()), holder,
-                                                 activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, mavenModelMap, holder, activatedProfiles);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
