@@ -99,18 +99,16 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     return StringUtil.compareVersionNumbers(version, getActualVersion(myMavenVersion)) <= 0;
   }
 
+  protected boolean isMaven4() {
+    return StringUtil.compareVersionNumbers(getActualVersion(myMavenVersion), "4.0") >= 0;
+  }
+
   private List<String> defaultResources() {
-    if (StringUtil.compareVersionNumbers(getActualVersion(myMavenVersion), "4.0") >= 0) {
-      return List.of("src/main/resources", "src/main/resources-filtered");
-    }
-    return List.of("src/main/resources");
+    return isMaven4() ? List.of("src/main/resources", "src/main/resources-filtered") : List.of("src/main/resources");
   }
 
   private List<String> defaultTestResources() {
-    if (StringUtil.compareVersionNumbers(getActualVersion(myMavenVersion), "4.0") >= 0) {
-      return List.of("src/test/resources", "src/test/resources-filtered");
-    }
-    return List.of("src/test/resources");
+    return isMaven4() ? List.of("src/test/resources", "src/test/resources-filtered") : List.of("src/test/resources");
   }
 
   protected void assertDefaultResources(String moduleName, String... additionalSources) {
