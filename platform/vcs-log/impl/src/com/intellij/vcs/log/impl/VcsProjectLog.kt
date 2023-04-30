@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
@@ -150,7 +149,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   }
 
   @CalledInAny
-  private suspend fun disposeLog(recreate: Boolean, beforeCreateLog: Runnable = EmptyRunnable.getInstance()) {
+  private suspend fun disposeLog(recreate: Boolean, beforeCreateLog: (suspend () -> Unit)? = null) {
     disposeLog()
 
     if (!recreate || isDisposing) {
@@ -158,9 +157,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     }
 
     try {
-      blockingContext {
-        beforeCreateLog.run()
-      }
+      beforeCreateLog?.invoke()
     }
     catch (e: Throwable) {
       LOG.error("Unable to execute 'beforeCreateLog'", e)
@@ -203,7 +200,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
    */
   @ApiStatus.Internal
   @CalledInAny
-  fun runOnDisposedLog(task: Runnable): Job {
+  fun runOnDisposedLog(task: (suspend () -> Unit)? = null): Job {
     return coroutineScope.launch {
       disposeLog(recreate = true, beforeCreateLog = task)
     }

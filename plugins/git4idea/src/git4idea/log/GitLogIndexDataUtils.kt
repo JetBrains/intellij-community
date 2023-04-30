@@ -3,8 +3,9 @@ package git4idea.log
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.TaskCancellation
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,6 +17,8 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.PersistentUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
 
@@ -53,9 +56,11 @@ internal object GitLogIndexDataUtils {
         }
 
         vcsProjectLog.runOnDisposedLog {
-          FileUtil.rename(currentLogDataPath.toFile(), logDataBackupPath.fileName.toString())
-          FileUtil.rename(tempLogDataPath.toFile(), currentLogDataPath.fileName.toString())
-          FileUtil.delete(logDataBackupPath)
+          withContext(Dispatchers.IO) {
+            FileUtil.rename(currentLogDataPath.toFile(), logDataBackupPath.fileName.toString())
+            FileUtil.rename(tempLogDataPath.toFile(), currentLogDataPath.fileName.toString())
+            FileUtil.delete(logDataBackupPath)
+          }
         }
       }
     }.queue()
@@ -63,19 +68,18 @@ internal object GitLogIndexDataUtils {
 
   internal fun createArchiveWithLogData(project: Project, outputArchiveDir: Path) {
     VcsProjectLog.getInstance(project).runOnDisposedLog {
-      val runnable = Runnable {
+      withBackgroundProgress(project = project,
+                             title = GitBundle.message("vcs.log.archiving.log.index.data"),
+                             cancellation = TaskCancellation.nonCancellable()) {
         val logId = PersistentUtil.calcLogId(project, VcsProjectLog.getLogProviders(project))
-        val logCache = PersistentUtil.LOG_CACHE
-        val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(project.name, logId)
-        val archive = outputArchiveDir.resolve("$logIndexDirName.zip")
-
-        Compressor.Zip(archive).use { zip ->
-          zip.addDirectory(logCache.resolve(logIndexDirName))
+        val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(projectName = project.name, logId = logId)
+        withContext(Dispatchers.IO) {
+          val logCache = PersistentUtil.LOG_CACHE
+          Compressor.Zip(outputArchiveDir.resolve("$logIndexDirName.zip")).use { zip ->
+            zip.addDirectory(logCache.resolve(logIndexDirName))
+          }
         }
       }
-
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, GitBundle.message("vcs.log.archiving.log.index.data"),
-                                                                        false, project)
     }
   }
 

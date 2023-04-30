@@ -8,7 +8,9 @@ import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.StorageId
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 
 internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog) {
   private val countBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
@@ -53,7 +55,7 @@ internal fun VcsLogManager.storageIds(): List<StorageId> {
                      (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId).filterNotNull()
 }
 
-internal fun VcsProjectLog.invalidateCaches(logManager: VcsLogManager): Job = recreateLog(logManager, true)
+internal fun VcsProjectLog.invalidateCaches(logManager: VcsLogManager): Job = recreateLog(logManager = logManager, invalidateCaches = true)
 
 private fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean): Job {
   val storageIds = logManager.storageIds()
@@ -63,9 +65,13 @@ private fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCache
     if (invalidateCaches) {
       for (storageId in storageIds) {
         try {
-          val deleted = storageId.cleanupAllStorageFiles()
-          if (deleted) thisLogger().info("Deleted ${storageId.storagePath}")
-          else thisLogger().error("Could not delete ${storageId.storagePath}")
+          val deleted = withContext(Dispatchers.IO) { storageId.cleanupAllStorageFiles() }
+          if (deleted) {
+            thisLogger().info("Deleted ${storageId.storagePath}")
+          }
+          else {
+            thisLogger().error("Could not delete ${storageId.storagePath}")
+          }
         }
         catch (t: Throwable) {
           thisLogger().error(t)
