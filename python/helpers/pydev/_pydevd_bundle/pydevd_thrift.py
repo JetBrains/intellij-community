@@ -385,7 +385,7 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
             array = array[roffset:]
             rows = min(rows, len(array))
 
-    def get_value(row, col):
+    def get_formatted_value(row, col):
         value = array
         if rows == 1 or cols == 1:
             if rows == 1 and cols == 1:
@@ -396,9 +396,12 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
                     value = value[0]
         else:
             value = array[row][col]
-        return value
+        try:
+            return format % value
+        except TypeError:
+            return ("%" + DEFAULT_DF_FORMAT) % value
 
-    array_chunk.data = array_data_to_thrift_struct(rows, cols, lambda r: (get_value(r, c) for c in range(cols)), format)
+    array_chunk.data = array_data_to_thrift_struct(rows, cols, lambda r: (get_formatted_value(r, c) for c in range(cols)), "%" + DEFAULT_DF_FORMAT)
     return array_chunk
 
 
