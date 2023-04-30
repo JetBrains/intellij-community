@@ -46,8 +46,9 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsIgnoreManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl"/>
 
+    <!-- preload only for performance reasons -->
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl"/>
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl" preload="notHeadless"/>
     <projectService serviceInterface="com.intellij.vcs.console.VcsConsoleTabService"
                     serviceImplementation="com.intellij.vcs.console.VcsConsoleTabServiceImpl"
                     headlessImplementation="com.intellij.vcs.console.MockVcsConsoleTabService"/>

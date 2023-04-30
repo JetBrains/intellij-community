@@ -85,6 +85,6 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
   }
 
   public static @NotNull VcsLogCachesInvalidator getInstance() {
-    return EP_NAME.findExtension(VcsLogCachesInvalidator.class);
+    return EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator.class);
   }
 }

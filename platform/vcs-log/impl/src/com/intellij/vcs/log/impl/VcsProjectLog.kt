@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -47,6 +48,8 @@ import kotlin.time.Duration.Companion.seconds
 private val LOG: Logger
   get() = logger<VcsProjectLog>()
 
+private val CLOSE_LOG_TIMEOUT = 10.seconds
+
 @Service(Service.Level.PROJECT)
 class VcsProjectLog(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val uiProperties = project.service<VcsLogProjectTabsProperties>()
@@ -58,6 +61,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
   private val disposeStarted = AtomicBoolean(false)
 
+  // not-reentrant - invoking [lock] even from the same thread/coroutine that currently holds the lock still suspends the invoker
   private val mutex = Mutex()
 
   val logManager: VcsLogManager?
@@ -76,9 +80,16 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   init {
     tabManager = VcsLogTabsManager(project = project, uiProperties = uiProperties, busConnection = busConnection)
 
-    @Suppress("SSBasedInspection") val shutdownTask = Runnable {
-      runBlocking {
-        shutDown()
+    @Suppress("SSBasedInspection", "ObjectLiteralToLambda") val shutdownTask = object : Runnable {
+      override fun run() {
+        if (disposeStarted.get()) {
+          LOG.warn("unregisterShutdownTask should be called")
+          return
+        }
+
+        runBlocking {
+          shutDown()
+        }
       }
     }
 
@@ -102,26 +113,22 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
       return
     }
 
-    withTimeout(10.seconds) {
-      disposeLog(recreate = false)
+    try {
+      withTimeout(CLOSE_LOG_TIMEOUT) {
+        disposeLog()
+      }
+    }
+    catch (e: TimeoutCancellationException) {
+      LOG.error("Cannot close VCS log in ${CLOSE_LOG_TIMEOUT.inWholeSeconds} seconds")
     }
   }
 
-  private fun subscribeToMappingsAndPluginChanges() {
-    busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
-      coroutineScope.launch {
-        disposeLog(recreate = true)
-      }
-    })
-    busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
-  }
-
-  private fun disposeLogBlocking(recreate: Boolean, beforeCreateLog: Runnable = EmptyRunnable.getInstance()) {
+  private fun disposeLogBlocking(recreate: Boolean) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       runBlockingModal(owner = ModalTaskOwner.project(project),
                        title = VcsLogBundle.message("vcs.log.closing.process"),
                        cancellation = TaskCancellation.nonCancellable()) {
-        disposeLog(recreate = recreate, beforeCreateLog = beforeCreateLog)
+        disposeLog(recreate = recreate)
       }
     }
     else {
@@ -144,6 +151,37 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
   @CalledInAny
   private suspend fun disposeLog(recreate: Boolean, beforeCreateLog: Runnable = EmptyRunnable.getInstance()) {
+    disposeLog()
+
+    if (!recreate || isDisposing) {
+      return
+    }
+
+    try {
+      blockingContext {
+        beforeCreateLog.run()
+      }
+    }
+    catch (e: Throwable) {
+      LOG.error("Unable to execute 'beforeCreateLog'", e)
+    }
+
+    try {
+      createLog(forceInit = false)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error("Unable to execute 'createLog'", e)
+    }
+  }
+
+  private suspend fun disposeLog() {
+    if (lazyVcsLogManager.cached == null) {
+      return
+    }
+
     mutex.withLock {
       val logManager = withContext(Dispatchers.EDT + modality()) {
         blockingContext {
@@ -155,25 +193,6 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
       if (logManager != null) {
         blockingContext {
           Disposer.dispose(logManager)
-        }
-      }
-      if (recreate) {
-        if (!isDisposing) {
-          try {
-            blockingContext {
-              beforeCreateLog.run()
-            }
-          }
-          catch (e: Throwable) {
-            LOG.error("Unable to execute 'beforeCreateLog'", e)
-          }
-        }
-
-        try {
-          createLog(false)
-        }
-        catch (e: Throwable) {
-          LOG.error("Unable to execute 'createLog'", e)
         }
       }
     }
@@ -206,7 +225,10 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
         return null
       }
 
-      val logProviders = blockingContext { getLogProviders(project) }
+      val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>().await()
+      val logProviders = blockingContext {
+        VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
+      }
       if (logProviders.isEmpty()) {
         return null
       }
@@ -227,7 +249,12 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
     override suspend fun execute(project: Project) {
       val projectLog = getInstance(project)
-      projectLog.subscribeToMappingsAndPluginChanges()
+      projectLog.busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+        projectLog.coroutineScope.launch {
+          projectLog.disposeLog(recreate = true)
+        }
+      })
+      projectLog.busConnection.subscribe(DynamicPluginListener.TOPIC, projectLog.MyDynamicPluginUnloader())
       projectLog.createLog(forceInit = false)
     }
   }
@@ -343,7 +370,12 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 // when "disposeLog" is queued as "invokeAndWait"
 // (used there in order to ensure sequential execution) will the app freeze when modal progress is displayed.
 private suspend fun modality(): CoroutineContext {
-  return if (coroutineContext.contextModality() == null) ModalityState.any().asContextElement() else EmptyCoroutineContext
+  return if (coroutineContext.contextModality() == null) {
+    ModalityState.any().asContextElement()
+  }
+  else {
+    EmptyCoroutineContext
+  }
 }
 
 private suspend fun initialize(logManager: VcsLogManager, force: Boolean) {
@@ -355,12 +387,12 @@ private suspend fun initialize(logManager: VcsLogManager, force: Boolean) {
   if (PostponableLogRefresher.keepUpToDate()) {
     val invalidator = CachesInvalidator.EP_NAME.findExtensionOrFail(VcsLogCachesInvalidator::class.java)
     if (invalidator.isValid) {
-      HeavyAwareListener.executeOutOfHeavyProcessLater(5000) { logManager.scheduleInitialization() }
+      logManager.scheduleInitialization()
       return
     }
   }
 
-  withContext(modality()) {
+  withContext(Dispatchers.EDT + modality()) {
     if (logManager.isLogVisible) {
       logManager.scheduleInitialization()
     }
