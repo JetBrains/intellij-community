@@ -508,5 +508,6 @@
     <extensionPoint name="codeWithMe.authorizationProvider" interface="com.intellij.codeWithMe.CodeWithMeAuthorizationProvider" dynamic="true" />
     <extensionPoint name="codeWithMe.serverUrlProvider" interface="com.intellij.codeWithMe.CodeWithMeServerUrlProvider" dynamic="true" />
     <extensionPoint name="newUIConfigurable" interface="com.intellij.ui.ExperimentalUIConfigurable" dynamic="true"/>
+    <extensionPoint name="emptyIntentionProvider" interface="com.intellij.codeInsight.daemon.impl.EmptyIntentionProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

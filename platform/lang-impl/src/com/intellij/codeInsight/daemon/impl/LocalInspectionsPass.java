@@ -33,6 +33,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.FileViewProvider;
@@ -414,8 +415,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (needEmptyAction && emptyActionRegistered.add(Pair.create(((ProblemDescriptorBase)descriptor).getTextRange(), key.toString()))) {
       String displayNameByKey = HighlightDisplayKey.getDisplayNameByKey(key);
       LOG.assertTrue(displayNameByKey != null, key.toString());
-      IntentionAction emptyIntentionAction = new EmptyIntentionAction(displayNameByKey);
-      result.add(emptyIntentionAction);
+
+      result.add(Registry.is("llm.empty.intention.generation")
+                 ? new EmptyIntentionGeneratorIntention(displayNameByKey, descriptor.getDescriptionTemplate())
+                 : new EmptyIntentionAction(displayNameByKey));
     }
     return result;
   }
