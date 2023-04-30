@@ -214,7 +214,7 @@ internal class K1MoveRefactoringSupport : KotlinMoveRefactoringSupport {
             val declarationNotNull = declaration ?: return null
 
             if (isExtension || containerFqName != null || isImported) return {
-                KotlinMoveUsage.createIfPossible(it.mainReference, declarationNotNull, addImportToOriginalFile = false, isInternal = true)
+                KotlinMoveRenameUsage.createIfPossible(it.mainReference, declarationNotNull, addImportToOriginalFile = false, isInternal = true)
             }
 
             return null

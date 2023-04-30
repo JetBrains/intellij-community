@@ -75,7 +75,7 @@ fun restoreInternalUsages(
         val referencedElement = (usageInfo as? MoveRenameUsageInfo)?.referencedElement ?: return@mapNotNull null
         val newReferencedElement = mapToNewOrThis(referencedElement, oldToNewElementsMapping)
         if (!newReferencedElement.isValid) return@mapNotNull null
-        (usageInfo as? KotlinMoveUsage)?.refresh(it, newReferencedElement)
+        (usageInfo as? KotlinMoveRenameUsage)?.refresh(it, newReferencedElement)
     }
 }
 
@@ -154,12 +154,12 @@ private fun postProcessMoveUsage(
     val newElement = mapToNewOrThis(oldElement, oldToNewElementsMapping)
 
     when (usage) {
-        is KotlinMoveUsage.Deferred -> {
+        is KotlinMoveRenameUsage.Deferred -> {
             val newUsage = usage.resolve(newElement) ?: return
             postProcessMoveUsage(newUsage, oldToNewElementsMapping, nonCodeUsages, shorteningMode)
         }
 
-        is KotlinMoveUsage.Unqualifiable -> {
+        is KotlinMoveRenameUsage.Unqualifiable -> {
             val file = with(usage) {
                 if (addImportToOriginalFile) originalFile else mapToNewOrThis(
                     originalFile,

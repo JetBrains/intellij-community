@@ -77,12 +77,12 @@ class MoveKotlinMethodProcessor(
         val methodCallUsages = mutableSetOf<UsageInfo>()
 
         methodCallUsages += ReferencesSearch.search(method, searchScope).mapNotNull { ref ->
-            KotlinMoveUsage.createIfPossible(ref, method, addImportToOriginalFile = true, isInternal = method.isAncestor(ref.element))
+            KotlinMoveRenameUsage.createIfPossible(ref, method, addImportToOriginalFile = true, isInternal = method.isAncestor(ref.element))
         }
 
         if (targetVariableIsMethodParameter()) {
             internalUsages += ReferencesSearch.search(targetVariable, searchScope).mapNotNull { ref ->
-                KotlinMoveUsage.createIfPossible(ref, targetVariable, addImportToOriginalFile = false, isInternal = true)
+                KotlinMoveRenameUsage.createIfPossible(ref, targetVariable, addImportToOriginalFile = false, isInternal = true)
             }
         }
 
@@ -90,7 +90,7 @@ class MoveKotlinMethodProcessor(
         traverseOuterInstanceReferences(method) { internalUsages += it }
 
         conflictChecker.checkAllConflicts(
-            methodCallUsages.filter { it is KotlinMoveUsage && !it.isInternal }.toMutableSet(), internalUsages, conflicts
+          methodCallUsages.filter { it is KotlinMoveRenameUsage && !it.isInternal }.toMutableSet(), internalUsages, conflicts
         )
 
         if (oldClassParameterNames.size > 1) {
@@ -178,7 +178,7 @@ class MoveKotlinMethodProcessor(
 
                     if (targetVariable is KtObjectDeclaration) {
                         val ref = (resultingExpression as? KtQualifiedExpression)?.receiverExpression?.mainReference ?: return
-                        KotlinMoveUsage.createIfPossible(
+                        KotlinMoveRenameUsage.createIfPossible(
                             ref, targetClassOrObject, addImportToOriginalFile = true,
                             isInternal = targetClassOrObject.isAncestor(ref.element)
                         )?.let { usagesToProcess += it }

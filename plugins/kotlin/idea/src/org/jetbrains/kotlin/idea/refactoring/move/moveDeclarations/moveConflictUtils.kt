@@ -51,8 +51,8 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.refactoring.getUsageContext
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRenameUsage
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveUsage
 import org.jetbrains.kotlin.idea.refactoring.move.getTargetModule
 import org.jetbrains.kotlin.idea.refactoring.pullUp.renderForConflicts
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
@@ -863,7 +863,7 @@ fun analyzeConflictsInFile(
     val elementsToMove = file.declarations
     if (elementsToMove.isEmpty()) return
 
-    val (internalUsages, externalUsages) = usages.partition { it is KotlinMoveUsage && it.isInternal }
+    val (internalUsages, externalUsages) = usages.partition { it is KotlinMoveRenameUsage && it.isInternal }
     val internalUsageSet = internalUsages.toMutableSet()
     val externalUsageSet = externalUsages.toMutableSet()
 

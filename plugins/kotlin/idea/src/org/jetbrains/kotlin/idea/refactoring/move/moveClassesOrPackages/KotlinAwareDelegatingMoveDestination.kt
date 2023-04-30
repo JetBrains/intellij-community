@@ -13,8 +13,8 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRenameUsage
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveUsage
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.analyzeConflictsInFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -68,7 +68,7 @@ class KotlinAwareDelegatingMoveDestination(
             for ((index, element) in extraElementsForReferenceSearch.withIndex()) {
                 progressIndicator.fraction = (index + 1) / extraElementsForReferenceSearch.size.toDouble()
                 ReferencesSearch.search(element, projectScope).mapNotNullTo(extraUsages) { ref ->
-                    KotlinMoveUsage.createIfPossible(ref, element, addImportToOriginalFile = true, isInternal = false)
+                    KotlinMoveRenameUsage.createIfPossible(ref, element, addImportToOriginalFile = true, isInternal = false)
                 }
             }
         } finally {

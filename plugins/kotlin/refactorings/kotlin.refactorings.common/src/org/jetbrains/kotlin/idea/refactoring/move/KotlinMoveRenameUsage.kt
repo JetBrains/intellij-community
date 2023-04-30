@@ -15,13 +15,21 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 
-sealed interface KotlinMoveUsage {
-    val isInternal: Boolean
+sealed class KotlinMoveRenameUsage(
+    element: PsiElement,
+    reference: PsiReference,
+    referencedElement: PsiElement
+) : MoveRenameUsageInfo(element, reference, referencedElement) {
+    abstract val isInternal: Boolean
 
-    fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo
+    abstract fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo
 
-    sealed interface Deferred : KotlinMoveUsage {
-        fun resolve(newElement: PsiElement): UsageInfo?
+    sealed class Deferred(
+        element: PsiElement,
+        reference: PsiReference,
+        referencedElement: PsiElement
+    ) : KotlinMoveRenameUsage(element, reference, referencedElement) {
+        abstract fun resolve(newElement: PsiElement): UsageInfo?
 
         class CallableReference(
             element: PsiElement,
@@ -30,14 +38,7 @@ sealed interface KotlinMoveUsage {
             val originalFile: PsiFile,
             private val addImportToOriginalFile: Boolean,
             override val isInternal: Boolean
-        ) : Deferred, MoveRenameUsageInfo(
-            element,
-            reference,
-            reference.rangeInElement.startOffset,
-            reference.rangeInElement.endOffset,
-            referencedElement,
-            false
-        ) {
+        ) : Deferred(element, reference, referencedElement) {
             override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
                 return CallableReference(
                     refExpr,
@@ -77,14 +78,7 @@ sealed interface KotlinMoveUsage {
         val originalFile: PsiFile,
         val addImportToOriginalFile: Boolean,
         override val isInternal: Boolean
-    ) : KotlinMoveUsage, MoveRenameUsageInfo(
-        element,
-        reference,
-        reference.rangeInElement.startOffset,
-        reference.rangeInElement.endOffset,
-        referencedElement,
-        false
-    ) {
+    ) : KotlinMoveRenameUsage(element, reference, referencedElement) {
         override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
             return Unqualifiable(
                 refExpr,
@@ -102,14 +96,7 @@ sealed interface KotlinMoveUsage {
         reference: PsiReference,
         referencedElement: PsiElement,
         override val isInternal: Boolean
-    ) : KotlinMoveUsage, MoveRenameUsageInfo(
-        element,
-        reference,
-        reference.rangeInElement.startOffset,
-        reference.rangeInElement.endOffset,
-        referencedElement,
-        false
-    ) {
+    ) : KotlinMoveRenameUsage(element, reference, referencedElement) {
         override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
             return Qualifiable(refExpr, refExpr.mainReference, referencedElement, isInternal)
         }

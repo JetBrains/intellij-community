@@ -169,7 +169,7 @@ class MoveKotlinDeclarationsProcessor(
                     .search(lightElement, searchScope)
                     .mapNotNullTo(ArrayList()) { ref ->
                         if (foundReferences.add(ref) && elementsToMove.none { it.isAncestor(ref.element) }) {
-                            KotlinMoveUsage.createIfPossible(ref, lightElement, addImportToOriginalFile = true, isInternal = false)
+                            KotlinMoveRenameUsage.createIfPossible(ref, lightElement, addImportToOriginalFile = true, isInternal = false)
                         } else null
                     }
 
@@ -283,7 +283,7 @@ class MoveKotlinDeclarationsProcessor(
             }
         }
 
-        val (oldInternalUsages, externalUsages) = usages.partition { it is KotlinMoveUsage && it.isInternal }
+        val (oldInternalUsages, externalUsages) = usages.partition { it is KotlinMoveRenameUsage && it.isInternal }
         val newInternalUsages = ArrayList<UsageInfo>()
 
         markInternalUsages(oldInternalUsages)
