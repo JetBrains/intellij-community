@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
+import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
 import java.util.*
 
@@ -41,6 +42,15 @@ var KtFile.allElementsToMove: List<PsiElement>? by UserDataProperty(Key.create("
 var KtSimpleNameExpression.internalUsageInfo: UsageInfo? by CopyablePsiUserDataProperty(Key.create("INTERNAL_USAGE_INFO"))
 
 var KtFile.updatePackageDirective: Boolean? by UserDataProperty(Key.create("UPDATE_PACKAGE_DIRECTIVE"))
+
+fun KtElement.getInternalReferencesToUpdateOnPackageNameChange(containerChangeInfo: MoveContainerChangeInfo): List<UsageInfo> {
+    val usages = ArrayList<UsageInfo>()
+    KotlinMoveRefactoringSupport.getInstance()
+        .processInternalReferencesToUpdateOnPackageNameChange(this, containerChangeInfo) { expr, factory ->
+            usages.addIfNotNull(factory(expr))
+        }
+    return usages
+}
 
 fun getTargetPackageFqName(targetContainer: PsiElement): FqName? {
     if (targetContainer is PsiDirectory) {
