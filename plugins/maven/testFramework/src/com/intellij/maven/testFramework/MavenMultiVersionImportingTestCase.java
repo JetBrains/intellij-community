@@ -126,4 +126,9 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     var expectedSources = ArrayUtil.toStringArray(expectedList);
     assertTestResources(moduleName, expectedSources);
   }
+
+  protected String[] arrayOfNotNull(String... values) {
+    if (null == values) return ArrayUtil.EMPTY_STRING_ARRAY;
+    return Arrays.stream(values).filter(v -> null != v).toArray(String[]::new);
+  }
 }
