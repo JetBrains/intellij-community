@@ -11,9 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 // A way to remove obsolete component data.
 internal val OBSOLETE_STORAGE_EP = ExtensionPointName<ObsoleteStorageBean>("com.intellij.obsoleteStorage")
@@ -60,9 +58,13 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult,
                                                                        forceSavingAllSettings: Boolean,
                                                                        saveSessionProducerManager: SaveSessionProducerManager) {
-    for (settingsSavingComponent in asyncSettingsSavingComponents.value) {
-      runAndCollectException(result) {
-        settingsSavingComponent.save()
+    coroutineScope {
+      for (settingsSavingComponent in asyncSettingsSavingComponents.value) {
+        launch {
+          runAndCollectException(result) {
+            settingsSavingComponent.save()
+          }
+        }
       }
     }
 

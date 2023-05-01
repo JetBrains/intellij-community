@@ -12,14 +12,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.serviceContainer.NonInjectable
-import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
@@ -39,7 +38,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
 
   private val _currentProvider = SynchronizedClearableLazy { computeProvider(settings) }
 
-  protected val currentProviderIfComputed: CredentialStore?
+  private val currentProviderIfComputed: CredentialStore?
     get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
 
   var currentProvider: CredentialStore
@@ -71,11 +70,12 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
     }
   }
 
-  internal fun createMasterKeyEncryptionSpec(): EncryptionSpec =
-    when (val pgpKey = settings.state.pgpKeyId) {
+  private fun createMasterKeyEncryptionSpec(): EncryptionSpec {
+    return when (val pgpKey = settings.state.pgpKeyId) {
       null -> EncryptionSpec(type = getDefaultEncryptionType(), pgpKeyId = null)
       else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey)
     }
+  }
 
   // it is a helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider: Lazy<CredentialStore> = lazy { InMemoryCredentialStore() }
@@ -123,9 +123,11 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
     }.asCompletableFuture().asPromise()
   }
 
-  open suspend fun save() {
+  suspend fun save() {
     val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
-    keePassCredentialStore.save(createMasterKeyEncryptionSpec())
+    withContext(Dispatchers.IO) {
+      keePassCredentialStore.save(createMasterKeyEncryptionSpec())
+    }
   }
 
   override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean {
@@ -165,21 +167,6 @@ class TestPasswordSafeImpl @NonInjectable constructor(
 class PasswordSafeImpl(coroutineScope: CoroutineScope) : BasePasswordSafe(coroutineScope), SettingsSavingComponent {
   override val settings: PasswordSafeSettings
     get() = service<PasswordSafeSettings>()
-
-  // SecureRandom (used to generate master password on first save) can be blocking on Linux
-  private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(delay = 0, ApplicationManager.getApplication()) {
-    val currentThread = Thread.currentThread()
-    ShutDownTracker.getInstance().executeWithStopperThread(currentThread) {
-      (currentProviderIfComputed as? KeePassCredentialStore)?.save(createMasterKeyEncryptionSpec())
-    }
-  }
-
-  override suspend fun save() {
-    val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
-    if (keePassCredentialStore.isNeedToSave()) {
-      saveAlarm.request()
-    }
-  }
 }
 
 fun getDefaultKeePassDbFile(): Path = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
