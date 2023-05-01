@@ -449,8 +449,8 @@ public final class UpdateHighlightersUtil {
    * This method currently works in O(total highlighter count in file) time.
    */
   public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
+    ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
     if (model == null) return;
 
