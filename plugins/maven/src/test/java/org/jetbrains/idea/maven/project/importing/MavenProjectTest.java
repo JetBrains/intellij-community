@@ -1029,6 +1029,9 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
       p("org.apache.maven.plugins", "maven-surefire-plugin"));
     List<PluginInfo> expectedList = new ArrayList<>();
     expectedList.addAll(defaultPlugins);
+    if (isMaven4()) {
+      expectedList.add(p("org.apache.maven.plugins", "maven-wrapper-plugin"));
+    }
     expectedList.addAll(Arrays.asList(expected));
     List<PluginInfo> actualList = p(getMavenProject().getDeclaredPlugins());
     assertUnorderedElementsAreEqual(actualList, expectedList);
