@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.isToBeShortened
 import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -72,14 +73,14 @@ sealed class MoveDeclarationsDelegate {
 
         private fun isValidTargetForImplicitCompanionAsDispatchReceiver(
             moveDescriptor: MoveDeclarationsDescriptor,
-            companionDescriptor: ClassDescriptor
+            companionObject: KtObjectDeclaration
         ): Boolean {
             return when (val moveTarget = moveDescriptor.moveTarget) {
                 is KotlinMoveTarget.Companion -> true
                 is KotlinMoveTarget.ExistingElement -> {
                     val targetClass = moveTarget.targetElement as? KtClassOrObject ?: return false
                     val targetClassDescriptor = targetClass.unsafeResolveToDescriptor() as ClassDescriptor
-                    val companionClassDescriptor = companionDescriptor.containingDeclaration as? ClassDescriptor ?: return false
+                    val companionClassDescriptor = companionObject.descriptor?.containingDeclaration as? ClassDescriptor ?: return false
                     targetClassDescriptor.isSubclassOf(companionClassDescriptor)
                 }
                 else -> false
@@ -98,7 +99,7 @@ sealed class MoveDeclarationsDelegate {
 
                 val isConflict = when (usage) {
                     is ImplicitCompanionAsDispatchReceiverUsageInfo -> {
-                        if (!isValidTargetForImplicitCompanionAsDispatchReceiver(descriptor, usage.companionDescriptor)) {
+                        if (!isValidTargetForImplicitCompanionAsDispatchReceiver(descriptor, usage.companionObject)) {
                             conflicts.putValue(
                                 element,
                                 KotlinBundle.message("text.implicit.companion.object.will.be.inaccessible.0", element.text)

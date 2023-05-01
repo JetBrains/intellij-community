@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 class ImplicitCompanionAsDispatchReceiverUsageInfo(
     callee: KtSimpleNameExpression,
-    val companionDescriptor: ClassDescriptor
+    val companionObject: KtObjectDeclaration
 ) : UsageInfo(callee)
 

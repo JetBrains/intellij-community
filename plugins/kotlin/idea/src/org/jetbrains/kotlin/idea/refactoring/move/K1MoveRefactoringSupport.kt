@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
+import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
@@ -181,8 +182,9 @@ internal class K1MoveRefactoringSupport : KotlinMoveRefactoringSupport {
                     if (isExtension && containingDescriptor is ClassDescriptor) {
                         val dispatchReceiver = refExpr.getResolvedCall(bindingContext)?.dispatchReceiver
                         val implicitClass = (dispatchReceiver as? ImplicitClassReceiver)?.classDescriptor
-                        if (implicitClass?.isCompanionObject == true) {
-                            return { ImplicitCompanionAsDispatchReceiverUsageInfo(it, implicitClass) }
+                        val psiClass = implicitClass?.psiElement
+                        if (psiClass is KtObjectDeclaration && psiClass.isCompanion()) {
+                            return { ImplicitCompanionAsDispatchReceiverUsageInfo(it, psiClass) }
                         }
                         if (dispatchReceiver != null || containingDescriptor.kind != ClassKind.OBJECT) return null
                     }
