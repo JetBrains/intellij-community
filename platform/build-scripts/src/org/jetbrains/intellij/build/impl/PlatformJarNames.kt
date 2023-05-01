@@ -3,4 +3,5 @@ package org.jetbrains.intellij.build.impl
 
 internal object PlatformJarNames {
   internal const val RUNTIME_MODULE_REPOSITORY_JAR: String = "platform-runtime-repository.jar"
+  internal const val LIB_JAR: String = "lib.jar"
 }

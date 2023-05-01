@@ -176,7 +176,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
             packager.mergeLibsByPredicate(key, libraryToMerge, outputDir, value)
           }
           if (!libraryToMerge.isEmpty()) {
-            packager.filesToSourceWithMappings(outputDir.resolve("lib.jar"), libraryToMerge)
+            packager.filesToSourceWithMappings(outputDir.resolve(PlatformJarNames.LIB_JAR), libraryToMerge)
           }
         }
         else if (!libraryToMerge.isEmpty()) {
@@ -590,7 +590,7 @@ private suspend fun buildJars(descriptors: Collection<JarDescriptor>,
           }
 
         // app.jar is combined later with other JARs and then re-ordered
-        if (!dryRun && item.pathInClassLog.isNotEmpty() && item.pathInClassLog != "lib/app.jar") {
+        if (!dryRun && item.pathInClassLog.isNotEmpty() && item.pathInClassLog != "lib/$APP_JAR") {
           reorderJar(relativePath = item.pathInClassLog, file = file)
         }
         nativeFileHandler?.sourceToNativeFiles ?: emptyMap()
@@ -645,7 +645,7 @@ internal fun mergeProductJar(appFile: Path, libDir: Path) {
     return
   }
 
-  spanBuilder("merge product.jar into app.jar").setAttribute("file", appFile.toString()).use {
+  spanBuilder("merge $PRODUCT_JAR into $APP_JAR").setAttribute("file", appFile.toString()).use {
     transformZipUsingTempFile(appFile) { zipCreator ->
       val packageIndexBuilder = PackageIndexBuilder()
       copyZipRaw(appFile, packageIndexBuilder, zipCreator)

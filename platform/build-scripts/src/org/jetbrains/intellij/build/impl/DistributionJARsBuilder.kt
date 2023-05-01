@@ -104,10 +104,10 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
 
         val distAllDir = context.paths.distAllDir
         val libDir = distAllDir.resolve("lib")
-        val appFile = libDir.resolve("app.jar")
+        val appFile = libDir.resolve(APP_JAR)
         mergeProductJar(appFile, libDir)
         if (!context.isStepSkipped(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
-          reorderJar("lib/app.jar", appFile)
+          reorderJar("lib/$APP_JAR", appFile)
         }
         context.bootClassPathJarNames =
           if (context.useModularLoader) persistentListOf(PLATFORM_LOADER_JAR, RUNTIME_MODULE_REPOSITORY_JAR)
