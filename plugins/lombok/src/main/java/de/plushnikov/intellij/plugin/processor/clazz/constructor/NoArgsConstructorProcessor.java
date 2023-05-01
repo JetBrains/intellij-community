@@ -33,7 +33,7 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
       result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), problemSink);
 
       if (problemSink.deepValidation()) {
-        final Collection<PsiField> requiredFields = getRequiredFields(psiClass);
+        final Collection<PsiField> requiredFields = getRequiredFields(psiClass, true);
         if (!requiredFields.isEmpty()) {
           problemSink.addErrorMessage("inspection.message.constructor.noargs.needs.to.be.forced")
             .withLocalQuickFixes(() -> PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "force", "true"));
