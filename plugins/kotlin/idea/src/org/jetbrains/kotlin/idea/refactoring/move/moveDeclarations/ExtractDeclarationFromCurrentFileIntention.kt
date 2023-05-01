@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog
@@ -122,7 +123,7 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
             project,
             moveSource,
             moveTarget,
-            MoveDeclarationsDelegate.TopLevel,
+            KotlinMoveDeclarationDelegate.TopLevel,
             searchInCommentsAndStrings = false,
             searchInNonCode = false,
             moveCallback = moveCallBack

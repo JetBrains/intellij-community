@@ -56,18 +56,18 @@ import kotlin.math.max
 import kotlin.math.min
 
 class MoveDeclarationsDescriptor @JvmOverloads constructor(
-    val project: Project,
-    val moveSource: KotlinMoveSource,
-    val moveTarget: KotlinMoveTarget,
-    val delegate: MoveDeclarationsDelegate,
-    val searchInCommentsAndStrings: Boolean = true,
-    val searchInNonCode: Boolean = true,
-    val deleteSourceFiles: Boolean = false,
-    val moveCallback: MoveCallback? = null,
-    val openInEditor: Boolean = false,
-    val allElementsToMove: List<PsiElement>? = null,
-    val analyzeConflicts: Boolean = true,
-    val searchReferences: Boolean = true
+  val project: Project,
+  val moveSource: KotlinMoveSource,
+  val moveTarget: KotlinMoveTarget,
+  val delegate: KotlinMoveDeclarationDelegate,
+  val searchInCommentsAndStrings: Boolean = true,
+  val searchInNonCode: Boolean = true,
+  val deleteSourceFiles: Boolean = false,
+  val moveCallback: MoveCallback? = null,
+  val openInEditor: Boolean = false,
+  val allElementsToMove: List<PsiElement>? = null,
+  val analyzeConflicts: Boolean = true,
+  val searchReferences: Boolean = true
 )
 
 private object ElementHashingStrategy : HashingStrategy<PsiElement> {
@@ -248,11 +248,11 @@ class MoveKotlinDeclarationsProcessor(
                 }
             }
 
-            internalUsages += descriptor.delegate.findInternalUsages(descriptor)
+            internalUsages += descriptor.delegate.findInternalUsages(descriptor.moveSource)
             collectUsages(kotlinToLightElements, externalUsages)
             if (descriptor.analyzeConflicts) {
                 conflictChecker.checkAllConflicts(externalUsages, internalUsages, conflicts)
-                descriptor.delegate.collectConflicts(descriptor, internalUsages, conflicts)
+                descriptor.delegate.collectConflicts(descriptor.moveTarget, internalUsages, conflicts)
             }
 
             usages += internalUsages
@@ -276,7 +276,7 @@ class MoveKotlinDeclarationsProcessor(
     internal fun doPerformRefactoring(usages: List<UsageInfo>) {
         fun moveDeclaration(declaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): KtNamedDeclaration {
             val targetContainer = moveTarget.getOrCreateTargetPsi(declaration)
-            descriptor.delegate.preprocessDeclaration(descriptor, declaration)
+            descriptor.delegate.preprocessDeclaration(descriptor.moveTarget, declaration)
             if (moveEntireFile) return declaration
             return mover(declaration, targetContainer).apply {
                 addToBeShortenedDescendantsToWaitingSet()
@@ -291,7 +291,7 @@ class MoveKotlinDeclarationsProcessor(
         val usagesToProcess = ArrayList(externalUsages)
 
         try {
-            descriptor.delegate.preprocessUsages(descriptor, usages)
+            descriptor.delegate.preprocessUsages(project, descriptor.moveSource, usages)
 
             val oldToNewElementsMapping = CollectionFactory.createCustomHashingStrategyMap<PsiElement, PsiElement>(ElementHashingStrategy)
 

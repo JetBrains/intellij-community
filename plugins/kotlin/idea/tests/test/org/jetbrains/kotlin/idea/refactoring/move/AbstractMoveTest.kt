@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.changePackage.KotlinChangePackageRefactoring
 import org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareDelegatingMoveDestination
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.MoveKotlinMethodProcessor
@@ -240,7 +239,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 )
             }
 
-            val descriptor = MoveDeclarationsDescriptor(project, KotlinMoveSource(elementsToMove), moveTarget, MoveDeclarationsDelegate.TopLevel)
+            val descriptor = MoveDeclarationsDescriptor(project, KotlinMoveSource(elementsToMove), moveTarget, KotlinMoveDeclarationDelegate.TopLevel)
             MoveKotlinDeclarationsProcessor(descriptor).run()
         }
     },
@@ -287,7 +286,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 if (targetClassName != null) {
                     KotlinFullClassNameIndex.get(targetClassName, project, project.projectScope()).first()!!
                 } else null
-            val delegate = MoveDeclarationsDelegate.NestedClass(
+            val delegate = KotlinMoveDeclarationDelegate.NestedClass(
                 config.getNullableString("newName"),
                 config.getNullableString("outerInstanceParameter")
             )

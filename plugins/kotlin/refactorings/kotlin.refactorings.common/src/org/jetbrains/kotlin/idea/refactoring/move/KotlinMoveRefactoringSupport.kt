@@ -30,9 +30,15 @@ interface KotlinMoveRefactoringSupport {
 
     fun addDelayedImportRequest(elementToImport: PsiElement, file: KtFile)
 
+    fun addDelayedShorteningRequest(element: KtElement)
+
     fun processInternalReferencesToUpdateOnPackageNameChange(
         element: KtElement,
         containerChangeInfo: MoveContainerChangeInfo,
         body: (originalRefExpr: KtSimpleNameExpression, usageFactory: KotlinUsageInfoFactory) -> Unit
     )
+
+    fun isValidTargetForImplicitCompanionAsDispatchReceiver(moveTarget: KotlinMoveTarget, companionObject: KtObjectDeclaration): Boolean
+
+    fun renderType(ktObjectDeclaration: KtClassOrObject): String
 }

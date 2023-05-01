@@ -12,9 +12,12 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.codeInsight.shorten.isToBeShortened
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -116,6 +119,10 @@ internal class K1MoveRefactoringSupport : KotlinMoveRefactoringSupport {
 
     override fun addDelayedImportRequest(elementToImport: PsiElement, file: KtFile) {
         org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest(elementToImport, file)
+    }
+
+    override fun addDelayedShorteningRequest(element: KtElement) {
+        element.isToBeShortened = true
     }
 
     override fun processInternalReferencesToUpdateOnPackageNameChange(
@@ -229,5 +236,26 @@ internal class K1MoveRefactoringSupport : KotlinMoveRefactoringSupport {
 
             processReference(refExpr, bindingContext)?.let { body(refExpr, it) }
         }
+    }
+
+    override fun isValidTargetForImplicitCompanionAsDispatchReceiver(
+        moveTarget: KotlinMoveTarget,
+        companionObject: KtObjectDeclaration
+    ): Boolean {
+        return when (moveTarget) {
+            is KotlinMoveTarget.Companion -> true
+            is KotlinMoveTarget.ExistingElement -> {
+                val targetClass = moveTarget.targetElement as? KtClassOrObject ?: return false
+                val targetClassDescriptor = targetClass.unsafeResolveToDescriptor() as ClassDescriptor
+                val companionClassDescriptor = companionObject.descriptor?.containingDeclaration as? ClassDescriptor ?: return false
+                targetClassDescriptor.isSubclassOf(companionClassDescriptor)
+            }
+            else -> false
+        }
+    }
+
+    override fun renderType(classOrObject: KtClassOrObject): String {
+        val type = (classOrObject.unsafeResolveToDescriptor() as ClassDescriptor).defaultType
+        return IdeDescriptorRenderers.SOURCE_CODE.renderType(type)
     }
 }

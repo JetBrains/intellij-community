@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.move.MoveCallback
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
@@ -56,7 +57,7 @@ internal class MoveKotlinNestedClassesModel(
     override fun computeModelResult(throwOnConflicts: Boolean): ModelResultWithFUSData {
         val elementsToMove = selectedElementsToMove
         val target = KotlinMoveTarget.ExistingElement(getCheckedTargetClass())
-        val delegate = MoveDeclarationsDelegate.NestedClass()
+        val delegate = KotlinMoveDeclarationDelegate.NestedClass()
         val descriptor = MoveDeclarationsDescriptor(
             project,
             KotlinMoveSource(elementsToMove),

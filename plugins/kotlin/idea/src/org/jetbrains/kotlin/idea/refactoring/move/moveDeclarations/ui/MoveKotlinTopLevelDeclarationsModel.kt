@@ -310,18 +310,18 @@ internal class MoveKotlinTopLevelDeclarationsModel(
         }
 
         val options = MoveDeclarationsDescriptor(
-            project,
-            KotlinMoveSource(elementsWithMPPIfNeeded),
-            target,
-            MoveDeclarationsDelegate.TopLevel,
-            isSearchInComments,
-            isSearchInNonJavaFiles,
-            deleteSourceFiles = isDeleteEmptyFiles,
-            moveCallback = moveCallback,
-            openInEditor = false,
-            allElementsToMove = null,
-            analyzeConflicts = true,
-            searchReferences = isSearchReferences
+          project,
+          KotlinMoveSource(elementsWithMPPIfNeeded),
+          target,
+          KotlinMoveDeclarationDelegate.TopLevel,
+          isSearchInComments,
+          isSearchInNonJavaFiles,
+          deleteSourceFiles = isDeleteEmptyFiles,
+          moveCallback = moveCallback,
+          openInEditor = false,
+          allElementsToMove = null,
+          analyzeConflicts = true,
+          searchReferences = isSearchReferences
         )
         return MoveKotlinDeclarationsProcessor(options, KotlinMover.Default, throwOnConflicts)
     }

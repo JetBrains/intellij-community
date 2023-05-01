@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
+package org.jetbrains.kotlin.idea.refactoring.move
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler
 import com.intellij.refactoring.util.MoveRenameUsageInfo
@@ -9,41 +10,27 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.codeInsight.shorten.isToBeShortened
-import org.jetbrains.kotlin.idea.refactoring.move.*
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 
-sealed class MoveDeclarationsDelegate {
-    abstract fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): MoveContainerChangeInfo
+sealed interface KotlinMoveDeclarationDelegate {
+    fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): MoveContainerChangeInfo
 
-    open fun findInternalUsages(descriptor: MoveDeclarationsDescriptor): List<UsageInfo> = emptyList()
+    fun findInternalUsages(moveSource: KotlinMoveSource): List<UsageInfo> = emptyList()
 
-    open fun collectConflicts(
-        descriptor: MoveDeclarationsDescriptor,
-        internalUsages: MutableSet<UsageInfo>,
-        conflicts: MultiMap<PsiElement, String>
-    ) {
+    fun collectConflicts(moveTarget: KotlinMoveTarget, internalUsages: MutableSet<UsageInfo>, conflicts: MultiMap<PsiElement, String>) {}
 
-    }
+    fun preprocessDeclaration(moveTarget: KotlinMoveTarget, originalDeclaration: KtNamedDeclaration) {}
 
-    open fun preprocessDeclaration(descriptor: MoveDeclarationsDescriptor, originalDeclaration: KtNamedDeclaration) {
+    fun preprocessUsages(project: Project, moveSource: KotlinMoveSource, usages: List<UsageInfo>) {}
 
-    }
-
-    open fun preprocessUsages(descriptor: MoveDeclarationsDescriptor, usages: List<UsageInfo>) {
-
-    }
-
-    object TopLevel : MoveDeclarationsDelegate() {
-        override fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): MoveContainerChangeInfo {
+    object TopLevel : KotlinMoveDeclarationDelegate {
+        override fun getContainerChangeInfo(
+            originalDeclaration: KtNamedDeclaration,
+            moveTarget: KotlinMoveTarget
+        ): MoveContainerChangeInfo {
             val sourcePackage = MoveContainerInfo.Package(originalDeclaration.containingKtFile.packageFqName)
             val targetPackage = moveTarget.targetContainerFqName?.let { MoveContainerInfo.Package(it) } ?: MoveContainerInfo.UnknownPackage
             return MoveContainerChangeInfo(sourcePackage, targetPackage)
@@ -51,10 +38,13 @@ sealed class MoveDeclarationsDelegate {
     }
 
     class NestedClass(
-      val newClassName: String? = null,
-      private val outerInstanceParameterName: String? = null
-    ) : MoveDeclarationsDelegate() {
-        override fun getContainerChangeInfo(originalDeclaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): MoveContainerChangeInfo {
+        val newClassName: String? = null,
+        private val outerInstanceParameterName: String? = null
+    ) : KotlinMoveDeclarationDelegate {
+        override fun getContainerChangeInfo(
+            originalDeclaration: KtNamedDeclaration,
+            moveTarget: KotlinMoveTarget
+        ): MoveContainerChangeInfo {
             val originalInfo = MoveContainerInfo.Class(originalDeclaration.containingClassOrObject!!.fqName!!)
             val movingToClass = (moveTarget as? KotlinMoveTarget.ExistingElement)?.targetElement is KtClassOrObject
             val targetContainerFqName = moveTarget.targetContainerFqName
@@ -66,29 +56,13 @@ sealed class MoveDeclarationsDelegate {
             return MoveContainerChangeInfo(originalInfo, newInfo)
         }
 
-        override fun findInternalUsages(descriptor: MoveDeclarationsDescriptor): List<UsageInfo> {
-            val classToMove = descriptor.moveSource.elementsToMove.singleOrNull() as? KtClass ?: return emptyList()
+        override fun findInternalUsages(moveSource: KotlinMoveSource): List<UsageInfo> {
+            val classToMove = moveSource.elementsToMove.singleOrNull() as? KtClass ?: return emptyList()
             return collectOuterInstanceReferences(classToMove)
         }
 
-        private fun isValidTargetForImplicitCompanionAsDispatchReceiver(
-            moveDescriptor: MoveDeclarationsDescriptor,
-            companionObject: KtObjectDeclaration
-        ): Boolean {
-            return when (val moveTarget = moveDescriptor.moveTarget) {
-                is KotlinMoveTarget.Companion -> true
-                is KotlinMoveTarget.ExistingElement -> {
-                    val targetClass = moveTarget.targetElement as? KtClassOrObject ?: return false
-                    val targetClassDescriptor = targetClass.unsafeResolveToDescriptor() as ClassDescriptor
-                    val companionClassDescriptor = companionObject.descriptor?.containingDeclaration as? ClassDescriptor ?: return false
-                    targetClassDescriptor.isSubclassOf(companionClassDescriptor)
-                }
-                else -> false
-            }
-        }
-
         override fun collectConflicts(
-            descriptor: MoveDeclarationsDescriptor,
+            moveTarget: KotlinMoveTarget,
             internalUsages: MutableSet<UsageInfo>,
             conflicts: MultiMap<PsiElement, String>
         ) {
@@ -99,7 +73,9 @@ sealed class MoveDeclarationsDelegate {
 
                 val isConflict = when (usage) {
                     is ImplicitCompanionAsDispatchReceiverUsageInfo -> {
-                        if (!isValidTargetForImplicitCompanionAsDispatchReceiver(descriptor, usage.companionObject)) {
+                        val isValidTarget = KotlinMoveRefactoringSupport.getInstance()
+                            .isValidTargetForImplicitCompanionAsDispatchReceiver(moveTarget, usage.companionObject)
+                        if (!isValidTarget) {
                             conflicts.putValue(
                                 element,
                                 KotlinBundle.message("text.implicit.companion.object.will.be.inaccessible.0", element.text)
@@ -118,32 +94,33 @@ sealed class MoveDeclarationsDelegate {
             }
         }
 
-        override fun preprocessDeclaration(descriptor: MoveDeclarationsDescriptor, originalDeclaration: KtNamedDeclaration) {
+        override fun preprocessDeclaration(moveTarget: KotlinMoveTarget, originalDeclaration: KtNamedDeclaration) {
             with(originalDeclaration) {
                 newClassName?.let { setName(it) }
 
                 if (this is KtClass) {
-                    if ((descriptor.moveTarget as? KotlinMoveTarget.ExistingElement)?.targetElement !is KtClassOrObject) {
+                    if ((moveTarget as? KotlinMoveTarget.ExistingElement)?.targetElement !is KtClassOrObject) {
                         if (hasModifier(KtTokens.INNER_KEYWORD)) removeModifier(KtTokens.INNER_KEYWORD)
                         if (hasModifier(KtTokens.PROTECTED_KEYWORD)) removeModifier(KtTokens.PROTECTED_KEYWORD)
                     }
 
                     if (outerInstanceParameterName != null) {
-                        val type = (containingClassOrObject!!.unsafeResolveToDescriptor() as ClassDescriptor).defaultType
-                        val parameter = KtPsiFactory(project).createParameter(
-                            "private val $outerInstanceParameterName: ${IdeDescriptorRenderers.SOURCE_CODE.renderType(type)}"
-                        )
-                        createPrimaryConstructorParameterListIfAbsent().addParameter(parameter).isToBeShortened = true
+                        val containingClass = containingClassOrObject ?: return
+                        val moveRefactoringSupport = KotlinMoveRefactoringSupport.getInstance()
+                        val type = moveRefactoringSupport.renderType(containingClass)
+                        val parameter = KtPsiFactory(project).createParameter("private val $outerInstanceParameterName: $type")
+                        val addedParameter = createPrimaryConstructorParameterListIfAbsent().addParameter(parameter)
+                        moveRefactoringSupport.addDelayedShorteningRequest(addedParameter)
                     }
                 }
             }
         }
 
-        override fun preprocessUsages(descriptor: MoveDeclarationsDescriptor, usages: List<UsageInfo>) {
+        override fun preprocessUsages(project: Project, moveSource: KotlinMoveSource, usages: List<UsageInfo>) {
             if (outerInstanceParameterName == null) return
-            val psiFactory = KtPsiFactory(descriptor.project)
+            val psiFactory = KtPsiFactory(project)
             val newOuterInstanceRef = psiFactory.createExpression(outerInstanceParameterName)
-            val classToMove = descriptor.moveSource.elementsToMove.singleOrNull() as? KtClass
+            val classToMove = moveSource.elementsToMove.singleOrNull() as? KtClass
 
             for (usage in usages) {
                 if (usage is MoveRenameUsageInfo) {
@@ -153,7 +130,7 @@ sealed class MoveDeclarationsDelegate {
                         val lightOuterClass = outerClass?.toLightClass()
                         if (lightOuterClass != null) {
                             MoveInnerClassUsagesHandler.EP_NAME
-                                .forLanguage(usage.element!!.language)
+                                .forLanguage(usage.element?.language ?: return)
                                 ?.correctInnerClassUsage(usage, lightOuterClass, outerInstanceParameterName)
                         }
                     }
@@ -163,9 +140,9 @@ sealed class MoveDeclarationsDelegate {
                     is OuterInstanceReferenceUsageInfo.ExplicitThis -> {
                         usage.expression.replace(newOuterInstanceRef)
                     }
+
                     is OuterInstanceReferenceUsageInfo.ImplicitReceiver -> {
-                        val newElem  = psiFactory.createExpressionByPattern("$0.$1", outerInstanceParameterName, usage.callElement)
-                        usage.callElement.replace(newElem)
+                        usage.callElement.let { it.replace(psiFactory.createExpressionByPattern("$0.$1", outerInstanceParameterName, it)) }
                     }
                 }
             }
