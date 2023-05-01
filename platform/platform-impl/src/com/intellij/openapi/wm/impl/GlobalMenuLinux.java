@@ -400,6 +400,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         if (DO_FILL_ROOTS) {
           final long startMs = System.currentTimeMillis();
           am.removeAll(); // just for insurance
+          am.setSelected(true);
           am.fillMenu();
           _syncChildren(mi, am, 1, stats); // NOTE: fill root menus to avoid empty submenu showing
           am.removeAll();
@@ -621,6 +622,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       if (cmi != null) {
         if (deepness > 1 && (each instanceof ActionMenu jmiEach)) {
           jmiEach.removeAll();
+          jmiEach.setSelected(true);
           jmiEach.fillMenu();
           _syncChildren(cmi, jmiEach, deepness - 1, stats);
         }
@@ -730,48 +732,35 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         if (TRACE_SKIPPED_EVENT) _trace("skipped fill-event for item '%s', use cached (too frequent fill-events)", String.valueOf(mi.txt));
       }
       else {
-        final int retriesCount = 3;
-        int tryNumer = 0;
-        for (; tryNumer < retriesCount; ++tryNumer) {
-          try {
-            ApplicationManager.getApplication().invokeAndWait(() -> {
-              // ETD-start
-              final JMenuItem jmi = mi.jitem;
-              if (jmi == null) {
-                if (TRACE_HIERARCHY_MISMATCHES) {
-                  _trace(
-                    "corresponding (opening) swing item is null, event source: " +
-                    mi +
-                    ", swing menu hierarchy:\n" +
-                    _dumpSwingHierarchy());
-                }
-                return;
-              }
-              if (!(jmi instanceof ActionMenu am)) {
-                LOG.debug("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
-                          jmi.getClass().getName() +
-                          ", event source: " +
-                          mi);
-                return;
-              }
-
-              mi.lastFilledMs = timeMs;
-
-              am.removeAll();
-              am.fillMenu();
-              _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2,
-                            stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
-            });
-            break;
-          } catch (ProcessCanceledException e) {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          // ETD-start
+          final JMenuItem jmi = mi.jitem;
+          if (jmi == null) {
+            if (TRACE_HIERARCHY_MISMATCHES) {
+              _trace(
+                "corresponding (opening) swing item is null, event source: " +
+                mi +
+                ", swing menu hierarchy:\n" +
+                _dumpSwingHierarchy());
+            }
+            return;
           }
-        }
-        if (tryNumer >= retriesCount) {
-          // clear cached children of menuitem (just for insurance)
-          mi.clearChildrenSwingRefs();
-          mi.children.forEach(k -> k.position = -1);
-          LOG.debug("Menu group wasn't expanded in 3 attempts, will do nothing..");
-        }
+          if (!(jmi instanceof ActionMenu am)) {
+            LOG.debug("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
+                      jmi.getClass().getName() +
+                      ", event source: " +
+                      mi);
+            return;
+          }
+
+          mi.lastFilledMs = timeMs;
+
+          am.removeAll();
+          am.setSelected(true);
+          am.fillMenu();
+          _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2,
+                        stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
+        });
 
         // glib main-loop thread
         final long elapsedMs = System.currentTimeMillis() - timeMs;
@@ -1119,6 +1108,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       }
 
       am.clearItems();
+      am.setSelected(false);
       clearChildrenSwingRefs();
       _onSwingCleared(System.currentTimeMillis());
       if (TRACE_CLEARING) _trace("\t cleared '%s'", toStringShort());
