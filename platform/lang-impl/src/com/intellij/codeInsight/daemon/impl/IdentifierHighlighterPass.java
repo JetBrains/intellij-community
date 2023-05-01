@@ -59,7 +59,7 @@ public class IdentifierHighlighterPass {
 
   /**
    * @param file may be injected fragment, in which case the {@code editor} must be corresponding injected editor and  {@code visibleRange} must have consistent offsets inside the injected document.
-   * In both cases, {@link #doCollectInformation()} will produce and {@link #doApplyInformationToEditor()} will apply HighlightInfos for the host file.
+   * In both cases, {@link #doCollectInformation()} will produce and apply HighlightInfos to the host file.
    */
   IdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange visibleRange) {
     myFile = file;
@@ -69,7 +69,10 @@ public class IdentifierHighlighterPass {
   }
 
   public void doCollectInformation() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
+    boolean runFindUsages = true;
     if (highlightUsagesHandler != null) {
       List<PsiElement> targets = highlightUsagesHandler.getTargets();
       highlightUsagesHandler.computeUsages(targets);
@@ -83,11 +86,24 @@ public class IdentifierHighlighterPass {
         LOG.assertTrue(writeUsage != null, "null text range from " + highlightUsagesHandler);
       }
       myWriteAccessRanges.addAll(writeUsages);
-      if (!highlightUsagesHandler.highlightReferences()) return;
+      if (!highlightUsagesHandler.highlightReferences()) {
+        runFindUsages = false;
+      }
     }
 
-    collectCodeBlockMarkerRanges();
-    highlightReferencesAndDeclarations();
+    if (runFindUsages) {
+      collectCodeBlockMarkerRanges();
+      highlightReferencesAndDeclarations();
+    }
+
+    if (!myEditor.isDisposed()) {
+      boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
+      List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
+      PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+      BackgroundUpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), hostEditor, 0, hostFile.getTextLength(), infos,
+                                                                     hostEditor.getColorsScheme(), getId());
+    }
   }
 
   @ApiStatus.Internal
@@ -230,24 +246,20 @@ public class IdentifierHighlighterPass {
              "virtual file: " + myFile.getVirtualFile());
   }
 
-  private static int id;
+  private static volatile int id;
   private int getId() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     int id = IdentifierHighlighterPass.id;
     if (id == 0) {
-      IdentifierHighlighterPass.id = id = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(
-        myFile.getProject())).getNextAvailableId();
+      TextEditorHighlightingPassRegistrarImpl registrar =
+        (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myFile.getProject());
+      synchronized (IdentifierHighlighterPass.class) {
+        id = IdentifierHighlighterPass.id;
+        if (id == 0) {
+          IdentifierHighlighterPass.id = id = registrar.getNextAvailableId();
+        }
+      }
     }
     return id;
-  }
-
-  public void doApplyInformationToEditor() {
-    boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
-    List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
-    PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
-    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-    UpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), hostEditor, 0, hostFile.getTextLength(), infos, hostEditor.getColorsScheme(), getId());
-    doAdditionalCodeBlockHighlighting();
   }
 
   private boolean isCaretOverCollapsedFoldRegion() {
@@ -262,7 +274,7 @@ public class IdentifierHighlighterPass {
    *
    * In brace matching case this is done from {@link BraceHighlightingHandler#highlightBraces(TextRange, TextRange, boolean, boolean, com.intellij.openapi.fileTypes.FileType)}
    */
-  private void doAdditionalCodeBlockHighlighting() {
+  public void doAdditionalCodeBlockHighlighting() {
     if (myCodeBlockMarkerRanges.size() < 2 || !(myEditor instanceof EditorEx)) {
       return;
     }

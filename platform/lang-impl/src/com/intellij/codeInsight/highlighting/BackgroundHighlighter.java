@@ -212,7 +212,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
                                                       @NotNull Editor newEditor) {
     ReadAction.nonBlocking(() -> {
         int textLength = newFile.getTextLength();
-        if (textLength == -1) {
+        if (textLength == -1 | editor.isDisposed()) {
           // sometimes some crazy stuff is returned (EA-248725)
           return null;
         }
@@ -224,12 +224,11 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
         return pass;
       })
       .expireWhen(() -> !BackgroundHighlightingUtil.isValidEditor(editor) ||
-                        editor.getCaretModel().getOffset() != offsetBefore ||
-                        !newFile.isValid())
+                        editor.getCaretModel().getOffset() != offsetBefore)
       .coalesceBy(HighlightIdentifiersKey.class, editor)
       .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), identifierHighlighterPass -> {
         if (identifierHighlighterPass != null) {
-          identifierHighlighterPass.doApplyInformationToEditor();
+          identifierHighlighterPass.doAdditionalCodeBlockHighlighting();
         }
       })
       .submit(AppExecutorUtil.getAppExecutorService());
