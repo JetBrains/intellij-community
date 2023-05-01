@@ -30,7 +30,6 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.function.Function
 
 /**
  * Functionality without stream provider covered, ICS has own test suite
@@ -674,7 +673,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
 open class TestSchemeProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
   override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>,
                             name: String,
-                            attributeProvider: Function<in String, String?>,
+                            attributeProvider: (String) -> String?,
                             isBundled: Boolean): TestScheme {
     val scheme = dataHolder.read().deserialize(TestScheme::class.java)
     dataHolder.updateDigest(scheme)

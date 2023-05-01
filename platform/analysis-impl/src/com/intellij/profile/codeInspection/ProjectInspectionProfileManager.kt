@@ -22,26 +22,28 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import java.util.function.Function
 
 private const val VERSION = "1.0"
-const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
+const val PROJECT_DEFAULT_PROFILE_NAME: String = "Project Default"
 
-private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionProjectProfileManager">
+private val defaultSchemeDigest = hashElement(JDOMUtil.load("""<component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
   </profile>
-</component>""").digest()
+</component>"""))
 
 const val PROFILE_DIR: String = "inspectionProfiles"
 const val PROFILES_SETTINGS: String = "profiles_settings.xml"
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "$PROFILE_DIR/profiles_settings.xml", exclusive = true))])
-open class ProjectInspectionProfileManager(override val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element>, ProjectBasedInspectionProfileManager, Disposable {
+open class ProjectInspectionProfileManager(final override val project: Project) : BaseInspectionProfileManager(project.messageBus),
+                                                                                  PersistentStateComponentWithModificationTracker<Element>,
+                                                                                  ProjectBasedInspectionProfileManager,
+                                                                                  Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectInspectionProfileManager {
-      return project.getService(InspectionProjectProfileManager::class.java) as ProjectInspectionProfileManager
+      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
     }
   }
 
@@ -52,7 +54,7 @@ open class ProjectInspectionProfileManager(override val project: Project) : Base
   override val schemeManager = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
-                              attributeProvider: Function<in String, String?>,
+                              attributeProvider: (String) -> String?,
                               isBundled: Boolean): InspectionProfileImpl {
       val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
       profile.isProjectLevel = true
@@ -61,8 +63,8 @@ open class ProjectInspectionProfileManager(override val project: Project) : Base
 
     override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, PROFILES_SETTINGS)
 
-    override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: ByteArray): Boolean {
-      return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest.contentEquals(defaultSchemeDigest)
+    override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: Long): Boolean {
+      return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest == defaultSchemeDigest
     }
 
     override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
@@ -207,7 +209,7 @@ open class ProjectInspectionProfileManager(override val project: Project) : Base
   @Synchronized
   fun useApplicationProfile(name: String) {
     state.useProjectProfile = false
-    // yes, we reuse the same field - useProjectProfile field will be used to distinguish - is it app or project level
+    // yes, we reuse the same field - useProjectProfile field will be used to distinguish - is an it app or project level
     // to avoid data format change
     state.projectProfile = name
   }

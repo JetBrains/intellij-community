@@ -52,7 +52,7 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
 
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
-                              attributeProvider: Function<in String, String?>,
+                              attributeProvider: (String) -> String?,
                               isBundled: Boolean): InspectionProfileImpl {
       return InspectionProfileImpl(name,
                                    InspectionToolRegistrar.getInstance(),

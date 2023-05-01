@@ -25,5 +25,6 @@
     <orderEntry type="library" name="Kryo5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="hash4j" level="project" />
   </component>
 </module>
