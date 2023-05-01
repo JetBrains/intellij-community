@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog
 import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode

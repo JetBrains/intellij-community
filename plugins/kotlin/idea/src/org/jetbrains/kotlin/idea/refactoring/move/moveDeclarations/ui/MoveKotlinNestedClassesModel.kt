@@ -9,10 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.move.MoveCallback
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
+import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MoveRefactoringDestination
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MovedEntity

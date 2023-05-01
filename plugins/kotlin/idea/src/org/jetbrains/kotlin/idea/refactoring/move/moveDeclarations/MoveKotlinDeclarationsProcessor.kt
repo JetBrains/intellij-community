@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.util.EditorHelper
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -14,7 +13,6 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
-import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler
 import com.intellij.refactoring.rename.RenameUtil
@@ -54,21 +52,6 @@ import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.keysToMap
 import kotlin.math.max
 import kotlin.math.min
-
-class MoveDeclarationsDescriptor @JvmOverloads constructor(
-  val project: Project,
-  val moveSource: KotlinMoveSource,
-  val moveTarget: KotlinMoveTarget,
-  val delegate: KotlinMoveDeclarationDelegate,
-  val searchInCommentsAndStrings: Boolean = true,
-  val searchInNonCode: Boolean = true,
-  val deleteSourceFiles: Boolean = false,
-  val moveCallback: MoveCallback? = null,
-  val openInEditor: Boolean = false,
-  val allElementsToMove: List<PsiElement>? = null,
-  val analyzeConflicts: Boolean = true,
-  val searchReferences: Boolean = true
-)
 
 private object ElementHashingStrategy : HashingStrategy<PsiElement> {
     override fun equals(e1: PsiElement?, e2: PsiElement?): Boolean {

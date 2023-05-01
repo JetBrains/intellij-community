@@ -18,11 +18,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsTransferableData.Companion.STUB_RENDERER
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
+import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getSourceRoot

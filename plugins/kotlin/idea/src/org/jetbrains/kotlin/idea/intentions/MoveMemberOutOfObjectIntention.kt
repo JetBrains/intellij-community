@@ -9,11 +9,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveDeclarationsDescriptor
+import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
