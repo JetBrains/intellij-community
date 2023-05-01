@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletio
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletionTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.debugger.test.*
+import org.jetbrains.kotlin.idea.debugger.test.AbstractBreakpointHighlightingTest
 import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractSequenceTraceTestCase
 import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractSequenceTraceWithIREvaluatorTestCase
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaToLibrarySourceTest
@@ -254,6 +255,16 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractPositionManagerTest> {
             model("positionManager", isRecursive = false, pattern = KT, testClassName = "SingleFile")
             model("positionManager", isRecursive = false, pattern = DIRECTORY, testClassName = "MultiFile")
+        }
+
+
+        listOf(AbstractBreakpointHighlightingTest::class,
+               AbstractIrBreakpointHighlightingTest::class,
+               AbstractIndyLambdaBreakpointHighlightingTest::class,
+               AbstractK1IdeK2CodeBreakpointHighlightingTest::class).forEach {
+            testClass(it) {
+                model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+            }
         }
 
         testClass<AbstractSmartStepIntoTest> {

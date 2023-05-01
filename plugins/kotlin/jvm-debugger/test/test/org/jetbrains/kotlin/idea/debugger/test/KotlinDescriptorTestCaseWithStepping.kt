@@ -233,8 +233,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
             val sourcePosition = PositionUtil.getSourcePosition(this)
             println(sourcePosition?.render() ?: "null", ProcessOutputTypes.SYSTEM)
+            extraPrintContext(this)
         }
     }
+
+    protected open fun extraPrintContext(context: SuspendContextImpl) {}
 
     private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int, ignoreFilters: Boolean) {
         val filters = createSmartStepIntoFilters()
