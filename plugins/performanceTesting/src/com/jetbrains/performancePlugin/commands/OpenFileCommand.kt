@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.sampullara.cli.Args
-import com.sampullara.cli.Argument
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
@@ -41,10 +40,6 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
         else -> project.guessProjectDir()?.findFileByRelativePath(filePath)
       }
     }
-
-    internal class Options(@field:Argument var timeout: Long = 0L,
-                           @field:Argument var suppressErrors: Boolean = false,
-                           @field:Argument(required = true) var file: String = "")
   }
 
   override fun getName(): String {
@@ -52,7 +47,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val myOptions = Options().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
+    val myOptions = OpenFileCommandOptions().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
     val filePath = myOptions.file
     val timeout = myOptions.timeout
     val suppressErrors = myOptions.suppressErrors
