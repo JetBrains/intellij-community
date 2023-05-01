@@ -44,7 +44,7 @@ class PyIdeCommonFragmentsBuilder : PyCommonFragmentsBuilder() {
       fragments.add(modulesFragment)
     }
 
-    val sdkComboBox = PySdkComboBox(true) { modulesComboBox?.selectedModule }
+    val sdkComboBox = PySdkComboBox(true) { if (modules.size > 1) modulesComboBox?.selectedModule else modules.firstOrNull() }
     val minimumSize = CommandLinePanel.setMinimumWidth(sdkComboBox, 400)
     sdkComboBox.preferredSize = minimumSize
     sdkComboBox.renderer = PySdkListCellRenderer()

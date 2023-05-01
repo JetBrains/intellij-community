@@ -25,6 +25,7 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     addContentSourceRoots(fragments)
 
     customizeFragments(fragments)
+    fragments.add(PyEditorExtensionFragment())
 
     fragments.add(LogsGroupFragment())
     return fragments
