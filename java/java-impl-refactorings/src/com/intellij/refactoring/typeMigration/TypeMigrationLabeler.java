@@ -419,6 +419,10 @@ public class TypeMigrationLabeler {
 
   void convertExpression(PsiExpression expr, PsiType toType, PsiType fromType, boolean isCovariantPosition) {
     final PsiMember member = expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).resolveMethod() : null;
+    convertExpression(expr, toType, fromType, isCovariantPosition, member);
+  }
+
+  private void convertExpression(PsiExpression expr, PsiType toType, PsiType fromType, boolean isCovariantPosition, PsiMember member) {
     final TypeConversionDescriptorBase conversion = myRules.findConversion(fromType, toType, member, expr, isCovariantPosition, this);
 
     if (conversion == null) {
@@ -952,7 +956,8 @@ public class TypeMigrationLabeler {
 
   void migrateMethodCallExpressions(PsiType migrationType, PsiParameter param, PsiClass psiClass) {
     boolean checkNumberOfArguments = false;
-    if (param.getType() instanceof PsiEllipsisType && !(migrationType instanceof PsiEllipsisType)) {
+    PsiType sourceType = param.getType();
+    if (sourceType instanceof PsiEllipsisType && !(migrationType instanceof PsiEllipsisType)) {
       checkNumberOfArguments = true;
     }
     final PsiType strippedType =
@@ -970,8 +975,14 @@ public class TypeMigrationLabeler {
         final PsiExpressionList argumentList = call.getArgumentList();
         if (argumentList != null) {
           final PsiExpression[] expressions = argumentList.getExpressions();
-          if (checkNumberOfArguments && parametersCount != expressions.length) {
-            markFailedConversion(migrationType, argumentList);
+          if (checkNumberOfArguments) {
+            if (migrationType instanceof PsiArrayType) {
+              convertExpression(expressions[index], migrationType, sourceType, false, method);
+              continue;
+            }
+            else if (parametersCount != expressions.length) {
+              markFailedConversion(migrationType, argumentList);
+            }
           }
           if (index > -1 && index < expressions.length) {
             for (int idx = index; idx < (param.isVarArgs() ? expressions.length : index + 1); idx++) {

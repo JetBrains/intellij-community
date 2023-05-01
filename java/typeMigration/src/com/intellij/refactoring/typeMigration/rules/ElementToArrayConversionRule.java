@@ -2,6 +2,7 @@
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
@@ -13,6 +14,9 @@ public class ElementToArrayConversionRule extends TypeConversionRule {
   @Override
   public TypeConversionDescriptorBase findConversion(PsiType from, PsiType to, PsiMember member, PsiExpression context,
                                                      TypeMigrationLabeler labeler) {
+    if (member != null && from instanceof PsiEllipsisType && to instanceof PsiArrayType && !(to instanceof PsiEllipsisType)) {
+      from = ((PsiEllipsisType)from).getComponentType();
+    }
     final int dimensions = to.getArrayDimensions() - from.getArrayDimensions();
     if (dimensions < 0) {
       final PsiExpression expression = unwrap(context, -dimensions);
@@ -39,17 +43,41 @@ public class ElementToArrayConversionRule extends TypeConversionRule {
       }
       componentType = TypeConversionUtil.erasure(componentType);
       if (componentType.isAssignableFrom(from)) {
-        PsiType finalComponentType = componentType;
+        final boolean vararg = member instanceof PsiMethod method && method.isVarArgs();
+        final PsiType finalComponentType = componentType;
         return new TypeConversionDescriptorBase() {
           @Override
           public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
-            String text = "{".repeat(dimensions) + context.getText() + "}".repeat(dimensions);
-            if (!(expression.getParent() instanceof PsiVariable variable && variable.getType().equals(finalComponentType))) {
+            String content = vararg ? getVarargText(expression) : expression.getText();
+            String text = "{".repeat(dimensions) + content + "}".repeat(dimensions);
+            PsiElement parent = expression.getParent();
+            if (!(parent instanceof PsiVariable variable && variable.getType().equals(finalComponentType))) {
               text = "new " + finalComponentType.getCanonicalText() + "[]".repeat(dimensions) + text;
             }
             PsiExpression newExpression =
               JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(text, expression);
-            return (PsiExpression)expression.replace(newExpression);
+            if (vararg) {
+              PsiElement last = expression;
+              PsiElement anchor = last.getNextSibling();
+              while (anchor != null && !PsiUtil.isJavaToken(anchor, JavaTokenType.RPARENTH)) {
+                last = anchor;
+                anchor = anchor.getNextSibling();
+              }
+              parent.deleteChildRange(expression, last);
+              return (PsiExpression)parent.add(newExpression);
+            }
+            else {
+              return (PsiExpression)expression.replace(newExpression);
+            }
+          }
+
+          private static String getVarargText(PsiElement element) {
+            final StringBuilder result = new StringBuilder();
+            while (element != null && !PsiUtil.isJavaToken(element, JavaTokenType.RPARENTH)) {
+              result.append(element.getText());
+              element = element.getNextSibling();
+            }
+            return result.toString();
           }
         };
       }

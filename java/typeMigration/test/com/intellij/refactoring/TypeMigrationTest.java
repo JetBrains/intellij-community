@@ -60,6 +60,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFirstParamType("doSomething", new PsiEllipsisType(myFactory.createTypeFromText("java.lang.CharSequence", null)));
   }
 
+  public void testVararg2Array() {
+    doTestFirstParamType("m", myFactory.createTypeFromText("Integer[]", null));
+  }
+
   public void testInt2Array() {
     doTestReturnType("x", "int[][]");
   }
