@@ -25,7 +25,7 @@ class LuxExportersProvider : OTelExportersProvider {
     fileToWrite?.let {
       return listOf(
         FilteredMetricsExporter(CsvGzippedMetricsExporter(fileToWrite)) { metric ->
-          metric.belongsToScope(LUX)
+          metric.belongsToScope(Lux)
         })
     }
     return emptyList()

@@ -3,22 +3,22 @@ package com.intellij.diagnostic.telemetry
 
 
 @JvmField
-val PLATFORM_METRICS = Scope("platform.metrics")
+val PlatformMetrics = Scope("platform.metrics")
 
 @JvmField
-val EDT = Scope("edt", PLATFORM_METRICS)
+val EDT = Scope("edt", PlatformMetrics)
 
 @JvmField
-val INDEXES = Scope("indexes", PLATFORM_METRICS)
+val Indexes = Scope("indexes", PlatformMetrics)
 
 @JvmField
-val STORAGE = Scope("storage", PLATFORM_METRICS)
+val Storage = Scope("storage", PlatformMetrics)
 
 @JvmField
-val VFS = Scope("vfs", PLATFORM_METRICS)
+val VFS = Scope("vfs", PlatformMetrics)
 
 @JvmField
-val JVM = Scope("jvm", PLATFORM_METRICS)
+val JVM = Scope("jvm", PlatformMetrics)
 
 @JvmField
-val COMPLETION_RANKING = Scope("completion.ranking.ml", PLATFORM_METRICS)
+val CompletionRanking = Scope("completion.ranking.ml", PlatformMetrics)

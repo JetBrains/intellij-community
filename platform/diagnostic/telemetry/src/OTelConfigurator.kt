@@ -51,7 +51,7 @@ class OTelConfigurator(private val mainScope: CoroutineScope,
   private fun defaultMetricsExportersRegistration() {
     metricsReportingPath ?: return
     metricsExporters.add(MetricsExporterEntry(listOf(FilteredMetricsExporter(CsvMetricsExporter(RollingFileSupplier(metricsReportingPath))) { metric ->
-      metric.belongsToScope(PLATFORM_METRICS)
+      metric.belongsToScope(PlatformMetrics)
     }), Duration.ofMinutes(1)))
     metricsExporters.add(MetricsExporterEntry(listOf(aggregatedMetricsExporter), Duration.ofSeconds(1)))
     registerMetricsExporter()

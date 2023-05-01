@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.performance
 
-import com.intellij.diagnostic.telemetry.COMPLETION_RANKING
+import com.intellij.diagnostic.telemetry.CompletionRanking
 import com.intellij.diagnostic.telemetry.TraceManager
 import io.opentelemetry.api.metrics.LongCounter
 import java.util.concurrent.ConcurrentHashMap
@@ -75,7 +75,7 @@ class MLCompletionPerformanceTracker {
   }
 
   private class OTelTracker : PerfTracker {
-    private val meter = TraceManager.getMeter(COMPLETION_RANKING)
+    private val meter = TraceManager.getMeter(CompletionRanking)
     private val key2counter: MutableMap<String, LongCounter> = mutableMapOf()
     override fun addByKey(key: String, timeMs: Long) {
       key2counter.computeIfAbsent(key) {

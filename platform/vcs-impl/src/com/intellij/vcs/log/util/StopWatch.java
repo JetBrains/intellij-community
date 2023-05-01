@@ -2,9 +2,11 @@
 package com.intellij.vcs.log.util;
 
 import com.intellij.diagnostic.telemetry.ScopesExtensionsKt;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,7 @@ public final class StopWatch {
   @NotNull private final Map<VirtualFile, Long> myDurationPerRoot;
 
   private StopWatch(@NotNull String operation) {
-    mySpan = ScopesExtensionsKt.tracer(STOP_WATCH_SCOPE).spanBuilder(operation).startSpan();
+    mySpan = ScopesExtensionsKt.tracer(StopWatchScope).spanBuilder(operation).startSpan();
     myOperation = operation;
     myStartTime = System.currentTimeMillis();
     myDurationPerRoot = new HashMap<>();

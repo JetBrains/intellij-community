@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.STORAGE;
+import static com.intellij.diagnostic.telemetry.PlatformScopesKt.Storage;
 
 /**
  * Store blobs, like {@link com.intellij.util.io.storage.AbstractStorage}, but tries to be faster:
@@ -1084,7 +1084,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TraceManager.getMeter(STORAGE);
+    final Meter meter = TraceManager.getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();
