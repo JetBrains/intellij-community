@@ -251,8 +251,8 @@ final class RefreshSessionImpl extends RefreshSession {
     mySemaphore.waitFor();
   }
 
-  boolean waitFor(long msTimeout) {
-    return mySemaphore.waitFor(msTimeout);
+  Semaphore getSemaphore() {
+    return mySemaphore;
   }
 
   @NotNull ModalityState getModality() {
