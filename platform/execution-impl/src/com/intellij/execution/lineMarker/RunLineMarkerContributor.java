@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Function;
 
 public abstract class RunLineMarkerContributor {
@@ -41,12 +43,10 @@ public abstract class RunLineMarkerContributor {
     }
 
     public Info(Icon icon, @Nullable com.intellij.util.Function<? super PsiElement, String> tooltipProvider, AnAction @NotNull ... actions) {
-      this.icon = icon;
-      this.actions = actions;
-      this.tooltipProvider = tooltipProvider == null ? null : it -> tooltipProvider.fun(it);
+      this(icon, actions, tooltipProvider == null ? null : it -> tooltipProvider.fun(it));
     }
 
-    public Info(@NotNull final AnAction action) {
+    public Info(@NotNull AnAction action) {
       this(action.getTemplatePresentation().getIcon(), new AnAction[]{action}, element -> getText(action, element));
     }
 
@@ -55,6 +55,19 @@ public abstract class RunLineMarkerContributor {
      */
     public boolean shouldReplace(@NotNull Info other) {
       return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(icon) + Arrays.hashCode(actions) + Objects.hashCode(tooltipProvider);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof Info info &&
+             Objects.equals(icon, info.icon)
+             && Arrays.equals(actions, info.actions)
+             && Objects.equals(tooltipProvider, info.tooltipProvider);
     }
   }
 
