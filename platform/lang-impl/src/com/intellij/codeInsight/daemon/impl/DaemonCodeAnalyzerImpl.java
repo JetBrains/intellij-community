@@ -417,6 +417,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
+          // give other threads a chance to do smth useful
+          if (System.currentTimeMillis() > start + 50) {
+            TimeoutUtil.sleep(10);
+          }
           EDT.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException((DaemonProgressIndicator)progress);
           if (savedException != null) throw savedException;
@@ -838,7 +842,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   public static @NotNull List<LineMarkerInfo<?>> getLineMarkers(@NotNull Document document, @NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     List<LineMarkerInfo<?>> result = new ArrayList<>();
     LineMarkersUtil.processLineMarkers(project, document, new TextRange(0, document.getTextLength()), -1,
                                        new CommonProcessors.CollectProcessor<>(result));

@@ -55,7 +55,6 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -791,7 +790,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     backspace();
 
-    Collection<String> changed = new ArrayList<>();
+    Collection<String> changed = Collections.synchronizedList(new ArrayList<>());
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
@@ -811,12 +810,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
         if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
-        EdtInvocationManager.invokeLaterIfNeeded(() -> {
-          List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-          if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) != null) {
-            changed.add(highlighter + ": \n" + reason);
-          } // else not line marker
-        });
+        List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+        if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) != null) {
+          changed.add(highlighter + ": \n" + reason);
+        } // else not line marker
       }
     });
 

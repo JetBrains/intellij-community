@@ -69,14 +69,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    try {
-      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, myMarkers, getId());
-      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-      FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.markFileUpToDate(myDocument, getId());
-    }
-    catch (IndexNotReadyException ignored) {
-    }
   }
 
   @Override
@@ -100,29 +92,33 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
            elements -> {
              Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
              List<LineMarkerProvider> providersList = new ArrayList<>(providers);
-
              queryProviders(
                elements.inside, root, providersList, (__, info) -> {
                  info.updatePass = passId;
                  lineMarkers.add(info);
-                 ApplicationManager.getApplication().invokeLater(() -> {
-                   if (isValid()) {
-                     LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
-                   }
-                 }, myProject.getDisposed());
+                 LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
                });
              queryProviders(elements.outside, root, providersList,
-                            (__, info) -> {
-                              info.updatePass = passId;
-                              lineMarkers.add(info);
-                            });
+               (__, info) -> {
+                 info.updatePass = passId;
+                 lineMarkers.add(info);
+               });
              return true;
            });
     }
 
-    myMarkers = mergeLineMarkers(lineMarkers, getDocument());
+    List<LineMarkerInfo<?>> markers = mergeLineMarkers(lineMarkers, getDocument());
+    myMarkers = markers;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("LineMarkersPass.doCollectInformation. lineMarkers: " + lineMarkers+"; merged: "+myMarkers);
+      LOG.debug("LineMarkersPass.doCollectInformation. lineMarkers: " + lineMarkers+"; merged: "+markers);
+    }
+    try {
+      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId());
+      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+      FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
+      fileStatusMap.markFileUpToDate(myDocument, getId());
+    }
+    catch (IndexNotReadyException ignored) {
     }
   }
 
@@ -172,9 +168,11 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (myMode != Mode.SLOW) {
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < elements.size(); i++) {
         PsiElement element = elements.get(i);
 
+        //noinspection ForLoopReplaceableByForEach
         for (int j = 0; j < providers.size(); j++) {
           ProgressManager.checkCanceled();
           LineMarkerProvider provider = providers.get(j);
@@ -208,6 +206,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     if (InjectionUtils.shouldCollectLineMarkersForInjectedFiles(myFile)) {
       Set<PsiFile> visitedInjectedFiles = new HashSet<>();
       // line markers for injected could be slow
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < elements.size(); i++) {
         PsiElement element = elements.get(i);
 
@@ -216,6 +215,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     }
 
     List<LineMarkerInfo<?>> slowLineMarkers = new NotNullList<>();
+    //noinspection ForLoopReplaceableByForEach
     for (int j = 0; j < providers.size(); j++) {
       ProgressManager.checkCanceled();
       LineMarkerProvider provider = providers.get(j);
@@ -231,6 +231,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       }
 
       if (!slowLineMarkers.isEmpty()) {
+        //noinspection ForLoopReplaceableByForEach
         for (int k = 0; k < slowLineMarkers.size(); k++) {
           LineMarkerInfo<?> slowInfo = slowLineMarkers.get(k);
           PsiElement element = slowInfo.getElement();
