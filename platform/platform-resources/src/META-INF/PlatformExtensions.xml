@@ -1457,7 +1457,9 @@
     <diagnostic.freezeProfiler implementation="com.intellij.diagnostic.opentelemetry.OTelMetricsFreezeProfiler"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
-
+    <registryKey key="llm.empty.intention.generation"
+                 defaultValue="false"
+                 description="Provides AI generated code for inspections without quick-fixes"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
