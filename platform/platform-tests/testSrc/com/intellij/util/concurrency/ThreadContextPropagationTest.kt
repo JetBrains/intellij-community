@@ -13,6 +13,7 @@ import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
@@ -115,14 +116,16 @@ class ThreadContextPropagationTest {
   }
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
-    return suspendCancellableCoroutine { continuation ->
-      val element = TestElement("element")
-       installThreadContext(element).use {                               // install context in calling thread
-        submit {                                                         // switch to another thread
-          val result: Result<Unit> = runCatching {
-            assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
+    val element = TestElement("element")
+    withContext(element) {
+      suspendCancellableCoroutine { continuation ->
+        blockingContext(continuation.context) {                            // install context in calling thread
+          submit {                                                         // switch to another thread
+            val result: Result<Unit> = runCatching {
+              assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
+            }
+            continuation.resumeWith(result)
           }
-          continuation.resumeWith(result)
         }
       }
     }
