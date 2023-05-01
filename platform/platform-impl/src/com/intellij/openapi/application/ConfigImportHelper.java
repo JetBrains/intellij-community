@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.idea.StartupErrorReporter;
+import com.intellij.openapi.application.migrations.BigDataToolsMigration;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -882,6 +883,11 @@ public final class ConfigImportHelper {
                                                      pluginsToDownload);
     }
 
+    migrateGlobalPlugins(newConfigDir,
+                         oldConfigDir,
+                         pluginsToMigrate,
+                         pluginsToDownload);
+
     pluginsToMigrate.removeIf(hasPendingUpdate);
     if (!pluginsToMigrate.isEmpty()) {
       migratePlugins(newPluginsDir, pluginsToMigrate, log);
@@ -894,6 +900,15 @@ public final class ConfigImportHelper {
       // migrating plugins for which we weren't able to download updates
       migratePlugins(newPluginsDir, pluginsToDownload, log);
     }
+  }
+
+  private static void migrateGlobalPlugins(@NotNull Path newConfigDir,
+                                           @NotNull Path oldConfigDir,
+                                           @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+                                           @NotNull List<IdeaPluginDescriptor> pluginsToDownload) {
+    String currentProductVersion = PluginManagerCore.getBuildNumber().asString();
+
+    BigDataToolsMigration.migratePlugins(currentProductVersion, newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
   }
 
   private static void partitionNonBundled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
