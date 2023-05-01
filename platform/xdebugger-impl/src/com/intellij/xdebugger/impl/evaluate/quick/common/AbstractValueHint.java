@@ -33,7 +33,9 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
@@ -232,7 +234,13 @@ public abstract class AbstractValueHint {
     myInsideShow = true;
     try {
       hideCurrentHint();
-      myCurrentHint = new LightweightHint(component) {
+
+      BorderLayoutPanel content = JBUI.Panels.simplePanel();
+      content.setBackground(component.getBackground());
+      content.setBorder(JBUI.Borders.empty(10));
+      content.addToCenter(component);
+
+      myCurrentHint = new LightweightHint(content) {
         @Override
         protected boolean canAutoHideOn(TooltipEvent event) {
           InputEvent inputEvent = event.getInputEvent();
@@ -246,6 +254,7 @@ public abstract class AbstractValueHint {
           return true;
         }
       };
+      myCurrentHint.setForceShowAsPopup(true);
       myCurrentHint.addHintListener(new HintListener() {
         @Override
         public void hintHidden(@NotNull EventObject event) {
