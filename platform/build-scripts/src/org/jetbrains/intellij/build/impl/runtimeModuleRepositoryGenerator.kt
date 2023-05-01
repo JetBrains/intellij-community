@@ -14,6 +14,8 @@ import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.exists
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
