@@ -59,14 +59,13 @@ import org.junit.Assert
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import java.io.File
-import java.io.File.pathSeparatorChar
 
-abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() {
+abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolders: Boolean = true) : KotlinMavenImportingTestCase() {
     protected val kotlinVersion = "1.1.3"
 
     override fun setUp() {
         super.setUp()
-        createStdProjectFolders()
+        if (createStdProjectFolders) createStdProjectFolders()
     }
 
     override fun tearDown() = runAll(

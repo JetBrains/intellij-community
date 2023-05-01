@@ -135,4 +135,21 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     if (null == values) return ArrayUtil.EMPTY_STRING_ARRAY;
     return Arrays.stream(values).filter(v -> null != v).toArray(String[]::new);
   }
+
+  protected void createStdProjectFolders() {
+    createStdProjectFolders("");
+  }
+
+  protected void createStdProjectFolders(String subdir) {
+    if (!subdir.isEmpty()) subdir += "/";
+    var folders = arrayOfNotNull(
+      subdir + "src/main/java",
+      subdir + "src/main/resources",
+      maven4orNull(subdir + "src/main/resources-filtered"),
+      subdir + "src/test/java",
+      subdir + "src/test/resources",
+      maven4orNull(subdir + "src/test/resources-filtered")
+    );
+    createProjectSubDirs(folders);
+  }
 }
