@@ -156,11 +156,12 @@ private fun vFileEventIterCheck(log: VfsLog) {
         is ReadResult.Invalid -> throw rec.cause
         is ReadResult.SingleOperation -> {
           singleOp++
-          rec.iter.copy().next() // read it
+          rec.iterator().next() // read it
         }
         is ReadResult.VFileEventRange -> {
           vfileEvents++
           rec.forEachContainedOperation {
+            check(it !is OperationReadResult.Invalid)
             vfileEventContentOps++
           }
         }

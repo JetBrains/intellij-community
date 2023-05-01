@@ -203,47 +203,52 @@ class OperationLogStorageImpl(
     storageIO.close()
   }
 
-  private inner class IteratorImpl private constructor(var iterPos: Long, var invalidationFlag: Boolean) : OperationLogStorage.Iterator {
+  private inner class IteratorImpl(
+    private var position: Long,
+    private var invalidationFlag: Boolean = false
+  ) : OperationLogStorage.Iterator {
     // [tag, previous operation, tag]  [tag, next operation, tag]
-    //                      iterPos --^
-
-    constructor(iterPos: Long) : this(iterPos, false)
+    //                      position --^
 
     override fun hasNext(): Boolean {
-      return iterPos < size() && !invalidationFlag
+      return position < size() && !invalidationFlag
     }
 
     override fun hasPrevious(): Boolean {
-      return iterPos > 0 && !invalidationFlag
+      return position > 0 && !invalidationFlag
     }
 
-    override fun next(): OperationReadResult = readAt(iterPos).alsoAdvance()
-    override fun nextFiltered(mask: VfsOperationTagsMask): OperationReadResult = readAtFiltered(iterPos, mask).alsoAdvance()
+    override fun next(): OperationReadResult = readAt(position).alsoAdvance()
+    override fun nextFiltered(mask: VfsOperationTagsMask): OperationReadResult = readAtFiltered(position, mask).alsoAdvance()
 
-    override fun previous(): OperationReadResult = readPreceding(iterPos).alsoRetreat()
-    override fun previousFiltered(mask: VfsOperationTagsMask): OperationReadResult = readPrecedingFiltered(iterPos, mask).alsoRetreat()
+    override fun previous(): OperationReadResult = readPreceding(position).alsoRetreat()
+    override fun previousFiltered(mask: VfsOperationTagsMask): OperationReadResult = readPrecedingFiltered(position, mask).alsoRetreat()
 
-    override fun copy(): IteratorImpl = IteratorImpl(iterPos, invalidationFlag)
-
-    override fun compareTo(other: OperationLogStorage.Iterator): Int {
-      other as IteratorImpl
-      return iterPos.compareTo(other.iterPos)
-    }
+    override fun copy(): IteratorImpl = IteratorImpl(position, invalidationFlag)
 
     private fun OperationReadResult.alsoAdvance() = this.also {
       when (this) {
-        is OperationReadResult.Valid -> iterPos += bytesForOperationDescriptor(operation.tag)
-        is OperationReadResult.Incomplete -> iterPos += bytesForOperationDescriptor(tag)
+        is OperationReadResult.Valid -> position += bytesForOperationDescriptor(operation.tag)
+        is OperationReadResult.Incomplete -> position += bytesForOperationDescriptor(tag)
         is OperationReadResult.Invalid -> invalidationFlag = true
       }
     }
 
     private fun OperationReadResult.alsoRetreat() = this.also {
       when (this) {
-        is OperationReadResult.Valid -> iterPos -= bytesForOperationDescriptor(operation.tag)
-        is OperationReadResult.Incomplete -> iterPos -= bytesForOperationDescriptor(tag)
+        is OperationReadResult.Valid -> position -= bytesForOperationDescriptor(operation.tag)
+        is OperationReadResult.Incomplete -> position -= bytesForOperationDescriptor(tag)
         is OperationReadResult.Invalid -> invalidationFlag = true
       }
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (other !is IteratorImpl) return false
+      return position == other.position
+    }
+
+    override fun hashCode(): Int {
+      return position.hashCode()
     }
   }
 }
