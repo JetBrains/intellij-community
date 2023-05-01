@@ -16,9 +16,17 @@ class SingleAlarm @JvmOverloads constructor(
     : this(task, delay, parentDisposable, ThreadToUse.SWING_THREAD, modalityState)
 
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
-    : this(task, delay, parentDisposable, threadToUse, if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.NON_MODAL else null)
+    : this(task = task,
+           delay = delay,
+           parentDisposable = parentDisposable,
+           threadToUse = threadToUse,
+           modalityState = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.NON_MODAL else null)
 
-  constructor(task: Runnable, delay: Int) : this(task, delay, null, ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL)
+  constructor(task: Runnable, delay: Int) : this(task = task,
+                                                 delay = delay,
+                                                 parentDisposable = null,
+                                                 threadToUse = ThreadToUse.SWING_THREAD,
+                                                 modalityState = ModalityState.NON_MODAL)
 
   init {
     if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {
@@ -58,7 +66,10 @@ class SingleAlarm @JvmOverloads constructor(
 
   companion object {
     fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
-      return SingleAlarm(Runnable(task), delay, ThreadToUse.POOLED_THREAD, parentDisposable)
+      return SingleAlarm(task = Runnable(task),
+                         delay = delay,
+                         threadToUse = ThreadToUse.POOLED_THREAD,
+                         parentDisposable = parentDisposable)
     }
   }
 }
