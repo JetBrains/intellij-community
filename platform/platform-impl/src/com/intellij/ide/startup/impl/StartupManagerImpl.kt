@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<StartupManagerImpl>()
-private val tracer by lazy { StartupManager.tracer() }
+private val tracer by lazy { TraceManager.getTracer(StartupManager) }
 
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5-seconds delay after project opening.

@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.telemetry
 
-import com.intellij.diagnostic.telemetry.otExporters.AggregatedMetricsExporter
-import com.intellij.diagnostic.telemetry.otExporters.AggregatedSpansProcessor
 import com.intellij.openapi.application.ApplicationInfo
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
@@ -49,7 +47,9 @@ object TraceManager {
    * @param verbose provides a way to disable by default some tracers.
    *    Such tracers will be created only if additional system property "verbose" is set to true.
    *
+   * This function is now obsolete. Please use type-safe alternative getTracer(Scope)
    */
+  @Obsolete
   @JvmOverloads
   fun getTracer(scopeName: String, verbose: Boolean = false): IJTracer {
     return wrapTracer(scopeName, sdk.getTracer(scopeName), verbose, verboseMode)
@@ -62,6 +62,10 @@ object TraceManager {
 
   @JvmStatic
   fun getMeter(scope: Scope): Meter = scope.meter()
+
+  @JvmStatic
+  @JvmOverloads
+  fun getTracer(scope: Scope, verbose: Boolean = false): IJTracer = scope.tracer(verbose)
 
   fun addSpansExporters(vararg exporters: AsyncSpanExporter) {
     oTelConfigurator?.let {

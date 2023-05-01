@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -52,7 +53,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static com.intellij.diagnostic.telemetry.ScopesExtensionsKt.tracer;
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
 import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
 import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
@@ -422,7 +422,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = tracer(VCS).spanBuilder("indexing").startSpan();
+      mySpan = TraceManager.getTracer(VCS).spanBuilder("indexing").startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 

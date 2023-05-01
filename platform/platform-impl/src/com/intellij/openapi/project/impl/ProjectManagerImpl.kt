@@ -9,7 +9,7 @@ import com.intellij.conversion.CannotConvertException
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.telemetry.tracer
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.openapi.util.ProjectManagerScope
 import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -921,7 +921,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 }
 
-private val tracer by lazy { ProjectManagerScope.tracer() }
+private val tracer by lazy { TraceManager.getTracer(ProjectManagerScope) }
 
 @NlsSafe
 private fun message(e: Throwable): String {

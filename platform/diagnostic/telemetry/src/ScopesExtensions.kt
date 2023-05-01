@@ -3,4 +3,4 @@ package com.intellij.diagnostic.telemetry
 
 
 fun Scope.meter() = TraceManager.getMeter(this.toString())
-fun Scope.tracer() = TraceManager.getTracer(this.toString())
+fun Scope.tracer(verbose: Boolean) = TraceManager.getTracer(this.toString(), verbose)

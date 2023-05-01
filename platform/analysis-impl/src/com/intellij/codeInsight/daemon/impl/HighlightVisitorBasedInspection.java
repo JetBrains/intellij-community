@@ -130,7 +130,7 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
 
     String fileName = file.getName();
     List<HighlightInfo> result = new ArrayList<>();
-    IJTracer tracer = TraceManager.INSTANCE.getTracer(HighlightVisitorScope.toString(), true);
+    IJTracer tracer = TraceManager.getTracer(HighlightVisitorScope, true);
 
     for (TextEditorHighlightingPass pass : gpasses) {
       runWithSpan(tracer, pass.getClass().getSimpleName(), span -> {

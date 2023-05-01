@@ -5,7 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
-import com.intellij.diagnostic.telemetry.ScopesExtensionsKt;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -350,7 +350,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @NotNull
   private synchronized Pair<List<LookupElement>, Integer> doArrangeItems(@NotNull LookupElementListPresenter lookup,
                                                                          boolean onExplicitAction) {
-    return computeWithSpan(ScopesExtensionsKt.tracer(CodeCompletion), "arrangeItems", span -> {
+    return computeWithSpan(TraceManager.getTracer(CodeCompletion), "arrangeItems", span -> {
       List<LookupElement> items = getMatchingItems();
       Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(items));
 

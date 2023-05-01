@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible
 
-import com.intellij.diagnostic.telemetry.tracer
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.vcs.log.data.util.VCS
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.diagnostic.Logger
@@ -49,7 +49,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val hashFilter = allFilters.get(VcsLogFilterCollection.HASH_FILTER)
     val filters = allFilters.without(VcsLogFilterCollection.HASH_FILTER)
 
-    VCS.tracer().spanBuilder("filter").useWithScope {
+    TraceManager.getTracer(VCS).spanBuilder("filter").useWithScope {
       if (hashFilter != null && !hashFilter.hashes.isEmpty()) { // hashes should be shown, no matter if they match other filters or not
         val hashFilterResult = applyHashFilter(dataPack, hashFilter, sortType, commitCount)
         if (hashFilterResult != null) {
