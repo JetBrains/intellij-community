@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.impl.PlatformJarNames.RUNTIME_MODULE_REPOSITORY_JAR
 import org.jetbrains.intellij.build.tasks.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_8_JAR
 import org.jetbrains.intellij.build.tasks.UTIL_JAR
@@ -220,7 +221,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
     layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
   }
-  addModule("platform-runtime-repository.jar", listOf("intellij.platform.runtime.repository"), productLayout = productLayout, layout = layout)
+  addModule(RUNTIME_MODULE_REPOSITORY_JAR, listOf("intellij.platform.runtime.repository"), productLayout = productLayout, layout = layout)
   addModule("jps-model.jar", listOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.serialization",
