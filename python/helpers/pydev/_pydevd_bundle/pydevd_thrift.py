@@ -465,8 +465,8 @@ def array_to_meta_thrift_struct(array, name, format):
     array_chunk.cols = cols
     array_chunk.format = "%" + format
     array_chunk.type = type
-    array_chunk.max = "%s" % bounds[1]
-    array_chunk.min = "%s" % bounds[0]
+    array_chunk.max = array_chunk.format % bounds[1]
+    array_chunk.min = array_chunk.format % bounds[0]
     return array, array_chunk, rows, cols, format
 
 
