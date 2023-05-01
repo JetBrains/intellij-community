@@ -169,12 +169,13 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   /**
-   * Switches on the PassThrough mode if this method is called during testing.
+   * Switches on the PassThrough mode if this method is called in unit test (i.e., when {@link Application#isUnitTestMode()} is true).
    * It is needed to support some old tests, which expect such behaviour.
-   *
+   * @deprecated use {@link #waitForAllExecuted(long, TimeUnit)} instead in tests
    * @return this instance for the sequential creation (the Builder pattern)
    */
   @ApiStatus.Internal
+  @Deprecated
   public final MergingUpdateQueue usePassThroughInUnitTestMode() {
     Application app = ApplicationManager.getApplication();
     if (app == null || app.isUnitTestMode()) myPassThrough = true;
