@@ -42,6 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -433,12 +434,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
 
     List<LocalInspectionToolWrapper> enabled = new ArrayList<>();
-    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(myProject);
+    Set<String> projectTypes = ProjectTypeService.getProjectTypeIds(myProject);
+    boolean isTests = ApplicationManager.getApplication().isUnitTestMode();
 
     for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();
 
-      if (!toolWrapper.isApplicable(projectTypes)) continue;
+      if (!isTests && !toolWrapper.isApplicable(projectTypes)) continue;
 
       if (toolWrapper instanceof LocalInspectionToolWrapper && !isAcceptableLocalTool((LocalInspectionToolWrapper)toolWrapper)) {
         continue;

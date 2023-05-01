@@ -8,6 +8,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="XML" applyToDialects="false" id="KotlinObjectExtensionRegistrationInspection"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="ERROR"
@@ -15,6 +16,7 @@
                      key="inspections.plugin.extension.registers.kotlin.object"/>
 
     <localInspection language="kotlin" id="KotlinObjectRegisteredAsExtensionInspection"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
@@ -22,6 +24,7 @@
                      key="inspections.plugin.kotlin.object.registered.as.extension"/>
 
     <localInspection language="kotlin" id="ForbiddenInSuspectContextMethodInspection"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
@@ -29,6 +32,7 @@
                      key="inspections.forbidden.method.in.suspend.context"/>
 
     <localInspection language="kotlin" id="CompanionObjectInExtensionInspection"
+                     projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="ERROR"
