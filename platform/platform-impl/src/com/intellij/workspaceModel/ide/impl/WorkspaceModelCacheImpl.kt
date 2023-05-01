@@ -4,29 +4,33 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.SingleAlarm
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(FlowPreview::class)
 @ApiStatus.Internal
-class WorkspaceModelCacheImpl(private val project: Project) : WorkspaceModelCache, Disposable {
+class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: CoroutineScope) : WorkspaceModelCache {
   override val enabled = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
-  private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(1000, this) { this.doCacheSaving() }
+  private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val cacheFile by lazy { initCacheFile() }
   private val unloadedEntitiesCacheFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve("unloaded-entities-cache.data") }
@@ -37,12 +41,22 @@ class WorkspaceModelCacheImpl(private val project: Project) : WorkspaceModelCach
     if (enabled) {
       LOG.debug("Project Model Cache at $cacheFile")
 
-      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      project.messageBus.connect(coroutineScope).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
           LOG.debug("Schedule cache update")
-          saveAlarm.request()
+          check(saveRequests.tryEmit(Unit))
         }
       })
+
+      coroutineScope.launch {
+        saveRequests
+          .debounce(1_000.milliseconds)
+          .collect {
+            withContext(Dispatchers.IO) {
+              doCacheSaving()
+            }
+          }
+      }
     }
   }
 
@@ -59,9 +73,8 @@ class WorkspaceModelCacheImpl(private val project: Project) : WorkspaceModelCach
     return project.getProjectDataPath(DATA_DIR_NAME).resolve("cache.data")
   }
 
-
+  @TestOnly
   override fun saveCacheNow() {
-    saveAlarm.cancel()
     doCacheSaving()
   }
 
@@ -100,7 +113,6 @@ class WorkspaceModelCacheImpl(private val project: Project) : WorkspaceModelCach
     return cacheSerializer.loadCacheFromFile(unloadedEntitiesCacheFile, invalidateCachesMarkerFile,
                                              invalidateProjectCacheMarkerFile)
   }
-  override fun dispose() = Unit
 
   private fun invalidateProjectCache() {
     LOG.info("Invalidating project model cache by creating $invalidateProjectCacheMarkerFile")
