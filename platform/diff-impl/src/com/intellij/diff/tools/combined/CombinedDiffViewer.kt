@@ -55,10 +55,10 @@ import kotlin.math.max
 class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataProvider {
   private val project = context.project!! // CombinedDiffContext expected
 
-  internal val contentPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false))
+  internal val blocksPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false))
 
   internal val scrollPane = JBScrollPane(
-    contentPanel,
+    blocksPanel,
     ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
   ).apply {
@@ -126,7 +126,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     val diffBlock = createDiffBlock(content, needBorder)
     val viewer = content.viewer
 
-    contentPanel.add(diffBlock.component)
+    blocksPanel.add(diffBlock.component)
     diffBlocks[blockId] = diffBlock
     diffViewers[blockId] = viewer
     diffBlocksPositions[blockId] = getDiffBlocksCount() - 1
@@ -145,7 +145,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     val blockId = diffBlock.id
     Disposer.register(diffBlock, Disposable {
       diffBlocks.remove(blockId)
-      contentPanel.remove(diffBlock.component)
+      blocksPanel.remove(diffBlock.component)
       diffViewers.remove(blockId)?.also(Disposer::dispose)
       diffBlocksPositions.remove(blockId)
     })
