@@ -16,7 +16,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,13 +24,6 @@ import java.util.StringJoiner;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final SwitchMigrationCase[] ourCases = new SwitchMigrationCase[]{
-    EnhancedSwitchBackwardMigrationInspection::inspectReturningSwitch,
-    EnhancedSwitchBackwardMigrationInspection::inspectVariableSavingSwitch,
-    EnhancedSwitchBackwardMigrationInspection::inspectSwitchStatement,
-    EnhancedSwitchBackwardMigrationInspection::inspectAssignmentSwitch,
-  };
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -60,10 +52,20 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   }
 
   private static Replacer findReplacer(@NotNull PsiSwitchBlock block) {
-    for (SwitchMigrationCase migrationCase : ourCases) {
-      Replacer replacer = migrationCase.suggestReplacer(block);
-      if (replacer != null) return replacer;
-    }
+    Replacer replacer;
+
+    replacer = inspectReturningSwitch(block);
+    if (replacer != null) return replacer;
+
+    replacer = inspectVariableSavingSwitch(block);
+    if (replacer != null) return replacer;
+
+    replacer = inspectSwitchStatement(block);
+    if (replacer != null) return replacer;
+
+    replacer = inspectAssignmentSwitch(block);
+    if (replacer != null) return replacer;
+
     return null;
   }
 
@@ -92,11 +94,6 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   private static Replacer inspectSwitchStatement(@NotNull PsiSwitchBlock switchBlock) {
     if (!(switchBlock instanceof PsiSwitchStatement)) return null;
     return new SwitchStatementReplacer();
-  }
-
-  private interface SwitchMigrationCase {
-    @Nullable
-    Replacer suggestReplacer(@NotNull PsiSwitchBlock switchBlock);
   }
 
   private interface Replacer {
