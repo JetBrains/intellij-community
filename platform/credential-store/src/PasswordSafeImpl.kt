@@ -20,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
@@ -27,8 +28,7 @@ import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
 
-abstract class BasePasswordSafe(private val cs: CoroutineScope) : PasswordSafe() {
-
+abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : PasswordSafe() {
   protected abstract val settings: PasswordSafeSettings
 
   override var isRememberPasswordByDefault: Boolean
@@ -77,7 +77,7 @@ abstract class BasePasswordSafe(private val cs: CoroutineScope) : PasswordSafe()
       else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey)
     }
 
-  // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
+  // it is a helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider: Lazy<CredentialStore> = lazy { InMemoryCredentialStore() }
 
   override val isMemoryOnly: Boolean
@@ -108,7 +108,7 @@ abstract class BasePasswordSafe(private val cs: CoroutineScope) : PasswordSafe()
   override fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
     if (memoryOnly) {
       memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
-      // remove to ensure that on getPassword we will not return some value from default provider
+      // remove to ensure that on getPassword we will not return some value from the default provider
       currentProvider.set(attributes, null)
     }
     else {
@@ -116,9 +116,9 @@ abstract class BasePasswordSafe(private val cs: CoroutineScope) : PasswordSafe()
     }
   }
 
-  // maybe in the future we will use native async, so, this method added here instead "if needed, just use runAsync in your code"
+  // maybe in the future we will use native async; this method added here instead "if needed, just use runAsync in your code"
   override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> {
-    return cs.async(Dispatchers.IO) {
+    return coroutineScope.async(Dispatchers.IO) {
       get(attributes)
     }.asCompletableFuture().asPromise()
   }
@@ -143,9 +143,11 @@ abstract class BasePasswordSafe(private val cs: CoroutineScope) : PasswordSafe()
   }
 }
 
+@TestOnly
 class TestPasswordSafeImpl @NonInjectable constructor(
   override val settings: PasswordSafeSettings
 ) : BasePasswordSafe(
+  @Suppress("DEPRECATION")
   ApplicationManager.getApplication().coroutineScope
 ) {
 
@@ -159,8 +161,8 @@ class TestPasswordSafeImpl @NonInjectable constructor(
   }
 }
 
-class PasswordSafeImpl(cs: CoroutineScope) : BasePasswordSafe(cs), SettingsSavingComponent {
-
+@Internal
+class PasswordSafeImpl(coroutineScope: CoroutineScope) : BasePasswordSafe(coroutineScope), SettingsSavingComponent {
   override val settings: PasswordSafeSettings
     get() = service<PasswordSafeSettings>()
 
@@ -263,4 +265,6 @@ fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
   return TestPasswordSafeImpl(settings, store)
 }
 
-private fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
+private fun CredentialAttributes.toPasswordStoreable(): CredentialAttributes {
+  return if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
+}
