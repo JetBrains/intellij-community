@@ -95,6 +95,9 @@ public class Menu extends MenuItem {
 
   public void setTitle(String label) {
     ensureNativePeer();
+    if (label == null)
+      label = "";
+    myTitle = label;
     nativeSetTitle(nativePeer, label, isInHierarchy);
   }
 
@@ -240,6 +243,18 @@ public class Menu extends MenuItem {
       else {
         invokeWithLWCToolkit(myOnOpen, () -> endFill(false/*already on AppKit thread*/), myComponent, true);
       }
+    }
+  }
+
+  public void menuWillOpen() {
+    // Called on AppKit when menu opening
+    if (!myIsOpened) {
+      // When user opens some menu at second time (without focus lost) apple doesn't call menuNeedsUpdate for
+      // this menu (but always calls menuWillOpen) and for all submenus. It causes problems like IDEA-319117.
+      // So detect this case and call menuNeedsUpdate() "manually".
+      // NOTE: unfortunately modifying menu here can cause unstable behaviour, see IDEA-315910.
+      Logger.getInstance(Menu.class).debug("menuNeedsUpdate wasn't called for '" + myTitle + "', will do it now");
+      menuNeedsUpdate();
     }
   }
 
