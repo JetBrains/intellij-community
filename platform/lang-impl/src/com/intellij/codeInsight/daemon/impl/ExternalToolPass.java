@@ -13,7 +13,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -127,7 +126,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         }
         Object collectedInfo = null;
         try {
-          collectedInfo = editor != null ? annotator.collectInformation(psiRoot, editor, errorFound) : annotator.collectInformation(psiRoot);
+          collectedInfo = editor == null ? annotator.collectInformation(psiRoot) : annotator.collectInformation(psiRoot, editor, errorFound);
         }
         catch (Throwable t) {
           processError(t, annotator, psiRoot);
@@ -140,6 +139,33 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         advanceProgress(1);
       }
     }
+
+    long modificationStampBefore = myDocument.getModificationStamp();
+    Update update = new Update(myFile) {
+      @Override
+      public void setRejected() {
+        super.setRejected();
+        doFinish(getHighlights());
+      }
+
+      @Override
+      public void run() {
+        if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+            // run annotators outside the read action because they could start OSProcessHandler
+            runChangeAware(myDocument, ExternalToolPass.this::doAnnotate);
+            ReadAction.run(() -> {
+              ProgressManager.checkCanceled();
+              if (!documentChanged(modificationStampBefore)) {
+                doApply();
+                doFinish(getHighlights());
+              }
+            });
+          });
+        }
+      }
+    };
+    ExternalAnnotatorManager.getInstance().queue(update);
   }
 
   @NotNull
@@ -160,33 +186,6 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   @Override
   protected void applyInformationWithProgress() {
-    long modificationStampBefore = myDocument.getModificationStamp();
-
-    Update update = new Update(myFile) {
-      @Override
-      public void setRejected() {
-        super.setRejected();
-        doFinish(getHighlights(), modificationStampBefore);
-      }
-
-      @Override
-      public void run() {
-        if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-            runChangeAware(myDocument, ExternalToolPass.this::doAnnotate);
-            ReadAction.run(() -> {
-              ProgressManager.checkCanceled();
-              if (!documentChanged(modificationStampBefore)) {
-                doApply();
-                doFinish(getHighlights(), modificationStampBefore);
-              }
-            });
-          });
-        }
-      }
-    };
-
-    ExternalAnnotatorManager.getInstance().queue(update);
   }
 
   private boolean documentChanged(long modificationStampBefore) {
@@ -235,18 +234,11 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     return infos;
   }
 
-  private void doFinish(@NotNull List<? extends HighlightInfo> highlights, long modificationStampBefore) {
-    Editor editor = getEditor();
-    ModalityState modalityState =
-      editor == null ? ModalityState.defaultModalityState() : ModalityState.stateForComponent(editor.getComponent());
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
-        int start = myRestrictRange.getStartOffset();
-        int end = myRestrictRange.getEndOffset();
-        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
-        DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
-      }
-    }, modalityState, __ -> !myFile.isValid());
+  private void doFinish(@NotNull List<? extends HighlightInfo> highlights) {
+    int start = myRestrictRange.getStartOffset();
+    int end = myRestrictRange.getEndOffset();
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
+    DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 
   private static void processError(@NotNull Throwable t, @NotNull ExternalAnnotator<?,?> annotator, @NotNull PsiFile root) {

@@ -292,6 +292,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             policy.waitForHighlighting(project, editor);
           }
           IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
+          try {
+            ExternalAnnotatorManager.getInstance().waitForAllExecuted(1, TimeUnit.MINUTES);
+          }
+          catch (ExecutionException | InterruptedException | TimeoutException e) {
+            throw new RuntimeException(e);
+          }
+          UIUtil.dispatchAllInvocationEvents();
           infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), null, project));
           if (readEditorMarkupModel) {
             MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
