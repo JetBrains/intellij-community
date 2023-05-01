@@ -77,5 +77,7 @@ class MessagePatternsExample {
 
     format = MessageFormat.format(PATTERN, <warning descr="Argument with index '0' is not used in the pattern">1</warning>); //warning
     System.out.println(format);
+
+    String abc = MessageFormat.format("{1}{2}{3}{65}",6, 5, 4, 3,<error descr="Expression expected">)</error>;
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -74,6 +75,12 @@ public class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspe
 
       private void checkIndexes(@NotNull PsiMethodCallExpression call,
                                 @NotNull List<MessageFormatUtil.MessageFormatPlaceholder> indexes) {
+        PsiExpression[] expressions = call.getArgumentList().getExpressions();
+        for (PsiExpression expression : expressions) {
+          if (expression == null || expression instanceof PsiEmptyExpressionImpl) {
+            return;
+          }
+        }
         int count = call.getArgumentList().getExpressionCount();
         int argumentNumber = count - 1;
         List<Integer> notFoundArguments = new ArrayList<>();
@@ -115,11 +122,9 @@ public class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspe
         }
 
         if (!notUsedArguments.isEmpty()) {
-          PsiExpression[] expressions = call.getArgumentList().getExpressions();
           for (Integer notUsedArgument : notUsedArguments) {
             int expressionIndex = notUsedArgument + 1;
             PsiExpression expression = expressions[expressionIndex];
-            if (expression == null) continue;
             holder.registerProblem(expression,
                                    InspectionGadgetsBundle.message("inspection.incorrect.message.format.not.used.argument",
                                                                    notUsedArgument));
@@ -169,7 +174,7 @@ public class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspe
         if (!immediatePattern) {
           Optional<MessageFormatUtil.MessageFormatError> toHighlight =
             result.errors().stream()
-              .filter(t-> t.errorType().getSeverity().ordinal() <= MessageFormatUtil.ErrorSeverity.WARNING.ordinal())
+              .filter(t -> t.errorType().getSeverity().ordinal() <= MessageFormatUtil.ErrorSeverity.WARNING.ordinal())
               .min(Comparator.comparing(t -> t.errorType().getSeverity()));
           if (toHighlight.isEmpty()) {
             return null;
