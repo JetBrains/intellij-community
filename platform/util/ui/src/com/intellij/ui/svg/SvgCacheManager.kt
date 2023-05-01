@@ -34,7 +34,7 @@ value class SvgCacheClassifier(internal val key: Int) {
   constructor(scale: Float, size: Int) : this((scale + (10_000 + size)).toBits())
 }
 
-fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v11.db")
+fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v12.db")
 
 fun getSvgIconCacheInvalidMarkerFile(file: Path): Path = file.parent.resolve("${file.fileName}.invalidated")
 
