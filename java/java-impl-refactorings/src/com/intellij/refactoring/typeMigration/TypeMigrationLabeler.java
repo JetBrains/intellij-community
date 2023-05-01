@@ -324,7 +324,7 @@ public class TypeMigrationLabeler {
       else if ((element instanceof PsiField || element instanceof PsiLocalVariable) &&
                isMultiVariableDeclaration((PsiVariable)element)) {
         final PsiTypeElement typeElement = ((PsiVariable)element).getTypeElement();
-        myVariableMigration.putValue(typeElement, usageInfo);
+        if (typeElement != null) myVariableMigration.putValue(typeElement, usageInfo);
       }
       else {
         TypeMigrationReplacementUtil.migrateMemberOrVariableType(element, project, getTypeEvaluator().getType(usageInfo));
@@ -581,7 +581,7 @@ public class TypeMigrationLabeler {
       return false;
     }
     final PsiElement resolved = Util.normalizeElement(element);
-    if (!canBeRoot(resolved, myRules.getSearchScope())) {
+    if (!canBeRoot(resolved, myRules.getSearchScope()) || resolved instanceof PsiEnumConstant) {
       return false;
     }
     final PsiType originalType = getElementType(resolved);
