@@ -1030,7 +1030,8 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
     List<PluginInfo> expectedList = new ArrayList<>();
     expectedList.addAll(defaultPlugins);
     expectedList.addAll(Arrays.asList(expected));
-    assertUnorderedElementsAreEqual(p(getMavenProject().getDeclaredPlugins()), expectedList);
+    List<PluginInfo> actualList = p(getMavenProject().getDeclaredPlugins());
+    assertUnorderedElementsAreEqual(actualList, expectedList);
   }
 
   private MavenPlugin findPlugin(String groupId, String artifactId) {
