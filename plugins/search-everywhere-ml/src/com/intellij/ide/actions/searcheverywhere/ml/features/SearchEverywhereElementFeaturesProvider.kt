@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.textMatching.PrefixMatchingType
 import com.intellij.textMatching.PrefixMatchingUtil
@@ -18,11 +19,13 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       = ExtensionPointName.create("com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider")
 
     fun getFeatureProviders(): List<SearchEverywhereElementFeaturesProvider> {
-      return EP_NAME.extensionList
+      return EP_NAME.extensionList.filter { getPluginInfo(it.javaClass).isDevelopedByJetBrains() }
     }
 
     fun getFeatureProvidersForContributor(contributorId: String): List<SearchEverywhereElementFeaturesProvider> {
-      return EP_NAME.extensionList.filter { it.isContributorSupported(contributorId) }
+      return EP_NAME.extensionList.filter {
+        getPluginInfo(it.javaClass).isDevelopedByJetBrains() && it.isContributorSupported(contributorId)
+      }
     }
 
     internal val NAME_LENGTH = EventFields.RoundedInt("nameLength")
