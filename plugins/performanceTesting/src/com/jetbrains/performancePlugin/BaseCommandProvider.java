@@ -82,7 +82,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(DebugRunConfigurationCommand.PREFIX, DebugRunConfigurationCommand::new),
       Map.entry(DebugStepCommand.PREFIX, DebugStepCommand::new),
       Map.entry(StopDebugProcessCommand.PREFIX, StopDebugProcessCommand::new),
-      Map.entry(WaitJpsBuildCommand.PREFIX, WaitJpsBuildCommand::new)
+      Map.entry(WaitJpsBuildCommand.PREFIX, WaitJpsBuildCommand::new),
+      Map.entry(WaitForFinishedCodeAnalysis.PREFIX, WaitForFinishedCodeAnalysis::new)
     );
   }
 }

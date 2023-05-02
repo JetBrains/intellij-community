@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -19,6 +20,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +28,8 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Command takes screenshot.
- * Takes JPG screenshot of current screen to specified file.
+ * Takes JPG screenshot of current screen to specified file
+ * (or if empty parameter is specified, the file will be stored under the LOG dir).
  * <p>
  * Syntax: %takeScreenshot <fullPathToFile>
  * Example: %takeScreenshot ./myScreenshot.jpg
@@ -42,7 +45,8 @@ public class TakeScreenshotCommand extends AbstractCommand {
   @Override
   public @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final AsyncPromise<Object> result = new AsyncPromise<>();
-    String fullPathToFile = extractCommandArgument(PREFIX);
+    String arguments = extractCommandArgument(PREFIX);
+    final String fullPathToFile = (!arguments.isEmpty()) ? arguments : Paths.get(PathManager.getLogPath()).resolve("screenshot_before_exit.png").toString();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       takeScreenshotOfFrame(fullPathToFile);
     });
