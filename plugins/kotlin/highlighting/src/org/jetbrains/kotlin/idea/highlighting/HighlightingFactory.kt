@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.highlighting
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
 internal object HighlightingFactory {
-    fun createInfoAnnotation(holder: AnnotationHolder, textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
+    fun createInfoAnnotation(holder: AnnotationHolder, textRange: TextRange, @NlsSafe message: String?, textAttributes: TextAttributesKey?) {
         val builder =
             if (message == null) holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
             else holder.newAnnotation(HighlightSeverity.INFORMATION, message)
