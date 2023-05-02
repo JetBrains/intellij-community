@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.util.childScope
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
-import com.intellij.vcs.log.ui.actions.ResumeIndexingAction
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
 import java.util.concurrent.atomic.AtomicBoolean
@@ -83,14 +82,14 @@ internal class IdleVcsLogIndexer(private val project: Project,
       startIndexJob = launch("Start VCS log indexing on IDE idle", idleDelayValue.asInteger().minutes) {
         if (isIndexingPaused(index)) {
           VcsLogUsageTriggerCollector.idleIndexerTriggered(project)
-          ResumeIndexingAction.toggleIndexing(index.indexingRoots, index)
+          toggleIndexing(index.indexingRoots, index)
           indexingResumed = true
         }
       }
 
       stopIndexJob = launch("Stop VCS log indexing on IDE active", 100.milliseconds) {
         if (indexingResumed) {
-          ResumeIndexingAction.toggleIndexing(index.indexingRoots, index)
+          toggleIndexing(index.indexingRoots, index)
           indexingResumed = false
         }
       }

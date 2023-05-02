@@ -9,8 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogIndex
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.toggleIndexing
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
@@ -67,21 +67,6 @@ class ResumeIndexingAction : DumbAwareAction() {
   }
 
   companion object {
-    /**
-     * Resume Log indexing if paused or pause indexing if indexing is in progress.
-     */
-    internal fun toggleIndexing(rootsForIndexing: Set<VirtualFile>, index: VcsLogIndex) {
-      if (rootsForIndexing.any { it.isScheduledForIndexing(index) }) {
-        rootsForIndexing.filter { !it.isBig() }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
-      }
-      else {
-        var resumed = false
-        for (root in rootsForIndexing.filter { it.isBig() }) {
-          resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
-        }
-        if (resumed) (index as? VcsLogModifiableIndex)?.scheduleIndex(false)
-      }
-    }
     internal fun VirtualFile.isBig(): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(this)
     internal fun VirtualFile.isScheduledForIndexing(index: VcsLogIndex): Boolean = index.isIndexingEnabled(this) &&
                                                                                   !index.isIndexed(this)
