@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.hashToHexString
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.ApiStatus
@@ -57,7 +58,7 @@ class KotlinCompilationErrorProcessedFilesTimeStampRecorder :
 
     fun keepOnlyIfHourPassedAndRecordTimestamps(vFile: VirtualFile, compilationErrorIds: List<String>): List<String> {
         if (compilationErrorIds.isEmpty()) return emptyList()
-        val hash = vFile.pathMd5Hash()
+        val hash = pathMd5Hash(vFile)
         lock.write {
             val currentTime = System.currentTimeMillis()
             val result = compilationErrorIds.asSequence()
@@ -85,11 +86,11 @@ class KotlinCompilationErrorProcessedFilesTimeStampRecorder :
     private fun dropOutdatedTimestamps(currentTime: Long = System.currentTimeMillis()): Boolean =
         state.timestamps.values.removeIf { currentTime.isHourPassedSince(it) }
 
-    private fun VirtualFile.pathMd5Hash(): String = DigestUtil.md5Hex(path.encodeToByteArray())
-
     companion object {
         fun getInstance(project: Project): KotlinCompilationErrorProcessedFilesTimeStampRecorder = project.service()
     }
 }
+
+private fun pathMd5Hash(virtualFile: VirtualFile): String = hashToHexString(virtualFile.path, DigestUtil.md5())
 
 private fun Long.isHourPassedSince(lastTime: Long): Boolean = TimeUnit.MILLISECONDS.toHours(this - lastTime) >= 1

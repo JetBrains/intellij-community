@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("FunctionName")
+
 package com.intellij.util.io
 
 import java.io.IOException
@@ -10,7 +12,6 @@ import java.security.Provider
 import java.security.SecureRandom
 import kotlin.io.path.inputStream
 
-@Suppress("FunctionName")
 object DigestUtil {
   @JvmStatic
   val random: SecureRandom by lazy { SecureRandom() }
@@ -30,9 +31,6 @@ object DigestUtil {
   @JvmStatic
   fun sha256(): MessageDigest = cloneDigest(sha256)
   private val sha256 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-256") }
-
-  fun sha3_224(): MessageDigest = cloneDigest(sha3_224)
-  fun sha3_512(): MessageDigest = cloneDigest(sha3_512)
 
   @JvmStatic
   fun sha512(): MessageDigest = cloneDigest(sha512)
@@ -60,10 +58,10 @@ object DigestUtil {
   }
 
   @JvmStatic
-  fun sha1Hex(input: ByteArray): String = bytesToHex(sha1().digest(input))
+  fun sha1Hex(input: ByteArray): String = hashToHexString(input, sha1())
 
   @JvmStatic
-  fun md5Hex(input: ByteArray): String = bytesToHex(md5().digest(input))
+  fun hash(input: ByteArray, digest: MessageDigest): ByteArray = digest.digest(input)
 
   @JvmStatic
   @JvmOverloads
@@ -96,14 +94,25 @@ object DigestUtil {
   }
 }
 
+fun hashToHexString(input: ByteArray, digest: MessageDigest): String = bytesToHex(digest.digest(input))
+
+fun hashToHexString(input: String, digest: MessageDigest): String = bytesToHex(digest.digest(input.toByteArray()))
+
 private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
 
 private val sha3_224: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-224") }
+private val sha3_256: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-256") }
 private val sha3_512: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-512") }
 
 private fun getMessageDigest(algorithm: String): MessageDigest {
   return MessageDigest.getInstance(algorithm, sunSecurityProvider)
 }
+
+fun sha3_224(): MessageDigest = cloneDigest(sha3_224)
+
+fun sha3_256(): MessageDigest = cloneDigest(sha3_256)
+
+fun sha3_512(): MessageDigest = cloneDigest(sha3_512)
 
 /**
  * Digest cloning is faster than requesting a new one from [MessageDigest.getInstance].

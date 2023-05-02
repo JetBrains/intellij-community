@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.DigestUtil;
+import com.intellij.util.io.DigestUtilKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -32,6 +32,8 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.intellij.util.io.DigestUtilKt.sha3_256;
 
 /**
  * The central piece of our SSL support - special kind of trust manager, that asks user to confirm
@@ -118,7 +120,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     for (X509Certificate certificate : certificates) {
       ks.setCertificateEntry(
         certificate.getSubjectX500Principal().toString() + "-" +
-        DigestUtil.sha256Hex(certificate.getEncoded()), certificate);
+        DigestUtilKt.hashToHexString(certificate.getEncoded(), sha3_256()), certificate);
     }
 
     TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -248,8 +250,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     boolean accepted = false;
     if (parameters.myAskUser) {
 
-      String acceptLogMessage = "Going to ask user about certificate for: " + endPoint.getSubjectDN().toString() +
-                       ", issuer: " + endPoint.getIssuerDN().toString();
+      String acceptLogMessage = "Going to ask user about certificate for: " + endPoint.getSubjectX500Principal().toString() +
+                       ", issuer: " + endPoint.getIssuerX500Principal().toString();
       if (parameters.myAskOrRejectReason != null) {
         acceptLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
@@ -260,8 +262,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       });
     }
     else {
-      String rejectLogMessage = "Didn't show certificate dialog for: " + endPoint.getSubjectDN().toString() +
-                       ", issuer: " + endPoint.getIssuerDN().toString();
+      String rejectLogMessage = "Didn't show certificate dialog for: " + endPoint.getSubjectX500Principal().toString() +
+                       ", issuer: " + endPoint.getIssuerX500Principal().toString();
       if (parameters.myAskOrRejectReason != null) {
         rejectLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
@@ -389,7 +391,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         }
         myKeyStore.setCertificateEntry(createAlias(certificate), certificate);
         flushKeyStore();
-        LOG.info("Added certificate for '" + certificate.getSubjectDN().toString() + "' to " + myPath);
+        LOG.info("Added certificate for '" + certificate.getSubjectX500Principal().toString() + "' to " + myPath);
         // trust manager should be updated each time its key store was modified
         myTrustManager = initFactoryAndGetManager();
         myDispatcher.getMulticaster().certificateAdded(certificate);

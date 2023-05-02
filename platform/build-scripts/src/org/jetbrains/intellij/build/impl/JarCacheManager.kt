@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.sha3_224
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -78,8 +78,8 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheMa
     }
 
     // 224 bit and not 256/512 - use a slightly shorter filename
-    // xxh3 is not used as it is not secure and moreover better to stick to JDK API
-    val hash = DigestUtil.sha3_224()
+    // xxh3 is not used as it is not secure and moreover, better to stick to JDK API
+    val hash = sha3_224()
     for (string in sourceToRelativePath.keys) {
       hash.update(string.encodeToByteArray())
       hash.update('-'.code.toByte())
