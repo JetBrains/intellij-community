@@ -13,18 +13,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.ClientProperty;
 import com.intellij.ui.DirtyUI;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static com.intellij.ide.actions.SelectInContextImpl.CONTEXT_EDITOR_PROVIDER_KEY;
 
 public final class SelectInAction extends DumbAwareAction implements PerformWithDocumentsCommitted {
 
@@ -36,17 +32,8 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     SelectInContext context = SelectInContextImpl.createContext(e);
-    final SelectInContext editorContext = createEditorContext(e);
     if (context == null) return;
-    invoke(e.getDataContext(), context, editorContext);
-  }
-
-  @Nullable
-  private static SelectInContext createEditorContext(@NotNull AnActionEvent e) {
-    final var contextComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    final var contextEditorProvider = contextComponent == null ? null: ClientProperty.get(contextComponent, CONTEXT_EDITOR_PROVIDER_KEY);
-    final var providedEditor = contextEditorProvider == null ? null : contextEditorProvider.getContextEditor(e);
-    return providedEditor == null ? null : SelectInContextImpl.createContext(e, providedEditor);
+    invoke(e.getDataContext(), context);
   }
 
   @Override
@@ -61,25 +48,20 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     }
   }
 
-  private static void invoke(@NotNull DataContext dataContext, @NotNull SelectInContext context, @Nullable SelectInContext editorContext) {
+  private static void invoke(@NotNull DataContext dataContext, @NotNull SelectInContext context) {
     List<SelectInTarget> targetVector = SelectInManager.getInstance(context.getProject()).getTargetList();
     ListPopup popup;
     if (Registry.is("ide.selectIn.experimental.popup", true)) {
-      popup = createActionPopup(dataContext, context, editorContext, targetVector);
+      popup = createActionPopup(dataContext, context, targetVector);
     }
     else {
-      popup = createLegacyPopup(dataContext, context, editorContext, targetVector);
+      popup = createLegacyPopup(dataContext, context, targetVector);
     }
     popup.showInBestPositionFor(dataContext);
   }
 
   @NotNull
-  private static ListPopup createLegacyPopup(
-    @NotNull DataContext dataContext,
-    @NotNull SelectInContext context,
-    @Nullable SelectInContext editorContext,
-    List<SelectInTarget> targetVector
-  ) {
+  private static ListPopup createLegacyPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
     ListPopup popup;
     if (targetVector.isEmpty()) {
       DefaultActionGroup group = new DefaultActionGroup();
@@ -88,18 +70,13 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
                                                                   JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
     }
     else {
-      popup = JBPopupFactory.getInstance().createListPopup(new SelectInActionsStep(targetVector, context, editorContext));
+      popup = JBPopupFactory.getInstance().createListPopup(new SelectInActionsStep(targetVector, context));
     }
     return popup;
   }
 
   @NotNull
-  private static ListPopup createActionPopup(
-    @NotNull DataContext dataContext,
-    @NotNull SelectInContext context,
-    @Nullable SelectInContext editorContext,
-    List<SelectInTarget> targetVector
-  ) {
+  private static ListPopup createActionPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
     DefaultActionGroup group = new DefaultActionGroup();
     if (targetVector.isEmpty()) {
       group.add(new NoTargetsAction());
@@ -107,7 +84,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     else {
       for (int i = 0; i < targetVector.size(); i++) {
         SelectInTarget target = targetVector.get(i);
-        group.add(SelectInTargetActionKt.createSelectInTargetAction(target, context, editorContext));
+        group.add(SelectInTargetActionKt.createSelectInTargetAction(target, context));
       }
     }
     return JBPopupFactory.getInstance().createActionGroupPopup(
@@ -120,18 +97,12 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
   }
 
   private static final class SelectInActionsStep extends BaseListPopupStep<SelectInTarget> {
-    private final @NotNull SelectInContext mySelectInContext;
-    private final @Nullable SelectInContext myEditorContext;
+    private final SelectInContext mySelectInContext;
     private final List<SelectInTarget> myVisibleTargets;
 
-    SelectInActionsStep(
-      @NotNull Collection<SelectInTarget> targetVector,
-      @NotNull SelectInContext selectInContext,
-      @Nullable SelectInContext editorContext
-    ) {
+    SelectInActionsStep(@NotNull Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
       myVisibleTargets = new ArrayList<>(targetVector);
-      myEditorContext = editorContext;
       List<Icon> icons = fillInIcons(targetVector, selectInContext);
       init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, icons);
     }
@@ -169,17 +140,14 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
       if (finalChoice) {
         PsiDocumentManager.getInstance(mySelectInContext.getProject()).commitAllDocuments();
-        var context = myEditorContext != null && target instanceof SelectInTargetPreferringEditorContext
-                      ? myEditorContext
-                      : mySelectInContext;
-        target.selectIn(context, true);
+        target.selectIn(mySelectInContext, true);
         return FINAL_CHOICE;
       }
       if (target instanceof CompositeSelectInTarget) {
         final ArrayList<SelectInTarget> subTargets = new ArrayList<>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
         if (subTargets.size() > 0) {
           subTargets.sort(new SelectInManager.SelectInTargetComparator());
-          return new SelectInActionsStep(subTargets, mySelectInContext, myEditorContext);
+          return new SelectInActionsStep(subTargets, mySelectInContext);
         }
       }
       return FINAL_CHOICE;

@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.ui.ClientProperty;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -51,19 +52,19 @@ public final class SelectInContextImpl extends FileSelectInContext {
 
   @Nullable
   public static SelectInContext createContext(AnActionEvent event) {
-    return createContext(event, null);
-  }
-
-  @Nullable
-  static SelectInContext createContext(AnActionEvent event, @Nullable FileEditor providedEditor) {
     SelectInContext result = event.getData(SelectInContext.DATA_KEY);
     if (result != null) {
       return result;
     }
 
     Project project = event.getProject();
-    FileEditor editor = providedEditor;
-    if (editor == null) {
+    FileEditor editor;
+    final var contextComponent = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    final var contextEditorProvider = ClientProperty.get(contextComponent, CONTEXT_EDITOR_PROVIDER_KEY);
+    if (contextEditorProvider != null) {
+      editor = contextEditorProvider.getContextEditor(event);
+    }
+    else {
       editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
     }
 
