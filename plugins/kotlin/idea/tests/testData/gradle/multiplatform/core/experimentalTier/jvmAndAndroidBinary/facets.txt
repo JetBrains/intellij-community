@@ -8,7 +8,6 @@ project.consumer.androidTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    dependsOnModuleNames = :consumer:commonTest
     targetPlatform = JVM (17)
 
 project.consumer.commonMain
@@ -74,7 +73,6 @@ project.producer.androidTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    dependsOnModuleNames = :producer:commonTest
     targetPlatform = JVM (17)
 
 project.producer.commonMain

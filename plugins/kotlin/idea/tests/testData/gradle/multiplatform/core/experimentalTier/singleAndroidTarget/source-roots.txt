@@ -2,11 +2,12 @@ MODULES
 project
 
 project.androidTest
-    src/androidAndroidTest/kotlin (Java, Test)
-    src/androidAndroidTestDebug/kotlin (Java, Test)
-    src/androidDebugAndroidTest/kotlin (Java, Test)
+    src/androidInstrumentedTest/kotlin (Java, Test)
+    src/androidInstrumentedTestDebug/kotlin (Java, Test)
     src/androidTest/java (Java, Test)
+    src/androidTest/kotlin (Java, Test)
     src/androidTestDebug/java (Java, Test)
+    src/androidTestDebug/kotlin (Java, Test)
 
 project.main
     src/androidDebug/kotlin (Java)
@@ -18,9 +19,8 @@ project.main
     src/main/kotlin (Java)
 
 project.unitTest
-    src/androidDebugUnitTest/kotlin (Java, Test)
-    src/androidTest/kotlin (Java, Test)
-    src/androidTestDebug/kotlin (Java, Test)
+    src/androidUnitTest/kotlin (Java, Test)
+    src/androidUnitTestDebug/kotlin (Java, Test)
     src/commonTest/kotlin (Java, Test)
     src/test/java (Java, Test)
     src/test/kotlin (Java, Test)

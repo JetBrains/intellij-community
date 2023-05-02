@@ -4,11 +4,12 @@ project
 project.consumer
 
 project.consumer.androidTest
-    consumer/src/androidAndroidTest/kotlin (Java, Test)
-    consumer/src/androidAndroidTestDebug/kotlin (Java, Test)
-    consumer/src/androidDebugAndroidTest/kotlin (Java, Test)
+    consumer/src/androidInstrumentedTest/kotlin (Java, Test)
+    consumer/src/androidInstrumentedTestDebug/kotlin (Java, Test)
     consumer/src/androidTest/java (Java, Test)
+    consumer/src/androidTest/kotlin (Java, Test)
     consumer/src/androidTestDebug/java (Java, Test)
+    consumer/src/androidTestDebug/kotlin (Java, Test)
 
 project.consumer.commonMain
     consumer/src/commonMain/kotlin (Java)
@@ -34,9 +35,8 @@ project.consumer.main
     consumer/src/main/kotlin (Java)
 
 project.consumer.unitTest
-    consumer/src/androidDebugUnitTest/kotlin (Java, Test)
-    consumer/src/androidTest/kotlin (Java, Test)
-    consumer/src/androidTestDebug/kotlin (Java, Test)
+    consumer/src/androidUnitTest/kotlin (Java, Test)
+    consumer/src/androidUnitTestDebug/kotlin (Java, Test)
     consumer/src/test/java (Java, Test)
     consumer/src/test/kotlin (Java, Test)
     consumer/src/testDebug/java (Java, Test)
@@ -45,11 +45,12 @@ project.consumer.unitTest
 project.producer
 
 project.producer.androidTest
-    producer/src/androidAndroidTest/kotlin (Java, Test)
-    producer/src/androidAndroidTestDebug/kotlin (Java, Test)
-    producer/src/androidDebugAndroidTest/kotlin (Java, Test)
+    producer/src/androidInstrumentedTest/kotlin (Java, Test)
+    producer/src/androidInstrumentedTestDebug/kotlin (Java, Test)
     producer/src/androidTest/java (Java, Test)
+    producer/src/androidTest/kotlin (Java, Test)
     producer/src/androidTestDebug/java (Java, Test)
+    producer/src/androidTestDebug/kotlin (Java, Test)
 
 project.producer.commonMain
     producer/src/commonMain/kotlin (Java)
@@ -75,9 +76,8 @@ project.producer.main
     producer/src/main/kotlin (Java)
 
 project.producer.unitTest
-    producer/src/androidDebugUnitTest/kotlin (Java, Test)
-    producer/src/androidTest/kotlin (Java, Test)
-    producer/src/androidTestDebug/kotlin (Java, Test)
+    producer/src/androidUnitTest/kotlin (Java, Test)
+    producer/src/androidUnitTestDebug/kotlin (Java, Test)
     producer/src/test/java (Java, Test)
     producer/src/test/kotlin (Java, Test)
     producer/src/testDebug/java (Java, Test)
