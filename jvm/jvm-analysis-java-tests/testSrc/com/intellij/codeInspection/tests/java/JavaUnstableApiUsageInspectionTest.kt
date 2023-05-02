@@ -319,7 +319,7 @@ class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() 
   fun `test scheduled for removal fix`() {
     inspection.myIgnoreInsideImports = false
     inspection.myIgnoreApiDeclaredInThisProject = false
-    myFixture.testQuickFixWithPreview(JvmLanguage.JAVA, hint = "Replace method call with 'X.bar()'", before = """
+    myFixture.testQuickFix(JvmLanguage.JAVA, before = """
       package org.jetbrains.annotations;
 
       final class ApiStatus {
@@ -361,6 +361,6 @@ class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() 
           X.bar();
         }
       }
-    """.trimIndent())
+    """.trimIndent(), hint = "Replace method call with 'X.bar()'", testPreview = true)
   }
 }
