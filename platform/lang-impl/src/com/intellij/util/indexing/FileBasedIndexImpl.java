@@ -4,7 +4,7 @@ package com.intellij.util.indexing;
 import com.google.common.collect.Iterators;
 import com.intellij.AppTopics;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.model.ModelBranch;
@@ -109,7 +109,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.Indexes;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 import static com.intellij.util.MathUtil.clamp;
 import static com.intellij.util.indexing.IndexingFlag.cleanProcessingFlag;
 import static com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag;
@@ -2303,7 +2303,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       super("IndexesFlusher",
             scheduler, FLUSHING_PERIOD_MS,
             MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
-            TraceManager.getMeter(Indexes)
+            TelemetryTracer.getMeter(Indexes)
       );
     }
 

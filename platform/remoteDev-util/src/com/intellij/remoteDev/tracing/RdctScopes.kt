@@ -1,6 +1,6 @@
 package com.intellij.remoteDev.tracing
 
-import com.intellij.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
 val RDCT = Scope("rdct")

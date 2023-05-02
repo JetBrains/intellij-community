@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.util.text.NameUtilCore
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes

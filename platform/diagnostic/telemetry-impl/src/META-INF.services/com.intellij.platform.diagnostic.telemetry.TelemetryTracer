@@ -1,0 +1,4 @@
+# Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+# TODO: For some reason service loading doesn't work for here. Need to investigate.
+# ./community/jps/model-impl/src/META-INF/services/com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+com.intellij.platform.diagnostic.telemetry.impl.TraceManager

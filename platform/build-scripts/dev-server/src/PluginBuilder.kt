@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
@@ -89,7 +89,7 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
-    runWithSpan(TraceManager.getTracer(VCS), "checkout", (span) -> {
+    runWithSpan(TelemetryTracer.Companion.getInstance().getTracer(VCS), "checkout", (span) -> {
       StructuredIdeActivity checkoutActivity = CHECKOUT_ACTIVITY.started(myProject, () -> List.of(
         IS_BRANCH_PROTECTED.with(isBranchProtected()),
         IS_NEW_BRANCH.with(myNewBranch != null)

@@ -2,7 +2,7 @@
 package com.intellij.diagnostic.opentelemetry
 
 import com.intellij.diagnostic.FreezeProfiler
-import com.intellij.diagnostic.telemetry.OpenTelemetryUtils
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger

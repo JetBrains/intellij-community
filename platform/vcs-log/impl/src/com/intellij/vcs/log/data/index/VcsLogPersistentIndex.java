@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -432,7 +432,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TraceManager.getTracer(VCS).spanBuilder("indexing").startSpan();
+      mySpan = TelemetryTracer.Companion.getInstance().getTracer(VCS).spanBuilder("indexing").startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 

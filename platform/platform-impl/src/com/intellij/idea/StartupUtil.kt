@@ -6,7 +6,7 @@ package com.intellij.idea
 import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -209,7 +209,7 @@ ${dumpCoroutines(stripDump = false)}
   val telemetryInitJob = async {
     appInfoDeferred.join()
     runActivity("opentelemetry configuration") {
-      TraceManager.init(mainScope, ApplicationInfoImpl.getShadowInstance(), true)
+      TelemetryTracer.getInstance()
     }
   }
 

@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
-import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span

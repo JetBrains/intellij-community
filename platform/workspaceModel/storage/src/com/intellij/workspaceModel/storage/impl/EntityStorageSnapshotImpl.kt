@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.platform.diagnostic.telemetry.JPS
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -935,7 +936,7 @@ internal class MutableEntityStorageImpl(
     init {
       // See also [org.jetbrains.jps.diagnostic.JpsMetrics] and [org.jetbrains.jps.diagnostic.Metrics].
       // If tracking of spans are needed it makes sense to extract them into separate module and depend on it.
-      setupOpenTelemetryReporting(TraceManager.getMeter("jps-sync"))
+      setupOpenTelemetryReporting(TelemetryTracer.getMeter(JPS))
     }
   }
 }

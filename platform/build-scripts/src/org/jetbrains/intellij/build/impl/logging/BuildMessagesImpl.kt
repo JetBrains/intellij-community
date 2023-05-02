@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*

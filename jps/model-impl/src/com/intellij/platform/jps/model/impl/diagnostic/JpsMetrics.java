@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.jps.model.impl.diagnostic;
 
-import com.intellij.diagnostic.telemetry.helpers.SharedMetrics;
+import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
+import com.intellij.platform.diagnostic.telemetry.helpers.SharedMetrics;
 
 import java.util.concurrent.Semaphore;
 
@@ -9,7 +10,7 @@ public class JpsMetrics extends SharedMetrics {
   private static final Semaphore lock = new Semaphore(1);
   private static JpsMetrics instance = null;
 
-  private JpsMetrics() { super("jps-sync"); }
+  private JpsMetrics() { super(PlatformScopesKt.JPS); }
 
   public static JpsMetrics getInstance() {
     try {

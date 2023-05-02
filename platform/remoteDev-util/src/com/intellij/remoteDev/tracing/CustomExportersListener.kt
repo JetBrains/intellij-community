@@ -1,15 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteDev.tracing
 
-import com.intellij.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.diagnostic.telemetry.MetricsExporterEntry
-import com.intellij.diagnostic.telemetry.TraceManager.addMetricsExporters
-import com.intellij.diagnostic.telemetry.TraceManager.addSpansExporters
-import com.intellij.diagnostic.telemetry.otExporters.OTelExportersProvider
+import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
+import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
 import com.intellij.ide.ApplicationInitializedListener
 import kotlinx.coroutines.CoroutineScope
 
-class CustomExportersListener: ApplicationInitializedListener {
+class CustomExportersListener : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
     val spanExporters = mutableListOf<AsyncSpanExporter>()
     val metricsExporters = mutableListOf<MetricsExporterEntry>()
@@ -26,7 +25,9 @@ class CustomExportersListener: ApplicationInitializedListener {
         metricsExporters.add(MetricsExporterEntry(metrics, duration))
       }
     }
-    addSpansExporters(*spanExporters.toTypedArray())
-    addMetricsExporters(*metricsExporters.toTypedArray())
+    TelemetryTracer.getInstance().apply {
+      addSpansExporters(*spanExporters.toTypedArray())
+      addMetricsExporters(*metricsExporters.toTypedArray())
+    }
   }
 }

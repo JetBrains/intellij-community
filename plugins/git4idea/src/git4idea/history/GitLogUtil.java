@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.diagnostic.telemetry.TraceUtil.runWithSpanThrows;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.runWithSpanThrows;
 import static com.intellij.vcs.log.data.util.VcsScopeKt.VCS;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
@@ -182,7 +182,7 @@ public final class GitLogUtil {
       handler.addParameters("--decorate=full");
       handler.endOptions();
 
-      runWithSpanThrows(TraceManager.getTracer(VCS), "loading commit metadata", span -> {
+      runWithSpanThrows(TelemetryTracer.Companion.getInstance().getTracer(VCS), "loading commit metadata", span -> {
         span.setAttribute("rootName", root.getName());
 
         GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);

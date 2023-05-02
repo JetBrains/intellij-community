@@ -59,8 +59,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 
 final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);

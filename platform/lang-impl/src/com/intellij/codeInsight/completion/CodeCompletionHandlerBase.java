@@ -11,7 +11,7 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -68,7 +68,7 @@ import java.util.Objects;
 import java.util.concurrent.Future;
 
 import static com.intellij.codeInsight.util.CodeCompletionKt.*;
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
 
 @SuppressWarnings("deprecation")
 public class CodeCompletionHandlerBase {
@@ -87,7 +87,7 @@ public class CodeCompletionHandlerBase {
   final boolean autopopup;
   private static int ourAutoInsertItemTimeout = Registry.intValue("ide.completion.auto.insert.item.timeout", 2000);
 
-  private final Tracer completionTracer = TraceManager.getTracer(CodeCompletion);
+  private final Tracer completionTracer = TelemetryTracer.Companion.getInstance().getTracer(CodeCompletion);
 
   public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
     return createHandler(completionType, true, false, true);

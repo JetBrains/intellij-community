@@ -5,7 +5,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,7 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-import static com.intellij.diagnostic.telemetry.PlatformScopesKt.EDT;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.EDT;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -88,7 +88,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   static {
     LOG.info("OTel monitoring for NonBlockingReadAction is " + (ENABLE_OTEL_MONITORING ? "enabled" : "disabled"));
     if (ENABLE_OTEL_MONITORING) {
-      Meter meter = TraceManager.getMeter(EDT);
+      Meter meter = TelemetryTracer.getMeter(EDT);
       MONITOR = new OTelMonitor(meter);
     }
     else {
