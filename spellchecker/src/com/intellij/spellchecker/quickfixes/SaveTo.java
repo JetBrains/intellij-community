@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -96,6 +97,8 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   }
 
   private static void acceptWord(String word, DictionaryLevel level, ProblemDescriptor descriptor) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
+
     PsiElement psi = descriptor.getPsiElement();
     PsiFile file = psi.getContainingFile();
     Project project = file.getProject();
