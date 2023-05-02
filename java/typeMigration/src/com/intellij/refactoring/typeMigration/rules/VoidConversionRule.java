@@ -2,6 +2,9 @@
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
@@ -29,6 +32,16 @@ public class VoidConversionRule extends TypeConversionRule {
       return new TypeConversionDescriptorBase() {
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
+          PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+          if (method != null) {
+            PsiDocComment docComment = method.getDocComment();
+            if (docComment != null) {
+              PsiDocTag docTag = docComment.findTagByName("return");
+              if (docTag != null) {
+                docTag.delete();
+              }
+            }
+          }
           final PsiElement parent = expression.getParent();
           if (parent instanceof PsiReturnStatement) {
             if (SideEffectChecker.mayHaveSideEffects(expression)) {
