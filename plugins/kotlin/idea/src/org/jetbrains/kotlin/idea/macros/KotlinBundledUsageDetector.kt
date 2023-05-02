@@ -95,5 +95,11 @@ class KotlinBundledUsageDetector(private val project: Project, private val cs: C
 
 private val Project.detectorInstance: KotlinBundledUsageDetector get() = service()
 
+private val kotlinDistLocationPrefixFileName by lazy {
+    KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.name
+}
+
 private val String.isStartsWithDistPrefix: Boolean
-    get() = File(JpsPathUtil.urlToPath(this)).startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX)
+    // greatly speed-up this lookup by checking whether it *COULD* be kotlin dist folder
+    get() = contains(kotlinDistLocationPrefixFileName) &&
+            File(JpsPathUtil.urlToPath(this)).startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX)
