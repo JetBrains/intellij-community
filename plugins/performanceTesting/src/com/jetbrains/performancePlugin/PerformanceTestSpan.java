@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin;
 
+import com.intellij.diagnostic.telemetry.IJNoopTracer;
 import com.intellij.diagnostic.telemetry.IJTracer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import io.opentelemetry.api.trace.Span;
@@ -25,5 +26,9 @@ public final class PerformanceTestSpan {
   public static Context getContext(){
     if (performanceTestSpan != null) return Context.current().with(performanceTestSpan);
     return Context.current();
+  }
+
+  public static IJTracer getTracer(boolean noopTracer) {
+    return noopTracer ? IJNoopTracer.INSTANCE : TRACER;
   }
 }

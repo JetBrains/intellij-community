@@ -39,7 +39,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     checkFocusInEditor(context)
 
     val busConnection = project.messageBus.simpleConnect()
-    val span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
+    val span = PerformanceTestSpan.getTracer(isWarmupMode()).spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
     var spanRef: Span? = null
     var scopeRef: Scope? = null
     suspendCancellableCoroutine { continuation ->
@@ -112,5 +112,9 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
 
       throw IllegalStateException("There is no focus in editor (focusOwner=$focusOwner)")
     }
+  }
+
+  private fun isWarmupMode(): Boolean {
+    return text.contains("WARMUP")
   }
 }
