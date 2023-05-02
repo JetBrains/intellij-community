@@ -40,5 +40,6 @@ private class GroovyInlineTransformationHighlightingPass(val file: GroovyFileBas
       }
 
     })
+    applyInformationInBackground()
   }
 }

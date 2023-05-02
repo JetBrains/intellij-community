@@ -60,6 +60,7 @@ private class GroovyDeclarationHighlightingPass(file: GroovyFileBase, document: 
         super.visitElement(element)
       }
     })
+    applyInformationInBackground()
   }
 }
 
