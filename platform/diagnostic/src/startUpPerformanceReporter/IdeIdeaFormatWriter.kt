@@ -12,13 +12,12 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.tree.IElementType
 import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
-import org.bouncycastle.crypto.generators.Argon2BytesGenerator
-import org.bouncycastle.crypto.params.Argon2Parameters
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.management.ManagementFactory
@@ -145,12 +144,11 @@ private fun writeIcons(writer: JsonGenerator) {
 }
 
 private fun safeHashValue(value: String): String {
-  val generator = Argon2BytesGenerator()
-  generator.init(Argon2Parameters.Builder(Argon2Parameters.ARGON2_id).build())
+  val digest = DigestUtil.sha3_512()
+  digest.update(value.toByteArray())
   // 160 bit is enough for uniqueness
-  val result = ByteArray(20)
-  generator.generateBytes(value.toByteArray(), result, 0, result.size)
-  return Base64.getEncoder().withoutPadding().encodeToString(result)
+  val result = digest.digest().copyOf(20)
+  return Base64.getUrlEncoder().withoutPadding().encodeToString(result)
 }
 
 private fun writeServiceStats(writer: JsonGenerator) {
