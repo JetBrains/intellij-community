@@ -307,6 +307,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
         throw new PluginException("configurable class name is not set", pluginDescriptor == null ? null : pluginDescriptor.getPluginId());
       }
     }
+    catch (ProcessCanceledException ex) {
+      throw ex;
+    }
     catch (AssertionError | Exception | LinkageError error) {
       LOG.error(new PluginException(error, pluginDescriptor == null ? null : pluginDescriptor.getPluginId()));
     }
