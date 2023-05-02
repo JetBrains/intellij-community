@@ -198,4 +198,15 @@ mod tests {
         let result = run_launcher(LauncherRunSpec::standard().with_args(&["exit-code", "42"]));
         assert_eq!(result.exit_status.code(), Some(42), "The exit code of the launcher is unexpected: {:?}", result);
     }
+
+    #[test]
+    fn exception_handling() {
+        let result = run_launcher(LauncherRunSpec::standard().with_args(&["exception"]));
+
+        assert!(!result.exit_status.success(), "Expected to fail: {:?}", result);
+
+        let exception = "java.lang.UnsupportedOperationException: aw, snap";
+        assert!(result.stderr.contains(exception), "Exception message ('{}') is missing: {:?}", exception, result);
+        assert!(result.stderr.contains("at com.intellij.idea.Main.exception"), "Stacktrace is missing: {:?}", result);
+    }
 }
