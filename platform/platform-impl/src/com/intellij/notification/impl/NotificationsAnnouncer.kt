@@ -10,11 +10,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.jetbrains.JBR
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Container
+import java.awt.KeyboardFocusManager
 
 @Service(Service.Level.APP)
 class NotificationsAnnouncer {
@@ -28,9 +31,18 @@ class NotificationsAnnouncer {
       return ScreenReader.isActive() && mode != 0 && JBR.isAccessibleAnnouncerSupported()
     }
 
-    private fun doNotify(notification: Notification) {
+    private fun doNotify(notification: Notification, project: Project?) {
       if (!isEnabled()) return
       EDT.assertIsEdt()
+
+      if (project != null) {
+        val projectWindow = WindowManager.getInstance().getFrame(project)
+        var focusedWindow: Container? = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+        while (focusedWindow != null && projectWindow !== focusedWindow) {
+          focusedWindow = focusedWindow.parent
+        }
+        if (focusedWindow == null) return
+      }
 
       val groupId = notification.groupId
       val type = NotificationsConfigurationImpl.getSettings(groupId).displayType
@@ -66,8 +78,16 @@ class NotificationsAnnouncer {
   }
 
   class MyListener: Notifications {
+    val project: Project?
+
+    constructor(project: Project?) {
+      this.project = project
+    }
+
+    constructor():this(null)
+
     override fun notify(notification: Notification) {
-      doNotify(notification)
+      doNotify(notification, project)
     }
   }
 }
