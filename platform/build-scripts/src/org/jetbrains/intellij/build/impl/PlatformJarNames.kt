@@ -25,7 +25,7 @@ object PlatformJarNames {
    * Used in some IDEs for modules containing classes which are used in tests only and therefore should not be included in the IDE's 
    * production classpath. 
    */
-  internal const val TEST_FRAMEWORK_JAR: String = "testFramework.jar"
+  const val TEST_FRAMEWORK_JAR: String = "testFramework.jar"
   
   /**
    * Used for `intellij.platform.runtime.repository` module which is added to the initial classpath when the new modular loader is used.  
