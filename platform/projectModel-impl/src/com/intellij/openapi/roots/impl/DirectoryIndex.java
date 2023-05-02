@@ -12,7 +12,6 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
 import java.util.Set;
@@ -36,9 +35,6 @@ public abstract class DirectoryIndex {
 
   @Nullable
   public abstract SourceFolder getSourceRootFolder(@NotNull DirectoryInfo info);
-
-  @Nullable
-  public abstract JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info);
 
   @NotNull
   public abstract

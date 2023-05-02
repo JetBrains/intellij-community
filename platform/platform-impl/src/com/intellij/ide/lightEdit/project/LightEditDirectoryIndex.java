@@ -12,7 +12,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,12 +31,6 @@ class LightEditDirectoryIndex extends DirectoryIndex {
   @Nullable
   @Override
   public SourceFolder getSourceRootFolder(@NotNull DirectoryInfo info) {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info) {
     return null;
   }
 

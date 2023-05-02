@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.model.ModelBranch;
-import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,10 +22,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
@@ -36,9 +32,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -124,29 +118,13 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    if (myWorkspaceFileIndex != null) {
-      return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
-    }
-    return getRootIndex(false).getDirectoriesByPackageName(packageName, includeLibrarySources);
+    return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
   @Override
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName,
                                                         @NotNull GlobalSearchScope scope) {
-    if (myWorkspaceFileIndex != null) {
-      return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, scope);
-    }
-    
-    Collection<ModelBranch> branches = scope.getModelBranchesAffectingScope();
-    if (branches.isEmpty()) {
-      return super.getDirectoriesByPackageName(packageName, scope);
-    }
-
-    List<RootIndex> indices = ContainerUtil.append(ContainerUtil.map(branches, DirectoryIndexImpl::obtainBranchRootIndex),
-                                                   getRootIndex(false));
-    return new CollectionQuery<>(indices)
-      .flatMapping(i -> i.getDirectoriesByPackageName(packageName, true))
-      .filtering(scope::contains);
+    return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, scope);
   }
 
   @NotNull
@@ -171,7 +149,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   RootIndex getRootIndex(boolean forOrderEntryGraph) {
-    if (!forOrderEntryGraph && myWorkspaceFileIndex != null) {
+    if (!forOrderEntryGraph) {
       LOG.error("Internal DirectoryIndex class must not be used directly to avoid long computations, use ProjectFileIndex API instead");
     }
     RootIndex rootIndex = myRootIndex;
@@ -202,20 +180,9 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  @Nullable
-  public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info) {
-    SourceFolder folder = getSourceRootFolder(info);
-    return folder == null ? null : folder.getRootType();
-  }
-
-  @Override
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
-    if (myWorkspaceFileIndex != null) {
-      return myWorkspaceFileIndex.getPackageName(dir);
-    } 
-
-    return getRootIndex(dir).getPackageName(dir);
+    return myWorkspaceFileIndex.getPackageName(dir);
   }
 
   @NotNull
@@ -223,20 +190,10 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
     if (myProject.isDefault()) return Collections.emptyList();
-    if (myWorkspaceFileIndex != null) {
-      WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true);
-      WorkspaceFileSetWithCustomData<?> fileSet = fileInfo.findFileSet(data -> true);
-      if (fileSet == null) return Collections.emptyList();
-      return getRootIndex(true).getOrderEntries(fileSet.getRoot());
-    }
-    
-    if (fileOrDir instanceof VirtualFileWindow) {
-      fileOrDir = ((VirtualFileWindow)fileOrDir).getDelegate();
-    }
-    fileOrDir = BackedVirtualFile.getOriginFileIfBacked(fileOrDir);
-    DirectoryInfo info = getInfoForFile(fileOrDir);
-    if (!(info instanceof DirectoryInfoImpl)) return Collections.emptyList();
-    return getRootIndex(true).getOrderEntries(((DirectoryInfoImpl)info).getRoot());
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true);
+    WorkspaceFileSetWithCustomData<?> fileSet = fileInfo.findFileSet(data -> true);
+    if (fileSet == null) return Collections.emptyList();
+    return getRootIndex(true).getOrderEntries(fileSet.getRoot());
   }
 
   @Override
