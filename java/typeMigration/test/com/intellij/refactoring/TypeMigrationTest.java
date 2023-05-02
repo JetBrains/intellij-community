@@ -878,6 +878,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestMethodType("x", PsiTypes.voidType());
   }
 
+  public void testTernaryMigrateToVoid() {
+    doTestMethodType("ternary", PsiTypes.voidType());
+  }
+
   public void testMigrationToSuper() {
     doTestFieldType("b", myFactory.createTypeFromText("Test.A<java.lang.String>", null));
   }

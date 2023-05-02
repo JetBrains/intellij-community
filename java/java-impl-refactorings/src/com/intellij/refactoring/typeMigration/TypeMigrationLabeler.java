@@ -1016,7 +1016,12 @@ public class TypeMigrationLabeler {
           if (value != null) {
             final PsiType type = getTypeEvaluator().evaluateType(value);
             if (type != null && !type.equals(migrationType)) {
-              migrateExpressionType(value, migrationType, statement, TypeConversionUtil.isAssignable(migrationType, type), true);
+              if (PsiTypes.voidType().equals(migrationType)) {
+                convertExpression(value, migrationType, type, true);
+              }
+              else {
+                migrateExpressionType(value, migrationType, statement, TypeConversionUtil.isAssignable(migrationType, type), true);
+              }
             }
           }
         }
