@@ -165,7 +165,7 @@ private class EditorSelectInContext(
         constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
           psiFile?.findElementAt(offset)
         }
-        if (editor.caretModel.offset == offset) {
+        if (editor.caretModel.offset == offset && PsiDocumentManager.getInstance(project).isCommitted(editor.document)) {
           super.selectInCurrentTarget(requestFocus)
           break
         }
