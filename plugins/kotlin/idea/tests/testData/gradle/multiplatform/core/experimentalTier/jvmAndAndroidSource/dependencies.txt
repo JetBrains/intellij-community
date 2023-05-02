@@ -5,7 +5,6 @@ project.consumer
 
 project.consumer.androidTest
     consumer.commonMain (friend, TEST)
-    consumer.commonTest (refines, TEST)
     consumer.jvmAndAndroidMain (friend, TEST)
     consumer.main (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
@@ -107,7 +106,6 @@ project.producer.androidTest
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
     producer.commonMain (friend, TEST)
-    producer.commonTest (refines, TEST)
     producer.jvmAndAndroidMain (friend, TEST)
     producer.main (friend, TEST)
 

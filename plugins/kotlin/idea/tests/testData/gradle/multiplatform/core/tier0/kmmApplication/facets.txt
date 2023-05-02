@@ -6,7 +6,6 @@ project.androidTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    dependsOnModuleNames = project:commonTest
     targetPlatform = JVM (17)
 
 project.commonMain
