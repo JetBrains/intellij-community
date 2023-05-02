@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,8 @@ public final class DirectByteBufferAllocator {
         return ourAllocator.submit(computable::compute).get();
       }
       catch (InterruptedException e) {
+        //RC: The buffer is _also_ allocated by a ourAllocator -- should be collected by GC
+        //    But it could create some additional pressure on a native memory pool
         Logger.getInstance(DirectByteBufferAllocator.class).error("ByteBuffer allocation in dedicated thread was interrupted", e);
         return computable.compute();
       }
@@ -51,7 +54,8 @@ public final class DirectByteBufferAllocator {
           throw (OutOfMemoryError)cause; // OutOfMemoryError should be propagated (handled above)
         }
         else {
-          throw new RuntimeException(e);
+          ExceptionUtil.rethrow(e);
+          throw new RuntimeException(e);//unreachable, but javac doesn't know :(
         }
       }
     }

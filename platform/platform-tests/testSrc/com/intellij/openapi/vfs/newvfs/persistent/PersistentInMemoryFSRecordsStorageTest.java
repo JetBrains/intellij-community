@@ -24,6 +24,7 @@ public class PersistentInMemoryFSRecordsStorageTest
     return new PersistentInMemoryFSRecordsStorage(storagePath, maxRecordsToInsert);
   }
 
+  @Override
   @Ignore("InMemory storage doesn't use the file -> doesn't remove it either")
   public void closeAndRemoveAllFiles_cleansUpEverything_newStorageCreatedFromSameFilenameIsEmpty(){
   }

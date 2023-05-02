@@ -537,7 +537,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       final boolean deleted = FSRecords.isDeleted(id);
       if(!deleted) {
         LOG.error("FSRecords(id: " + id + ", name: '" + name + "', !deleted), " +
-                  "but VFI.findChild(" + name + ")=" + fileByName + " with different id(=" + fileByName.getId() + ")");
+                  "but VDI.findChild(" + name + ")=" + fileByName + " with different id(=" + fileByName.getId() + ")");
       }
       return null;
     }
