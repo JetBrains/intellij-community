@@ -232,8 +232,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       scaledDelegateIcon = result
       modificationCount.incrementAndGet()
       checkDelegationDepth()
-      setDone(result)
       processRepaints(oldWidth = oldWidth, result = result)
+      setDone(result)
     }
   }
 
