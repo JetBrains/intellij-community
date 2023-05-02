@@ -38,6 +38,7 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 
@@ -346,6 +347,9 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
     for (scheme in changedSchemes) {
       try {
         saveScheme(scheme, nameGenerator, filesToDelete)
+      }
+      catch (e: CancellationException) {
+        throw e
       }
       catch (e: Throwable) {
         errors.add(RuntimeException("Cannot save scheme $fileSpec/$scheme", e))
