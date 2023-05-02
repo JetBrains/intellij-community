@@ -11,7 +11,10 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -53,10 +56,6 @@ public final class SelectInContextImpl extends FileSelectInContext {
 
     Project project = event.getProject();
     FileEditor editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
-    if (editor == null) {
-      editor = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
-    }
-
     VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
     result = createEditorContext(project, editor, virtualFile);
     if (result != null) {
