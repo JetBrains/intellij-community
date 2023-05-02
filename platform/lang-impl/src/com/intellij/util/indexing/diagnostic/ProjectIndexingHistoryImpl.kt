@@ -193,11 +193,12 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
             }
           }
           is Event.StageEvent -> {
-            normalizedEvents.add(event)
             if (suspensionStartTime != null) {
-              //apparently we haven't stopped yet
-              suspensionStartTime = event.instant
+              normalizedEvents.add(Event.SuspensionEvent(true, suspensionStartTime))
+              normalizedEvents.add(Event.SuspensionEvent(false, event.instant))
+              suspensionStartTime = null
             }
+            normalizedEvents.add(event)
           }
         }
       }
@@ -466,11 +467,14 @@ data class ProjectScanningHistoryImpl(override val project: Project,
             }
           }
           is Event.StageEvent -> {
-            normalizedEvents.add(event)
+            //progressIndicator is checked before registering stages, so suspension has definitely ended before that moment;
+            //event may be registered later, but the milliseconds of difference are not that important
             if (suspensionStartTime != null) {
-              //apparently we haven't stopped yet
-              suspensionStartTime = event.instant
+              normalizedEvents.add(Event.SuspensionEvent(true, suspensionStartTime))
+              normalizedEvents.add(Event.SuspensionEvent(false, event.instant))
+              suspensionStartTime = null
             }
+            normalizedEvents.add(event)
           }
         }
       }

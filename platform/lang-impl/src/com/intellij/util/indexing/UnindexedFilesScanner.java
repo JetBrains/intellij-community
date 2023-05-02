@@ -161,18 +161,16 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                     @NotNull ProjectScanningHistoryImpl scanningHistory,
                     @NotNull ProgressIndicator indicator,
                     @NotNull Ref<? super StatusMark> markRef) {
-    Instant delayedPushingStart = Instant.now();
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties, delayedPushingStart);
-    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, delayedPushingStart);
+    markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.PushProperties,
+              scanningHistory, ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, true);
     try {
       if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
         ((PushedFilePropertiesUpdaterImpl)myPusher).performDelayedPushTasks();
       }
     }
     finally {
-      Instant delayedPushingEnd = Instant.now();
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties, delayedPushingEnd);
-      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, delayedPushingEnd);
+      markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.PushProperties,
+                scanningHistory, ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, false);
     }
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.getName()));
 
@@ -183,9 +181,8 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
 
     List<IndexableFilesIterator> orderedProviders;
-    Instant iteratorsStart = Instant.now();
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators, iteratorsStart);
-    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, iteratorsStart);
+    markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.CreatingIterators,
+              scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, true);
     try {
       if (myPredefinedIndexableFilesIterators == null) {
         Pair<@NotNull List<IndexableFilesIterator>, @NotNull StatusMark> pair = collectProviders(myProject, myIndex);
@@ -197,14 +194,12 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       }
     }
     finally {
-      Instant iteratorsTimeEnd = Instant.now();
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators, iteratorsTimeEnd);
-      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, iteratorsTimeEnd);
+      markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.CreatingIterators,
+                scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, false);
     }
 
-    Instant scanningStageStart = Instant.now();
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning, scanningStageStart);
-    scanningHistory.startStage(ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, scanningStageStart);
+    markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.Scanning,
+              scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, true);
     try {
       collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory, scanningHistory);
       if (isFullIndexUpdate()) {
@@ -212,12 +207,29 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       }
     }
     finally {
-      Instant scanningStageStop = Instant.now();
-      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Scanning, scanningStageStop);
-      scanningHistory.stopStage(ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, scanningStageStop);
+      markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.Scanning,
+                scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, false);
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
+  }
+
+  private static void markStage(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                                @NotNull ProjectIndexingHistoryImpl.Stage stage,
+                                @NotNull ProjectScanningHistoryImpl scanningHistory,
+                                @NotNull ProjectScanningHistoryImpl.ScanningStage scanningStage,
+                                boolean isStart) {
+    ProgressManager.checkCanceled();
+    Instant scanningStageTime = Instant.now();
+    if (isStart) {
+      projectIndexingHistory.startStage(stage, scanningStageTime);
+      scanningHistory.startStage(scanningStage, scanningStageTime);
+    }
+    else {
+      projectIndexingHistory.stopStage(stage, scanningStageTime);
+      scanningHistory.stopStage(scanningStage, scanningStageTime);
+    }
+    ProgressManager.checkCanceled();
   }
 
   private void scanAndUpdateUnindexedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
