@@ -275,8 +275,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void scrollToEnd() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = getEditor();
-    if (editor != null) {
-      scrollToEnd(editor);
+    if (editor == null) return;
+    boolean hasSelection = editor.getSelectionModel().hasSelection();
+    List<CaretState> prevSelection = hasSelection ? editor.getCaretModel().getCaretsAndSelections() : null;
+    scrollToEnd(editor);
+    if (prevSelection != null) {
+      editor.getCaretModel().setCaretsAndSelections(prevSelection);
     }
   }
 
@@ -507,18 +511,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void updateStickToEndState(@NotNull EditorEx editor, boolean useImmediatePosition) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    JScrollBar scrollBar = editor.getScrollPane().getVerticalScrollBar();
-    int scrollBarPosition = useImmediatePosition ? scrollBar.getValue() :
-                            editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
-    boolean vScrollAtBottom = scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
-    boolean stickingToEnd = isStickingToEnd(editor);
-
-    if (!vScrollAtBottom && stickingToEnd) {
+    boolean vScrollAtBottom = isVScrollAtTheBottom(editor, useImmediatePosition);
+    boolean caretAtTheLastLine = isCaretAtTheLastLine(editor);
+    if (!vScrollAtBottom && caretAtTheLastLine) {
       myCancelStickToEnd = true;
     } 
-    else if (vScrollAtBottom && !stickingToEnd) {
-      scrollToEnd(editor);
-    }
   }
 
   @NotNull
@@ -682,7 +679,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void flushDeferredText() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) return;
-    Editor editor = getEditor();
+    EditorEx editor = (EditorEx)getEditor();
     boolean shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd(editor);
     myCancelStickToEnd = false; // Cancel only needs to last for one update. Next time, isStickingToEnd() will be false.
 
@@ -782,10 +779,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.getInlayModel().getInlineElementsInRange(0, 0).forEach(Disposer::dispose); // remove inlays if any
   }
 
-  protected static boolean isStickingToEnd(@NotNull Editor editor) {
+  protected static boolean isStickingToEnd(@NotNull EditorEx editor) {
+    return isCaretAtTheLastLine(editor) ||
+           isVScrollAtTheBottom(editor, true);
+  }
+
+  private static boolean isCaretAtTheLastLine(@NotNull Editor editor) {
     Document document = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
     return document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
+  }
+
+  private static boolean isVScrollAtTheBottom(@NotNull EditorEx editor, boolean useImmediatePosition) {
+    JScrollBar scrollBar = editor.getScrollPane().getVerticalScrollBar();
+    int scrollBarPosition = useImmediatePosition ? scrollBar.getValue() :
+                            editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
+    return scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
   }
 
   private void clearHyperlinkAndFoldings() {
