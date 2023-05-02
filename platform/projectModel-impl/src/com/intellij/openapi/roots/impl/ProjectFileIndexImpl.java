@@ -236,11 +236,6 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
-  public boolean isIgnored(@NotNull VirtualFile file) {
-    return isExcluded(file);
-  }
-
-  @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     return myWorkspaceFileIndex.isInContent(fileOrDir);
   }
