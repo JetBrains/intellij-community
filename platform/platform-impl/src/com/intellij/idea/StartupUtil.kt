@@ -342,7 +342,7 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
       logEssentialInfoAboutIde(log, appInfo, args)
     }
 
-    if (!AppMode.isHeadless() && SystemInfoRt.isMac) {
+    if (!AppMode.isHeadless() && !AppMode.isRemoteDevHost() && SystemInfoRt.isMac) {
       // JNA and Swing are used - invoke only after both are loaded
       initUiDeferred.join()
       launch(CoroutineName("mac app init")) {
