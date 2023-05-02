@@ -51,6 +51,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataProvider {
   private val project = context.project!! // CombinedDiffContext expected
@@ -94,30 +95,19 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       .also { Disposer.register(this, it) }
 
   internal fun updateBlockContent(newContent: CombinedDiffBlockContent) {
-    val viewRect = scrollPane.viewport.viewRect
-    val viewSize = scrollPane.viewport.viewSize
-
     val blockId = newContent.blockId
     val block = getBlockForId(blockId)
 
     if (block == null) {
-      throw IllegalStateException("Block with id $blockId not found in CombinedDiffViewer" )
+      throw IllegalStateException("Block with id $blockId not found in CombinedDiffViewer")
     }
 
-    val adjustmentNeeded = isBlockBeforeOrIntersectViewport(blockId)
-
-    val newViewer = newContent.viewer
-    diffViewers.remove(blockId)?.also(Disposer::dispose)
-    diffViewers[blockId] = newViewer
-    block.updateBlockContent(newContent)
-    newViewer.init()
-
-    val afterSize = scrollPane.viewport.viewSize
-
-    val diff = afterSize.height - viewSize.height
-    if (diff > 0 && adjustmentNeeded) {
-      viewRect.y += diff
-      scrollPane.viewport.viewPosition = Point(viewRect.x, viewRect.y)
+    runPreservingViewportContent {
+      val newViewer = newContent.viewer
+      diffViewers.remove(blockId)?.also(Disposer::dispose)
+      diffViewers[blockId] = newViewer
+      block.updateBlockContent(newContent)
+      newViewer.init()
     }
   }
 
@@ -183,6 +173,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   private inner class ViewportChangeListener : ChangeListener {
 
     override fun stateChanged(e: ChangeEvent) {
+      //runPreservingViewportContent {}
       visibleBlocksUpdateQueue.queue(object : Update(e) {
         override fun run() = notifyVisibleBlocksChanged()
         override fun canEat(update: Update): Boolean = true
@@ -280,26 +271,47 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
   }
 
-  private fun isBlockBeforeOrIntersectViewport(blockId: CombinedBlockId): Boolean {
+  private fun runPreservingViewportContent(run: () -> Unit) {
     val viewRect = scrollPane.viewport.viewRect
-    var intersectionStarted = false
+
+    var anchorBlock: JComponent? = null
+    var diff = 0
+    var isTopBoundAnchor = false
 
     for (block in getAllBlocks()) {
-      val viewportIntersected = block.component.bounds.intersects(viewRect)
+      val blockRect = block.component.bounds
 
-      if (!intersectionStarted && viewportIntersected) {
-        intersectionStarted = true
-        if (blockId == block.id) return !scrollPane.viewport.viewRect.contains(block.component.bounds)
+      if (blockRect.maxY < viewRect.minY) {
+        // full block before the viewport
+        continue
       }
 
-      if (!intersectionStarted) {
-        if (blockId == block.id) {
-          val contains = scrollPane.viewport.viewRect.contains(block.component.bounds)
-          if (!contains) return true
-        }
+      if (blockRect.maxY >= viewRect.minY && blockRect.maxY <= viewRect.maxY) {
+        // the bottom of block in the viewport
+        anchorBlock = block.component
+        diff = (blockRect.maxY - viewRect.minY).roundToInt()
+        break
+      }
+
+      if (blockRect.maxY > viewRect.maxY && blockRect.minY < viewRect.minY) {
+        // this block is larger than the viewport
+        anchorBlock = block.component
+        isTopBoundAnchor = true
+        diff = (blockRect.minY - viewRect.minY).toInt()
+        break
       }
     }
-    return false
+
+    run()
+
+    if (anchorBlock == null) return
+
+    val newViewRect = scrollPane.viewport.viewRect
+    val newBlockRect = anchorBlock.bounds
+
+    newViewRect.y = if (isTopBoundAnchor) newBlockRect.minY.toInt() else newBlockRect.maxY.toInt()
+    newViewRect.y -= diff
+    scrollPane.viewport.viewPosition = Point(newViewRect.x, newViewRect.y)
   }
 
   private fun updateGlobalBlockHeader(visibleBlocks: List<CombinedDiffBlock<*>>, viewRect: Rectangle) {
@@ -370,7 +382,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
                       focusBlock: Boolean = true,
                       onSelected: () -> Unit = {}) {
     val blockId = getBlockId(index) ?: return
-    val block = getBlockForId(blockId)?: return
+    val block = getBlockForId(blockId) ?: return
 
     selectDiffBlock(index, block, scrollPolicy, focusBlock, onSelected)
   }

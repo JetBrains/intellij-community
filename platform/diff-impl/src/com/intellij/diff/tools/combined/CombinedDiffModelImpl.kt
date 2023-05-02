@@ -121,7 +121,6 @@ open class CombinedDiffModelImpl(protected val project: Project,
           runInEdt { modelListeners.multicaster.onRequestsLoaded(mapOf(blockToSelect to diffRequest), blockToSelect) }
         }
         blocksToLoad.remove(blockToSelect)
-        //return@runUnderDisposeAwareIndicator
       }
       val loadedDiffRequests = hashMapOf<CombinedBlockId, DiffRequest>()
       for (blockId in blockIds) {
@@ -136,8 +135,7 @@ open class CombinedDiffModelImpl(protected val project: Project,
       }
 
       modelListeners.multicaster.onProgressBar(false)
-      runInEdt { modelListeners.multicaster.onRequestsLoaded(loadedDiffRequests, blockToSelect) }
-
+      runInEdt { modelListeners.multicaster.onRequestsLoaded(loadedDiffRequests) }
     }, indicator)
   }
 
