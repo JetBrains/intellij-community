@@ -5,8 +5,10 @@ import java.util.Properties;
 public class UseOfPropertiesAsHashtable {
     public static void main(String[] args) {
         Properties properties = new Properties();
-        properties.put("foo", "bar");
+        properties.setProperty("foo", "bar");
+        properties.put("x", 1);
         properties.putAll(null);
-        properties.get("foo");
+        String value = (String) properties.getProperty("foo");
+        Long l = (Long)properties.get("x");
     }
 }

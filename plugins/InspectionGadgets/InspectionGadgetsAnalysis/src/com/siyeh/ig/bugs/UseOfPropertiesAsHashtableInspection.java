@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,35 +40,35 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection impleme
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "properties.object.as.hashtable.problem.descriptor");
+    return InspectionGadgetsBundle.message("properties.object.as.hashtable.problem.descriptor");
   }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiMethodCallExpression methodCallExpression =
-      (PsiMethodCallExpression)infos[0];
-    final String methodName =
-      methodCallExpression.getMethodExpression().getReferenceName();
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
+    final String methodName = methodCallExpression.getMethodExpression().getReferenceName();
     final boolean put = HardcodedMethodConstants.PUT.equals(methodName);
     if (!(put || HardcodedMethodConstants.GET.equals(methodName))) {
       return null;
     }
-    final PsiExpressionList argumentList =
-      methodCallExpression.getArgumentList();
+    final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     for (PsiExpression argument : arguments) {
       final PsiType type = argument.getType();
-      if (type == null ||
-          !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return null;
+      }
+    }
+    if (!put) {
+      PsiType expectedType = ExpectedTypeUtils.findExpectedType(methodCallExpression, false, true);
+      if (expectedType != null && !expectedType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return null;
       }
     }
     return new UseOfPropertiesAsHashtableFix(put);
   }
 
-  private static class UseOfPropertiesAsHashtableFix
-    extends InspectionGadgetsFix {
+  private static class UseOfPropertiesAsHashtableFix extends InspectionGadgetsFix {
 
     private final boolean put;
 
@@ -126,14 +127,15 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection impleme
   private static class UseOfPropertiesAsHashtableVisitor extends BaseInspectionVisitor {
     private static final CallMatcher HASH_TABLE_CALLS =
       CallMatcher.anyOf(
-        CallMatcher.instanceCall("java.util.Hashtable", "put", "putIfAbsent").parameterTypes("K", "V"),
+        CallMatcher.instanceCall("java.util.Hashtable", "put", "putIfAbsent").parameterTypes("K", "V"), // JDK 8 and below
+        CallMatcher.instanceCall("java.util.Hashtable", "put", "putIfAbsent").
+          parameterTypes(CommonClassNames.JAVA_LANG_OBJECT, CommonClassNames.JAVA_LANG_OBJECT), // JDK 9 and above
         CallMatcher.instanceCall("java.util.Hashtable", "get").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT),
         CallMatcher.instanceCall("java.util.Hashtable", "putAll").parameterTypes(CommonClassNames.JAVA_UTIL_MAP)
       );
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       if (!HASH_TABLE_CALLS.test(call)) return;
       final PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
@@ -141,7 +143,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection impleme
       if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_UTIL_PROPERTIES)) return;
       if ("putAll".equals(call.getMethodExpression().getReferenceName())) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
-        // putAll with properties or Map<String, String> argument is probably safe, 
+        // putAll with properties or Map<String, String> argument is probably safe,
         // assuming that the original Properties or Map<String, String> object was safely filled
         if (args.length == 1) {
           PsiType type = args[0].getType();
