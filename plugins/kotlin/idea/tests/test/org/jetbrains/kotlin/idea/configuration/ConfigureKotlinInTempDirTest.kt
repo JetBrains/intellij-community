@@ -30,6 +30,8 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 @RunWith(JUnit38ClassRunner::class)
 class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
@@ -75,10 +77,11 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         assertFalse(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
 
         val connection = project.messageBus.connect(testRootDisposable)
-        var kotlinBundledWasDetected = false
+
+        val kotlinBundledDetected = CompletableFuture<Unit>()
         connection.subscribe(KotlinBundledUsageDetector.TOPIC, object : KotlinBundledUsageDetectorListener {
             override fun kotlinBundledDetected() {
-                kotlinBundledWasDetected = true
+                kotlinBundledDetected.complete(Unit)
             }
         })
 
@@ -92,10 +95,10 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             }
         }
 
-        assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
-
         connection.deliverImmediately()
-        assertTrue(kotlinBundledWasDetected)
+
+        kotlinBundledDetected.get(5, TimeUnit.SECONDS)
+        assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
     }
 
     fun testMigrationNotificationWithStdlib() {
