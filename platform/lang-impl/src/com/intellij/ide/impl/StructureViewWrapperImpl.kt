@@ -298,6 +298,9 @@ class StructureViewWrapperImpl(private val myProject: Project,
     scheduleRebuild(RebuildDelay.NOW, why)
   }
 
+  @Deprecated(message = "Every update/rebuild is async now, use scheduleRebuild() to do rebuild at earliest possible time")
+  fun rebuild() = scheduleRebuild()
+
   private fun scheduleRebuild(delay: RebuildDelay, why: String) {
     LOG.debug("request to rebuild a structure view $delay: $why")
     pendingRebuild.set(true)
