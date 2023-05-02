@@ -13,7 +13,11 @@ import javax.swing.JLayeredPane
 import javax.swing.JPanel
 
 class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout()) {
+  val actions = ArrayList<AnAction>()
+
   fun initialize(actions: Array<AnAction>) {
+    this.actions.addAll(actions)
+
     val cellRoofColor = editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
     val backgroundColor = editor.colorsScheme.defaultBackground
     val leftPanel = createCellDelimiterPanel(backgroundColor, cellRoofColor)
