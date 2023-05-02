@@ -3,6 +3,7 @@
 
 package com.intellij.util.io
 
+import com.intellij.util.io.DigestUtil.updateContentHash
 import java.io.IOException
 import java.io.InputStream
 import java.math.BigInteger
@@ -29,33 +30,16 @@ object DigestUtil {
   private val sha1 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-1") }
 
   @JvmStatic
-  fun sha256(): MessageDigest = cloneDigest(sha256)
-  private val sha256 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-256") }
+  fun sha256(): MessageDigest = cloneDigest(sha2_256)
 
   @JvmStatic
-  fun sha512(): MessageDigest = cloneDigest(sha512)
-  private val sha512 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-512") }
+  fun sha512(): MessageDigest = cloneDigest(sha2_512)
 
   @JvmStatic
   fun digestToHash(digest: MessageDigest) = bytesToHex(digest.digest())
 
   @JvmStatic
   fun sha256Hex(input: ByteArray): String = bytesToHex(sha256().digest(input))
-
-  @JvmStatic
-  fun sha256Hex(file: Path): String {
-    try {
-      val digest = sha256()
-      val buffer = ByteArray(512 * 1024)
-      file.inputStream().use {
-        updateContentHash(digest, it, buffer)
-      }
-      return bytesToHex(digest.digest())
-    }
-    catch (e: IOException) {
-      throw RuntimeException("Failed to read $file. ${e.message}", e)
-    }
-  }
 
   @JvmStatic
   fun sha1Hex(input: ByteArray): String = hashToHexString(input, sha1())
@@ -94,11 +78,28 @@ object DigestUtil {
   }
 }
 
+fun sha256Hex(file: Path): String {
+  try {
+    val digest = cloneDigest(sha2_256)
+    val buffer = ByteArray(512 * 1024)
+    file.inputStream().use {
+      updateContentHash(digest, it, buffer)
+    }
+    return bytesToHex(digest.digest())
+  }
+  catch (e: IOException) {
+    throw RuntimeException("Failed to read $file. ${e.message}", e)
+  }
+}
+
 fun hashToHexString(input: ByteArray, digest: MessageDigest): String = bytesToHex(digest.digest(input))
 
 fun hashToHexString(input: String, digest: MessageDigest): String = bytesToHex(digest.digest(input.toByteArray()))
 
 private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
+
+private val sha2_512 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-512") }
+private val sha2_256 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-256") }
 
 private val sha3_224: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-224") }
 private val sha3_256: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-256") }
