@@ -12,10 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.client.ClientDisposableProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
@@ -38,6 +35,7 @@ import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
@@ -771,11 +769,29 @@ public abstract class DialogWrapper {
 
   public static @NotNull JButton createJButtonForAction(@NotNull Action action, @Nullable JRootPane rootPane) {
     JButton button;
-    if (action instanceof OptionAction && UISettings.getShadowInstance().getAllowMergeButtons()) {
-      button = createJOptionsButton((OptionAction)action);
+    if (action instanceof OptionAction optionAction && UISettings.getShadowInstance().getAllowMergeButtons()) {
+      JBOptionButton optionButton = new JBOptionButton(optionAction, optionAction.getOptions());
+      optionButton.setOptionTooltipText(getDefaultTooltip());
+      button = optionButton;
     }
     else {
-      button = new JButton(action);
+      button = action instanceof DialogWrapperAction ? new JButton(action) : new JButton(action) {
+        @Override
+        protected void fireActionPerformed(ActionEvent event) {
+          Window window = UIUtil.getWindow(this);
+          DialogWrapper wrapper = window instanceof DialogWrapperDialog dwd ? dwd.getDialogWrapper() : null;
+          if (wrapper == null) return;
+          if (wrapper.myClosed) return;
+          if (wrapper.myPerformAction) return;
+          wrapper.myPerformAction = true;
+          try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+            super.fireActionPerformed(event);
+          }
+          finally {
+            wrapper.myPerformAction = false;
+          }
+        }
+      };
     }
 
     if (SystemInfoRt.isMac) {
@@ -799,12 +815,6 @@ public abstract class DialogWrapper {
     }
 
     return button;
-  }
-
-  private static @NotNull JButton createJOptionsButton(@NotNull OptionAction action) {
-    JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
-    optionButton.setOptionTooltipText(getDefaultTooltip());
-    return optionButton;
   }
 
   public static @NotNull Pair<Integer, @Nls String> extractMnemonic(@Nullable @Nls String text) {
@@ -1806,8 +1816,8 @@ public abstract class DialogWrapper {
     public void actionPerformed(ActionEvent e) {
       if (myClosed) return;
       if (myPerformAction) return;
-      try {
-        myPerformAction = true;
+      myPerformAction = true;
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         doAction(e);
       }
       finally {
