@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
-import JupyterCellBorderButton
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx

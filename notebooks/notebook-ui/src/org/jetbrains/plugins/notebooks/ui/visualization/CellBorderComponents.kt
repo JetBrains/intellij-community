@@ -1,3 +1,5 @@
+package org.jetbrains.plugins.notebooks.ui.visualization
+
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeyboardShortcut
@@ -8,7 +10,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.notebooks.ui.SteadyUIPanel
-import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import java.awt.*
 import javax.swing.JButton
 import javax.swing.JComponent
