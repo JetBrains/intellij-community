@@ -173,7 +173,7 @@ abstract class Row : Cell(), RowBuilder {
    * Specifies the right alignment for the component if the cell is larger than the component plus its gaps.
    */
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   inline fun right(init: Row.() -> Unit) {
     alignRight()
     init()
