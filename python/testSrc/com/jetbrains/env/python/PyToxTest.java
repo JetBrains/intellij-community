@@ -52,22 +52,6 @@ public final class PyToxTest extends PyEnvTestCase {
   }
 
   /**
-   * Check tox nose runner
-   */
-  @Test
-  public void testToxNose() {
-    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxNose/", 1,
-                                                     () -> new MyTestProcessRunner(),
-                                                     Arrays.asList(
-                                                       Pair.create("py37", new InterpreterExpectations("", true)),
-                                                       // Does not support 3.6
-                                                       Pair.create("py36", new InterpreterExpectations("SyntaxError", false))
-                                                     ),
-                                                     Integer.MAX_VALUE)
-    );
-  }
-
-  /**
    * Check tox pytest runner
    */
   @Test
@@ -76,8 +60,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py37", new InterpreterExpectations("", true)),
-                                                       // Does not support 3.4
-                                                       Pair.create("py36", new InterpreterExpectations("SyntaxError", false))
+                                                       Pair.create("py38", new InterpreterExpectations("Assertion", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -89,7 +72,7 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTestXDist/", 1,
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
-                                                       Pair.create("py36", new InterpreterExpectations("", false)),
+                                                       Pair.create("py38", new InterpreterExpectations("", false)),
                                                        Pair.create("py37", new InterpreterExpectations("", true))
                                                      ),
                                                      Integer.MAX_VALUE) {
@@ -114,7 +97,7 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTestPy3k/", 1,
                                                      () -> new MyTestProcessRunner(),
                                                      Collections.singletonList(
-                                                       Pair.create("py36", new InterpreterExpectations("", true))
+                                                       Pair.create("py38", new InterpreterExpectations("", true))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -129,8 +112,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py37", new InterpreterExpectations("", true)),
-                                                       // Does not support 3.4
-                                                       Pair.create("py36", new InterpreterExpectations("SyntaxError", false))
+                                                       Pair.create("py38", new InterpreterExpectations("Assertion", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -145,7 +127,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py37", new InterpreterExpectations("ython 3.7", true)),
-                                                       Pair.create("py36", new InterpreterExpectations("", false))
+                                                       Pair.create("py38", new InterpreterExpectations("", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -192,7 +174,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      Arrays.asList(
                                                        //26 and 37 only used for first time, they aren't used after rerun
                                                        Pair.create("py37", new InterpreterExpectations("", true, 1)),
-                                                       Pair.create("py36", new InterpreterExpectations("", false))
+                                                       Pair.create("py38", new InterpreterExpectations("", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -241,7 +223,7 @@ public final class PyToxTest extends PyEnvTestCase {
    */
   @Test
   public void testConcreteEnv() {
-    final String[] envsToRun = {"py37", "py36"};
+    final String[] envsToRun = {"py37", "py38"};
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyAbstractTestProcessRunner<PyToxConfiguration>>("/toxtest/toxSuccess/", SdkCreationType.EMPTY_SDK) {
         @NotNull
