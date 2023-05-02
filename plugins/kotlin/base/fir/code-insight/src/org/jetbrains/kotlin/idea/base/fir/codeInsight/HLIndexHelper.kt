@@ -8,12 +8,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isKotlinBuiltins
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtFile
 
 /**
  *TODO get rid of this class, replace with [org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider]
@@ -22,7 +22,7 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
     fun getTopLevelCallables(nameFilter: (Name) -> Boolean): Collection<KtCallableDeclaration> {
         val values = SmartList<KtCallableDeclaration>()
         val processor = CancelableCollectFilterProcessor(values) {
-            it.receiverTypeReference == null
+            !it.isKotlinBuiltins() && it.receiverTypeReference == null
         }
 
         val keyFilter: (String) -> Boolean = { nameFilter(getShortName(it)) }

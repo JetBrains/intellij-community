@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class KtSymbolFromIndexProvider(private val project: Project) {
     context(KtAnalysisSession)
@@ -118,7 +119,7 @@ class KtSymbolFromIndexProvider(private val project: Project) {
 
         val values = SmartList<KtNamedDeclaration>()
         val processor = CancelableCollectFilterProcessor(values) {
-            it is KtCallableDeclaration && psiFilter(it) && !it.isExpectDeclaration()
+            it is KtCallableDeclaration && psiFilter(it) && !it.isExpectDeclaration() && !it.isKotlinBuiltins()
         }
         KotlinFunctionShortNameIndex.processElements(nameString, project, scope, processor)
         KotlinPropertyShortNameIndex.processElements(nameString, project, scope, processor)
@@ -158,4 +159,11 @@ class KtSymbolFromIndexProvider(private val project: Project) {
     }
 
     private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
+}
+
+private val KotlinBuiltins = setOf("kotlin/ArrayIntrinsicsKt", "kotlin/internal/ProgressionUtilKt")
+fun KtCallableDeclaration.isKotlinBuiltins(): Boolean {
+    if (this !is KtNamedFunction) return false
+    val file = containingKtFile
+    return file.packageFqName.asString().replace(".", "/") + "/" + file.virtualFile.nameWithoutExtension in KotlinBuiltins
 }
