@@ -29,7 +29,7 @@ abstract class FileIndexBase implements FileIndex {
 
   FileIndexBase(@NotNull Project project) {
     myDirectoryIndex = DirectoryIndex.getInstance(project);
-    myWorkspaceFileIndex = WorkspaceFileIndexEx.IS_ENABLED ? (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project) : null;
+    myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
   }
 
   protected abstract boolean isScopeDisposed();

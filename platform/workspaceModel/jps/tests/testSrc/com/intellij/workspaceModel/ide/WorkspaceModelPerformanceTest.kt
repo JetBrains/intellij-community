@@ -15,7 +15,6 @@ import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModel
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -84,7 +83,6 @@ class WorkspaceModelPerformanceTest {
       ApplicationManagerEx.setInStressTest(true)
       disposerDebugMode = Disposer.isDebugMode()
       Disposer.setDebugMode(false)
-      println("Uses ${if (WorkspaceFileIndexEx.IS_ENABLED) "new incremental" else "old non-incremental"} implementation of DirectoryIndex")
     }
 
     @AfterAll

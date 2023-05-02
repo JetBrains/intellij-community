@@ -106,10 +106,8 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         }
       }
     }
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      runActivity("workspace file index initialization") {
-        (project.serviceAsync<WorkspaceFileIndex>().await() as WorkspaceFileIndexEx).initialize()
-      }
+    runActivity("workspace file index initialization") {
+      (project.serviceAsync<WorkspaceFileIndex>().await() as WorkspaceFileIndexEx).initialize()
     }
 
     modulesLoadingTimeMs.addAndGet(System.currentTimeMillis() - start)

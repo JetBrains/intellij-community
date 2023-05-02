@@ -385,7 +385,6 @@ class ModuleRootsInProjectFileIndexTest {
 
   @Test
   fun `is in content by url for existing file`() {
-    assumeTrue(WorkspaceFileIndexEx.IS_ENABLED)
     val file = projectModel.baseProjectDir.newVirtualFile("module/file.txt")
     PsiTestUtil.addContentRoot(module, moduleDir)
     assertEquals(ThreeState.YES, WorkspaceFileIndex.getInstance(projectModel.project).isUrlInContent(file.url))
@@ -393,7 +392,6 @@ class ModuleRootsInProjectFileIndexTest {
 
   @Test
   fun `is url in content for non existing file`() {
-    assumeTrue(WorkspaceFileIndexEx.IS_ENABLED)
     val moduleUrl = moduleDir.url
     val rootUrl = "$moduleUrl/root"
     val excludedUrl = "$moduleUrl/root/excluded"

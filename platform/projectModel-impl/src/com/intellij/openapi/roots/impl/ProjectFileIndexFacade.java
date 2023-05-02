@@ -28,7 +28,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     super(project);
 
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myWorkspaceFileIndex = WorkspaceFileIndexEx.IS_ENABLED ? (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project) : null;
+    myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
   }
 
   @Override

@@ -80,15 +80,6 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   
   @TestOnly
   fun reset()
-
-  companion object {
-    /**
-     * WorkspaceFileIndex is now always enabled. Usages of this constant will be inlined later.
-     */
-    @Suppress("MayBeConstant")
-    @JvmField
-    val IS_ENABLED: Boolean = true
-  }
 }
 
 /**

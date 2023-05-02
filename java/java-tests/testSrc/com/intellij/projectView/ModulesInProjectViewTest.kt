@@ -12,7 +12,6 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 
 open class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
   init {
@@ -75,20 +74,17 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     runBlockingModal(myProject, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
     }
-    if (!WorkspaceFileIndexEx.IS_ENABLED) {
-      //todo temporarily dispose until events are fired after unloading
-      assertStructureEqual("""
-        Project
-         loaded
-          unloaded-inner
-           subdir
-           y.txt
-         unloaded
-          loaded-inner
-           subdir
-           z.txt
-      """.trimIndent())
-    }
+    assertStructureEqual("""
+      Project
+       loaded
+        unloaded-inner
+         subdir
+         y.txt
+       unloaded
+        loaded-inner
+         subdir
+         z.txt
+    """.trimIndent())
   }
 
   fun `test unloaded module with qualified name`() {

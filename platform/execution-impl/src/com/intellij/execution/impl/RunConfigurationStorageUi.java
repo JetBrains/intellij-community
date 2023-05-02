@@ -226,9 +226,7 @@ public class RunConfigurationStorageUi {
     if (file == null) return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
     if (!file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
 
-    boolean isInContent = WorkspaceFileIndexEx.IS_ENABLED
-                          ? WorkspaceFileIndex.getInstance(project).isUrlInContent(VfsUtilCore.pathToUrl(path)) != ThreeState.NO
-                          : ProjectFileIndex.getInstance(project).isInContent(file);
+    boolean isInContent = WorkspaceFileIndex.getInstance(project).isUrlInContent(VfsUtilCore.pathToUrl(path)) != ThreeState.NO;
     if (!isInContent) {
       if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, false) == null) {
         return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
