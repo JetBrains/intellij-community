@@ -400,7 +400,16 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
         td(NOT_APPLICABLE)
       }
       td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
-      td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+      if (fileCount.numberOfRefreshedFilesScheduledForIndexingAfterScan > 0) {
+        td {
+          text(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+          br()
+          text("(incl. ${fileCount.numberOfRefreshedFilesScheduledForIndexingAfterScan} refreshed)")
+        }
+      }
+      else {
+        td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
+      }
     }
   }
 
