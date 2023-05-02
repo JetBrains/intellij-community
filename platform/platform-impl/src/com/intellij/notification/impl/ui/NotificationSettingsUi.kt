@@ -4,8 +4,8 @@ package com.intellij.notification.impl.ui
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationDisplayType.*
+import com.intellij.notification.impl.NotificationsAnnouncer
 import com.intellij.notification.impl.NotificationsConfigurationImpl
-import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.notification.impl.isSoundEnabled
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -76,8 +76,8 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper, priv
     type.model.selectedItem = notification.displayType
     log.isSelected = notification.isShouldLog
     if (isReadAloudEnabled()) {
-      readAloud.isSelected = notification.isShouldReadAloud && !NotificationsManagerImpl.isAnnouncingEnabled()
-      readAloud.isEnabled = !NotificationsManagerImpl.isAnnouncingEnabled()
+      readAloud.isSelected = notification.isShouldReadAloud && !NotificationsAnnouncer.isEnabled()
+      readAloud.isEnabled = !NotificationsAnnouncer.isEnabled()
     }
     if (isSoundEnabled()) {
       playSound.isSelected = notification.isPlaySound
