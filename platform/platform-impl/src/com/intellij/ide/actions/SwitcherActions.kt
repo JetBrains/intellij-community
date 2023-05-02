@@ -23,7 +23,7 @@ private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDow
 
 internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
 internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
-internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
+abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
   private fun isControlTab(event: KeyEvent?) = event?.run { isControlDown && keyCode == KeyEvent.VK_TAB } ?: false
   private fun isControlTabDisabled(event: AnActionEvent) = ScreenReader.isActive() && isControlTab(event.inputEvent as? KeyEvent)
 
@@ -182,7 +182,7 @@ internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList
 }
 
 
-internal class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<InputEvent>) : KeyAdapter() {
+class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<InputEvent>) : KeyAdapter() {
   private val wasAltDown = true == event?.isAltDown
   private val wasAltGraphDown = true == event?.isAltGraphDown
   private val wasControlDown = true == event?.isControlDown

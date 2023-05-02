@@ -39,7 +39,7 @@ private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyb
 
 private val mainTextComparator by lazy { Comparator.comparing(SwitcherListItem::mainText, NaturalComparator.INSTANCE) }
 
-internal interface SwitcherListItem {
+interface SwitcherListItem {
   val mnemonic: String? get() = null
   val mainText: String
   val statusText: String get() = ""
@@ -121,7 +121,7 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
 }
 
 
-internal class SwitcherVirtualFile(
+class SwitcherVirtualFile(
   val project: Project,
   val file: VirtualFile,
   val window: EditorWindow?
