@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
 import com.intellij.openapi.actionSystem.*
@@ -10,7 +10,7 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle
-import git4idea.log.GitRefManager.LOCAL_BRANCH
+import git4idea.log.GitRefManager.Companion.LOCAL_BRANCH
 import git4idea.repo.GitRepository
 
 internal class GitCheckoutActionGroup : GitSingleCommitActionGroup(GitBundle.message("git.log.action.checkout.group"), false) {
