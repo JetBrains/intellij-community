@@ -105,7 +105,7 @@
       "description": "Used in tool buttons bars and the navigation bar"
     },
     {
-      "key": "Button.Split.default.borderColor",
+      "key": "Button.Split.default.separatorColor",
       "description": "Separator color for default split button"
     },
     {

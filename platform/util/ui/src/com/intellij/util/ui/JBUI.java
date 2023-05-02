@@ -461,8 +461,8 @@ public final class JBUI {
 
       public static final class Split {
         public static final class Default {
-          public static @NotNull Color borderColor() {
-            return JBColor.namedColor("Button.Split.default.borderColor",
+          public static @NotNull Color separatorColor() {
+            return JBColor.namedColor("Button.Split.default.separatorColor",
                                       JBColor.namedColor("Blue8", 0x88ADF7).getRGB(),
                                       JBColor.namedColor("Blue10", 0x83ACFC).getRGB());
           }
