@@ -16,6 +16,7 @@ import org.jetbrains.jewel.styles.LocalRadioButtonStyle
 import org.jetbrains.jewel.styles.LocalSeparatorStyle
 import org.jetbrains.jewel.styles.LocalSliderStyle
 import org.jetbrains.jewel.styles.LocalTabStyle
+import org.jetbrains.jewel.styles.LocalTextAreaStyle
 import org.jetbrains.jewel.styles.LocalTextFieldStyle
 import org.jetbrains.jewel.styles.LocalTextStyle
 import org.jetbrains.jewel.styles.LocalTreeViewStyle
@@ -24,6 +25,7 @@ import org.jetbrains.jewel.styles.ScrollbarStyle
 import org.jetbrains.jewel.styles.SeparatorStyle
 import org.jetbrains.jewel.styles.SliderStyle
 import org.jetbrains.jewel.styles.TabStyle
+import org.jetbrains.jewel.styles.TextAreaStyle
 import org.jetbrains.jewel.styles.TextFieldStyle
 import org.jetbrains.jewel.styles.TreeViewStyle
 import org.jetbrains.jewel.styles.localNotProvided
@@ -46,6 +48,7 @@ fun IntelliJTheme(
     LocalButtonStyle provides ButtonStyle(palette, metrics, typography.button),
     LocalIconButtonStyle provides ButtonStyle(palette, metrics, typography.button),
     LocalCheckboxStyle provides CheckboxStyle(palette, painters, typography.checkBox),
+    LocalTextAreaStyle provides TextAreaStyle(palette, metrics, typography.textField),
     LocalTextFieldStyle provides TextFieldStyle(palette, metrics, typography.textField),
     LocalRadioButtonStyle provides RadioButtonStyle(palette, painters, typography.radioButton),
     LocalSeparatorStyle provides SeparatorStyle(palette, metrics),
