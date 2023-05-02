@@ -285,10 +285,21 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return type != null && rootTypes.contains(type);
   }
 
+  @SuppressWarnings("deprecation")
   @Nullable
   @Override
   public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
-    return myDirectoryIndex.getSourceRootFolder(getInfoForFileOrDirectory(fileOrDir));
+    WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet =
+      myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleSourceRootData.class);
+    if (fileSet == null) return null;
+    for (ContentEntry contentEntry : ModuleRootManager.getInstance(fileSet.getData().getModule()).getContentEntries()) {
+      for (SourceFolder folder : contentEntry.getSourceFolders()) {
+        if (fileSet.getRoot().equals(folder.getFile())) {
+          return folder;
+        }
+      }
+    }
+    return null;
   }
 
   @Override
