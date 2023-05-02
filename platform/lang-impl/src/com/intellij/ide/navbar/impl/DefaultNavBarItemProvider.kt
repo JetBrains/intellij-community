@@ -37,12 +37,19 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
 
     // TODO: cache all roots? (like passing through NavBarModelBuilder.traverseToRoot)
     // TODO: hash all roots? (Set instead of Sequence)
-    val projectFileIndex = ProjectRootManager.getInstance(item.data.project).fileIndex
-    val defaultRoots = item.data.project.getBaseDirectories()
-    val oldEpRoots = additionalRoots(item.data.project)
-    val allRoots = (defaultRoots + oldEpRoots).filter { it.parent == null || !projectFileIndex.isInContent(it.parent) }
 
-    if (getVirtualFile(item.data) in allRoots) return null
+    val project = runCatching { item.data.project }.getOrNull()
+
+    if (project != null) {
+      val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
+      val defaultRoots = project.getBaseDirectories()
+      val oldEpRoots = additionalRoots(project)
+      val allRoots = (defaultRoots + oldEpRoots).filter { it.parent == null || !projectFileIndex.isInContent(it.parent) }
+
+      if (getVirtualFile(item.data) in allRoots) {
+        return null
+      }
+    }
 
     val parent = fromOldExtensions({ ext ->
       try {
@@ -175,10 +182,10 @@ internal fun ensurePsiFromExtensionIsValid(psi: PsiElement, message: String, cla
   }
   catch (t: Throwable) {
     if (clazz != null) {
-      throw PluginException.createByClass(message, t, clazz)
+      throw PluginException.createByClass("$message, psi class: ${psi.javaClass.canonicalName}", t, clazz)
     }
     else {
-      throw IllegalStateException(message, t)
+      throw IllegalStateException("$message, psi class: ${psi.javaClass.canonicalName}", t)
     }
   }
 }
