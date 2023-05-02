@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -23,7 +22,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.util.io.URLUtil
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.platform.workspace.storage.EntityChange
@@ -42,14 +40,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleFileListener
 
 open class KotlinModuleStateModificationService(val project: Project) : Disposable {
-    init {
-        val busConnection = project.messageBus.connect(this)
-        busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
-        busConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, JdkListener())
-        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, SingleFileModuleFileListener())
-        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, LibraryUpdatesListener())
-    }
-
     protected open fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean { return false }
 
     private fun invalidateSourceModule(module: Module, isRemoval: Boolean = false) {
@@ -69,7 +59,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
     /**
      * Publishes module state modification events for script and not-under-content-root [KtModule]s.
      */
-    private inner class SingleFileModuleFileListener : AbstractSingleFileModuleFileListener(project) {
+    class SingleFileModuleFileListener(private val project: Project) : AbstractSingleFileModuleFileListener(project) {
         override fun shouldProcessEvent(event: VFileEvent): Boolean = event is VFileDeleteEvent || event is VFileMoveEvent
 
         override fun processEvent(event: VFileEvent, module: KtModule) {
@@ -77,11 +67,13 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
         }
     }
 
-    private inner class LibraryUpdatesListener : BulkFileListener {
+    class LibraryUpdatesListener(private val project: Project) : BulkFileListener {
         val index = ProjectRootManager.getInstance(project).fileIndex
 
+        private val moduleStateModificationService: KotlinModuleStateModificationService get() = getInstance(project)
+
         override fun after(events: List<VFileEvent>) {
-            if (mayBuiltinsHaveChanged(events)) {
+            if (moduleStateModificationService.mayBuiltinsHaveChanged(events)) {
                 KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
                 return
             }
@@ -95,17 +87,19 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
                 if (file.extension != "jar") return@mapNotNull null  //react only on jars
                 val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@mapNotNull null
                 (index.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
-            }.distinct().forEach { invalidateLibraryModule(it) }
+            }.distinct().forEach { moduleStateModificationService.invalidateLibraryModule(it) }
         }
     }
 
-    private inner class JdkListener : ProjectJdkTable.Listener {
+    class JdkListener(private val project: Project) : ProjectJdkTable.Listener {
         override fun jdkRemoved(jdk: Sdk) {
             project.publishModuleStateModification(SdkInfo(project, jdk).toKtModule(), isRemoval = true)
         }
     }
 
-    private inner class ModelChangeListener : WorkspaceModelChangeListener {
+    class ModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
+        private val moduleStateModificationService: KotlinModuleStateModificationService get() = getInstance(project)
+
         override fun beforeChanged(event: VersionedStorageChange) {
             handleLibraryChanges(event)
             handleModuleChanges(event)
@@ -114,7 +108,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
 
         private fun handleContentRootInModuleChanges(event: VersionedStorageChange) {
             for (changedModule in event.getChangedModules()) {
-                invalidateSourceModule(changedModule)
+                moduleStateModificationService.invalidateSourceModule(changedModule)
             }
         }
 
@@ -154,12 +148,12 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
                     is EntityChange.Removed -> {
                         change.oldEntity
                           .findLibraryBridge(event.storageBefore)
-                          ?.let { invalidateLibraryModule(it, isRemoval = true) }
+                          ?.let { moduleStateModificationService.invalidateLibraryModule(it, isRemoval = true) }
                     }
 
                     is EntityChange.Replaced -> {
                         val changedLibrary = change.getReplacedEntity(event, LibraryEntity::findLibraryBridge) ?: continue
-                        invalidateLibraryModule(changedLibrary)
+                        moduleStateModificationService.invalidateLibraryModule(changedLibrary)
                     }
                 }
             }
@@ -172,13 +166,13 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
                     is EntityChange.Added -> {}
                     is EntityChange.Removed -> {
                         change.oldEntity.findModule(event.storageBefore)?.let { module ->
-                            invalidateSourceModule(module, isRemoval = true)
+                            moduleStateModificationService.invalidateSourceModule(module, isRemoval = true)
                         }
                     }
 
                     is EntityChange.Replaced -> {
                         val changedModule = change.getReplacedEntity(event, ModuleEntity::findModule) ?: continue
-                        invalidateSourceModule(changedModule)
+                        moduleStateModificationService.invalidateSourceModule(changedModule)
                     }
                 }
             }
