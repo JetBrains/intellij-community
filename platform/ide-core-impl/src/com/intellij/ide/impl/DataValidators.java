@@ -93,7 +93,7 @@ public abstract class DataValidators {
   }
 
   private static void reportPsiElementOnEdt(@NotNull String dataId, @NotNull Object source) {
-    LOG.error(PluginException.createByClass(
+    LOG.warn(PluginException.createByClass(  // Android Studio: KTIJ-24369, b/280310828
       "PSI element is provided on EDT by " + source.getClass().getName() + ".getData(\"" + dataId + "\"). " +
       "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER", null, source.getClass()));
   }
