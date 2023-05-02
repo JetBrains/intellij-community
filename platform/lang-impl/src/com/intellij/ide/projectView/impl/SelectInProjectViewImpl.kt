@@ -93,7 +93,7 @@ class SelectInProjectViewImpl(
   fun ensureSelected(
     paneId: String,
     virtualFile: VirtualFile?,
-    elementSupplier: Supplier<Any>,
+    elementSupplier: Supplier<Any?>,
     requestFocus: Boolean,
     result: ActionCallback?
   ) {
@@ -112,13 +112,13 @@ class SelectInProjectViewImpl(
         val virtualFile: VirtualFile?,
       )
       val context = readAction {
-        val elementToSelect = elementSupplier.get()
+        val elementToSelect = elementSupplier.get() ?: return@readAction null
         SelectionContext(
 visibleAndSelectedUserObject != null && visibleAndSelectedUserObject.canRepresent(elementToSelect),
 virtualFile ?: (elementToSelect as? PsiElement)?.virtualFile
         )
       }
-      if (context.isAlreadyVisibleAndSelected || context.virtualFile == null) {
+      if (context == null || context.isAlreadyVisibleAndSelected || context.virtualFile == null) {
         result?.setDone()
         return@launch
       }
