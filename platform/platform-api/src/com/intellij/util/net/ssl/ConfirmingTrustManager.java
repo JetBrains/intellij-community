@@ -46,15 +46,13 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   private static final Logger LOG = Logger.getInstance(ConfirmingTrustManager.class);
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
 
-  public final ThreadLocal<@Nullable UntrustedCertificateStrategy> myUntrustedCertificateStrategy =
-    ThreadLocal.withInitial(() -> null);
+  public final ThreadLocal<@Nullable UntrustedCertificateStrategy> myUntrustedCertificateStrategy = ThreadLocal.withInitial(() -> null);
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
     return new ConfirmingTrustManager(getSystemTrustManagers(), new MutableTrustManager(path, password));
   }
 
-  @NotNull
-  private static List<X509TrustManager> getSystemTrustManagers() {
+  private static @NotNull List<X509TrustManager> getSystemTrustManagers() {
     List<X509TrustManager> result = new ArrayList<>();
 
     X509TrustManager osManager = getOperatingSystemTrustManager();
@@ -70,8 +68,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     return result;
   }
 
-  @Nullable
-  private static X509TrustManager getJavaRuntimeDefaultTrustManager() {
+  private static @Nullable X509TrustManager getJavaRuntimeDefaultTrustManager() {
     try {
       TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       // hacky way to get default trust store
@@ -88,8 +85,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     return null;
   }
 
-  @Nullable
-  private static X509TrustManager getOperatingSystemTrustManager() {
+  private static @Nullable X509TrustManager getOperatingSystemTrustManager() {
     try {
       Collection<X509Certificate> additionalTrustedCertificates =
         OsCertificatesService.getInstance().getCustomOsSpecificTrustedCertificates();
@@ -116,13 +112,12 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  @NotNull
-  static X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<? extends X509Certificate> certificates) throws Exception {
+  static @NotNull X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<? extends X509Certificate> certificates) throws Exception {
     KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
     ks.load(null, null);
     for (X509Certificate certificate : certificates) {
       ks.setCertificateEntry(
-        certificate.getSubjectDN().toString() + "-" +
+        certificate.getSubjectX500Principal().toString() + "-" +
         DigestUtil.sha256Hex(certificate.getEncoded()), certificate);
     }
 
@@ -162,8 +157,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  @Nullable
-  private static X509TrustManager findX509TrustManager(TrustManager[] managers) {
+  private static @Nullable X509TrustManager findX509TrustManager(TrustManager[] managers) {
     for (TrustManager manager : managers) {
       if (manager instanceof X509TrustManager) {
         return (X509TrustManager)manager;
@@ -475,8 +469,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
      * @param alias certificate's alias
      * @return certificate or null if it's not present
      */
-    @Nullable
-    public X509Certificate getCertificate(@NotNull String alias) {
+    public @Nullable X509Certificate getCertificate(@NotNull String alias) {
       myReadLock.lock();
       try {
         return (X509Certificate)myKeyStore.getCertificate(alias);
