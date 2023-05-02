@@ -64,7 +64,7 @@ class NastradamusClientTest {
     val tempPropertiesFile = File.createTempFile("teamcity_", "_properties_file.properties")
 
     Properties().apply {
-      setProperty("teamcity.build.id", "100500")
+      setProperty("teamcity.build.id", "225659992")
       setProperty("teamcity.buildType.id", "bt3989238923")
       setProperty("teamcity.auth.userId", "fake_user_id")
       setProperty("teamcity.auth.password", "fake_password")
@@ -248,6 +248,7 @@ class NastradamusClientTest {
     tcMockServer.enqueue(getOkResponse("teamcity/TestOccurences.json"))
     tcMockServer.enqueue(getOkResponse("teamcity/EmptyTestOccurences.json"))
     tcMockServer.enqueue(getOkResponse("teamcity/Build_Info_Triggered_By_Aggregator.json"))
+    setFakeResponsesForTeamCityChanges()
 
     nastradamusMockServer.enqueue(MockResponse()
                                     .setBody("")

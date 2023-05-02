@@ -56,7 +56,7 @@ class NastradamusClient(
       )
     }
 
-    return TestResultRequestEntity(buildInfo = getBuildInfo(), testRunResults = testResultEntities)
+    return TestResultRequestEntity(buildInfo = getBuildInfo(), testRunResults = testResultEntities, changes = getTeamCityChangesDetails())
   }
 
   fun sendTestRunResults(testResultRequestEntity: TestResultRequestEntity, wasNastradamusDataUsed: Boolean) {
