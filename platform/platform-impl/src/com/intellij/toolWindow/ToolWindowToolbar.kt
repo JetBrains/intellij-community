@@ -20,11 +20,13 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.border.Border
 
-internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
+internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
   abstract val bottomStripe: StripeV2
   abstract val topStripe: StripeV2
+
+  abstract val moreButton: MoreSquareStripeButton
 
   protected fun init() {
     layout = BorderLayout()
@@ -42,6 +44,12 @@ internal abstract class ToolWindowToolbar : JBPanel<ToolWindowToolbar>() {
     topWrapper.add(topStripe, BorderLayout.NORTH)
     add(topWrapper, BorderLayout.NORTH)
     add(bottomStripe, BorderLayout.SOUTH)
+  }
+
+  fun initMoreButton() {
+    if (isPrimary) {
+      topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+    }
   }
 
   open fun createBorder():Border = JBUI.Borders.empty()

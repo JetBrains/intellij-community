@@ -46,6 +46,11 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
 
   abstract fun setLayout(newLayout: DesktopLayout)
 
+  abstract fun getMoreButtonSide(): ToolWindowAnchor
+
+  open fun setMoreButtonSide(side: ToolWindowAnchor) {
+  }
+
   /**
    * Copied `layout` into internal layout and rearranges tool windows.
    */

@@ -1357,6 +1357,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     checkInvariants(null)
   }
 
+  override fun getMoreButtonSide() = state.moreButton
+
+  override fun setMoreButtonSide(side: ToolWindowAnchor) {
+    state.moreButton = side
+
+    if (isNewUi) {
+      for (pane in toolWindowPanes.values) {
+        val buttonManager = pane.buttonManager
+        if (buttonManager is ToolWindowPaneNewButtonManager) {
+          buttonManager.updateMoreButtons()
+        }
+      }
+    }
+  }
+
   override fun invokeLater(runnable: Runnable) {
     if (!toolWindowSetInitializer.addToPendingTasksIfNotInitialized(runnable)) {
       ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, project.disposed)
@@ -1464,7 +1479,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val buttonManager = toolWindowPane.buttonManager as ToolWindowPaneNewButtonManager
     var button = buttonManager.getSquareStripeFor(entry.readOnlyWindowInfo.anchor).getButtonFor(options.toolWindowId)?.getComponent()
     if (button == null || !button.isShowing) {
-      button = (buttonManager.getSquareStripeFor(ToolWindowAnchor.LEFT) as? ToolWindowLeftToolbar)?.moreButton!!
+      button = buttonManager.getMoreButton(getMoreButtonSide())
       position = Balloon.Position.atLeft
     }
     val show = Runnable {

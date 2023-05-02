@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import org.jdom.Element
@@ -26,10 +27,12 @@ interface ToolWindowManagerState : PersistentStateComponent<Element> {
   val scheduledLayout: AtomicProperty<DesktopLayout?>
   val isEditorComponentActive: Boolean
   var frame: ProjectFrameHelper?
+  var moreButton: ToolWindowAnchor
 }
 
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 private const val RECENT_TW_TAG = "recentWindows"
+private const val MORE_BUTTON_TAG = "moreButton"
 
 @ApiStatus.Internal
 @State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
@@ -52,6 +55,8 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
     }
 
   override var frame: ProjectFrameHelper? = null
+
+  override var moreButton = ToolWindowAnchor.LEFT
 
   override fun getState(): Element? {
     if (frame == null) {
@@ -76,6 +81,9 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
         recentState.addContent(Element("value").addContent(it))
       }
       element.addContent(recentState)
+    }
+    if (moreButton !== ToolWindowAnchor.LEFT) {
+      element.addContent(Element(MORE_BUTTON_TAG).setAttribute("side", moreButton.toString()))
     }
     return element
   }
@@ -119,6 +127,9 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
           element.content.forEach {
             recentToolWindows.add(it.value)
           }
+        }
+        MORE_BUTTON_TAG -> {
+          moreButton = ToolWindowAnchor.fromText(element.getAttributeValue("side"))
         }
       }
     }

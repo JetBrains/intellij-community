@@ -8,24 +8,65 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.JBUI
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
-internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) :
+internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
+                                      private val side: ToolWindowAnchor,
+                                      vararg moveTo: ToolWindowAnchor) :
   ActionButton(createAction(toolWindowToolbar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR,
                { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
 
   init {
     setLook(SquareStripeButtonLook(this))
+    addMouseListener(object : PopupHandler() {
+      override fun invokePopup(component: Component, x: Int, y: Int) {
+        val popupMenu = ActionManager.getInstance()
+          .createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, createPopupGroup(moveTo))
+        popupMenu.component.show(component, x, y)
+      }
+    })
+  }
+
+  private fun createPopupGroup(moveTo: Array<out ToolWindowAnchor>): DefaultActionGroup {
+    val group = DefaultActionGroup()
+
+    for (anchor in moveTo) {
+      group.add(object : DumbAwareAction(UIBundle.message("tool.window.more.button.move", anchor.capitalizedDisplayName)) {
+        override fun actionPerformed(e: AnActionEvent) {
+          ToolWindowManagerEx.getInstanceEx(e.project ?: return).setMoreButtonSide(anchor)
+        }
+      })
+    }
+
+    return group
+  }
+
+  override fun update() {
+    super.update()
+    val project = dataContext.getData(CommonDataKeys.PROJECT)
+    if (project == null) {
+      return
+    }
+
+    val available = ToolWindowsGroup.getToolWindowActions(project, true).isNotEmpty() && ToolWindowManagerEx.getInstanceEx(
+      project).getMoreButtonSide() == side
+
+    myPresentation.isEnabledAndVisible = available
+    isEnabled = available
+    isVisible = available
   }
 
   override fun updateToolTipText() {
@@ -58,7 +99,7 @@ private fun scaleIcon(): Icon {
   )
 }
 
-private fun createAction(toolWindowToolbar: ToolWindowLeftToolbar): DumbAwareAction {
+private fun createAction(toolWindowToolbar: ToolWindowToolbar): DumbAwareAction {
   return object : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
       val actions = ToolWindowsGroup.getToolWindowActions(e.project ?: return, true)
@@ -67,10 +108,6 @@ private fun createAction(toolWindowToolbar: ToolWindowLeftToolbar): DumbAwareAct
 
       val moreSquareStripeButton = toolWindowToolbar.moreButton
       popup.show(RelativePoint(toolWindowToolbar, Point(toolWindowToolbar.width, moreSquareStripeButton.y)))
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = ToolWindowsGroup.getToolWindowActions(e.project ?: return, true).isNotEmpty()
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
