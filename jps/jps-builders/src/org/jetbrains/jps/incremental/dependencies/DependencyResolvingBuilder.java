@@ -60,6 +60,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 /**
@@ -104,7 +105,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildStarted(CompileContext context) {
-    ResourceGuard.init(context);
+    JpsLibraryResolveGuard.init(context);
   }
 
   @Override
@@ -204,12 +205,12 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
                                                boolean verifySha256Checksums,
                                                boolean useBindRepositories) throws Exception {
     final JpsMavenRepositoryLibraryDescriptor descriptor = lib.getProperties().getData();
-    final ResourceGuard guard = ResourceGuard.get(context, descriptor);
-    if (guard.requestProcessing(context.getCancelStatus())) {
+    final List<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
+
+    JpsLibraryResolveGuard.performUnderGuard(context, descriptor, required, () -> {
       try {
         ArtifactRepositoryManager effectiveRepoManager = getRepositoryManager(context, descriptor, lib.getName(), useBindRepositories);
 
-        final Collection<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
         List<File> compiledRoots = new ArrayList<>(required);
         for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
           if (isArtifactNotCorrupted(context, lib.getName(), descriptor, it.next())) {
@@ -234,10 +235,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       catch (TransferCancelledException e) {
         context.checkCanceled();
       }
-      finally {
-        guard.finish();
-      }
-    }
+    });
   }
 
   private static void syncPaths(final Collection<? extends File> required, @NotNull Collection<? extends File> resolved) throws Exception {
@@ -466,50 +464,109 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static final class ResourceGuard {
-    private static final Key<ConcurrentMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard>> CONTEXT_KEY = GlobalContextKey.create("_artifact_repository_resolved_libraries_");
-    private static final byte INITIAL = 0;
-    private static final byte PROGRESS = 1;
-    private static final byte FINISHED = 2;
-    private byte myState = INITIAL;
-    private CanceledStatus myStatus;
+  private static final class JpsLibraryResolveGuard {
 
-    private synchronized boolean requestProcessing(final CanceledStatus cancelStatus) {
-      myStatus = cancelStatus;
-      if (myState == INITIAL) {
-        myState = PROGRESS;
-        return true;
-      }
-      while (myState == PROGRESS) {
-        if (cancelStatus.isCanceled()) {
-          break;
-        }
-        try {
-          this.wait(1000L);
-        }
-        catch (InterruptedException ignored) {
-        }
-      }
-      return false;
-    }
+    private static final Key<ConcurrentHashMap<Object, Guard>> CONTEXT_KEY = GlobalContextKey.create("_dependency_resolving_builder_guards_");
 
-    private synchronized void finish() {
-      if (myState != FINISHED) {
-        myState = FINISHED;
-        this.notifyAll();
-      }
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+      void run() throws Exception;
     }
 
     private static void init(CompileContext context) {
       context.putUserData(CONTEXT_KEY, new ConcurrentHashMap<>());
     }
 
-    private static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
-      final ConcurrentMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard> map = context.getUserData(CONTEXT_KEY);
+    private static void performUnderGuard(@NotNull CompileContext context,
+                                          @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                          @NotNull List<File> roots,
+                                          @NotNull ThrowingRunnable action) throws Exception {
+      Stream<Guard> descriptorGuard = Stream.of(getDescriptorGuard(context, descriptor));
+      Stream<Guard> rootsGuards = roots.stream()
+        .map(File::toPath)
+        .map(Path::toAbsolutePath)
+        .map(Path::normalize)
+        // sort and filter equal guards to acquire locks always in similar order and prevent deadlocks
+        .sorted()
+        .distinct()
+        .map((root) -> getRootGuard(context, root));
+
+      List<Guard> guards = Stream.concat(descriptorGuard, rootsGuards).collect(Collectors.toList());
+      try {
+        for (Guard guard : guards) {
+          if (!guard.requestProcessing(context.getCancelStatus())) {
+            return;
+          }
+        }
+
+        action.run();
+      }
+      finally {
+        // release locks in reversed order to prevent deadlocks
+        for (Guard guard : ContainerUtil.reverse(guards)) {
+          guard.finish();
+        }
+      }
+    }
+
+    private static Guard getDescriptorGuard(@NotNull CompileContext context, @NotNull JpsMavenRepositoryLibraryDescriptor descriptor) {
+      Map<Object, Guard> map = context.getUserData(CONTEXT_KEY);
       assert map != null;
-      final ResourceGuard g = new ResourceGuard();
-      final ResourceGuard existing = map.putIfAbsent(descriptor, g);
-      return existing != null? existing : g;
+      return map.computeIfAbsent(descriptor, (ignored) ->
+        new Guard(true) // descriptor must not be processed more than once
+      );
+    }
+
+    private static Guard getRootGuard(@NotNull CompileContext context, @NotNull Path rootPath) {
+      Map<Object, Guard> map = context.getUserData(CONTEXT_KEY);
+      assert map != null;
+      return map.computeIfAbsent(rootPath, (ignored) ->
+        new Guard(false) // root can be processed more than once (similar dependency root can be used in multiple libraries)
+      );
+    }
+
+    private static final class Guard {
+      private static final byte INITIAL = 0;
+      private static final byte PROGRESS = 1;
+      private static final byte FINISHED = 2;
+      private byte myState = INITIAL;
+      private final boolean mySingleProcessingGuard;
+
+      /**
+       * Create new guard.
+       * @param isSingleProcessingGuard If true and {@link Guard#requestProcessing(CanceledStatus)} will allow processing (return true)
+       *                                only once, otherwise multiple processing repeats is allowed.
+       */
+      private Guard(boolean isSingleProcessingGuard) {
+        mySingleProcessingGuard = isSingleProcessingGuard;
+      }
+
+      private synchronized boolean requestProcessing(CanceledStatus canceledStatus) {
+        if (canceledStatus.isCanceled()) return false;
+
+        if (myState == INITIAL) {
+          myState = PROGRESS;
+          return true;
+        }
+
+        // wait until another thread completes its work with the guarded object
+        while (myState == PROGRESS && !canceledStatus.isCanceled()) {
+          try {
+            wait(100L);
+          } catch (InterruptedException ignored) {
+          }
+        }
+
+        // allow processing only if not cancelled, and myState is reset from PROGRESS to INITIAL
+        return myState == INITIAL && !canceledStatus.isCanceled();
+      }
+
+      private synchronized void finish() {
+        if (myState != FINISHED) {
+          myState = mySingleProcessingGuard ? FINISHED : INITIAL;
+          notifyAll();
+        }
+      }
     }
   }
 
