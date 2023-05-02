@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.completion.KeywordCompletion
 import org.jetbrains.kotlin.idea.completion.context.*
@@ -38,7 +39,11 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
 
     private val resolveDependentCompletionKeywordHandlers = ResolveDependentCompletionKeywordHandlerProvider(basicContext)
 
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirRawPositionCompletionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         val expression = when (positionContext) {
             is FirNameReferencePositionContext -> positionContext.reference.expression.let {
                 it.parentsWithSelf.match(KtLabelReferenceExpression::class, KtContainerNode::class, last = KtExpressionWithLabel::class)

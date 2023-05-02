@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.checkers.ExtensionApplicabilityChecker
@@ -84,13 +85,12 @@ internal open class FirCallableCompletionContributor(
         return CallableInsertionOptions(importStrategy, insertionStrategy)
     }
 
-    protected open fun KtAnalysisSession.filter(symbol: KtCallableSymbol): Boolean = true
+    context(KtAnalysisSession)
+    protected open fun filter(symbol: KtCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean =
+        sessionParameters.allowExpectedDeclarations || !symbol.isExpect()
 
     private val shouldCompleteTopLevelCallablesFromIndex: Boolean
         get() = prefixMatcher.prefix.isNotEmpty()
-
-    protected val excludeEnumEntries =
-        !basicContext.project.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
 
     protected data class CallableWithMetadataForCompletion(
         private val _signature: KtCallableSignature<*>,
@@ -107,7 +107,8 @@ internal open class FirCallableCompletionContributor(
 
     override fun KtAnalysisSession.complete(
         positionContext: FirNameReferencePositionContext,
-        weighingContext: WeighingContext
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
     ): Unit = with(positionContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val scopesContext = originalKtFile.getScopeContextForPosition(nameExpression)
@@ -123,8 +124,8 @@ internal open class FirCallableCompletionContributor(
         val weighingContextWithoutExpectedType = weighingContext.withoutExpectedType()
 
         val callablesWithMetadata: Sequence<CallableWithMetadataForCompletion> = when {
-            receiver != null -> collectDotCompletion(scopesContext, receiver, extensionChecker, visibilityChecker)
-            else -> completeWithoutReceiver(scopesContext, extensionChecker, visibilityChecker)
+            receiver != null -> collectDotCompletion(scopesContext, receiver, extensionChecker, visibilityChecker, sessionParameters)
+            else -> completeWithoutReceiver(scopesContext, extensionChecker, visibilityChecker, sessionParameters)
         }
             .filterIfInsideAnnotationEntryArgument(position, weighingContext.expectedType)
             .filterOutShadowedCallables()
@@ -147,6 +148,7 @@ internal open class FirCallableCompletionContributor(
         scopeContext: KtScopeContext,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
+        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val implicitReceivers = scopeContext.implicitReceivers
         val implicitReceiversTypes = implicitReceivers.map { it.type }
@@ -155,15 +157,15 @@ internal open class FirCallableCompletionContributor(
             scopeContext,
             visibilityChecker,
             scopeNameFilter,
-            excludeEnumEntries,
-        ) { filter(it) }
-        val extensionsWhichCanBeCalled = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker)
+            sessionParameters,
+        ) { filter(it, sessionParameters) }
+        val extensionsWhichCanBeCalled = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker, sessionParameters)
         val availableStaticAndTopLevelNonExtensions = collectStaticAndTopLevelNonExtensionsFromScopeContext(
             scopeContext,
             visibilityChecker,
             scopeNameFilter,
-            excludeEnumEntries,
-        ) { filter(it) }
+            sessionParameters,
+        ) { filter(it, sessionParameters) }
 
         // TODO: consider relying on tower resolver when populating callable entries. For example
         //  val Int.foo : ...
@@ -206,7 +208,12 @@ internal open class FirCallableCompletionContributor(
                 .forEach { yield(createCallableWithMetadata(it.asSignature(), CompletionSymbolOrigin.Index)) }
         }
 
-        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(implicitReceiversTypes, extensionChecker, visibilityChecker)
+        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
+            implicitReceiversTypes,
+            extensionChecker,
+            visibilityChecker,
+            sessionParameters,
+        )
             .forEach { (signature, applicabilityResult) ->
                 val extensionOptions = getExtensionOptions(signature, applicabilityResult) ?: return@forEach
                 yield(createCallableWithMetadata(signature, CompletionSymbolOrigin.Index, extensionOptions))
@@ -218,14 +225,23 @@ internal open class FirCallableCompletionContributor(
         explicitReceiver: KtExpression,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
+        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         val symbol = explicitReceiver.reference()?.resolveToSymbol()
         return when {
-            symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, visibilityChecker)
+            symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, visibilityChecker, sessionParameters)
 
             symbol is KtNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope -> sequence {
                 if (symbol.classKind == KtClassKind.ENUM_CLASS) {
-                    yieldAll(collectDotCompletionForCallableReceiver(scopeContext, explicitReceiver, extensionChecker, visibilityChecker))
+                    yieldAll(
+                        collectDotCompletionForCallableReceiver(
+                            scopeContext,
+                            explicitReceiver,
+                            extensionChecker,
+                            visibilityChecker,
+                            sessionParameters
+                        )
+                    )
                 }
 
                 val staticScope = symbol.getStaticMemberScope()
@@ -235,7 +251,7 @@ internal open class FirCallableCompletionContributor(
                     staticScope,
                     visibilityChecker,
                     scopeNameFilter,
-                    excludeEnumEntries,
+                    sessionParameters,
                 )
 
                 nonExtensions.forEach { member ->
@@ -249,7 +265,13 @@ internal open class FirCallableCompletionContributor(
                 emptySequence()
             }
 
-            else -> collectDotCompletionForCallableReceiver(scopeContext, explicitReceiver, extensionChecker, visibilityChecker)
+            else -> collectDotCompletionForCallableReceiver(
+                scopeContext,
+                explicitReceiver,
+                extensionChecker,
+                visibilityChecker,
+                sessionParameters,
+            )
         }
     }
 
@@ -262,7 +284,8 @@ internal open class FirCallableCompletionContributor(
 
     private fun KtAnalysisSession.collectDotCompletionForPackageReceiver(
         packageSymbol: KtPackageSymbol,
-        visibilityChecker: CompletionVisibilityChecker
+        visibilityChecker: CompletionVisibilityChecker,
+        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         val packageScope = packageSymbol.getPackageScope()
         val packageScopeKind = KtScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
@@ -271,7 +294,7 @@ internal open class FirCallableCompletionContributor(
             .getCallableSymbols(scopeNameFilter)
             .filterNot { it.isExtension }
             .filter { visibilityChecker.isVisible(it) }
-            .filter { filter(it) }
+            .filter { filter(it, sessionParameters) }
             .map { callable ->
                 val callableSignature = callable.asSignature()
                 val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(callableSignature))
@@ -284,7 +307,7 @@ internal open class FirCallableCompletionContributor(
         explicitReceiver: KtExpression,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
-        allowSyntheticJavaProperties: Boolean = true,
+        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val smartCastInfo = explicitReceiver.getSmartCastInfo()
         if (smartCastInfo?.isStable == false) {
@@ -294,7 +317,7 @@ internal open class FirCallableCompletionContributor(
                 visibilityChecker,
                 scopeContext,
                 extensionChecker,
-                allowSyntheticJavaProperties,
+                sessionParameters,
                 // Only offer the hint if the type is denotable.
                 smartCastInfo.smartCastType.takeIf { it.approximateToSuperPublicDenotable(true) == null }
             )
@@ -307,7 +330,7 @@ internal open class FirCallableCompletionContributor(
             visibilityChecker,
             scopeContext,
             extensionChecker,
-            allowSyntheticJavaProperties
+            sessionParameters,
         )
         yieldAll(callablesWithMetadata)
     }
@@ -317,17 +340,22 @@ internal open class FirCallableCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         scopeContext: KtScopeContext,
         extensionChecker: ExtensionApplicabilityChecker,
-        allowSyntheticJavaProperties: Boolean = true,
+        sessionParameters: FirCompletionSessionParameters,
         explicitReceiverTypeHint: KtType? = null
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val nonExtensionMembers = collectNonExtensionsForType(
             typeOfPossibleReceiver,
             visibilityChecker,
             scopeNameFilter,
-            excludeEnumEntries,
-            withSyntheticJavaProperties = allowSyntheticJavaProperties
-        ) { filter(it) }
-        val extensionNonMembers = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker, typeOfPossibleReceiver)
+            sessionParameters,
+        ) { filter(it, sessionParameters) }
+        val extensionNonMembers = collectSuitableExtensions(
+            scopeContext,
+            extensionChecker,
+            visibilityChecker,
+            sessionParameters,
+            typeOfPossibleReceiver
+        )
 
         nonExtensionMembers.forEach { signatureWithScopeKind ->
             val callableWithMetadata = createCallableWithMetadata(
@@ -347,8 +375,13 @@ internal open class FirCallableCompletionContributor(
             }
         }
 
-        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
-            .filter { (signature, _) -> filter(signature.symbol) }
+        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
+            listOf(typeOfPossibleReceiver),
+            extensionChecker,
+            visibilityChecker,
+            sessionParameters
+        )
+            .filter { (signature, _) -> filter(signature.symbol, sessionParameters) }
             .forEach { (signature, applicabilityResult) ->
                 val extensionOptions = getExtensionOptions(signature, applicabilityResult) ?: return@forEach
                 val callableWithMetadata = createCallableWithMetadata(
@@ -365,6 +398,7 @@ internal open class FirCallableCompletionContributor(
         receiverTypes: List<KtType>,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
+        sessionParameters: FirCompletionSessionParameters,
     ): Collection<ApplicableExtension> {
         if (receiverTypes.isEmpty()) return emptyList()
 
@@ -378,7 +412,7 @@ internal open class FirCallableCompletionContributor(
         val topLevelExtensionsFromResolveExtension = resolveExtensionScope.getCallableSymbols(scopeNameFilter).filter { it.isExtension }
 
         return (topLevelExtensionsFromIndex + topLevelExtensionsFromResolveExtension)
-            .filter { filter(it) }
+            .filter { filter(it, sessionParameters) }
             .filter { visibilityChecker.isVisible(it) }
             .mapNotNull { checkApplicabilityAndSubstitute(it, extensionChecker) }
             .let { ShadowedCallablesFilter.sortExtensions(it, receiverTypes) }
@@ -388,15 +422,16 @@ internal open class FirCallableCompletionContributor(
         scopeContext: KtScopeContext,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
+        sessionParameters: FirCompletionSessionParameters,
         explicitReceiverType: KtType? = null,
     ): Sequence<Pair<KtCallableSignatureWithContainingScopeKind, KtExtensionApplicabilityResult.Applicable>> {
         val receiversTypes = explicitReceiverType?.let { listOf(it) } ?: scopeContext.implicitReceivers.map { it.type }
 
         return scopeContext.scopes.asSequence().flatMap { scopeWithKind ->
-            val extensions = collectSuitableExtensions(scopeWithKind.scope, receiversTypes, extensionChecker, visibilityChecker)
-            extensions.map { (signature, applicability) ->
-                KtCallableSignatureWithContainingScopeKind(signature, scopeWithKind.kind) to applicability
-            }
+            collectSuitableExtensions(scopeWithKind.scope, receiversTypes, extensionChecker, visibilityChecker, sessionParameters)
+                .map { (signature, applicability) ->
+                    KtCallableSignatureWithContainingScopeKind(signature, scopeWithKind.kind) to applicability
+                }
         }
     }
 
@@ -405,11 +440,12 @@ internal open class FirCallableCompletionContributor(
         receiverTypes: List<KtType>,
         hasSuitableExtensionReceiver: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
+        sessionParameters: FirCompletionSessionParameters,
     ): Collection<ApplicableExtension> =
         scope.getCallableSymbols(scopeNameFilter)
             .filter { it.isExtension || it is KtVariableLikeSymbol && (it.returnType as? KtFunctionalType)?.hasReceiver == true }
             .filter { visibilityChecker.isVisible(it) }
-            .filter { filter(it) }
+            .filter { filter(it, sessionParameters) }
             .mapNotNull { callable -> checkApplicabilityAndSubstitute(callable, hasSuitableExtensionReceiver) }
             .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
 
@@ -560,46 +596,41 @@ internal class FirCallableReferenceCompletionContributor(
         scopeContext: KtScopeContext,
         explicitReceiver: KtExpression,
         extensionChecker: ExtensionApplicabilityChecker,
-        visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<CallableWithMetadataForCompletion> {
-        val allowSyntheticJavaProperties =
-            explicitReceiver.languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
+        visibilityChecker: CompletionVisibilityChecker,
+        sessionParameters: FirCompletionSessionParameters,
+    ): Sequence<CallableWithMetadataForCompletion> = when (val symbol = explicitReceiver.reference()?.resolveToSymbol()) {
+        is KtPackageSymbol -> emptySequence()
+        is KtNamedClassOrObjectSymbol -> sequence {
+            val type = symbol.buildSelfClassType()
+            val nonExtensionMembers = collectNonExtensionsForType(
+                type,
+                visibilityChecker,
+                scopeNameFilter,
+                sessionParameters,
+            ) { filter(it, sessionParameters) }
 
-        return when (val symbol = explicitReceiver.reference()?.resolveToSymbol()) {
-            is KtPackageSymbol -> emptySequence()
-            is KtNamedClassOrObjectSymbol -> sequence {
-                val type = symbol.buildSelfClassType()
-                val nonExtensionMembers = collectNonExtensionsForType(
-                    type,
-                    visibilityChecker,
-                    scopeNameFilter,
-                    excludeEnumEntries,
-                    withSyntheticJavaProperties = allowSyntheticJavaProperties
-                ) { filter(it) }
+            val staticScope = listOfNotNull(symbol.companionObject?.getMemberScope(), symbol.getStaticMemberScope()).asCompositeScope()
+            val staticScopeKind = KtScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
+            val staticMembers = collectNonExtensionsFromScope(
+                staticScope,
+                visibilityChecker,
+                scopeNameFilter,
+                sessionParameters,
+            ) { filter(it, sessionParameters) }.map { KtCallableSignatureWithContainingScopeKind(it, staticScopeKind) }
 
-                val staticScope = listOfNotNull(symbol.companionObject?.getMemberScope(), symbol.getStaticMemberScope()).asCompositeScope()
-                val staticScopeKind = KtScopeKind.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
-                val staticMembers = collectNonExtensionsFromScope(
-                    staticScope,
-                    visibilityChecker,
-                    scopeNameFilter,
-                    excludeEnumEntries
-                ) { filter(it) }.map { KtCallableSignatureWithContainingScopeKind(it, staticScopeKind) }
-
-                (nonExtensionMembers + staticMembers).forEach {
-                    yield(createCallableWithMetadata(it.signature, it.scopeKind, noImportRequired = true, withExpectedType = false))
-                }
+            (nonExtensionMembers + staticMembers).forEach {
+                yield(createCallableWithMetadata(it.signature, it.scopeKind, noImportRequired = true, withExpectedType = false))
             }
+        }
 
-            else -> {
-                collectDotCompletionForCallableReceiver(
-                    scopeContext,
-                    explicitReceiver,
-                    extensionChecker,
-                    visibilityChecker,
-                    allowSyntheticJavaProperties
-                )
-            }
+        else -> {
+            collectDotCompletionForCallableReceiver(
+                scopeContext,
+                explicitReceiver,
+                extensionChecker,
+                visibilityChecker,
+                sessionParameters,
+            )
         }
     }
 }
@@ -620,8 +651,9 @@ internal class FirInfixCallableCompletionContributor(
         is KtExtensionApplicabilityResult.NonApplicable -> null
     }
 
-    override fun KtAnalysisSession.filter(symbol: KtCallableSymbol): Boolean {
-        return symbol is KtFunctionSymbol && symbol.isInfix
+    context(KtAnalysisSession)
+    override fun filter(symbol: KtCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean {
+        return symbol is KtFunctionSymbol && symbol.isInfix && super.filter(symbol, sessionParameters)
     }
 
     companion object {

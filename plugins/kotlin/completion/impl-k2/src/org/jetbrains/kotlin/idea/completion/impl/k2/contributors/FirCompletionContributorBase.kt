@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
@@ -74,7 +75,11 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected val scopeNameFilter: KtScopeNameFilter =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
-    abstract fun KtAnalysisSession.complete(positionContext: C, weighingContext: WeighingContext)
+    abstract fun KtAnalysisSession.complete(
+        positionContext: C,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    )
 
     protected fun KtAnalysisSession.addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
         if (symbol !is KtNamedSymbol) return
@@ -185,9 +190,10 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
 internal fun <C : FirRawPositionCompletionContext> KtAnalysisSession.complete(
     contextContributor: FirCompletionContributorBase<C>,
     positionContext: C,
-    weighingContext: WeighingContext
+    weighingContext: WeighingContext,
+    sessionParameters: FirCompletionSessionParameters,
 ) {
     with(contextContributor) {
-        complete(positionContext, weighingContext)
+        complete(positionContext, weighingContext, sessionParameters)
     }
 }

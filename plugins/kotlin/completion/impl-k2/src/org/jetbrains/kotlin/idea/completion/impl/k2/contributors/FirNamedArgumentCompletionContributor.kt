@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.findValueArgument
@@ -27,7 +28,11 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
     FirCompletionContributorBase<FirNameReferencePositionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext, weighingContext: WeighingContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirNameReferencePositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         if (positionContext.explicitReceiver != null) return
 
         val valueArgument = findValueArgument(positionContext.nameExpression) ?: return

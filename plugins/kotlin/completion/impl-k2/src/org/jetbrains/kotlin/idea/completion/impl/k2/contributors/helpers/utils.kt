@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -47,9 +48,7 @@ internal fun KtAnalysisSession.collectLocalAndMemberNonExtensionsFromScopeContex
     scopeContext: KtScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
-    excludeEnumEntries: Boolean,
-    withSyntheticJavaProperties: Boolean = true,
-    skipJavaGettersAndSetters: Boolean = true,
+    sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KtCallableSymbol) -> Boolean = { true }
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = sequence {
     val indexedImplicitReceivers = scopeContext.implicitReceivers.associateBy { it.scopeIndexInTower }
@@ -57,23 +56,20 @@ internal fun KtAnalysisSession.collectLocalAndMemberNonExtensionsFromScopeContex
 
     for (scopeWithKind in scopes) {
         val kind = scopeWithKind.kind
-        val collectWithSyntheticJavaProperties =
-            kind is KtScopeKind.TypeScope && withSyntheticJavaProperties && kind.indexInTower in indexedImplicitReceivers
+        val isImplicitReceiverScope = kind is KtScopeKind.TypeScope && kind.indexInTower in indexedImplicitReceivers
 
-        val nonExtensions = if (collectWithSyntheticJavaProperties) {
+        val nonExtensions = if (isImplicitReceiverScope) {
             val implicitReceiver = indexedImplicitReceivers.getValue(kind.indexInTower)
             collectNonExtensionsForType(
                 implicitReceiver.type,
                 visibilityChecker,
                 scopeNameFilter,
-                excludeEnumEntries,
-                withSyntheticJavaProperties = true,
-                skipJavaGettersAndSetters,
+                sessionParameters,
                 implicitReceiver.scopeIndexInTower,
                 symbolFilter
             )
         } else {
-            collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, excludeEnumEntries, symbolFilter).map {
+            collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter).map {
                 KtCallableSignatureWithContainingScopeKind(it, kind)
             }
         }
@@ -90,7 +86,7 @@ internal fun KtAnalysisSession.collectStaticAndTopLevelNonExtensionsFromScopeCon
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = scopeContext.scopes.asSequence()
     .filterNot { it.kind is KtScopeKind.LocalScope || it.kind is KtScopeKind.TypeScope }
     .flatMap { scopeWithKind ->
-        collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, excludeEnumEntries, symbolFilter)
+        collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter)
             .map { KtCallableSignatureWithContainingScopeKind(it, scopeWithKind.kind) }
     }
 
@@ -102,14 +98,12 @@ internal fun KtAnalysisSession.collectNonExtensionsForType(
     type: KtType,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
-    excludeEnumEntries: Boolean,
-    withSyntheticJavaProperties: Boolean = true,
-    skipJavaGettersAndSetters: Boolean = true,
+    sessionParameters: FirCompletionSessionParameters,
     indexInTower: Int? = null,
     symbolFilter: (KtCallableSymbol) -> Boolean = { true }
 ): Sequence<KtCallableSignatureWithContainingScopeKind> {
     val typeScope = type.getTypeScope() ?: return emptySequence()
-    val syntheticJavaPropertiesTypeScope = type.takeIf { withSyntheticJavaProperties }?.getSyntheticJavaPropertiesScope()
+    val syntheticJavaPropertiesTypeScope = type.takeIf { sessionParameters.allowSyntheticJavaProperties }?.getSyntheticJavaPropertiesScope()
 
     val getAndSetAwareNameFilter = scopeNameFilter.getAndSetAware()
 
@@ -118,7 +112,7 @@ internal fun KtAnalysisSession.collectNonExtensionsForType(
         ?.filterIsInstance<KtCallableSignature<KtSyntheticJavaPropertySymbol>>()
         .orEmpty()
 
-    val callables = typeScope.getCallableSignatures(getAndSetAwareNameFilter).applyIf(skipJavaGettersAndSetters) {
+    val callables = typeScope.getCallableSignatures(getAndSetAwareNameFilter).applyIf(!sessionParameters.allowJavaGettersAndSetters) {
         val javaGetterAndSetterSymbols = syntheticProperties.flatMapTo(mutableSetOf()) { it.symbol.getterAndSetter }
         filter { it.symbol !in javaGetterAndSetterSymbols }
     }
@@ -137,7 +131,7 @@ internal fun KtAnalysisSession.collectNonExtensionsForType(
         yieldAll(syntheticProperties.map {
             KtCallableSignatureWithContainingScopeKind(it, KtScopeKind.SyntheticJavaPropertiesScope(scopeIndex))
         })
-    }.applyIf(excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.signature.symbol) } }
+    }.applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.signature.symbol) } }
 }
 
 context(KtAnalysisSession)
@@ -152,12 +146,12 @@ internal fun KtAnalysisSession.collectNonExtensionsFromScope(
     scope: KtScope,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
-    excludeEnumEntries: Boolean,
+    sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KtCallableSymbol) -> Boolean = { true }
 ): Sequence<KtCallableSignature<*>> = scope.getCallableSymbols(scopeNameFilter.getAndSetAware())
     .map { it.asSignature() }
     .filterNonExtensions(visibilityChecker, symbolFilter)
-    .applyIf(excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.symbol) } }
+    .applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.symbol) } }
 
 context(KtAnalysisSession)
 private fun Sequence<KtCallableSignature<*>>.filterNonExtensions(

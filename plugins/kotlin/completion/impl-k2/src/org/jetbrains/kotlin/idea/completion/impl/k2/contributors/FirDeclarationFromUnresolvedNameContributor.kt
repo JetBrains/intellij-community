@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
@@ -31,7 +32,11 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirRawPositionCompletionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         val declaration = positionContext.position.getCurrentDeclarationAtCaret() ?: return
         val referenceScope = referenceScope(declaration) ?: return
 

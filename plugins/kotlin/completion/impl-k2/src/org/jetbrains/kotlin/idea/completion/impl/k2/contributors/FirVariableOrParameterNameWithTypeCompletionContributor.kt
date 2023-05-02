@@ -47,7 +47,11 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
     private val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes()
 
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirRawPositionCompletionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         val variableOrParameter: KtCallableDeclaration = when (positionContext) {
             is FirValueParameterPositionContext -> positionContext.ktParameter.takeIf { NameWithTypeCompletion.shouldCompleteParameter(it) }
             is FirTypeNameReferencePositionContext ->

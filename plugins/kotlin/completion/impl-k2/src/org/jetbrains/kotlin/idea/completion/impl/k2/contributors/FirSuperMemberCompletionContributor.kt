@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -48,12 +49,10 @@ internal class FirSuperMemberCompletionContributor(
         val signature: KtCallableSignature<*> get() = withValidityAssertion { _signature }
     }
 
-    private val excludeEnumEntries =
-        !basicContext.project.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
-
     override fun KtAnalysisSession.complete(
         positionContext: FirSuperReceiverNameReferencePositionContext,
-        weighingContext: WeighingContext
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
     ) = with(positionContext) {
         val superReceiver = positionContext.superExpression
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
@@ -61,9 +60,9 @@ internal class FirSuperMemberCompletionContributor(
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
             if (superType !is KtIntersectionType) {
-                getNonExtensionsMemberSymbols(superType, visibilityChecker).asIterable() to emptySet()
+                getNonExtensionsMemberSymbols(superType, visibilityChecker, sessionParameters).asIterable() to emptySet()
             } else {
-                getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker)
+                getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker, sessionParameters)
             }
         collectCallToSuperMember(superReceiver, nonExtensionMembers, weighingContext, namesNeedDisambiguation)
         collectDelegateCallToSuperMember(weighingContext, superReceiver, nonExtensionMembers, namesNeedDisambiguation)
@@ -72,13 +71,14 @@ internal class FirSuperMemberCompletionContributor(
 
     private fun KtAnalysisSession.getSymbolsAndNamesNeedDisambiguation(
         superTypes: List<KtType>,
-        visibilityChecker: CompletionVisibilityChecker
+        visibilityChecker: CompletionVisibilityChecker,
+        sessionParameters: FirCompletionSessionParameters,
     ): Pair<List<CallableInfo>, Set<Name>> {
         val allSymbols = mutableListOf<CallableInfo>()
         val symbolsInAny = mutableSetOf<KtCallableSymbol>()
         val symbolCountsByName = mutableMapOf<Name, Int>()
         for (superType in superTypes) {
-            for (callableInfo in getNonExtensionsMemberSymbols(superType, visibilityChecker)) {
+            for (callableInfo in getNonExtensionsMemberSymbols(superType, visibilityChecker, sessionParameters)) {
                 val symbol = callableInfo.signature.symbol
 
                 // Abstract symbol does not participate completion.
@@ -107,9 +107,10 @@ internal class FirSuperMemberCompletionContributor(
 
     private fun KtAnalysisSession.getNonExtensionsMemberSymbols(
         receiverType: KtType,
-        visibilityChecker: CompletionVisibilityChecker
+        visibilityChecker: CompletionVisibilityChecker,
+        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableInfo> {
-        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, excludeEnumEntries).map {
+        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, sessionParameters).map {
             CallableInfo(receiverType, it.signature, it.scopeKind)
         }
     }

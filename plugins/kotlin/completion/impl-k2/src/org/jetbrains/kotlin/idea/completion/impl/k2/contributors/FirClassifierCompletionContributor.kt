@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
@@ -26,7 +27,11 @@ internal open class FirClassifierCompletionContributor(
     protected open fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
         importStrategyDetector.detectImportStrategyForClassifierSymbol(classifierSymbol)
 
-    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext, weighingContext: WeighingContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirNameReferencePositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
 
         when (val receiver = positionContext.explicitReceiver) {

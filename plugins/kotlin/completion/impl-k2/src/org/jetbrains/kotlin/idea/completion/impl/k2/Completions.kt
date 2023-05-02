@@ -18,83 +18,84 @@ internal object Completions {
     fun KtAnalysisSession.complete(
         factory: FirCompletionContributorFactory,
         positionContext: FirRawPositionCompletionContext,
-        weighingContext: WeighingContext
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
     ) {
         when (positionContext) {
             is FirExpressionNameReferencePositionContext -> if (positionContext.allowsOnlyNamedArguments()) {
-                complete(factory.namedArgumentContributor(0), positionContext, weighingContext)
+                complete(factory.namedArgumentContributor(0), positionContext, weighingContext, sessionParameters)
             } else {
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
-                complete(factory.namedArgumentContributor(0), positionContext, weighingContext)
-                complete(factory.callableContributor(0), positionContext, weighingContext)
-                complete(factory.classifierContributor(0), positionContext, weighingContext)
-                complete(factory.packageCompletionContributor(1), positionContext, weighingContext)
+                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.namedArgumentContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.callableContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.packageCompletionContributor(1), positionContext, weighingContext, sessionParameters)
             }
 
             is FirSuperReceiverNameReferencePositionContext -> {
-                complete(factory.superMemberContributor(0), positionContext, weighingContext)
+                complete(factory.superMemberContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirTypeNameReferencePositionContext -> {
-                complete(factory.classifierContributor(0), positionContext, weighingContext)
-                complete(factory.keywordContributor(1), positionContext, weighingContext)
-                complete(factory.packageCompletionContributor(2), positionContext, weighingContext)
+                complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.keywordContributor(1), positionContext, weighingContext, sessionParameters)
+                complete(factory.packageCompletionContributor(2), positionContext, weighingContext, sessionParameters)
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
-                complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext)
-                complete(factory.declarationFromOverridableMembersContributor(1), positionContext, weighingContext)
-                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext)
+                complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext, sessionParameters)
+                complete(factory.declarationFromOverridableMembersContributor(1), positionContext, weighingContext, sessionParameters)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirAnnotationTypeNameReferencePositionContext -> {
-                complete(factory.annotationsContributor(0), positionContext, weighingContext)
-                complete(factory.keywordContributor(1), positionContext, weighingContext)
-                complete(factory.packageCompletionContributor(2), positionContext, weighingContext)
+                complete(factory.annotationsContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.keywordContributor(1), positionContext, weighingContext, sessionParameters)
+                complete(factory.packageCompletionContributor(2), positionContext, weighingContext, sessionParameters)
             }
 
             is FirSuperTypeCallNameReferencePositionContext -> {
-                complete(factory.superEntryContributor(0), positionContext, weighingContext)
+                complete(factory.superEntryContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirImportDirectivePositionContext -> {
-                complete(factory.packageCompletionContributor(0), positionContext, weighingContext)
-                complete(factory.importDirectivePackageMembersContributor(0), positionContext, weighingContext)
+                complete(factory.packageCompletionContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.importDirectivePackageMembersContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirPackageDirectivePositionContext -> {
-                complete(factory.packageCompletionContributor(0), positionContext, weighingContext)
+                complete(factory.packageCompletionContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirTypeConstraintNameInWhereClausePositionContext -> {
-                complete(factory.typeParameterConstraintNameInWhereClauseContributor(0), positionContext, weighingContext)
+                complete(factory.typeParameterConstraintNameInWhereClauseContributor(), positionContext, weighingContext, sessionParameters)
             }
 
             is FirMemberDeclarationExpectedPositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
+                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirUnknownPositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
+                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirClassifierNamePositionContext -> {
-                complete(factory.classifierNameContributor(0), positionContext, weighingContext)
-                complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext)
+                complete(factory.classifierNameContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext, sessionParameters)
             }
 
             is FirWithSubjectEntryPositionContext -> {
-                complete(factory.whenWithSubjectConditionContributor(0), positionContext, weighingContext)
+                complete(factory.whenWithSubjectConditionContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirCallableReferencePositionContext -> {
-                complete(factory.classReferenceContributor(0), positionContext, weighingContext)
-                complete(factory.callableReferenceContributor(1), positionContext, weighingContext)
-                complete(factory.classifierReferenceContributor(1), positionContext, weighingContext)
+                complete(factory.classReferenceContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.callableReferenceContributor(1), positionContext, weighingContext, sessionParameters)
+                complete(factory.classifierReferenceContributor(1), positionContext, weighingContext, sessionParameters)
             }
 
             is FirInfixCallPositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
-                complete(factory.infixCallableContributor(0), positionContext, weighingContext)
+                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.infixCallableContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirIncorrectPositionContext -> {
@@ -102,16 +103,18 @@ internal object Completions {
             }
 
             is FirSimpleParameterPositionContext -> {
-                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext, weighingContext) // for parameter declaration
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
-                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext)
+                // for parameter declaration
+                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
             is FirPrimaryConstructorParameterPositionContext -> {
-                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext, weighingContext) // for parameter declaration
-                complete(factory.declarationFromOverridableMembersContributor(0), positionContext, weighingContext)
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
-                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext)
+                // for parameter declaration
+                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.declarationFromOverridableMembersContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
+                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext, sessionParameters)
             }
         }
     }

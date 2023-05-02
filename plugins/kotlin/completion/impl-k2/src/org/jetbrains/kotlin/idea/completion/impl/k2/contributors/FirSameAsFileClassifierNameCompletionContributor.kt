@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirClassifierNamePositionContext
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -16,7 +17,11 @@ internal class FirSameAsFileClassifierNameCompletionContributor(
     priority: Int
 ) : FirCompletionContributorBase<FirClassifierNamePositionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(positionContext: FirClassifierNamePositionContext, weighingContext: WeighingContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirClassifierNamePositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         if (positionContext.classLikeDeclaration is KtClassOrObject) {
             completeTopLevelClassName(positionContext.classLikeDeclaration)
         }

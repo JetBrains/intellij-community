@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirImportDirectivePositionContext
@@ -17,7 +18,11 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
 ) : FirCompletionContributorBase<FirImportDirectivePositionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(positionContext: FirImportDirectivePositionContext, weighingContext: WeighingContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirImportDirectivePositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         val reference = positionContext.explicitReceiver?.reference() ?: return
         val scopeWithKind = getStaticScope(reference) ?: return
         val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)

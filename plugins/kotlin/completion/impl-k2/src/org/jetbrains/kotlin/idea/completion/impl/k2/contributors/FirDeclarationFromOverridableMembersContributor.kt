@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirTypeNameReferencePositionContext
@@ -35,7 +36,11 @@ internal class FirDeclarationFromOverridableMembersContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirRawPositionCompletionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         val declaration = when (positionContext) {
             is FirValueParameterPositionContext -> positionContext.ktParameter
             // In a fake file a callable declaration under construction is appended with "X.f$", which is parsed as a type reference.

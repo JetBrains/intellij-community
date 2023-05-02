@@ -7,13 +7,18 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.FirCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.context.FirPositionCompletionContextDetector
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinFirCompletionContributor : CompletionContributor() {
@@ -70,7 +75,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         val factory = FirCompletionContributorFactory(basicContext)
         with(Completions) {
             val weighingContext = createWeighingContext(basicContext, positionContext)
-            complete(factory, positionContext, weighingContext)
+            val sessionParameters = FirCompletionSessionParameters(basicContext, positionContext)
+            complete(factory, positionContext, weighingContext, sessionParameters)
         }
     }
 
@@ -116,4 +122,18 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         return false
     }
+}
+
+internal data class FirCompletionSessionParameters(
+    private val basicContext: FirBasicCompletionContext,
+    private val positionContext: FirRawPositionCompletionContext,
+) {
+    private val languageVersionSettings = basicContext.project.languageVersionSettings
+    val excludeEnumEntries: Boolean = !languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
+
+    val allowSyntheticJavaProperties: Boolean = positionContext !is FirCallableReferencePositionContext ||
+            languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
+
+    val allowJavaGettersAndSetters: Boolean = !allowSyntheticJavaProperties || basicContext.parameters.invocationCount > 1
+    val allowExpectedDeclarations: Boolean = basicContext.originalKtFile.moduleInfo.platform.isMultiPlatform()
 }
