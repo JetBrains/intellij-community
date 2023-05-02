@@ -3,12 +3,10 @@ package com.intellij.ide.lightEdit.project;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EmptyQuery;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,20 +16,16 @@ import java.util.List;
 import java.util.Set;
 
 class LightEditDirectoryIndex extends DirectoryIndex {
-  @NotNull
+
+  @SuppressWarnings("removal")
   @Override
-  public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
+  public @NotNull DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     return getFileInfo();
   }
 
+  @SuppressWarnings("removal")
   static DirectoryInfo getFileInfo() {
     return LightEditDirectoryInfo.INSTANCE;
-  }
-
-  @Nullable
-  @Override
-  public SourceFolder getSourceRootFolder(@NotNull DirectoryInfo info) {
-    return null;
   }
 
   @NotNull
@@ -58,72 +52,12 @@ class LightEditDirectoryIndex extends DirectoryIndex {
     return Collections.emptySet();
   }
 
+  @SuppressWarnings("removal")
   private static class LightEditDirectoryInfo extends DirectoryInfo {
     private static final LightEditDirectoryInfo INSTANCE = new LightEditDirectoryInfo();
-
-    @Override
-    public boolean isInProject(@NotNull VirtualFile file) {
-      return false;
-    }
-
-    @Override
-    public boolean isIgnored() {
-      return false;
-    }
-
-    @Override
-    public boolean isExcluded(@NotNull VirtualFile file) {
-      return false;
-    }
-
-    @Override
-    public boolean isInModuleSource(@NotNull VirtualFile file) {
-      return false;
-    }
-
-    @Override
-    public boolean isInLibrarySource(@NotNull VirtualFile file) {
-      return false;
-    }
-
-    @Nullable
-    @Override
-    public VirtualFile getSourceRoot() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public SourceFolder getSourceRootFolder() {
-      return null;
-    }
-
-    @Override
-    public VirtualFile getLibraryClassRoot() {
-      return null;
-    }
-
-    @Nullable
     @Override
     public VirtualFile getContentRoot() {
       return null;
-    }
-
-    @Nullable
-    @Override
-    public Module getModule() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public String getUnloadedModuleName() {
-      return null;
-    }
-
-    @Override
-    public boolean processContentBeneathExcluded(@NotNull VirtualFile dir, @NotNull Processor<? super VirtualFile> processor) {
-      return false;
     }
   }
 }

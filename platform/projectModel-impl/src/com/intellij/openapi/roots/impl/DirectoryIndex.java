@@ -5,7 +5,6 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
@@ -30,11 +29,12 @@ public abstract class DirectoryIndex {
     return project.getService(DirectoryIndex.class);
   }
 
+  /**
+   * @deprecated this is an internal obsolete method, other methods from {@link com.intellij.openapi.roots.ProjectFileIndex} should be used instead
+   */
+  @Deprecated(forRemoval = true)
   @NotNull
   public abstract DirectoryInfo getInfoForFile(@NotNull VirtualFile file);
-
-  @Nullable
-  public abstract SourceFolder getSourceRootFolder(@NotNull DirectoryInfo info);
 
   @NotNull
   public abstract

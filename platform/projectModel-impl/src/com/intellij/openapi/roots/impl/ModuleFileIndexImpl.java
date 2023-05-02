@@ -205,11 +205,6 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @Override
-  protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
-    return ProjectFileIndexImpl.isFileInContent(file, info) && myModule.equals(info.getModule());
-  }
-
-  @Override
   protected boolean isInContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
     return fileSet.getData() instanceof ModuleContentOrSourceRootData data && myModule.equals(data.getModule());
   }

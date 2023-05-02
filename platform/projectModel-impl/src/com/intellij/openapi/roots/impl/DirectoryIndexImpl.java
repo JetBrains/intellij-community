@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,10 +9,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -23,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
@@ -56,12 +50,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     myProject = project;
     myConnection = project.getMessageBus().connect();
     subscribeToFileChanges();
-    LowMemoryWatcher.register(() -> {
-      RootIndex index = myRootIndex;
-      if (index != null) {
-        index.onLowMemory();
-      }
-    }, this);
   }
 
   @Override
@@ -76,7 +64,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         RootIndex rootIndex = myRootIndex;
         if (rootIndex != null && shouldResetOnEvents(events)) {
-          rootIndex.myPackageDirectoryCache.clear();
           for (VFileEvent event : events) {
             if (isIgnoredFileCreated(event)) {
               reset();
@@ -111,10 +98,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
            FileTypeRegistry.getInstance().isFileIgnored(((VFilePropertyChangeEvent)event).getFile());
   }
 
-  private void dispatchPendingEvents() {
-    myConnection.deliverImmediately();
-  }
-
   @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
@@ -127,31 +110,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, scope);
   }
 
-  @NotNull
-  RootIndex getRootIndex(VirtualFile file) {
-    ModelBranch branch = ModelBranch.getFileBranch(file);
-    if (branch != null) {
-      return obtainBranchRootIndex(branch);
-    }
-    return getRootIndex(false);
-  }
-
-  private static final Key<Pair<Long, RootIndex>> BRANCH_ROOT_INDEX = Key.create("BRANCH_ROOT_INDEX");
-
-  private static RootIndex obtainBranchRootIndex(ModelBranch branch) {
-    Pair<Long, RootIndex> pair = branch.getUserData(BRANCH_ROOT_INDEX);
-    long modCount = branch.getBranchedVfsStructureModificationCount();
-    if (pair == null || pair.first != modCount) {
-      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)));
-      branch.putUserData(BRANCH_ROOT_INDEX, pair);
-    }
-    return pair.second;
-  }
-
-  RootIndex getRootIndex(boolean forOrderEntryGraph) {
-    if (!forOrderEntryGraph) {
-      LOG.error("Internal DirectoryIndex class must not be used directly to avoid long computations, use ProjectFileIndex API instead");
-    }
+  RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
       myRootIndex = rootIndex = new RootIndex(myProject);
@@ -159,24 +118,15 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     return rootIndex;
   }
 
-  @NotNull
   @Override
-  public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
-    checkAvailability();
-    ProgressManager.checkCanceled();
-    SlowOperations.assertSlowOperationsAreAllowed();
-    dispatchPendingEvents();
-    return getRootIndex(file).getInfoForFile(file);
-  }
+  public @NotNull DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
+    return new DirectoryInfo() {
 
-  @Nullable
-  @Override
-  public SourceFolder getSourceRootFolder(@NotNull DirectoryInfo info) {
-    boolean inModuleSource = info instanceof DirectoryInfoImpl && ((DirectoryInfoImpl)info).isInModuleSource();
-    if (inModuleSource) {
-      return info.getSourceRootFolder();
-    }
-    return null;
+      @Override
+      public @Nullable VirtualFile getContentRoot() {
+        return myWorkspaceFileIndex.getContentFileSetRoot(file, true);
+      }
+    };
   }
 
   @Override
@@ -193,14 +143,14 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true);
     WorkspaceFileSetWithCustomData<?> fileSet = fileInfo.findFileSet(data -> true);
     if (fileSet == null) return Collections.emptyList();
-    return getRootIndex(true).getOrderEntries(fileSet.getRoot());
+    return getRootIndex().getOrderEntries(fileSet.getRoot());
   }
 
   @Override
   @NotNull
   public Set<String> getDependentUnloadedModules(@NotNull Module module) {
     checkAvailability();
-    return getRootIndex(true).getDependentUnloadedModules(module);
+    return getRootIndex().getDependentUnloadedModules(module);
   }
 
   private void checkAvailability() {

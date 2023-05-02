@@ -144,22 +144,12 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return fileSet != null && fileSet.getData().getForGeneratedSources();
   }
 
-  @Nullable
-  public static VirtualFile getClassRootForFile(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
-    return info.isInProject(file) ? info.getLibraryClassRoot() : null;
-  }
-
   @Override
   public VirtualFile getSourceRootForFile(@NotNull VirtualFile file) {
     WorkspaceFileSet fileSet =
       myWorkspaceFileIndex.findFileSetWithCustomData(file, true, true, false, true, ModuleOrLibrarySourceRootData.class);
     if (fileSet == null) return null;
     return fileSet.getRoot();
-  }
-
-  @Nullable
-  public static VirtualFile getSourceRootForFile(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
-    return info.isInProject(file) ? info.getSourceRoot() : null;
   }
 
   @Override
@@ -186,14 +176,6 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
       return contentRoot;
     }
     return fileSet.getRoot();
-  }
-
-  @Nullable
-  public static VirtualFile getContentRootForFile(@NotNull DirectoryInfo info, @NotNull VirtualFile file, boolean honorExclusion) {
-    if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
-      return info.getContentRoot();
-    }
-    return null;
   }
 
   @Override
@@ -238,10 +220,6 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     return myWorkspaceFileIndex.isInContent(fileOrDir);
-  }
-
-  public static boolean isFileInContent(@NotNull VirtualFile fileOrDir, @NotNull DirectoryInfo info) {
-    return info.isInProject(fileOrDir) && info.getModule() != null;
   }
 
   public @Nullable VirtualFile getModuleSourceOrLibraryClassesRoot(@NotNull VirtualFile file) {
