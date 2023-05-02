@@ -32,7 +32,6 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         if (symbol.symbolKind == KtSymbolKind.CLASS_MEMBER && !containingClassIsObject) return ImportStrategy.DoNothing
 
         val callableId = symbol.callableIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
-        if (callableId.isAlreadyImported()) return ImportStrategy.DoNothing
 
         return if (symbol.isExtension || isFunctionalVariableCall && (symbol.returnType as? KtFunctionalType)?.hasReceiver == true) {
             ImportStrategy.AddImport(callableId)
@@ -50,7 +49,7 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         return ImportStrategy.InsertFqNameAndShorten(classId)
     }
 
-    private fun FqName.isAlreadyImported(): Boolean {
+    fun FqName.isAlreadyImported(): Boolean {
         val importPath = ImportPath(this, isAllUnder = false)
         return importPath.isImported(defaultImports, excludedImports)
     }

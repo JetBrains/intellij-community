@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.parents
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
@@ -22,10 +23,8 @@ import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
@@ -37,6 +36,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHelper
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -114,10 +114,19 @@ internal open class FirCallableCompletionContributor(
         val scopesContext = originalKtFile.getScopeContextForPosition(nameExpression)
 
         val extensionChecker = object : ExtensionApplicabilityChecker {
+            /**
+             * Cached applicability results for callable extension symbols.
+             *
+             * If an extension is applicable but some of its type parameters are substituted to error types, then multiple calls to
+             * [checkExtensionIsSuitable] produce unequal substitutors, and subsequently unequal signatures, because error types are
+             * considered equal only if their underlying types are referentially equal, so we need to use [cache] in order to avoid
+             * unexpected unequal signatures.
+             */
+            private val cache: MutableMap<KtCallableSymbol, KtExtensionApplicabilityResult> = mutableMapOf()
+
             context(KtAnalysisSession)
-            override fun checkApplicability(symbol: KtCallableSymbol): KtExtensionApplicabilityResult {
-                return symbol.checkExtensionIsSuitable(originalKtFile, nameExpression, explicitReceiver)
-            }
+            override fun checkApplicability(symbol: KtCallableSymbol): KtExtensionApplicabilityResult =
+                cache.getOrPut(symbol) { symbol.checkExtensionIsSuitable(originalKtFile, nameExpression, explicitReceiver) }
         }
 
         val receiver = explicitReceiver
@@ -127,9 +136,9 @@ internal open class FirCallableCompletionContributor(
             receiver != null -> collectDotCompletion(scopesContext, receiver, extensionChecker, visibilityChecker, sessionParameters)
             else -> completeWithoutReceiver(scopesContext, extensionChecker, visibilityChecker, sessionParameters)
         }
-            .filterIfInsideAnnotationEntryArgument(position, weighingContext.expectedType)
-            .filterOutShadowedCallables()
-            .filterOutUninitializedCallables(position)
+            .filterIfInsideAnnotationEntryArgument(positionContext.position, weighingContext.expectedType)
+            .filterOutShadowedCallables(weighingContext.expectedType)
+            .filterOutUninitializedCallables(positionContext.position)
 
         for (callableWithMetadata in callablesWithMetadata) {
             val context = if (callableWithMetadata.withExpectedType) weighingContext else weighingContextWithoutExpectedType
@@ -205,6 +214,7 @@ internal open class FirCallableCompletionContributor(
 
             (callablesFromIndex + callablesFromExtensions)
                 .filterNot { it.isExtension } // extensions should be collected and checked with `collectTopLevelExtensionsFromIndices`
+                .filter { filter(it, sessionParameters) }
                 .forEach { yield(createCallableWithMetadata(it.asSignature(), CompletionSymbolOrigin.Index)) }
         }
 
@@ -525,17 +535,29 @@ internal open class FirCallableCompletionContributor(
     private fun KtParameter.getNextParametersWithSelf(): Sequence<KtParameter> = generateSequence({ this }, { it.nextSiblingOfSameType() })
 
     context(KtAnalysisSession)
-    private fun Sequence<CallableWithMetadataForCompletion>.filterOutShadowedCallables(): Sequence<CallableWithMetadataForCompletion> =
+    private fun Sequence<CallableWithMetadataForCompletion>.filterOutShadowedCallables(
+        expectedType: KtType?,
+    ): Sequence<CallableWithMetadataForCompletion> =
         sequence {
             val shadowedCallablesFilter = ShadowedCallablesFilter()
 
             for (callableWithMetadata in this@filterOutShadowedCallables) {
-                val excludeFromCompletion = shadowedCallablesFilter.excludeFromCompletion(
+                val callableFqName = callableWithMetadata.signature.callableIdIfNonLocal?.asSingleFqName()
+                val isAlreadyImported = with(importStrategyDetector) { callableFqName?.isAlreadyImported() == true }
+                val typeArgumentsAreRequired = (callableWithMetadata.signature.symbol as? KtFunctionLikeSymbol)?.let {
+                    FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(it, expectedType)
+                } == false
+
+                val (excludeFromCompletion, updatedOptions) = shadowedCallablesFilter.excludeFromCompletion(
                     callableWithMetadata.signature,
                     callableWithMetadata.options,
                     callableWithMetadata.symbolOrigin,
+                    isAlreadyImported,
+                    typeArgumentsAreRequired,
                 )
-                if (!excludeFromCompletion) yield(callableWithMetadata)
+                if (excludeFromCompletion) continue
+
+                yield(callableWithMetadata.applyIf(updatedOptions != callableWithMetadata.options) { copy(options = updatedOptions) })
             }
         }
 

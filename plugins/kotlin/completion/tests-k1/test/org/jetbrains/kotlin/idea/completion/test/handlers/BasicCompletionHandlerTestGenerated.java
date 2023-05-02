@@ -154,6 +154,29 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/defaultImports")
+    public static class DefaultImports extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("DoNotInsertCallableFqNameWhenParametersDiffer.kt")
+        public void testDoNotInsertCallableFqNameWhenParametersDiffer() throws Exception {
+            runTest("../testData/handlers/basic/defaultImports/DoNotInsertCallableFqNameWhenParametersDiffer.kt");
+        }
+
+        @TestMetadata("InsertCallableFqNameWhenNameClash.kt")
+        public void testInsertCallableFqNameWhenNameClash() throws Exception {
+            runTest("../testData/handlers/basic/defaultImports/InsertCallableFqNameWhenNameClash.kt");
+        }
+
+        @TestMetadata("StringFakeConstructor.kt")
+        public void testStringFakeConstructor() throws Exception {
+            runTest("../testData/handlers/basic/defaultImports/StringFakeConstructor.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/exclChar")
     public static class ExclChar extends AbstractBasicCompletionHandlerTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1395,11 +1418,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("StaticFunctionFromJavaWithConflict.kt")
         public void testStaticFunctionFromJavaWithConflict() throws Exception {
             runTest("../testData/handlers/basic/StaticFunctionFromJavaWithConflict.kt");
-        }
-
-        @TestMetadata("StringFakeConstructor.kt")
-        public void testStringFakeConstructor() throws Exception {
-            runTest("../testData/handlers/basic/StringFakeConstructor.kt");
         }
 
         @TestMetadata("SuperMethod.kt")

@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
+import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -40,12 +41,12 @@ internal class FunctionLookupElementFactory {
     ): LookupElementBuilder {
         val insertEmptyLambda = insertLambdaBraces(signature)
         val lookupObject = FunctionCallLookupObject(
-          name,
-          options,
-          renderFunctionParameters(signature),
-          inputValueArgumentsAreRequired = signature.valueParameters.isNotEmpty(),
-          inputTypeArgumentsAreRequired = !functionCanBeCalledWithoutExplicitTypeArguments(signature.symbol, expectedType),
-          insertEmptyLambda,
+            name,
+            options,
+            renderFunctionParameters(signature),
+            inputValueArgumentsAreRequired = signature.valueParameters.isNotEmpty(),
+            inputTypeArgumentsAreRequired = !functionCanBeCalledWithoutExplicitTypeArguments(signature.symbol, expectedType),
+            insertEmptyLambda,
         )
 
         val builder = LookupElementBuilder.create(lookupObject, name.asString())
@@ -69,6 +70,7 @@ internal class FunctionLookupElementFactory {
                     insertionStrategy.insertionHandlerAction(context)
                 }
             })
+
             is CallableInsertionStrategy.WithCallArgs -> {
                 val argString = insertionStrategy.args.joinToString(", ", prefix = "(", postfix = ")")
                 builder.withInsertHandler(
@@ -80,16 +82,20 @@ internal class FunctionLookupElementFactory {
                     }
                 ).withTailText(argString, false)
             }
+
             is CallableInsertionStrategy.WithSuperDisambiguation -> {
                 val resultBuilder = updateLookupElementBuilder(options, builder, insertionStrategy.subStrategy)
                 updateLookupElementBuilderToInsertTypeQualifierOnSuper(resultBuilder, insertionStrategy)
             }
         }
     }
+}
 
-    private fun KtAnalysisSession.functionCanBeCalledWithoutExplicitTypeArguments(
-      symbol: KtFunctionLikeSymbol,
-      expectedType: KtType?
+object FunctionInsertionHelper {
+    context(KtAnalysisSession)
+    fun functionCanBeCalledWithoutExplicitTypeArguments(
+        symbol: KtFunctionLikeSymbol,
+        expectedType: KtType?
     ): Boolean {
         if (symbol.typeParameters.isEmpty()) return true
 
