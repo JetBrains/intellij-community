@@ -31,6 +31,7 @@ internal class KtDeclarationTreeNode private constructor(
 
     internal companion object {
         private val CLASS_INITIALIZER = "<" + KotlinBundle.message("project.view.class.initializer") + ">"
+        private val EXPRESSION =  "<" + KotlinBundle.message("project.view.expression") + ">"
         private val ERROR_NAME = "<" + KotlinBundle.message("project.view.class.error.name") + ">"
 
         private fun String?.orErrorName() = if (!isNullOrBlank()) this else ERROR_NAME
@@ -100,10 +101,16 @@ internal class KtDeclarationTreeNode private constructor(
                         declaration.referenceExpression()
 
                     val referencedNameAsName = nameReferenceExpression?.getReferencedNameAsName()
-                    referencedNameAsName?.asString() ?: CLASS_INITIALIZER
+                    referencedNameAsName?.asString()?.let { return it }
+                    return if (declaration.body is KtExpression) {
+                        EXPRESSION
+                    } else {
+                        CLASS_INITIALIZER
+                    }
                 }
 
                 is KtAnonymousInitializer -> CLASS_INITIALIZER
+                is KtScript -> (declaration.parent as? KtFile)?.name ?: declaration.name.orErrorName()
                 else -> declaration.name.orErrorName()
             }
         }
@@ -117,13 +124,7 @@ internal class KtDeclarationTreeNode private constructor(
             } as? KtNameReferenceExpression
         }
 
-        fun create(project: Project?,
-                   ktDeclaration: KtDeclaration,
-                   viewSettings: ViewSettings): KtDeclarationTreeNode? =
-            if (ktDeclaration is KtScriptInitializer && ktDeclaration.referenceExpression() == null) {
-                null
-            } else {
-                KtDeclarationTreeNode(project, ktDeclaration, viewSettings)
-            }
+        fun create(project: Project?, ktDeclaration: KtDeclaration, viewSettings: ViewSettings): KtDeclarationTreeNode =
+            KtDeclarationTreeNode(project, ktDeclaration, viewSettings)
     }
 }

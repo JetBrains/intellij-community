@@ -64,6 +64,5 @@ private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
   .create("GradleVersionCatalogs-refactoring") {
     withSettingsFile {
       setProjectName("GradleVersionCatalogs-refactoring")
-      enableFeaturePreview("VERSION_CATALOGS")
     }
   }

@@ -137,7 +137,7 @@ public final class MavenDistributionsCache {
 
   private static Path getSourceMavenPath() {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    return BundledMavenDownloader.INSTANCE.downloadMavenDistribution(communityRoot);
+    return BundledMavenDownloader.INSTANCE.downloadMavenDistributionSync(communityRoot);
   }
 
   @Nullable

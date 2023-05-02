@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.util.FileStructurePopup;
+import com.intellij.ide.util.FileStructurePopupListener;
 import com.intellij.ide.util.StructureViewCompositeModel;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -66,6 +67,7 @@ public class ViewStructureAction extends DumbAwareAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     StructureViewBuilder builder = fileEditor.getStructureViewBuilder();
     if (builder == null) return null;
+    project.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC).stateChanged(true);
     StructureView structureView;
     StructureViewModel treeModel;
     if (builder instanceof TreeBasedStructureViewBuilder) {

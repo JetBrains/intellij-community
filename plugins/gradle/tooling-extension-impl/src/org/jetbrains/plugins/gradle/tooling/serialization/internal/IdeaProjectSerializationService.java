@@ -7,7 +7,6 @@ import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import org.gradle.internal.impldep.gnu.trove.TObjectHashingStrategy;
 import org.gradle.api.JavaVersion;
-import org.gradle.internal.impldep.com.google.api.client.repackaged.com.google.common.base.Objects;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.consumer.converters.BackwardsCompatibleIdeaModuleDependency;
 import org.gradle.tooling.model.*;
@@ -30,7 +29,6 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.util.Comparing.compare;
-import static org.gradle.internal.impldep.com.google.api.client.repackaged.com.google.common.base.Objects.equal;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
 
 /**
@@ -870,7 +868,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
         new TObjectHashingStrategy<IdeaCompilerOutput>() {
           @Override
           public int computeHashCode(IdeaCompilerOutput object) {
-            return Objects.hashCode(object.getInheritOutputDirs(), object.getOutputDir(), object.getTestOutputDir());
+            return argsHashCode(object.getInheritOutputDirs(), object.getOutputDir(), object.getTestOutputDir());
           }
 
           @Override
@@ -929,37 +927,36 @@ public final class IdeaProjectSerializationService implements SerializationServi
           }
 
           private int computeHashCode(@NotNull final IdeaModuleDependency object) {
-            return Objects.hashCode(new TargetModuleNameGetter(object, myGradleVersionComparator).get(), object.getScope().getScope());
+            return argsHashCode(new TargetModuleNameGetter(object, myGradleVersionComparator).get(), object.getScope().getScope());
           }
 
           private int computeHashCode(@NotNull IdeaSingleEntryLibraryDependency object) {
-            return Objects.hashCode(object.getFile(), object.getScope().getScope(), hasCode(object.getGradleModuleVersion()));
+            return argsHashCode(object.getFile(), object.getScope().getScope(), hasCode(object.getGradleModuleVersion()));
           }
 
           private int hasCode(@Nullable GradleModuleVersion version) {
-            return version == null ? 0 : Objects.hashCode(version.getGroup(), version.getName(), version.getVersion());
+            return version == null ? 0 : argsHashCode(version.getGroup(), version.getName(), version.getVersion());
           }
 
           private boolean equals(@NotNull IdeaModuleDependency o1, @NotNull IdeaModuleDependency o2) {
             return o1.getExported() == o2.getExported() &&
-                   Objects
-                     .equal(new TargetModuleNameGetter(o1, myGradleVersionComparator).get(),
-                            new TargetModuleNameGetter(o2, myGradleVersionComparator).get()) &&
-                   Objects.equal(o1.getScope().getScope(), o2.getScope().getScope());
+                   nullsafeEqual(new TargetModuleNameGetter(o1, myGradleVersionComparator).get(),
+                                 new TargetModuleNameGetter(o2, myGradleVersionComparator).get()) &&
+                   nullsafeEqual(o1.getScope().getScope(), o2.getScope().getScope());
           }
 
           private boolean equals(@NotNull IdeaSingleEntryLibraryDependency o1, @NotNull IdeaSingleEntryLibraryDependency o2) {
             return o1.getExported() == o2.getExported() &&
                    equal(o1.getGradleModuleVersion(), o2.getGradleModuleVersion()) &&
-                   Objects.equal(o1.getFile().getPath(), o2.getFile().getPath()) &&
-                   Objects.equal(o1.getScope().getScope(), o2.getScope().getScope());
+                   nullsafeEqual(o1.getFile().getPath(), o2.getFile().getPath()) &&
+                   nullsafeEqual(o1.getScope().getScope(), o2.getScope().getScope());
           }
 
           private boolean equal(@Nullable GradleModuleVersion version1, @Nullable GradleModuleVersion version2) {
             return version1 == version2 || version1 != null && version2 != null &&
-                                           Objects.equal(version1.getName(), version2.getName()) &&
-                                           Objects.equal(version1.getGroup(), version2.getGroup()) &&
-                                           Objects.equal(version1.getVersion(), version2.getVersion());
+                                           nullsafeEqual(version1.getName(), version2.getName()) &&
+                                           nullsafeEqual(version1.getGroup(), version2.getGroup()) &&
+                                           nullsafeEqual(version1.getVersion(), version2.getVersion());
           }
         });
 
@@ -968,7 +965,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
         new TObjectHashingStrategy<IdeaJavaLanguageSettings>() {
           @Override
           public int computeHashCode(final IdeaJavaLanguageSettings object) {
-            return object == null ? 0 : Objects.hashCode(getLanguageLevel(object),
+            return object == null ? 0 : argsHashCode(getLanguageLevel(object),
                                                          nullizeUnsupported(new TargetBytecodeVersionGetter(object)),
                                                          nullizeUnsupported(new JavaHomePathGetter(object)));
           }
@@ -978,9 +975,9 @@ public final class IdeaProjectSerializationService implements SerializationServi
             return o1 == o2 ||
                    o1 != null && o2 != null &&
                    getLanguageLevel(o1) == getLanguageLevel(o2) &&
-                   equal(nullizeUnsupported(new TargetBytecodeVersionGetter(o1)),
-                         nullizeUnsupported(new TargetBytecodeVersionGetter(o2))) &&
-                   equal(nullizeUnsupported(new JavaHomePathGetter(o1)), nullizeUnsupported(new JavaHomePathGetter(o2)));
+                   nullsafeEqual(nullizeUnsupported(new TargetBytecodeVersionGetter(o1)),
+                                 nullizeUnsupported(new TargetBytecodeVersionGetter(o2))) &&
+                   nullsafeEqual(nullizeUnsupported(new JavaHomePathGetter(o1)), nullizeUnsupported(new JavaHomePathGetter(o2)));
           }
         });
 
@@ -1169,5 +1166,15 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
     return GradleVersion.current();
   }
+
+  private static int argsHashCode(Object... objects) {
+    return Arrays.hashCode(objects);
+  }
+
+  private static boolean nullsafeEqual(Object a, Object b) {
+    return a == b || a != null && a.equals(b);
+  }
+
+
 }
 

@@ -2,19 +2,18 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsInfoViewModel
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 internal object GitLabMergeRequestDetailsDescriptionComponentFactory {
   private const val VISIBLE_DESCRIPTION_LINES = 2
@@ -25,6 +24,8 @@ internal object GitLabMergeRequestDetailsDescriptionComponentFactory {
   ): JComponent {
     val descriptionPanel = SimpleHtmlPane().apply {
       bindText(scope, detailsInfoVm.description)
+    }.let {
+      CollaborationToolsUIUtil.wrapWithLimitedSize(it, DimensionRestrictions.LinesHeight(it, VISIBLE_DESCRIPTION_LINES))
     }
     val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
       detailsInfoVm.showTimeline()
@@ -32,14 +33,11 @@ internal object GitLabMergeRequestDetailsDescriptionComponentFactory {
       border = JBUI.Borders.emptyTop(4)
     }
 
-    val layout = MigLayout(LC().emptyBorders().flowY())
-    return JPanel(layout).apply {
+    return VerticalListPanel().apply {
       name = "Review details description panel"
-      isOpaque = false
 
-      val maxHeight = UIUtil.getUnscaledLineHeight(descriptionPanel) * VISIBLE_DESCRIPTION_LINES
-      add(descriptionPanel, CC().maxHeight("$maxHeight"))
-      add(timelineLink, CC())
+      add(descriptionPanel)
+      add(timelineLink)
     }
   }
 }

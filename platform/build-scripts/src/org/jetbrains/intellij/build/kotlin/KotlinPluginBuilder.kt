@@ -305,7 +305,7 @@ Android Studio: workaround for b/218317110 */
       spec.withProjectLibrary("kotlinx-collections-immutable", LibraryPackMode.STANDALONE_MERGED)
       spec.withProjectLibrary("javax-inject", LibraryPackMode.STANDALONE_MERGED)
 
-      spec.withGeneratedResources(BiConsumer { targetDir, context ->
+      spec.withGeneratedResources { targetDir, context ->
         val distLibName = "kotlinc.kotlin-dist"
         val library = context.project.libraryCollection.findLibrary(distLibName)!!
         val jars = library.getFiles(JpsOrderRootType.COMPILED)
@@ -313,7 +313,7 @@ Android Studio: workaround for b/218317110 */
           throw IllegalStateException("$distLibName is expected to have only one jar")
         }
         Decompressor.Zip(jars[0]).extract(targetDir.resolve("kotlinc"))
-      })
+      }
 
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {

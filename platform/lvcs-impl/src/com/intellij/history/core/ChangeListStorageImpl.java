@@ -156,6 +156,15 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   @Override
+  public synchronized void force() {
+    try {
+      myStorage.force();
+    } catch (IOException e) {
+      handleError(e, null);
+    }
+  }
+
+  @Override
   public synchronized long nextId() {
     return ++myLastId;
   }
@@ -213,7 +222,6 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
         changeSet.write(out);
       }
       myStorage.setLastId(myLastId);
-      myStorage.force();
     }
     catch (IOException e) {
       handleError(e, null);
@@ -237,7 +245,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
         eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
       }
       myStorage.deleteRecordsUpTo(firstObsoleteId);
-      myStorage.force();
+      force();
     }
     catch (IOException e) {
       handleError(e, null);

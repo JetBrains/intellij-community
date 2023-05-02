@@ -2886,12 +2886,11 @@ public final class UIUtil {
   }
 
   public static int getLineHeight(@NotNull JTextComponent textComponent) {
-    return textComponent.getFontMetrics(textComponent.getFont()).getHeight();
+    return getLineHeight((JComponent)textComponent);
   }
 
-  public static int getUnscaledLineHeight(@NotNull JComponent component) {
-    Font baseFont = component.getFont().deriveFont(JBUIScale.DEF_SYSTEM_FONT_SIZE);
-    return component.getFontMetrics(baseFont).getHeight();
+  public static int getLineHeight(@NotNull JComponent component) {
+    return component.getFontMetrics(component.getFont()).getHeight();
   }
 
   /**

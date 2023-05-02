@@ -3,22 +3,25 @@ package com.intellij.externalProcessAuthHelper
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.readUtf8
 import externalApp.ExternalApp
 import externalApp.ExternalAppHandler
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.HttpMethod
-import io.netty.handler.codec.http.QueryStringDecoder
+import io.netty.handler.codec.http.*
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.ide.BuiltInServerManager
-import org.jetbrains.ide.RestService
+import org.jetbrains.ide.*
 import org.jetbrains.io.response
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 /**
  * The provider of external application scripts called by Git when a remote operation needs communication with the user.
@@ -107,6 +110,10 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
 abstract class ExternalProcessRest<T : ExternalAppHandler>(
   private val entryPointName: @NonNls String
 ) : RestService() {
+  companion object {
+    private val LOG = logger<ExternalProcessRest<*>>()
+  }
+
   protected abstract val externalProcessHandler: ExternalProcessHandlerService<T>
 
   override fun getServiceName(): String = entryPointName
@@ -122,14 +129,34 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
     val uuid = UUID.fromString(handlerId)
     val bodyContent = request.content().readUtf8()
 
-    val result = externalProcessHandler.invokeHandler(uuid, bodyContent)
+    val channel = context.channel()
 
-    if (result != null) {
-      sendResponse(request, context, response(result, StandardCharsets.UTF_8))
+    val indicator = EmptyProgressIndicator()
+    channel.closeFuture().addListener {
+      indicator.cancel()
     }
-    else {
-      sendOk(request, context)
+
+    val executor = AppExecutorUtil.getAppExecutorService()
+    CompletableFuture.supplyAsync({ runHandler(indicator, uuid, bodyContent) }, executor).handle { res, err ->
+      if (err != null) {
+        if (err is ProcessCanceledException) {
+          channel.close()
+        }
+        else {
+          LOG.warn(err)
+          sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, channel)
+        }
+      }
+      else if (res != null) {
+        sendResponse(request, context, response(res, StandardCharsets.UTF_8))
+      }
+      else {
+        sendStatus(HttpResponseStatus.NO_CONTENT, false, channel)
+      }
     }
     return null
   }
+
+  private fun runHandler(indicator: EmptyProgressIndicator, uuid: UUID, bodyContent: String): String? =
+    ProgressManager.getInstance().runProcess(Computable { externalProcessHandler.invokeHandler(uuid, bodyContent) }, indicator)
 }

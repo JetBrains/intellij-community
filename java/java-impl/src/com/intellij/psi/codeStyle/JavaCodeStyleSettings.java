@@ -184,7 +184,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
    */
   public boolean SPACE_BEFORE_DECONSTRUCTION_LIST = false;
 
-  public boolean DOUBLY_SHIFTED_SWITCH_EXPRESSION_BODY = true;
   @WrapConstant
   public int MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   public boolean ALIGN_TYPES_IN_MULTI_CATCH = true;

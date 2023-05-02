@@ -91,6 +91,5 @@ private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
   .create("GradleVersionCatalogs-inspection") {
     withSettingsFile {
       setProjectName("GradleVersionCatalogs-inspection")
-      enableFeaturePreview("VERSION_CATALOGS")
     }
   }

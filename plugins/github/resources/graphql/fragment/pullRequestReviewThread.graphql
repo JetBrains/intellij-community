@@ -1,16 +1,17 @@
 fragment pullRequestReviewThread on PullRequestReviewThread {
-    ...nodeInfo
-    isResolved
-    isOutdated
-    path
-    diffSide
-    line
-    originalLine
-    startLine
-    originalStartLine
-    comments(first: 100) {
-        nodes {
-            ...pullRequestReviewComment
-        }
+  ...nodeInfo
+  isResolved
+  isOutdated
+  path
+  diffSide
+  line
+  originalLine
+  startDiffSide
+  startLine
+  originalStartLine
+  comments(first: 100) {
+    nodes {
+      ...pullRequestReviewComment
     }
+  }
 }

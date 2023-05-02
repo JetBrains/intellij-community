@@ -16,7 +16,7 @@ import java.util.*
 
 class GitParsedChangesBundleImpl(private val project: Project,
                                  private val vcsRoot: VirtualFile,
-                                 private val baseRef: String,
+                                 private val baseSha: String,
                                  private val mergeBaseSha: String,
                                  commits: List<GitCommitShaWithPatches>,
                                  private val headPatches: List<FilePatch>)
@@ -26,17 +26,16 @@ class GitParsedChangesBundleImpl(private val project: Project,
 
   override val changes = mutableListOf<Change>()
   override val changesByCommits = mutableMapOf<String, Collection<Change>>()
-  override val linearHistory: Boolean
 
-  private val _diffDataByChange: MutableMap<Change, GitChangeDiffData> =
+  private val _diffDataByChange: MutableMap<Change, GitTextFilePatchWithHistory> =
     CollectionFactory.createCustomHashingStrategyMap(GitParsedChangesBundle.REVISION_COMPARISON_HASHING_STRATEGY)
-  override val diffDataByChange: Map<Change, GitChangeDiffData> = Collections.unmodifiableMap(_diffDataByChange)
+  override val patchesByChange: Map<Change, GitTextFilePatchWithHistory> = Collections.unmodifiableMap(_diffDataByChange)
 
   init {
     val commitsHashes = commits.mapTo(mutableSetOf()) { it.sha }
 
     // One or more merge commit for changes that are included into PR (master merges are ignored)
-    linearHistory = commits.all { commit ->
+    val linearHistory = commits.all { commit ->
       commit.parents.count { commitsHashes.contains(it) } <= 1
     }
 
@@ -53,7 +52,7 @@ class GitParsedChangesBundleImpl(private val project: Project,
 
     var previousCommitSha = mergeBaseSha
 
-    val commitsHashes = commits.map { it.sha }
+    val commitsHashes = listOf(mergeBaseSha) + commits.map { it.sha }
     for (commitWithPatches in commits) {
 
       val commitSha = commitWithPatches.sha
@@ -77,7 +76,7 @@ class GitParsedChangesBundleImpl(private val project: Project,
 
           patch.beforeVersionId = previousCommitSha
           patch.afterVersionId = commitSha
-          _diffDataByChange[change] = GitChangeDiffData.Commit(patch, fileHistory)
+          _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, false, fileHistory)
         }
       }
       changesByCommits[commitWithPatches.sha] = commitChanges
@@ -99,10 +98,10 @@ class GitParsedChangesBundleImpl(private val project: Project,
           LOG.debug("Unable to find file history for cumulative patch for $filePath")
           continue
         }
-        patch.beforeVersionId = baseRef
+        patch.beforeVersionId = baseSha
         patch.afterVersionId = headSha
 
-        _diffDataByChange[change] = GitChangeDiffData.Cumulative(patch, fileHistory)
+        _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, true, fileHistory)
       }
     }
   }
@@ -121,9 +120,9 @@ class GitParsedChangesBundleImpl(private val project: Project,
       changes.add(change)
 
       if (patch is TextFilePatch) {
-        patch.beforeVersionId = baseRef
+        patch.beforeVersionId = baseSha
         patch.afterVersionId = headSha
-        _diffDataByChange[change] = GitChangeDiffData.Cumulative(patch, SinglePatchGitFileHistory(patch))
+        _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, true, SinglePatchGitFileHistory(patch))
       }
     }
   }

@@ -48,7 +48,7 @@ abstract class IdeStructureTestBase {
   fun moduleStructureValidation(softly: SoftAssertions) {
     val context = createBuildContext()
     val state = runBlocking {
-      createDistributionBuilderState(pluginsToPublish = emptySet(), context = context)
+      createDistributionBuilderState(context = context)
     }
 
     println("Packed modules:")

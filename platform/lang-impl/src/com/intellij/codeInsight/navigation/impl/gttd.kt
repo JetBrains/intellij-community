@@ -43,7 +43,7 @@ internal class GTTDActionData(
   private val offset: Int,
 ) {
 
-  private fun typeSymbols() = targetData.typeSymbols(editor, offset)
+  private fun typeSymbols() = targetData.typeSymbols(project, editor, offset)
 
   @Suppress("DEPRECATION")
   @Deprecated("Unused in v2 implementation")
@@ -72,18 +72,18 @@ internal class GTTDActionData(
   }
 
   fun result(): NavigationActionResult? {
-    return result(typeSymbols().navigationTargets(project).toCollection(SmartList()))
+    return result(typeSymbols().navigationTargets(project).toCollection(LinkedHashSet()))
   }
 }
 
-private fun TargetData.typeSymbols(editor: Editor, offset: Int): Sequence<Symbol> {
+private fun TargetData.typeSymbols(project: Project, editor: Editor, offset: Int): Sequence<Symbol> {
   return when (this) {
-    is TargetData.Declared -> typeSymbols(editor, offset)
-    is TargetData.Referenced -> typeSymbols(editor, offset)
+    is TargetData.Declared -> typeSymbols(project, editor, offset)
+    is TargetData.Referenced -> typeSymbols(project, editor, offset)
   }
 }
 
-private fun TargetData.Declared.typeSymbols(editor: Editor, offset: Int): Sequence<Symbol> = sequence {
+private fun TargetData.Declared.typeSymbols(project: Project, editor: Editor, offset: Int): Sequence<Symbol> = sequence {
   val psiSymbolService = PsiSymbolService.getInstance()
   for (declaration: PsiSymbolDeclaration in declarations) {
     val target = declaration.symbol
@@ -95,13 +95,13 @@ private fun TargetData.Declared.typeSymbols(editor: Editor, offset: Int): Sequen
     }
     else {
       for (typeProvider in SymbolTypeProvider.EP_NAME.extensions) {
-        yieldAll(typeProvider.getSymbolTypes(target))
+        yieldAll(typeProvider.getSymbolTypes(project, target))
       }
     }
   }
 }
 
-private fun TargetData.Referenced.typeSymbols(editor: Editor, offset: Int): Sequence<Symbol> = sequence {
+private fun TargetData.Referenced.typeSymbols(project: Project, editor: Editor, offset: Int): Sequence<Symbol> = sequence {
   for (reference: PsiSymbolReference in references) {
     if (reference is EvaluatorReference) {
       for (targetElement in reference.targetElements) {
@@ -113,7 +113,7 @@ private fun TargetData.Referenced.typeSymbols(editor: Editor, offset: Int): Sequ
     else {
       for (typeProvider in SymbolTypeProvider.EP_NAME.extensions) {
         for (target in reference.resolveReference()) {
-          yieldAll(typeProvider.getSymbolTypes(target))
+          yieldAll(typeProvider.getSymbolTypes(project, target))
         }
       }
     }

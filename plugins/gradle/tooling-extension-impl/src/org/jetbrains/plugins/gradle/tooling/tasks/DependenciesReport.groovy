@@ -53,7 +53,7 @@ class DependenciesReport extends DefaultTask {
 
     def projectNameFunction = new ProjectNameFunction()
     List<DependencyScopeNode> graph = []
-    for (configuration in configurationList) {
+    for (Configuration configuration in configurationList) {
       if (!configuration.isCanBeResolved()) continue
       graph.add(generator.doBuildDependenciesGraph(configuration, project, projectNameFunction))
     }

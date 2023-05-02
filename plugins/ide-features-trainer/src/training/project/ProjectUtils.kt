@@ -178,6 +178,7 @@ object ProjectUtils {
           GeneralSettings.getInstance().confirmOpenNewProject = confirmOpenNewProject
         }
       }
+
       postInitCallback(project)
     }
   }

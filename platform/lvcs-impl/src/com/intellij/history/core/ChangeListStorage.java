@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 public interface ChangeListStorage {
   void close();
 
+  void force();
+
   long nextId();
 
   @Nullable

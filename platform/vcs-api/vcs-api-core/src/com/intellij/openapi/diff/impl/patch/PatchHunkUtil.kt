@@ -2,8 +2,7 @@
 package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.diff.util.Range
-import com.intellij.openapi.diff.impl.patch.PatchHunk
-import com.intellij.openapi.diff.impl.patch.PatchLine
+import com.intellij.diff.util.Side
 
 object PatchHunkUtil {
 
@@ -75,6 +74,60 @@ object PatchHunkUtil {
       ranges.add(Range(start1, end1, start2, end2))
     }
     return ranges
+  }
+
+  /**
+   * @param diffFile if [true] will return index of the line in diff file (with header and no-newline comments), else - in [PatchHunk]
+   */
+  fun findHunkLineIndex(hunk: PatchHunk, locationInDiff: Pair<Side, Int>, diffFile: Boolean = false): Int? {
+    val (side, fileLineIndex) = locationInDiff
+    val sideFileLineIndex = fileLineIndex - side.select(hunk.startLineBefore, hunk.startLineAfter)
+    var sideFileLineCounter = 0
+
+    // +1 for header
+    var hunkLineIndex = if (diffFile) 1 else 0
+
+    var lastMatchedLineWithNewline: Int? = null
+    for (line in hunk.lines) {
+      if (line.type == PatchLine.Type.ADD && side == Side.RIGHT ||
+          line.type == PatchLine.Type.REMOVE && side == Side.LEFT ||
+          line.type == PatchLine.Type.CONTEXT) {
+        if (sideFileLineCounter == sideFileLineIndex) return hunkLineIndex
+        sideFileLineCounter++
+        //potentially a comment on a newline
+        if (sideFileLineCounter == sideFileLineIndex && !line.isSuppressNewLine) lastMatchedLineWithNewline = hunkLineIndex
+      }
+      hunkLineIndex += if (diffFile && line.isSuppressNewLine) 2 else 1
+    }
+    return lastMatchedLineWithNewline
+  }
+
+  fun findDiffFileLineIndex(patch: TextFilePatch, locationInDiff: Pair<Side, Int>): Int? {
+    val (hunk, offset) = findHunkWithOffset(patch, locationInDiff) ?: return null
+    val hunkLineIndex = findHunkLineIndex(hunk, locationInDiff, true) ?: return null
+
+    // header included in offset
+    return offset + (hunkLineIndex - 1)
+  }
+
+  private fun findHunkWithOffset(patch: TextFilePatch, locationInDiff: Pair<Side, Int>): Pair<PatchHunk, Int>? {
+    val (side, lineIndex) = locationInDiff
+    var diffLineCounter = 0
+    for (hunk in patch.hunks) {
+      // +1 for header
+      diffLineCounter++
+      val range = getRange(hunk)
+      val start = side.select(range.start1, range.start2)
+      val end = side.select(range.end1, range.end2)
+
+      if (lineIndex in start .. end) {
+        return hunk to diffLineCounter
+      }
+
+      val hunkLinesCount = hunk.lines.size + hunk.lines.count { it.isSuppressNewLine }
+      diffLineCounter += hunkLinesCount
+    }
+    return null
   }
 
   fun createPatchFromHunk(filePath: String, diffHunk: String): String {

@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.IconUtil
 import com.intellij.util.childScope
 import com.intellij.util.ui.ImageUtil
@@ -155,7 +156,9 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
     val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
     return GHPRDataContext(contextScope, listLoader, listUpdatesChecker, dataProviderRepository,
                            securityService, repoDataService, creationService, detailsService, avatarIconsProvider, filesManager,
-                           GHPRDiffRequestModelImpl())
+                           GHPRDiffRequestModelImpl()).also {
+      Disposer.register(this, changesService)
+    }
   }
 
   private class ImageLoader(private val requestExecutor: GithubApiRequestExecutor)

@@ -163,7 +163,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   private data class PositionUpdateRequest(val file: VirtualFile, val navigationMode: NavigationMode)
 }
 
-internal class ExecutionPoint(
+internal class ExecutionPoint private constructor(
   private val mainSourcePosition: XSourcePosition?,
   private val alternativeSourcePosition: XSourcePosition?,
   val isTopFrame: Boolean,
@@ -172,6 +172,14 @@ internal class ExecutionPoint(
     return when (sourceKind) {
       XSourceKind.MAIN -> mainSourcePosition
       XSourceKind.ALTERNATIVE -> alternativeSourcePosition
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun create(mainSourcePosition: XSourcePosition?, alternativeSourcePosition: XSourcePosition?, isTopFrame: Boolean): ExecutionPoint? {
+      if (mainSourcePosition == null && alternativeSourcePosition == null) return null
+      return ExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame)
     }
   }
 }

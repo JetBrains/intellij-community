@@ -43,14 +43,24 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
   val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
   macZip.moveTo(sitFile, overwrite = true)
   signMacBinaries(context, listOf(sitFile))
+  val useNotaryRestApi = useNotaryRestApi()
+  val useNotaryXcodeApi = notarize && !useNotaryRestApi
+  if (notarize && useNotaryRestApi) {
+    notarize(sitFile, context)
+  }
   val useMacHost = macHostProperties?.host != null &&
                    macHostProperties.userName != null &&
                    macHostProperties.password != null
-  if (useMacHost && (notarize || !context.isStepSkipped(BuildOptions.MAC_DMG_STEP))) {
-    notarizeAndBuildDmgViaMacBuilderHost(sitFile, requireNotNull(macHostProperties), notarize, customizer, context)
+  if (useMacHost && (useNotaryXcodeApi || !context.isStepSkipped(BuildOptions.MAC_DMG_STEP))) {
+    notarizeAndBuildDmgViaMacBuilderHost(
+      sitFile, requireNotNull(macHostProperties),
+      notarize = useNotaryXcodeApi,
+      staple = notarize,
+      customizer, context
+    )
   }
   else {
-    buildLocally(sitFile, targetName, notarize, customizer, context)
+    buildLocally(sitFile, targetName, notarize = useNotaryXcodeApi, customizer, context)
   }
   check(Files.exists(sitFile)) {
     "$sitFile wasn't created"
@@ -85,6 +95,7 @@ private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, co
 private fun notarizeAndBuildDmgViaMacBuilderHost(sitFile: Path,
                                                  macHostProperties: MacHostProperties,
                                                  notarize: Boolean,
+                                                 staple: Boolean,
                                                  customizer: MacDistributionCustomizer,
                                                  context: BuildContext) {
   val dmgImage = if (context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)) {
@@ -107,7 +118,8 @@ private fun notarizeAndBuildDmgViaMacBuilderHost(sitFile: Path,
     artifactDir = Path.of(context.paths.artifacts),
     dmgImage = dmgImage,
     artifactBuilt = context::notifyArtifactWasBuilt,
-    publishAppArchive = context.publishSitArchive
+    publishAppArchive = context.publishSitArchive,
+    staple = staple
   )
 }
 

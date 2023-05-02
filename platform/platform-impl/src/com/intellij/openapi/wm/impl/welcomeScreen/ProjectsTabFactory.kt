@@ -34,7 +34,6 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.launch
@@ -55,8 +54,6 @@ internal class ProjectsTabFactory : WelcomeTabFactory {
   }
 
   override fun createWelcomeTab(parentDisposable: Disposable): WelcomeScreenTab = ProjectsTab(parentDisposable)
-
-  override fun isApplicable(): Boolean = !PlatformUtils.isDataSpell()
 }
 
 class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScreenTab(

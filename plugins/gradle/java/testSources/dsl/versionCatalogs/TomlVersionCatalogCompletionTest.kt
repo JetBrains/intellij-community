@@ -166,7 +166,6 @@ class TomlVersionCatalogCompletionTest : GradleCodeInsightTestCase() {
       .create("GradleVersionCatalogs-suggestions") {
         withSettingsFile {
           setProjectName("GradleVersionCatalogs-suggestions")
-          enableFeaturePreview("VERSION_CATALOGS")
         }
       }
   }

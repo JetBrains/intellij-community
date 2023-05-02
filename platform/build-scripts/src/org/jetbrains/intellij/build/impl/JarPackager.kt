@@ -21,7 +21,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
-import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.nio.channels.FileChannel
@@ -176,7 +175,7 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
       val list = mutableListOf<DistributionFileEntry>()
 
       if (nativeFiles.isNotEmpty()) {
-        packNativeFiles(outputDir = outputDir, nativeFiles = nativeFiles, packager = packager, list = list, dryRun = dryRun)
+        packNativePresignedFiles(nativeFiles = nativeFiles, context = context)
       }
 
       for (item in packager.jarDescriptors.values) {
@@ -193,44 +192,15 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
              packager.libraryEntries.sortedWith { a, b -> compareValuesBy(a, b, { it.path }, { it.type }, { it.libraryFile }) }
     }
 
-    private suspend fun packNativeFiles(outputDir: Path,
-                                        nativeFiles: Map<ZipSource, MutableList<String>>,
-                                        packager: JarPackager,
-                                        list: MutableList<DistributionFileEntry>,
-                                        dryRun: Boolean) {
-      val targetFile = outputDir.resolve("3rd-party-native.jar")
-      val sources = mutableListOf<Source>()
+    private suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, MutableList<String>>, context: BuildContext) {
       coroutineScope {
         for (source in nativeFiles.keys.sortedBy { it.file.name }) {
           val paths = nativeFiles.getValue(source)
           val sourceFile = source.file
-          val fileName = sourceFile.name
-          if (fileName.startsWith("jna-") || fileName.startsWith("pty4j-") || fileName.startsWith("native-")) {
-            async(Dispatchers.IO) {
-              unpackNativeLibraries(sourceFile = sourceFile, paths = paths, context = packager.context)
-            }
-            continue
+          async(Dispatchers.IO) {
+            unpackNativeLibraries(sourceFile = sourceFile, paths = paths, context = context)
           }
-
-          sources.add(ZipSource(file = sourceFile, filter = paths::contains) { size ->
-            val originalEntry = packager.libraryEntries.first { it.libraryFile === sourceFile }
-            if (originalEntry is ProjectLibraryEntry) {
-              list.add(ProjectLibraryEntry(path = targetFile,
-                                           data = originalEntry.data,
-                                           libraryFile = sourceFile,
-                                           size = size))
-            }
-            else {
-              list.add(ModuleLibraryFileEntry(path = targetFile,
-                                              moduleName = (originalEntry as ModuleLibraryFileEntry).moduleName,
-                                              libraryFile = originalEntry.libraryFile,
-                                              size = size))
-            }
-          })
-        }
-
-        withContext(Dispatchers.IO) {
-          buildJar(targetFile = targetFile, sources = sources, dryRun = dryRun, nativeFiles = null)
+          continue
         }
       }
     }
@@ -303,12 +273,13 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
 
     val excluded = layout.excludedModuleLibraries.get(moduleName)
     for (element in context.findRequiredModule(moduleName).dependenciesList.dependencies) {
-      if (element !is JpsLibraryDependency || element.libraryReference.parentReference!!.resolve() !is JpsModule) {
+      val libraryReference = (element as? JpsLibraryDependency)?.libraryReference ?: continue
+      if (libraryReference.parentReference !is JpsModuleReference) {
         continue
       }
 
       if (JpsJavaExtensionService.getInstance().getDependencyExtension(element)?.scope
-          ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
+            ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
         continue
       }
 

@@ -29,7 +29,7 @@ public class HtmlTextCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (HtmlCompletionContributor.isHtmlElementInTextCompletionEnabledForFile(psiFile)) {
+    if (HtmlCompletionContributor.isHtmlElementInTextCompletionAutoPopupEnabledForFile(psiFile)) {
       return notAfterASpace(psiFile, offset);
     }
     return shouldSkipAutopopupInHtml(contextElement, offset) ? ThreeState.YES : ThreeState.UNSURE;

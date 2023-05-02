@@ -43,7 +43,7 @@ class GitLabMergeRequestDiffReviewViewModelImpl(
       .flatMapLatest { mr ->
         mr.changes
           .map(GitLabMergeRequestChanges::getParsedChanges)
-          .map { it.diffDataByChange.asIterable() }
+          .map { it.patchesByChange.asIterable() }
           .associateBy(
             { (change, _) -> change },
             { cs, (_, diffData) -> GitLabMergeRequestDiffChangeViewModelImpl(cs, currentUser, mr, diffData) },

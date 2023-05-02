@@ -593,7 +593,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       public void navigate(boolean requestFocus) {
         FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
         boolean isEditorAreaFocused = IJSwingUtilities.hasFocus(fileEditorManager.getComponent());
-        navigatable.navigate(isEditorAreaFocused);
+        navigatable.navigate(requestFocus && isEditorAreaFocused);
       }
 
       @Override

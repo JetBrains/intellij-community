@@ -50,6 +50,9 @@ class UISettingsUtils(private val settings: UISettings) {
       if (scale == 1f) fontSize
       else round(fontSize * scale)
 
+    @JvmStatic
+    fun percentValue(value: Float) = value.percentValue
+
     fun defaultScale(isPresentation: Boolean) = if (isPresentation) 1.75f else 1f
   }
 }

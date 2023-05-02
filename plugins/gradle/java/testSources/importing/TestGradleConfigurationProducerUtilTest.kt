@@ -61,7 +61,7 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
       withJUnit4()
       addPostfix("""
         task myTestsJar(type: Jar, dependsOn: testClasses) {
-            baseName = "test-${'$'}{project.archivesBaseName}"
+            archiveBaseName = "test-${'$'}{project.archivesBaseName}"
             from sourceSets.test.output
         }
 

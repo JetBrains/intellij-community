@@ -309,6 +309,19 @@ object GHGQLRequests {
 
       fun addComment(server: GithubServerPath,
                      reviewId: String,
+                     body: String, commitSha: String, fileName: String, diffLine: Int)
+        : GQLQuery<GHPullRequestReviewCommentWithPendingReview> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addReviewComment,
+                                 mapOf("reviewId" to reviewId,
+                                       "body" to body,
+                                       "commit" to commitSha,
+                                       "file" to fileName,
+                                       "position" to diffLine),
+                                 GHPullRequestReviewCommentWithPendingReview::class.java,
+                                 "addPullRequestReviewComment", "comment")
+
+      fun addComment(server: GithubServerPath,
+                     reviewId: String,
                      inReplyTo: String,
                      body: String)
         : GQLQuery<GHPullRequestReviewCommentWithPendingReview> =
@@ -333,22 +346,17 @@ object GHGQLRequests {
                                  "updatePullRequestReviewComment", "pullRequestReviewComment")
 
       fun addThread(server: GithubServerPath, reviewId: String,
-                    body: String, line: Int, side: Side, startLine: Int, fileName: String): GQLQuery<GHPullRequestReviewThread> {
-        val params: Map<String, Any> = mutableMapOf("body" to body,
-                                                    "line" to line,
-                                                    "path" to fileName,
-                                                    "pullRequestReviewId" to reviewId,
-                                                    "side" to side.name).apply {
-          if (startLine != line) {
-            put("startSide", side.name)
-            put("startLine", startLine)
-          }
-        }
-        return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addPullRequestReviewThread,
-                                        params,
-                                        GHPullRequestReviewThread::class.java,
-                                        "addPullRequestReviewThread", "thread")
-      }
+                    body: String, line: Int, side: Side, startLine: Int, fileName: String): GQLQuery<GHPullRequestReviewThread> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addPullRequestReviewThread,
+                                 mapOf("body" to body,
+                                       "line" to line,
+                                       "path" to fileName,
+                                       "pullRequestReviewId" to reviewId,
+                                       "side" to side.name,
+                                       "startSide" to side.name,
+                                       "startLine" to startLine),
+                                 GHPullRequestReviewThread::class.java,
+                                 "addPullRequestReviewThread", "thread")
 
       fun resolveThread(server: GithubServerPath, threadId: String): GQLQuery<GHPullRequestReviewThread> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.resolveReviewThread,

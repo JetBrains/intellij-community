@@ -21,6 +21,7 @@ import com.intellij.psi.*
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testIntegration.TestRunLineMarkerProvider
 import com.intellij.util.LocalTimeCounter
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -247,7 +248,11 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
       }
       withTask("testJar", "Jar") {
         code("dependsOn testClasses")
-        assign("baseName", "test-${'$'}{project.archivesBaseName}")
+        if (gradleVersion.baseVersion < GradleVersion.version("8.0")) {
+          assign("baseName", "test-${'$'}{project.archivesBaseName}")
+        } else {
+          assign("archiveBaseName", "test-${'$'}{project.archivesBaseName}")
+        }
         code("from sourceSets.test.output")
       }
       withPostfix {

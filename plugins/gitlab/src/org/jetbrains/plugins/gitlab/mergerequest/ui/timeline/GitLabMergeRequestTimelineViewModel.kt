@@ -57,11 +57,11 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val timelineLoadingFlow: Flow<LoadingState> = channelFlow {
     send(LoadingState.Loading)
 
-    mergeRequestFlow.collectLatest { mr ->
+    mergeRequestFlow.collectLatest { mrResult ->
       coroutineScope {
         val result = try {
-          val resultMr = mr.getOrThrow()
-          LoadingState.Result(resultMr, createItemsFlow(resultMr).mapToVms().stateIn(this))
+          val mr = mrResult.getOrThrow()
+          LoadingState.Result(mr, createItemsFlow(mr).mapToVms(mr).stateIn(this))
         }
         catch (ce: CancellationException) {
           throw ce
@@ -139,18 +139,19 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     }
   }
 
-  private fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms() =
+  private fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms(mr: GitLabMergeRequest) =
     mapCaching(
       GitLabMergeRequestTimelineItem::id,
-      { cs, item -> createVm(cs, item) },
+      { cs, item -> createVm(cs, mr, item) },
       { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
     )
 
-  private fun createVm(cs: CoroutineScope, item: GitLabMergeRequestTimelineItem): GitLabMergeRequestTimelineItemViewModel =
+  private fun createVm(cs: CoroutineScope, mr: GitLabMergeRequest, item: GitLabMergeRequestTimelineItem)
+    : GitLabMergeRequestTimelineItemViewModel =
     when (item) {
       is GitLabMergeRequestTimelineItem.Immutable ->
         GitLabMergeRequestTimelineItemViewModel.Immutable(item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, item.discussion)
+        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, mr, item.discussion)
     }
 }

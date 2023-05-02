@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.panels.Wrapper
@@ -57,10 +58,8 @@ object GHPRReviewCommentComponent {
                showResolvedMarker,
                maxTextWidth)
 
-    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentWrapper, comment::body) {
+    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentWrapper, maxTextWidth, comment::body) {
       reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it)
-    }.apply {
-      maxEditorWidth = maxTextWidth
     }
 
     val editButton = CodeReviewCommentUIUtil.createEditButton {
@@ -136,10 +135,11 @@ object GHPRReviewCommentComponent {
                                  commentBody: @Nls String,
                                  maxTextWidth: Int): JComponent {
     val commentComponentFactory = GHPRReviewCommentComponentFactory(project)
-    val commentComponent = if (GHSuggestedChange.containsSuggestedChange(commentBody)) {
-      val suggestedChange = GHSuggestedChange.create(commentBody,
-                                                     thread.diffHunk, thread.filePath,
-                                                     thread.startLine ?: thread.line, thread.line)
+    val hunk = thread.patchHunk ?: PatchHunk(0, 0, 0, 0)
+    val commentComponent = if (thread.line != null && GHSuggestedChange.containsSuggestedChange(commentBody)) {
+      val startLine = (thread.startLine ?: thread.line!!)
+      val endLine = thread.line!!
+      val suggestedChange = GHSuggestedChange(commentBody, hunk, thread.filePath, startLine, endLine)
       commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper, maxTextWidth)
     }
     else {

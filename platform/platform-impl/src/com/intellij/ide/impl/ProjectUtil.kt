@@ -674,7 +674,7 @@ object ProjectUtil {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
     val preferAttach = currentProject != null &&
                        canAttach &&
-                       (PlatformUtils.isDataGrip() && !ProjectUtilCore.isValidProjectPath(file) || PlatformUtils.isDataSpell())
+                       (PlatformUtils.isDataGrip() && !ProjectUtilCore.isValidProjectPath(file))
     if (preferAttach && attachToProjectAsync(projectToClose = currentProject!!, projectDir = file, callback = null)) {
       return null
     }

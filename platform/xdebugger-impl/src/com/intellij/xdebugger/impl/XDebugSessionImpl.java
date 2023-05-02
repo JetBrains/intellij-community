@@ -652,7 +652,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       boolean isTopFrame = isTopFrameSelected();
       XSourcePosition mainSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.MAIN);
       XSourcePosition alternativeSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.ALTERNATIVE);
-      ExecutionPoint executionPoint = new ExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame);
+      ExecutionPoint executionPoint = ExecutionPoint.create(mainSourcePosition, alternativeSourcePosition, isTopFrame);
       myExecutionPointManager.setExecutionPoint(executionPoint);
       myExecutionPointManager.setActiveSourceKind(myCurrentSourceKind);
       updateExecutionPointGutterIconRenderer();
@@ -699,6 +699,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     boolean sessionChanged = myDebuggerManager.setCurrentSession(this);
     if (sessionChanged || forceUpdateExecutionPosition) {
       updateExecutionPosition();
+    }
+    else {
+      myExecutionPointManager.showExecutionPosition();
     }
   }
 
@@ -787,7 +790,6 @@ public final class XDebugSessionImpl implements XDebugSession {
     updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage);
   }
 
-  @SuppressWarnings("removal")
   @Override
   public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
                                    @NotNull XSuspendContext suspendContext) {
@@ -870,7 +872,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (!dependentBreakpointManager.isMasterOrSlave(breakpoint)) return;
 
     List<XBreakpoint<?>> breakpoints = dependentBreakpointManager.getSlaveBreakpoints(breakpoint);
-    myInactiveSlaveBreakpoints.removeAll(breakpoints);
+    breakpoints.forEach(myInactiveSlaveBreakpoints::remove);
     for (XBreakpoint<?> slaveBreakpoint : breakpoints) {
       processAllHandlers(slaveBreakpoint, true);
     }

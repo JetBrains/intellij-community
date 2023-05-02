@@ -34,6 +34,7 @@ import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.AssertionFailedError
+import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -44,6 +45,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Supplier
+import kotlin.coroutines.EmptyCoroutineContext
 
 internal val sampleDirBasedProjectFile = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
 internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePath(),
@@ -403,7 +405,10 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null, expectedFil
 
     // Reinitialize application level services
     val application = ApplicationManager.getApplication()
-    ApplicationManager.getApplication().replaceService(JpsGlobalModelSynchronizer::class.java, JpsGlobalModelSynchronizerImpl(), parentDisposable)
+    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    ApplicationManager.getApplication().replaceService(JpsGlobalModelSynchronizer::class.java,
+                                                       JpsGlobalModelSynchronizerImpl(coroutineScope),
+                                                       parentDisposable)
     ApplicationManager.getApplication().replaceService(GlobalWorkspaceModel::class.java, GlobalWorkspaceModel(), parentDisposable)
 
     // Entity source for global entities

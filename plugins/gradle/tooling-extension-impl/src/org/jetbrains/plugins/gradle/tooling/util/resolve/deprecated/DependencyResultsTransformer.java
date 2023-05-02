@@ -28,6 +28,7 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.findArtifactSources;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.toComponentIdentifier;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver.*;
@@ -188,7 +189,8 @@ public class DependencyResultsTransformer {
             if (taskProperty != null && (taskProperty.getProperty(artifact) instanceof AbstractArchiveTask)) {
 
               AbstractArchiveTask archiveTask = (AbstractArchiveTask)taskProperty.getProperty(artifact);
-              resolvedDepsFiles.add(new File(archiveTask.getDestinationDir(), archiveTask.getArchiveName()));
+              resolvedDepsFiles.add(new File(reflectiveCall(archiveTask, "getDestinationDir", File.class),
+                                             reflectiveCall(archiveTask, "getArchiveName", String.class)));
 
 
               try {
@@ -312,12 +314,16 @@ public class DependencyResultsTransformer {
     return result;
   }
 
-  private static ComponentResultKey getKey(ResolvedComponentResult result) {
+  private ComponentResultKey getKey(ResolvedComponentResult result) {
     if (is46rBetter) {
-      return new AttributesBasedKey(result.getId(), result.getVariant().getAttributes());
-    } else {
-      return new ComponentIdKey(result.getId());
+      try {
+        ResolvedVariantResult variant = reflectiveCall(result, "getVariant", ResolvedVariantResult.class);
+        return new AttributesBasedKey(result.getId(), variant.getAttributes());
+      } catch (Exception e) {
+        myProject.getLogger().lifecycle("Error getting variant", e);
+      }
     }
+    return new ComponentIdKey(result.getId());
   }
 
   private interface ComponentResultKey{}

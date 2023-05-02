@@ -41,7 +41,6 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
       .create("GradleVersionCatalogs-findUsages") {
         withSettingsFile {
           setProjectName("GradleVersionCatalogs-findUsages")
-          enableFeaturePreview("VERSION_CATALOGS")
         }
         withFile("gradle/libs.versions.toml", /* language=TOML */ """
       [versions]

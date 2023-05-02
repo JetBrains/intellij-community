@@ -83,6 +83,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     super.updateUI()
 
     if (parent != null) {
+      updateToolbar()
       updateBorders()
     }
   }

@@ -1,18 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.layout
 
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.util.ui.JBInsets
 import java.awt.*
 import kotlin.math.min
 
 /**
- * Wraps a single component optionally limiting its size to [maxWidth] and [maxHeight]
+ * Wraps a single component limiting its size to [maxSize]
  */
-class SizeRestrictedSingleComponentLayout(
-  var maxWidth: Int? = null,
-  var maxHeight: Int? = null
-) : LayoutManager2 {
+class SizeRestrictedSingleComponentLayout : LayoutManager2 {
+
+  var maxSize: DimensionRestrictions = DimensionRestrictions.None
 
   private var component: Component? = null
 
@@ -29,47 +28,49 @@ class SizeRestrictedSingleComponentLayout(
   }
 
   override fun minimumLayoutSize(parent: Container): Dimension =
-    component?.takeIf { it.isVisible }?.minimumSize?.also {
+    component?.takeIf { it.isVisible }?.minimumSize?.let {
+      maxSize.limitMax(it)
+    }?.also {
       JBInsets.addTo(it, parent.insets)
     } ?: Dimension(0, 0)
 
-  private fun getWidthRestriction(): Int = maxWidth?.let(JBUIScale::scale) ?: Int.MAX_VALUE
-  private fun getHeightRestriction(): Int = maxHeight?.let(JBUIScale::scale) ?: Int.MAX_VALUE
-
-  override fun preferredLayoutSize(parent: Container): Dimension {
-    val prefSize = component?.takeIf { it.isVisible }?.preferredSize ?: return Dimension(0, 0)
-
-    val prefWidth = min(prefSize.width, getWidthRestriction())
-    val prefHeight = min(prefSize.height, getHeightRestriction())
-
-    return Dimension(prefWidth, prefHeight).also {
+  override fun preferredLayoutSize(parent: Container): Dimension =
+    component?.takeIf { it.isVisible }?.preferredSize?.let {
+      maxSize.limitMax(it)
+    }?.also {
       JBInsets.addTo(it, parent.insets)
-    }
-  }
+    } ?: Dimension(0, 0)
 
-  override fun maximumLayoutSize(target: Container): Dimension {
-    val maxSize = component?.takeIf { it.isVisible }?.maximumSize ?: return Dimension(0, 0)
-
-    val maxWidth = min(maxSize.width, getWidthRestriction())
-    val maxHeight = min(maxSize.height, getHeightRestriction())
-
-    return Dimension(maxWidth, maxHeight).also {
+  override fun maximumLayoutSize(target: Container): Dimension =
+    component?.takeIf { it.isVisible }?.maximumSize?.let {
+      maxSize.limitMax(it)
+    }?.also {
       JBInsets.addTo(it, target.insets)
-    }
-  }
+    } ?: Dimension(0, 0)
 
   override fun layoutContainer(parent: Container) {
     if (component?.isVisible != true) return
 
-    val bounds = Rectangle(0, 0, parent.width, parent.height)
-    JBInsets.removeFrom(bounds, parent.insets)
-
-    bounds.width = min(getWidthRestriction(), bounds.width)
-    bounds.height = min(getHeightRestriction(), bounds.height)
-    component?.bounds = bounds
+    component?.bounds = Rectangle(0, 0, parent.width, parent.height).apply {
+      JBInsets.removeFrom(this, parent.insets)
+      size = maxSize.limitMax(size)
+    }
   }
 
   override fun getLayoutAlignmentX(target: Container?): Float = 0f
   override fun getLayoutAlignmentY(target: Container?): Float = 0f
-  override fun invalidateLayout(target: Container?) = Unit
+  override fun invalidateLayout(target: Container?) = Unit //TODO: cache
+
+  companion object {
+    fun constant(maxWidth: Int? = null, maxHeight: Int? = null): SizeRestrictedSingleComponentLayout =
+      SizeRestrictedSingleComponentLayout().apply {
+        maxSize = DimensionRestrictions.ScalingConstant(maxWidth, maxHeight)
+      }
+  }
+}
+
+private fun DimensionRestrictions.limitMax(size: Dimension): Dimension {
+  val width = min(size.width, getWidth() ?: Int.MAX_VALUE)
+  val height = min(size.height, getHeight() ?: Int.MAX_VALUE)
+  return Dimension(width, height)
 }

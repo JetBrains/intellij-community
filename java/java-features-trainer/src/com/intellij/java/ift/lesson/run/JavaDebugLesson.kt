@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ift.lesson.run
 
 import com.intellij.debugger.JavaDebuggerBundle
@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.util.text.StringUtil
@@ -104,7 +105,7 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
       }
     }
 
-    task("Debugger.PopFrame") {
+    task(IdeActions.ACTION_RESET_FRAME) {
       text(JavaLessonsBundle.message("java.debug.workflow.drop.frame", code("extractNumber"), code("extractNumber"),
                                 icon(AllIcons.Actions.InlineDropFrame), action(it)))
       stateCheck {

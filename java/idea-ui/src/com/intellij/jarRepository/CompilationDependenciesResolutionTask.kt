@@ -17,8 +17,9 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
 /**
- * Compilation dependencies may be located in private Space Packages which should be resolved on IDE side
- * before launching build process not to pass Space token between processes for security reasons.
+ * Compilation dependencies should be resolved before launching build process not to have:
+ * * parallel resolution in [LibrarySynchronizationQueue] and build process;
+ * * private Maven repositories authentication for build process.
  */
 internal class CompilationDependenciesResolutionTask : CompileTask {
   companion object {

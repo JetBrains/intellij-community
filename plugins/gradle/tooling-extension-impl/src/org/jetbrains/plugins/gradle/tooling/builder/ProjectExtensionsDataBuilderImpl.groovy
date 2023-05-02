@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.tooling.builder
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionContainer
+import org.gradle.api.plugins.ExtensionsSchema
 import org.gradle.api.reflect.HasPublicType
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
@@ -52,7 +53,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       def extension = it as ExtensionContainer
       List<String> keyList =
         GradleVersion.current() >= GradleVersion.version("4.5")
-          ? extension.extensionsSchema.collect { it["name"] as String }
+          ? extractKeys(extension)
           : extractKeysViaReflection(extension)
 
       for (name in keyList) {
@@ -62,6 +63,14 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
         def rootTypeFqn = getType(value)
         result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn))
       }
+    }
+    return result
+  }
+
+  private static List<String> extractKeys(ExtensionContainer extension) {
+    List<String> result = []
+    for (final ExtensionsSchema.ExtensionSchema schema in extension.extensionsSchema) {
+      result.add(schema.name)
     }
     return result
   }

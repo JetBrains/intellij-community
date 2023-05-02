@@ -58,11 +58,11 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     myFixture.completeBasic();
     assertEquals(List.of("+MinusFlag", "-Flag", "Diagnostic", "Experimental", "Value"), myFixture.getLookupElementStrings());
     LookupElement[] elements = myFixture.getLookupElements();
-    checkPresentation(elements[0], "[p] +MinusFlag|null/bool");
-    checkPresentation(elements[1], "[p] -Flag|null/bool");
+    checkPresentation(elements[0], "+MinusFlag|null/bool");
+    checkPresentation(elements[1], "-Flag|null/bool");
     checkPresentation(elements[2], "[d] Diagnostic| = 20/uint");
     checkPresentation(elements[3], "[e] Experimental| = 10/uint");
-    checkPresentation(elements[4], "[p] Value| = 10/uint");
+    checkPresentation(elements[4], "Value| = 10/uint");
     myFixture.type('\n');
     myFixture.checkResult("-XX:+MinusFlag ");
   }
@@ -71,9 +71,8 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     LookupElementPresentation presentation = new LookupElementPresentation();
     element.renderElement(presentation);
     Icon icon = presentation.getIcon();
-    String iconTag = icon == AllIcons.Actions.ArrowExpand ? "[p] " :
-                     icon == AllIcons.General.ShowInfos ? "[d] " :
-                     icon == AllIcons.General.Warning ? "[e] " : "";
+    String iconTag = icon == AllIcons.General.ShowInfos ? "[d] " :
+                     icon == AllIcons.General.ShowWarning ? "[e] " : "";
     String actual = iconTag + presentation.getItemText() + "|" + presentation.getTailText() + "/" + presentation.getTypeText();
     assertEquals(expected, actual);
   }

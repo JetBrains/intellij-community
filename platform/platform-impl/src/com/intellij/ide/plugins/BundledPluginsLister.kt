@@ -4,7 +4,7 @@ package com.intellij.ide.plugins
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.ModernApplicationStarter
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.util.io.jackson.array
@@ -15,10 +15,8 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.system.exitProcess
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
-internal class BundledPluginsLister : ModernApplicationStarter() {
+private class BundledPluginsLister : ModernApplicationStarter() {
   override val commandName: String
     get() = "listBundledPlugins"
 
@@ -34,7 +32,7 @@ internal class BundledPluginsLister : ModernApplicationStarter() {
         // noinspection UseOfSystemOutOrSystemErr
         OutputStreamWriter(System.out, StandardCharsets.UTF_8)
       }
-      JsonFactory().createGenerator(out).useDefaultPrettyPrinter().use { writer ->
+      JsonFactory().createGenerator(out).use { writer ->
         val plugins = PluginManagerCore.getPluginSet().enabledPlugins
         val modules = HashSet<String>()
         val pluginIds = ArrayList<String>(plugins.size)
@@ -57,13 +55,13 @@ internal class BundledPluginsLister : ModernApplicationStarter() {
         writer.obj {
           writeList(writer, "modules", modules.sorted())
           writeList(writer, "plugins", pluginIds)
-          writeList(writer, "extensions", extensions)
+          writeList(writer, "fileExtensions", extensions)
         }
       }
     }
     catch (e: Exception) {
       try {
-        Logger.getInstance(javaClass).error("Bundled plugins list builder failed", e)
+        logger<BundledPluginsLister>().error("Bundled plugins list builder failed", e)
       }
       catch (ignored: Throwable) { }
       e.printStackTrace(System.err)

@@ -3,11 +3,13 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.util.text.NameUtilCore
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.apache.maven.model.Dependency
 import org.apache.maven.model.Exclusion
 import org.apache.maven.model.Model
@@ -30,7 +32,7 @@ import java.util.*
 import java.util.function.BiConsumer
 
 /**
- * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depends on non-repository libraries.
+ * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depend on non-repository libraries.
  *
  * @see [org.jetbrains.intellij.build.ProductProperties.mavenArtifacts]
  * @see [org.jetbrains.intellij.build.BuildOptions.MAVEN_ARTIFACTS_STEP]
@@ -63,7 +65,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
         val extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependency) ?: continue
         result.put(dependency, when (extension.scope) {
           JpsJavaDependencyScope.COMPILE ->
-            //if a dependency isn't exported transitive dependencies will include it into runtime classpath only
+            //if a dependency isn't exported, transitive dependencies will include it in runtime classpath only
             if (extension.isExported) DependencyScope.COMPILE else DependencyScope.RUNTIME
           JpsJavaDependencyScope.RUNTIME -> DependencyScope.RUNTIME
 
@@ -94,17 +96,17 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
     }
   }
 
-  fun generateMavenArtifacts(namesOfModulesToPublish: List<String>,
-                             namesOfModulesToSquashAndPublish: List<String>,
-                             outputDir: String) {
+  suspend fun generateMavenArtifacts(moduleNamesToPublish: Collection<String>,
+                                     moduleNamesToSquashAndPublish: List<String>,
+                                     outputDir: String) {
     val modulesToPublish = HashMap<MavenArtifactData, List<JpsModule>>()
 
-    generateMavenArtifactData(namesOfModulesToPublish).forEach(BiConsumer { aModule, artifactData ->
+    generateMavenArtifactData(moduleNamesToPublish).forEach(BiConsumer { aModule, artifactData ->
       modulesToPublish.put(artifactData, listOf(aModule))
     })
 
-    val squashingMavenArtifactsData = generateMavenArtifactData(namesOfModulesToSquashAndPublish)
-    for (moduleName in namesOfModulesToSquashAndPublish) {
+    val squashingMavenArtifactsData = generateMavenArtifactData(moduleNamesToSquashAndPublish)
+    for (moduleName in moduleNamesToSquashAndPublish) {
       val module = context.findRequiredModule(moduleName)
       val modules = JpsJavaExtensionService.dependencies(module)
         .recursively().withoutSdk().includedIn(JpsJavaClasspathKind.runtime(false)).modules
@@ -124,7 +126,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
     spanBuilder("layout maven artifacts")
       .setAttribute(AttributeKey.stringArrayKey("modules"), modulesToPublish.entries.map { entry ->
         "  [${entry.value.joinToString(separator = ",") { it.name }}] -> ${entry.key.coordinates}"
-      }).useWithScope {
+      }).useWithScope2 {
         layoutMavenArtifacts(modulesToPublish, context.paths.artifactDir.resolve(outputDir), context)
       }
   }
@@ -176,7 +178,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
 
         if (computationInProgress.contains(depModule)) {
           /*
-           It's forbidden to have compile-time circular dependencies in IntelliJ project, but there are some cycles with runtime scope
+           It's forbidden to have compile-time circular dependencies in the IntelliJ project, but there are some cycles with runtime scope
             (e.g. intellij.platform.ide.impl depends on (runtime scope) intellij.platform.configurationStore.impl which depends on intellij.platform.ide.impl).
            It's convenient to have such dependencies to allow running tests in classpath of their modules, so we can just ignore them while
            generating pom.xml files.
@@ -338,46 +340,52 @@ private fun splitByCamelHumpsMergingNumbers(s: String): List<String> {
 }
 
 /**
- * second component of module names which describes a common group rather than a specific framework and therefore should be excluded from artifactId
+ * the second component of module names which describes a common group rather than a specific framework
+ * and therefore should be excluded from artifactId
  */
 private val COMMON_GROUP_NAMES: Set<String> = java.util.Set.of("platform", "vcs", "tools", "clouds")
 
-private fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData, List<JpsModule>>, outputDir: Path, context: BuildContext) {
+private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData, List<JpsModule>>,
+                                         outputDir: Path,
+                                         context: BuildContext) {
   val publishSourceFilter = context.productProperties.mavenArtifacts.publishSourcesFilter
+  coroutineScope {
+    for ((artifactData, modules) in modulesToPublish.entries) {
+      launch {
+        val modulesWithSources = modules.filter {
+          it.getSourceRoots(JavaSourceRootType.SOURCE).any() || it.getSourceRoots(JavaResourceRootType.RESOURCE).any()
+        }
 
-  modulesToPublish.entries.parallelStream().forEach { (artifactData, modules) ->
-    val modulesWithSources = modules.filter {
-      it.getSourceRoots(JavaSourceRootType.SOURCE).any() || it.getSourceRoots(JavaResourceRootType.RESOURCE).any()
-    }
+        val dirPath = artifactData.coordinates.directoryPath
+        val artifactDir = outputDir.resolve(dirPath)
+        Files.createDirectories(artifactDir)
 
-    val dirPath = artifactData.coordinates.directoryPath
-    val artifactDir = outputDir.resolve(dirPath)
-    Files.createDirectories(artifactDir)
+        generatePomXmlData(artifactData = artifactData,
+                           file = artifactDir.resolve(artifactData.coordinates.getFileName("", "pom")))
 
-    generatePomXmlData(artifactData = artifactData,
-                       file = artifactDir.resolve(artifactData.coordinates.getFileName("", "pom")))
+        buildJar(
+          targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("", "jar")),
+          sources = modulesWithSources.map {
+            DirSource(dir = context.getModuleOutputDir(it), excludes = commonModuleExcludes)
+          },
+        )
 
-    buildJar(
-      targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("", "jar")),
-      sources = modulesWithSources.map {
-        DirSource(dir = context.getModuleOutputDir(it), excludes = commonModuleExcludes)
-      },
-    )
-
-    val publishSourcesForModules = modules.filter { publishSourceFilter(it, context) }
-    if (!publishSourcesForModules.isEmpty() && !modulesWithSources.isEmpty()) {
-      buildJar(
-        targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("sources", "jar")),
-        sources = publishSourcesForModules.flatMap { module ->
-          module.getSourceRoots(JavaSourceRootType.SOURCE).asSequence().map {
-            DirSource(dir = it.path, prefix = it.properties.packagePrefix.replace('.', '/'), excludes = commonModuleExcludes)
-          } +
-          module.getSourceRoots(JavaResourceRootType.RESOURCE).asSequence().map {
-            DirSource(dir = it.path, prefix = it.properties.relativeOutputPath, excludes = commonModuleExcludes)
-          }
-        },
-        compress = true,
-      )
+        val publishSourcesForModules = modules.filter { publishSourceFilter(it, context) }
+        if (!publishSourcesForModules.isEmpty() && !modulesWithSources.isEmpty()) {
+          buildJar(
+            targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("sources", "jar")),
+            sources = publishSourcesForModules.flatMap { module ->
+              module.getSourceRoots(JavaSourceRootType.SOURCE).asSequence().map {
+                DirSource(dir = it.path, prefix = it.properties.packagePrefix.replace('.', '/'), excludes = commonModuleExcludes)
+              } +
+              module.getSourceRoots(JavaResourceRootType.RESOURCE).asSequence().map {
+                DirSource(dir = it.path, prefix = it.properties.relativeOutputPath, excludes = commonModuleExcludes)
+              }
+            },
+            compress = true,
+          )
+        }
+      }
     }
   }
 }

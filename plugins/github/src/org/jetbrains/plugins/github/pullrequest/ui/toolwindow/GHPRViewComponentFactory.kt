@@ -30,6 +30,7 @@ import git4idea.changes.GitParsedChangesBundle
 import git4idea.changes.findCumulativeChange
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
@@ -160,7 +161,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         tree.selectFile(VcsUtil.getFilePath(filePath, false))
       }
       else {
-        val change = changesProviderModel.value.diffDataByChange.findCumulativeChange(oid, filePath)
+        val change = changesProviderModel.value.patchesByChange.findCumulativeChange(oid, filePath)
         if (change == null) {
           tree.selectFile(VcsUtil.getFilePath(filePath, false))
         }
@@ -270,7 +271,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private fun createChangesTree(
     parentPanel: JPanel,
     model: SingleValueModel<Collection<Change>>,
-    emptyTextText: String,
+    emptyTextText: @Nls String,
     getCustomData: ChangesTree.(String) -> Any? = { null }
   ): ChangesTree {
     val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)

@@ -84,7 +84,7 @@ open class GHPRDiffRequestChainProducer(
 
     VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
 
-    val diffComputer = changesProvider.diffDataByChange[change]?.getDiffComputer()
+    val diffComputer = changesProvider.patchesByChange[change]?.getDiffComputer()
     if (diffComputer != null) {
       requestDataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
     }
@@ -114,7 +114,7 @@ open class GHPRDiffRequestChainProducer(
   }
 
   private fun getReviewSupport(changesProvider: GitParsedChangesBundle, change: Change): GHPRDiffReviewSupport? {
-    val diffData = changesProvider.diffDataByChange[change] ?: return null
+    val diffData = changesProvider.patchesByChange[change] ?: return null
 
     return GHPRDiffReviewSupportImpl(project,
                                      dataProvider.reviewData, dataProvider.detailsData, avatarIconsProvider,

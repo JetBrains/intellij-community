@@ -62,11 +62,11 @@ import kotlin.streams.asSequence
 internal suspend fun buildDistribution(state: DistributionBuilderState,
                                        context: BuildContext,
                                        isUpdateFromSources: Boolean = false): List<DistributionFileEntry> = coroutineScope {
-  validateModuleStructure(state, context)
+  validateModuleStructure(state.platform, context)
   createPrebuildSvgIconsJob(context)
   createBuildBrokenPluginListJob(context)
 
-  val flatIdeClassPath = createIdeClassPath(state, context)
+  val flatIdeClassPath = createIdeClassPath(state.platform, context)
   if (context.productProperties.buildDocAuthoringAssets) {
     launch {
       buildAdditionalAuthoringArtifacts(ideClassPath = flatIdeClassPath, context = context)
@@ -165,9 +165,9 @@ Android Studio: don't patch ApplicationNamesInfo yet */
 /**
  * Validates module structure to be ensure all module dependencies are included
  */
-fun validateModuleStructure(state: DistributionBuilderState, context: BuildContext) {
+fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   if (context.options.validateModuleStructure) {
-    ModuleStructureValidator(context, state.platform.includedModules).validate()
+    ModuleStructureValidator(context, platform.includedModules).validate()
   }
 }
 
@@ -420,11 +420,11 @@ private suspend fun buildHelpPlugin(helpPlugin: PluginLayout,
   return PluginRepositorySpec(destFile, moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
 }
 
-internal suspend fun generateProjectStructureMapping(context: BuildContext, state: DistributionBuilderState): List<DistributionFileEntry> {
+internal suspend fun generateProjectStructureMapping(context: BuildContext, platform: PlatformLayout): List<DistributionFileEntry> {
   val moduleOutputPatcher = ModuleOutputPatcher()
   return coroutineScope {
     val libDirLayout = async {
-      processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher, platform = state.platform, context = context, copyFiles = false)
+      processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher, platform = platform, context = context, copyFiles = false)
     }
     val allPlugins = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.bundledPluginModules,
                                                       productLayout = context.productProperties.productLayout)
@@ -543,9 +543,9 @@ private val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = 
 
 internal class PluginRepositorySpec(@JvmField val pluginZip: Path, @JvmField val pluginXml: ByteArray /* content of plugin.xml */)
 
-fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout: ProductModulesLayout): Set<PluginLayout> {
+fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout: ProductModulesLayout): MutableSet<PluginLayout> {
   if (modules.isEmpty()) {
-    return emptySet()
+    return createPluginLayoutSet(0)
   }
 
   val pluginLayouts = productLayout.pluginLayouts
@@ -797,8 +797,12 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
     return false
   }
 
-  if (bundlingRestrictions === PluginBundlingRestrictions.EPHEMERAL) {
+  if (bundlingRestrictions == PluginBundlingRestrictions.EPHEMERAL) {
     return if (withEphemeral) osFamily == null && arch == null else false
+  }
+
+  if (bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE) {
+    return false
   }
 
   return when {
@@ -1134,14 +1138,14 @@ private fun buildBlockMap(file: Path, json: JSON) {
   }
 }
 
-suspend fun createIdeClassPath(state: DistributionBuilderState, context: BuildContext): Set<String> {
+suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext): Set<String> {
   // for some reasons, maybe duplicated paths - use set
   val classPath = LinkedHashSet<String>()
   val pluginLayouts = context.productProperties.productLayout.pluginLayouts
   val nonPluginEntries = mutableListOf<DistributionFileEntry>()
   val pluginEntries = mutableListOf<DistributionFileEntry>()
   val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-  for (e in generateProjectStructureMapping(context = context, state = state)) {
+  for (e in generateProjectStructureMapping(context = context, platform = platform)) {
     if (e.path.startsWith(pluginDir)) {
       val relativePath = pluginDir.relativize(e.path)
       // for plugins our classloader load jars only from lib folder
@@ -1172,10 +1176,10 @@ suspend fun createIdeClassPath(state: DistributionBuilderState, context: BuildCo
   return classPath
 }
 
-suspend fun buildSearchableOptions(state: DistributionBuilderState,
+suspend fun buildSearchableOptions(platform: PlatformLayout,
                                    context: BuildContext,
                                    systemProperties: Map<String, Any> = emptyMap()): Path? {
-  return buildSearchableOptions(ideClassPath = createIdeClassPath(state, context), context = context, systemProperties = systemProperties)
+  return buildSearchableOptions(ideClassPath = createIdeClassPath(platform, context), context = context, systemProperties = systemProperties)
 }
 
 /**

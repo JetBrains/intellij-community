@@ -24,13 +24,6 @@ import kotlin.system.measureTimeMillis
 @VisibleForTesting
 class DelayedProjectSynchronizer : ProjectActivity {
   override suspend fun execute(project: Project) {
-    // TODO:: Introduce the process of delayed sync even if project was not opened
-    if (GlobalLibraryTableBridge.isEnabled()) {
-      val modelSynchronizer = JpsGlobalModelSynchronizer.getInstance()
-      writeAction {
-        modelSynchronizer.delayLoadGlobalWorkspaceModel()
-      }
-    }
     doSync(project)
   }
 

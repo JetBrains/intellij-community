@@ -1073,7 +1073,7 @@
     <applicationService serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
     <globalInspection shortName="Annotator" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle"
-                      enabledByDefault="false" level="ERROR"
+                      enabledByDefault="true" level="ERROR"
                       bundle="messages.InspectionsBundle" key="inspection.annotator.display.name"
                       implementationClass="com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection"/>
     <localInspection shortName="LossyEncoding" bundle="messages.LangBundle" key="lossy.encoding"

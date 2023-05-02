@@ -170,6 +170,13 @@ public interface ExtensionPoint extends DomElement {
       ADDITIONAL_DEPRECATED,
 
       /**
+       * Obsolete API, should not be used for new code.
+       *
+       * @see ApiStatus.Obsolete
+       */
+      OBSOLETE,
+
+      /**
        * Internal API, should not be used outside of IntelliJ project.
        *
        * @see ApiStatus.Internal

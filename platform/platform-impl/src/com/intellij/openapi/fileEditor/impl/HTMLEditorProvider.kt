@@ -34,18 +34,21 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     const val JS_FUNCTION_NAME: String = "jbCefQuery"
 
     @JvmStatic
-    fun openEditor(project: Project, @DialogTitle title: String, html: String) =
+    fun openEditor(project: Project, @DialogTitle title: String, html: String) {
       openEditor(project, title, Request.html(html))
+    }
 
     @JvmStatic
-    fun openEditor(project: Project, @DialogTitle title: String, url: String, timeoutHtml: String? = null) =
+    fun openEditor(project: Project, @DialogTitle title: String, url: String, timeoutHtml: String? = null) {
       openEditor(project, title, Request.url(url).withTimeoutHtml(timeoutHtml))
+    }
 
     @JvmStatic
-    fun openEditor(project: Project, @DialogTitle title: String, request: Request) {
+    fun openEditor(project: Project, @DialogTitle title: String, request: Request): FileEditor {
       val file = LightVirtualFile(title, WebPreviewFileType.INSTANCE, "")
       REQUEST_KEY.set(file, request)
-      FileEditorManager.getInstance(project).openFile(file, true)
+      val editors = FileEditorManager.getInstance(project).openFile(file, true)
+      return editors.find { it is HTMLFileEditor } ?: editors[0]
     }
   }
 

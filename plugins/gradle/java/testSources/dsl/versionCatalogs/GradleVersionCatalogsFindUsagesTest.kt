@@ -84,7 +84,6 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
       .create("GradleVersionCatalogs-find-usages-bare") {
         withSettingsFile {
           setProjectName("GradleVersionCatalogs-find-usages-bare")
-          enableFeaturePreview("VERSION_CATALOGS")
         }
       }
   }

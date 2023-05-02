@@ -2,13 +2,13 @@
 package com.intellij.ui.mac;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.IdeDependentAction;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -25,7 +25,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
-public class MergeAllWindowsAction extends DumbAwareAction {
+public class MergeAllWindowsAction extends IdeDependentAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -50,6 +50,7 @@ public class MergeAllWindowsAction extends DumbAwareAction {
     else {
       presentation.setEnabledAndVisible(false);
     }
+    super.update(e);
   }
 
   public static boolean isTabbedWindow(@NotNull JFrame frame) {

@@ -178,6 +178,11 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        " @com.intellij.util.xmlb.annotations.Attribute " +
                        " @Internal public String internalAttribute; " +
                        "}")
+    myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.Obsolete; " +
+                       "@Obsolete public class MyObsoleteEP {" +
+                       " @com.intellij.util.xmlb.annotations.Attribute " +
+                       " @Obsolete public String obsoleteAttribute; " +
+                       "}")
     myFixture.addClass("package foo; " +
                        "import com.intellij.util.xmlb.annotations.Attribute; " +
                        "import com.intellij.util.xmlb.annotations.Property; " +

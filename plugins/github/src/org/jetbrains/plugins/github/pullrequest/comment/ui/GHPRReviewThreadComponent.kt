@@ -16,6 +16,7 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
@@ -30,7 +31,6 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
@@ -71,16 +71,21 @@ object GHPRReviewThreadComponent {
     return panel
   }
 
-  fun createThreadDiff(thread: GHPRReviewThreadModel,
-                       diffComponentFactory: GHPRReviewThreadDiffComponentFactory,
+  fun createThreadDiff(project: Project,
+                       thread: GHPRReviewThreadModel,
                        selectInToolWindowHelper: GHPRSelectInToolWindowHelper): JComponent {
+    val hunk = thread.patchHunk
+    if (hunk == null) {
+      return JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
+    }
 
     val collapsibleState = MutableStateFlow(false)
     thread.addAndInvokeStateChangeListener {
       collapsibleState.value = thread.isResolved || thread.isOutdated
     }
 
-    val diffComponent = diffComponentFactory.createComponent(thread.diffHunk, thread.startLine)
+    val diffComponent = TimelineDiffComponentFactory
+      .createDiffComponent(project, EditorFactory.getInstance(), hunk, thread.originalLocation, thread.originalStartLocation)
     return TimelineDiffComponentFactory.wrapWithHeader(diffComponent, thread.filePath, collapsibleState, thread.collapsedState) {
       selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath)
     }

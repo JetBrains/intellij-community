@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.collections.immutable.*
@@ -37,15 +36,11 @@ class ProductModulesLayout {
   var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
 
   /**
-   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
+   * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under "&lt;product-code&gt;-plugins" directory in the build artifacts.
    * Layouts of the plugins are specified in {@link [pluginLayouts]} list.
    */
-  var pluginModulesToPublish: Collection<String> = LinkedHashSet()
-    get() = java.util.Set.copyOf(field)
-    set(value) {
-      field = LinkedHashSet(value)
-    }
+  var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
 
   /**
    * Describes layout of non-trivial plugins which may be included into the product. The actual list of the plugins need to be bundled
@@ -114,7 +109,7 @@ class ProductModulesLayout {
    *
    * @see #setPluginModulesToPublish
    */
-  var prepareCustomPluginRepositoryForPublishedPlugins = true
+  var prepareCustomPluginRepositoryForPublishedPlugins: Boolean = true
 
   /**
    * If {@code true} then all plugins that compatible with an IDE will be built. By default, these plugins will be placed to "auto-uploading"
@@ -122,7 +117,7 @@ class ProductModulesLayout {
    * <br>
    * If {@code false} only plugins from {@link #setPluginModulesToPublish} will be considered.
    */
-  var buildAllCompatiblePlugins = true
+  var buildAllCompatiblePlugins: Boolean = true
 
   /**
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
@@ -135,18 +130,6 @@ class ProductModulesLayout {
    * This API is experimental, use with care
    */
   var excludedModuleNames: PersistentSet<String> = persistentSetOf()
-
-  /**
-   * @return list of all modules which output is included into the plugin's JARs
-   */
-  fun getIncludedPluginModules(enabledPluginModules: Collection<String>): Collection<String> {
-    val result = LinkedHashSet<String>()
-    result.addAll(enabledPluginModules)
-    pluginLayouts.asSequence()
-      .filter { enabledPluginModules.contains(it.mainModule) }
-      .flatMapTo(result) { it.includedModules.map { it.moduleName }.distinct() }
-    return result
-  }
 }
 
 internal fun createPluginLayoutSet(expectedSize: Int): MutableSet<PluginLayout> {

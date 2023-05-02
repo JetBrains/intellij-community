@@ -81,12 +81,27 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
     val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout)
-    val state = compilePlatformAndPluginModules(pluginsToPublish, context)
-    buildSearchableOptions(state, context)
+    val distState = createDistributionBuilderState(pluginsToPublish = pluginsToPublish,
+                                                   context = context)
+    val compilationTasks = CompilationTasks.create(context = context)
+    compilationTasks.compileModules(
+      moduleNames = distState.getModulesForPluginsToPublish() + listOf("intellij.idea.community.build.tasks",
+                                                                       "intellij.platform.images.build",
+                                                                       "intellij.tools.launcherGenerator"),
+    )
+
+    buildProjectArtifacts(
+      platform = distState.platform,
+      enabledPluginModules = getEnabledPluginModules(pluginsToPublish = distState.pluginsToPublish,
+                                                     productProperties = context.productProperties),
+      compilationTasks = compilationTasks,
+      context = context,
+    )
+    buildSearchableOptions(distState.platform, context)
     buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
                            compressPluginArchive = context.options.compressZipFiles,
                            buildPlatformLibJob = null,
-                           state = state,
+                           state = distState,
                            context = context)
   }
 
@@ -143,8 +158,8 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
   writeProjectStructureReport(
-    entries = generateProjectStructureMapping(context = context,
-                                              state = createDistributionBuilderState(pluginsToPublish = emptySet(), context = context)),
+    entries = generateProjectStructureMapping(context = context, platform = createPlatformLayout(pluginsToPublish = emptySet(),
+                                                                                                 context = context)),
     file = targetFile,
     buildPaths = context.paths
   )
@@ -172,29 +187,6 @@ private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
 
   val root = System.getProperty("user.home", null)
   return if (root == null) Path.of(".m2/repository") else Path.of(root, ".m2/repository")
-}
-
-/**
- * Building a list of modules that the IDE will provide for plugins.
- */
-private suspend fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilderState, context: BuildContext) {
-  context.executeStep(spanBuilder("build provided module list"), BuildOptions.PROVIDED_MODULES_LIST_STEP) {
-    withContext(Dispatchers.IO) {
-      Files.deleteIfExists(targetFile)
-      val ideClasspath = createIdeClassPath(state, context)
-      // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      runApplicationStarter(context = context,
-                            tempDir = context.paths.tempDir.resolve("builtinModules"),
-                            ideClasspath = ideClasspath,
-                            arguments = listOf("listBundledPlugins", targetFile.toString()))
-      check(Files.exists(targetFile)) {
-        "Failed to build provided modules list: $targetFile doesn\'t exist"
-      }
-    }
-    context.productProperties.customizeBuiltinModules(context, targetFile)
-    context.builtinModule = readBuiltinModulesFile(targetFile)
-    context.notifyArtifactWasBuilt(targetFile)
-  }
 }
 
 private fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
@@ -392,8 +384,8 @@ private fun copyDependenciesFile(context: BuildContext): Path {
 
 private fun checkProjectLibraries(names: Collection<String>, fieldName: String, context: BuildContext) {
   val unknownLibraries = names.filter { context.project.libraryCollection.findLibrary(it) == null }
-  if (!unknownLibraries.isEmpty()) {
-    context.messages.error("The following libraries from $fieldName aren\'t found in the project: $unknownLibraries")
+  check(unknownLibraries.isEmpty()) {
+    "The following libraries from $fieldName aren\'t found in the project: $unknownLibraries"
   }
 }
 
@@ -512,22 +504,12 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
   return sourceFiles
 }
 
-private suspend fun compilePlatformAndPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
-  val distState = createDistributionBuilderState(pluginsToPublish, context)
-  val compilationTasks = CompilationTasks.create(context)
-  compilationTasks.compileModules(
-    distState.getModulesForPluginsToPublish() +
-    listOf("intellij.idea.community.build.tasks", "intellij.platform.images.build", "intellij.tools.launcherGenerator"))
-  compilationTasks.buildProjectArtifacts(distState.getIncludedProjectArtifacts())
-  return distState
-}
-
-private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
+private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
   val productProperties = context.productProperties
   val mavenArtifacts = productProperties.mavenArtifacts
 
   val toCompile = LinkedHashSet<String>()
-  toCompile.addAll(getModulesToCompile(context))
+  collectModulesToCompile(context = context, result = toCompile)
   context.proprietaryBuildTools.scrambleTool?.let {
     toCompile.addAll(it.additionalModulesToCompile)
   }
@@ -536,35 +518,95 @@ private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLa
   toCompile.addAll(mavenArtifacts.squashedModules)
   toCompile.addAll(mavenArtifacts.proprietaryModules)
   toCompile.addAll(productProperties.modulesToCompileTests)
-  CompilationTasks.create(context).compileModules(toCompile)
+  toCompile.add("intellij.tools.launcherGenerator")
+
+  val compilationTasks = CompilationTasks.create(context)
+  compilationTasks.compileModules(toCompile)
+
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
+                                                          productLayout = context.productProperties.productLayout)
+  filterPluginsToPublish(pluginsToPublish, context)
+
+  var enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, productProperties = context.productProperties)
+  // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
+  val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context)
+  val productLayout = context.productProperties.productLayout
+  val addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
+                            hasPlatformCoverage(productLayout = productLayout,
+                                                enabledPluginModules = enabledPluginModules,
+                                                context = context)
 
   if (context.shouldBuildDistributions()) {
-    val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
-    val state = compilePlatformAndPluginModules(pluginsToPublish, context)
-    buildProvidedModuleList(targetFile = providedModuleFile, state = state, context = context)
-    if (!productProperties.productLayout.buildAllCompatiblePlugins) {
-      return state
-    }
-
     if (context.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
       Span.current().addEvent("skip collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
     }
     else {
-      return compilePlatformAndPluginModules(
-        pluginsToPublish = pluginsToPublish + collectCompatiblePluginsToPublish(providedModuleFile, context),
-        context = context
-      )
+      val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
+      val platform = createPlatformLayout(pluginsToPublish, context)
+      compilationTasks.compileModules(moduleNames = getModulesForPluginsToPublish(platform, pluginsToPublish))
+      val builtinModuleData = spanBuilder("build provided module list").useWithScope2 {
+        val ideClasspath = createIdeClassPath(platform = platform, context = context)
+
+        Files.deleteIfExists(providedModuleFile)
+        // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
+        runApplicationStarter(context = context,
+                              tempDir = context.paths.tempDir.resolve("builtinModules"),
+                              ideClasspath = ideClasspath,
+                              arguments = listOf("listBundledPlugins", providedModuleFile.toString()))
+        context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
+        try {
+          val builtinModuleData = readBuiltinModulesFile(file = providedModuleFile)
+          context.builtinModule = builtinModuleData
+          builtinModuleData
+        }
+        catch (e: NoSuchFileException) {
+          throw IllegalStateException("Failed to build provided modules list: $providedModuleFile doesn\'t exist")
+        }
+      }
+
+      context.notifyArtifactWasBuilt(artifactPath = providedModuleFile)
+      if (!productProperties.productLayout.buildAllCompatiblePlugins) {
+        val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
+        buildProjectArtifacts(platform = distState.platform,
+                              enabledPluginModules = enabledPluginModules,
+                              compilationTasks = compilationTasks,
+                              context = context)
+        return distState
+      }
+
+      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, context = context, result = pluginsToPublish)
+      filterPluginsToPublish(pluginsToPublish, context)
+
+      // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
+      enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, productProperties = context.productProperties)
     }
   }
-  return compilePlatformAndPluginModules(pluginsToPublish, context)
+
+  val platform = createPlatformLayout(
+    addPlatformCoverage = addPlatformCoverage,
+    projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
+    context = context,
+  )
+  val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
+  compilationTasks.compileModules(distState.getModulesForPluginsToPublish())
+
+  buildProjectArtifacts(platform = distState.platform,
+                        enabledPluginModules = enabledPluginModules,
+                        compilationTasks = compilationTasks,
+                        context = context)
+  return distState
 }
 
-private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
-  return compileModulesForDistribution(
-    pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
-                                                        productLayout = context.productProperties.productLayout),
-    context = context
-  )
+private fun buildProjectArtifacts(platform: PlatformLayout,
+                                  enabledPluginModules: Set<String>,
+                                  compilationTasks: CompilationTasks,
+                                  context: BuildContext) {
+  val artifactNames = LinkedHashSet<String>()
+  artifactNames.addAll(platform.includedArtifacts.keys)
+  getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
+    .flatMapTo(artifactNames) { it.includedArtifacts.keys }
+
+  compilationTasks.buildProjectArtifacts(artifactNames)
 }
 
 suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").useWithScope2 {
@@ -589,7 +631,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
       else {
         Span.current().addEvent("skip building product distributions because " +
                                 "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
-        buildSearchableOptions(distributionState, context)
+        buildSearchableOptions(distributionState.platform, context)
         buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
                                compressPluginArchive = context.options.compressZipFiles,
                                buildPlatformLibJob = null,
@@ -653,20 +695,24 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
   }
 
   return createSkippableJob(spanBuilder("generate maven artifacts"), BuildOptions.MAVEN_ARTIFACTS_STEP, context) {
-    val moduleNames = ArrayList<String>()
+    val moduleNames = HashSet<String>()
     if (mavenArtifacts.forIdeModules) {
       moduleNames.addAll(distributionState.platformModules)
       val productLayout = context.productProperties.productLayout
-      moduleNames.addAll(productLayout.getIncludedPluginModules(productLayout.bundledPluginModules))
+      collectIncludedPluginModules(enabledPluginModules = productLayout.bundledPluginModules, product = productLayout, result = moduleNames)
     }
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
     moduleNames.addAll(mavenArtifacts.additionalModules)
     if (!moduleNames.isEmpty()) {
-      mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, mavenArtifacts.squashedModules, "maven-artifacts")
+      mavenArtifactsBuilder.generateMavenArtifacts(moduleNamesToPublish = moduleNames,
+                                                   moduleNamesToSquashAndPublish = mavenArtifacts.squashedModules,
+                                                   outputDir = "maven-artifacts")
     }
     if (!mavenArtifacts.proprietaryModules.isEmpty()) {
-      mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, emptyList(), "proprietary-maven-artifacts")
+      mavenArtifactsBuilder.generateMavenArtifacts(moduleNamesToPublish = mavenArtifacts.proprietaryModules,
+                                                   moduleNamesToSquashAndPublish = emptyList(),
+                                                   outputDir = "proprietary-maven-artifacts")
     }
   }
 }
@@ -1141,19 +1187,19 @@ private fun crossPlatformZip(macX64DistDir: Path,
   }
 }
 
-fun getModulesToCompile(buildContext: BuildContext): Set<String> {
-  val productLayout = buildContext.productProperties.productLayout
-  val result = LinkedHashSet<String>()
-  result.addAll(productLayout.getIncludedPluginModules(java.util.Set.copyOf(productLayout.bundledPluginModules)))
+fun collectModulesToCompile(context: BuildContext, result: MutableCollection<String>) {
+  val productLayout = context.productProperties.productLayout
+  collectIncludedPluginModules(enabledPluginModules = productLayout.bundledPluginModules.toHashSet(),
+                               product = productLayout,
+                               result = result)
   collectPlatformModules(result)
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
   result.addAll(getToolModules())
-  result.addAll(buildContext.productProperties.additionalModulesToCompile)
+  result.addAll(context.productProperties.additionalModulesToCompile)
   result.add("intellij.idea.community.build.tasks")
   result.add("intellij.platform.images.build")
   result.removeAll(productLayout.excludedModuleNames)
-  return result
 }
 
 // Captures information about all available inspections in a JSON format as part of an Inspectopedia project.
@@ -1194,3 +1240,16 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
     }
   }
 }
+
+/**
+ * @return list of all modules which output is included in the plugin's JARs
+ */
+internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>,
+                                          product: ProductModulesLayout,
+                                          result: MutableCollection<String>) {
+  result.addAll(enabledPluginModules)
+  product.pluginLayouts.asSequence()
+    .filter { enabledPluginModules.contains(it.mainModule) }
+    .flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
+}
+

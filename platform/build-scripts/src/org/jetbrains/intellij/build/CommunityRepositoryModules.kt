@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build
@@ -12,10 +12,8 @@ import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
-
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.BiConsumer
 
 object CommunityRepositoryModules {
   /**
@@ -44,6 +42,12 @@ object CommunityRepositoryModules {
     },
     plugin("intellij.webp") { spec ->
       spec.bundlingRestrictions.ephemeral = true
+    },
+    plugin("intellij.webp") { spec ->
+      spec.bundlingRestrictions.marketplace = true
+      spec.withResource("lib/libwebp/linux", "lib/libwebp/linux")
+      spec.withResource("lib/libwebp/mac", "lib/libwebp/mac")
+      spec.withResource("lib/libwebp/win", "lib/libwebp/win")
     },
     plugin("intellij.laf.win10") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
@@ -134,7 +138,7 @@ object CommunityRepositoryModules {
         "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31",
         "intellij.maven.server.indexer"
       ))
-      spec.withGeneratedResources(BiConsumer { targetDir, context ->
+      spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
         val mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
@@ -142,7 +146,7 @@ object CommunityRepositoryModules {
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
-      })
+      }
     },
     plugin(listOf(
       "intellij.gradle",
@@ -214,8 +218,8 @@ object CommunityRepositoryModules {
     },
     javaFXPlugin("intellij.javaFX.community"),
     plugin("intellij.terminal") { spec ->
-      spec.withResource("resources/zsh/.zshenv", "")
-      spec.withResource("resources/zsh/hooks.zsh", "")
+      spec.withResource("resources/zsh/.zshenv", "zsh")
+      spec.withResource("resources/zsh/hooks.zsh", "zsh")
       spec.withResource("resources/jediterm-bash.in", "")
       spec.withResource("resources/fish/init.fish", "fish")
     },

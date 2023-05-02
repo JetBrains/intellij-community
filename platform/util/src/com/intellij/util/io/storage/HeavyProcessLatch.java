@@ -9,6 +9,8 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -107,7 +109,7 @@ public final class HeavyProcessLatch {
    * @return {@code true} if any heavy operation of type {@code type} is currently running in some thread
    */
   public boolean isRunning(@NotNull Type type) {
-    return ContainerUtil.exists(myHeavyProcesses, op->op.getType() == type);
+    return ContainerUtil.exists(myHeavyProcesses, op -> op.getType() == type);
   }
 
   /**
@@ -115,22 +117,28 @@ public final class HeavyProcessLatch {
    * which has its {@link Operation#getType()} != {@code type}
    */
   public boolean isRunningAnythingBut(@NotNull Type type) {
-    return ContainerUtil.exists(myHeavyProcesses, op->op.getType() != type);
+    return findRunningExcept(type) != null;
   }
 
   /**
    * @return heavy operation currently running, if any, in undefined order
    */
+  @TestOnly
   public Operation getAnyRunningOperation() {
     Iterator<Operation> iterator = myHeavyProcesses.iterator();
     return iterator.hasNext() ? iterator.next() : null;
   }
 
   /**
-   * @return all heavy operations currently running, in undefined order, or an empty collection
+   * @return a heavy operation currently running in some thread, which has its {@link Operation#getType()} != {@code type}
    */
-  public @NotNull Collection<Operation> getRunningOperations() {
-    return new ArrayList<>(myHeavyProcesses);
+  public @Nullable Operation findRunningExcept(@NotNull Type type) {
+    for (Operation operation : myHeavyProcesses) {
+      if (operation.getType() != type) {
+        return operation;
+      }
+    }
+    return null;
   }
 
   @SuppressWarnings("InterfaceMayBeAnnotatedFunctional")

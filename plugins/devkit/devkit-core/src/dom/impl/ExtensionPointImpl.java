@@ -69,7 +69,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     }
     // only With and GenericAttributeValue<PsiClass> can be returned
     @SuppressWarnings("unchecked")
-    GenericAttributeValue<PsiClass> genericAttributeValue = (GenericAttributeValue<PsiClass>) domElement;
+    GenericAttributeValue<PsiClass> genericAttributeValue = (GenericAttributeValue<PsiClass>)domElement;
     return genericAttributeValue;
   }
 
@@ -172,6 +172,10 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
 
         if (effectiveClass.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
           return Kind.EXPERIMENTAL_API;
+        }
+
+        if (effectiveClass.hasAnnotation(ApiStatus.Obsolete.class.getCanonicalName())) {
+          return Kind.OBSOLETE;
         }
 
         if (effectiveClass.isDeprecated()) {
