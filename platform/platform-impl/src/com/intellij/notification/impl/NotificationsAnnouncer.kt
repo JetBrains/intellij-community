@@ -61,13 +61,6 @@ class NotificationsAnnouncer {
       if (notification.content.isNotEmpty()) {
         components.add(StringUtil.removeHtmlTags(notification.content))
       }
-      val actions = notification.actions
-      if (!actions.isEmpty()) {
-        components.add(IdeBundle.message("notification.accessible.announce.actions.prefix"))
-        for (action in actions) {
-          components.add(action.templatePresentation.text)
-        }
-      }
       return components
     }
   }
