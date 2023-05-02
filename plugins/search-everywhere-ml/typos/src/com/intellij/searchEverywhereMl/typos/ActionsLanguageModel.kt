@@ -94,7 +94,11 @@ internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictio
 
     override fun run() {
       (getWordsFromActions() + getWordsFromSettings())
-        .flatMap { it.split(" ", "-", ".") }
+        .flatMap {
+          splitText(it)
+            .filter { token -> token is SearchEverywhereStringToken.Word }
+            .map { token -> token.value }
+        }
         .map { it.filter { c -> c.isLetterOrDigit() } }
         .filterNot { it.isEmpty() || it.isSingleCharacter() }
         .map { it.lowercase() }

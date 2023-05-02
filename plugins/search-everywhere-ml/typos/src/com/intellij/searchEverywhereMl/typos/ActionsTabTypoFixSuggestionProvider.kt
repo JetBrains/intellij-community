@@ -30,18 +30,23 @@ internal class ActionsTabTypoFixSuggestionProvider(project: Project) {
       return _suggestionRanker
     }
 
-  fun suggestFixFor(query: String): SearchEverywhereSpellCheckResult = query.split(" ")
-    .filter { it.isNotBlank() }
-    .map(::correctWord)
+  fun suggestFixFor(query: String): SearchEverywhereSpellCheckResult = splitText(query)
+    .map { token ->
+      when (token) {
+        is SearchEverywhereStringToken.Delimiter -> WordSpellCheckResult.NoCorrection(token.value)
+        is SearchEverywhereStringToken.Word -> correctWord(token.value)
+      }
+    }
     .toQuerySpellCheckResult()
 
   private fun correctWord(word: String): WordSpellCheckResult = word.takeIf { spellChecker.hasProblem(it) }
     ?.let { misspelledWord ->
-      val correctionSuggestions = spellChecker.getSuggestions(misspelledWord).toLinkedSet()
+      val correctionSuggestions = spellChecker.getSuggestions(misspelledWord.lowercase()).toLinkedSet()
 
-      suggestionRanker?.score(word, correctionSuggestions)
+      suggestionRanker?.score(word.lowercase(), correctionSuggestions)
         ?.asSequence()
         ?.maxBy { it.value }
+        ?.let { (correction, confidence) -> correction.capitalizeBasedOn(word) to confidence }
         ?.let { (word, confidence) -> WordSpellCheckResult.Correction(word, confidence) }
     } ?: WordSpellCheckResult.NoCorrection(word)
 
@@ -50,12 +55,19 @@ internal class ActionsTabTypoFixSuggestionProvider(project: Project) {
     class NoCorrection(originalWord: String) : WordSpellCheckResult(originalWord)
   }
 
-  private fun Collection<WordSpellCheckResult>.toQuerySpellCheckResult(): SearchEverywhereSpellCheckResult {
+  private fun Sequence<WordSpellCheckResult>.toQuerySpellCheckResult(): SearchEverywhereSpellCheckResult {
     if (all { it is WordSpellCheckResult.NoCorrection }) return SearchEverywhereSpellCheckResult.NoCorrection
 
-    val correctedQuery = joinToString(" ") { it.word }
+    val correctedQuery = joinToString("") { it.word }
     val confidence = filterIsInstance<WordSpellCheckResult.Correction>().map { it.confidence }.average()
     return SearchEverywhereSpellCheckResult.Correction(correctedQuery, confidence)
+  }
+
+  private fun String.capitalizeBasedOn(other: String): String {
+    if (other.all { it.isLowerCase() }) return this.lowercase()
+    if (other.all { it.isUpperCase() }) return this.uppercase()
+    if (other.first().isUpperCase()) return this.replaceFirstChar { it.uppercase() }
+    else return this
   }
 }
 
