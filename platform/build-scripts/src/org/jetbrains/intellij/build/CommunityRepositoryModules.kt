@@ -284,7 +284,8 @@ object CommunityRepositoryModules {
     plugin(listOf(
       "intellij.searchEverywhereMl",
       "intellij.searchEverywhereMl.yaml",
-      "intellij.searchEverywhereMl.vcs"
+      "intellij.searchEverywhereMl.vcs",
+      "intellij.searchEverywhereMl.typos"
     )),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
