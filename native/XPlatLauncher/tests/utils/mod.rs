@@ -480,8 +480,8 @@ impl LauncherRunResult {
 impl Debug for LauncherRunResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "\n** exit code: {}\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
-            self.exit_status.code().unwrap_or(-1), self.stderr, self.stdout))
+            "\n** exit code: {:?} ({:?})\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
+            self.exit_status.code(), self.exit_status, self.stderr, self.stdout))
     }
 }
 
@@ -570,22 +570,14 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
             panic!("Launcher has been running for more than 60 seconds, terminating")
         }
 
-        match launcher_process.try_wait() {
-            Ok(opt) => match opt {
-                None => {
-                    println!("Waiting for launcher process to exit");
-                }
-                Some(es) => return Ok(LauncherRunResult {
-                    exit_status: es,
-                    stdout: fs::read_to_string(&stdout_file_path).context("Cannot open stdout file")?,
-                    stderr: fs::read_to_string(&stderr_file_path).context("Cannot open stderr file")?,
-                    dump: if run_spec.dump { Some(read_launcher_run_result(&dump_file_path)) } else { None }
-                }),
-            },
-            Err(e) => {
-                Err(e)?
-            }
-        };
+        if let Some(es) = launcher_process.try_wait()? {
+            return Ok(LauncherRunResult {
+                exit_status: es,
+                stdout: fs::read_to_string(&stdout_file_path).context("Cannot open stdout file")?,
+                stderr: fs::read_to_string(&stderr_file_path).context("Cannot open stderr file")?,
+                dump: if run_spec.dump { Some(read_launcher_run_result(&dump_file_path)) } else { None }
+            });
+        }
 
         thread::sleep(time::Duration::from_secs(1))
     }
