@@ -128,7 +128,7 @@ private fun cloneDigest(digest: MessageDigest): MessageDigest {
   }
 }
 
-private fun bytesToHex(data: ByteArray): String {
+fun bytesToHex(data: ByteArray): String {
   val l = data.size
   val chars = CharArray(l shl 1)
   var i = 0
