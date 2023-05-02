@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -19,36 +19,36 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
 internal class FunctionCallHighlighter(
-    holder: AnnotationHolder,
-    project: Project
-) : AfterResolveHighlighter(holder, project) {
+  project: Project
+) : AfterResolveHighlighter(project) {
 
     context(KtAnalysisSession)
-    override fun highlight(element: KtElement) {
-        when (element) {
+    override fun highlight(element: KtElement): List<HighlightInfo.Builder> {
+        return when (element) {
             is KtBinaryExpression -> highlightBinaryExpression(element)
             is KtCallExpression -> highlightCallExpression(element)
-            else -> {}
+            else -> emptyList()
         }
     }
 
     context(KtAnalysisSession)
-    private fun highlightBinaryExpression(expression: KtBinaryExpression) {
-        val operationReference = expression.operationReference as? KtReferenceExpression ?: return
-        if (operationReference.isAssignment()) return
-        val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return
-        if (call is KtSimpleFunctionCall && (call.symbol as? KtFunctionSymbol)?.isOperator == true) return
-        getTextAttributesForCall(call)?.let { attributes ->
+    private fun highlightBinaryExpression(expression: KtBinaryExpression): List<HighlightInfo.Builder> {
+        val operationReference = expression.operationReference as? KtReferenceExpression ?: return emptyList()
+        if (operationReference.isAssignment()) return emptyList()
+        val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return emptyList()
+        if (call is KtSimpleFunctionCall && (call.symbol as? KtFunctionSymbol)?.isOperator == true) return emptyList()
+        val h = getTextAttributesForCall(call)?.let { attributes ->
             highlightName(operationReference, attributes)
         }
+        return listOfNotNull(h)
     }
 
     private fun KtReferenceExpression.isAssignment() =
         (this as? KtOperationReferenceExpression)?.operationSignTokenType == KtTokens.EQ
 
     context(KtAnalysisSession)
-    private fun highlightCallExpression(expression: KtCallExpression) {
-        expression.calleeExpression
+    private fun highlightCallExpression(expression: KtCallExpression): List<HighlightInfo.Builder> {
+        return listOfNotNull(expression.calleeExpression
             ?.takeUnless { it is KtLambdaExpression }
             ?.takeUnless { it is KtCallExpression /* KT-16159 */ }
             ?.let { callee ->
@@ -57,7 +57,7 @@ internal class FunctionCallHighlighter(
                         highlightName(callee, attributes)
                     }
                 }
-            }
+            })
     }
 
     context(KtAnalysisSession)
