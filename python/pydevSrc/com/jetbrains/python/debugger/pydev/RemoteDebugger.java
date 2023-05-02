@@ -23,6 +23,7 @@ import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommand;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport;
 import com.jetbrains.python.debugger.pydev.transport.DebuggerTransport;
 import com.jetbrains.python.debugger.pydev.transport.ServerModeDebuggerTransport;
@@ -166,8 +167,9 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   @Nullable
-  public String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType) throws PyDebuggerException {
-    final TableCommand tableCommand = new TableCommand(this, threadId, frameId, command, commandType);
+  public String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType,
+                                 TableCommandParameters tableCommandParameters) throws PyDebuggerException {
+    final TableCommand tableCommand = new TableCommand(this, threadId, frameId, command, commandType, tableCommandParameters);
     tableCommand.execute();
     return tableCommand.getCommandResult();
   }

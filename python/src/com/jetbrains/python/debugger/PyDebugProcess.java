@@ -799,7 +799,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType);
+    return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType, tableCommandParameters);
   }
 
   @Override
