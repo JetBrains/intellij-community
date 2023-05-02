@@ -870,6 +870,14 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestMethodType("toVoidMethod", PsiTypes.voidType());
   }
 
+  public void testDoNotPropagateMigrationToVoid() {
+    doTestMethodType("x", PsiTypes.voidType());
+  }
+
+  public void testDoNotPropagateVoidToMethods() {
+    doTestMethodType("x", PsiTypes.voidType());
+  }
+
   public void testMigrationToSuper() {
     doTestFieldType("b", myFactory.createTypeFromText("Test.A<java.lang.String>", null));
   }

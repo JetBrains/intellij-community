@@ -577,7 +577,8 @@ public class TypeMigrationLabeler {
     if (myAllowedRoots != null && !myAllowedRoots.contains(element)) {
       return false;
     }
-    if (type.equals(PsiTypes.nullType())) {
+    if (type.equals(PsiTypes.nullType()) ||
+        PsiTypes.voidType().equals(type) && myCurrentRoot != null) {
       return false;
     }
     final PsiElement resolved = Util.normalizeElement(element);
