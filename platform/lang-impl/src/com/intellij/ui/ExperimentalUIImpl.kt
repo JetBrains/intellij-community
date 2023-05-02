@@ -37,10 +37,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     }
   }
 
-  private fun isNewUIEnabledByDefault() = PlatformUtils.isAqua() ||
-                                          PlatformUtils.isPyCharmCommunity() ||
-                                          PlatformUtils.isPyCharmPro() ||
-                                          PlatformUtils.isWebStorm()
+  private fun isNewUIEnabledByDefault() = true
 
   override fun getIconMappings(): Map<ClassLoader, Map<String, String>> = service<IconMapLoader>().loadIconMapping()
 
