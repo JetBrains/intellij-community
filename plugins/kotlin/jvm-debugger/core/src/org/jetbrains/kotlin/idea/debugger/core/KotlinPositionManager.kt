@@ -341,13 +341,14 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
         val method = location.safeMethod() ?: return null
-        if (!method.name().isGeneratedIrBackendLambdaMethodName()) {
+        if (!method.name().isGeneratedIrBackendLambdaMethodName() || method.isGeneratedErasedLambdaMethod()) {
             return null
         }
 
         val lambdas = location.declaringType().methods()
             .filter {
               it.name().isGeneratedIrBackendLambdaMethodName() &&
+              !it.isGeneratedErasedLambdaMethod() &&
               DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
             }
 
@@ -571,6 +572,27 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                )
             }
     }
+}
+
+// Kotlin compiler generates private final static <outer-method>$lambda$0 method
+// per each lambda that takes lambda (kotlin.jvm.functions.FunctionN) as the first parameter
+// and all the rest are the lambda parameters (java.lang.Object).
+// This generated method just calls the lambda with provided parameters.
+// However, this method contains a line number (where a lambda is defined), so it should be ignored.
+internal fun Method.isGeneratedErasedLambdaMethod(): Boolean {
+    if (name().isGeneratedIrBackendLambdaMethodName() && isPrivate && isStatic) {
+        val args = argumentTypeNames()
+        val kotlinFunctionPrefix = "kotlin.jvm.functions.Function"
+        if (args.size >= 2 && args[0].startsWith(kotlinFunctionPrefix)) {
+            val parameterCount = args[0].removePrefix(kotlinFunctionPrefix).toIntOrNull()
+            if (parameterCount != null && args.size == parameterCount + 1 &&
+                args.drop(1).all { it == "java.lang.Object" }
+            ) {
+                return true
+            }
+        }
+    }
+    return false
 }
 
 private fun Location.getZeroBasedLineNumber(): Int =
