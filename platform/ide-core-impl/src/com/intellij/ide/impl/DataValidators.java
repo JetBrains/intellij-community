@@ -123,7 +123,7 @@ public abstract class DataValidators {
 
   private static void reportPsiElementOnEdt(@NotNull String dataId, @NotNull Object source) {
     Class<?> aClass = unwrap(source).getClass();
-    LOG.error(PluginException.createByClass(
+    LOG.warn(PluginException.createByClass(   // Android Studio: KTIJ-24369, b/280310828
       "PSI element for DataKey(\"" + dataId + "\") is provided on EDT by " + aClass.getName() + ". " +
       "Use `DataSink.lazy` to provide such data", null, aClass));
   }
