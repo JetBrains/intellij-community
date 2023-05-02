@@ -39,6 +39,7 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.IdeFocusManager
@@ -61,6 +62,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.InputEvent
@@ -508,14 +510,24 @@ object Switcher : BaseSwitcherAction(null) {
       }
       model.removeAll()
       model.addAll(0, items)
-      ReadAction.nonBlocking<Map<VirtualFile?, String>> {
-        ContainerUtil.map2Map(
-          items) { o: SwitcherVirtualFile -> Pair.create(o.file, VfsPresentationUtil.getUniquePresentableNameForUI(o.project, o.file)) }
+
+      class ListItemData(val item: SwitcherVirtualFile,
+                         val mainText: String,
+                         val backgroundColor: Color?,
+                         val foregroundTextColor: Color?)
+      ReadAction.nonBlocking<List<ListItemData>> {
+        items.map {
+          ListItemData(it, VfsPresentationUtil.getUniquePresentableNameForUI(it.project, it.file),
+                       VfsPresentationUtil.getFileBackgroundColor(it.project, it.file),
+                       FileStatusManager.getInstance(it.project).getStatus(it.file).color)
+        }
       }
         .expireWith(this)
-        .finishOnUiThread(ModalityState.any()) { map: Map<VirtualFile?, String> ->
-          for (item in items) {
-            item.mainText = map[item.file]!!
+        .finishOnUiThread(ModalityState.any()) { list ->
+          for (data in list) {
+            data.item.mainText = data.mainText
+            data.item.backgroundColor = data.backgroundColor
+            data.item.foregroundTextColor = data.foregroundTextColor
           }
           files.invalidate()
           files.repaint()
