@@ -20,6 +20,8 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -625,7 +627,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       //On Win there are a lot of issues with removing file that was mmapped.
       // Let's give mapped buffers at least a chance to be collected & unmapped -- not a guarantee from that kind of
       // issues, but a small step in the right direction
-      
+
       //noinspection CallToSystemGC
       System.gc();
     }
@@ -960,6 +962,46 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       @Override
       public String toString() {
         return "Page[#" + pageIndex + "][offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b)";
+      }
+    }
+  }
+
+  /** Opens records.dat file given as args[0], prints header fields, and first records (up to 1024) */
+  public static void main(String[] args) throws IOException {
+    if (args.length < 1) {
+      System.err.println("Args: <path-to-records.dat>");
+      return;
+    }
+    final Path pathToRecordsDat = Paths.get(args[0]);
+    if (!Files.exists(pathToRecordsDat)) {
+      System.err.println("path: " + pathToRecordsDat + " does not exist");
+      return;
+    }
+
+    System.out.println("storage: " + pathToRecordsDat);
+    try (PersistentFSRecordsLockFreeOverMMappedFile records = new PersistentFSRecordsLockFreeOverMMappedFile(pathToRecordsDat,
+                                                                                                             DEFAULT_MAPPED_CHUNK_SIZE)) {
+
+      final int recordsCount = records.recordsCount();
+      System.out.println("length: " + records.length() + " b");
+      System.out.println("version: " + records.getVersion());
+      System.out.println("timestamp: " + new Date(records.getTimestamp()).toGMTString());
+      System.out.println("connectionStatus: " + Integer.toHexString(records.getConnectionStatus()));
+      System.out.println("recordsCount: " + recordsCount);
+      System.out.println("globalModCount: " + records.getGlobalModCount());
+
+      System.out.println("First records (<=1024)");
+      for (int recordId = FSRecords.ROOT_FILE_ID; recordId <= Math.min(recordsCount, 1024); recordId++) {
+        records.readRecord(recordId, record -> {
+          System.out.printf(
+            "{id:%4d, nameId: %d, parentId: %d, length: %d, flags: %s, timestamp: %d, attributeId: %d, contentId:%d, modCount: %d}\n",
+            record.recordId(), record.getNameId(), record.getParent(),
+            record.getLength(), Integer.toBinaryString(record.getFlags()), record.getTimestamp(),
+            record.getAttributeRecordId(), record.getContentRecordId(),
+            record.getModCount()
+          );
+          return true;
+        });
       }
     }
   }
