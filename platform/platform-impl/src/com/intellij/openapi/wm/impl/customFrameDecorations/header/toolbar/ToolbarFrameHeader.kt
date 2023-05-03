@@ -46,11 +46,11 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     isOpaque = false
   }
   private val menuBarContainer = createMenuBarContainer()
-  private val expandableMenu = ExpandableMenu(this)
-  private val mainMenuButton = MainMenuButton(expandableMenu)
+  private val mainMenuButton = MainMenuButton()
   private var toolbar : MainToolbar? = null
   private val myToolbarPlaceholder = createToolbarPlaceholder()
   private val myHeaderContent = createHeaderContent()
+  private val expandableMenu = ExpandableMenu(this)
   private val toolbarHeaderTitle = SimpleCustomDecorationPath(frame).apply {
     isOpaque = false
   }
@@ -87,7 +87,7 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     if (isCompact) "PATH" else "TOOLBAR"
 
   init {
-    expandableMenu.headerContent = myHeaderContent
+    mainMenuButton.expandableMenu = expandableMenu
     layout = GridBagLayout()
     val gb = GridBag().anchor(WEST)
 

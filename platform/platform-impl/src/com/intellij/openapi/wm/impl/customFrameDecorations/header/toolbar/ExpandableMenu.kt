@@ -11,7 +11,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeMenuBar
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -28,10 +27,9 @@ import javax.swing.*
 private const val ALPHA = (255 * 0.6).toInt()
 private const val MENU_HIDE_DELAY = 300
 
-internal class ExpandableMenu(private val frameHeader: FrameHeader) {
+internal class ExpandableMenu(private val headerContent: JComponent) {
 
   val ideMenu = IdeMenuBar.createMenuBar()
-  lateinit var headerContent: JComponent
   private var expandedMenuBar: JPanel? = null
   private val shadowComponent = ShadowComponent()
   private val alarm = Alarm()
@@ -47,7 +45,7 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
       }
     }
 
-    frameHeader.addComponentListener(object : ComponentAdapter() {
+    headerContent.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         updateBounds()
       }
@@ -55,7 +53,7 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
   }
 
   fun isEnabled(): Boolean {
-    return SystemInfoRt.isWindows && Registry.`is`("ide.windows.main.menu.expand.horizontal")
+    return !SystemInfoRt.isMac && Registry.`is`("ide.main.menu.expand.horizontal")
   }
 
   fun isShowing(): Boolean {
@@ -117,7 +115,7 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
   }
 
   fun updateColor() {
-    val color = frameHeader.background
+    val color = headerContent.background
     expandedMenuBar?.background = color
     @Suppress("UseJBColor")
     shadowComponent.background = Color(color.red, color.green, color.blue, ALPHA)
