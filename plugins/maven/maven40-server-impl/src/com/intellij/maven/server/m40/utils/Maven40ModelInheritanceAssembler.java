@@ -8,8 +8,21 @@ import org.apache.maven.model.building.ModelProblemCollectorRequest;
 import org.apache.maven.model.inheritance.DefaultInheritanceAssembler;
 import org.jetbrains.idea.maven.model.MavenModel;
 
+import java.util.Properties;
+
 public final class Maven40ModelInheritanceAssembler {
   public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
+    // mergeModel_Properties
+    if (null != parentModel) {
+      Properties parentProperties = parentModel.getProperties();
+      Properties properties = model.getProperties();
+      for (Object key : parentProperties.keySet()) {
+        if (!properties.containsKey(key)) {
+          properties.put(key, parentProperties.get(key));
+        }
+      }
+    }
+
     Model result = Maven40ModelConverter.toNativeModel(model).getDelegate();
     Model parent = Maven40ModelConverter.toNativeModel(parentModel).getDelegate();
     DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
