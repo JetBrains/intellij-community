@@ -4,11 +4,11 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
@@ -19,10 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This is an internal class, {@link ProjectFileIndex} must be used instead.
@@ -39,43 +36,21 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(myProject).getModules());
-    for (final Module module : modules) {
-      for (VirtualFile contentRoot : getRootsToIterate(module)) {
-        if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
-          return false;
+    List<VirtualFile> roots = ReadAction.compute(() -> {
+      Set<VirtualFile> allRoots = new LinkedHashSet<>();
+      myWorkspaceFileIndex.visitFileSets(fileSet -> {
+        if (fileSet.getKind().isContent()) {
+          allRoots.add(fileSet.getRoot());
         }
+      });
+      return ContainerUtil.filter(allRoots, root -> root.getParent() == null || myWorkspaceFileIndex.getContentFileSetRoot(root.getParent(), false) == null);
+    });
+    for (VirtualFile root : roots) {
+      if (!iterateContentUnderDirectory(root, processor, filter)) {
+        return false;
       }
     }
     return true;
-  }
-
-  @NotNull
-  private Set<VirtualFile> getRootsToIterate(@NotNull Module module) {
-    return ReadAction.compute(() -> {
-      if (module.isDisposed()) return Collections.emptySet();
-
-      ModuleFileIndexImpl moduleFileIndex = (ModuleFileIndexImpl)ModuleRootManager.getInstance(module).getFileIndex();
-      Set<VirtualFile> result = moduleFileIndex.getModuleRootsToIterate();
-
-      for (Iterator<VirtualFile> iterator = result.iterator(); iterator.hasNext(); ) {
-        VirtualFile root = iterator.next();
-        Module moduleForFile = getModuleForFile(root, false);
-        if (!module.equals(moduleForFile)) { // maybe 2 modules have the same content root?
-          iterator.remove();
-          continue;
-        }
-
-        VirtualFile parent = root.getParent();
-        if (parent != null) {
-          if (isInContent(parent)) {
-            iterator.remove();
-          }
-        }
-      }
-
-      return result;
-    });
   }
 
   @Override

@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +51,6 @@ abstract class FileIndexBase implements FileIndex {
   }
 
   protected boolean isInContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
-    return fileSet.getData() instanceof ModuleContentOrSourceRootData;
+    return fileSet.getKind().isContent();
   }
 }
