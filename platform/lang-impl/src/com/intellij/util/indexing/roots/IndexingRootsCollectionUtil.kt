@@ -15,16 +15,16 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.CustomizingIndexingContributor
 import com.intellij.util.indexing.ReincludedRootsUtil
-import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator
 import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator
+import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createGenericContentEntityIterators
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion.createIterator
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forExternalEntity
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGenericContentEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLibraryEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleAwareCustomizedContentEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleRootsFileBased
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGenericContentEntity
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor
@@ -341,14 +341,15 @@ internal class WorkspaceIndexingRootsBuilder {
   }
 
   companion object {
+    @JvmOverloads
     fun registerEntitiesFromContributors(project: Project,
                                          entityStorage: EntityStorage,
-                                         settings: Settings?): WorkspaceIndexingRootsBuilder {
+                                         settings: Settings = Settings.DEFAULT): WorkspaceIndexingRootsBuilder {
       val builder = WorkspaceIndexingRootsBuilder()
       val contributors = (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexImpl).contributors
       for (contributor in contributors) {
         ProgressManager.checkCanceled()
-        if (settings?.shouldIgnore(contributor) == true) {
+        if (settings.shouldIgnore(contributor)) {
           continue
         }
         builder.registerEntitiesFromContributor(contributor, entityStorage)
@@ -357,6 +358,13 @@ internal class WorkspaceIndexingRootsBuilder {
     }
 
     internal class Settings {
+      companion object {
+        val DEFAULT = Settings()
+
+        init {
+          DEFAULT.retainCondition = Condition<WorkspaceFileIndexContributor<*>> { contributor -> contributor.storageKind == EntityStorageKind.MAIN }
+        }
+      }
       var retainCondition: Condition<WorkspaceFileIndexContributor<*>>? = null
       fun shouldIgnore(contributor: WorkspaceFileIndexContributor<*>): Boolean {
         val condition = retainCondition

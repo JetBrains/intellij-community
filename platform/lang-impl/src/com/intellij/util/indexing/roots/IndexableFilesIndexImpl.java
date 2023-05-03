@@ -113,7 +113,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     }
 
     WorkspaceIndexingRootsBuilder builder =
-      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(project, entityStorage, null);
+      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(project, entityStorage);
     builder.addIteratorsFromRoots(iterators, libraryOrigins, entityStorage);
 
     boolean addedFromDependenciesIndexedStatusService = false;

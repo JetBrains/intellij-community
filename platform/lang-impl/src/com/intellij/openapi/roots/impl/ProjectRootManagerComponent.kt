@@ -4,7 +4,9 @@ package com.intellij.openapi.roots.impl
 import com.intellij.ProjectTopics
 import com.intellij.configurationStore.BatchUpdateListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -35,20 +37,22 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
-import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -353,7 +357,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   private fun collectCustomWorkspaceWatchRoots(recursivePaths: MutableSet<String>) {
     val settings = WorkspaceIndexingRootsBuilder.Companion.Settings()
     settings.retainCondition = Condition<WorkspaceFileIndexContributor<out WorkspaceEntity>> {
-      it !is PlatformInternalWorkspaceFileIndexContributor && it !is SkipAddingToWatchedRoots
+      it.storageKind == EntityStorageKind.MAIN && it !is PlatformInternalWorkspaceFileIndexContributor && it !is SkipAddingToWatchedRoots
     }
     val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(project,
                                                                                  WorkspaceModel.getInstance(project).currentSnapshot,
