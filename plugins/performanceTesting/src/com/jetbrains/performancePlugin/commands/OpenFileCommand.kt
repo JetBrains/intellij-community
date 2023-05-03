@@ -47,10 +47,12 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val myOptions = OpenFileCommandOptions().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
-    val filePath = myOptions.file
-    val timeout = myOptions.timeout
-    val suppressErrors = myOptions.suppressErrors
+    val myOptions = runCatching {
+      OpenFileCommandOptions().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
+    }.getOrNull()
+    val filePath = myOptions?.file ?:  text.split(' ', limit = 4)[1]
+    val timeout = myOptions?.timeout ?: 0
+    val suppressErrors = myOptions?.suppressErrors ?: false
 
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
