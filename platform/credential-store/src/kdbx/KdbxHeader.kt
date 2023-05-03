@@ -21,12 +21,7 @@ import com.intellij.credentialStore.generateBytes
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.io.DigestUtil
 import org.bouncycastle.crypto.engines.AESEngine
-import org.bouncycastle.crypto.io.CipherInputStream
-import org.bouncycastle.crypto.io.CipherOutputStream
-import org.bouncycastle.crypto.modes.CBCBlockCipher
-import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher
 import org.bouncycastle.crypto.params.KeyParameter
-import org.bouncycastle.crypto.params.ParametersWithIV
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -35,6 +30,12 @@ import java.security.DigestOutputStream
 import java.security.SecureRandom
 import java.util.*
 import java.util.zip.GZIPOutputStream
+import javax.crypto.Cipher
+import javax.crypto.CipherInputStream
+import javax.crypto.CipherOutputStream
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
+
 
 /**
  * This class represents the header portion of a KeePass KDBX file or stream. The header is received in
@@ -131,7 +132,8 @@ internal class KdbxHeader() {
    */
   fun createDecryptedStream(digest: ByteArray, inputStream: InputStream): InputStream {
     val finalKeyDigest = getFinalKeyDigest(digest, masterSeed, transformSeed, transformRounds)
-    return getDecryptedInputStream(inputStream, finalKeyDigest, encryptionIv)
+    val cipher = createChipper(forEncryption = false, keyData = finalKeyDigest, ivData = encryptionIv)
+    return CipherInputStream(inputStream, cipher)
   }
 
   /**
@@ -140,9 +142,10 @@ internal class KdbxHeader() {
    */
   fun createEncryptedStream(digest: ByteArray, outputStream: OutputStream): OutputStream {
     val finalKeyDigest = getFinalKeyDigest(digest, masterSeed, transformSeed, transformRounds)
-    var out = getEncryptedOutputStream(outputStream, finalKeyDigest, encryptionIv)
-    out.write(streamStartBytes)
-    out = HashedBlockOutputStream(out)
+    val cipher = createChipper(forEncryption = true, keyData = finalKeyDigest, ivData = encryptionIv)
+    val cipherOutputStream = CipherOutputStream(outputStream, cipher)
+    cipherOutputStream.write(streamStartBytes)
+    val out = HashedBlockOutputStream(cipherOutputStream)
     return when (compressionFlags) {
       CompressionFlags.GZIP -> GZIPOutputStream(out, HashedBlockOutputStream.BLOCK_SIZE)
       else -> out
@@ -290,23 +293,15 @@ private fun getFinalKeyDigest(key: ByteArray, masterSeed: ByteArray, transformSe
   return md.digest(transformedKeyDigest)
 }
 
-/**
- * Create a decrypted input stream from an encrypted one
- */
-private fun getDecryptedInputStream(encryptedInputStream: InputStream, keyData: ByteArray, ivData: ByteArray): InputStream {
-  val keyAndIV = ParametersWithIV(KeyParameter(keyData), ivData)
-  val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
-  cipher.init(false, keyAndIV)
-  return CipherInputStream(encryptedInputStream, cipher)
-}
-
-/**
- * Create an encrypted output stream from an unencrypted output stream
- */
-private fun getEncryptedOutputStream(decryptedOutputStream: OutputStream, keyData: ByteArray, ivData: ByteArray): OutputStream {
-  val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
-  cipher.init(true, ParametersWithIV(KeyParameter(keyData), ivData))
-  return CipherOutputStream(decryptedOutputStream, cipher)
+private fun createChipper(forEncryption: Boolean, ivData: ByteArray, keyData: ByteArray): Cipher {
+  val iv = IvParameterSpec(ivData)
+  val secretKey = SecretKeySpec(keyData, 0, keyData.size, "AES")
+  // https://stackoverflow.com/a/29234136
+  // https://crypto.stackexchange.com/a/9044
+  // Java only provides PKCS#5 padding, but it is the same as PKCS#7 padding
+  val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+  cipher.init(if (forEncryption) Cipher.ENCRYPT_MODE else Cipher.DECRYPT_MODE, secretKey, iv)
+  return cipher
 }
 
 private fun readIntHeaderData(input: LittleEndianDataInputStream): Int {
