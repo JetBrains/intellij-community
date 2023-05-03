@@ -139,6 +139,7 @@
     ],
     "fileTypes": {
       "actionScript.svg": "fileTypes/as.svg",
+      "addAny.svg": "fileTypes/addAny.svg",
       "angularJS.svg": "icons/AngularJS.svg",
       "anyType.svg": "fileTypes/any_type.svg",
       "archive.svg": [
@@ -146,6 +147,7 @@
         "nodes/ppJar.svg"
       ],
       "aspectJ.svg": "fileTypes/aspectj.svg",
+      "config.svg": "fileTypes/config.svg",
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
       "eclipse.svg": "providers/eclipse.svg",
@@ -479,6 +481,7 @@
       "copyOfFolder.svg": "nodes/copyOfFolder.svg",
       "dataColumn.svg": "nodes/dataColumn.svg",
       "dataSchema.svg": "nodes/dataSchema.svg",
+      "dataTables.svg": "nodes/DataTables.svg",
       "desktop.svg": "nodes/desktop.svg",
       "editFolder.svg": "modules/editFolder.svg",
       "enum.svg": "nodes/enum.svg",
@@ -495,6 +498,7 @@
       "gvariable.svg": "nodes/gvariable.svg",
       "homeFolder.svg": "nodes/homeFolder.svg",
       "ideaProject.svg": "nodes/ideaProject.svg",
+      "include.svg": "nodes/include.svg",
       "interface.svg": "nodes/interface.svg",
       "jdk.svg": "nodes/ppJdk.svg",
       "lambda.svg": "nodes/lambda.svg",
@@ -515,6 +519,7 @@
         "nodes/parameter.svg"
       ],
       "plugin.svg": "nodes/plugin.svg",
+      "ppWeb.svg": "nodes/ppWeb.svg",
       "property.svg": [
         "nodes/property.svg",
         "nodes/propertyRead.svg",
@@ -531,7 +536,9 @@
       "star.svg": "nodes/favorite.svg",
       "starEmpty.svg": "nodes/notFavoriteOnHover.svg",
       "static.svg": "nodes/static.svg",
+      "template.svg": "nodes/template.svg",
       "test.svg": "nodes/test.svg",
+      "testGroup.svg": "nodes/testGroup.svg",
       "testIgnored.svg": "nodes/testIgnored.svg",
       "testResourcesRoot.svg": "modules/testResourcesRoot.svg",
       "testRoot.svg": "modules/testRoot.svg",
