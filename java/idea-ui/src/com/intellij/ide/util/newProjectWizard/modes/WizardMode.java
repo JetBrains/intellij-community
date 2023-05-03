@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class WizardMode implements Disposable {
+  @SuppressWarnings("UnresolvedPluginConfigReference") // IDEA-302097
   public static final ExtensionPointName<WizardMode> MODES = ExtensionPointName.create("com.intellij.wizardMode");
 
   private StepSequence myStepSequence;
