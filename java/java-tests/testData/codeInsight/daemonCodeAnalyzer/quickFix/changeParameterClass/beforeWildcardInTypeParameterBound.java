@@ -1,4 +1,4 @@
-// "Make 'T' extend 'java.lang.Enum'" "true"
+// "Make 'T' extend 'java.lang.Enum'" "true-preview"
 
 class EnumGeneric<T extends Enum<?>> {
 }

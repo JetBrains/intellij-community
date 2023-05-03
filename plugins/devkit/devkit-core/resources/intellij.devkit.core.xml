@@ -229,16 +229,6 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MigrateToOptControlInspection"
                      key="inspection.migrate.to.opt.control.display.name"/>
-    <localInspection language="UAST" shortName="LightService"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceInspection"
-                     key="inspection.light.service.display.name"/>
-    <localInspection language="UAST" shortName="NonFinalOrNonInternalExtensionClass"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.NonFinalOrNonInternalExtensionClassInspection"
-                     key="inspection.extension.class.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"

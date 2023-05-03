@@ -24,8 +24,12 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.popup.PopupState;
+import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +46,8 @@ import java.util.List;
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
+  private static final Icon NEW_UI_ICON =
+    IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
@@ -55,7 +61,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     resetActionIcon();
 
     if (myPopupState.isHidden() && !myPopupState.isRecentlyHidden()) {
-      ListPopup popup = createMainPopup(e.getDataContext());
+      ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
       myPopupState.prepareToShow(popup);
       PopupUtil.showForActionButtonEvent(popup, e);
     }
@@ -80,7 +86,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   @NotNull
-  private static ListPopup createMainPopup(@NotNull DataContext context) {
+  private static ListPopup createMainPopup(@NotNull DataContext context, Component component) {
     List<AnAction> appActions = new ArrayList<>();
     List<AnAction> pluginActions = new ArrayList<>();
 
@@ -138,20 +144,28 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }
     }
 
+    Project project = CommonDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+    }
+
+    ListPopupStep<?> step = JBPopupFactory.getInstance().createActionsStep(
+      group, context, null, false, true, null, component, true, 0, false);
     return JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+      .createListPopup(project, step, renderer -> {
+        return new SettingsPopupListElementRenderer<>(((PopupListElementRenderer<?>) renderer).getPopup());
+      });
   }
 
   private static boolean ourShowPlatformUpdateIcon;
   private static boolean ourShowPluginsUpdateIcon;
-  private static boolean ourNewUiIcon;
+  private static boolean ourNewUiIcon = calculateOurNewUiIcon();
 
   public static void updateState() {
     resetActionIcon();
 
-    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-    ourNewUiIcon = !ExperimentalUI.isNewUI() && !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY)
-                   && ExperimentalUI.getPromotionDaysCount() < 14;
+    ourNewUiIcon = calculateOurNewUiIcon();
 
     loop:
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
@@ -173,6 +187,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     if (isAvailableInStatusBar()) {
       updateWidgets();
     }
+  }
+
+  private static boolean calculateOurNewUiIcon() {
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+    return !ExperimentalUI.isNewUI() && !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY)
+           && ExperimentalUI.getPromotionDaysCount() < 14;
   }
 
   private static @NotNull @Nls String getActionTooltip() {
@@ -209,7 +229,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
              : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
     if (ourNewUiIcon) {
-      return GEAR_ICON.getInfoIcon();
+      return NEW_UI_ICON;
     }
 
     return getCustomizedIcon(GEAR_ICON);
@@ -342,7 +362,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         }
 
         Component component = event.getComponent();
-        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component));
+        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), component);
         myPopupState.prepareToShow(popup);
         popup.addListener(new JBPopupListener() {
           @Override
@@ -392,6 +412,23 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
     public void markAsRead() {
       myNewAction = false;
+    }
+  }
+
+  private static class SettingsPopupListElementRenderer<E> extends PopupListElementRenderer<E> {
+
+    private SettingsPopupListElementRenderer(ListPopupImpl aPopup) {
+      super(aPopup);
+    }
+
+    @Override
+    protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
+      super.customizeComponent(list, value, isSelected);
+
+      myTextLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+      myTextLabel.setIconTextGap(JBUI.scale(6));
+      boolean enableNewUi = value instanceof AnActionHolder actionHolder && actionHolder.getAction() instanceof EnableNewUiAction;
+      myTextLabel.setIcon(enableNewUi ? AllIcons.General.Beta : null);
     }
   }
 }

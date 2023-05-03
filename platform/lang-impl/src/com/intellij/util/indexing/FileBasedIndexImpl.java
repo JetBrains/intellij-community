@@ -627,7 +627,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           dirtyFileIds.add(fileId);
         }
         dirtyFileIds.addAll(myStaleIds);
-        PersistentDirtyFilesQueue.INSTANCE.storeIndexingQueue(dirtyFileIds);
+        new PersistentDirtyFilesQueue().storeIndexingQueue(dirtyFileIds, ManagingFS.getInstance().getCreationTimestamp());
         getChangedFilesCollector().clearFilesToUpdate();
 
         IndexingStamp.flushCaches();
@@ -1139,13 +1139,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Pair<FileContentImpl, Long> previousContentAndStamp = SoftReference.dereference(previousContentAndStampRef);
 
     if (previousContentAndStamp != null && currentDocStamp == previousContentAndStamp.getSecond()) {
-      return previousContentAndStamp.getFirst();
+      FileContentImpl existingFC = previousContentAndStamp.getFirst();
+      if (project.equals(existingFC.getProject())) {
+        return existingFC;
+      }
     }
-    else {
-      FileContentImpl newFc = (FileContentImpl)FileContentImpl.createByText(vFile, contentText, project);
-      document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
-      return newFc;
-    }
+
+    FileContentImpl newFc = (FileContentImpl)FileContentImpl.createByText(vFile, contentText, project);
+    document.putUserData(ourFileContentKey, new WeakReference<>(Pair.create(newFc, currentDocStamp)));
+    return newFc;
   }
 
   @NotNull

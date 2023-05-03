@@ -59,6 +59,8 @@ internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   @RequiresEdt
   override fun installTips(project: Project, simpleSampleText: String) {
+    OnboardingTipsStatistics.logOnboardingTipsInstalled(project, onboardingGenerationNumber)
+
     // Set this option explicitly, because its default depends on number of empty projects.
     PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
 

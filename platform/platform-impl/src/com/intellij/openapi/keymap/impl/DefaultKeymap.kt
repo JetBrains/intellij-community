@@ -69,7 +69,8 @@ open class DefaultKeymap {
         loadKeymap(getKeymapName(bean), object : SchemeDataHolder<KeymapImpl> {
           override fun read(): Element {
             val effectiveFile = getEffectiveFile(bean)
-            val data = ResourceUtil.getResourceAsBytes(effectiveFile, pluginDescriptor.classLoader)
+            // check parents because of IDEA-314393
+            val data = ResourceUtil.getResourceAsBytes(effectiveFile, pluginDescriptor.classLoader, true)
             if (data == null) {
               throw PluginException("Cannot find $effectiveFile", pluginDescriptor.pluginId)
             }

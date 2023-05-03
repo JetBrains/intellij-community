@@ -735,7 +735,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected boolean shouldLockOnValueOf() {
-    return !myExternalKeysNoMapping;
+    return true; //!myExternalKeysNoMapping;
   }
 
   private int nextDuplicatedValueRecord() {

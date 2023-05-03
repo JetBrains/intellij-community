@@ -85,6 +85,11 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
       inlineActions.getOrNull(activeButton)?.text
   }
 
+  override fun isMoreButton(element: Any?, index: Int): Boolean {
+    val count = calcExtraButtonsCount(element)
+    return count > 0 && index == count - 1
+  }
+
   private fun createNextStepRunnable(element: ActionItem) = Runnable { myListPopup.showNextStepPopup(myStep.onChosen(element, false), element) }
 
   private fun createInlineActionRunnable(action: AnAction, inputEvent: InputEvent?) = Runnable { myStep.performAction(action, inputEvent) }

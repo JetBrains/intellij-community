@@ -34,7 +34,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
@@ -182,6 +181,7 @@ public final class GradleManager
 
       for (BuildParticipant buildParticipant : compositeBuild.getCompositeParticipants()) {
         if (pathsEqual(buildParticipant.getRootPath(), projectPath)) continue;
+        if (GradleConstants.BUILD_SRC_NAME.equals(buildParticipant.getRootProjectName())) continue;
         if (buildParticipant.getProjects().stream().anyMatch(path -> pathsEqual(path, projectPath))) {
           continue;
         }

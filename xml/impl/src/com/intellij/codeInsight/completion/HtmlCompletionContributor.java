@@ -47,16 +47,20 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
 
   public static final String[] TARGET = {"_blank", "_top", "_self", "_parent"};
   public static final String[] ENCTYPE = {"multipart/form-data", "application/x-www-form-urlencoded"};
-  public static final String[] REL = {"alternate", "author", "bookmark", "help", "icon", "license", "next", "nofollow",
-    "noreferrer", "noopener", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
-    "glossary", "copyright", "chapter", "section", "subsection", "appendix", "script", "import",
-    "apple-touch-icon", "apple-touch-icon-precomposed", "apple-touch-startup-image"};
+  public static final String[] REL_LINK = {"alternate", "canonical", "author", "dns-prefetch", "help",
+    "icon", "manifest", "modulepreload", "license", "next", "pingback", "preconnect", "prefetch", "preload",
+    "prerender", "prev", "stylesheet", "apple-touch-icon", "apple-touch-icon-precomposed", "apple-touch-startup-image"};
+  public static final String[] REL_A_AREA = {"bookmark", "external", "help", "license", "next", "nofollow", "noopener",
+    "noreferrer", "opener", "prev", "search", "tag", "sponsored", "ugc"};
+  public static final String[] REL_FORM = {"external", "help", "license", "next", "nofollow", "noopener", "noreferrer",
+    "opener", "prev", "search"};
   public static final String[] MEDIA = {"all", "braille", "embossed", "handheld", "print", "projection", "screen", "speech", "tty", "tv"};
   public static final String[] LANGUAGE =
     {"JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5"};
   public static final String[] TYPE = {"text/css", "text/html", "text/plain", "text/xml"};
-  public static final String[] SANDBOX = {"allow-forms", "allow-pointer-lock", "allow-popups", "allow-same-origin",
-    "allow-scripts", "allow-top-navigation"};
+  public static final String[] SANDBOX = {"allow-downloads", "allow-forms", "allow-modals", "allow-orientation-lock", "allow-pointer-lock",
+      "allow-popups", "allow-popups-to-escape-sandbox", "allow-presentation", "allow-same-origin", "allow-scripts", "allow-top-navigation",
+      "allow-top-navigation-by-user-activation", "allow-top-navigation-to-custom-protocols"};
   public static final String[] LANG =
     {"aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av", "ay", "az", "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo", "br", "bs",
       "ca", "ce", "ch", "co", "cr", "cs", "cu", "cv", "cy", "da", "de", "dv", "dz", "ee", "el", "en", "eo", "es", "et", "eu", "fa", "ff",
@@ -116,14 +120,21 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       if ("target".equals(name) || "formtarget".equals(name)) {
         return TARGET;
       }
-      else if (("lang".equals(name) || "xml:lang".equals(name)) && tagName.equalsIgnoreCase("html")) {
+      else if (("lang".equals(name) || "xml:lang".equals(name)) && tagName.equalsIgnoreCase("html") || "hreflang".equals(name)) {
         return LANG;
       }
       else if ("enctype".equals(name)) {
-        return ENCTYPE;
+        var descriptor = attribute.getDescriptor();
+        return descriptor == null || descriptor.isEnumerated() ? ArrayUtilRt.EMPTY_STRING_ARRAY : ENCTYPE;
       }
-      else if ("rel".equals(name) || "rev".equals(name)) {
-        return REL;
+      else if ("rel".equals(name) && tagName.equalsIgnoreCase("link")) {
+        return REL_LINK;
+      }
+      else if (("rel".equals(name) || "rev".equals(name)) && (tagName.equalsIgnoreCase("a") || tagName.equalsIgnoreCase("area"))) {
+        return REL_A_AREA;
+      }
+      else if ("rel".equals(name) && tagName.equalsIgnoreCase("form")) {
+        return REL_FORM;
       }
       else if ("media".equals(name)) {
         return MEDIA;

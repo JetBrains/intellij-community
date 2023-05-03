@@ -84,7 +84,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myPluginsDownloadUrl;
   private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
-  private String myWhatsNewEapUrl;
   private boolean myShowWhatsNewOnUpdate;
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
@@ -260,7 +259,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         //noinspection SpellCheckingInspection
         case "whatsnew": {
           myWhatsNewUrl = child.getAttributeValue("url");
-          myWhatsNewEapUrl = child.getAttributeValue("eap_url");
           myShowWhatsNewOnUpdate = Boolean.parseBoolean(child.getAttributeValue("show-on-update"));
         }
         break;
@@ -684,11 +682,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   @Override
   public String getWhatsNewUrl() {
     return myWhatsNewUrl;
-  }
-
-  @Override
-  public String getWhatsNewEapUrl() {
-    return myWhatsNewEapUrl;
   }
 
   @Override

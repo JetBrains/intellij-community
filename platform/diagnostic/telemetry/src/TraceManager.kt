@@ -17,6 +17,8 @@ import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
+import io.opentelemetry.context.propagation.ContextPropagators
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -41,6 +43,7 @@ import java.util.concurrent.TimeUnit
 object TraceManager {
   private var sdk: OpenTelemetry = OpenTelemetry.noop()
   private var verboseMode: Boolean = false
+  private var otlpCollector = MessageBusSpanExporter()
 
   fun init(mainScope: CoroutineScope) {
     val traceFile = System.getProperty("idea.diagnostic.opentelemetry.file")
@@ -52,7 +55,14 @@ object TraceManager {
     val metricsReportingPath = System.getProperty("idea.diagnostic.opentelemetry.metrics.file",
                                                   "open-telemetry-metrics.csv")
 
+    val connectionMetricsPath = System.getProperty("idea.diagnostic.opentelemetry.metrics.file",
+                                                  "open-telemetry-connection-metrics.csv")
+
+    val connectionMetricsFlag = System.getProperty("rdct.connection.metrics.enabled")
+
+    val rdctOtlpEndpoint = System.getProperty("rdct.diagnostic.otlp")
     val metricsEnabled = !metricsReportingPath.isNullOrEmpty()
+
     if (traceFile == null && traceEndpoint == null && !metricsEnabled) {
       // noop
       return
@@ -64,6 +74,7 @@ object TraceManager {
     val serviceNamespace = appInfo.build.productCode
 
     val spanExporters = mutableListOf<AsyncSpanExporter>()
+    var connectionMetricsReader: PeriodicMetricReader? = null
     if (traceFile != null) {
       spanExporters.add(JaegerJsonSpanExporter(file = Path.of(traceFile),
                                                serviceName = serviceName,
@@ -76,8 +87,21 @@ object TraceManager {
 
     val metricExporters = mutableListOf<MetricExporter>()
     if (metricsEnabled) {
-      val exporter = createMetricsExporter(metricsReportingPath)
+      val exporter = FilteredMetricsExporter(createMetricsExporter(metricsReportingPath)) { metric -> !metric.name.contains("rdct") }
       metricExporters.add(exporter)
+
+      if (connectionMetricsFlag != null) {
+        val connectionExporter = FilteredMetricsExporter(createMetricsExporter(connectionMetricsPath)) { metric ->
+          metric.name.contains("rdct")
+        }
+        connectionMetricsReader = PeriodicMetricReader.builder(connectionExporter)
+          .setInterval(Duration.ofSeconds(1))
+          .build()
+      }
+    }
+
+    if (rdctOtlpEndpoint != null) {
+      spanExporters.add(otlpCollector)
     }
 
     val resource = Resource.create(Attributes.of(
@@ -111,8 +135,12 @@ object TraceManager {
         .setInterval(Duration.ofMinutes(1)) // == default value, but to be explicit
         .build()
 
-      val meterProvider = SdkMeterProvider.builder()
+      val registeredMetricsReaders = SdkMeterProvider.builder()
         .registerMetricReader(metricsReader)
+      connectionMetricsReader?.let {
+        registeredMetricsReaders.registerMetricReader(it)
+      }
+      val meterProvider = registeredMetricsReaders
         .setResource(resource)
         .build()
 
@@ -121,7 +149,8 @@ object TraceManager {
       ShutDownTracker.getInstance().registerShutdownTask(meterProvider::shutdown)
     }
 
-    sdk = otelSdkBuilder.buildAndRegisterGlobal()
+    sdk = otelSdkBuilder.setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+        .buildAndRegisterGlobal()
 
     val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
     verboseMode = useVerboseSdk?.toBooleanStrictOrNull() == true

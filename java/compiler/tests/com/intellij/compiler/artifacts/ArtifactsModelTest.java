@@ -4,7 +4,9 @@ package com.intellij.compiler.artifacts;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
+import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotEquals;
@@ -162,6 +164,17 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     assertTrue(newModifiableArtifact.isBuildOnMake());
     assertFalse(newArtifact.isBuildOnMake());
     assertNotEquals("B", newArtifact.getOutputPath());
+  }
+
+  public void  testLibraryElementHasPresentationWithoutStorage() {
+    try {
+      new LibraryPackagingElement("level", "libName", "name").createPresentation(
+        new MockPackagingEditorContext(new MockArtifactsStructureConfigurableContext(), null));
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+      Assert.fail("Exception is not expected");
+    }
   }
 
   private Artifact[] getArtifacts() {

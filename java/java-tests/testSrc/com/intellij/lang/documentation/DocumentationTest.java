@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.platform.documentation.DocumentationTarget;
+import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 

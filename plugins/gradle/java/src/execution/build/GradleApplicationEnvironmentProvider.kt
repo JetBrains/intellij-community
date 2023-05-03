@@ -58,6 +58,7 @@ open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironme
     def sourceSetName = '$sourceSetName'
     def javaModuleName = ${if (javaModuleName == null) "null\n" else "'$javaModuleName'\n"}
     def isOlderThan64 = GradleVersion.current().baseVersion < GradleVersion.version("6.4")
+    def isOlderThan33 = GradleVersion.current().baseVersion < GradleVersion.version("3.3")
     ${if (useManifestJar) "gradle.addListener(new ManifestTaskActionListener(runAppTaskName))\n" else ""}
     ${if (useArgsFile) "gradle.addListener(new ArgFileTaskActionListener(runAppTaskName))\n" else ""}
     ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClassToRun, mapPath('$intelliJRtPath')))\n " else ""}
@@ -66,7 +67,13 @@ open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironme
 
     allprojects {
       afterEvaluate { project ->
-        if(project.path == gradlePath && project?.convention?.findPlugin(JavaPluginConvention)) {
+        def projectPath
+        if (isOlderThan33) {
+          projectPath = project.path
+        } else {
+          projectPath = project.identityPath.toString()
+        }
+        if(projectPath == gradlePath && project?.convention?.findPlugin(JavaPluginConvention)) {
           def overwrite = project.tasks.findByName(runAppTaskName) != null
           project.tasks.create(name: runAppTaskName, overwrite: overwrite, type: JavaExec) {
             if (javaExePath) executable = javaExePath

@@ -36,6 +36,7 @@ import com.intellij.xml.util.XmlUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({"ALL"})
@@ -110,6 +111,7 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
 
   public void testHtmlCompletion() throws Exception {
     CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
+
     configureByFile("/1.html");
     checkResultByFile("/1_after.html");
 
@@ -152,15 +154,19 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
     configureByFile("/14.html");
     checkResultByFile("/14_after.html");
 
+    ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
+    manager.setDefaultHtmlDoctype(Html5SchemaProvider.getHtml5SchemaLocation(), getProject());
+    configureByFile("/14a.html");
+    myFixture.completeBasic();
+    assertEquals(Arrays.asList("application/x-www-form-urlencoded", "multipart/form-data", "text/plain"), myFixture.getLookupElementStrings());
+    manager.setDefaultHtmlDoctype(XmlUtil.XHTML_URI, getProject());
+
     configureByFile("/Link.Rel.html");
     checkResultByFile("/Link.Rel_after.html");
 
     configureByFile("/Link.Type.html");
     myFixture.type('\n');
     checkResultByFile("/Link.Type_after.html");
-
-    configureByFile("/Link.Rev.html");
-    checkResultByFile("/Link.Rev_after.html");
 
     configureByFile("/Link.Media.html");
     checkResultByFile("/Link.Media_after.html");

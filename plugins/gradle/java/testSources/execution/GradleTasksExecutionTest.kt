@@ -2,13 +2,19 @@
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.task.TaskCallback
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
+import junit.framework.AssertionFailedError
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -37,6 +43,49 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
 
     assertThat(runTaskAndGetErrorOutput("$projectPath/build.gradle", "myTask", "-b foo")).contains("The specified build file",
                                                                                                    "foo' does not exist.")
+  }
+
+  @Test
+  fun `run task from subproject`() {
+    createProjectSubFile("settings.gradle", "include('m1:m2:m3')")
+    createProjectSubFile("buildSrc/settings.gradle", "// ---")
+    createProjectSubFile("m1/m2/m3/build.gradle", """
+tasks.register("hello-module") {
+    doLast {
+        logger.lifecycle("expected!")
+    }
+}
+    """.trimIndent())
+    importProject()
+
+    val taskData: TaskData = ExternalSystemApiUtil
+      .findProjectTasks(myProject, GradleConstants.SYSTEM_ID, "$projectPath/m1/m2/m3")
+      .find { it.name == "hello-module" } ?: throw AssertionFailedError("Task 'hello-module' not found")
+
+    val output = runTask(taskData)
+    assertThat(output).contains("expected!");
+  }
+
+  private fun runTask(taskData: TaskData): String {
+    val taskExecutionInfo = ExternalSystemActionUtil.buildTaskInfo(taskData)
+
+    val notificationManager = ApplicationManager.getApplication().getService(
+      ExternalSystemProgressNotificationManager::class.java)
+    val taskOutput = java.lang.StringBuilder()
+    val listener: ExternalSystemTaskNotificationListenerAdapter = object : ExternalSystemTaskNotificationListenerAdapter() {
+      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+        taskOutput.append(text)
+      }
+    }
+    notificationManager.addNotificationListener(listener)
+    try {
+      runTask(taskExecutionInfo.settings, taskExecutionInfo.executorId, myProject, GradleConstants.SYSTEM_ID, null,
+              ProgressExecutionMode.NO_PROGRESS_SYNC)
+    }
+    finally {
+      notificationManager.removeNotificationListener(listener)
+    }
+    return taskOutput.toString()
   }
 
   private fun runTaskAndGetErrorOutput(projectPath: String, taskName: String, scriptParameters: String = ""): String {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -478,6 +478,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.showVisualFormattingLayer
     set(value) {
       state.showVisualFormattingLayer = value
+    }
+
+  var showBreakpointsOverLineNumbers: Boolean
+    get() = state.showBreakpointsOverLineNumbers
+    set(value) {
+      state.showBreakpointsOverLineNumbers = value
     }
 
   companion object {

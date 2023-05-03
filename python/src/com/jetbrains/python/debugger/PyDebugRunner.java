@@ -391,6 +391,16 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(console,
                                                                                                                   processHandler,
                                                                                                                   debugConsoleCommunication);
+
+    return initDebugConsoleView(pythonConsoleView, consoleExecuteActionHandler, debugProcess, processHandler, debugConsoleCommunication, session);
+  }
+
+  protected static PythonDebugConsoleCommunication initDebugConsoleView(@NotNull PythonConsoleView pythonConsoleView,
+                                                                        @NotNull PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler,
+                                                                        @NotNull PyDebugProcess debugProcess,
+                                                                        @NotNull ProcessHandler processHandler,
+                                                                        @NotNull PythonDebugConsoleCommunication debugConsoleCommunication,
+                                                                        final XDebugSession session) {
     pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
     debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);

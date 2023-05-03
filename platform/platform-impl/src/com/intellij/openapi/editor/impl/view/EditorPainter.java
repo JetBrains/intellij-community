@@ -1644,7 +1644,7 @@ public final class EditorPainter implements TextDrawingCallback {
           myInnerWhitespaceShown) {
         return true;
       } else {
-        return mySelectionWhitespaceShown && caretData.isOffsetInSelection(offset);
+        return mySelectionWhitespaceShown && caretData != null && caretData.isOffsetInSelection(offset);
       }
     }
   }

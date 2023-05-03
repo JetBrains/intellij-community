@@ -240,7 +240,6 @@
 
     "EditorTabs": {
       "underlineArc": "4",
-      "tabInsets": "-3,12,-4,8",
       "unselectedBlend": "0.9",
       "hoverBackground": "#FFFFFF00",
       "hoverInactiveBackground": "#FFFFFF00",
@@ -249,7 +248,6 @@
 
     "Editor": {
       "SearchField" : {
-        "borderInsets" : "7,10,7,8",
         "background": "Grey14"
       },
       "Toolbar" : {
@@ -297,18 +295,11 @@
       "borderColor": {
         "os.default": "Grey12",
         "os.windows": "windowsPopupBorder"
-      },
-      "borderInsets": "6,1,6,1",
-      "Selection": {
-        "innerInsets": "0,6,0,6"
       }
     },
 
     "PopupMenu": {
-      "background": "Grey14",
-      "Selection": {
-        "innerInsets": "0,6,0,6"
-      }
+      "background": "Grey14"
     },
 
     "MenuItem.background": "Grey14",
@@ -335,7 +326,6 @@
       "borderColor": "Grey2",
       "foreground": "Grey13",
       "linkForeground": "Blue8",
-      "borderInsets": "4,4,4,0",
       "Button": {
         "background": "Grey2",
         "borderColor": "Grey7",
@@ -375,7 +365,6 @@
       "background": "Grey14",
       "borderColor": "windowsPopupBorder",
       "Advertiser": {
-        "borderInsets": "6,20,6,20",
         "foreground": "Grey7",
         "background": "Grey13",
         "borderColor": "Grey13",
@@ -399,8 +388,7 @@
       "matchForeground": "Blue4",
       "Advertiser": {
         "foreground": "Grey7",
-        "background": "Grey13",
-        "borderInsets": "4,12,3,8"
+        "background": "Grey13"
       }
     },
 
@@ -414,8 +402,6 @@
       "failedEndColor": "Red8",
       "trackColor": "Grey11"
     },
-    "ToolBar.verticalToolbarInsets": "7,4,7,4",
-    "ToolBar.horizontalToolbarInsets": "4,7,4,7",
     "ToolBar.separatorColor": "Grey11",
 
     "SearchField": {
@@ -429,8 +415,7 @@
       "List.settingsBackground": "Grey13",
       "Advertiser": {
         "foreground": "Grey7",
-        "background": "Grey13",
-        "borderInsets": "6,20,6,20"
+        "background": "Grey13"
       }
     },
 
@@ -456,24 +441,19 @@
         "foreground": "Grey6",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey12",
-        "pressedBackground": "Grey11",
-        "widgetInsets": "6,8,6,8"
+        "pressedBackground": "Grey11"
       },
       "Breadcrumbs": {
         "foreground": "Grey6",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey12",
         "floatingBackground": "Grey14",
-        "itemInsets": "0,0,0,0",
-        "chevronInset": "0",
-        "floatingToolbarInsets": "8,12,8,12",
-        "itemBackgroundInsets": "2,4,2,4"
+        "chevronInset": "0"
       }
     },
 
     "TabbedPane": {
       "tabHeight": 40,
-      "tabInsets": "0,12,0,12",
       "tabSelectionArc": 4,
       "hoverColor": "Grey12",
       "contentAreaColor": "Grey12",
@@ -501,8 +481,6 @@
     },
 
     "HelpTooltip": {
-      "defaultTextBorderInsets": "12,16,16,16",
-      "smallTextBorderInsets": "8,12,9,12",
       "verticalGap": 6
     },
 
@@ -539,8 +517,7 @@
       },
       "HeaderTab": {
         "hoverBackground": "Grey12",
-        "hoverInactiveBackground": "Grey12",
-        "leftRightInsets": "0,12,0,12"
+        "hoverInactiveBackground": "Grey12"
       },
       "Button": {
         "selectedForeground": "Grey14",
@@ -568,21 +545,16 @@
       "inactiveBackground": "Grey3",
       "separatorColor": "Grey4",
       "Icon": {
-        "borderInsets": "10,10,10,10",
         "background": "Grey2",
         "hoverBackground": "Grey3",
         "pressedBackground": "Grey3"
       },
       "Dropdown": {
         "foreground": "Grey12",
-        "borderInsets": "3,12,3,6",
         "background": "Grey2",
         "hoverBackground": "Grey3",
         "pressedBackground": "Grey3",
         "maxWidth": 350
-      },
-      "Button": {
-        "buttonInsets": "0,0,0,0"
       }
     },
 
@@ -619,7 +591,6 @@
       },
       "FileHistory.Commit.selectedBranchBackground": "Blue11",
       "MarkerPopup": {
-        "borderInsets": "6,8,6,10",
         "borderColor": "Grey11"
       },
       "GitLog": {

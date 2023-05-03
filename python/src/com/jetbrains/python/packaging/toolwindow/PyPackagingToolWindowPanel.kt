@@ -6,7 +6,6 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -34,7 +33,6 @@ import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.Alarm
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
-import com.intellij.util.childScope
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -46,10 +44,7 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonVcsPackageSpecification
 import com.jetbrains.python.sdk.pythonSdk
 import icons.PythonIcons
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -62,7 +57,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.ListSelectionListener
 
 class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolWindow) : SimpleToolWindowPanel(false, true), Disposable  {
-  private val packagingScope = ApplicationManager.getApplication().coroutineScope.childScope(Dispatchers.Default)
+  private val packagingScope = CoroutineScope(Dispatchers.IO)
   private var selectedPackage: DisplayablePackage? = null
   private var selectedPackageDetails: PythonPackageDetails? = null
 
@@ -321,7 +316,7 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
         if (project.modules.size > 1) {
           val newFile = event.newFile ?: return
           val module = ModuleUtilCore.findModuleForFile(newFile, project)
-          packagingScope.launch(Dispatchers.IO) {
+          packagingScope.launch {
             val index = (moduleList.model as DefaultListModel<Module>).indexOf(module)
             moduleList.selectionModel.setSelectionInterval(index, index)
           }
@@ -427,7 +422,7 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     showHeaderForPackage(selectedPackage, managementEnabled)
 
     this.selectedPackage = selectedPackage
-    packagingScope.launch(Dispatchers.IO) {
+    packagingScope.launch {
       val packageDetails = service.detailsForPackage(selectedPackage)
 
       val installActions = if (managementEnabled) {
@@ -474,7 +469,7 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     return object : AbstractAction(installAction.text) {
       override fun actionPerformed(e: ActionEvent?) {
         val version = if (versionSelector.text == latestText) null else versionSelector.text
-        packagingScope.launch(Dispatchers.IO) {
+        packagingScope.launch {
           val specification = details.toPackageSpecification(version)
           installAction.installPackage(specification)
         }

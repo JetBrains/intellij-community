@@ -1,1 +1,0 @@
-deprecated: output.png; meaning is unclear, use other icons

@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
@@ -22,7 +23,7 @@ class GHSuggestionHtmlSyntaxHighlighter(
   private val project: Project?,
   private val suggestedChangeInfo: GHSuggestedChange,
 ) : HtmlSyntaxHighlighter {
-  override fun color(language: String?, rawContent: String): HtmlChunk {
+  override fun color(language: String?, rawContent: @NlsSafe String): HtmlChunk {
     val name = PathUtil.getFileName(suggestedChangeInfo.filePath)
     val fileType = (FileTypeRegistry.getInstance().getFileTypeByFileName(name) as? LanguageFileType) ?: PlainTextFileType.INSTANCE
     val fileLanguage = fileType.language
@@ -37,7 +38,7 @@ class GHSuggestionHtmlSyntaxHighlighter(
 
   private fun createColoredChunk(project: Project?,
                                  language: Language,
-                                 rawContent: String,
+                                 rawContent: @NlsSafe String,
                                  textAttributesKey: TextAttributesKey): HtmlChunk {
     val colorsScheme = EditorColorsUtil.getGlobalOrDefaultColorScheme()
     val backgroundColor = colorsScheme.getAttributes(textAttributesKey).backgroundColor
@@ -59,7 +60,7 @@ class GHSuggestionHtmlSyntaxHighlighter(
       get() = JBUI.scale(2)
 
     @VisibleForTesting
-    fun trimStartWithMinIndent(text: String): String {
+    fun trimStartWithMinIndent(text: String): @NlsSafe String {
       val lines = text.lines().let {
         if (it.last() == "") it.dropLast(1)
         else it

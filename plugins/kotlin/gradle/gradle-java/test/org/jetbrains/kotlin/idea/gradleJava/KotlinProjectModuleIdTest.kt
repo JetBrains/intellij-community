@@ -40,10 +40,9 @@ class KotlinProjectModuleIdTest {
         )
 
         assertEquals(
-            KotlinProjectModuleId("included-build"),
+            KotlinProjectModuleId(":included-build"),
             KotlinProjectModuleId(coordinates)
         )
-
     }
 
     @Test
@@ -53,7 +52,7 @@ class KotlinProjectModuleIdTest {
         )
 
         assertEquals(
-            KotlinProjectModuleId("included-build:subproject"),
+            KotlinProjectModuleId(":included-build:subproject"),
             KotlinProjectModuleId(coordinates)
         )
     }

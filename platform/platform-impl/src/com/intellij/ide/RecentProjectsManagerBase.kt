@@ -313,6 +313,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
     val projectPath = getProjectPath(project) ?: return
     synchronized(stateLock) {
+      findAndRemoveNewlyClonedProject(projectPath)
       val info = state.additionalInfo.computeIfAbsent(projectPath) { RecentProjectMetaInfo() }
       info.activationTimestamp = timestamp
       info.opened = true

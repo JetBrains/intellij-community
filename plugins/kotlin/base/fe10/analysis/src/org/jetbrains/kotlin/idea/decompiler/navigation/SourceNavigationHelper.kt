@@ -89,7 +89,7 @@ object SourceNavigationHelper {
                         return ModuleInfoProvider.getInstance(project)
                             .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)
                             .map { it.binariesScope }
-                            .toList()
+                            .toSet()
                             .union()
                     }
                 }

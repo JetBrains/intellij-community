@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * This extension allows to add custom components to {@link WelcomeScreen}
@@ -22,9 +24,19 @@ public interface WelcomeScreenCustomization {
 
 
   /**
+   * @deprecated Use {@link #createQuickAccessActions(Disposable)} instead
+   */
+  @Deprecated
+  default @Nullable Component createQuickAccessComponent(@NotNull Disposable parentDisposable) {
+    return null;
+  }
+
+  /**
    * @return component that is always shown on the {@link WelcomeScreen} with tab view (left bottom panel)
    */
-  @Nullable Component createQuickAccessComponent(@NotNull Disposable parentDisposable);
+  default @Nullable List<AnAction> createQuickAccessActions(@NotNull Disposable parentDisposable) {
+    return null;
+  }
 
   /**
    * @return toolbar shown below the main panel (selected tab) of the {@link WelcomeScreen}

@@ -241,9 +241,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
     if (helper is DecoratedHelper) {
       val isCustomFrameHeaderVisible = !fullScreen || SystemInfo.isMac && !ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
-      if (SystemInfo.isMac) {
-        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, isCustomFrameHeaderVisible)
-      }
     }
     else if (SystemInfoRt.isXWindow) {
       val shouldMinimize = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()

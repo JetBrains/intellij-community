@@ -88,7 +88,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
     }
     if (WorkspaceFileIndexEx.IS_ENABLED) {
       runActivity("workspace file index initialization") {
-        (project.serviceAsync<WorkspaceFileIndex>().await() as WorkspaceFileIndexEx).ensureInitialized()
+        (project.serviceAsync<WorkspaceFileIndex>().await() as WorkspaceFileIndexEx).initialize()
       }
     }
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()

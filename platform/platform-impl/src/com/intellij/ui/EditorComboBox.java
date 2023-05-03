@@ -280,7 +280,7 @@ public class EditorComboBox extends ComboBox implements DocumentListener {
 
   private void releaseEditor() {
     if (myEditorField != null) {
-      myEditorField.releaseEditorAndScheduleForRemovalLater();
+      myEditorField.releaseEditorLater();
     }
   }
 

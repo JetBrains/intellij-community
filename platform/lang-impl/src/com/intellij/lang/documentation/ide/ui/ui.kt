@@ -13,7 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.platform.documentation.LinkData
+import com.intellij.platform.backend.documentation.LinkData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane

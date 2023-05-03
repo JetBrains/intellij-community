@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
 import com.intellij.ui.dualView.TableCellRendererWrapper
@@ -6,6 +6,7 @@ import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.popup.list.SelectablePanel.Companion.wrap
 import com.intellij.ui.popup.list.SelectablePanel.SelectionArcCorners
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -136,18 +137,29 @@ internal class VcsLogNewUiTableCellRenderer(
   }
 
   companion object {
+    private val additionalGap
+      get() = 8
+
     private val INSETS
       get() = 4
 
     private val ARC
       get() = JBUI.CurrentTheme.Popup.Selection.ARC.get()
 
+    @JvmStatic
+    fun getAdditionalOffset(column: Int): Int {
+      if (column == ROOT_COLUMN_INDEX + 1) {
+        return JBUIScale.scale(additionalGap)
+      }
+      return 0
+    }
+
     private fun createEmptyPanel(): JPanel = object : JPanel(null) {
       init {
         isOpaque = false
       }
 
-      override fun getPreferredSize(): Dimension = JBDimension(8, 0)
+      override fun getPreferredSize(): Dimension = JBDimension(additionalGap, 0)
     }
 
     private const val ROOT_COLUMN_INDEX = 0

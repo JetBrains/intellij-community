@@ -5,11 +5,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.management.runPackagingTool
+import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.jetbrains.python.packaging.management.runPackagingTool
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -21,32 +20,30 @@ class PipPythonPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManag
   override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
 
   override suspend fun reloadPackages(): Result<List<PythonPackage>> {
-    return withContext(Dispatchers.IO) {
-      val result = runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
-        val output = runPackagingTool("list", emptyList(), PyBundle.message("python.packaging.list.progress"))
+    val result = runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+      val output = runPackagingTool("list", emptyList(), PyBundle.message("python.packaging.list.progress"))
 
-        val packages = output.lineSequence()
-          .filter { it.isNotBlank() }
-          .map {
-            val line = it.split("\t")
-            PythonPackage(line[0], line[1])
-          }
-          .sortedWith(compareBy(PythonPackage::name))
-          .toList()
-        Result.success(packages)
-      }
-
-      if (result.isFailure) return@withContext result
-
-      installedPackages = result.getOrThrow()
-
-      ApplicationManager.getApplication()
-        .messageBus
-        .syncPublisher(PACKAGE_MANAGEMENT_TOPIC)
-        .packagesChanged(sdk)
-
-      result
+      val packages = output.lineSequence()
+        .filter { it.isNotBlank() }
+        .map {
+          val line = it.split("\t")
+          PythonPackage(line[0], line[1])
+        }
+        .sortedWith(compareBy(PythonPackage::name))
+        .toList()
+      Result.success(packages)
     }
+
+    if (result.isFailure) return result
+
+    installedPackages = result.getOrThrow()
+
+    ApplicationManager.getApplication().messageBus.apply {
+      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
+      syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
+    }
+
+    return result
   }
 
 }

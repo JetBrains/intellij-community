@@ -11,8 +11,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.tag
 import com.intellij.openapi.util.text.HtmlChunk.text
-import com.intellij.platform.documentation.DocumentationResult
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 

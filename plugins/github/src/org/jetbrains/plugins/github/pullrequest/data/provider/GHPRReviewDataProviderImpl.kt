@@ -97,14 +97,15 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                           fileName: String,
                           side: Side,
                           line: Int): CompletableFuture<out GHPullRequestReviewComment> {
-    return changesProvider.loadPatchFromMergeBase(progressIndicator, commitSha, fileName)
+    val future = changesProvider.loadPatchFromMergeBase(progressIndicator, commitSha, fileName)
       .thenComposeAsync({ patch ->
                           check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
                           val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line)
                                          ?: error("Can't map file line to diff")
                           reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, position)
                         }, ProcessIOExecutorService.INSTANCE)
-      .dropReviews().notifyReviews()
+    pendingReviewRequestValue.overrideProcess(future.successOnEdt { it.pullRequestReview })
+    return future.dropReviews().notifyReviews()
   }
 
   override fun addComment(progressIndicator: ProgressIndicator,
@@ -209,6 +210,8 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     }
     else {
       reviewService.addThread(progressIndicator, reviewId, body, line, side, startLine, fileName)
+    }.completionOnEdt {
+      pendingReviewRequestValue.drop()
     }.dropReviews().notifyReviews()
   }
 

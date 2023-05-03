@@ -3,7 +3,7 @@ package com.intellij.codeInsight.documentation.render
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.documentation.InlineDocumentation
+import com.intellij.platform.backend.documentation.InlineDocumentation
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.documentation
 
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
-import com.intellij.platform.documentation.impl.computeDocumentationBlocking
+import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 

@@ -101,6 +101,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     }
   }
 
+  @ApiStatus.Internal
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url, @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
     if (!JBCefApp.isSupported()) {
       throw new IllegalStateException("JCEF is not supported on this system");
@@ -110,9 +111,11 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
     var parameters = new HashMap<String, String>();
     parameters.put("var", "embed");
-    if (darkTheme) {
-      parameters.put("theme", "dark");
+    var theme = darkTheme ? "dark" : "light";
+    if (ExperimentalUI.isNewUI()) {
+      theme += "-new-ui";
     }
+    parameters.put("theme", theme);
     var locale = Locale.getDefault();
     if (locale != null) {
       parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));

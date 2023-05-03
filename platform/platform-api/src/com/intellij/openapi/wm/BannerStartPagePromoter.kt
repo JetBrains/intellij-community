@@ -9,6 +9,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -31,10 +32,8 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     headerPanel.layout = BoxLayout(headerPanel, BoxLayout.X_AXIS)
     headerPanel.alignmentX = Component.LEFT_ALIGNMENT
 
-    val header = JLabel(headerLabel)
-    header.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(2))
 
-    headerPanel.add(header)
+    headerPanel.add(createHeader())
     headerPanel.add(Box.createHorizontalGlue())
 
     val hPanel: JPanel = BackgroundRoundedPanel(JBUI.scale(16))
@@ -69,7 +68,8 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
       }
     }
 
-    vPanel.add(Box.createVerticalGlue())
+    val minSize = JBDimension(0, 8)
+    vPanel.add(Box.Filler(minSize, minSize, Dimension(0, Short.MAX_VALUE.toInt())))
     vPanel.add(buttonPixelHunting(jButton))
 
     hPanel.background = JBColor.namedColor("WelcomeScreen.SidePanel.background", JBColor(0xF2F2F2, 0x3C3F41))
@@ -124,4 +124,9 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
 
   protected abstract fun runAction()
 
+  protected open fun createHeader(): JLabel {
+    val result = JLabel(headerLabel)
+    result.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(2))
+    return result
+  }
 }

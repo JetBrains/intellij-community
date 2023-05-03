@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class KotlinMPPGradleTestTasksProvider : GradleTestTasksProvider {
@@ -35,7 +36,7 @@ class KotlinMPPGradleTestTasksProvider : GradleTestTasksProvider {
         val moduleData = GradleProjectResolverUtil.findModule(externalProjectInfo.externalProjectStructure, projectPath)
             ?: return emptyList()
 
-        val gradlePath = GradleProjectResolverUtil.getGradlePath(module) ?: return emptyList()
+        val gradlePath = getGradleIdentityPathOrNull(module) ?: return emptyList()
         val taskNamePrefix = if (gradlePath.endsWith(':')) gradlePath else "$gradlePath:"
 
         val kotlinTaskNameCandidates = ExternalSystemApiUtil.findAll(moduleData, KotlinTargetData.KEY)

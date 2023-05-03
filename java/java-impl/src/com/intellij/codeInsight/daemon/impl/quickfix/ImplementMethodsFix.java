@@ -120,13 +120,13 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
       aClass = psiClass;
       overrideImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(psiClass, true);
     }
-    final List<PsiMethodMember> members = getMap(overrideImplement);
+    final List<PsiMethodMember> members = filterNonDefaultMethodMembers(overrideImplement);
     OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, members, options);
     return IntentionPreviewInfo.DIFF;
   }
 
   @NotNull
-  private static List<PsiMethodMember> getMap(Collection<CandidateInfo> overrideImplement) {
+  public static List<PsiMethodMember> filterNonDefaultMethodMembers(Collection<CandidateInfo> overrideImplement) {
     return ContainerUtil.map(
       ContainerUtil.filter(overrideImplement,
                            t -> t.getElement() instanceof PsiMethod method && !method.hasModifierProperty(PsiModifier.DEFAULT)),

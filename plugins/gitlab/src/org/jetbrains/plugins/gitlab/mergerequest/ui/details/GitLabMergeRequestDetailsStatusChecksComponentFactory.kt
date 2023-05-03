@@ -132,7 +132,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       }
       val reviewerLabel = JLabel().apply {
         icon = avatarIconsProvider.getIcon(reviewer, AVATAR_SIZE)
-        text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewer.username)
+        text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewer.name)
         iconTextGap = STATUS_COMPONENTS_GAP
       }
 

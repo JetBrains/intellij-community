@@ -40,6 +40,7 @@ import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
@@ -114,7 +115,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings!!
     val gradleRunConfiguration = runnerAndConfigurationSettings.configuration as ExternalSystemRunConfiguration
 
-    val gradlePath = GradleProjectResolverUtil.getGradlePath(module) ?: return null
+    val gradlePath = getGradleIdentityPathOrNull(module) ?: return null
     val sourceSetName = when {
                           GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY == ExternalSystemApiUtil.getExternalModuleType(
                             module) -> GradleProjectResolverUtil.getSourceSetName(module)

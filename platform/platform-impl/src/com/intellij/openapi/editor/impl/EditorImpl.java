@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -25,7 +25,10 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.*;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
+import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -3317,13 +3320,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static void logSchemeChangeIfNeeded(EditorColorsScheme scheme) {
-    if (!LOG.isDebugEnabled() || !(scheme instanceof EditorColorsSchemeImpl)) return;
+    if (!LOG.isDebugEnabled()) return;
     EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
-    boolean isGlobal = colorsManager != null && colorsManager.getGlobalScheme() == scheme;
+    if (colorsManager == null) return;
 
-    LOG.debug("Will set mutable scheme to editor (isGlobal=%b, presentationMode=%b)"
-                .formatted(isGlobal, UISettings.getInstance().getPresentationMode()));
-    LOG.debug(ExceptionUtil.currentStackTrace());
+    EditorColorsScheme globalScheme = colorsManager.getGlobalScheme();
+    boolean isGlobal = (scheme == globalScheme);
+    boolean isBounded = (scheme instanceof MyColorSchemeDelegate);
+
+    while (!isGlobal && !isBounded && scheme instanceof DelegateColorScheme) {
+      scheme = ((DelegateColorScheme)scheme).getDelegate();
+      if (scheme == globalScheme) isGlobal = true;
+      if (scheme instanceof MyColorSchemeDelegate) isBounded = true;
+    }
+
+    if (isGlobal && !isBounded) {
+      LOG.debug("Will set the unbounded global scheme to editor (presentationMode=%b)"
+                  .formatted(UISettings.getInstance().getPresentationMode()));
+      LOG.debug(ExceptionUtil.currentStackTrace());
+    }
   }
 
   @Override
@@ -3381,6 +3396,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @MouseSelectionState
   private int getMouseSelectionState() {
     return myMouseSelectionState;
+  }
+
+  /**
+   * Update baseline selection if {@link Caret#selectWordAtCaret} action was performed asynchronously.
+   *
+   * @see #selectWordAtCaret(boolean)
+   */
+  @ApiStatus.Internal
+  public void updateMouseWordSelectionStateToCaret() {
+    if (myMouseSelectionState != MOUSE_SELECTION_STATE_WORD_SELECTED) return;
+    Caret caret = getCaretModel().getCurrentCaret();
+    mySavedSelectionStart = caret.getSelectionStart();
+    mySavedSelectionEnd = caret.getSelectionEnd();
+    caret.moveToOffset(mySavedSelectionEnd);
   }
 
   private void setMouseSelectionState(@MouseSelectionState int mouseSelectionState) {
@@ -4053,9 +4082,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area). Also, don't move caret when context menu for an inlay is invoked.
-      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && !ExperimentalUI.isNewUI()) ||
-                  isInsideGutterWhitespaceArea(e) ||
-                  eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
+      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) ||
+                          isInsideGutterWhitespaceArea(e) ||
+                          eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
       if (moveCaret) {
         VisualPosition visualPosition = getTargetPosition(x, y, true);
         LogicalPosition pos = visualToLogicalPosition(visualPosition);
@@ -4116,7 +4145,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
       if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        if (ExperimentalUI.isNewUI()) {
+        if (ExperimentalUI.isNewUI() && UISettings.getInstance().getShowBreakpointsOverLineNumbers()) {
           //do nothing here and set/unset a breakpoint if possible in XLineBreakpointManager
           return false;
         } else {
@@ -4251,6 +4280,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
+  /**
+   * Enter click-and-drag selection mode: select words only.
+   */
   private void selectWordAtCaret(boolean honorCamelCase) {
     Caret caret = getCaretModel().getCurrentCaret();
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
@@ -4262,6 +4294,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     caret.moveToOffset(mySavedSelectionEnd);
   }
 
+  /**
+   * Enter click-and-drag selection mode: select lines only.
+   */
   private void selectLineAtCaret(boolean moveToEnd) {
     Caret caret = getCaretModel().getCurrentCaret();
     caret.selectLineAtCaret();
@@ -4595,7 +4630,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(super.getEditorFontSize2D())) {
+      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D())) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {

@@ -289,6 +289,16 @@ object GitLessonsUtil {
     }
   }
 
+  fun TaskContext.openGitWindow(@Nls stepText: String) {
+    text(stepText)
+    text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(GitBundle.message("git4idea.vcs.name"))),
+         LearningBalloonConfig(Balloon.Position.atRight, width = 0))
+    stateCheck {
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.isVisible == true
+    }
+    test { actions("ActivateVersionControlToolWindow") }
+  }
+
   fun TaskTestContext.clickChangeElement(partOfText: String) {
     val checkPath: (TreePath) -> Boolean = { p -> p.getPathComponent(p.pathCount - 1).toString().contains(partOfText) }
     ideFrame {

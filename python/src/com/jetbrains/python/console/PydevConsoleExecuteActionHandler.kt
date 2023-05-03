@@ -29,10 +29,10 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
   private val project = myConsoleView.project
   private val myEnterHandler = PyConsoleEnterHandler()
-  private var myIpythonInputPromptCount = 2
+  protected open var ipythonInputPromptCount = 2
 
   fun decreaseInputPromptCount(value : Int) {
-    myIpythonInputPromptCount -= value
+    ipythonInputPromptCount -= value
   }
 
   override var isEnabled: Boolean = false
@@ -72,7 +72,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       executingPrompt()
     }
     if (ipythonEnabled && !consoleComm.isWaitingForInput && !code.getText().isBlank()) {
-      ++myIpythonInputPromptCount
+      ++ipythonInputPromptCount
     }
     if (PyConsoleUtil.isCommandQueueEnabled(project)) {
       // add new command to CommandQueue service
@@ -126,7 +126,11 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   private val ipythonEnabled: Boolean
     get() = PyConsoleUtil.getOrCreateIPythonData(myConsoleView.virtualFile).isIPythonEnabled
 
-  private fun ipythonInPrompt() {
+  protected open fun ipythonInPrompt() {
+    ipythonInPrompt("In [$ipythonInputPromptCount]:")
+  }
+
+  protected fun ipythonInPrompt(prompt: String) {
     myConsoleView.setPromptAttributes(object : ConsoleViewContentType("", TextAttributes()) {
       override fun getAttributes(): TextAttributes {
         val attrs = EditorColorsManager.getInstance().globalScheme.getAttributes(USER_INPUT_KEY)
@@ -135,7 +139,6 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       }
     })
 
-    val prompt = "In [$myIpythonInputPromptCount]:"
     val indentPrompt = PyConsoleUtil.IPYTHON_INDENT_PROMPT.padStart(prompt.length)
     myConsoleView.prompt = prompt
     myConsoleView.indentPrompt = indentPrompt
@@ -217,7 +220,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       if (shouldCopyToHistory(console)) {
         (console as? PythonConsoleView)?.let { pythonConsole ->
           pythonConsole.flushDeferredText()
-          pythonConsole.storeExecutionCounterLineNumber(myIpythonInputPromptCount,
+          pythonConsole.storeExecutionCounterLineNumber(ipythonInputPromptCount,
                                                         pythonConsole.historyViewer.document.lineCount +
                                                         console.consoleEditor.document.lineCount)
         }

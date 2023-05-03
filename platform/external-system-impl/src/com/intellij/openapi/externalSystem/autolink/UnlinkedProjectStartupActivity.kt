@@ -28,6 +28,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.CopyOnWriteArrayList
 
 @VisibleForTesting
 class UnlinkedProjectStartupActivity : ProjectActivity {
@@ -241,7 +242,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private class ProjectRoots : Iterable<String> {
 
-    private val projectRoots = ArrayList<String>()
+    private val projectRoots = CopyOnWriteArrayList<String>()
     private val addListeners = DisposableWrapperList<suspend (String) -> Unit>()
     private val removeListeners = DisposableWrapperList<suspend (String) -> Unit>()
 

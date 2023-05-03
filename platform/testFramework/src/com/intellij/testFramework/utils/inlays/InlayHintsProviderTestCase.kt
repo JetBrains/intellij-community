@@ -4,19 +4,25 @@ package com.intellij.testFramework.utils.inlays
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase.HintPresence.NO_HINTS
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase.HintPresence.SOME_HINTS
 import com.intellij.util.containers.isEmpty
 
 abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
 
   companion object {
-    const val NO_HINTS_PREFIX = "// NO_HINTS"
-  }
+    private const val NO_HINTS_PREFIX = "// NO_HINTS"
 
-  private enum class HintPresence {
-    NO_HINTS,
-    SOME_HINTS
+    fun verifyHintsPresence(expectedText: String) {
+      val expectedHintPresence =
+        if (expectedText.lineSequence().any { it.startsWith(NO_HINTS_PREFIX) }) HintPresence.NO_HINTS else HintPresence.SOME_HINTS
+      val actualHintPresence =
+        if (InlayDumpUtil.inlayPattern.matcher(expectedText).results().isEmpty()) HintPresence.NO_HINTS else HintPresence.SOME_HINTS
+      assertEquals("Hint presence should match the use of the $NO_HINTS_PREFIX directive.", expectedHintPresence, actualHintPresence)
+    }
+
+    private enum class HintPresence {
+      NO_HINTS,
+      SOME_HINTS
+    }
   }
 
   @JvmOverloads
@@ -31,9 +37,7 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     assertEquals(expectedText, actualText)
 
     if(verifyHintPresence) {
-      val expectedHintPresence = if (expectedText.lineSequence().any { it.startsWith(NO_HINTS_PREFIX) }) NO_HINTS else SOME_HINTS
-      val actualHintPresence = if (InlayDumpUtil.inlayPattern.matcher(expectedText).results().isEmpty()) NO_HINTS else SOME_HINTS
-      assertEquals("Hint presence should match the use of the $NO_HINTS_PREFIX directive.", expectedHintPresence, actualHintPresence)
+      verifyHintsPresence(expectedText)
     }
   }
 

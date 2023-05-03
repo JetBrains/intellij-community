@@ -1,1 +1,0 @@
-deprecated: chrome16.png; to be removed (use {@link #Chrome})

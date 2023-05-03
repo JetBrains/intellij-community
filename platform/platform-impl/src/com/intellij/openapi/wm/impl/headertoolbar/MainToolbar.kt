@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -25,12 +26,16 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import java.awt.*
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
+
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
+
+  var layoutCallBack : LayoutCallBack? = null
 
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
@@ -92,7 +97,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 
   private fun createActionBar(group: ActionGroup): JComponent {
-    val toolbar = MyActionToolbarImpl(group = group)
+    val toolbar = MyActionToolbarImpl(group, layoutCallBack)
     toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
     toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
@@ -106,7 +111,9 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 }
 
-private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+typealias LayoutCallBack = () -> Unit
+
+private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: LayoutCallBack?) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
 
   init {
     updateFont()
@@ -115,6 +122,11 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
     for (i in 0 until bounds.size) fitRectangle(bounds[i], getComponent(i))
+  }
+
+  override fun doLayout() {
+    super.doLayout()
+    layoutCallBack?.invoke()
   }
 
   private fun fitRectangle(rect: Rectangle, cmp: Component) {
@@ -175,3 +187,5 @@ internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance)
 }
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
+
+fun adjustIconForHeader(icon: Icon) = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon

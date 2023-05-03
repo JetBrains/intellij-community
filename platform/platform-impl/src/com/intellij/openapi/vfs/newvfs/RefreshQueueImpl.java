@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -57,12 +57,11 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
       runRefreshSession(session, -1L);
       fireEvents(session);
     }
+    else if (app.holdsReadLock() || EDT.isCurrentThreadEdt()) {
+      LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire)");
+    }
     else {
-      if (app.holdsReadLock() || EDT.isCurrentThreadEdt()) {
-        LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire)");
-        return;
-      }
-      queueSession(session, ModalityState.defaultModalityState());
+      queueSession(session, session.getModality());
       session.waitFor();
     }
   }

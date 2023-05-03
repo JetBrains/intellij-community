@@ -38,6 +38,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
@@ -583,7 +584,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    myShowNavBar = ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBarInBottom();
+    boolean showNavBar = ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBarInBottom();
+    if (myShowNavBar == showNavBar && showNavBar) {
+      return;
+    }
+    myShowNavBar = showNavBar;
 
     BorderLayout layout = (BorderLayout)myRefreshAndInfoPanel.getLayout();
     Component c = layout.getLayoutComponent(BorderLayout.CENTER);
@@ -596,7 +601,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       if (myCentralComponent != null) {
         ApplicationManager.getApplication().invokeLater(() -> {
           myRefreshAndInfoPanel.add(myCentralComponent, BorderLayout.CENTER);
-          myCentralComponent.updateUI();
+          IJSwingUtilities.updateComponentTreeUI(myCentralComponent);
         });
       }
     }

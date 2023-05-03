@@ -24,7 +24,7 @@ class ReaderModeSettingsImpl : PersistentStateComponentWithModificationTracker<R
     }
 
     var visualFormattingChosenScheme by property(SchemeState())
-    @get:ReportValue var enableVisualFormatting by property(true)
+    @get:ReportValue var enableVisualFormatting by property(false)
     @get:ReportValue var useActiveSchemeForVisualFormatting by property(true)
     @get:ReportValue var showLigatures by property(EditorColorsManager.getInstance().globalScheme.fontPreferences.useLigatures())
     @get:ReportValue var increaseLineSpacing by property(false)

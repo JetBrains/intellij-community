@@ -2,8 +2,8 @@
 package com.intellij.lang.documentation.psi
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.documentation.DocumentationTarget
-import com.intellij.platform.documentation.PsiDocumentationTargetProvider
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 import com.intellij.psi.PsiElement
 
 @JvmField

@@ -19,6 +19,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 import static org.junit.Assert.assertEquals;
@@ -33,19 +34,19 @@ public class GradleProjectResolverUtilTest {
   @Test
   public void testGetGradlePath() {
     final Module rootModule = createModuleMock("rootModule");
-    assertEquals(":", GradleProjectResolverUtil.getGradlePath(rootModule));
+    assertEquals(":", getGradleIdentityPathOrNull(rootModule));
 
     final Module subModule = createModuleMock(":foo:subModule");
-    assertEquals(":foo:subModule", GradleProjectResolverUtil.getGradlePath(subModule));
+    assertEquals(":foo:subModule", getGradleIdentityPathOrNull(subModule));
 
     final Module compositeBuildSubModule = createModuleMock("composite:subModule");
-    assertEquals(":subModule", GradleProjectResolverUtil.getGradlePath(compositeBuildSubModule));
+    assertEquals(":subModule", getGradleIdentityPathOrNull(compositeBuildSubModule));
 
     final Module sourceSetModule = createModuleMock("rootModule:main", GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
-    assertEquals(":", GradleProjectResolverUtil.getGradlePath(sourceSetModule));
+    assertEquals(":", getGradleIdentityPathOrNull(sourceSetModule));
 
     final Module sourceSetSubModule = createModuleMock(":foo:subModule:main", GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
-    assertEquals(":foo:subModule", GradleProjectResolverUtil.getGradlePath(sourceSetSubModule));
+    assertEquals(":foo:subModule", getGradleIdentityPathOrNull(sourceSetSubModule));
   }
 
   @NotNull

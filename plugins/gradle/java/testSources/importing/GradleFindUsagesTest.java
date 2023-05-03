@@ -133,9 +133,9 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
 
     importProject();
     assertModules("multiproject", "app",
-                  "multiproject_buildSrc", "multiproject_buildSrc_main", "multiproject_buildSrc_test",
+                  "multiproject_multiproject-buildSrc", "multiproject_multiproject-buildSrc_main", "multiproject_multiproject-buildSrc_test",
                   "gradle-plugin", "gradle-plugin_test", "gradle-plugin_main",
-                  "gradle-plugin_buildSrc", "gradle-plugin_buildSrc_main", "gradle-plugin_buildSrc_test");
+                  "gradle-plugin_gradle-plugin-buildSrc", "gradle-plugin_gradle-plugin-buildSrc_main", "gradle-plugin_gradle-plugin-buildSrc_test");
 
     assertUsages("testIncludedBuildSrcClassesUsages_nonQN.BuildSrcClass", 2);
     assertUsages("testIncludedBuildSrcClassesUsages_nonQN.IncludedBuildSrcClass", 1);
@@ -150,9 +150,9 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("multiproject", "app",
-                  "multiproject_buildSrc",
+                  "multiproject_multiproject-buildSrc",
                   "gradle-plugin",
-                  "gradle-plugin_buildSrc");
+                  "gradle-plugin_gradle-plugin-buildSrc");
     assertUsages(pair("testIncludedBuildSrcClassesUsages_merged_nonQN.BuildSrcClass", 2),
                  pair("testIncludedBuildSrcClassesUsages_merged_nonQN.IncludedBuildSrcClass", 1));
     assertUsages("testIncludedBuildSrcClassesUsages_merged_nonQN.IncludedBuildClass", 2);

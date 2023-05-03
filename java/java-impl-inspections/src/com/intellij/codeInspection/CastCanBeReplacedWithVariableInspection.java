@@ -159,7 +159,7 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
     return occurrence != expression && occurrenceTextRange.getEndOffset() < expressionTextRange.getStartOffset();
   }
 
-  public static boolean isChangedBetween(@NotNull final PsiVariable variable,
+  private static boolean isChangedBetween(@NotNull final PsiVariable variable,
                                           @NotNull final PsiElement scope,
                                           @NotNull final PsiElement start,
                                           @NotNull final PsiElement end) {

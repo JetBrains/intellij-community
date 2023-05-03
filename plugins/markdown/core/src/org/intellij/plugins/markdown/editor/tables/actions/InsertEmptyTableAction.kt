@@ -97,7 +97,7 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
         val document = editor.document
         val caretOffset = caret.offset
         val currentLine = document.getLineNumber(caret.offset)
-        val text = buildEmptyTable(rows, columns)
+        val text = buildEmptyTable(rows, columns, cellWidth = 3)
         val content = when {
           currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1) -> "\n$text"
           else -> text

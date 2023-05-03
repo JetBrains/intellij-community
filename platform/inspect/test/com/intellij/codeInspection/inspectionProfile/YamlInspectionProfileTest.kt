@@ -1,13 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
+import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.TestDataPath
 import junit.framework.TestCase
@@ -18,6 +17,15 @@ import java.io.File
 class YamlInspectionProfileTest: LightPlatformTestCase() {
 
   override fun getTestDirectoryName(): String = PathManager.getCommunityHomePath() + "/platform/inspect/testData/"
+
+  override fun setUp() {
+    super.setUp()
+    InspectionProfileImpl.INIT_INSPECTIONS = true
+    ApplicationInspectionProfileManager.getInstanceImpl().forceInitProfilesInTestUntil(testRootDisposable)
+    Disposer.register(testRootDisposable) {
+      InspectionProfileImpl.INIT_INSPECTIONS = false
+    }
+  }
 
   fun testBasic(){ checkEffectiveProfile() }
 
@@ -38,7 +46,6 @@ class YamlInspectionProfileTest: LightPlatformTestCase() {
   private fun checkEffectiveProfile(){
     val fileName = getTestName(true)
     val expectedProfileText = FileUtil.loadFile(File("$testDirectoryName/${fileName}_profile.xml"))
-    InspectionProfileImpl.INIT_INSPECTIONS = true
     val effectiveProfile = YamlInspectionProfileImpl.loadFrom(project, "$testDirectoryName/$fileName.yml").buildEffectiveProfile()
     val externalizedText = getExternalizedText(effectiveProfile)
     TestCase.assertEquals(expectedProfileText, externalizedText)

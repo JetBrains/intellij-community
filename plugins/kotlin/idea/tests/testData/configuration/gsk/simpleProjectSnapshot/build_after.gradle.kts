@@ -21,5 +21,5 @@ dependencies {
 
 // VERSION: 1.7.255-SNAPSHOT
 kotlin {
-    jvmToolchain(8)
+    jvmToolchain(11)
 }

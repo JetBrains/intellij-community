@@ -215,7 +215,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
 
     removeAll();
     setLayout(new BorderLayout(JBUIScale.scale(3), 0));
-    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.SearchField.borderInsets", JBUI.insets(SystemInfo.isLinux ? 2 : 1))));
+    setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchField.borderInsets()));
 
     add(historyButtonWrapper, BorderLayout.WEST);
     add(myScrollPane, BorderLayout.CENTER);

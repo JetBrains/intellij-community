@@ -1,16 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -68,5 +63,18 @@ var ContentRootEntity.Builder.projectModelTestEntity: ProjectModelTestEntity?
 private val ContentRootEntity.projectModelTestEntity: ProjectModelTestEntity? by WorkspaceEntity.extension()
 
 
-open class Descriptor(val data: String)
+open class Descriptor(val data: String) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as Descriptor
+
+    return data == other.data
+  }
+
+  override fun hashCode(): Int {
+    return data.hashCode()
+  }
+}
 class DescriptorInstance(data: String) : Descriptor(data)

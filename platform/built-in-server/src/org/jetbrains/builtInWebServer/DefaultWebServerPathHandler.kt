@@ -39,8 +39,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     val extraHeaders = validateToken(request, channel, isSignedRequest) ?: return true
     // Check project validity after token validation to avoid info disclosure
     if (project == null) {
-      HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
-      return true
+      return false
     }
 
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)

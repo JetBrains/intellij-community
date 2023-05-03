@@ -296,6 +296,35 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     super.setCellRenderer(new ExpandedItemListCellRendererWrapper<>(cellRenderer, myExpandableItemsHandler));
   }
 
+
+  /**
+   * @see com.intellij.ui.treeStructure.Tree#getScrollableUnitIncrement(Rectangle, int, int)
+   */
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    int increment = super.getScrollableUnitIncrement(visibleRect, orientation, direction);
+    return adjustIncrement(visibleRect, orientation, direction, increment);
+  }
+
+  @Override
+  public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+    int increment = super.getScrollableBlockIncrement(visibleRect, orientation, direction);
+    // in case of scrolling list up using a single wheel rotation, the block increment is used to calculate min scroll as
+    // currScroll - blockIncrement
+    // the resulting y-position of visible rect never exceed min scroll
+
+    // see javax.swing.plaf.basic.BasicScrollPaneUI.Handler.mouseWheelMoved -> vertical handling part -> limitScroll
+    return adjustIncrement(visibleRect, orientation, direction, increment);
+  }
+
+
+  private static int adjustIncrement(Rectangle visibleRect, int orientation, int direction, int increment) {
+    if (increment == 0 && orientation == SwingConstants.VERTICAL && direction < 0) {
+      return visibleRect.y;
+    }
+    return increment;
+  }
+
   public void installCellRenderer(final @NotNull NotNullFunction<? super E, ? extends JComponent> fun) {
     setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
   }

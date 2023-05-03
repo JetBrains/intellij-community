@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.ui.AppUIUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.io.systemIndependentPath
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
@@ -98,8 +99,12 @@ internal class OpenFileHttpService : RestService() {
       }
     }
 
-    if (apiRequest.file == null) {
+    val requestedFile = apiRequest.file
+    if (requestedFile == null) {
       return parameterMissedErrorMessage("file")
+    }
+    if (PathUtilRt.startsWithSeparatorSeparator(FileUtil.toSystemIndependentName(requestedFile))) {
+      return "UNC paths are not supported"
     }
 
     val promise = openFile(apiRequest, context, request) ?: return null

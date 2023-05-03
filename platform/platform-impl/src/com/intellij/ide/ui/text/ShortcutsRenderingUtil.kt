@@ -148,8 +148,8 @@ object ShortcutsRenderingUtil {
   }.replaceSpacesWithNonBreakSpaces()
 
   private fun getLinuxWinKeyString(code: Int) = when (code) {
-    KeyEvent.VK_ENTER -> "↩ Enter"
-    KeyEvent.VK_BACK_SPACE -> "← Backspace"
+    KeyEvent.VK_ENTER -> "Enter"
+    KeyEvent.VK_BACK_SPACE -> "Backspace"
     else -> KeyEvent.getKeyText(code)
   }
 
@@ -158,6 +158,7 @@ object ShortcutsRenderingUtil {
     KeyEvent.VK_BACK_SPACE -> "⌫ Del"
     KeyEvent.VK_ESCAPE -> "⎋ Esc"
     KeyEvent.VK_TAB -> "⇥ Tab"
+    KeyEvent.VK_SHIFT -> "⇧ Shift"
     else -> KeyEvent.getKeyText(code)
   }
 

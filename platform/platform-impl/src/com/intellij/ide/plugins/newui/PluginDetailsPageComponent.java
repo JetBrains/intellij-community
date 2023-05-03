@@ -1158,7 +1158,11 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
       myLicensePanel.setText(message, false, false);
       myLicensePanel.showBuyPlugin(() -> plugin);
-      myLicensePanel.setVisible(true);
+
+      // if the plugin requires commercial IDE, we do not show trial/price message
+      boolean requiresCommercialIde = plugin instanceof PluginNode
+                                      && ((PluginNode)plugin).getSuggestedCommercialIde() != null;
+      myLicensePanel.setVisible(!requiresCommercialIde);
     }
     else {
       LicensingFacade instance = LicensingFacade.getInstance();

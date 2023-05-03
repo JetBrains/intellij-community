@@ -616,8 +616,8 @@ public class HelpTooltip {
   }
 
   private static Border textBorder(boolean multiline) {
-    Insets i = UIManager.getInsets(multiline ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
-    return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty();
+    Insets i = multiline ? JBUI.CurrentTheme.HelpTooltip.defaultTextBorderInsets() : JBUI.CurrentTheme.HelpTooltip.smallTextBorderInsets();
+    return new JBEmptyBorder(i);
   }
 
   private static Font deriveHeaderFont(Font font) {

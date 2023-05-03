@@ -20,8 +20,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.documentation.DocumentationTarget
-import com.intellij.platform.documentation.InlineDocumentation
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.InlineDocumentation
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.util.concurrency.AppExecutorUtil

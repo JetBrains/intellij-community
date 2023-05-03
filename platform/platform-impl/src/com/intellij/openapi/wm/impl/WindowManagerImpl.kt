@@ -38,6 +38,7 @@ import java.awt.event.ComponentEvent
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JDialog
 import javax.swing.JFrame
+import javax.swing.JOptionPane
 import javax.swing.JWindow
 
 private val LOG = logger<WindowManagerImpl>()
@@ -277,6 +278,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
         frameToReuse.set(releasedFrameHelper.frame)
         releasedFrameHelper.frame.doSetRootPane(null)
         releasedFrameHelper.frame.setFrameHelper(null)
+        if (JOptionPane.getRootFrame() === releasedFrameHelper.frame) {
+          JOptionPane.setRootFrame(null)
+        }
       }
     }
 

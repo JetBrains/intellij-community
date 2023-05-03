@@ -21,6 +21,8 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.GotItComponentBuilder.Companion.EXTENDED_MAX_WIDTH
 import com.intellij.ui.GotItComponentBuilder.Companion.MAX_LINES_COUNT
+import com.intellij.ui.ShortcutExtension.Companion.getStyles
+import com.intellij.ui.ShortcutExtension.Companion.patchShortcutTags
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -243,6 +245,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       .setHideOnKeyOutside(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
+      .setRequestFocus(requestFocus)
       .setBorderColor(JBUI.CurrentTheme.GotItTooltip.borderColor(useContrastColors))
       .setCornerToPointerDistance(getArrowShift())
       .setFillColor(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))

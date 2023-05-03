@@ -42,9 +42,11 @@ object DistributedTestModel : Ext(TestRoot) {
     field("testMethodName", string.nullable)
     field("traceCategories", immutableList(string))
     property("ready", bool.nullable)
-    signal("sendException", RdTestSessionException)
+    signal("sendException", RdTestSessionException).async
     signal("shutdown", void)
     signal("dumpThreads", void).async
+    call("closeProject", void, bool)
+    call("closeProjectIfOpened", void, bool)
     call("runNextAction", void, bool)
     call("makeScreenshot", string, bool)
   }

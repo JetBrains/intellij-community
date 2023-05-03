@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
@@ -42,6 +43,14 @@ interface WorkspaceFileIndex {
    */
   @RequiresReadLock
   fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile?
+
+  /**
+   * Checks whether a file identified by [url] will belong to a file set of [content][WorkspaceFileKind.isContent] kind. This function
+   * is supposed to be used only if the file and its possible parent file sets aren't created yet, in other cases [isInContent] should be 
+   * used instead.
+   */
+  @RequiresReadLock
+  fun isUrlInContent(url: String): ThreeState
 
   /**
    * Searches for the first parent of [file] (or [file] itself) which has an associated [WorkspaceFileSet] taking into account the passed

@@ -2,11 +2,10 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.JBTabPainter;
@@ -61,7 +60,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
 
   @Override
   public boolean useSmallLabels() {
-    return true;
+    return !ExperimentalUI.isNewUI();
   }
 
   @Override
@@ -77,15 +76,6 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
     }
     final Rectangle bounds = label.getBounds();
     return point.y <= bounds.y + bounds.height;
-  }
-
-  @Override
-  public Rectangle layout(JComponent c, Rectangle bounds) {
-    if (c instanceof Toolbar) {
-      bounds.height -= getSeparatorWidth();
-      return super.layout(c, bounds);
-    }
-    return super.layout(c, bounds);
   }
 
   @Override
@@ -106,33 +96,34 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
    * @return scaled preferred runner tab label height aligned with toolbars
    */
   public static int getTabLabelPreferredHeight() {
-    return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + getActionButtonIndent() + getActionToolbarIndent() + getThinBorderThickness();
-  }
-
-  private static int getActionButtonIndent() {
-    return 2 * JBUI.scale(1);
-  }
-
-  private static int getActionToolbarIndent() {
-    return 2 * JBUI.scale(2);
-  }
-
-  private static int getThinBorderThickness() {
-    return 1;
+    return ExperimentalUI.isNewUI() ? JBUI.scale(JBUI.CurrentTheme.DebuggerTabs.tabHeight())
+                                    : JBUI.scale(29);
   }
 
   @NotNull
   @Override
   protected TabLabel createTabLabel(@NotNull TabInfo info) {
     return new SingleHeightLabel(this, info) {
+      {
+        updateFont();
+      }
+
       @Override
-      public void setTabActions(ActionGroup group) {
-        super.setTabActions(group);
-        if (myActionPanel != null) {
-          final JComponent wrapper = (JComponent)myActionPanel.getComponent(0);
-          wrapper.remove(0);
-          wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
+      public void updateUI() {
+        super.updateUI();
+        updateFont();
+      }
+
+      private void updateFont() {
+        JComponent label = getLabelComponent();
+        if (label != null && ExperimentalUI.isNewUI()) {  // can be null at the first updateUI call during init
+          label.setFont(JBUI.CurrentTheme.DebuggerTabs.font());
         }
+      }
+
+      @Override
+      protected int getActionsInset() {
+        return 8;
       }
 
       @Override

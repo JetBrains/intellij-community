@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.util.xmlb.annotations.Tag;
@@ -14,7 +14,6 @@ public class XDebuggerGeneralSettings {
   private boolean myScrollToCenter = false;
   private boolean myConfirmBreakpointRemoval = false;
   private boolean myRunToCursorGesture = true;
-  private boolean myBreakpointsOnLineNumbers = true;
 
   @Tag("evaluation-dialog-mode")
   public EvaluationMode getEvaluationDialogMode() {
@@ -75,13 +74,5 @@ public class XDebuggerGeneralSettings {
 
   public void setRunToCursorGestureEnabled(boolean runToCursorGesture) {
     myRunToCursorGesture = runToCursorGesture;
-  }
-
-  public boolean isBreakpointsOnLineNumbers() {
-    return myBreakpointsOnLineNumbers;
-  }
-
-  public void setBreakpointsOnLineNumbers(boolean breakpointsOnLineNumbers) {
-    myBreakpointsOnLineNumbers = breakpointsOnLineNumbers;
   }
 }

@@ -96,7 +96,7 @@ internal class GHPRReviewFlowViewModelImpl(
                                              !securityService.isMergeForbiddenForProject()
 
   override val isMergeAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
-    mergeabilityState?.canBeMerged == true && securityService.isRebaseMergeAllowed()
+    mergeabilityState?.canBeMerged == true && securityService.isMergeAllowed()
   }
 
   override val isRebaseAllowed: Flow<Boolean> = mergeabilityState.map { mergeabilityState ->
@@ -128,10 +128,11 @@ internal class GHPRReviewFlowViewModelImpl(
   }
 
   override fun requestReview(parentComponent: JComponent) = stateModel.submitTask {
+    val reviewers = (reviewerAndReviewState.value.keys + metadataModel.reviewers).toList()
     GHUIUtil.showChooserPopup(
       parentComponent,
       GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
-      metadataModel.reviewers,
+      reviewers,
       metadataModel.loadPotentialReviewers()
     ).thenAccept { selectedReviewers ->
       metadataModel.adjustReviewers(EmptyProgressIndicator(), selectedReviewers)
@@ -178,6 +179,7 @@ internal class GHPRReviewFlowViewModelImpl(
         _pendingCommentsState.value = pendingComments?.comments?.totalCount ?: 0
       }
     }
+    reviewDataProvider.resetPendingReview()
 
     reviewDataProvider.messageBus
       .connect(scope)

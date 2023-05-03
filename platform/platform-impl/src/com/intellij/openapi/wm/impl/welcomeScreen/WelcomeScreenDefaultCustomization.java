@@ -8,23 +8,21 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.wm.WelcomeScreenCustomization;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.components.labels.ActionLink;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createShowPopupAction;
 
 public class WelcomeScreenDefaultCustomization implements WelcomeScreenCustomization {
 
   @Override
-  public @Nullable Component createQuickAccessComponent(@NotNull Disposable parentDisposable) {
-    AnAction action = createShowPopupAction(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS);
-    ActionLink link = new ActionLink("", ExperimentalUI.isNewUI() ? AllIcons.General.Settings : AllIcons.General.GearHover, action);
-    link.setToolTipText(ActionsBundle.groupText(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS));
-    link.setBorder(JBUI.Borders.emptyBottom(ExperimentalUI.isNewUI() ? 7 : 4));
-    return WelcomeScreenComponentFactory.wrapActionLink(link);
+  public @Nullable List<AnAction> createQuickAccessActions(@NotNull Disposable parentDisposable) {
+    AnAction result = createShowPopupAction(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS);
+    result.getTemplatePresentation().setText(ActionsBundle.groupText(IdeActions.GROUP_WELCOME_SCREEN_OPTIONS));
+    result.getTemplatePresentation().setIcon(ExperimentalUI.isNewUI() ? AllIcons.General.Settings : AllIcons.General.GearHover);
+    return Collections.singletonList(result);
   }
 }

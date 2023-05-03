@@ -59,7 +59,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
   private fun suggestName(): String {
     val location = context.projectDirectory
-    if (path == location.parent.toCanonicalPath()) {
+    if (path == location.parent?.toCanonicalPath()) {
       return location.name
     }
     return suggestUniqueName()

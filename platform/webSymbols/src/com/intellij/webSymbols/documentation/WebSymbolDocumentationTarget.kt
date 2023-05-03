@@ -2,8 +2,8 @@
 package com.intellij.webSymbols.documentation
 
 import com.intellij.navigation.TargetPresentation
-import com.intellij.platform.documentation.DocumentationResult
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 

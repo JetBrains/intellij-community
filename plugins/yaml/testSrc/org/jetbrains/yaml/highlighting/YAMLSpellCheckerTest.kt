@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.psi.injection.Injectable
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.InjectionTestFixture
 import org.intellij.lang.regexp.RegExpLanguage
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.jetbrains.annotations.Nls
@@ -68,24 +69,12 @@ class YAMLSpellCheckerTest : BasePlatformTestCase() {
   fun testInjectedFragments() {
     myFixture.configureByText("hashes.yaml", """
       data:
-        fail: '<TYPO>ilike</TYPO>'
-        ok: '[i<caret>like]?' 
+        # language=RegExp
+        ok: '[i<caret>like]?'
     """.trimIndent())
 
-    InjectLanguageAction.invokeImpl(myFixture.project, myFixture.editor, myFixture.file, object : Injectable() {
-      override fun getId(): String {
-        return "temporary"
-      }
-
-      @Nls(capitalization = Nls.Capitalization.Title)
-      override fun getDisplayName(): String {
-        return "Temporary"
-      }
-
-      override fun getLanguage(): Language {
-        return RegExpLanguage.INSTANCE
-      }
-    })
+    InjectionTestFixture(myFixture)
+      .assertInjectedLangAtCaret(RegExpLanguage.INSTANCE.id)
 
     myFixture.checkHighlighting(true, false, true)
   }

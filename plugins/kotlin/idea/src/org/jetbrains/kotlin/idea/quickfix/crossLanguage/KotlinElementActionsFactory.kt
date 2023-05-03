@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeIn
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -554,11 +553,7 @@ internal fun addAnnotationEntry(
     val psiFactory = KtPsiFactory(target.project)
     // could be generated via descriptor when KT-30478 is fixed
     val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(target, request, psiFactory)
-    val annotationEntry = psiFactory.createAnnotationEntry(annotationText)
-    target.findAnnotation(FqName(request.qualifiedName))?.let {
-        return it.replace(annotationEntry) as KtAnnotationEntry
-    }
-    return target.addAnnotationEntry(annotationEntry)
+    return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
 }
 
 private fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {

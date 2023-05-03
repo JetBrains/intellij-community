@@ -13,6 +13,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,23 +47,28 @@ public class YAMLUtil {
    */
   @NotNull
   public static String getConfigFullName(@NotNull YAMLPsiElement target) {
-    final StringBuilder builder = new StringBuilder();
+    return StringUtil.join(getConfigFullNameParts(target), ".");
+  }
+
+  public static @NotNull List<String> getConfigFullNameParts(@NotNull YAMLPsiElement target) {
+    SmartList<String> result = new SmartList<>();
     PsiElement element = target;
     while (element != null) {
-      PsiElement parent = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, YAMLSequenceItem.class);
+      String elementIndexSuffix = "";
+      if (element instanceof YAMLSequenceItem) {
+        elementIndexSuffix = "[" + ((YAMLSequenceItem)element).getItemIndex() + "]";
+        element = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class);
+      }
+
       if (element instanceof YAMLKeyValue) {
-        builder.insert(0, ((YAMLKeyValue)element).getKeyText());
-        if (parent != null) {
-          builder.insert(0, '.');
-        }
+        String keyText = ((YAMLKeyValue)element).getKeyText();
+        result.add(keyText + elementIndexSuffix);
       }
-      else if (element instanceof YAMLSequenceItem) {
-        builder.insert(0, "[" + ((YAMLSequenceItem)element).getItemIndex() + "]");
-      }
-      element = parent;
+      element = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, YAMLSequenceItem.class);
     }
-    return builder.toString();
+    return ContainerUtil.reverse(result);
   }
+
 
   @NotNull
   public static Collection<YAMLKeyValue> getTopLevelKeys(final YAMLFile file) {

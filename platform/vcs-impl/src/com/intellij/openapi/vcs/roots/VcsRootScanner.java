@@ -194,7 +194,7 @@ public final class VcsRootScanner implements Disposable {
   static final class TrustListener implements TrustedProjectsListener {
     @Override
     public void onProjectTrusted(@NotNull Project project) {
-      getInstance(project).scheduleScan();
+      ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> getInstance(project).scheduleScan());
     }
   }
 }

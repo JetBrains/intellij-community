@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.SwingHelper
 import com.jetbrains.python.PyBundle
@@ -92,6 +94,11 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     if (!Registry.get("python.use.targets.api").asBoolean()) {
       group.add(AddInterpreterAction(project, module, currentSdk))
     }
+    group.add(object : AnAction(PyBundle.message("python.packaging.interpreter.widget.manage.packages")) {
+      override fun actionPerformed(e: AnActionEvent) {
+        ToolWindowManager.getInstance(project).getToolWindow("Python Packages")?.show()
+      }
+    })
 
     return JBPopupFactory.getInstance().createActionGroupPopup(
       PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"),

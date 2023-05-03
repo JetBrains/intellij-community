@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.platform.documentation.impl.DocumentationRequest
-import com.intellij.platform.documentation.impl.documentationRequest
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.HintUpdateSupply

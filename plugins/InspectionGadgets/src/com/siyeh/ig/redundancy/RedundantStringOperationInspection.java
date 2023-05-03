@@ -208,7 +208,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         LocalQuickFix fix = new RemoveRedundantOffsetAndLengthArgumentsFix(args[1], args[2]);
         return myManager.createProblemDescriptor(args[1], args[2],
                                                  InspectionGadgetsBundle.message("inspection.redundant.arguments.message"),
-                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fix);
+                                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly, fix);
       }
       return null;
     }

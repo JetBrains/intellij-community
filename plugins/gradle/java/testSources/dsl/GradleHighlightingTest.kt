@@ -240,6 +240,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       }
       withDirectory("buildSrc/src/main/groovy")
       withDirectory("buildSrc/src/main/java")
+      withFile("buildSrc/settings.gradle", "")
     }
 
     private val BUILD_SRC_FIXTURE_2 = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc2") {

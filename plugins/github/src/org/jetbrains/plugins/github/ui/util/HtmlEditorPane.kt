@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.util
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
@@ -19,7 +20,11 @@ import javax.swing.text.html.InlineView
 internal class HtmlEditorPane() : BaseHtmlEditorPane() {
 
   init {
-    editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP, GHExtensions()).build()
+    editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
+      ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
+      CollaborationToolsUIUtil.CONTENT_TOOLTIP,
+      GHExtensions()
+    ).build()
   }
 
   constructor(@NlsSafe body: String) : this() {
@@ -42,9 +47,9 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane() {
           return object : InlineView(elem) {
 
             override fun getPreferredSpan(axis: Int): Float {
-              when (axis) {
-                X_AXIS -> return icon.iconWidth.toFloat() + super.getPreferredSpan(axis)
-                else -> return super.getPreferredSpan(axis)
+              return when (axis) {
+                X_AXIS -> icon.iconWidth.toFloat() + super.getPreferredSpan(axis)
+                else -> super.getPreferredSpan(axis)
               }
             }
 

@@ -40,14 +40,14 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
 import java.awt.Window
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.accessibility.AccessibleContext
 import javax.swing.*
+
+private const val INIT_BOUNDS_KEY = "InitBounds"
 
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
@@ -190,12 +190,7 @@ open class ProjectFrameHelper internal constructor(
       frame.iconImage = null
     }
     else if (SystemInfoRt.isLinux) {
-      frame.addComponentListener(object : ComponentAdapter() {
-        override fun componentShown(e: ComponentEvent) {
-          frame.removeComponentListener(this)
-          IdeMenuBar.installAppMenuIfNeeded(frame)
-        }
-      })
+      IdeMenuBar.installAppMenuIfNeeded(frame)
       // in production (not from sources) makes sense only on Linux
       AppUIUtil.updateWindowIcon(frame)
     }
@@ -340,6 +335,26 @@ open class ProjectFrameHelper internal constructor(
     frameDecorator?.setProject()
     activationTimestamp?.let {
       RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
+    }
+    applyInitBounds()
+  }
+
+  fun setInitBounds(bounds: Rectangle?) {
+    if (bounds != null && frame.isInFullScreen) {
+      frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, bounds)
+    }
+  }
+
+  private fun applyInitBounds() {
+    if (isInFullScreen) {
+      val bounds = rootPane.getClientProperty(INIT_BOUNDS_KEY)
+      rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
+      if (bounds is Rectangle) {
+        ProjectFrameBounds.getInstance(project!!).markDirty(bounds)
+      }
+    }
+    else {
+      ProjectFrameBounds.getInstance(project!!).markDirty(frame.bounds)
     }
   }
 

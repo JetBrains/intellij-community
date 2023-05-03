@@ -9,7 +9,7 @@ import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException

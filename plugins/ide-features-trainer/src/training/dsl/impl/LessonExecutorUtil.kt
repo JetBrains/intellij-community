@@ -8,14 +8,20 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
+import com.intellij.util.ui.JBUI
 import training.dsl.*
 import training.learn.ActionsRecorder
 import training.ui.LearningUiHighlightingManager
 import training.ui.MessageFactory
-import java.awt.*
+import java.awt.Component
+import java.awt.Point
+import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 internal data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
@@ -67,7 +73,7 @@ internal object LessonExecutorUtil {
     val textBuilder = MessageFactory.convertToGotItFormat(text)
     val balloonBuilder = GotItComponentBuilder(textBuilder)
     if (balloonConfig.width > 0) {
-      balloonBuilder.withMaxWidth(balloonConfig.width)
+      balloonBuilder.withMaxWidth(JBUI.scale(balloonConfig.width))
     }
     val balloon: Balloon = balloonBuilder
       .withStepNumber(lessonExecutor.visualIndexNumber)
@@ -76,11 +82,10 @@ internal object LessonExecutorUtil {
       .requestFocus(balloonConfig.gotItCallBack != null)
       .withContrastColors(true)
       .build(actionsRecorder) {
-        setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
+        setCornerToPointerDistance(JBUI.scale(balloonConfig.cornerToPointerDistance))
         setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
         setCloseButtonEnabled(false)
         setHideOnCloseClick(false)
-        setRequestFocus(true)
       }
 
     balloon.addListener(object : JBPopupListener {

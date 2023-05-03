@@ -7,8 +7,11 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +35,8 @@ public final class TypeEvalContext {
 
   private List<String> myTrace;
   private String myTraceIndent = "";
+
+  private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<>();
   private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<>();
@@ -204,6 +209,20 @@ public final class TypeEvalContext {
         return type;
       }
     );
+  }
+
+  /**
+   * Normally, each {@link PyTypeProvider} is supposed to perform all the necessary analysis independently
+   * and hence should completely isolate its state. However, on rare occasions when several type providers have to
+   * recursively call each other, it might be necessary to preserve some state for subsequent calls to the same provider with
+   * the same instance of {@link TypeEvalContext}. Each {@link TypeEvalContext} instance contains an associated thread-local
+   * {@link ProcessingContext} that can be used for such caching. Should be used with discretion.
+   *
+   * @return a thread-local instance of {@link ProcessingContext} bound to this {@link TypeEvalContext} instance
+   */
+  @ApiStatus.Experimental
+  public @NotNull ProcessingContext getProcessingContext() {
+    return myProcessingContext.get();
   }
 
   private static void assertValid(@Nullable PyType result, @NotNull PyTypedElement element) {

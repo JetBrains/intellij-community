@@ -195,6 +195,7 @@ public final class ConditionalExpressionGenerator {
     final PsiType thenType = thenValue.getType();
     final PsiType elseType = elseValue.getType();
     if (thenType instanceof PsiPrimitiveType &&
+        !PsiTypes.nullType().equals(thenType) &&
         !(elseType instanceof PsiPrimitiveType) &&
         !(type instanceof PsiPrimitiveType)) {
       // prevent unboxing of boxed value to preserve semantics (IDEA-48267, IDEA-310641)
@@ -204,6 +205,7 @@ public final class ConditionalExpressionGenerator {
       conditional.append(ct.text(elseValue, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
     }
     else if (elseType instanceof PsiPrimitiveType &&
+             !PsiTypes.nullType().equals(elseType) &&
              !(thenType instanceof PsiPrimitiveType) &&
              !(type instanceof PsiPrimitiveType)) {
       // prevent unboxing of boxed value to preserve semantics (IDEA-48267, IDEA-310641)

@@ -54,6 +54,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Edit = load("actions/edit.svg", -1253654087, 2);
     /** 16x16 */ public static final @NotNull Icon EditScheme = load("actions/editScheme.svg", 356615607, 2);
     /** 16x16 */ public static final @NotNull Icon EditSource = load("actions/editSource.svg", -1793495184, 2);
+    /** 16x16 */ public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.svg", 1145610884, 0);
+    /** 16x16 */ public static final @NotNull Icon EnableNewUiSelected = load("actions/enableNewUiSelected.svg", -1417821710, 0);
     /** 16x16 */ public static final @NotNull Icon Execute = load("actions/execute.svg", -1785415525, 10);
     /** 16x16 */ public static final @NotNull Icon Exit = load("actions/exit.svg", -837971561, 2);
     /** 16x16 */ public static final @NotNull Icon Expandall = load("actions/expandall.svg", 1240410990, 2);
@@ -215,11 +217,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Words = load("actions/words.svg", 1648055349, 0);
     /** 16x16 */ public static final @NotNull Icon WordsHovered = load("actions/wordsHovered.svg", -1193053876, 0);
     /** 16x16 */ public static final @NotNull Icon WordsSelected = load("actions/wordsSelected.svg", -2133467313, 0);
-
-    /** @deprecated use {@link #ToggleVisibility} */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final @NotNull Icon ShowHiddens = ToggleVisibility;
 
     /** @deprecated to be removed (use expandable text field instead, see https://jetbrains.design/intellij/controls/built_in_button/) */
     @SuppressWarnings("unused")
@@ -745,11 +742,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestRoot = load("modules/testRoot.svg", 1542095868, 0);
     /** 16x16 */ public static final @NotNull Icon UnloadedModule = load("modules/unloadedModule.svg", -44158296, 0);
     /** 16x16 */ public static final @NotNull Icon UnmarkWebroot = load("modules/unmarkWebroot.svg", 1827537326, 0);
-
-    /** @deprecated meaning is unclear, use other icons */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final @NotNull Icon Output = load("modules/output.png", 0, 0);
   }
 
   public static final class Nodes {
@@ -1284,12 +1276,6 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon Opera = load("xml/browsers/opera.svg", -1288349951, 0);
       /** 16x16 */ public static final @NotNull Icon Safari = load("xml/browsers/safari.svg", -1768440962, 0);
       /** 16x16 */ public static final @NotNull Icon Yandex = load("xml/browsers/yandex.svg", -1968862051, 0);
-
-      /** @deprecated to be removed (use {@link #Chrome}) */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval
-      public static final @NotNull Icon Chrome16 = Chrome;
     }
 
     /** 16x16 */ public static final @NotNull Icon Css_class = load("xml/css_class.svg", -2000216852, 0);

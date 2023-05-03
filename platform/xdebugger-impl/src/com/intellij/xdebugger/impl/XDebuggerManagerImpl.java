@@ -558,7 +558,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         return -1;
       }
       int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
-      return editor.getDocument().getLineNumber(lineStartOffset);
+      int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
+      return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
     }
 
     @Override

@@ -326,7 +326,9 @@ Android Studio: workaround for b/218317110 */
             val library = context.project.libraryCollection.libraries
               .firstOrNull { it.name.startsWith("kotlinc.kotlin-jps-plugin-classpath") && it.type is JpsRepositoryLibraryType }
 
-            val kotlinVersion = library?.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.version ?: KOTLIN_COOP_DEV_VERSION
+            val kotlinVersion = System.getProperty("force.override.kotlin.compiler.version")
+                                ?: library?.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.version
+                                ?: KOTLIN_COOP_DEV_VERSION
 
             val version = "${major}-${kotlinVersion}-${kind}${minor}"
             context.messages.info("version: $version")

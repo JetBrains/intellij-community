@@ -28,6 +28,7 @@ class CompactAccountsPanelFactory<A : Account>(
 
     @Suppress("UndesirableClassUsage")
     val accountsList = JList(accountsListModel).apply {
+      isOpaque = false
       cellRenderer = iconRenderer
       ClientProperty.put(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(iconRenderer))
 

@@ -86,7 +86,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   }
 
   private val reloadDetailsAction = actionManager.getAction("Github.PullRequest.Details.Reload")
-  private val reloadChangesAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
 
   private val detailsLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
     dataProvider.detailsData.reloadDetails()
@@ -150,14 +149,14 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   ) : GHPRCommitBrowserComponentController {
     override fun selectCommit(oid: String) {
       val selectedCommit = commitsVm.reviewCommits.value.find { it.abbreviatedOid == oid }
-      commitsVm.selectCommit(selectedCommit)
       diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
+      commitsVm.selectCommit(selectedCommit)
       CollaborationToolsUIUtil.focusPanel(tree)
     }
 
     override fun selectChange(oid: String?, filePath: String) {
-      commitsVm.selectAllCommits()
       diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
+      commitsVm.selectAllCommits()
 
       if (oid == null) {
         tree.selectFile(VcsUtil.getFilePath(filePath, false))
@@ -227,7 +226,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       diffBridge.filesTree = tree
       diffBridge.commitsTree = tree
       diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
-      tree?.showPullRequestProgress(uiDisposable, repository, dataProvider.reviewData, dataProvider.viewedStateData)
+      tree?.showPullRequestProgress(uiDisposable, repository, dataProvider.reviewData, dataProvider.viewedStateData, diffBridge)
     }.createWithUpdatesStripe(uiDisposable) { parent, model ->
       val getCustomData = { tree: ChangesTree, dataId: String ->
         if (GHPRActionKeys.PULL_REQUEST_FILES.`is`(dataId)) tree.getPullRequestFiles()
@@ -287,7 +286,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider,
                                                           dataContext.filesManager)
 
-    reloadChangesAction.registerCustomShortcutSet(tree, null)
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 
     DataManager.registerDataProvider(parentPanel) { dataId ->

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
@@ -54,7 +54,7 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
                                                 list: PsiAnnotationOwner,
                                                 annotationRequest: AnnotationRequest) {
       val project = context.project
-      val annotation = list.findAnnotation(annotationRequest.qualifiedName) ?: list.addAnnotation(annotationRequest.qualifiedName)
+      val annotation = list.addAnnotation(annotationRequest.qualifiedName)
       val psiElementFactory = PsiElementFactory.getInstance(project)
 
       fillAnnotationAttributes(annotation, annotationRequest, psiElementFactory, context)

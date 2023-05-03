@@ -2,16 +2,13 @@
 package com.jetbrains.python.packaging.toolwindow
 
 import com.google.common.io.Resources
-import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.jcef.JCEFHtmlPanel
-import com.intellij.util.ui.UIUtil
-import org.cef.browser.CefBrowser
-import org.cef.browser.CefFrame
-import org.cef.handler.CefRequestHandlerAdapter
-import org.cef.network.CefRequest
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicInteger
@@ -23,7 +20,16 @@ class PyPackagingJcefHtmlPanel(project: Project) : JCEFHtmlPanel(uniqueUrl) {
 
   private val cssStyleCodeToInject: String
     get() {
-      val styleKey = if (UIUtil.isUnderDarcula()) "python_packaging_toolwindow_darcula.css" else "python_packaging_toolwindow_default.css"
+      val styleKey = when (val laf = LafManager.getInstance().currentLookAndFeel) {
+        is UIThemeBasedLookAndFeelInfo -> when (laf.theme.id) {
+          "ExperimentalDark" -> "python_packaging_toolwindow_dark.css"
+          "ExperimentalLight" -> "python_packaging_toolwindow_light.css"
+          "JetBrainsHighContrastTheme" -> "python_packaging_toolwindow_high_contrast.css"
+          else -> "python_packaging_toolwindow_default.css"
+        }
+        is DarculaLookAndFeelInfo -> "python_packaging_toolwindow_darcula.css"
+        else -> "python_packaging_toolwindow_default.css"
+      }
       return loadedStyles.getOrPut(styleKey) {
         try {
           val resource = PyPackagingJcefHtmlPanel::class.java.getResource("/styles/$styleKey") ?: error("Failed to load $styleKey")

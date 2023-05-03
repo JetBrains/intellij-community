@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -23,12 +23,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 /**
  * Temporary utility class for migration to the new UI.
@@ -44,16 +44,13 @@ public abstract class ExperimentalUI {
   public static final String KEY = "ide.experimental.ui";
 
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
+  public static final String NEW_UI_FIRST_SWITCH = "experimental.ui.first.switch";
   public static final String NEW_UI_PROMO_BANNER_DISABLED_PROPERTY = "experimental.ui.promo.banner.disabled";
 
-  private static final String FIRST_PROMOTION_DATE_FORMAT = "yyyy/MM/dd";
-  private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.date";
+  private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.localdate";
 
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
-
-  // Temporary solution for the IDEA-313607 issue in 231 branch. Master has a better solution.
-  public final AtomicBoolean needSuggestRestart = new AtomicBoolean(true);
 
   @Contract(pure = true)
   public static boolean isNewUI() {
@@ -64,32 +61,30 @@ public abstract class ExperimentalUI {
   }
 
   public static void setNewUI(boolean newUI) {
-    if (newUI) {
-      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true);
-    }
+    getInstance().setNewUIInternal(newUI, true);
+  }
 
-    Registry.get("ide.experimental.ui").setValue(newUI);
+  public void setNewUIInternal(boolean newUI, boolean suggestRestart) {
+
   }
 
   public static int getPromotionDaysCount() {
     PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
     String value = propertyComponent.getValue(FIRST_PROMOTION_DATE_PROPERTY);
-    SimpleDateFormat dateFormat = new SimpleDateFormat(FIRST_PROMOTION_DATE_FORMAT);
-    Date now = new Date();
+    LocalDate now = LocalDate.now();
 
     if (value == null) {
-      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, dateFormat.format(now));
+      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
       return 0;
     }
 
     try {
-      Date firstDate = dateFormat.parse(value);
-      return (int)TimeUnit.DAYS.convert(now.getTime() - firstDate.getTime(), TimeUnit.MILLISECONDS);
+      LocalDate firstDate = LocalDate.parse(value);
+      return (int)DAYS.between(firstDate, now);
     }
-    catch (ParseException e) {
+    catch (DateTimeParseException e) {
       LOG.warn("Invalid stored date " + value);
-      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, dateFormat.format(now));
+      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
       return 0;
     }
   }
@@ -142,7 +137,7 @@ public abstract class ExperimentalUI {
       else if (instance.isIconPatcherSet.compareAndSet(true, false)) {
         IconLoader.removePathPatcher(instance.iconPathPatcher);
         instance.iconPathPatcher = null;
-        instance.onExpUIDisabled(instance.needSuggestRestart.get());
+        instance.onExpUIDisabled(true);
       }
     }
   }
@@ -222,6 +217,10 @@ public abstract class ExperimentalUI {
 
     public static final class General {
       public static final Icon Search = loadIcon("expui/general/search.svg");
+    }
+
+    public static final class ToolWindow {
+      public static final Icon MeetNewUi = loadIcon("expui/toolwindow/meetNewUi.svg");
     }
 
     private static Icon loadIcon(String path) {

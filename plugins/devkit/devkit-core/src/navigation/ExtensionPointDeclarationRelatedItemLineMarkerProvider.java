@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -21,26 +23,34 @@ import org.jetbrains.uast.*;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
- * Navigate from EP field to declaration in {@code plugin.xml}.
+ * Provides gutter icon for EP code declaration to matching {@code <extensionPoint>} in {@code plugin.xml}.
  */
-public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
+final class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     UElement uElement = UastUtils.getUParentForIdentifier(element);
-    if (!(uElement instanceof UField)) {
-      return;
-    }
+    if (uElement instanceof UField uField) {
+      if (!isExtensionPointNameDeclarationField(uField)) return;
 
-    process((UField)uElement, element.getProject(), result);
+      process(resolveEpFqn(uField), uField, element.getProject(), result);
+    }
+    else if (uElement instanceof UCallExpression uCallExpression) {
+      if (!isExtensionPointNameDeclarationViaSuperCall(uCallExpression)) return;
+
+      UDeclaration uDeclaration = UastUtils.getParentOfType(uCallExpression, UDeclaration.class);
+      assert uDeclaration != null : uElement.asSourceString();
+      process(resolveEpFqn(uCallExpression), uDeclaration, element.getProject(), result);
+    }
   }
 
-  private static void process(UField uField, Project project, Collection<? super RelatedItemLineMarkerInfo<?>> result) {
-    if (!isExtensionPointNameDeclarationField(uField)) return;
-
-    final String epFqn = resolveEpFqn(uField);
+  private static void process(@Nullable @NonNls String epFqn,
+                              @NotNull UDeclaration uDeclaration,
+                              Project project,
+                              Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     if (epFqn == null) return;
 
     final ExtensionPoint point = ExtensionPointIndex.findExtensionPoint(project,
@@ -48,7 +58,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
                                                                         epFqn);
     if (point == null) return;
 
-    PsiElement identifier = UElementKt.getSourcePsiElement(uField.getUastAnchor());
+    PsiElement identifier = UElementKt.getSourcePsiElement(uDeclaration.getUastAnchor());
     if (identifier == null) return;
 
     final ExtensionPointCandidate candidate = new ExtensionPointCandidate(SmartPointerManager.createPointer(point.getXmlTag()), epFqn);
@@ -57,8 +67,33 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
     result.add(info);
   }
 
-  @Nullable
-  private static String resolveEpFqn(UField uField) {
+  private static boolean isExtensionPointNameDeclarationViaSuperCall(@NotNull UCallExpression uCallExpression) {
+    if (uCallExpression.getValueArgumentCount() != 1) return false;
+    if (uCallExpression.getKind() != UastCallKind.CONSTRUCTOR_CALL) {
+      if (uCallExpression.getKind() != UastCallKind.METHOD_CALL && !Objects.equals(uCallExpression.getMethodName(), "super")) {
+        return false;
+      }
+    }
+
+    // Kotlin EP_NAME field with CTOR call -> handled by UField branch
+    if (UastUtils.getParentOfType(uCallExpression, UField.class) != null) {
+      return false;
+    }
+
+    PsiMethod resolvedMethod = uCallExpression.resolve();
+    if (resolvedMethod == null) return false;
+    if (!resolvedMethod.isConstructor()) return false;
+    return InheritanceUtil.isInheritor(resolvedMethod.getContainingClass(), KeyedExtensionCollector.class.getName());
+  }
+
+
+  private static @Nullable @NonNls String resolveEpFqn(@NotNull UCallExpression uCallExpression) {
+    UExpression uParameter = uCallExpression.getArgumentForParameter(0);
+    if (uParameter == null) return null;
+    return UastUtils.evaluateString(uParameter);
+  }
+
+  private static @Nullable @NonNls String resolveEpFqn(@NotNull UField uField) {
     final UExpression initializer = uField.getUastInitializer();
 
     UExpression epNameExpression = null;
@@ -76,7 +111,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
     return UastUtils.evaluateString(epNameExpression);
   }
 
-  private static boolean isExtensionPointNameDeclarationField(UField uField) {
+  private static boolean isExtensionPointNameDeclarationField(@NotNull UField uField) {
     if (!uField.isFinal()) {
       return false;
     }

@@ -24,7 +24,7 @@ import static org.jetbrains.annotations.ApiStatus.Obsolete;
 /**
  * <b>PSA</b>
  * <p>
- * The new code is expected to implement {@link com.intellij.lang.documentation.DocumentationTarget DocumentationTarget} instead.
+ * The new code is expected to implement {@link com.intellij.platform.backend.documentation.DocumentationTarget DocumentationTarget} instead.
  * {@code DocumentationProvider} interface is not <b>yet</b> deprecated to avoid warnings in the existing code.
  * Existing implementations are supported as is
  * via {@link com.intellij.lang.documentation.psi.PsiElementDocumentationTarget PsiElementDocumentationTarget},

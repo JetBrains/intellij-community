@@ -1001,14 +1001,18 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION);
+      LOG.error(
+        "Read access is allowed from inside read-action (or EDT) only" +
+        " (see com.intellij.openapi.application.Application.runReadAction())\n" + getThreadDetails());
     }
   }
 
   @Override
   public void assertReadAccessNotAllowed() {
     if (isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_INSIDE_READ_ACTION);
+      LOG.error(
+        "Read access is not allowed",
+        getThreadDetails());
     }
   }
 
@@ -1041,8 +1045,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
   }
 
-  private static void throwThreadAccessException(@NotNull @NonNls String message) {
-    throw new RuntimeExceptionWithAttachments(message + DOCUMENTATION_LINK + "\n" + getThreadDetails(),
+  private static void throwThreadAccessException(@NotNull String message) {
+    throw new RuntimeExceptionWithAttachments(message, getThreadDetails(),
                                               new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
@@ -1083,7 +1087,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertTimeConsuming() {
-    assertIsNonDispatchThread();
+    if (myTestModeFlag || myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
+    LOG.assertTrue(!isDispatchThread(), "This operation is time consuming and must not be called on EDT");
   }
 
   @Override
@@ -1276,9 +1281,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertWriteAccessAllowed() {
-    if (!isWriteAccessAllowed()) {
-      throwThreadAccessException(MUST_EXECUTE_INSIDE_WRITE_ACTION);
-    }
+    LOG.assertTrue(isWriteAccessAllowed(),
+                   "Write access is allowed inside write-action only (see com.intellij.openapi.application.Application.runWriteAction())");
   }
 
   @Override

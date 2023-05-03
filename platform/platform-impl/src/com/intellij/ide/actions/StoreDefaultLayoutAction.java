@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager;
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +13,9 @@ public final class StoreDefaultLayoutAction extends StoreNamedLayoutAction {
   }
 
   @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    return false; // Store Current Layout in the Window menu looks weird with a check mark
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setDescription(ActionsBundle.message("action.StoreDefaultLayout.named.description", getLayoutNameSupplier().invoke()));
   }
 
 }

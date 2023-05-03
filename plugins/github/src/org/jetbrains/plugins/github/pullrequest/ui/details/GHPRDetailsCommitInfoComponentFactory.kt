@@ -4,7 +4,11 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.ColorUtil
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
@@ -18,14 +22,14 @@ internal object GHPRDetailsCommitInfoComponentFactory {
     val title = HtmlEditorPane().apply {
       bindText(scope, commitsVm.selectedCommit.map { commit -> commit?.messageHeadlineHTML.orEmpty() })
     }
-    val description = HtmlEditorPane().apply {
-      bindText(scope, commitsVm.selectedCommit.map { commit -> commit?.messageBodyHTML.orEmpty() })
-    }
     val info = HtmlEditorPane().apply {
       bindText(scope, commitsVm.selectedCommit.map { commit ->
         commit ?: return@map ""
         val author = commit.author?.user ?: commitsVm.ghostUser
-        "${author.shortName} ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"
+        HtmlBuilder()
+          .append(HtmlChunk.text("${author.getPresentableName()} ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"))
+          .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor())))
+          .toString()
       })
     }
 
@@ -34,7 +38,6 @@ internal object GHPRDetailsCommitInfoComponentFactory {
       bindVisibility(scope, commitsVm.selectedCommit.map { commit -> commit != null })
 
       add(title)
-      add(description)
       add(info)
     }
   }

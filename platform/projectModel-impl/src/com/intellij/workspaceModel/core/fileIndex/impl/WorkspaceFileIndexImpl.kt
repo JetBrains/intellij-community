@@ -7,6 +7,7 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIteratorEx
@@ -21,7 +22,9 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.CollectionQuery
+import com.intellij.util.PathUtil
 import com.intellij.util.Query
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
@@ -39,7 +42,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   @Volatile
-  override var indexData: WorkspaceFileIndexData = UninitializedWorkspaceFileIndexData 
+  override var indexData: WorkspaceFileIndexData = EmptyWorkspaceFileIndexData.NOT_INITIALIZED 
 
   init {
     project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
@@ -53,7 +56,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
       }
     })
     LowMemoryWatcher.register({ indexData.onLowMemory() }, project)
-    val clearData = Runnable { indexData = UninitializedWorkspaceFileIndexData }
+    val clearData = Runnable { indexData = EmptyWorkspaceFileIndexData.RESET }
     EP_NAME.addChangeListener(clearData, this)
     CustomEntityProjectModelInfoProvider.EP.addChangeListener(clearData, this)
   }
@@ -76,6 +79,33 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   override fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile? {
     return findFileSet(file, honorExclusion, true, false, false)?.root
+  }
+
+  override fun isUrlInContent(url: String): ThreeState {
+    var currentUrl = url
+    val fileManager = VirtualFileManager.getInstance()
+    val urlManager = VirtualFileUrlManager.getInstance(project)
+    while (currentUrl.isNotEmpty()) {
+      val file = fileManager.findFileByUrl(currentUrl)
+      if (file != null) {
+        return ThreeState.fromBoolean(isInContent(file))
+      }
+      val virtualFileUrl = urlManager.findByUrl(currentUrl)
+      if (virtualFileUrl != null) {
+        val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl)
+        if (NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds) {
+          return ThreeState.NO
+        }
+        if (NonExistingFileSetKind.EXCLUDED_OTHER in kinds) {
+          return ThreeState.UNSURE
+        }
+        if (NonExistingFileSetKind.INCLUDED_CONTENT in kinds) {
+          return ThreeState.YES
+        }
+      }
+      currentUrl = PathUtil.getParentPath(currentUrl)
+    }
+    return ThreeState.NO
   }
 
   override fun processContentFilesRecursively(fileOrDir: VirtualFile,
@@ -154,9 +184,15 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     }
   }
 
-  override suspend fun ensureInitialized() {
+  override suspend fun initialize() {
     readAction {
-      getOrCreateMainIndexData()
+      initializeBlocking()
+    }
+  }
+
+  override fun initializeBlocking() {
+    if (indexData is EmptyWorkspaceFileIndexData) {
+      indexData = WorkspaceFileIndexDataImpl(contributors, project, RootFileSupplier.INSTANCE)
     }
   }
 
@@ -185,7 +221,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
-    getOrCreateMainIndexData().visitFileSets(visitor)
+    getMainIndexData().visitFileSets(visitor)
   }
 
   override fun getPackageName(directory: VirtualFile): String? {
@@ -193,7 +229,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> {
-    return getOrCreateMainIndexData().getDirectoriesByPackageName(packageName, includeLibrarySources)
+    return getMainIndexData().getDirectoriesByPackageName(packageName, includeLibrarySources)
   }
 
   override fun getDirectoriesByPackageName(packageName: String, scope: GlobalSearchScope): Query<VirtualFile> {
@@ -201,7 +237,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     if (branches.isEmpty()) {
       return getDirectoriesByPackageName(packageName, true).filtering { scope.contains(it) }
     }
-    val indexDataList = mutableListOf(getOrCreateMainIndexData()).also {
+    val indexDataList = mutableListOf(getMainIndexData()).also {
       branches.mapTo(it, ::obtainBranchIndexData)
     }
     return CollectionQuery(indexDataList)
@@ -214,14 +250,24 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     if (branch != null) {
       return obtainBranchIndexData(branch)
     }
-    return getOrCreateMainIndexData()
+    return getMainIndexData()
   }
 
-  private fun getOrCreateMainIndexData(): WorkspaceFileIndexData {
+  private fun getMainIndexData(): WorkspaceFileIndexData {
     var data = indexData
-    if (data === UninitializedWorkspaceFileIndexData) {
-      data = WorkspaceFileIndexDataImpl(contributors, project, RootFileSupplier.INSTANCE)
-      indexData = data
+    when (data) {
+      EmptyWorkspaceFileIndexData.NOT_INITIALIZED -> {
+        if (!project.isDefault) {
+          thisLogger().error("WorkspaceFileIndex is not initialized yet, empty data is returned. Activities which use the project configuration must be postponed until the project is fully loaded.")
+        }
+        else {
+          thisLogger().warn("WorkspaceFileIndex must not be queried for the default project")
+        }
+      }
+      EmptyWorkspaceFileIndexData.RESET -> {
+        data = WorkspaceFileIndexDataImpl(contributors, project, RootFileSupplier.INSTANCE)
+        indexData = data
+      }
     }
     return data
   }
@@ -240,7 +286,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   override fun reset() {
-    indexData = UninitializedWorkspaceFileIndexData
+    indexData = EmptyWorkspaceFileIndexData.RESET
   }
 }
 

@@ -19,6 +19,7 @@ public final class CollaborationToolsIcons {
   /** 16x16 */ public static final @NotNull Icon Comment = load("icons/comment.svg", 434693468, 0);
   /** 16x16 */ public static final @NotNull Icon Delete = load("icons/delete.svg", -1322057667, 0);
   /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("icons/deleteHovered.svg", 1457380528, 0);
+  /** 16x16 */ public static final @NotNull Icon FileUnread = load("icons/fileUnread.svg", -1208661777, 0);
   /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("icons/pullRequestClosed.svg", 410361929, 0);
   /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("icons/pullRequestOpen.svg", -1114527288, 0);
 
@@ -30,7 +31,6 @@ public final class CollaborationToolsIcons {
     /** 16x16 */ public static final @NotNull Icon CommentUnreadMany = load("icons/review/commentUnreadMany.svg", -1322379145, 2);
     /** 16x16 */ public static final @NotNull Icon CommentUnresolved = load("icons/review/commentUnresolved.svg", 1519158026, 0);
     /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("icons/review/defaultAvatar.svg", 2035996389, 0);
-    /** 16x16 */ public static final @NotNull Icon FileUnread = load("icons/review/fileUnread.svg", -1208661777, 0);
     /** 16x16 */ public static final @NotNull Icon NonMergeable = load("icons/review/nonMergeable.svg", -379994552, 0);
   }
 

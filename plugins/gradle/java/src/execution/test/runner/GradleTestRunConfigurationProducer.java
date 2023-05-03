@@ -199,7 +199,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       for (String sourceFolder : sourceFolders) {
         if (FileUtil.isAncestor(sourceFolder, sourcePath, false)) {
           String testTaskSimpleName = testData.getTestName();
-          List<String> tasks = new SmartList<>(gradleModuleData.getTaskPath(testTaskSimpleName, true));
+          List<String> tasks = new SmartList<>(gradleModuleData.getTaskPathOfSimpleTaskName(testTaskSimpleName));
           testTasks.add(new TasksToRun.Impl(testTaskSimpleName, tasks));
         }
       }

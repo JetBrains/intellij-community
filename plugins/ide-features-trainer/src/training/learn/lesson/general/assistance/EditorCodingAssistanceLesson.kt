@@ -63,7 +63,6 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
       test {
         Thread.sleep(500)
         invokeActionViaShortcut("CONTROL F1")
-        invokeActionViaShortcut("CONTROL F1")
       }
     }
 

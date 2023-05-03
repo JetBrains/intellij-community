@@ -12,7 +12,7 @@ import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
 

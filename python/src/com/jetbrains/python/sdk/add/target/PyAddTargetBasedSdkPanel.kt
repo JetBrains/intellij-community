@@ -83,7 +83,7 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
                                          context = context,
                                          targetSupplier = targetSupplier,
                                          config = config)
-    val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context, targetEnvironmentConfiguration, config)
+    val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context, targetSupplier, config)
     val condaPanel = createAnacondaPanel()
     return when {
       isUnderLocalTarget -> {

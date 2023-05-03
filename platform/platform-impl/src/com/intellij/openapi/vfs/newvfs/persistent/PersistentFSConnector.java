@@ -76,10 +76,10 @@ final class PersistentFSConnector {
 
   private static @NotNull PersistentFSConnection init(@NotNull String cachesDir, int expectedVersion, boolean useContentHashes,
                                                       List<ConnectionInterceptor> interceptors) {
-    Exception exception = null;
+    Throwable exception = null;
     for (int i = 0; i < MAX_INITIALIZATION_ATTEMPTS; i++) {
       INITIALIZATION_COUNTER.incrementAndGet();
-      Pair<PersistentFSConnection, Exception> pair = tryInit(cachesDir, expectedVersion, useContentHashes, interceptors);
+      Pair<PersistentFSConnection, Throwable> pair = tryInit(cachesDir, expectedVersion, useContentHashes, interceptors);
       exception = pair.getSecond();
       if (exception == null) {
         return pair.getFirst();
@@ -88,7 +88,7 @@ final class PersistentFSConnector {
     throw new RuntimeException("Can't initialize filesystem storage", exception);
   }
 
-  private static @NotNull Pair<PersistentFSConnection, Exception> tryInit(@NotNull String cachesDir,
+  private static @NotNull Pair<PersistentFSConnection, Throwable> tryInit(@NotNull String cachesDir,
                                                                           int expectedVersion,
                                                                           boolean useContentHashes,
                                                                           List<ConnectionInterceptor> interceptors) {
@@ -189,7 +189,7 @@ final class PersistentFSConnector {
                                                     markDirty,
                                                     interceptors), null);
     }
-    catch (Exception e) { // IOException, IllegalArgumentException
+    catch (Exception | AssertionError e) { // IOException, IllegalArgumentException, AssertionError (assert)
       LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
       try {
         PersistentFSConnection.closeStorages(records, names, attributes, contentHashesEnumerator, contents);

@@ -1908,22 +1908,24 @@
     },
     {
       "key": "RunWidget.foreground",
-      "description": "Foreground for run widget components and stroke icons",
+      "description": "Foreground for run widget components and stroke icons on the contrast background",
       "since": "2022.3"
     },
     {
       "key": "RunWidget.disabledForeground",
-      "description": "Foreground for run widget components and stroke icons in disable state",
-      "since": "2022.3"
+      "description": "Foreground for run widget components and stroke icons in disable state in the contrast run widget",
+      "since": "2022.3",
+      "deprecated": true
     },
     {
       "key": "RunWidget.background",
-      "description": "Background for run widget in non-running state",
-      "since": "2022.3"
+      "description": "Background for the contrast run widget in non-running state",
+      "since": "2022.3",
+      "deprecated": true
     },
     {
       "key": "RunWidget.runningBackground",
-      "description": "Background for run widget in running state",
+      "description": "Background for run widget actions in running state",
       "since": "2022.3"
     },
     {
@@ -1938,8 +1940,19 @@
     },
     {
       "key": "RunWidget.separatorColor",
-      "description": "The color for separator in run widget",
-      "since": "2022.3"
+      "description": "The color for separator in the contrast run widget",
+      "since": "2022.3",
+      "deprecated": true
+    },
+    {
+      "key": "RunWidget.runModeIconColor",
+      "description": "The non-running state color for stroke icons in the non-contrast run widget",
+      "since": "2023.1"
+    },
+    {
+      "key": "RunWidget.stopBackground",
+      "description": "Background for the stop button in the run widget",
+      "since": "2023.1"
     },
     {
       "key": "MainWindow.Tab.selectedForeground"

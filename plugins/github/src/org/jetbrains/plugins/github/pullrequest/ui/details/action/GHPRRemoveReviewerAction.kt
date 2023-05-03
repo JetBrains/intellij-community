@@ -13,7 +13,7 @@ internal class GHPRRemoveReviewerAction(
   scope: CoroutineScope,
   private val reviewFlowVm: GHPRReviewFlowViewModel,
   private val reviewer: GHPullRequestRequestedReviewer
-) : AbstractAction(CollaborationToolsBundle.message("review.details.action.remove.reviewer", reviewer.shortName)) {
+) : AbstractAction(CollaborationToolsBundle.message("review.details.action.remove.reviewer", reviewer.name ?: reviewer.shortName)) {
 
   init {
     scope.launch {
