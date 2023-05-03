@@ -45,9 +45,6 @@ object DigestUtil {
   fun sha1Hex(input: ByteArray): String = hashToHexString(input, sha1())
 
   @JvmStatic
-  fun hash(input: ByteArray, digest: MessageDigest): ByteArray = digest.digest(input)
-
-  @JvmStatic
   @JvmOverloads
   fun updateContentHash(digest: MessageDigest, file: Path, buffer: ByteArray = ByteArray(512 * 1024)) {
     try {
