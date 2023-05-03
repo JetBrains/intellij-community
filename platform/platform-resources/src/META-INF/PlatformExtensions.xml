@@ -1270,7 +1270,7 @@
                     preload="true"/>
 
     <applicationService serviceInterface="com.intellij.ui.ToolbarService"
-                        serviceImplementation="com.intellij.ui.ToolbarServiceImpl" client="local"/>
+                        serviceImplementation="com.intellij.ui.ToolbarServiceImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ui.WindowDeactivationManager" client="all"/>
 
