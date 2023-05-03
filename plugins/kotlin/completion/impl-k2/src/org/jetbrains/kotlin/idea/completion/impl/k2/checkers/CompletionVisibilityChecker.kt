@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.completion.checkers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
@@ -31,7 +33,14 @@ internal fun interface CompletionVisibilityChecker {
         ): CompletionVisibilityChecker = object : CompletionVisibilityChecker {
             context(KtAnalysisSession)
             override fun isVisible(symbol: KtSymbolWithVisibility): Boolean {
-                return basicContext.parameters.invocationCount > 1 || isVisible(
+                if (basicContext.parameters.invocationCount > 1) return true
+
+                if (symbol is KtClassLikeSymbol) {
+                    val classId = (symbol as? KtClassLikeSymbol)?.classIdIfNonLocal
+                    if (classId?.asSingleFqName()?.isJavaClassNotToBeUsedInKotlin() == true) return false
+                }
+
+                return isVisible(
                     symbol,
                     basicContext.originalKtFile.getFileSymbol(),
                     (positionContext as? FirNameReferencePositionContext)?.explicitReceiver,
