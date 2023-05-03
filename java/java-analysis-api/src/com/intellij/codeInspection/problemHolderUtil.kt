@@ -7,22 +7,46 @@ import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UReferenceExpression
 
-fun ProblemsHolder.registerUProblem(element: UCallExpression, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
+@JvmOverloads
+fun ProblemsHolder.registerUProblem(
+  element: UCallExpression,
+  descriptionTemplate: @InspectionMessage String,
+  vararg fixes: LocalQuickFix,
+  highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+) {
   val anchor = element.methodIdentifier?.sourcePsi ?: return
-  registerProblem(anchor, descriptionTemplate, *fixes)
+  registerProblem(anchor, descriptionTemplate, highlightType, *fixes)
 }
 
-fun ProblemsHolder.registerUProblem(element: UAnchorOwner, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
+@JvmOverloads
+fun ProblemsHolder.registerUProblem(
+  element: UAnchorOwner,
+  descriptionTemplate: @InspectionMessage String,
+  vararg fixes: LocalQuickFix,
+  highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+) {
   val anchor = element.uastAnchor?.sourcePsi ?: return
-  registerProblem(anchor, descriptionTemplate, *fixes)
+  registerProblem(anchor, descriptionTemplate, highlightType, *fixes)
 }
 
-fun ProblemsHolder.registerUProblem(element: UDeclaration, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
+@JvmOverloads
+fun ProblemsHolder.registerUProblem(
+  element: UDeclaration,
+  descriptionTemplate: @InspectionMessage String,
+  vararg fixes: LocalQuickFix,
+  highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+) {
   val anchor = element.uastAnchor?.sourcePsi ?: return
-  registerProblem(anchor, descriptionTemplate, *fixes)
+  registerProblem(anchor, descriptionTemplate, highlightType, *fixes)
 }
 
-fun ProblemsHolder.registerUProblem(element: UReferenceExpression, descriptionTemplate: @InspectionMessage String, vararg fixes: LocalQuickFix) {
+@JvmOverloads
+fun ProblemsHolder.registerUProblem(
+  element: UReferenceExpression,
+  descriptionTemplate: @InspectionMessage String,
+  vararg fixes: LocalQuickFix,
+  highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+) {
   val anchor = element.referenceNameElement?.sourcePsi ?: return
-  registerProblem(anchor, descriptionTemplate, *fixes)
+  registerProblem(anchor, descriptionTemplate, highlightType, *fixes)
 }
