@@ -56,9 +56,12 @@ def __get_table_provider(output: str):
 
     table_provider = None
     type_qualified_name = '{}.{}'.format(output_type.__module__, output_type.__name__)
-    if type_qualified_name == 'pandas.core.frame.DataFrame':
+    if type_qualified_name in ['pandas.core.frame.DataFrame',
+                               'pandas.core.series.Series',
+                               'numpy.ndarray']:
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
-    if type_qualified_name == 'polars.internals.dataframe.frame.DataFrame':
+    if type_qualified_name in ['polars.internals.dataframe.frame.DataFrame',
+                               'polars.internals.series.series.Series']:
         import _pydevd_bundle.tables.pydevd_polars as table_provider
 
     return table_provider
