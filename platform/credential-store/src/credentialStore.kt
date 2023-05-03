@@ -1,13 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
 import java.security.SecureRandom
 
-val LOG = logger<CredentialStore>()
+internal val LOG: Logger
+  get() = logger<PasswordSafeSettings>()
 
 fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {
@@ -72,7 +74,7 @@ private fun parseString(data: String, @Suppress("SameParameterValue") delimiter:
 
 // check isEmpty before
 @JvmOverloads
-fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
+fun Credentials.serialize(storePassword: Boolean = true): ByteArray = joinData(userName, if (storePassword) password else null)!!
 
 fun createSecureRandom(): SecureRandom {
   // do not use SecureRandom.getInstanceStrong()
@@ -88,5 +90,5 @@ internal fun SecureRandom.generateBytes(size: Int): ByteArray {
   return result
 }
 
-val ACCESS_TO_KEY_CHAIN_DENIED = Credentials.ACCESS_TO_KEY_CHAIN_DENIED
-val CANNOT_UNLOCK_KEYCHAIN = Credentials.CANNOT_UNLOCK_KEYCHAIN
+val ACCESS_TO_KEY_CHAIN_DENIED: Credentials = Credentials.ACCESS_TO_KEY_CHAIN_DENIED
+val CANNOT_UNLOCK_KEYCHAIN: Credentials = Credentials.CANNOT_UNLOCK_KEYCHAIN

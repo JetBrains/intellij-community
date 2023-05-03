@@ -10,6 +10,8 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.serviceContainer.NonInjectable
@@ -26,6 +28,9 @@ import org.jetbrains.concurrency.asPromise
 import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
+
+private val LOG: Logger
+  get() = logger<CredentialStore>()
 
 abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : PasswordSafe() {
   protected abstract val settings: PasswordSafeSettings
@@ -245,7 +250,7 @@ fun createPersistentCredentialStore(): CredentialStore? {
 fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
   val store = KeePassCredentialStore(dbFile, masterPasswordFile)
   val settings = PasswordSafeSettings()
-  settings.loadState(PasswordSafeSettings.PasswordSafeOptions().apply {
+  settings.loadState(PasswordSafeOptions().apply {
     provider = ProviderType.KEEPASS
     keepassDb = store.dbFile.toString()
   })

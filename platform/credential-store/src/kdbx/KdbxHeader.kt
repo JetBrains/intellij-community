@@ -38,7 +38,7 @@ import java.util.zip.GZIPOutputStream
 
 /**
  * This class represents the header portion of a KeePass KDBX file or stream. The header is received in
- * plain text and describes the encryption and compression of the remainder of the file.
+ * plain text and describes the encryption and compression of the file remainder.
  * It is a factory for encryption and decryption streams and contains a hash of its own serialization.
  * While KDBX streams are Little-Endian, data is passed to and from this class in standard Java byte order.
  * @author jo
@@ -90,7 +90,7 @@ internal class KdbxHeader() {
     protectedStreamKey = createProtectedStreamKey(random)
   }
   /**
-   * The ordinal 0 represents uncompressed and 1 GZip compressed
+   * Ordinal 0 represents uncompressed and 1 GZip compressed
    */
   enum class CompressionFlags {
     NONE, GZIP
@@ -126,8 +126,8 @@ internal class KdbxHeader() {
   var headerHash: ByteArray? = null
 
   /**
-   * Create a decrypted input stream using supplied digest and this header
-   * apply decryption to the passed encrypted input stream
+   * Create a decrypted input stream using supplied digest and this header.
+   * Apply decryption to the passed encrypted input stream
    */
   fun createDecryptedStream(digest: ByteArray, inputStream: InputStream): InputStream {
     val finalKeyDigest = getFinalKeyDigest(digest, masterSeed, transformSeed, transformRounds)
@@ -202,7 +202,7 @@ internal class KdbxHeader() {
       }
     }
 
-    // consume length etc. following END flag
+    // consume length etc. following an END flag
     readHeaderData(input)
 
     headerHash = digest.digest()

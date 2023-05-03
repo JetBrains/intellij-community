@@ -16,6 +16,8 @@ import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
@@ -40,6 +42,9 @@ import javax.swing.JPanel
 import javax.swing.JRadioButton
 import kotlin.io.path.exists
 
+private val LOG: Logger
+  get() = logger<PasswordSafeConfigurable>()
+
 class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                              CredentialStoreBundle.message("password.safe.configurable"),
                                                                                                              "reference.ide.settings.password.safe") {
@@ -51,7 +56,7 @@ class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, Pa
 }
 
 class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : ConfigurableUi<PasswordSafeSettings> {
-  private lateinit var myPanel: DialogPanel
+  private lateinit var panel: DialogPanel
   private lateinit var usePgpKey: JCheckBox
   private lateinit var pgpKeyCombo: ComboBox<PgpKey>
   private lateinit var keepassRadioButton: JRadioButton
@@ -70,13 +75,13 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     pgpListModel.replaceAll(secretKeys)
     usePgpKey.text = usePgpKeyText()
 
-    myPanel.reset()
+    panel.reset()
 
     keePassDbFile?.text = settings.keepassDb ?: getDefaultKeePassDbFile().toString()
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
-    if (myPanel.isModified()) return true
+    if (panel.isModified()) return true
 
     if (keePassDbFile == null) {
       return false
@@ -92,7 +97,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     val pgpKeyChanged = getNewPgpKey()?.keyId != this.settings.state.pgpKeyId
     val oldProviderType = this.settings.providerType
 
-    myPanel.apply()
+    panel.apply()
     val providerType = this.settings.providerType
 
     // close if any, it is more reliable just close current store and later it will be recreated lazily with a new settings
@@ -188,7 +193,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
   private fun getNewDbFileAsString() = keePassDbFile!!.text.trim().nullize()
 
   override fun getComponent(): JPanel {
-    myPanel = panel {
+    panel = panel {
       buttonsGroup(CredentialStoreBundle.message("passwordSafeConfigurable.save.password")) {
         row {
           radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
@@ -250,7 +255,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
       }.bind(settings::providerType)
     }
-    return myPanel
+    return panel
   }
 
   @NlsContexts.Checkbox

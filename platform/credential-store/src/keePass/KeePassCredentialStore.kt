@@ -8,6 +8,7 @@ import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.delete
 import com.intellij.util.io.safeOutputStream
 import org.jetbrains.annotations.TestOnly
@@ -17,16 +18,16 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 
-const val DB_FILE_NAME = "c.kdbx"
+const val DB_FILE_NAME: String = "c.kdbx"
 
-fun getDefaultKeePassBaseDirectory() = PathManager.getConfigDir()
+fun getDefaultKeePassBaseDirectory(): Path = PathManager.getConfigDir()
 
-fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().resolve(MASTER_KEY_FILE_NAME)
+fun getDefaultMasterPasswordFile(): Path = getDefaultKeePassBaseDirectory().resolve(MASTER_KEY_FILE_NAME)
 
 /**
  * preloadedMasterKey [MasterKey.value] will be cleared
  */
-internal class KeePassCredentialStore constructor(internal val dbFile: Path, private val masterKeyStorage: MasterKeyFileStorage, preloadedDb: KeePassDatabase? = null) : BaseKeePassCredentialStore() {
+internal class KeePassCredentialStore(internal val dbFile: Path, private val masterKeyStorage: MasterKeyFileStorage, preloadedDb: KeePassDatabase? = null) : BaseKeePassCredentialStore() {
   constructor(dbFile: Path, masterKeyFile: Path) : this(dbFile, MasterKeyFileStorage(masterKeyFile), null)
 
   private val isNeedToSave: AtomicBoolean
@@ -86,7 +87,7 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path, pri
     catch (e: Throwable) {
       // schedule save again
       isNeedToSave.set(true)
-      LOG.error("Cannot save password database", e)
+      logger<KeePassCredentialStore>().error("Cannot save password database", e)
     }
   }
 

@@ -2,7 +2,6 @@
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.inputStream
 import org.bouncycastle.crypto.SkippingStreamCipher
@@ -25,8 +24,8 @@ private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: In
   val kdbxHeader = KdbxHeader(inputStream)
   val decryptedInputStream = kdbxHeader.createDecryptedStream(credentials.key, inputStream)
 
-  val startBytes = FileUtilRt.loadBytes(decryptedInputStream, 32)
-  if (!Arrays.equals(startBytes, kdbxHeader.streamStartBytes)) {
+  val startBytes = decryptedInputStream.readNBytes(32)
+  if (!startBytes.contentEquals(kdbxHeader.streamStartBytes)) {
     throw IncorrectMasterPasswordException()
   }
 
