@@ -72,6 +72,32 @@ fun Lock.withLockCancellable(action: Runnable) {
   withLockCancellable(action::run)
 }
 
+@RequiresBlockingContext
+fun Lock.lockMaybeCancellable() {
+  while (true) {
+    ProgressManager.checkCanceled()
+    if (tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+      return
+    }
+  }
+}
+
+@RequiresBlockingContext
+fun <T> Lock.withLockMaybeCancellable(action: () -> T): T {
+  lockMaybeCancellable()
+  try {
+    return action()
+  }
+  finally {
+    unlock()
+  }
+}
+
+@RequiresBlockingContext
+fun Lock.withLockMaybeCancellable(action: Runnable) {
+  withLockMaybeCancellable(action::run)
+}
+
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun pollCancellable(waiter: () -> Boolean) {
