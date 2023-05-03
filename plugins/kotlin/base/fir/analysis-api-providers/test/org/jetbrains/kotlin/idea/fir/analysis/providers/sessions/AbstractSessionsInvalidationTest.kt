@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureReader
-import org.jetbrains.kotlin.idea.fir.analysis.providers.incModificationTracker
+import org.jetbrains.kotlin.idea.fir.analysis.providers.publishOutOfBlockModification
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -54,7 +54,7 @@ abstract class AbstractSessionsInvalidationTest : AbstractMultiModuleTest() {
         val sessionsBeforeOOBM = getAllModuleSessions(rootModule)
 
         val modulesToMakeOOBM = testStructure.modulesToMakeOOBM.map(modulesByNames::getValue)
-        modulesToMakeOOBM.forEach { it.incModificationTracker() }
+        modulesToMakeOOBM.forEach { it.publishOutOfBlockModification() }
 
         val sessionsAfterOOBM = getAllModuleSessions(rootModule)
 

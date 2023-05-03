@@ -2,10 +2,9 @@
 
 package org.jetbrains.kotlin.idea.fir.analysis.providers
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
-import org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeModificationTrackerService
+import org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeOutOfBlockModificationService
 
-internal fun Module.incModificationTracker() {
-    project.service<FirIdeModificationTrackerService>().increaseModificationCountForModule(this)
+internal fun Module.publishOutOfBlockModification() {
+    FirIdeOutOfBlockModificationService.getInstance(project).publishModuleOnlyOutOfBlockModification(this)
 }
