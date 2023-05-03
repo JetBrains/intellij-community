@@ -23,9 +23,6 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 %{
-  /** The current column of the current line (starting with 0). It is standard field supported by the jflex. */
-  protected int yycolumn = 0;
-
   /**
    * The number of open but not closed braces.
    * Note: lexer does not distinguish braces from brackets while counting them.

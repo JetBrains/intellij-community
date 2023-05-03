@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -146,7 +145,7 @@ private suspend fun notarizeSitLocally(sitFile: Path,
                                        context: BuildContext) {
   context.executeStep(spanBuilder("Notarizing .sit locally").setAttribute("sitFile", "$sitFile"), BuildOptions.MAC_NOTARIZE_STEP) {
     if (!SystemInfoRt.isMac) {
-      Span.current().addEvent(".sit can be notarized only on macOS")
+      it.addEvent(".sit can be notarized only on macOS")
       return@executeStep
     }
     val targetFile = tempDir.resolve(sitFile.fileName)
@@ -186,7 +185,7 @@ private suspend fun buildDmgLocally(sitFile: Path,
                                     context: BuildContext) {
   context.executeStep(spanBuilder("build .dmg locally"), BuildOptions.MAC_DMG_STEP) {
     if (!SystemInfoRt.isMac) {
-      Span.current().addEvent(".dmg can be built only on macOS")
+      it.addEvent(".dmg can be built only on macOS")
       return@executeStep
     }
     val exploded = tempDir.resolve("${context.fullBuildNumber}.exploded")

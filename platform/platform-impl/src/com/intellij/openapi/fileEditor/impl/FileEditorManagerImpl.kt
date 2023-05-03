@@ -74,7 +74,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.pom.Navigatable
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
@@ -142,7 +141,6 @@ open class FileEditorManagerImpl(
   private val selectionHistory = SelectionHistory()
 
   private val fileUpdateChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
-    val isNewUI = ExperimentalUI.isNewUI()
     val fileDocumentManager = FileDocumentManager.getInstance()
     for (file in toUpdate) {
       if (fileDocumentManager.isFileModified(file)) {
@@ -158,9 +156,7 @@ open class FileEditorManagerImpl(
       for (each in getAllSplitters()) {
         each.doUpdateFileIcon(file)
         each.updateFileColor(file)
-        if (!isNewUI) {
-          each.updateFileBackgroundColor(file)
-        }
+        each.updateFileBackgroundColor(file)
       }
     }
   }
@@ -572,10 +568,8 @@ open class FileEditorManagerImpl(
   }
 
   private fun updateFileBackgroundColor(file: VirtualFile) {
-    if (!ExperimentalUI.isNewUI()) {
-      for (each in getAllSplitters()) {
-        each.updateFileBackgroundColorAsync(file)
-      }
+    for (each in getAllSplitters()) {
+      each.updateFileBackgroundColorAsync(file)
     }
   }
 

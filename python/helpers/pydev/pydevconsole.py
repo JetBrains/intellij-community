@@ -371,6 +371,8 @@ if IS_ASYNCIO_REPL and not IPYTHON:
                 if str(err) == self.get_event_loop_err():
                     create_new_loop()
                     self.runcode(code)
+                else:
+                    self.showtraceback()
             except:
                 self.showtraceback()
 

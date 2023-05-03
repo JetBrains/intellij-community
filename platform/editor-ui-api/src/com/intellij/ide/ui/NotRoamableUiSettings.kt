@@ -75,8 +75,10 @@ class NotRoamableUiOptions : BaseState() {
   @get:Property(filter = FontFilter::class)
   var fontScale by property(0f)
 
+  @get:ReportValue
   var ideScale by property(1f)
 
+  @get:ReportValue
   var presentationModeIdeScale by property(0f)
 
   init {

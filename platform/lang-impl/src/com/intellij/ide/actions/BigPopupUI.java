@@ -231,7 +231,14 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     JPanel pnl = new JPanel(new BorderLayout());
     pnl.setOpaque(false);
 
-    JScrollPane resultsScroll = new JBScrollPane(myResultsList);
+    JScrollPane resultsScroll = new JBScrollPane(myResultsList) {
+      @Override
+      public void updateUI() {
+        boolean isBorderNull = getBorder() == null;
+        super.updateUI();
+        if (isBorderNull) setBorder(null);
+      }
+    };
     resultsScroll.setBorder(null);
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     ComponentUtil.putClientProperty(resultsScroll.getVerticalScrollBar(), JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);

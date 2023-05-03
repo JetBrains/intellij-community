@@ -9,6 +9,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
@@ -25,6 +26,7 @@ import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -142,7 +144,9 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+          try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+            myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+          }
         }
       }
     };

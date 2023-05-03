@@ -89,18 +89,12 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
 
   override fun getLibraryByName(name: String): Library? {
     val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))) ?: return null
-    val libraryBridge = diff.libraryMap.getDataByEntity(libraryEntity)
-    (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
-    return libraryBridge
+    return diff.libraryMap.getDataByEntity(libraryEntity)
   }
 
   override fun getLibraries(): Array<Library> {
     return diff.entities(LibraryEntity::class.java).filter { it.tableId::class == LibraryTableId.GlobalLibraryTableId::class }
-      .mapNotNull {
-        val libraryBridge = diff.libraryMap.getDataByEntity(it)
-        (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
-        libraryBridge
-      }
+      .mapNotNull { diff.libraryMap.getDataByEntity(it) }
       .toList().toTypedArray()
   }
 

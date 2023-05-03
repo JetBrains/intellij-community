@@ -44,6 +44,15 @@ data class UnattendedHostStatus(
     return gson.toJson(this)
   }
 
+  fun productCode(): String? {
+    val productAndVersion = appVersion.split("-")
+    return if (productAndVersion.size != 2) {
+      null
+    } else {
+      productAndVersion[0]
+    }
+  }
+
   companion object {
     private val gson = GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
 

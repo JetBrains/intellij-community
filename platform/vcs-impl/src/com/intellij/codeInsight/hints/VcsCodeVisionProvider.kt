@@ -106,7 +106,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
           val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
           val length = editor.document.textLength
           val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
-          val trimmedRange = elementContext.trimInsignificantChildren(element)
+          val trimmedRange = elementContext.computeEffectiveRange(element)
           val adjustedTrimmedRange = TextRange(min(trimmedRange.startOffset, length), min(trimmedRange.endOffset, length))
           val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedTrimmedRange, editor, aspect)
           val text = codeAuthorInfo.getText()

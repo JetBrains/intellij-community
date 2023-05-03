@@ -19,7 +19,7 @@ private const val FUS_GROUP_ID = "plugins.advertiser"
 
 private val GROUP = EventLogGroup(
   FUS_GROUP_ID,
-  5,
+  6,
 )
 
 private val SOURCE_FIELD = EventFields.Enum(
@@ -38,7 +38,7 @@ private val PLUGINS_FIELD = EventFields.StringListValidatedByCustomRule(
 )
 
 private val PLUGIN_FIELD = EventFields.StringValidatedByCustomRule(
-  "plugin",
+  "pluginId",  // "plugin" is reserved platform key in FeatureUsageData.platformDataKeys
   PluginIdRuleValidator::class.java,
 )
 

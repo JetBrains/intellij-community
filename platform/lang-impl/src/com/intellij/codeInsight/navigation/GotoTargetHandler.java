@@ -37,7 +37,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +45,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -126,46 +126,29 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (shouldSortTargets()) {
       allElements.sort(createComparator(gotoData));
     }
-    allElements.addAll(ContainerUtil.map(additionalActions, action -> new ItemWithPresentation(action, null)));
+    allElements.addAll(ContainerUtil.map(additionalActions, action -> new ItemWithPresentation(action,
+                                                                                               TargetPresentation.builder(action.getText())
+                                                                                                 .icon(action.getIcon()).presentation())));
 
     final IPopupChooserBuilder<ItemWithPresentation> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(allElements);
     final Ref<UsageView> usageView = new Ref<>();
     builder.setNamerForFiltering(item -> {
-      if (item.item instanceof AdditionalAction) {
-        return ((AdditionalAction)item.item).getText();
+      if (item.getItem() instanceof AdditionalAction) {
+        return ((AdditionalAction)item.getItem()).getText();
       }
-      return item.presentation.getPresentableText();
+      return item.getPresentation().getPresentableText();
     }).setTitle(title);
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new RoundedCellRenderer<>(new GotoTargetRenderer(o -> ((ItemWithPresentation)o).presentation))).
+    builder.setRenderer(new RoundedCellRenderer<>(new GotoTargetRenderer(o -> ((ItemWithPresentation)o).getPresentation()))).
       setItemsChosenCallback(selectedElements -> {
         for (ItemWithPresentation element : selectedElements) {
-          if (element.item instanceof AdditionalAction) {
-            ((AdditionalAction)element.item).execute();
+          if (element.getItem() instanceof AdditionalAction) {
+            ((AdditionalAction)element.getItem()).execute();
           }
           else {
-            Navigatable nav;
-            if (element.item instanceof Navigatable) {
-              nav = (Navigatable)element.item;
-            }
-            else {
-              nav = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.navigation"),
-                                                  () -> {
-                                                    PsiElement psiElement = ((SmartPsiElementPointer<?>)element.item).getElement();
-                                                    return psiElement == null ? null : EditSourceUtil.getDescriptor(psiElement);
-                                                  });
-            }
-            try {
-              if (nav != null && nav.canNavigate()) {
-                navigateToElement(nav);
-              }
-            }
-            catch (IndexNotReadyException e) {
-              DumbService.getInstance(project).showDumbModeNotification(
-                CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"));
-            }
+            navigate(project, element, navigatable -> navigateToElement(navigatable));
           }
         }
       }).
@@ -200,17 +183,40 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       Alarm alarm = new Alarm(popup);
       alarm.addRequest(() -> {
         if (!editor.isDisposed()) {
-          showPopup.consume(popup);
+          showPopup.accept(popup);
         }
       }, 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     else {
-      showPopup.consume(popup);
+      showPopup.accept(popup);
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       popup.closeOk(null);
+    }
+  }
+
+  public static void navigate(@NotNull Project project, ItemWithPresentation element, Consumer<Navigatable> navigator) {
+    Navigatable nav;
+    if (element.getItem() instanceof Navigatable) {
+      nav = (Navigatable)element.getItem();
+    }
+    else {
+      nav = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.navigation"),
+                                          () -> {
+                                            PsiElement psiElement = ((SmartPsiElementPointer<?>)element.getItem()).getElement();
+                                            return psiElement == null ? null : EditSourceUtil.getDescriptor(psiElement);
+                                          });
+    }
+    try {
+      if (nav != null && nav.canNavigate()) {
+        navigator.accept(nav);
+      }
+    }
+    catch (IndexNotReadyException e) {
+      DumbService.getInstance(project).showDumbModeNotification(
+        CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"));
     }
   }
 
@@ -219,7 +225,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     return Comparator.comparing(gotoData::getComparingObject);
   }
 
-  private static List<ItemWithPresentation> computePresentationInBackground(
+  public static List<ItemWithPresentation> computePresentationInBackground(
     @NotNull Project project,
     PsiElement @NotNull [] targets,
     boolean hasDifferentNames
@@ -354,11 +360,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         hasDifferentNames = myNames.size() > 1;
         if (hasDifferentNames) {
           for (ItemWithPresentation item : myItems) {
-            if (item.item instanceof Pointer<?>) {
+            if (item.getItem() instanceof Pointer<?>) {
               ReadAction.run(() -> {
-                Object o = ((Pointer<?>)item.item).dereference();
+                Object o = ((Pointer<?>)item.getItem()).dereference();
                 if (o instanceof PsiElement) {
-                  item.presentation = computePresentation((PsiElement)o, hasDifferentNames);
+                  item.setPresentation(computePresentation((PsiElement)o, hasDifferentNames));
                 }
               });
             }
@@ -370,14 +376,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return initPresentation(element, hasDifferentNames);
     }
 
-    private ItemWithPresentation initPresentation(PsiElement target, boolean hasDifferentNames) {
+    private static ItemWithPresentation initPresentation(PsiElement target, boolean hasDifferentNames) {
       Pointer<PsiElement> pointer = ReadAction.compute(() -> SmartPointerManager.createPointer(target));
       TargetPresentation presentation = ReadAction.compute(() -> computePresentation(target, hasDifferentNames));
       return new ItemWithPresentation(pointer, presentation);
     }
 
     public @NotNull String getComparingObject(ItemWithPresentation value) {
-      TargetPresentation presentation = value.presentation;
+      TargetPresentation presentation = value.getPresentation();
       return Stream.of(
         presentation.getPresentableText(),
         presentation.getContainerText(),
@@ -421,21 +427,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
 
       return null;
-    }
-  }
-
-  static class ItemWithPresentation implements Pointer<PsiElement> {
-    private ItemWithPresentation(Object item, TargetPresentation presentation) {
-      this.item = item;
-      this.presentation = presentation;
-    }
-
-    Object item;
-    private TargetPresentation presentation;
-
-    @Override
-    public @Nullable PsiElement dereference() {
-      return item instanceof Pointer<?> ? (PsiElement)((Pointer<?>)item).dereference() : null;
     }
   }
 }

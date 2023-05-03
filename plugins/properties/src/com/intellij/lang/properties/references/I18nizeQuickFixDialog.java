@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -229,10 +228,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   protected void init() {
     populatePropertiesFiles();
     propertiesFileChanged();
-    somethingChanged();
     setKeyValueEditBoxes();
 
     super.init();
+    somethingChanged();
   }
 
   private JTextField getKeyTextField() {

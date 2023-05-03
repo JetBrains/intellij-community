@@ -35,8 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -56,6 +55,7 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  */
 public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
+  private static String ourLinuxDistribution = null;
 
   public static final @NotNull NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = NotNullLazyValue.createValue(() -> {
     return NotificationGroup.create("JCEF", NotificationDisplayType.BALLOON, true, null, null, null);
@@ -179,6 +179,20 @@ public final class JBCefApp {
           LOG.info("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
           settings.no_sandbox = true;
         }
+      } else if (SystemInfoRt.isLinux) {
+        String linuxDistrib = readLinuxDistribution();
+        if (
+          linuxDistrib != null &&
+          (linuxDistrib.contains("debian") || linuxDistrib.contains("centos"))
+        ) {
+          if (Boolean.getBoolean("ide.browser.jcef.sandbox.disable_linux_os_check")) {
+            LOG.warn("JCEF sandbox enabled via VM-option 'disable_linux_os_check', OS: " + linuxDistrib);
+          } else {
+            LOG.info("JCEF sandbox was disabled because of unsupported OS: " + linuxDistrib);
+            settings.no_sandbox = true;
+            // TODO: show notification with workaround
+          }
+        }
       }
     }
 
@@ -247,6 +261,57 @@ public final class JBCefApp {
       case "default" -> LogSeverity.LOGSEVERITY_DEFAULT;
       default -> LogSeverity.LOGSEVERITY_DEFAULT;
     };
+  }
+
+  private static @Nullable String readLinuxDistributionFromOsRelease() {
+    String fileName = "/etc/os-release";
+    File f = new File(fileName);
+    if (!f.exists()) return null;
+
+    try {
+      BufferedReader br = new BufferedReader(new FileReader(fileName));
+      String line;
+      while ((line = br.readLine()) != null) {
+        if (line.startsWith("NAME="))
+          return line.replace("NAME=", "").replace("\"", "").toLowerCase();
+      }
+    } catch (IOException e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
+  private static @Nullable String readLinuxDistributionFromLsbRelease() {
+    String fileName = "/etc/lsb-release";
+    File f = new File(fileName);
+    if (!f.exists()) return null;
+
+    try {
+      BufferedReader br = new BufferedReader(new FileReader(fileName));
+      String line;
+      while ((line = br.readLine()) != null) {
+        if (line.startsWith("DISTRIB_DESCRIPTION"))
+          return line.replace("DISTRIB_DESCRIPTION=", "").replace("\"", "").toLowerCase();
+      }
+    } catch (IOException e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
+  private static String readLinuxDistribution() {
+    if (ourLinuxDistribution == null) {
+      if (SystemInfoRt.isLinux) {
+        String readResult = readLinuxDistributionFromLsbRelease();
+        if (readResult == null)
+          readResult = readLinuxDistributionFromOsRelease();
+        ourLinuxDistribution = readResult == null ? "linux" : readResult;
+      } else {
+        ourLinuxDistribution = "";
+      }
+    }
+
+    return ourLinuxDistribution;
   }
 
   private static boolean isSandboxSupported() {

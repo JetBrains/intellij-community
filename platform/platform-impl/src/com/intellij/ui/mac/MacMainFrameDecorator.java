@@ -193,6 +193,15 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     myTabsHandler.exitFullScreen();
   }
 
+  @Override
+  public void setStoredFullScreen() {
+    myInFullScreen = true;
+    JRootPane rootPane = frame.getRootPane();
+    if (rootPane != null) {
+      rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
+    }
+  }
+
   private void storeFullScreenStateIfNeeded() {
     // todo should we really check that frame has not null project as it was implemented previously?
     frame.doLayout();

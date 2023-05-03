@@ -79,11 +79,6 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  protected String getTerminalConnectionName(CloudTerminalProcess process) {
-    return "Terminal: " + myPipeName;
-  }
-
-  @Override
   public boolean isTerminalSessionPersistent() {
     return false;
   }
@@ -110,8 +105,9 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
     };
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral", "DialogTitleCapitalization"})
   @Override
-  public String runningTargetName() {
+  public @NotNull String getDefaultTabTitle() {
     return "Cloud terminal";
   }
 }

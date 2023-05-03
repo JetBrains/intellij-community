@@ -21,11 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class HtmlParsing {
-  @NonNls private static final String TR_TAG = "tr";
-  @NonNls private static final String TD_TAG = "td";
-  @NonNls private static final String TH_TAG = "th";
-  @NonNls private static final String TABLE_TAG = "table";
-
   private final PsiBuilder myBuilder;
   private final Stack<String> myTagNamesStack = new Stack<>();
   private final Stack<String> myOriginalTagNamesStack = new Stack<>();
@@ -177,11 +172,8 @@ public class HtmlParsing {
         originalTagName = parseOpenTagName();
 
         String tagName = StringUtil.toLowerCase(originalTagName);
-        while (childTerminatesParentInStack(tagName)) {
+        while (openingTagAutoClosesTagOnStack(tagName)) {
           IElementType tagElementType = getHtmlTagElementType();
-          if (!HtmlUtil.isOptionalEndForHtmlTagL(myTagNamesStack.peek())) {
-            tag.precede().errorBefore(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", myOriginalTagNamesStack.peek()), tag);
-          }
           PsiBuilder.Marker top = closeTag();
           top.doneBefore(tagElementType, tag);
         }
@@ -260,17 +252,14 @@ public class HtmlParsing {
         final PsiBuilder.Marker footer = mark();
         advance();
 
-        String endName = parseEndTagName();
-        if (endName != null) {
-          final String parentTagName = !myTagNamesStack.isEmpty() ? myTagNamesStack.peek() : "";
-          if (!parentTagName.equals(endName) && !endName.endsWith(COMPLETION_NAME)) {
-            final boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(parentTagName);
-            final boolean hasChancesToMatch =
-              HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName)
-                                                         : isTagNameFurtherInStack(endName, myTagNamesStack);
-            if (hasChancesToMatch) {
+        String endTagName = parseEndTagName();
+        if (endTagName != null) {
+          final String tagOnStack = !myTagNamesStack.isEmpty() ? myTagNamesStack.peek() : "";
+          if (!tagOnStack.equals(endTagName) && !endTagName.endsWith(COMPLETION_NAME)) {
+            boolean isTagNameFurtherInTheStack = isTagNameFurtherInStack(endTagName, myTagNamesStack);
+            if (isTagNameFurtherInTheStack) {
               footer.rollbackTo();
-              if (!isOptionalTagEnd) {
+              if (!canClosingTagAutoClose(tagOnStack, endTagName)) {
                 error(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", myOriginalTagNamesStack.peek()));
               }
               doneTag();
@@ -319,6 +308,10 @@ public class HtmlParsing {
       }
     }
     terminateText(xmlText);
+  }
+
+  protected boolean canClosingTagAutoClose(@NotNull String tagOnStack, @NotNull String closingTag) {
+    return HtmlUtil.canClosingTagAutoClose(tagOnStack, closingTag);
   }
 
   @NotNull
@@ -458,11 +451,11 @@ public class HtmlParsing {
     while (!eof());
   }
 
-  private boolean childTerminatesParentInStack(final String childName) {
+  private boolean openingTagAutoClosesTagOnStack(final String openingTag) {
     for (int i = myTagNamesStack.size() - 1; i >= 0; i--) {
       String parentName = myTagNamesStack.get(i);
 
-      Boolean result = childTerminatesParent(childName, parentName, i + 1);
+      Boolean result = canOpeningTagAutoClose(openingTag, parentName, i + 1);
       if (result != null) {
         return result;
       }
@@ -471,40 +464,8 @@ public class HtmlParsing {
   }
 
   @Nullable
-  protected Boolean childTerminatesParent(final String childName, final String parentName, int tagLevel) {
-    return childTerminatesParent(childName, parentName);
-  }
-
-  public static Boolean childTerminatesParent(final String childName, final String parentName) {
-    final boolean isCell = TD_TAG.equals(childName) || TH_TAG.equals(childName);
-    final boolean isRow = TR_TAG.equals(childName);
-    final boolean isStructure = isStructure(childName);
-
-    final boolean isParentTable = TABLE_TAG.equals(parentName);
-    final boolean isParentStructure = isStructure(parentName);
-    if (isCell && (TR_TAG.equals(parentName) || isParentStructure || isParentTable) ||
-        isRow && (isParentStructure || isParentTable) ||
-        isStructure && isParentTable) {
-      return false;
-    }
-
-    if ("li".equals(childName) && ("ul".equals(parentName) || "ol".equals(parentName))) {
-      return false;
-    }
-
-    if ("dl".equals(parentName) && ("dd".equals(childName) || "dt".equals(childName))) {
-      return false;
-    }
-
-    if (HtmlUtil.canTerminate(childName, parentName)) {
-      return true;
-    }
-
-    return null;
-  }
-
-  private static boolean isStructure(String childName) {
-    return "thead".equals(childName) || "tbody".equals(childName) || "tfoot".equals(childName);
+  protected Boolean canOpeningTagAutoClose(@NotNull String tagOnStack, @NotNull String openingTag, int tagLevel) {
+    return HtmlUtil.canOpeningTagAutoClose(tagOnStack, openingTag);
   }
 
   @NotNull

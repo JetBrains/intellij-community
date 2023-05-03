@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.rd.GraphicsExKt;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
@@ -42,6 +43,7 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
+import com.intellij.ui.tabs.impl.themes.TabTheme;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -1047,8 +1049,10 @@ public class JBTabsImpl extends JComponent
                 return;
               }
               int inset = JBUI.scale(2);
-              Rectangle rect = new Rectangle(x, y + inset, width, height - inset * 2);
-              getTabPainter().paintUnderline(JBTabsPosition.left, rect, JBUI.scale(3), (Graphics2D)g, true);
+              int arc = JBUI.scale(4);
+              TabTheme theme = getTabPainter().getTabTheme();
+              Rectangle rect = new Rectangle(x, y + inset, theme.getUnderlineHeight(), height - inset * 2);
+              GraphicsExKt.fill2DRoundRect((Graphics2D)g, rect, arc, theme.getUnderlineColor());
             }
 
             @Override
@@ -1069,12 +1073,10 @@ public class JBTabsImpl extends JComponent
             component.add(Box.createRigidArea(new Dimension(gap, 0)));
           }
 
-          if (settings.getShowFileIconInTabs()) {
-            iconLabel = new JLabel();
-            component.add(iconLabel);
-            int gap = JBUI.CurrentTheme.ActionsList.elementIconGap() - 2;
-            component.add(Box.createRigidArea(new Dimension(gap, 0)));
-          }
+          iconLabel = new JLabel();
+          component.add(iconLabel);
+          int gap = JBUI.CurrentTheme.ActionsList.elementIconGap() - 2;
+          component.add(Box.createRigidArea(new Dimension(gap, 0)));
 
           component.add(myTextLabel);
 
@@ -1102,7 +1104,8 @@ public class JBTabsImpl extends JComponent
         protected void customizeComponent(JList<? extends TabInfo> list, TabInfo info, boolean isSelected) {
           if (actionLabel != null) {
             Icon icon;
-            if (UISettings.getInstance().getShowCloseButton()) {
+            boolean hasActions = info.getTabLabelActions() != null && info.getTabLabelActions().getChildren(null).length > 0;
+            if (hasActions) {
               icon = Objects.equals(ClientProperty.get(list, HOVER_INDEX_KEY), myCurrentIndex)
                      ? AllIcons.Actions.CloseHovered
                      : AllIcons.Actions.Close;
@@ -1120,13 +1123,11 @@ public class JBTabsImpl extends JComponent
           }
 
           TabInfo selectedInfo = getSelectedInfo();
-          if (iconLabel != null) {
-            Icon icon = info.getIcon();
-            if (info != selectedInfo) {
-              icon = IconLoader.getTransparentIcon(icon, 0.7f);
-            }
-            iconLabel.setIcon(icon);
+          Icon icon = info.getIcon();
+          if (icon != null && info != selectedInfo) {
+            icon = IconLoader.getTransparentIcon(icon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha());
           }
+          iconLabel.setIcon(icon);
 
           ClientProperty.put(component, SELECTED_KEY, info == selectedInfo ? true : null);
 
@@ -1135,9 +1136,7 @@ public class JBTabsImpl extends JComponent
 
         @Override
         protected void setComponentIcon(Icon icon, Icon disabledIcon) {
-          if (iconLabel != null) {
-            iconLabel.setIcon(icon);
-          }
+          // icon will be set in customizeComponent
         }
 
         @Override
@@ -1186,20 +1185,22 @@ public class JBTabsImpl extends JComponent
                 return;
               }
 
-              if (!UISettings.getInstance().getShowCloseButton() && !tabInfo.isPinned()) {
+              // The last one is expected to be 'CloseTab'
+              AnAction tabAction = tabInfo.getTabLabelActions() != null
+                                   ? ArrayUtil.getLastElement(tabInfo.getTabLabelActions().getChildren(null))
+                                   : null;
+              if (tabAction == null && !tabInfo.isPinned()) {
                 return;
               }
 
               boolean clickToUnpin = false;
               if (tabInfo.isPinned()) {
-                AnAction action = ArrayUtil.getLastElement(tabInfo.getTabLabelActions().getChildren(null));
-                // The last one is expected to be 'CloseTab'
-                if (action != null) {
+                if (tabAction != null) {
                   JComponent component = tabInfo.getComponent();
                   boolean wasShowing = UIUtil.isShowing(component);
                   try {
                     UIUtil.markAsShowing(component, true);
-                    ActionManager.getInstance().tryToExecute(action, e, tabInfo.getComponent(), tabInfo.getTabActionPlace(), true);
+                    ActionManager.getInstance().tryToExecute(tabAction, e, tabInfo.getComponent(), tabInfo.getTabActionPlace(), true);
                   }
                   finally {
                     UIUtil.markAsShowing(component, wasShowing);

@@ -115,6 +115,8 @@ class BuildOptions {
 
     const val ARCHIVE_PLUGINS = "archivePlugins"
 
+    const val VALIDATE_PLUGINS_TO_BE_PUBLISHED = "validatePluginsToBePublished"
+
     /**
      * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
      * Comprises many small publication steps.

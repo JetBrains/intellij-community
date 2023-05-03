@@ -26,6 +26,7 @@ import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.fixtures.EditorTestFixture
 import junit.framework.TestCase
 import org.jdom.Element
+import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -330,7 +331,15 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                 val text = function.containingFile.text
 
                 val module = file.module!!
-                val mainClassName = function.toLightMethods().first().containingClass?.qualifiedName!!
+                val containingClass = function.toLightMethods().first().containingClass
+                val kotlinOrigin = (containingClass as? KtUltraLightClass)?.kotlinOrigin
+                val mainClassName = if (kotlinOrigin is KtObjectDeclaration && kotlinOrigin.isCompanion()) {
+                    // Run configuration for companion object is created for the owner class
+                    // i.e. `foo.Bar` instead of `foo.Bar.Companion`
+                    containingClass.parent as PsiClass
+                } else {
+                    containingClass
+                }?.qualifiedName!!
                 val findMainClassFileSlowResolve = if (text.contains("NO-DUMB-MODE")) {
                     findMainClassFile(module, mainClassName, true)
                 } else {

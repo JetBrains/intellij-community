@@ -28,6 +28,25 @@ public interface LineNumberConverter {
   @Nullable
   Integer getMaxLineNumber(@NotNull Editor editor);
 
+  /**
+   * Returns text to be displayed in the gutter for the given document line.
+   */
+  @Nullable
+  default String convertLineNumberToString(@NotNull Editor editor, int lineNumber) {
+    Integer converted = convert(editor, lineNumber);
+    return converted == null ? null : String.valueOf(converted);
+  }
+
+  /**
+   * Returns text of the maximum line number in document which should be used
+   * to calculate the width of the line number area in the gutter.
+   */
+  @Nullable
+  default String getMaxLineNumberString(@NotNull Editor editor) {
+    Integer maxLineNumber = getMaxLineNumber(editor);
+    return maxLineNumber == null ? null : String.valueOf(maxLineNumber);
+  }
+
   LineNumberConverter DEFAULT = new LineNumberConverter() {
     @Override
     public Integer convert(@NotNull Editor editor, int lineNumber) {

@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -14,17 +13,19 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
+import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
-import java.util.concurrent.CompletableFuture
+import org.jetbrains.annotations.SystemIndependent
 
 class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "openFile"
     const val SPAN_NAME: @NonNls String = "firstCodeAnalysis"
+    const val SUPPRESS_ERROR: @NonNls String = "SUPPRESS_ERROR"
 
     @JvmStatic
     fun findFile(filePath: String, project: Project): VirtualFile? {
@@ -37,32 +38,43 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val filePath = text.split(' ', limit = 2)[1]
+    val params = text.split(' ', limit = 4)
+    val filePath = params[1]
+    val timeout = if (params.size > 2) params[2].toLong() else 0
+    val suppressErrors = text.contains(SUPPRESS_ERROR)
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
-    val job = CompletableFuture<Unit>()
     val connection = project.messageBus.simpleConnect()
     val span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
     val spanRef = Ref<Span>()
     val scopeRef = Ref<Scope>()
-    connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
-      override fun daemonFinished() {
-        try {
-          connection.disconnect()
-          context.message(PerformanceTestingBundle.message("command.file.opened", file.name), line)
-        }
-        finally {
-          spanRef.get()?.end()
-          scopeRef.get()?.close()
-          job.complete(Unit)
-        }
-      }
-    })
+    val projectPath = project.basePath
+    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, scopeRef, timeout)
+    if (suppressErrors) {
+      job.suppressErrors()
+    }
     withContext(Dispatchers.EDT) {
       spanRef.set(span.startSpan())
       scopeRef.set(spanRef.get().makeCurrent())
+      setFilePath(projectPath, spanRef, file)
       FileEditorManager.getInstance(project).openFile(file, true)
     }
-    job.join()
+
+    job.onError {
+      spanRef.get()?.setAttribute("timeout", "true")
+    }
+    job.withErrorMessage("Timeout on open file ${file.path} more than $timeout seconds")
+    job.waitForComplete()
+  }
+
+  private fun setFilePath(projectPath: @SystemIndependent @NonNls String?,
+                        spanRef: Ref<Span>,
+                        file: VirtualFile) {
+    if (projectPath != null) {
+      spanRef.get().setAttribute("filePath", file.path.replaceFirst(projectPath, ""))
+    }
+    else {
+      spanRef.get().setAttribute("filePath", file.path)
+    }
   }
 }

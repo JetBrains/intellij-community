@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
@@ -31,7 +31,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   @Deprecated(forRemoval = true)
   @NotNull
   default Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
-    throw new AbstractMethodError();
+    throw new AbstractMethodError(getClass().getName() + " must implement getItemIcon method");
   }
 
   /**
@@ -51,7 +51,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   @NotNull
   @Nls
   default String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
-    throw new AbstractMethodError();
+    throw new AbstractMethodError(getClass().getName() + " must implement getItemDisplayText method");
   }
 
   /**

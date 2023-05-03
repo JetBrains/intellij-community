@@ -36,7 +36,7 @@ import org.jetbrains.annotations.TestOnly
 //internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2ObjectOpenHashMap<String, EntityId>>
 //internal typealias EntityId2JarDir = BidirectionalMultiMap<EntityId, VirtualFileUrl>
 internal typealias EntityId2Vfu = Long2ObjectOpenHashMap<Any>
-internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<String>>
+internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<EntityIdWithProperty>>
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
@@ -84,7 +84,7 @@ open class VirtualFileIndex internal constructor(
   override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
-      entityData.createEntity(entityStorage) to it.key.substring(it.value.asString().length + 1)
+      entityData.createEntity(entityStorage) to it.key.propertyName
     } ?: emptySequence()
 
   fun getIndexedJarDirectories(): Set<VirtualFileUrl> = entityId2JarDir.values
@@ -125,7 +125,8 @@ open class VirtualFileIndex internal constructor(
     assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
 
-  internal fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId.asString()}_$propertyName"
+  internal fun getCompositeKey(entityId: EntityId, propertyName: String) =
+    EntityIdWithProperty(entityId, propertyName)
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
@@ -377,6 +378,12 @@ open class VirtualFileIndex internal constructor(
         return MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId, other.entityId2JarDir)
       }
     }
+  }
+}
+
+internal data class EntityIdWithProperty(val entityId: EntityId, val propertyName: String) {
+  override fun toString(): String {
+    return "${entityId.asString()}_$propertyName"
   }
 }
 

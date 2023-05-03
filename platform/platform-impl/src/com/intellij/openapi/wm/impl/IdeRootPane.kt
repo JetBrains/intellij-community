@@ -238,11 +238,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   private fun updateScreenState(isInFullScreen: () -> Boolean) {
     fullScreen = isInFullScreen()
-    val bar = jMenuBar
     if (helper is DecoratedHelper) {
-      if (bar != null) {
-        bar.isVisible = fullScreen
-      }
       val isCustomFrameHeaderVisible = !fullScreen || SystemInfo.isMac && !ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
       if (SystemInfo.isMac) {
@@ -253,14 +249,13 @@ open class IdeRootPane internal constructor(frame: JFrame,
       val shouldMinimize = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
       val isNewToolbar = ExperimentalUI.isNewUI()
 
-      if (bar != null) {
-        bar.isVisible = fullScreen || !isMenuButtonInToolbar || shouldMinimize && isNewToolbar
-      }
       if (toolbar != null) {
         val uiSettings = UISettings.shadowInstance
          toolbar!!.isVisible = !fullScreen && ((!shouldMinimize && isNewToolbar && !isToolbarInHeader(uiSettings)) || (!isNewToolbar && uiSettings.showMainToolbar))
       }
     }
+
+    updateMainMenuVisibility()
   }
 
   override fun createRootLayout(): LayoutManager {
@@ -397,13 +392,18 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   private fun updateMainMenuVisibility() {
     val uiSettings = UISettings.shadowInstance
-    if (uiSettings.presentationMode || IdeFrameDecorator.isCustomDecorationActive()) {
-      return
-    }
-
     val globalMenuVisible = SystemInfoRt.isLinux && GlobalMenuLinux.isPresented()
+    val shouldMinimize = ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
+    val isNewToolbar = ExperimentalUI.isNewUI()
+
     // don't show swing-menu when global (system) menu presented
-    val visible = SystemInfo.isMacSystemMenu || !globalMenuVisible && uiSettings.showMainMenu && !isMenuButtonInToolbar
+    val visible = SystemInfo.isMacSystemMenu
+                  || fullScreen
+                  || (!IdeFrameDecorator.isCustomDecorationActive()
+                      && !globalMenuVisible
+                      && uiSettings.showMainMenu
+                      && (!isMenuButtonInToolbar || shouldMinimize && isNewToolbar))
+
     if (menuBar != null && visible != menuBar.isVisible) {
       menuBar.isVisible = visible
     }
@@ -453,7 +453,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
     UIUtil.decorateWindowHeader(this)
     updateToolbarVisibility()
     updateStatusBarVisibility()
-    updateMainMenuVisibility()
     val frame = frame ?: return
     frame.background = JBColor.PanelBackground
     (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()

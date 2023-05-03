@@ -809,7 +809,7 @@ Android Studio: don't register IntelliJ fork -->
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile$InspectionWidgetUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.cache.CacheRecoveryUsageCollector"/>.
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="3"/>
-
+    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.WindowsDefenderStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vfs.newvfs.VfsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationFusCollector"/>
@@ -1364,6 +1364,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <postStartupActivity implementation="com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigration"/>
 
+    <advancedSetting id="ide.show.tool.window.icons.on.hover" default="true" groupKey="group.advanced.settings.tool.windows"/>
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.macos.disable.native.shortcut.symbols" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
@@ -1394,8 +1395,8 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead.latency.threshold" default="100" groupKey="group.advanced.settings.terminal"/>
-    <advancedSetting id="terminal.use.1.0.line.spacing.for.alternative.screen.buffer" default="false" groupKey="group.advanced.settings.terminal"/>
-    <advancedSetting id="terminal.fill.character.background.including.line.spacing" default="true" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.use.1.0.line.spacing.for.alternative.screen.buffer" default="true" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.fill.character.background.including.line.spacing" default="false" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="false" groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.code.blocks.highlighting" default="true" groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false" groupKey="group.advanced.settings.documentation.components"/>
@@ -1433,6 +1434,9 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.headertoolbar.OpenProjectSelectionPredicateSupplier"
                         serviceImplementation="com.intellij.openapi.wm.impl.headertoolbar.DefaultOpenProjectSelectionPredicateSupplier"/>
+
+    <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
+                    serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
 
     <!-- Minimap -->
     <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>

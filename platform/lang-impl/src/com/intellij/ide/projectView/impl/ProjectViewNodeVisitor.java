@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.tree.AbstractTreeNodeVisitor;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +55,6 @@ class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
 
   @Override
   protected boolean isAncestor(@NotNull PsiElement content, @NotNull PsiElement element) {
-    return SlowOperations.allowSlowOperations(() -> PsiTreeUtil.isAncestor(content, element, true));
+    return PsiTreeUtil.isAncestor(content, element, true);
   }
 }

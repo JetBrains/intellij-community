@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import java.util.Locale;
@@ -8,8 +8,27 @@ import java.util.Locale;
  * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
  */
 public final class SystemInfoRt {
-  public static final String OS_NAME = System.getProperty("os.name");
-  public static final String OS_VERSION = System.getProperty("os.version").toLowerCase(Locale.ENGLISH);
+  public static final String OS_NAME;
+  public static final String OS_VERSION;
+
+  static {
+    String name = System.getProperty("os.name");
+    String version = System.getProperty("os.version").toLowerCase(Locale.ENGLISH);
+
+    if (name.startsWith("Windows") && name.matches("Windows \\d+")) {
+      try {
+        String version2 = name.substring("Windows".length() + 1) + ".0";
+        if (Float.parseFloat(version2) > Float.parseFloat(version)) {
+          version = version2;
+        }
+      }
+      catch (NumberFormatException ignored) { }
+      name = "Windows";
+    }
+
+    OS_NAME = name;
+    OS_VERSION = version;
+  }
 
   private static final String _OS_NAME = OS_NAME.toLowerCase(Locale.ENGLISH);
   public static final boolean isWindows = _OS_NAME.startsWith("windows");

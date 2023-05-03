@@ -14,6 +14,8 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.impl.dfaassist.DfaHint;
+import com.intellij.xdebugger.impl.dfaassist.DfaResult;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +59,7 @@ public abstract class DfaAssistTest extends LightPlatformCodeInsightTestCase {
 
     DebuggerDfaRunner runner = runnerRef.get();
     assertNotNull(context, runner);
-    DebuggerDfaRunner.DfaResult dfaResult = runner.computeHints();
+    DfaResult dfaResult = runner.computeHints();
     Map<PsiElement, DfaHint> hints = dfaResult.hints;
 
     String fileText = filteredText.replace("<caret>", "");

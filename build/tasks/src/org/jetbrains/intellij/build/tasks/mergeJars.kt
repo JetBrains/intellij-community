@@ -88,7 +88,7 @@ fun buildJar(targetFile: Path,
       val uniqueNames = HashMap<String, Path>()
 
       for (source in sources) {
-        val positionBefore = outChannel.position()
+        val positionBefore = zipCreator.resultStream.getChannelPosition()
         when (source) {
           is DirSource -> {
             val archiver = ZipArchiver(zipCreator, fileAdded = {

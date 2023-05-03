@@ -35,7 +35,10 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,17 +56,16 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -189,7 +191,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     });
 
     DebuggerEditorListener listener = new DebuggerEditorListener();
-    BreakpointPromoterEditorListener bpPromoter = new BreakpointPromoterEditorListener();
+    BreakpointPromoterEditorListener bpPromoter = new BreakpointPromoterEditorListener(coroutineScope);
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseMotionListener(listener, this);
     eventMulticaster.addEditorMouseListener(listener, this);
@@ -418,6 +420,19 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     private XSourcePositionImpl myLastPosition = null;
     private Icon myLastIcon = null;
 
+    private final XDebuggerLineChangeHandler lineChangeHandler;
+
+    BreakpointPromoterEditorListener(CoroutineScope coroutineScope) {
+      lineChangeHandler = new XDebuggerLineChangeHandler(coroutineScope, (gutter, position, types) -> {
+        myLastIcon = ObjectUtils.doIfNotNull(ContainerUtil.getFirstItem(types), XBreakpointType::getEnabledIcon);
+        if (myLastIcon != null) {
+          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine());
+        }
+        return Unit.INSTANCE;
+      });
+    }
+
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
       if (!ExperimentalUI.isNewUI() || !ShowBreakpointsOverLineNumbersAction.isSelected()) return;
@@ -432,25 +447,30 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
             XSourcePositionImpl position = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(document), line);
             if (position != null) {
               if (myLastPosition == null || !myLastPosition.getFile().equals(position.getFile()) || myLastPosition.getLine() != line) {
-                List<XLineBreakpointType> types = XBreakpointUtil.getAvailableLineBreakpointTypes(myProject, position, editor);
+                // drop an icon first and schedule the available types calculation
+                clear(gutter);
                 myLastPosition = position;
-                myLastIcon = ObjectUtils.doIfNotNull(ContainerUtil.getFirstItem(types), XBreakpointType::getEnabledIcon);
+                lineChangeHandler.lineChanged(editor, position);
               }
-              if (myLastIcon != null) {
+              else if (myLastIcon != null) {
+                // we need to set the cursor on every event, otherwise it is reset inside the editor
                 gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                updateActiveLineNumberIcon(gutter, myLastIcon, e.getLogicalPosition().line);
-              }
-              else {
-                updateActiveLineNumberIcon(gutter, null, null);
               }
               return;
             }
           }
         }
-        myLastPosition = null;
-        myLastIcon = null;
-        updateActiveLineNumberIcon(gutter, null, null);
+        if (myLastIcon != null) {
+          clear(gutter);
+          myLastPosition = null;
+          lineChangeHandler.exitedGutter();
+        }
       }
+    }
+
+    private void clear(EditorGutterComponentEx gutter) {
+      updateActiveLineNumberIcon(gutter, null, null);
+      myLastIcon = null;
     }
 
     private static void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {

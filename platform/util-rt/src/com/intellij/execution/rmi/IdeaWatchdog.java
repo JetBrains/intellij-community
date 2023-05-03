@@ -8,16 +8,24 @@ import java.rmi.RemoteException;
 
 
 public interface IdeaWatchdog extends Remote {
-
   String BINDING_NAME = "_LIVE_PULSE_";
-  long PULSE_TIMEOUT = 9 * 1000L;
-  long WAIT_TIMEOUT = 20 * 1000L;
 
-  void die() throws RemoteException;
   //always throws RemoteException
   @TestOnly
-  void dieNow(int exitCode) throws RemoteException;
+  void dieNowTestOnly(int exitCode) throws RemoteException;
+
+  /**
+   * @return true if watchdog was alive and successfully died
+   * @throws RemoteException
+   */
+  boolean die() throws RemoteException;
+
   boolean isAlive() throws RemoteException;
-  void ping() throws RemoteException;
+
+  boolean ping() throws RemoteException;
+
+  long getWaitTimeoutMillis() throws RemoteException;
+
+  long getPulseTimeoutMillis() throws RemoteException;
 }
 

@@ -52,14 +52,15 @@ open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironme
     val initScript = """
     def gradlePath = '$gradleTaskPath'
     def runAppTaskName = '$runAppTaskName'
-    def mainClass = '${mainClass.qualifiedName}'
+    def mainClassToRun = '${mainClass.qualifiedName}'
     def javaExePath = mapPath('$javaExePath')
     def _workingDir = ${if (workingDir.isNullOrEmpty()) "null\n" else "mapPath('$workingDir')\n"}
     def sourceSetName = '$sourceSetName'
     def javaModuleName = ${if (javaModuleName == null) "null\n" else "'$javaModuleName'\n"}
+    def isOlderThan64 = GradleVersion.current().baseVersion < GradleVersion.version("6.4")
     ${if (useManifestJar) "gradle.addListener(new ManifestTaskActionListener(runAppTaskName))\n" else ""}
     ${if (useArgsFile) "gradle.addListener(new ArgFileTaskActionListener(runAppTaskName))\n" else ""}
-    ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, mapPath('$intelliJRtPath')))\n " else ""}
+    ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClassToRun, mapPath('$intelliJRtPath')))\n " else ""}
 
     import org.gradle.util.GradleVersion
 
@@ -69,17 +70,21 @@ open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironme
           def overwrite = project.tasks.findByName(runAppTaskName) != null
           project.tasks.create(name: runAppTaskName, overwrite: overwrite, type: JavaExec) {
             if (javaExePath) executable = javaExePath
-            main = mainClass
+            if (isOlderThan64) {
+              main = mainClassToRun
+            } else {
+              mainClass = mainClassToRun
+            }
             ${argsString(params)}
             if (_workingDir) workingDir = _workingDir
             standardInput = System.in
             if (javaModuleName) {
               classpath = tasks[sourceSets[sourceSetName].jarTaskName].outputs.files + project.sourceSets[sourceSetName].runtimeClasspath;
-              if (GradleVersion.current().baseVersion < GradleVersion.version("6.4")) {
+              if (isOlderThan64) {
                 doFirst {
                   jvmArgs += [
                     '--module-path', classpath.asPath,
-                    '--module', javaModuleName + '/' + mainClass
+                    '--module', javaModuleName + '/' + mainClassToRun
                   ]
                   classpath = files()
                 }

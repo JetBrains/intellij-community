@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.diagnostic.telemetry.useWithScope2
+import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
@@ -105,12 +106,12 @@ interface BuildContext : CompilationContext {
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
 }
 
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend () -> Unit) {
+suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend (Span) -> Unit) {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
   }
   else {
-    spanBuilder.useWithScope2 { step() }
+    spanBuilder.useWithScope2(step)
   }
 }
 

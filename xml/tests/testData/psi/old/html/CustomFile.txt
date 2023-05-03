@@ -197,30 +197,35 @@ HtmlFile:test.html
                     XmlToken:XML_TAG_END('>')
                   XmlText
                     PsiWhiteSpace('\n           ')
-                  PsiErrorElement:Closing tag matches nothing
-                    XmlToken:XML_END_TAG_START('</')
-                    XmlToken:XML_NAME('tr')
-                    XmlToken:XML_TAG_END('>')
-                  XmlToken:XML_END_TAG_START('</')
-                  XmlToken:XML_NAME('form')
-                  XmlToken:XML_TAG_END('>')
-                XmlText
-                  PsiWhiteSpace('\n\n           ')
-                XmlToken:XML_END_TAG_START('</')
-                XmlToken:XML_NAME('table')
-                XmlToken:XML_TAG_END('>')
-              XmlText
-                PsiWhiteSpace('           \n    ')
-              XmlToken:XML_END_TAG_START('</')
-              XmlToken:XML_NAME('td')
-              XmlToken:XML_TAG_END('>')
-            XmlText
-              PsiWhiteSpace('\n  ')
+                  PsiErrorElement:Element form is not closed
+                    <empty list>
             XmlToken:XML_END_TAG_START('</')
             XmlToken:XML_NAME('tr')
             XmlToken:XML_TAG_END('>')
+          PsiErrorElement:Closing tag matches nothing
+            XmlToken:XML_END_TAG_START('</')
+            XmlToken:XML_NAME('form')
+            XmlToken:XML_TAG_END('>')
           XmlText
-            PsiWhiteSpace('\n')
+            PsiWhiteSpace('\n\n           ')
+          XmlToken:XML_END_TAG_START('</')
+          XmlToken:XML_NAME('table')
+          XmlToken:XML_TAG_END('>')
+        XmlText
+          PsiWhiteSpace('           \n    ')
+        PsiErrorElement:Closing tag matches nothing
+          XmlToken:XML_END_TAG_START('</')
+          XmlToken:XML_NAME('td')
+          XmlToken:XML_TAG_END('>')
+        XmlText
+          PsiWhiteSpace('\n  ')
+        PsiErrorElement:Closing tag matches nothing
+          XmlToken:XML_END_TAG_START('</')
+          XmlToken:XML_NAME('tr')
+          XmlToken:XML_TAG_END('>')
+        XmlText
+          PsiWhiteSpace('\n')
+        PsiErrorElement:Closing tag matches nothing
           XmlToken:XML_END_TAG_START('</')
           XmlToken:XML_NAME('table')
           XmlToken:XML_TAG_END('>')

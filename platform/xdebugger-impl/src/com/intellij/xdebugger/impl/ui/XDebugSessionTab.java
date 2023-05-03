@@ -31,6 +31,7 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -74,7 +75,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }
     }
     XDebugSessionTab tab;
-    if (Registry.is("debugger.new.tool.window.layout")) {
+    if (Registry.is("debugger.new.tool.window.layout") || XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess())) {
       if (XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess())) {
         tab = new XDebugSessionTab3(session, icon, environment);
       }

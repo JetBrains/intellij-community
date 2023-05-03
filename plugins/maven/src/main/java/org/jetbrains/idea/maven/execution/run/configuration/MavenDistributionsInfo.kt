@@ -51,7 +51,7 @@ class MavenDistributionsInfo : DistributionsInfo {
       }.firstOrNull();
 
       if (info != null) return info;
-      val version = MavenServerManager.getMavenVersion(mavenHome)
+      val version = MavenUtil.getMavenVersionByMavenHome(mavenHome)
       return when (mavenHome) {
         MavenServerManager.WRAPPED_MAVEN -> WrappedDistributionInfo()
         else -> LocalDistributionInfo(mavenHome)

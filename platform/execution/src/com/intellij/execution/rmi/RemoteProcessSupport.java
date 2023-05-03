@@ -568,31 +568,38 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     }
 
-    void startBeat() {
+    void startBeat() throws RemoteException, NotBoundException {
+      var watchdog = getWatchdog();
+      var pulseTimeoutMillis = watchdog.getPulseTimeoutMillis();
       myFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-        try {
-          if (live) {
-            IdeaWatchdog watchdog = getWatchdog();
-            watchdog.ping();
-          }
+        beat();
+      }, pulseTimeoutMillis, pulseTimeoutMillis, TimeUnit.MILLISECONDS);
+      Disposer.register(ApplicationManager.getApplication(), () -> stopBeat());
+    }
+
+    public boolean beat() {
+      try {
+        if (live) {
+          IdeaWatchdog watchdog = getWatchdog();
+          return watchdog.ping();
         }
-        catch (Exception ignore) {
-          live = false;
-          myFuture.cancel(false);
-        }
-        catch (Throwable t) {
-          live = false;
-          myFuture.cancel(false);
-          LOG.error(t);
-        }
-      }, IdeaWatchdog.PULSE_TIMEOUT, IdeaWatchdog.PULSE_TIMEOUT, TimeUnit.MILLISECONDS);
-      Disposer.register(ApplicationManager.getApplication(), () -> myFuture.cancel(false));
+      }
+      catch (Exception ignore) {
+        live = false;
+        stopBeat();
+      }
+      catch (Throwable t) {
+        live = false;
+        stopBeat();
+        LOG.error(t);
+      }
+      return false;
     }
 
     @TestOnly
     public void kill(int exitCode) {
       try {
-        getWatchdog().dieNow(exitCode);
+        getWatchdog().dieNowTestOnly(exitCode);
       }
       catch (RemoteException | NotBoundException ignore) {
       }

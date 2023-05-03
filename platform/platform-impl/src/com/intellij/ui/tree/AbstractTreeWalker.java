@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-public abstract class AbstractTreeWalker<N> {
+public abstract class AbstractTreeWalker<N> extends TreeWalkerBase<N> {
   private enum State {STARTED, REQUESTED, PAUSED, FINISHED, FAILED}
 
   private final AtomicReference<State> state = new AtomicReference<>();
@@ -42,52 +42,27 @@ public abstract class AbstractTreeWalker<N> {
     this.visitor = visitor;
   }
 
-  /**
-   * Returns a list of child nodes for the specified node.
-   * This method is called by the walker only if the visitor
-   * returned the {@link TreeVisitor.Action#CONTINUE CONTINUE} action.
-   * The walker will be paused if it returns {@code null}.
-   * To continue user should call the {@link #setChildren} method.
-   *
-   * @param node a node in a tree structure
-   * @return children for the specified node or {@code null} if children will be set later
-   */
-  protected abstract Collection<N> getChildren(@NotNull N node);
-
-  /**
-   * Sets the children, awaited by the walker, and continues to traverse a tree structure.
-   *
-   * @param children a list of child nodes for the node specified in the {@link #getChildren} method
-   * @throws IllegalStateException if it is called in unexpected state
-   */
-  public void setChildren(Collection<? extends N> children) {
+  @Override
+  public void setChildren(@NotNull Collection<? extends N> children) {
     boolean paused = state.compareAndSet(State.PAUSED, State.STARTED);
     if (!paused && !state.compareAndSet(State.REQUESTED, State.STARTED)) throw new IllegalStateException();
-    stack.push(children == null ? new ArrayDeque<>() : new ArrayDeque<>(children));
+    stack.push(new ArrayDeque<>(children));
     if (paused) processNextPath();
   }
 
-  /**
-   * @return a promise that will be resolved when visiting is finished
-   */
   @NotNull
+  @Override
   public Promise<TreePath> promise() {
     return promise;
   }
 
-  /**
-   * Stops visiting a tree structure by specifying a cause.
-   */
+  @Override
   public void setError(@NotNull Throwable error) {
     state.set(State.FAILED);
     promise.setError(error);
   }
 
-  /**
-   * Starts visiting a tree structure from the specified root node.
-   *
-   * @param node a tree root or {@code null} if nothing to traverse
-   */
+  @Override
   public void start(N node) {
     start(null, node);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -13,6 +13,8 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -27,6 +29,7 @@ import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
@@ -43,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQuickFixDialog {
   private static final String RESOURCE_BUNDLE_EXPRESSION_USED = "RESOURCE_BUNDLE_EXPRESSION_USED";
@@ -59,6 +63,9 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
 
   private final boolean myShowJavaCodeInfo;
   private final boolean myShowPreview;
+
+  private final ExecutorService myExecutorPool = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    "JavaI18nizeQuickFixDialog Executor Pool", AppExecutorUtil.getAppExecutorService(), 1);
 
   @NonNls public static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
   @NonNls public static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
@@ -222,7 +229,10 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
   @Override
   protected void somethingChanged() {
     if (myShowPreview) {
-      myPreviewLabel.setText(getI18nizedText());
+      ReadAction
+        .nonBlocking(() -> getI18nizedText())
+        .finishOnUiThread(ModalityState.stateForComponent(myPreviewLabel), (@NlsSafe String text) -> myPreviewLabel.setText(text))
+        .submit(myExecutorPool);
     }
     super.somethingChanged();
   }

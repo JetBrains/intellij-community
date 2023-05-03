@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.lang.Language;
@@ -18,6 +18,21 @@ import com.intellij.util.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Search for inheritors of given class.
+ * <p/>
+ * For given hierarchy
+ * <pre>
+ *   class A {}
+ *   class B extends A {}
+ *   class C extends B {}
+ * </pre>
+ * searching for inheritors of {@code A} with default {@code checkDeep=true} returns {@code B} and {@code C}.
+ * <p/>
+ * Use {@code checkDeep=false} or {@link DirectClassInheritorsSearch} to search for direct inheritors only.
+ *
+ * @see com.intellij.psi.util.InheritanceUtil
+ */
 public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiClass, ClassInheritorsSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.classInheritorsSearch");
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();

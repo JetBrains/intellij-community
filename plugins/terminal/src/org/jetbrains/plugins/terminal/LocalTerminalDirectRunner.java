@@ -338,13 +338,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  public String runningTargetName() {
-    return "Local Terminal";
-  }
-
-  @Override
-  protected String getTerminalConnectionName(PtyProcess process) {
-    return "Local Terminal";
+  public @NotNull String getDefaultTabTitle() {
+    return TerminalOptionsProvider.getInstance().getTabName();
   }
 
   /**

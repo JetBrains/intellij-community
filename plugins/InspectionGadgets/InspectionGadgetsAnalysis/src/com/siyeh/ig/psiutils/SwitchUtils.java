@@ -610,7 +610,7 @@ public final class SwitchUtils {
    * @return {@code true} if the given switch label statement contains a {@code default} case or an unconditional pattern,
    * {@code false} otherwise.
    */
-  public static boolean isTotalLabel(@Nullable PsiSwitchLabelStatementBase label) {
+  public static boolean isUnconditionalLabel(@Nullable PsiSwitchLabelStatementBase label) {
     if (label == null) return false;
     if (isDefaultLabel(label)) return true;
     PsiSwitchBlock switchBlock = label.getEnclosingSwitchBlock();
@@ -621,7 +621,8 @@ public final class SwitchUtils {
     if (type == null) return false;
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     if (labelElementList == null) return false;
-    return StreamEx.of(labelElementList.getElements()).select(PsiPattern.class)
+    return StreamEx.of(labelElementList.getElements())
+      .filter(element -> element instanceof PsiPattern || element instanceof PsiPatternGuard)
       .anyMatch(pattern -> JavaPsiPatternUtil.isUnconditionalForType(pattern, type));
   }
 

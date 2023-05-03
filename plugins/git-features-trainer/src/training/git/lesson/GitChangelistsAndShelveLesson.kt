@@ -3,9 +3,11 @@ package training.git.lesson
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -25,16 +27,16 @@ import com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
+import com.intellij.util.ui.JBUI
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.git.GitLessonsBundle
-import training.git.GitLessonsUtil.openCommitWindowText
+import training.git.GitLessonsUtil.clickTreeRow
+import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
@@ -78,7 +80,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     lateinit var highlightLineMarkerTaskId: TaskContext.TaskId
     task {
       highlightLineMarkerTaskId = taskId
-      triggerAndFullHighlight { usePulsation = true }.componentPart l@{ ui: EditorGutterComponentEx ->
+      triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         ui.getLineMarkerRect(commentText)
       }
@@ -145,12 +147,18 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       HintManager.getInstance().hideAllHints()  // to close the context menu of line marker
     }
 
-    task("CheckinProject") {
-      openCommitWindowText(GitLessonsBundle.message("git.changelists.shelf.open.commit.window"))
-      stateCheck {
-        ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
+    task {
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Commit")
       }
-      test { actions(it) }
+    }
+
+    task("CheckinProject") {
+      openCommitWindow(GitLessonsBundle.message("git.changelists.shelf.open.commit.window"))
+      test {
+        val stripe = previous.ui ?: error("Not found Commit stripe button")
+        ideFrame { jComponent(stripe).click() }
+      }
     }
 
     task {
@@ -170,7 +178,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     lateinit var letsShelveTaskId: TaskContext.TaskId
     task {
       letsShelveTaskId = taskId
-      triggerAndFullHighlight().treeItem { _, path ->
+      triggerAndBorderHighlight().treeItem { _, path ->
         path.getPathComponent(path.pathCount - 1).toString().contains(newChangeListName)
       }
     }
@@ -185,8 +193,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
-          val tree = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == newChangeListName }
-          tree.rightClickPath(newChangeListName)
+          clickTreeRow(rightClick = true) { item -> item.toString() == newChangeListName }
         }
       }
     }
@@ -205,7 +212,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     val shelveChangesButtonText = VcsBundle.message("shelve.changes.action").dropMnemonic()
     task {
-      triggerAndFullHighlight { usePulsation = true }.component { ui: JButton ->
+      triggerAndBorderHighlight().component { ui: JButton ->
         ui.text?.contains(shelveChangesButtonText) == true
       }
     }
@@ -228,7 +235,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     val removeButtonText = VcsBundle.message("button.remove")
     task {
-      triggerAndFullHighlight().component { ui: JButton ->
+      triggerAndBorderHighlight().component { ui: JButton ->
         ui.text?.contains(removeButtonText) == true
       }
     }
@@ -242,24 +249,26 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
 
     task {
+      triggerAndBorderHighlight().treeItem { _, path -> path.pathCount == 2 }
+    }
+
+    task {
       text(GitLessonsBundle.message("git.changelists.shelf.performed.explanation", strong(shelfText)))
-      triggerAndBorderHighlight { usePulsation = true }.treeItem { _, path ->
-        path.pathCount == 2
-      }
-      proceedLink()
+      gotItStep(Balloon.Position.below, width = 0,
+                GitLessonsBundle.message("git.changelists.shelf.performed.got.it", strong(shelfText)),
+                duplicateMessage = false)
     }
 
     val unshelveChangesButtonText = VcsBundle.message("unshelve.changes.action")
     task("ShelveChanges.UnshelveWithDialog") {
       text(GitLessonsBundle.message("git.changelists.shelf.open.unshelve.dialog", strong(shelfText), action(it)))
-      triggerAndFullHighlight { usePulsation = true }.component { ui: JButton ->
+      triggerAndBorderHighlight().component { ui: JButton ->
         ui.text?.contains(unshelveChangesButtonText) == true
       }
       showWarningIfCommitWindowClosed()
       test {
         ideFrame {
-          val tree = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == newChangeListName }
-          tree.rightClickPath(newChangeListName)
+          clickTreeRow(rightClick = true) { item -> item.toString() == newChangeListName }
           jMenuItem { item: ActionMenuItem -> item.anAction is UnshelveWithDialogAction }.click()
         }
       }
@@ -332,7 +341,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       val line = editor.offsetToVisualLine(offset, true)
       editor.visualLineToY(line)
     }
-    return Rectangle(this.x + this.width - 15, y, 10, editor.lineHeight)
+    return Rectangle(this.x + JBUI.scale(5), y, JBUI.scale(8), editor.lineHeight)
   }
 
   override val helpLinks: Map<String, String> get() = mapOf(

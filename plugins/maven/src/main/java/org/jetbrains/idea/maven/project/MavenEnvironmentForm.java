@@ -218,7 +218,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
 
   private void updateMavenVersionLabel() {
     boolean localTarget = myTargetName == null;
-    String version = MavenUtil.getMavenVersion(MavenServerManager.getMavenHomeFile(getMavenHome()));
+    String version = MavenUtil.getMavenVersion(MavenUtil.getMavenHomeFile(getMavenHome()));
     String versionText = null;
     if (version != null) {
       if (StringUtil.compareVersionNumbers(version, "3") < 0) {
@@ -259,7 +259,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
   @Nullable
   public String getMavenHome() {
     String mavenHome = FileUtil.toSystemIndependentName(mavenHomeField.getText().trim());
-    final File mavenHomeFile = MavenServerManager.getMavenHomeFile(mavenHome);
+    final File mavenHomeFile = MavenUtil.getMavenHomeFile(mavenHome);
     return mavenHomeFile != null ? mavenHomeFile.getPath() : null;
   }
 

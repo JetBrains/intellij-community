@@ -1,18 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryUsage
 
-import com.intellij.openapi.components.Service
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 
-@Service(Service.Level.APP)
-internal class LibraryDescriptorFinderService {
+internal object LibraryUsageDescriptors {
+  private val descriptors: List<LibraryDescriptor> = downloadLibraryDescriptors()
   private val libraryDescriptorFinder: LibraryLayer = LibraryLayer.create(downloadLibraryDescriptors())
 
   private fun downloadLibraryDescriptors(): List<LibraryDescriptor> {
+    if (!StatisticsUploadAssistant.isSendAllowed()) return emptyList()
+
     val url = LibraryDescriptor::class.java.getResource("/com/intellij/internal/statistic/libraryUsage/library-usage-statistics.xml")!!
 
     return XmlSerializer.deserialize(url, TechnologyDescriptors::class.java)
@@ -21,6 +23,9 @@ internal class LibraryDescriptorFinderService {
   }
 
   fun findSuitableLibrary(packageQualifier: String): String? = libraryDescriptorFinder.findSuitableLibrary(packageQualifier)
+
+  val libraryNames: Set<String>
+    get() = descriptors.mapTo(HashSet()) { it.libraryName }
 }
 
 @Tag("technologies")

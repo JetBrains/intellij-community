@@ -52,6 +52,9 @@ public abstract class ExperimentalUI {
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
 
+  // Temporary solution for the IDEA-313607 issue in 231 branch. Master has a better solution.
+  public final AtomicBoolean needSuggestRestart = new AtomicBoolean(true);
+
   @Contract(pure = true)
   public static boolean isNewUI() {
     // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
@@ -139,7 +142,7 @@ public abstract class ExperimentalUI {
       else if (instance.isIconPatcherSet.compareAndSet(true, false)) {
         IconLoader.removePathPatcher(instance.iconPathPatcher);
         instance.iconPathPatcher = null;
-        instance.onExpUIDisabled(true);
+        instance.onExpUIDisabled(instance.needSuggestRestart.get());
       }
     }
   }

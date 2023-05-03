@@ -68,7 +68,10 @@
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
     <action id="Terminal.Find" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Find"/>
-    <action id="Terminal.SelectAll" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="Terminal.SelectAll" class="com.intellij.openapi.actionSystem.EmptyAction">
+      <keyboard-shortcut first-keystroke="meta A" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta A" keymap="Mac OS X 10.5+"/>
+    </action>
     <action id="Terminal.SmartCommandExecution.Run" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
     </action>

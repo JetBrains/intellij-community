@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -27,6 +27,9 @@ import java.util.function.Function;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
 
+/**
+ * To install the speed search on a {@link JTree} component, pass the tree component to one of the constructors.
+ */
 public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   protected boolean myCanExpand;
 

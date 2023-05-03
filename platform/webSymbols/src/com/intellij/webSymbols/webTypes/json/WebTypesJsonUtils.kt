@@ -206,7 +206,7 @@ internal fun Reference.codeCompletion(name: String,
 internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules =
   WebSymbolsContextKindRules.EnablementRules(
     nodePackages,
-    projectTools,
+    projectToolExecutables,
     fileExtensions,
     ideLibraries,
     fileNamePatterns.mapNotNull { it.toRegex() },
@@ -375,10 +375,10 @@ private fun ReferenceWithProps.createNameConversionRules(context: WebSymbol?): L
   buildConvertersMap(rules.canonicalNames?.value, builder::addCanonicalNamesRule)
   buildConvertersMap(rules.matchNames?.value, builder::addMatchNamesRule)
   buildConvertersMap(rules.nameVariants?.value, builder::addNameVariantsRule)
-  if (builder.isEmpty())
-    return emptyList()
+  return if (builder.isEmpty())
+    emptyList()
   else
-    return listOf(builder.build())
+    listOf(builder.build())
 }
 
 private fun NameConverter.toFunction(): Function<String, String> =

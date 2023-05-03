@@ -50,19 +50,8 @@
 
     <action id="RunToolbarRollbackToPrevious" class="com.intellij.execution.runToolbar.RunToolbarRollbackToPrevious"/>
 
-    <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
-    <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction"/>
-    <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction"/>
-
-    <group id="RunTab.TopToolbar.Old">
-      <reference id="Rerun"/>
-      <reference id="Stop"/>
-    </group>
-
-    <group id="RunTab.TopToolbar">
-      <reference id="Rerun"/>
-      <reference id="Stop"/>
-    </group>
+    <group id="RunTab.TopToolbar.Old"/>
+    <group id="RunTab.TopToolbar"/>
 
     <group id="RunTab.TopToolbar.More" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup"/>
 

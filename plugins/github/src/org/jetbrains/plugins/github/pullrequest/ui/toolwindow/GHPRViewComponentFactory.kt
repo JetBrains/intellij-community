@@ -30,6 +30,8 @@ import git4idea.changes.GitParsedChangesBundle
 import git4idea.changes.findCumulativeChange
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -253,18 +255,24 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     changesProviderModel: SingleValueModel<GitParsedChangesBundle>,
     commitsAndFilesVm: GHPRCommitsViewModel
   ): SingleValueModel<Collection<Change>> {
-    val commitChangesModel: SingleValueModel<Collection<Change>> = SingleValueModel(emptyList())
-    scope.launch(start = CoroutineStart.UNDISPATCHED) {
-      commitsAndFilesVm.selectedCommit.collect { selectedCommit ->
-        commitChangesModel.value = if (selectedCommit == null) {
-          changesProviderModel.value.changes
-        }
-        else {
-          changesProviderModel.value.changesByCommits[selectedCommit.oid].orEmpty()
-        }
+    val changesState = MutableStateFlow(changesProviderModel.value)
+    changesProviderModel.addAndInvokeListener {
+      changesState.value = it
+    }
+    val selectedChanges = combine(changesState, commitsAndFilesVm.selectedCommit) { changes, commit ->
+      if (commit == null) {
+        changes.changes
+      }
+      else {
+        changes.changesByCommits[commit.oid].orEmpty()
       }
     }
-
+    val commitChangesModel: SingleValueModel<Collection<Change>> = SingleValueModel(emptyList())
+    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      selectedChanges.collect {
+        commitChangesModel.value = it
+      }
+    }
     return commitChangesModel
   }
 

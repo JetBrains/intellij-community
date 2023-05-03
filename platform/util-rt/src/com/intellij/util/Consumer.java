@@ -4,7 +4,7 @@ package com.intellij.util;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Deprecated. Use {@link java.util.function.Consumer} instead
+ * @deprecated Use {@link java.util.function.Consumer} instead
  */
 public interface Consumer<T> {
   /**

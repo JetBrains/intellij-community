@@ -110,7 +110,9 @@ class XDebugTabLayoutSettings(
       onThreadsSettingsChanged(false)
     }
 
-    override fun getDefaultOptionKey(): String = Registry.stringValue("debugger.default.selected.view.key")
+    override fun getDefaultOptionKey(): String =
+      (session.debugProcess as? XDebugSessionTabCustomizer)?.getDefaultFramesViewKey()
+      ?: Registry.stringValue("debugger.default.selected.view.key")
 
     override fun getAvailableOptions() = options
 

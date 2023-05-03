@@ -210,6 +210,9 @@ private fun calcProximityPerContextFromRules(project: Project,
   // Check packages by `package.json` entries
   calculateProximity({ it.pkgManagerDependencies }, SourceKind.PackageManagerDependency)
 
+  // Check project tool executables
+  calculateProximity({ it.projectToolExecutables }, SourceKind.ProjectToolExecutable)
+
   return Pair(result.mapValues { (_, map) -> map.toMap() }, modificationTrackers)
 }
 

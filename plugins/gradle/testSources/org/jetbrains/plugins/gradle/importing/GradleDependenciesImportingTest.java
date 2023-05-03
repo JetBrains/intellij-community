@@ -134,7 +134,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
           Module moduleDep = ((ModuleOrderEntry)entry).getModule();
           String sourceSetDepName = getSourceSetName(moduleDep);
           // for simplicity, only project dependency on 'default' configuration allowed here
-          assert sourceSetDepName != "main";
+          assert "main".equals(sourceSetDepName);
 
           String gradleProjectDepName = trimStart(trimEnd(getExternalProjectId(moduleDep), ":main"), ":");
           String version = getExternalProjectVersion(moduleDep);

@@ -22,10 +22,7 @@ class KotlinNonSourceRootIndexFilter: GlobalIndexFilter {
                 !virtualFile.isDirectory &&
                 affectsIndex(indexId) &&
                 virtualFile.extension == KotlinFileType.EXTENSION &&
-                runReadAction {
-                    ProjectRootManager.getInstance(project).fileIndex.getOrderEntriesForFile(virtualFile).isEmpty() &&
-                            !ProjectFileIndex.getInstance(project).isInLibrary(virtualFile)
-                }
+                runReadAction { !ProjectFileIndex.getInstance(project).isInSource(virtualFile) }
 
     override fun getVersion(): Int = 0
 

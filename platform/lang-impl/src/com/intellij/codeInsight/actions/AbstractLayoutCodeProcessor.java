@@ -149,7 +149,7 @@ public abstract class AbstractLayoutCodeProcessor {
                                         boolean processChangedTextOnly) {
     myProject = project;
     myModule = null;
-    myFiles = ContainerUtil.filter(files, AbstractLayoutCodeProcessor::canBeFormatted);
+    myFiles = List.of(files);
     myProgressText = progressText;
     myCommandName = commandName;
     myPostRunnable = postRunnable;
@@ -229,7 +229,7 @@ public abstract class AbstractLayoutCodeProcessor {
   @NotNull
   private FileRecursiveIterator build() {
     if (myFiles != null) {
-      return new FileRecursiveIterator(myProject, myFiles);
+      return new FileRecursiveIterator(myProject, ContainerUtil.filter(myFiles, AbstractLayoutCodeProcessor::canBeFormatted));
     }
     if (myProcessChangedTextOnly) {
       return buildChangedFilesIterator();

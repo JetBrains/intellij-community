@@ -13,6 +13,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIfStatement;
@@ -44,14 +45,14 @@ public class PyRunLineMarkerContributor extends RunLineMarkerContributor {
     if (element.getNode().getElementType() == PyTokenTypes.IF_KEYWORD) {
       PyIfStatement statement = PyIfStatementNavigator.getIfStatementByIfKeyword(element);
       return statement != null &&
-             ScopeUtil.getScopeOwner(element) instanceof PyFile &&
+             ScopeUtil.getScopeOwner(element) instanceof PyFile containingFile &&
+             containingFile.getVirtualFile().getFileType() == PythonFileType.INSTANCE &&
              PyUtil.isIfNameEqualsMain(statement);
     }
     else {
       return false;
     }
   }
-
   @Override
   public boolean producesAllPossibleConfigurations(@NotNull PsiFile file) {
     return false;

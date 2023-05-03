@@ -47,19 +47,17 @@ open class GHPRDiffRequestChainProducer(
   private val currentUser: GHUser
 ) : DiffRequestChainProducer {
 
-  internal val changeProducerFactory = object : ChangeDiffRequestProducerFactory {
+  internal val changeProducerFactory = ChangeDiffRequestProducerFactory { project, change ->
     val changesData = dataProvider.changesData
     val changesProviderFuture = changesData.loadChanges()
     //TODO: check if revisions are already fetched or load via API (could be much quicker in some cases)
     val fetchFuture = CompletableFuture.allOf(changesData.fetchBaseBranch(), changesData.fetchHeadBranch())
 
-    override fun create(project: Project?, change: Change): DiffRequestProducer? {
-      val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-      val changeDataKeys = loadRequestDataKeys(indicator, change, changesProviderFuture, fetchFuture)
-      val customDataKeys = createCustomContext(change)
+    val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+    val changeDataKeys = loadRequestDataKeys(indicator, change, changesProviderFuture, fetchFuture)
+    val customDataKeys = createCustomContext(change)
 
-      return ChangeDiffRequestProducer.create(project, change, changeDataKeys + customDataKeys)
-    }
+    ChangeDiffRequestProducer.create(project, change, changeDataKeys + customDataKeys)
   }
 
   override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {

@@ -43,6 +43,7 @@ import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.geom.Point2D
 import java.awt.image.BufferedImage
+import java.util.concurrent.Future
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -241,8 +242,17 @@ class ToolWindowPane internal constructor(
     setWeight(anchor, weight)
   }
 
+  private val setAnchorWeightFutures = hashMapOf<ToolWindowAnchor, Future<*>>()
+
   internal fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
+    setAnchorWeightFutures.remove(anchor)?.cancel(false)
     val size = rootPane.size
+    if (size.height == 0 && size.width == 0) {
+      setAnchorWeightFutures[anchor] = UIUtil.runOnceWhenResized(rootPane) {
+        setWeight(anchor, weight)
+      }
+      return
+    }
     when (anchor) {
       ToolWindowAnchor.TOP -> verticalSplitter.firstSize = (size.getHeight() * weight).toInt()
       ToolWindowAnchor.LEFT -> horizontalSplitter.firstSize = (size.getWidth() * weight).toInt()

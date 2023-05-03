@@ -166,6 +166,11 @@ public class Basic {
       case Pair<I>(D d,C c) -> { }
       case Pair<I>(D d,D d2) -> { }
     }
+
+    switch(pairI.x()) {
+      case C c when true -> {}
+      case D d -> {}
+    }
   }
 
 }

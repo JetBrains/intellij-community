@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -19,6 +19,9 @@ import java.util.ListIterator;
 
 import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
 
+/**
+ * To install the speed search on a {@link JTable} component, pass the table component to one of the constructors.
+ */
 public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
   private static final PairFunction<Object, Cell, String> TO_STRING = (o, cell) -> o == null || o instanceof Boolean ? "" : o.toString();
   private final PairFunction<Object, ? super Cell, String> myToStringConvertor;

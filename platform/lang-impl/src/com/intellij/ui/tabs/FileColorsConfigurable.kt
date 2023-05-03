@@ -106,7 +106,8 @@ internal class FileColorsConfigurable(project: Project) : SearchableConfigurable
 
   private val manager = FileColorManager.getInstance(project) as FileColorManagerImpl
   private val colorsTableModel = FileColorsTableModel(manager)
-  private val configurables = listOf(enabledFileColors, useInEditorTabs, useInProjectView, colorsTableModel)
+  // order matters: color changes should be applied before enabling it in the editor/project view
+  private val configurables = listOf(enabledFileColors, colorsTableModel, useInEditorTabs, useInProjectView)
 
   // UnnamedConfigurable
 

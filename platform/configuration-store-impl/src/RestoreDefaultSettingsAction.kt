@@ -8,6 +8,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.ExperimentalUI
 import java.nio.file.Path
 
 private class RestoreDefaultSettingsAction : DumbAwareAction() {
@@ -17,6 +18,10 @@ private class RestoreDefaultSettingsAction : DumbAwareAction() {
     }
 
     CustomConfigMigrationOption.StartWithCleanConfig.writeConfigMarkerFile()
+
+    // Temporary solution for the IDEA-313607 issue in 231 branch. Master has a better solution.
+    ExperimentalUI.getInstance().needSuggestRestart.set(false)
+    ExperimentalUI.setNewUI(false)
 
     invokeLater {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
