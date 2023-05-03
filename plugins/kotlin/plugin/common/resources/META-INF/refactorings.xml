@@ -38,6 +38,9 @@
     <refactoring.moveInnerHandler
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinInnerHandler"/>
+    <refactoring.moveInnerClassUsagesHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveJavaInnerClassKotlinUsagesHandler"/>
 
   </extensions>
 

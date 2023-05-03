@@ -15,21 +15,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 class MoveJavaInnerClassKotlinUsagesHandler : MoveInnerClassUsagesHandler {
     override fun correctInnerClassUsage(usage: UsageInfo, outerClass: PsiClass, parameterNameOuterClass: String?) {
         parameterNameOuterClass ?: return
-
         val innerCall = usage.element?.parent as? KtCallExpression ?: return
         val receiverExpression = innerCall.getQualifiedExpressionForSelector()?.receiverExpression
-
         val psiFactory = KtPsiFactory(usage.project)
-
         val argumentToAdd = psiFactory.createArgument(receiverExpression ?: psiFactory.createExpression("this"))
-
-        val argumentList = innerCall.valueArgumentList
-            ?: (innerCall.lambdaArguments.firstOrNull()?.let { lambdaArg ->
-                val anchor = PsiTreeUtil.skipSiblingsBackward(lambdaArg, PsiWhiteSpace::class.java)
-                innerCall.addAfter(psiFactory.createCallArguments("()"), anchor)
-            } as KtValueArgumentList?)
-            ?: return
-
+        val argumentList = innerCall.valueArgumentList ?: (innerCall.lambdaArguments.firstOrNull()?.let { lambdaArg ->
+            val anchor = PsiTreeUtil.skipSiblingsBackward(lambdaArg, PsiWhiteSpace::class.java)
+            innerCall.addAfter(psiFactory.createCallArguments("()"), anchor)
+        } as KtValueArgumentList?) ?: return
         argumentList.addArgumentAfter(argumentToAdd, null)
     }
 }
