@@ -16,7 +16,6 @@ log = { version = "0.4.17", features = ["std"] }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 jni = "0.21.1"
-jni-sys = "0.3.0"
 libloading = "0.8.0"
 anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
 

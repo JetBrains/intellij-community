@@ -3229,7 +3229,6 @@ dependencies = [
  "cargo-deny",
  "core-foundation",
  "jni",
- "jni-sys",
  "libc",
  "libloading",
  "log",
