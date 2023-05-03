@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.vfilefinder
 
-import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
@@ -19,7 +18,7 @@ class KotlinBuiltInsMetadataIndex : KotlinFileIndexBase() {
 
     override fun getIndexer() = INDEXER
 
-    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> FileTypeRegistry.getInstance().isFileOfType(file, KotlinBuiltInFileType) }
+    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(KotlinBuiltInFileType)
 
     override fun getVersion() = VERSION
 

@@ -93,7 +93,7 @@ class KotlinStdlibIndex : KotlinFileIndexBase() {
 
     override fun getIndexer() = INDEXER
 
-    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> file.fileType is ManifestFileType }
+    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(ManifestFileType.INSTANCE)
 
     override fun getVersion() = 1
 
