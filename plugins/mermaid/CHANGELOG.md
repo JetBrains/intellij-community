@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## 0.0.12
+- [MERMAID-56](https://youtrack.jetbrains.com/issue/MERMAID-56) Fixed freezes during diagram directive editing
+
 ## 0.0.11
 - [MERMAID-21](https://youtrack.jetbrains.com/issue/MERMAID-21) Fixed completion after front matter header
 - [MERMAID-34](https://youtrack.jetbrains.com/issue/MERMAID-34) Added more highlightable tokens for the syntax highlighter
