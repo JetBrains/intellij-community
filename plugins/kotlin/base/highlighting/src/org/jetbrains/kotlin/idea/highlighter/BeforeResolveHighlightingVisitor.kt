@@ -3,13 +3,12 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeHighlighting.RainbowHighlighter
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractAnnotationHolderHighlightingVisitor
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
@@ -17,10 +16,11 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.util.match
 
-class BeforeResolveHighlightingVisitor(holder: AnnotationHolder) : AbstractAnnotationHolderHighlightingVisitor(holder) {
+class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractAnnotationHolderHighlightingVisitor(holder) {
     override fun visitElement(element: PsiElement) {
         val elementType = element.node.elementType
         val attributes = when {

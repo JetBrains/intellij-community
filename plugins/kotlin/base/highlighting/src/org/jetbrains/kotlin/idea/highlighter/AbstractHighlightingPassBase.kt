@@ -3,11 +3,9 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
-import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.AnnotationSession
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
@@ -23,23 +21,14 @@ abstract class AbstractHighlightingPassBase(
     protected val file: KtFile,
     document: Document
 ) : TextEditorHighlightingPass(file.project, document), DumbAware {
-    private var annotationHolder: AnnotationHolderImpl? = null
 
     override fun doCollectInformation(progress: ProgressIndicator) {
-        // TODO: YES, IT USES `@ApiStatus.Internal` AnnotationHolderImpl intentionally:
-        //  there is no other way to highlight:
-        //  - HighlightInfo could not be highlighted immediately as myHighlightInfoProcessor.infoIsAvailable is not accessible
-        //  (HighlightingSessionImpl impl is closed) and/or UpdateHighlightersUtil.addHighlighterToEditorIncrementally is closed as well.
-        //  therefore direct usage of AnnotationHolderImpl is the smallest evil
-
-        val annotationHolder = AnnotationHolderImpl(AnnotationSession(file), false)
-        annotationHolder.runAnnotatorWithContext(file) { element, holder ->
-            runAnnotatorWithContext(element, holder)
-        }
-        this.annotationHolder = annotationHolder
+        val holder = HighlightInfoHolder(file)
+        runAnnotatorWithContext(file, holder)
+        applyInformationInBackground(holder)
     }
 
-    protected open fun runAnnotatorWithContext(element: PsiElement, holder: AnnotationHolder) {
+    protected open fun runAnnotatorWithContext(element: PsiElement, holder: HighlightInfoHolder) {
     }
 
     companion object {
@@ -63,16 +52,18 @@ abstract class AbstractHighlightingPassBase(
     }
 
     override fun doApplyInformationToEditor() {
+    }
+
+    private fun applyInformationInBackground(holder: HighlightInfoHolder) {
         if (IGNORE_IN_TESTS) {
             assert(ApplicationManager.getApplication().isUnitTestMode)
             return
         }
-        try {
-            val infos = annotationHolder?.map { HighlightInfo.fromAnnotation(it) } ?: return
-            UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, infos, colorsScheme, id)
-        } finally {
-            annotationHolder = null
+        val result:MutableList<HighlightInfo> = ArrayList(holder.size())
+        for (i in 0 until holder.size()) {
+            result.add(holder.get(i))
         }
+        BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, result, colorsScheme, id)
     }
 
 }
