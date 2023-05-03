@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -1378,12 +1378,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                         "  private static NodeFilter instance;\n" +
                         "}";
     final String s124 = "class 'Class {\n" +
-                        "  private 'Class('_ '_*) {\n" +
-                        "   '_*;\n" +
+                        "  private 'Class('_Type '_param*) {\n" +
+                        "   '_st*;\n" +
                         "  }\n" +
-                        "  private static '_Class2:* '_Instance;\n" +
+                        "  private static '_Class2 '_Instance;\n" +
                         "  static '_Class2 '_GetInstance() {\n" +
-                        "    '_*;\n" +
+                        "    '_st2*;\n" +
                         "    return '_Instance;\n" +
                         "  }\n" +
                         "}";
@@ -2547,7 +2547,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "   '_Statement;\n" +
                       "   return new Function<String, String>() {\n" +
                       "      public String apply(String b) {\n" +
-                      "         '_Statement;\n" +
+                      "         '_Statement2;\n" +
                       "      }\n" +
                       "   };\n" +
                       "}";
@@ -3538,6 +3538,28 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                       "System.arraycopy('_a, '_i, '_params, 0, '_p - '_i);"));
     assertEquals(1, findMatchesCount(in, "int[] '_params = new int['_p * 2 - '_i];\n" +
                                          "System.arraycopy('_a, '_i, '_params, 0, '_p - '_i);"));
+
+    in = """
+         class X {
+           @Test(expected=IllegalArgumentException.class)
+           public void testIt() throws IllegalArgumentException {
+             System.out.println();
+             System.out.println();
+           }
+           
+           @Test(expected=IllegalArgumentException.class)
+           public void testIt() throws NullPointerException {
+             System.out.println();
+             System.out.println();
+           }
+         }
+         """;
+    assertEquals(1, findMatchesCount(in, """
+      @Test(expected='_E.class)
+      public void '_m() throws '_E {
+          '_st*;
+      }
+      """));
   }
 
   public void testForStatement() {
