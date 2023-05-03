@@ -10,10 +10,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.VfsTimeMachine
+import com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic.timemachine.fullPath
+import com.intellij.util.io.PersistentStringEnumerator
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.div
 import kotlin.math.sqrt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -28,7 +32,7 @@ private data class Stats(
   val nullPayloads: AtomicInteger = AtomicInteger(0),
   val nullEnumeratedString: AtomicInteger = AtomicInteger(0),
   val exceptionResultCount: AtomicInteger = AtomicInteger(0),
-  val payloadSizeHist: IntHistogram = IntHistogram(listOf(0, 1, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 1024*16, 1024*128, 1024*1024)),
+  val payloadSizeHist: IntHistogram = IntHistogram(listOf(0, 1, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 1024 * 16, 1024 * 128, 1024 * 1024)),
   val tagsCount: ConcurrentHashMap<VfsOperationTag, Int> = ConcurrentHashMap(VfsOperationTag.values().size),
   val incompleteTagsCount: ConcurrentHashMap<VfsOperationTag, Int> = ConcurrentHashMap(VfsOperationTag.values().size),
   var elapsedTime: Duration = 0.seconds
@@ -40,7 +44,13 @@ private data class Stats(
 
 @OptIn(ExperimentalTime::class)
 private fun calcStats(log: VfsLog): Stats {
-  fun <T> incStat(key: T, value: Int?) = if (value != null) { value + 1 } else { 1 }
+  fun <T> incStat(key: T, value: Int?) = if (value != null) {
+    value + 1
+  }
+  else {
+    1
+  }
+
   val stats = Stats()
   stats.elapsedTime = measureTime {
     runBlocking {
@@ -74,7 +84,8 @@ private fun calcStats(log: VfsLog): Stats {
                   val data = payloadStorage.readAt(it.operation.dataPayloadRef)
                   if (data == null) {
                     stats.nullPayloads.incrementAndGet()
-                  } else {
+                  }
+                  else {
                     stats.payloadSizeHist.add(data.size)
                   }
                 }
@@ -116,6 +127,7 @@ private fun benchmark(log: VfsLog, runs: Int = 30, heatRuns: Int = 20) {
     val avg = avg()
     return sqrt(sumOf { (it - avg) * (it - avg) } / size)
   }
+
   fun <T> List<T>.avgOf(body: (T) -> Double) = map(body).avg()
   fun <T> List<T>.deviationOf(body: (T) -> Double) = map(body).std()
   data class MeanDev(val mean: Double, val dev: Double) {
@@ -124,6 +136,7 @@ private fun benchmark(log: VfsLog, runs: Int = 30, heatRuns: Int = 20) {
       return represent()
     }
   }
+
   fun <T> List<T>.meanDev(body: (T) -> Double) = MeanDev(avgOf(body), deviationOf(body))
 
   println(stats)
@@ -143,26 +156,57 @@ private fun single(log: VfsLog) {
   println("avg descriptor read speed: ${(stats.avgDescPS / 1000.0).format("%.1f")} KDesc/s")
 }
 
-private fun vFileEventIterCheck(log: VfsLog) {
+
+
+@OptIn(ExperimentalTime::class)
+private fun vFileEventIterCheck(log: VfsLog, names: PersistentStringEnumerator) {
   var singleOp = 0
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
-  log.query {
-    val iter = IteratorUtils.VFileEventBasedIterator(operationLogStorage.begin())
-    while (iter.hasNext()) {
-      val rec = iter.next()
-      when (rec) {
-        is ReadResult.Invalid -> throw rec.cause
-        is ReadResult.SingleOperation -> {
-          singleOp++
-          rec.iterator().next() // read it
-        }
-        is ReadResult.VFileEventRange -> {
-          vfileEvents++
-          rec.forEachContainedOperation {
-            check(it !is OperationReadResult.Invalid)
-            vfileEventContentOps++
+  val time = measureTime {
+    log.query {
+      val iter = IteratorUtils.VFileEventBasedIterator(operationLogStorage.begin())
+      while (iter.hasNext()) {
+        val rec = iter.next()
+        when (rec) {
+          is ReadResult.Invalid -> throw rec.cause
+          is ReadResult.SingleOperation -> {
+            singleOp++
+            rec.iterator().next() // read it
+          }
+          is ReadResult.VFileEventRange -> {
+            val snapshot = VfsTimeMachine.getSnapshot(rec.begin(), names::valueOf)
+            vfileEvents++
+            println()
+            println(rec.startTag)
+            when (rec.startTag) {
+              VfsOperationTag.VFILE_EVENT_MOVE -> {
+                val startOp =
+                  (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.Move
+                val file = snapshot.getFileById(startOp.fileId)
+                println("PATH: ${file.fullPath()}")
+                val oldParent = snapshot.getFileById(startOp.oldParentId)
+                val newParent = snapshot.getFileById(startOp.newParentId)
+                println("MOVE FROM PARENT ${oldParent.name.value} to ${newParent.name.value}")
+              }
+              VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
+                val startOp =
+                  (rec.begin().next() as OperationReadResult.Valid).operation as VfsOperation.VFileEventOperation.EventStart.ContentChange
+                val file = snapshot.getFileById(startOp.fileId)
+                println("PATH: ${file.fullPath()}")
+              }
+              else -> {}
+            }
+
+            rec.forEachContainedOperation {
+              if (it is OperationReadResult.Valid) {
+                println(it.operation)
+              }
+              else println(it)
+              check(it !is OperationReadResult.Invalid)
+              vfileEventContentOps++
+            }
           }
         }
       }
@@ -172,13 +216,16 @@ private fun vFileEventIterCheck(log: VfsLog) {
   println("singleOp: $singleOp")
   println("vfileEvents: $vfileEvents")
   println("vfileEventContentOps: $vfileEventContentOps")
+  println("time: $time")
 }
 
 fun main(args: Array<String>) {
   assert(args.size == 1) { "Usage: <LogStats> <path to vfslog folder>" }
 
-  val log = VfsLog(Path.of(args[0]), true)
+  val logPath = Path.of(args[0])
+  val log = VfsLog(logPath, true)
+  val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)
   //single(log)
   //benchmark(log, 100)
-  vFileEventIterCheck(log)
+  vFileEventIterCheck(log, names)
 }

@@ -203,12 +203,14 @@ class OperationLogStorageImpl(
     storageIO.close()
   }
 
-  private inner class IteratorImpl(
+  inner class IteratorImpl(
     private var position: Long,
     private var invalidationFlag: Boolean = false
   ) : OperationLogStorage.Iterator {
     // [tag, previous operation, tag]  [tag, next operation, tag]
     //                      position --^
+
+    fun getPosition(): Long = position
 
     override fun hasNext(): Boolean {
       return position < size() && !invalidationFlag
