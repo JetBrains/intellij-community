@@ -84,8 +84,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Nullable
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
-    WorkspaceFileSetWithCustomData<ModuleContentOrSourceRootData> fileSet =
-      myWorkspaceFileIndex.findFileSetWithCustomData(file, honorExclusion, true, false, false, ModuleContentOrSourceRootData.class);
+    WorkspaceFileSetWithCustomData<ModuleRelatedRootData> fileSet =
+      myWorkspaceFileIndex.findFileSetWithCustomData(file, honorExclusion, true, false, false, ModuleRelatedRootData.class);
     if (fileSet == null) return null;
     return fileSet.getData().getModule();
   }

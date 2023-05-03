@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +79,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return isFromThisModule(fileSet);
   }
 
-  private boolean isFromThisModule(@Nullable WorkspaceFileSetWithCustomData<? extends ModuleContentOrSourceRootData> fileSet) {
+  private boolean isFromThisModule(@Nullable WorkspaceFileSetWithCustomData<? extends ModuleRelatedRootData> fileSet) {
     return fileSet != null && fileSet.getData().getModule().equals(myModule);
   }
 
