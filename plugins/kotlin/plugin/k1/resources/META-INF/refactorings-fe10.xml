@@ -68,10 +68,6 @@
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinAliasClassHandler"
             order="first"/>
 
-    <refactoring.moveMemberHandler
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinMemberHandler"/>
-
     <refactoring.moveInnerHandler
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinInnerHandler"/>
