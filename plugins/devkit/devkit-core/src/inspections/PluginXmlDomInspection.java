@@ -27,7 +27,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -42,6 +41,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
@@ -91,7 +91,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   @XCollection
   public List<PluginModuleSet> PLUGINS_MODULES = new ArrayList<>();
-  private final ClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName = ClearableLazyValue.createAtomic(() -> {
+  private final SynchronizedClearableLazy<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName = new SynchronizedClearableLazy<>(() -> {
     Map<String, PluginModuleSet> result = new HashMap<>();
     for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
       for (String module : modulesSet.modules) {

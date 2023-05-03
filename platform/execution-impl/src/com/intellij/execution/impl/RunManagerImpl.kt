@@ -35,7 +35,6 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -50,6 +49,7 @@ import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.filterSmart
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
@@ -66,7 +66,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -224,14 +223,12 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
   private val isFirstLoadState = AtomicBoolean(true)
 
-  private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
-    override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
-      val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
-      for (provider in BeforeRunTaskProvider.EP_NAME.getExtensions(project)) {
-        result.put(provider.id.toString(), provider)
-      }
-      return result
+  private val stringIdToBeforeRunProvider = SynchronizedClearableLazy {
+    val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
+    for (provider in BeforeRunTaskProvider.EP_NAME.getExtensions(project)) {
+      result.put(provider.id.toString(), provider)
     }
+    result
   }
 
   internal val eventPublisher: RunManagerListener

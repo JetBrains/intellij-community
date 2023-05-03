@@ -7,13 +7,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   private final ConcurrentMap<String, List<StubFileElementType<?>>> myFileElementTypesCache = new ConcurrentHashMap<>();
   private final ConcurrentMap<StubFileElementType<?>, Long> myModCounts = new ConcurrentHashMap<>();
-  private final ClearableLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = ClearableLazyValue.createAtomic(() -> {
+  private final SynchronizedClearableLazy<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = new SynchronizedClearableLazy<>(() -> {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.waitUntilIndicesAreInitialized();
     UpdatableIndex<?, ?, ?, ?> index = fileBasedIndex.getIndex(StubUpdatingIndex.INDEX_ID);

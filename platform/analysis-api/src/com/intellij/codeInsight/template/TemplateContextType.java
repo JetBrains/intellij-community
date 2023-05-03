@@ -6,13 +6,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.ClearableLazyValue.createAtomic;
 import static com.intellij.openapi.util.NlsContexts.Label;
 
 /**
@@ -21,7 +20,7 @@ import static com.intellij.openapi.util.NlsContexts.Label;
  */
 public abstract class TemplateContextType {
   String myContextId;
-  ClearableLazyValue<@Nullable TemplateContextType> myBaseContextType;
+  SynchronizedClearableLazy<@Nullable TemplateContextType> myBaseContextType;
 
   private final @NotNull @Label String myPresentableName;
 
@@ -47,7 +46,7 @@ public abstract class TemplateContextType {
     myContextId = id;
     myPresentableName = presentableName;
     Class<? extends TemplateContextType> actualBaseClass = baseContextType != null ? baseContextType : EverywhereContextType.class;
-    myBaseContextType = createAtomic(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseClass));
+    myBaseContextType = new SynchronizedClearableLazy(() -> LiveTemplateContextService.getInstance().getTemplateContextType(actualBaseClass));
   }
 
   /**
