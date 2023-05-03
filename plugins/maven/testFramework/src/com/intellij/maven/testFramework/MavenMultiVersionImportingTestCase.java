@@ -115,11 +115,11 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     return isMaven4() ? value : null;
   }
 
-  private String[] defaultResources() {
+  protected String[] defaultResources() {
     return arrayOfNotNull("src/main/resources", maven4orNull("src/main/resources-filtered"));
   }
 
-  private String[] defaultTestResources() {
+  protected String[] defaultTestResources() {
     return arrayOfNotNull("src/test/resources",  maven4orNull("src/test/resources-filtered"));
   }
 
