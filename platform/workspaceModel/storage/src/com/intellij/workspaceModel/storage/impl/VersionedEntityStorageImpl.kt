@@ -172,22 +172,25 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
   @Volatile
   private var currentPointer: Current = Current(0, initialStorage)
 
+  /**
+   * About [changes] parameter:
+   * Here is a bit weird situation that we collect changes and pass them in this fucntion as the parameter.
+   *   Moreover, we collect changes even if two storages are equal.
+   * Unfortunately, we have to do it because we initialize bridges on the base of the changes.
+   * We may calculate the change in this function as we won't need the changes for bridges initialization.
+   */
   @Synchronized
-  fun replace(newStorage: EntityStorageSnapshot, changes: Map<Class<*>, List<EntityChange<*>>>,
-              beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
+  fun replace(newStorage: EntityStorageSnapshot,
+              changes: Map<Class<*>, List<EntityChange<*>>>,
+              beforeChanged: (VersionedStorageChange) -> Unit,
+              afterChanged: (VersionedStorageChange) -> Unit): VersionedStorageChange? {
     val oldCopy = currentPointer
-    if (oldCopy.storage == newStorage) return
+    if (oldCopy.storage == newStorage) return null
     val change = VersionedStorageChangeImpl(this, oldCopy.storage, newStorage, changes)
     beforeChanged(change)
     currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
     afterChanged(change)
-  }
-
-  @Synchronized
-  fun replaceSilently(newStorage: EntityStorageSnapshot) {
-    val oldCopy = currentPointer
-    if (oldCopy.storage == newStorage) return
-    currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
+    return change
   }
 }
 

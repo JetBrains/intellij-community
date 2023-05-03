@@ -78,7 +78,8 @@ class GlobalWorkspaceModel : Disposable {
     entityStorage = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
     val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
-    entityStorage.replaceSilently(mutableEntityStorage.toSnapshot())
+    val changes = mutableEntityStorage.collectChanges(EntityStorageSnapshot.empty())
+    entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
     callback.invoke()
   }
 

@@ -29,7 +29,6 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -50,8 +49,13 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   final override val entityStorage: VersionedEntityStorageImpl
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
 
-  private val mutableChangesEventFlow = MutableSharedFlow<VersionedStorageChange>(replay = 0, onBufferOverflow = BufferOverflow.SUSPEND)
-  override val changesEventFlow: Flow<VersionedStorageChange> = mutableChangesEventFlow.asSharedFlow()
+  private val updatesFlow = MutableSharedFlow<VersionedStorageChange>()
+
+  /**
+   * This flow will become obsolete, as we'll migrate to reactive listeners. However, [updatesFlow] will remain here
+   *   as a building block of the new listeners.
+   */
+  override val changesEventFlow: Flow<VersionedStorageChange> = updatesFlow.asSharedFlow()
 
   override val currentSnapshot: EntityStorageSnapshot
     get() = entityStorage.current
@@ -156,12 +160,17 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
+      val change = entityStorage.replace(newStorage, changes, this@WorkspaceModelImpl::onBeforeChanged,
+                                         this@WorkspaceModelImpl::onChanged)
+      if (change != null) {
+        cs.launch {
+          updatesFlow.emit(change)
+        }
+      }
     }.apply {
       totalUpdatesTimeMs.addAndGet(this)
       updatesCounter.incrementAndGet()
     }
-
     log.info("Project model updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       log.info(
@@ -189,7 +198,11 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    * Update project model without the notification to message bus and without resetting accumulated changes.
    *
    * This method doesn't require write action.
+   *
+   * This method runs without write action, so it causes different issues. We're going to deprecate this method, so it's better to avoid
+   *   the use of this function.
    */
+  @ApiStatus.Obsolete
   @Synchronized
   fun updateProjectModelSilent(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     checkRecursiveUpdate()
@@ -203,6 +216,11 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       updateTimeMillis = measureTimeMillis {
         updater(builder)
       }
+
+      // We don't send changes to the WorkspaceModelChangeListener during the silent update.
+      // But the concept of silent update is getting deprecated, and the list of changes will be sent to the new async listeners
+      val changes = builder.collectChanges(before)
+
       toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
       }
@@ -210,7 +228,12 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      entityStorage.replaceSilently(newStorage)
+      val change = entityStorage.replace(newStorage, changes, {}, {})
+      if (change != null) {
+        cs.launch {
+          updatesFlow.emit(change)
+        }
+      }
     }.apply {
       totalUpdatesTimeMs.addAndGet(this)
       updatesCounter.incrementAndGet()
@@ -276,7 +299,13 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       measureTimeMillis {
         val builder = replacement.builder
         this.initializeBridges(replacement.changes, builder)
-        entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
+        val change = entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
+
+        if (change != null) {
+          cs.launch {
+            updatesFlow.emit(change)
+          }
+        }
       })
 
     return true
@@ -324,8 +353,6 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change,
                                                                                                                 EntityStorageKind.MAIN)
     }
-
-    cs.launch { mutableChangesEventFlow.emit(change) }
 
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)
