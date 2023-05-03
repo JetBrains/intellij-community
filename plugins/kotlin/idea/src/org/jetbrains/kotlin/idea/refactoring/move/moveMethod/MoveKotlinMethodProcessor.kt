@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.refactoring.move.*
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
@@ -71,7 +70,7 @@ class MoveKotlinMethodProcessor(
             MoveContainerInfo.Class(targetClassOrObject.fqName!!)
         )
         val conflictChecker =
-            MoveConflictChecker(myProject, listOf(method), KotlinMoveTarget.ExistingElement(targetClassOrObject), method)
+            KotlinMoveConflictCheckerInfo(myProject, listOf(method), KotlinMoveTarget.ExistingElement(targetClassOrObject), method)
         val searchScope = myProject.projectScope()
         val internalUsages = mutableSetOf<UsageInfo>()
         val methodCallUsages = mutableSetOf<UsageInfo>()
@@ -89,9 +88,9 @@ class MoveKotlinMethodProcessor(
         internalUsages += method.getInternalReferencesToUpdateOnPackageNameChange(changeInfo)
         traverseOuterInstanceReferences(method) { internalUsages += it }
 
-        conflictChecker.checkAllConflicts(
-          methodCallUsages.filter { it is KotlinMoveRenameUsage && !it.isInternal }.toMutableSet(), internalUsages, conflicts
-        )
+        conflicts.putAllValues(KotlinMoveConflictCheckerSupport.getInstance().checkAllConflicts(
+            conflictChecker, internalUsages, methodCallUsages.filter { it is KotlinMoveRenameUsage && !it.isInternal }.toMutableSet()
+        ))
 
         if (oldClassParameterNames.size > 1) {
             for (usage in methodCallUsages.filter { it.element is KtNameReferenceExpression || it.element is PsiReferenceExpression }) {

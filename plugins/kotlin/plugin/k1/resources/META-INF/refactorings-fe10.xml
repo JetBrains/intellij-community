@@ -37,6 +37,8 @@
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.move.K1MoveRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRefactoringSupport"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.move.K1MoveConflictCheckerSupport"
+                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerSupport"/>
 
     <refactoring.moveHandler
             id="kotlin.moveMethod"

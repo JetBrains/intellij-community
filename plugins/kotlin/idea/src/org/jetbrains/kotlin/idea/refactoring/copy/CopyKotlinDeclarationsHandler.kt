@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.*
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveConflictChecker
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.sourceRoot
@@ -468,16 +467,17 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
 
         if (sourceData.project != sourceData.originalFile.project) return MultiMap.empty()
 
-        val conflictChecker = MoveConflictChecker(
+        val moveCheckerInfo = KotlinMoveConflictCheckerInfo(
             sourceData.project,
             sourceData.elementsToCopy,
             KotlinMoveTarget.Directory(FqName.ROOT, targetSourceRootPsi.virtualFile),
             sourceData.originalFile
         )
 
-        return MultiMap<PsiElement, String>().also {
-            conflictChecker.checkModuleConflictsInDeclarations(internalUsages, it)
-            conflictChecker.checkVisibilityInDeclarations(it)
+        val checkerSupport = KotlinMoveConflictCheckerSupport.getInstance()
+        return MultiMap<PsiElement, String>().apply {
+            putAllValues(checkerSupport.checkModuleConflictsInDeclarations(moveCheckerInfo, internalUsages))
+            putAllValues(checkerSupport.checkVisibilityInDeclarations(moveCheckerInfo))
         }
     }
 

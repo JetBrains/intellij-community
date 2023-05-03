@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
+package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -51,9 +51,6 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.refactoring.getUsageContext
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRenameUsage
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.getTargetModule
 import org.jetbrains.kotlin.idea.refactoring.pullUp.renderForConflicts
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -82,22 +79,9 @@ import org.jetbrains.kotlin.util.isJavaDescriptor
 import org.jetbrains.kotlin.util.supertypesWithAny
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import java.util.*
 
-class MoveConflictChecker(
-    private val project: Project,
-    private val elementsToMove: Collection<KtElement>,
-    private val moveTarget: KotlinMoveTarget,
-    contextElement: KtElement,
-    doNotGoIn: Collection<KtElement> = emptySet(),
-    allElementsToMove: Collection<PsiElement>? = null
-) {
-    private val doNotGoIn: Set<KtElement> by lazy { doNotGoIn.toSet() }
-    private val resolutionFacade = contextElement.getResolutionFacade()
-
-    private val fakeFile = KtPsiFactory(project).createFile("")
-
-    private val allElementsToMove = allElementsToMove ?: elementsToMove
-
+class K1MoveConflictCheckerSupport : KotlinMoveConflictCheckerSupport {
     private fun PackageFragmentDescriptor.withSource(sourceFile: KtFile): PackageFragmentDescriptor {
         return object : PackageFragmentDescriptor by this {
             override fun getOriginal() = this
@@ -105,32 +89,27 @@ class MoveConflictChecker(
         }
     }
 
-    private fun getModuleDescriptor(sourceFile: VirtualFile): ModuleDescriptor? {
-        val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(sourceFile) ?: return null
-        return resolutionFacade.findModuleDescriptor(moduleInfo)
+    private fun VirtualFile.getModuleDescriptor(context: KtElement): ModuleDescriptor? {
+        val moduleInfo = ModuleInfoProvider.getInstance(context.project).firstOrNull(this) ?: return null
+        return context.getResolutionFacade().findModuleDescriptor(moduleInfo)
     }
 
-    private fun KotlinMoveTarget.getContainerDescriptor(): DeclarationDescriptor? {
+    private fun KotlinMoveTarget.getContainerDescriptor(context: KtElement): DeclarationDescriptor? {
         return when (this) {
             is KotlinMoveTarget.ExistingElement -> when (val targetElement = targetElement) {
-                is KtNamedDeclaration -> resolutionFacade.resolveToDescriptor(targetElement)
-
+                is KtNamedDeclaration -> context.getResolutionFacade().resolveToDescriptor(targetElement)
                 is KtFile -> {
-                    val packageFragment =
-                        targetElement
-                            .findModuleDescriptor()
-                            .findPackageFragmentForFile(targetElement)
-
+                    val packageFragment = targetElement.findModuleDescriptor().findPackageFragmentForFile(targetElement)
                     packageFragment?.withSource(targetElement)
                 }
-
                 else -> null
             }
 
             is KotlinMoveTarget.Directory, is KotlinMoveTarget.DeferredFile -> {
                 val packageFqName = targetContainerFqName ?: return null
-                val targetModuleDescriptor = targetFileOrDir?.let { getModuleDescriptor(it) ?: return null }
-                    ?: resolutionFacade.moduleDescriptor
+                val targetModuleDescriptor = targetFileOrDir?.let { it.getModuleDescriptor(context) ?: return null }
+                    ?: context.getResolutionFacade().moduleDescriptor
+                val fakeFile = KtPsiFactory(context.project).createFile("")
                 MutablePackageFragmentDescriptor(targetModuleDescriptor, packageFqName).withSource(fakeFile)
 
             }
@@ -203,23 +182,20 @@ class MoveConflictChecker(
 
     // Based on RefactoringConflictsUtil.analyzeModuleConflicts
     private fun analyzeModuleConflictsInUsages(
-        project: Project,
+        moveChecker: KotlinMoveConflictCheckerInfo,
         usages: Collection<UsageInfo>,
-        targetScope: VirtualFile,
-        conflicts: MultiMap<PsiElement, String>
-    ) {
-        val targetModule = targetScope.getModule(project) ?: return
-
+        targetScope: VirtualFile
+    ): MultiMap<PsiElement, String> {
+        val conflicts = MultiMap<PsiElement, String>()
+        val targetModule = targetScope.getModule(moveChecker.project) ?: return MultiMap.empty()
         val fileIndex = ModuleRootManager.getInstance(targetModule).fileIndex
         val isInTestSources = fileIndex.getKotlinSourceRootType(targetScope) == TestSourceKotlinRootType
         NextUsage@ for (usage in usages) {
             val element = usage.element ?: continue
             if (PsiTreeUtil.getParentOfType(element, PsiImportStatement::class.java, false) != null) continue
-            if (isToBeMoved(element)) continue@NextUsage
-
+            if (moveChecker.isToBeMoved(element)) continue@NextUsage
             val resolveScope = element.resolveScope
             if (resolveScope.isSearchInModuleContent(targetModule, isInTestSources)) continue
-
             val usageModule = element.module ?: continue
             val scopeDescription = RefactoringUIUtil.getDescription(element.getUsageContext(), true)
             val referencedElement = (if (usage is MoveRenameUsageInfo) usage.referencedElement else usage.element) ?: error(usage)
@@ -240,43 +216,29 @@ class MoveConflictChecker(
             }
             conflicts.putValue(referencedElement, StringUtil.capitalize(message))
         }
+        return conflicts
     }
 
-    private fun checkModuleConflictsInUsages(externalUsages: MutableSet<UsageInfo>, conflicts: MultiMap<PsiElement, String>) {
-        val newConflicts = MultiMap<PsiElement, String>()
-        val targetScope = moveTarget.targetFileOrDir ?: return
-
-        analyzeModuleConflictsInUsages(project, externalUsages, targetScope, newConflicts)
+    override fun checkModuleConflictsInUsages(
+        moveCheckerInfo: KotlinMoveConflictCheckerInfo,
+        externalUsages: MutableSet<UsageInfo>
+    ): MultiMap<PsiElement, String> {
+        val conflicts = MultiMap<PsiElement, String>()
+        val targetScope = moveCheckerInfo.moveTarget.targetFileOrDir ?: return MultiMap.empty()
+        val newConflicts = analyzeModuleConflictsInUsages(moveCheckerInfo, externalUsages, targetScope)
         if (!newConflicts.isEmpty) {
             val referencedElementsToSkip = newConflicts.keySet().mapNotNullTo(HashSet()) { it.namedUnwrappedElement }
-            externalUsages.removeIf {
-                it is MoveRenameUsageInfo &&
-                        it.referencedElement?.namedUnwrappedElement?.let { element -> element in referencedElementsToSkip } ?: false
+            externalUsages.removeIf { it is MoveRenameUsageInfo
+                    && it.referencedElement?.namedUnwrappedElement?.let { element -> element in referencedElementsToSkip } ?: false
             }
             conflicts.putAllValues(newConflicts)
         }
-    }
-
-    companion object {
-        private val DESCRIPTOR_RENDERER_FOR_COMPARISON = DescriptorRenderer.withOptions {
-            withDefinedIn = true
-            classifierNamePolicy = ClassifierNamePolicy.FULLY_QUALIFIED
-            modifiers = emptySet()
-            withoutTypeParameters = true
-            parameterNameRenderingPolicy = ParameterNameRenderingPolicy.NONE
-            includeAdditionalModifiers = false
-            renderUnabbreviatedType = false
-            withoutSuperTypes = true
-        }
+        return conflicts
     }
 
     private fun getScopeWithPlatformAwareDependencies(module: Module): SearchScope {
         val baseScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
-
-        if (module.platform.isJvm()) {
-            return baseScope
-        }
-
+        if (module.platform.isJvm()) return baseScope
         return ModuleRootManager.getInstance(module)
             .orderEntries
             .filterIsInstance<JdkOrderEntry>()
@@ -284,87 +246,63 @@ class MoveConflictChecker(
     }
 
     @OptIn(ExperimentalMultiplatform::class)
-    fun checkModuleConflictsInDeclarations(
+    override fun checkModuleConflictsInDeclarations(
+        moveCheckerInfo: KotlinMoveConflictCheckerInfo,
         internalUsages: MutableSet<UsageInfo>,
-        conflicts: MultiMap<PsiElement, String>
-    ) {
-        val targetScope = moveTarget.targetFileOrDir ?: return
-        val targetModule = targetScope.getModule(project) ?: return
+    ): MultiMap<PsiElement, String> {
+        val conflicts = MultiMap<PsiElement, String>()
+        val targetScope = moveCheckerInfo.moveTarget.targetFileOrDir ?: return MultiMap.empty()
+        val targetModule = targetScope.getModule(moveCheckerInfo.project) ?: return MultiMap.empty()
         val resolveScope = getScopeWithPlatformAwareDependencies(targetModule)
-
         fun isInScope(targetElement: PsiElement, targetDescriptor: DeclarationDescriptor): Boolean {
             if (targetElement in resolveScope) return true
             if (targetElement.manager.isInProject(targetElement)) return false
-
             val fqName = targetDescriptor.importableFqName ?: return true
             val importableDescriptor = targetDescriptor.getImportableDescriptor()
-
             val dummyFile = KtPsiFactory(targetElement.project).createFile("dummy.kt", "").apply {
                 forcedModuleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(targetScope)
                 forcedTargetPlatform = targetModule.platform
             }
-
             val newTargetDescriptors = dummyFile.resolveImportReference(fqName)
-
-            if (
-                newTargetDescriptors.any { descriptor ->
-                    descriptor is MemberDescriptor && descriptor.isExpect &&
-                            descriptor.annotations.any { OptionalExpectation::class.qualifiedName!! == it.fqName?.asString() }
-                }
-            ) {
-                return false
-            }
-
-            if (importableDescriptor is TypeAliasDescriptor
-                && newTargetDescriptors.any {
-                    it is ClassDescriptor && it.isExpect && it.importableFqName == importableDescriptor.importableFqName
-                }
-            ) return true
-
+            if (newTargetDescriptors.any { descriptor -> descriptor is MemberDescriptor && descriptor.isExpect
+                        && descriptor.annotations.any { OptionalExpectation::class.qualifiedName!! == it.fqName?.asString() }
+            }) return false
+            if (importableDescriptor is TypeAliasDescriptor && newTargetDescriptors.any { it is ClassDescriptor
+                        && it.isExpect && it.importableFqName == importableDescriptor.importableFqName
+            }) return true
             val renderedImportableTarget = DESCRIPTOR_RENDERER_FOR_COMPARISON.render(importableDescriptor)
             val renderedTarget by lazy { DESCRIPTOR_RENDERER_FOR_COMPARISON.render(targetDescriptor) }
-
             return newTargetDescriptors.any { descriptor ->
                 if (DESCRIPTOR_RENDERER_FOR_COMPARISON.render(descriptor) != renderedImportableTarget) return@any false
                 if (importableDescriptor == targetDescriptor) return@any true
-
                 val candidateDescriptors: Collection<DeclarationDescriptor> = when (targetDescriptor) {
                     is ConstructorDescriptor -> {
                         (descriptor as? ClassDescriptor)?.constructors ?: emptyList()
                     }
-
                     is PropertyAccessorDescriptor -> {
                         (descriptor as? PropertyDescriptor)
                             ?.let { if (targetDescriptor is PropertyGetterDescriptor) it.getter else it.setter }
                             ?.let { listOf(it) }
                             ?: emptyList()
                     }
-
                     else -> emptyList()
                 }
-
                 candidateDescriptors.any { DESCRIPTOR_RENDERER_FOR_COMPARISON.render(it) == renderedTarget }
             }
         }
 
         val referencesToSkip = HashSet<KtReferenceExpression>()
-        for (declaration in elementsToMove - doNotGoIn) {
+        for (declaration in moveCheckerInfo.elementsToMove) {
             if (declaration.module == targetModule) continue
-
             declaration.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
                 // NB: for unknown reason, refExpr.resolveToCall() does not work here
                 val targetDescriptor =
                     refExpr.analyze(BodyResolveMode.PARTIAL)[BindingContext.REFERENCE_TARGET, refExpr] ?: return@forEachDescendantOfType
-
                 if (KotlinBuiltIns.isBuiltIn(targetDescriptor)) return@forEachDescendantOfType
-
-                val target = DescriptorToSourceUtilsIde.getAnyDeclaration(project, targetDescriptor) ?: return@forEachDescendantOfType
-
-                if (isToBeMoved(target)) return@forEachDescendantOfType
-
+                val target = DescriptorToSourceUtilsIde.getAnyDeclaration(moveCheckerInfo.project, targetDescriptor) ?: return@forEachDescendantOfType
+                if (moveCheckerInfo.isToBeMoved(target)) return@forEachDescendantOfType
                 if (isInScope(target, targetDescriptor)) return@forEachDescendantOfType
                 if (target is KtTypeParameter) return@forEachDescendantOfType
-
                 val superMethods = SmartSet.create<PsiMethod>()
                 target.toLightMethods().forEach { superMethods += it.findDeepestSuperMethods() }
                 if (superMethods.any { isInScope(it, targetDescriptor) }) return@forEachDescendantOfType
@@ -382,60 +320,59 @@ class MoveConflictChecker(
             }
         }
         internalUsages.removeIf { it.reference?.element?.let { element -> element in referencesToSkip } ?: false }
+        return conflicts
     }
 
-    private fun checkVisibilityInUsages(usages: Collection<UsageInfo>, conflicts: MultiMap<PsiElement, String>) {
+    override fun checkVisibilityInUsages(
+        moveCheckerInfo: KotlinMoveConflictCheckerInfo,
+        usages: Collection<UsageInfo>
+    ): MultiMap<PsiElement, String> {
+        val conflicts = MultiMap<PsiElement, String>()
         val declarationToContainers = HashMap<KtNamedDeclaration, MutableSet<PsiElement>>()
         for (usage in usages) {
             val element = usage.element
             if (element == null || usage !is MoveRenameUsageInfo || usage is NonCodeUsageInfo) continue
-
-            if (isToBeMoved(element)) continue
-
+            if (moveCheckerInfo.isToBeMoved(element)) continue
             val referencedElement = usage.referencedElement?.namedUnwrappedElement as? KtNamedDeclaration ?: continue
-            val referencedDescriptor = resolutionFacade.resolveToDescriptor(referencedElement)
-
+            val referencedDescriptor = moveCheckerInfo.context.getResolutionFacade().resolveToDescriptor(referencedElement)
+            val moveTarget = moveCheckerInfo.moveTarget
             if (referencedDescriptor is DeclarationDescriptorWithVisibility
                 && referencedDescriptor.visibility == DescriptorVisibilities.PUBLIC
                 && moveTarget is KotlinMoveTarget.ExistingElement
                 && moveTarget.targetElement.parentsWithSelf.filterIsInstance<KtClassOrObject>().all { it.isPublic }
             ) continue
-
             val container = element.getUsageContext()
             if (!declarationToContainers.getOrPut(referencedElement) { HashSet() }.add(container)) continue
-
-            val targetContainer = moveTarget.getContainerDescriptor() ?: continue
-
+            val targetContainer = moveTarget.getContainerDescriptor(moveCheckerInfo.context) ?: continue
             val referencingDescriptor = when (container) {
                 is KtDeclaration -> container.resolveToDescriptorIfAny()
                 is PsiMember -> container.getJavaMemberDescriptor()
                 else -> null
             } ?: continue
-
             val languageVersionSettings = referencedElement.getResolutionFacade().languageVersionSettings
-
             val actualVisibility = if (referencingDescriptor.isJavaDescriptor) referencedDescriptor.visibilityAsViewedFromJava() else null
             val originalDescriptorToCheck = referencedDescriptor.wrap(newVisibility = actualVisibility) ?: referencedDescriptor
             val newDescriptorToCheck = referencedDescriptor.asPredicted(targetContainer, actualVisibility) ?: continue
-
             if (originalDescriptorToCheck.isVisibleIn(referencingDescriptor, languageVersionSettings) && !newDescriptorToCheck.isVisibleIn(referencingDescriptor, languageVersionSettings)) {
                 val message = KotlinBundle.message(
                     "text.0.uses.1.which.will.be.inaccessible.after.move",
                     render(container),
                     render(referencedElement)
-                )
-                conflicts.putValue(element, message.capitalize())
+                ).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                conflicts.putValue(element, message)
             }
         }
+        return conflicts
     }
 
-    fun checkVisibilityInDeclarations(conflicts: MultiMap<PsiElement, String>) {
-        val targetContainer = moveTarget.getContainerDescriptor() ?: return
+    override fun checkVisibilityInDeclarations(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
+        val conflicts = MultiMap<PsiElement, String>()
+        val targetContainer = moveCheckerInfo.moveTarget.getContainerDescriptor(moveCheckerInfo.context) ?: return MultiMap.empty()
 
         fun DeclarationDescriptor.targetAwareContainingDescriptor(): DeclarationDescriptor? {
             val defaultContainer = containingDeclaration
             val psi = (this as? DeclarationDescriptorWithSource)?.source?.getPsi()
-            return if (psi != null && psi in allElementsToMove) targetContainer else defaultContainer
+            return if (psi != null && psi in moveCheckerInfo.allElementsToMove) targetContainer else defaultContainer
         }
 
         fun DeclarationDescriptor.targetAwareContainers(): Sequence<DeclarationDescriptor> {
@@ -478,12 +415,12 @@ class MoveConflictChecker(
             }
         }
 
-        for (declaration in elementsToMove - doNotGoIn) {
+        for (declaration in moveCheckerInfo.elementsToMove) {
             val languageVersionSettings = declaration.getResolutionFacade().languageVersionSettings
             declaration.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
                 refExpr.references.forEach { ref ->
                     val target = ref.resolve() ?: return@forEach
-                    if (isToBeMoved(target)) return@forEach
+                    if (moveCheckerInfo.isToBeMoved(target)) return@forEach
 
                     val targetDescriptor = when {
                         target is KtDeclaration -> target.resolveToDescriptorIfAny()
@@ -507,12 +444,12 @@ class MoveConflictChecker(
                 }
             }
         }
+        return conflicts
     }
 
-    private fun isToBeMoved(element: PsiElement): Boolean = allElementsToMove.any { it.isAncestor(element, false) }
-
-    private fun checkInternalMemberUsages(conflicts: MultiMap<PsiElement, String>) {
-        val targetModule = moveTarget.getTargetModule(project) ?: return
+    override fun checkInternalMemberUsages(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
+        val conflicts = MultiMap<PsiElement, String>()
+        val targetModule = moveCheckerInfo.moveTarget.getTargetModule(moveCheckerInfo.project) ?: return MultiMap.empty()
 
         val membersToCheck = LinkedHashSet<KtDeclaration>()
         val memberCollector = object : KtVisitorVoid() {
@@ -522,38 +459,39 @@ class MoveConflictChecker(
                 declarations.forEach { it.accept(this) }
             }
         }
-        elementsToMove.forEach { it.accept(memberCollector) }
+        moveCheckerInfo.elementsToMove.forEach { it.accept(memberCollector) }
 
         for (memberToCheck in membersToCheck) {
             for (reference in ReferencesSearch.search(memberToCheck)) {
                 val element = reference.element
                 val usageModule = ModuleUtilCore.findModuleForPsiElement(element) ?: continue
-                if (usageModule != targetModule && targetModule !in usageModule.implementedModules && !isToBeMoved(element)) {
+                if (usageModule != targetModule && targetModule !in usageModule.implementedModules && !moveCheckerInfo.isToBeMoved(element)) {
                     val container = element.getUsageContext()
                     val message = KotlinBundle.message(
                         "text.0.uses.internal.1.which.will.be.inaccessible.after.move",
                         render(container),
                         render(memberToCheck)
-                    )
-                    conflicts.putValue(element, message.capitalize())
+                    ).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                    conflicts.putValue(element, message)
                 }
             }
         }
+        return conflicts
     }
 
-    private fun checkSealedClassMove(conflicts: MultiMap<PsiElement, String>) {
-        val sealedInheritanceRulesRelaxed =
-            project.languageVersionSettings.supportsFeature(LanguageFeature.AllowSealedInheritorsInDifferentFilesOfSamePackage)
-
-        if (sealedInheritanceRulesRelaxed)
-            checkSealedClassMoveWithinPackageAndModule(conflicts)
-        else
-            checkSealedClassMoveWithinFile(conflicts)
+    override fun checkSealedClassMove(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
+        val languageVersionSettings = moveCheckerInfo.project.languageVersionSettings
+        return if (languageVersionSettings.supportsFeature(LanguageFeature.AllowSealedInheritorsInDifferentFilesOfSamePackage)) {
+            checkSealedClassMoveWithinPackageAndModule(moveCheckerInfo)
+        } else {
+            checkSealedClassMoveWithinFile(moveCheckerInfo)
+        }
     }
 
-    private fun checkSealedClassMoveWithinFile(conflicts: MultiMap<PsiElement, String>) {
+    private fun checkSealedClassMoveWithinFile(moveChecker: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
+        val conflicts = MultiMap<PsiElement, String>()
         val visited = HashSet<PsiElement>()
-        for (elementToMove in elementsToMove) {
+        for (elementToMove in moveChecker.elementsToMove) {
             if (!visited.add(elementToMove)) continue
             if (elementToMove !is KtClassOrObject) continue
 
@@ -561,13 +499,13 @@ class MoveConflictChecker(
             val rootClassDescriptor: ClassDescriptor
             if (elementToMove is KtClass && elementToMove.isSealed()) {
                 rootClass = elementToMove
-                rootClassDescriptor = rootClass.resolveToDescriptorIfAny() ?: return
+                rootClassDescriptor = rootClass.resolveToDescriptorIfAny() ?: return MultiMap.empty()
             } else {
-                val classDescriptor = elementToMove.resolveToDescriptorIfAny() ?: return
-                val superClassDescriptor = classDescriptor.getSuperClassNotAny() ?: return
-                if (superClassDescriptor.modality != Modality.SEALED) return
+                val classDescriptor = elementToMove.resolveToDescriptorIfAny() ?: return MultiMap.empty()
+                val superClassDescriptor = classDescriptor.getSuperClassNotAny() ?: return MultiMap.empty()
+                if (superClassDescriptor.modality != Modality.SEALED) return MultiMap.empty()
                 rootClassDescriptor = superClassDescriptor
-                rootClass = rootClassDescriptor.source.getPsi() as? KtClass ?: return
+                rootClass = rootClassDescriptor.source.getPsi() as? KtClass ?: return MultiMap.empty()
             }
 
             val subclasses = rootClassDescriptor.sealedSubclasses.mapNotNull { it.source.getPsi() }
@@ -576,12 +514,14 @@ class MoveConflictChecker(
             visited.add(rootClass)
             visited.addAll(subclasses)
 
-            if (isToBeMoved(rootClass) && subclasses.all { isToBeMoved(it) }) continue
+            if (moveChecker.isToBeMoved(rootClass) && subclasses.all { moveChecker.isToBeMoved(it) }) continue
 
             val message = if (elementToMove == rootClass) {
                 KotlinBundle.message("text.sealed.class.0.must.be.moved.with.all.its.subclasses", rootClass.name.toString())
             } else {
-                val type = ElementDescriptionUtil.getElementDescription(elementToMove, UsageViewTypeLocation.INSTANCE).capitalize()
+                val type = ElementDescriptionUtil.getElementDescription(elementToMove, UsageViewTypeLocation.INSTANCE).replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                }
                 KotlinBundle.message(
                     "text.0.1.must.be.moved.with.sealed.parent.class.and.all.its.subclasses",
                     type,
@@ -590,18 +530,20 @@ class MoveConflictChecker(
             }
             conflicts.putValue(elementToMove, message)
         }
+        return conflicts
     }
 
-    private fun checkSealedClassMoveWithinPackageAndModule(conflicts: MultiMap<PsiElement, String>) {
+    private fun checkSealedClassMoveWithinPackageAndModule(moveChecker: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
+        val conflicts = MultiMap<PsiElement, String>()
         val hierarchyChecker = SealedHierarchyChecker()
-
-        for (elementToMove in elementsToMove) {
+        for (elementToMove in moveChecker.elementsToMove) {
             if (elementToMove !is KtClassOrObject) continue
-            hierarchyChecker.reportIfMoveIsDestructive(elementToMove)?.let { conflicts.putValue(elementToMove, it) }
+            hierarchyChecker.reportIfMoveIsDestructive(moveChecker, elementToMove)?.let { conflicts.putValue(elementToMove, it) }
         }
+        return conflicts
     }
 
-    private fun checkNameClashes(conflicts: MultiMap<PsiElement, String>) {
+    override fun checkNameClashes(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
         fun <T> equivalent(a: T, b: T): Boolean = when (a) {
             is DeclarationDescriptor -> when (a) {
                 is FunctionDescriptor -> b is FunctionDescriptor
@@ -670,14 +612,15 @@ class MoveConflictChecker(
             currentScopeDeclaration.containingDeclaration?.let { walkDeclarations(it, declaration, report) }
         }
 
-        (elementsToMove - doNotGoIn)
+        val conflicts = MultiMap<PsiElement, String>()
+        (moveCheckerInfo.elementsToMove)
             .filterIsInstance<PsiNamedElement>()
             .forEach { declaration ->
                 val declarationDescriptor =
                     (declaration as KtElement).analyze().get(BindingContext.DECLARATION_TO_DESCRIPTOR, declaration)
                 if (declarationDescriptor is DeclarationDescriptor) {
 
-                    moveTarget.getContainerDescriptor()?.let { baseDescriptor ->
+                    moveCheckerInfo.moveTarget.getContainerDescriptor(moveCheckerInfo.context)?.let { baseDescriptor ->
                         walkDeclarations(baseDescriptor, declarationDescriptor) { conflictingDeclaration, conflictingScope ->
                             val message = KotlinBundle.message(
                                 "text.declarations.clash.move.0.destination.1.declared.in.scope.2",
@@ -690,29 +633,14 @@ class MoveConflictChecker(
                     }
                 }
             }
-    }
-
-    fun checkAllConflicts(
-        externalUsages: MutableSet<UsageInfo>,
-        internalUsages: MutableSet<UsageInfo>,
-        conflicts: MultiMap<PsiElement, String>
-    ) {
-        checkModuleConflictsInUsages(externalUsages, conflicts)
-        checkModuleConflictsInDeclarations(internalUsages, conflicts)
-        checkVisibilityInUsages(externalUsages, conflicts)
-        checkVisibilityInDeclarations(conflicts)
-        checkInternalMemberUsages(conflicts)
-        checkSealedClassMove(conflicts)
-        checkNameClashes(conflicts)
+        return conflicts
     }
 
 
     private inner class SealedHierarchyChecker {
-
         private val visited: MutableSet<ClassDescriptor> = mutableSetOf()
 
-        @OptIn(ExperimentalStdlibApi::class)
-        fun reportIfMoveIsDestructive(classToMove: KtClassOrObject): String? {
+        fun reportIfMoveIsDestructive(moveChecker: KotlinMoveConflictCheckerInfo, classToMove: KtClassOrObject): String? {
             val classToMoveDesc = classToMove.resolveToDescriptorIfAny() ?: return null
             if (classToMoveDesc in visited) return null
 
@@ -731,16 +659,18 @@ class MoveConflictChecker(
             assert(otherHierarchyMembers.isNotEmpty())
 
             // Entire hierarchy is to be moved at once?
-            if (otherHierarchyMembers.all { isToBeMoved(it) })
+            if (otherHierarchyMembers.all { moveChecker.isToBeMoved(it) })
                 return null
 
             // Hierarchy might be split (broken) (members reside in different packages) and we shouldn't prevent intention to fix it.
             // That is why it's ok to move the class to a package where at least one member of hierarchy resides. In case the hierarchy is
             // fully correct all its members share the same package.
 
-            val targetModule = moveTarget.getTargetModule(project) ?: return null
-            val targetPackage = moveTarget.getTargetPackage() ?: return null
-            val targetDir = moveTarget.targetFileOrDir?.takeIf { it.isDirectory } ?: moveTarget.targetFileOrDir?.parent
+            val targetModule = moveChecker.moveTarget.getTargetModule(moveChecker.project) ?: return null
+            val targetPackage = moveChecker.moveTarget.getTargetPackage(moveChecker.project) ?: return null
+            val targetDir = moveChecker.moveTarget.targetFileOrDir?.takeIf {
+                it.isDirectory
+            } ?: moveChecker.moveTarget.targetFileOrDir?.parent
 
             val className = classToMove.nameAsSafeName.asString()
 
@@ -748,7 +678,7 @@ class MoveConflictChecker(
                 val hierarchyMembers = buildList { add(classToMove); addAll(otherHierarchyMembers) }.toNamesList()
                 return KotlinBundle.message(
                     "text.sealed.broken.hierarchy.none.in.target",
-                    className, moveTarget.getPackageName(), targetModule.name, hierarchyMembers
+                    className, moveChecker.moveTarget.getPackageName(), targetModule.name, hierarchyMembers
                 )
             }
 
@@ -760,10 +690,12 @@ class MoveConflictChecker(
             val directoryToMoveFrom = classToMove.containingKtFile.containingDirectory?.virtualFile
 
             val membersRemainingInOriginalPackage =
-                otherHierarchyMembers.filter { it.residesIn(moduleToMoveFrom, packageToMoveFrom, directoryToMoveFrom) && !isToBeMoved(it) }.toList()
+                otherHierarchyMembers.filter {
+                    it.residesIn(moduleToMoveFrom, packageToMoveFrom, directoryToMoveFrom) && !moveChecker.isToBeMoved(it)
+                }.toList()
 
             if ((targetPackage != packageToMoveFrom || targetModule != moduleToMoveFrom) &&
-                membersRemainingInOriginalPackage.any { !isToBeMoved(it) }
+                membersRemainingInOriginalPackage.any { !moveChecker.isToBeMoved(it) }
             ) {
                 return KotlinBundle.message(
                     "text.sealed.broken.hierarchy.still.in.source",
@@ -783,10 +715,10 @@ class MoveConflictChecker(
 
         private fun DeclarationDescriptor.findPsiPackage(module: Module): PsiPackage? {
             val fqName = findPackage().fqName
-            return KotlinJavaPsiFacade.getInstance(project).findPackage(fqName.asString(), GlobalSearchScope.moduleScope(module))
+            return KotlinJavaPsiFacade.getInstance(module.project).findPackage(fqName.asString(), GlobalSearchScope.moduleScope(module))
         }
 
-        private fun KotlinMoveTarget.getTargetPackage(): PsiPackage? {
+        private fun KotlinMoveTarget.getTargetPackage(project: Project): PsiPackage? {
 
             fun tryGetPackageFromTargetContainer(): PsiPackage? {
                 val fqName = targetContainerFqName ?: return null
@@ -804,7 +736,6 @@ class MoveConflictChecker(
 
         private fun PsiPackage?.getNameOrDefault(): String = this?.qualifiedName?.takeIf { it.isNotEmpty() } ?: "default"
 
-        @OptIn(ExperimentalStdlibApi::class)
         private fun ClassDescriptor.listDirectSealedParents(): List<ClassDescriptor> = buildList {
             getSuperClassNotAny()?.takeIf { it.isSealed() }?.let { this.add(it) }
             getSuperInterfaces().filter { it.isSealed() }.let { this.addAll(it) }
@@ -850,33 +781,17 @@ class MoveConflictChecker(
 
         private fun List<PsiElement>.toNamesList(): List<String> = mapNotNull { el -> el.kotlinFqName?.asString() }.toList()
     }
-}
 
-fun analyzeConflictsInFile(
-    file: KtFile,
-    usages: Collection<UsageInfo>,
-    moveTarget: KotlinMoveTarget,
-    allElementsToMove: Collection<PsiElement>,
-    conflicts: MultiMap<PsiElement, String>,
-    onUsageUpdate: (List<UsageInfo>) -> Unit
-) {
-    val elementsToMove = file.declarations
-    if (elementsToMove.isEmpty()) return
-
-    val (internalUsages, externalUsages) = usages.partition { it is KotlinMoveRenameUsage && it.isInternal }
-    val internalUsageSet = internalUsages.toMutableSet()
-    val externalUsageSet = externalUsages.toMutableSet()
-
-    val conflictChecker = MoveConflictChecker(
-        file.project,
-        elementsToMove,
-        moveTarget,
-        elementsToMove.first(),
-        allElementsToMove = allElementsToMove
-    )
-    conflictChecker.checkAllConflicts(externalUsageSet, internalUsageSet, conflicts)
-
-    if (externalUsageSet.size != externalUsages.size || internalUsageSet.size != internalUsages.size) {
-        onUsageUpdate((externalUsageSet + internalUsageSet).toList())
+    companion object {
+        private val DESCRIPTOR_RENDERER_FOR_COMPARISON = DescriptorRenderer.withOptions {
+            withDefinedIn = true
+            classifierNamePolicy = ClassifierNamePolicy.FULLY_QUALIFIED
+            modifiers = emptySet()
+            withoutTypeParameters = true
+            parameterNameRenderingPolicy = ParameterNameRenderingPolicy.NONE
+            includeAdditionalModifiers = false
+            renderUnabbreviatedType = false
+            withoutSuperTypes = true
+        }
     }
 }

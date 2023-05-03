@@ -207,7 +207,7 @@ class MoveKotlinDeclarationsProcessor(
         }
 
         val usages = ArrayList<UsageInfo>()
-        val conflictChecker = MoveConflictChecker(
+        val moveCheckerInfo = KotlinMoveConflictCheckerInfo(
             project,
             elementsToMove,
             descriptor.moveTarget,
@@ -234,7 +234,8 @@ class MoveKotlinDeclarationsProcessor(
             internalUsages += descriptor.delegate.findInternalUsages(descriptor.moveSource)
             collectUsages(kotlinToLightElements, externalUsages)
             if (descriptor.analyzeConflicts) {
-                conflictChecker.checkAllConflicts(externalUsages, internalUsages, conflicts)
+                val conflictCheckerSupport = KotlinMoveConflictCheckerSupport.getInstance()
+                conflicts.putAllValues(conflictCheckerSupport.checkAllConflicts(moveCheckerInfo, internalUsages, externalUsages))
                 descriptor.delegate.collectConflicts(descriptor.moveTarget, internalUsages, conflicts)
             }
 

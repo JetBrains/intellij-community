@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRenameUsage
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.analyzeConflictsInFile
+import org.jetbrains.kotlin.idea.refactoring.move.analyzeConflictsInFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -76,7 +76,7 @@ class KotlinAwareDelegatingMoveDestination(
         }
 
         filesToProcess.forEach {
-            analyzeConflictsInFile(it, extraUsages, moveTarget, directoriesToMove, conflicts) {}
+            conflicts.putAllValues(analyzeConflictsInFile(it, extraUsages, moveTarget, directoriesToMove) {})
         }
     }
 }
