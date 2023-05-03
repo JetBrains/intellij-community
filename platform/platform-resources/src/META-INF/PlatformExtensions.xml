@@ -194,6 +194,8 @@
                         serviceImplementation="com.intellij.help.impl.HelpManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.fileChooser.FileChooserFactory"
                         serviceImplementation="com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileChooser.ClientFileChooserFactory"
+                        serviceImplementation="com.intellij.openapi.fileChooser.impl.LocalFileChooserFactory" client="local"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
 
