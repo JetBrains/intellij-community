@@ -47,10 +47,10 @@ interface ClientFileEditorManager {
   fun getEditors(file: VirtualFile): List<FileEditor>
 
   @RequiresBlockingContext
-  fun openFile(file: VirtualFile, forceCreate: Boolean): List<FileEditorWithProvider>
+  fun openFile(file: VirtualFile, forceCreate: Boolean, requestFocus: Boolean): List<FileEditorWithProvider>
 
   @Experimental
-  suspend fun openFileAsync(file: VirtualFile, forceCreate: Boolean): List<FileEditorWithProvider>
+  suspend fun openFileAsync(file: VirtualFile, forceCreate: Boolean, requestFocus: Boolean): List<FileEditorWithProvider>
 
   fun closeFile(file: VirtualFile, closeAllCopies: Boolean)
   fun isFileOpen(file: VirtualFile): Boolean

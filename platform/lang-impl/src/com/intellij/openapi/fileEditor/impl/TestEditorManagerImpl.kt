@@ -124,7 +124,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     val file = openFileDescriptor.file
     if (!isCurrentlyUnderLocalId) {
       val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
-      val result = clientManager.openFile(file, false)
+      val result = clientManager.openFile(file, false, true)
       val fileEditors = result.map { it.fileEditor }.toTypedArray()
       val providers = result.map { it.provider }.toTypedArray()
       return FileEditorComposite.fromPair(kotlin.Pair(fileEditors, providers))

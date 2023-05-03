@@ -881,7 +881,7 @@ open class FileEditorManagerImpl(
     }
 
     if (!ClientId.isCurrentlyUnderLocalId) {
-      val result = (clientFileEditorManager ?: return FileEditorComposite.EMPTY).openFileAsync(file = file, forceCreate = false)
+      val result = (clientFileEditorManager ?: return FileEditorComposite.EMPTY).openFileAsync(file = file, forceCreate = false, requestFocus = options.requestFocus)
       return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
                                                            allProviders = result.map { it.provider },
                                                            isPreview = options.usePreviewTab)
@@ -1132,7 +1132,7 @@ open class FileEditorManagerImpl(
 
   private fun openFileUsingClient(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
-    val result = clientManager.openFile(file = file, forceCreate = false)
+    val result = clientManager.openFile(file = file, forceCreate = false, requestFocus = options.requestFocus)
     return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
                                                          allProviders = result.map { it.provider },
                                                          isPreview = options.usePreviewTab)

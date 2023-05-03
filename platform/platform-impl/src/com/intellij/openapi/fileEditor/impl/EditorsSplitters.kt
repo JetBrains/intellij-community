@@ -962,7 +962,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
           else {
             ClientSessionsManager.getProjectSession(fileEditorManager.project, clientId)
-              ?.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, forceCreate = false)
+              ?.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(file = file, forceCreate = false, requestFocus = true)
           }
 
           // This is just to make sure document reference is kept on stack till this point
