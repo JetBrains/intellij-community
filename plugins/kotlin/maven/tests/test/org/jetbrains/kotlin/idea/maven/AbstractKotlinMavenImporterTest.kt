@@ -829,8 +829,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1337,8 +1337,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1397,8 +1397,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1465,8 +1465,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1519,8 +1519,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1577,8 +1577,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1635,8 +1635,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1693,8 +1693,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -1751,8 +1751,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -3172,8 +3172,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 
@@ -3226,8 +3226,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertKotlinSources("project", "src/main/kotlin")
             assertKotlinTestSources("project", "src/test/java")
-            assertKotlinResources("project", "src/main/resources")
-            assertKotlinTestResources("project", "src/test/resources")
+            assertDefaultKotlinResources("project")
+            assertDefaultKotlinTestResources("project")
         }
     }
 

@@ -139,6 +139,24 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     assertTestResources(moduleName, expectedSources);
   }
 
+  protected void assertDefaultResources(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... additionalSources) {
+    var expectedList = new ArrayList<String>();
+    expectedList.addAll(defaultResources());
+    expectedList.addAll(Arrays.asList(additionalSources));
+    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expectedSources);
+  }
+
+  protected void assertDefaultTestResources(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... additionalSources) {
+    var expectedList = new ArrayList<String>();
+    expectedList.addAll(defaultTestResources());
+    expectedList.addAll(Arrays.asList(additionalSources));
+    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expectedSources);
+  }
+
   protected String[] arrayOfNotNull(String... values) {
     if (null == values) return ArrayUtil.EMPTY_STRING_ARRAY;
     return Arrays.stream(values).filter(v -> null != v).toArray(String[]::new);

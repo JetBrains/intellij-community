@@ -29,15 +29,15 @@ abstract class KotlinMavenImportingTestCase : MavenMultiVersionImportingTestCase
         doAssertContentFolders(moduleName, SourceKotlinRootType, *expectedSources)
     }
 
-    protected fun assertKotlinResources(moduleName: String, vararg expectedSources: String) {
-        doAssertContentFolders(moduleName, ResourceKotlinRootType, *expectedSources)
+    protected fun assertDefaultKotlinResources(moduleName: String, vararg additionalSources: String) {
+        assertDefaultResources(moduleName, ResourceKotlinRootType, *additionalSources)
     }
 
     protected fun assertKotlinTestSources(moduleName: String, vararg expectedSources: String) {
         doAssertContentFolders(moduleName, TestSourceKotlinRootType, *expectedSources)
     }
 
-    protected fun assertKotlinTestResources(moduleName: String, vararg expectedSources: String) {
-        doAssertContentFolders(moduleName, TestResourceKotlinRootType, *expectedSources)
+    protected fun assertDefaultKotlinTestResources(moduleName: String, vararg additionalSources: String) {
+        assertDefaultTestResources(moduleName, TestResourceKotlinRootType, *additionalSources)
     }
 }
