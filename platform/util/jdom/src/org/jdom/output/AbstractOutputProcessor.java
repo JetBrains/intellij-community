@@ -1,6 +1,6 @@
 /*-- 
 
- Copyright (C) 2012 Jason Hunter & Brett McLaughlin.
+ Copyright (C) 2011-2012 Jason Hunter & Brett McLaughlin.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -51,92 +51,48 @@
  on the JDOM Project, please see <http://www.jdom.org/>.
 
  */
-
-package org.jdom.output.support;
+package org.jdom.output;
 
 import org.jdom.Content;
-import org.jdom.Text;
-import org.jdom.Verifier;
 
 import java.util.List;
 
 /**
- * This Walker implementation will produce trimmed text content.
+ * Methods common/useful for all Outputter processors.
  *
  * @author Rolf Lear
+ * @since JDOM2
  */
-final class WalkerTRIM extends AbstractFormattedWalker {
+abstract class AbstractOutputProcessor {
   /**
-   * Create the Trimmed walker instance.
+   * Create a walker to process Content List values.
+   * <p>
+   * If you require a custom walker to process content in a specific way
+   * then you probably want to override this method to build the walker you
+   * want.
    *
-   * @param content The list of content to format
-   * @param fstack  The current stack.
-   * @param escape  Whether Text values should be escaped.
+   * @param formatStack The current FormatStack for the walker (this should not be
+   *                    modified by the Walker).
+   * @param content     The list of content to walk.
+   * @param escape      If you want the Text values to be XMLEscaped then supply
+   *                    a non-null EscapeStrategy to use.
+   * @return the created walker.
    */
-  WalkerTRIM(final List<? extends Content> content,
-             final FormatStack fstack, final boolean escape) {
-    super(content, fstack, escape);
-  }
-
-  @Override
-  protected void analyzeMultiText(final MultiText mtext,
-                                  int offset, int len) {
-
-    while (len > 0) {
-      final Content c = get(offset);
-      if (c instanceof Text) {
-        // either Text or CDATA
-        if (!Verifier.isAllXMLWhitespace(c.getValue())) {
-          break;
-        }
-      }
-      else {
-        break;
-      }
-      offset++;
-      len--;
+  Walker buildWalker(FormatStack formatStack, List<? extends Content> content, boolean escape) {
+    switch (formatStack.getTextMode()) {
+      case PRESERVE:
+        return new WalkerPRESERVE(content);
+      case NORMALIZE:
+        return new WalkerNORMALIZE(content, formatStack, escape);
+      case TRIM:
+        return new WalkerTRIM(content, formatStack, escape);
+      case TRIM_FULL_WHITE:
+        return new WalkerTRIM_FULL_WHITE(content, formatStack, escape);
     }
-
-    while (len > 0) {
-      final Content c = get(offset + len - 1);
-      if (c instanceof Text) {
-        // either Text or CDATA
-        if (!Verifier.isAllXMLWhitespace(c.getValue())) {
-          break;
-        }
-      }
-      else {
-        break;
-      }
-      len--;
-    }
-
-    for (int i = 0; i < len; i++) {
-      Trim trim = Trim.NONE;
-      if (i + 1 == len) {
-        trim = Trim.RIGHT;
-      }
-      if (i == 0) {
-        trim = Trim.LEFT;
-      }
-      if (len == 1) {
-        trim = Trim.BOTH;
-      }
-      final Content c = get(offset + i);
-      switch (c.getCType()) {
-        case Text:
-          mtext.appendText(trim, c.getValue());
-          break;
-        case CDATA:
-          mtext.appendCDATA(trim, c.getValue());
-          break;
-        case EntityRef:
-          // treat like any other content.
-          // raw.
-        default:
-          mtext.appendRaw(c);
-          break;
-      }
-    }
+    // all cases should be handled in the switch statement above. If someone
+    // creates a new TextMode though, then it will create a warning in
+    // eclipse above, and the code will fall through to this 'default' raw
+    // instance.
+    return new WalkerPRESERVE(content);
   }
 }

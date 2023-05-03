@@ -52,7 +52,7 @@
 
  */
 
-package org.jdom.output.support;
+package org.jdom.output;
 
 import org.jdom.*;
 import org.jdom.output.Format;
@@ -77,13 +77,8 @@ import java.util.List;
  * <code>process(Writer,Format,*)</code> method may (will) be called concurrently from different threads.
  * </ol>
  * <p>
- * The {@link XmlOutputProcessorImpl} class is a full implementation of this
- * interface and is fully customisable. People who want a custom XMLOutputter
- * are encouraged to extend the AbstractXMLOutputProcessor rather than do a full
- * re-implementation of this interface.
  *
  * @author Rolf Lear
- * @see XmlOutputProcessorImpl
  * @since JDOM2
  */
 public interface XMLOutputProcessor {
@@ -175,18 +170,6 @@ public interface XMLOutputProcessor {
    * @throws NullPointerException if the input content is null
    */
   void process(Writer out, Format format, Comment comment) throws IOException;
-
-  /**
-   * Print out a <code>{@link ProcessingInstruction}</code>.
-   *
-   * @param out    <code>Writer</code> to use.
-   * @param format <code>Format</code> instance specifying output style
-   * @param pi     <code>ProcessingInstruction</code> to output.
-   * @throws IOException          if there's any problem writing.
-   * @throws NullPointerException if the input content is null
-   */
-  void process(Writer out, Format format, ProcessingInstruction pi)
-    throws IOException;
 
   /**
    * Print out a <code>{@link EntityRef}</code>.

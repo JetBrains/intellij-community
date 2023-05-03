@@ -54,11 +54,6 @@
 
 package org.jdom;
 
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
-
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Map;
 
 /**
@@ -137,11 +132,6 @@ public final class ProcessingInstruction extends Content {
    * @param newTarget <code>String</code> new target of PI.
    */
   private void setTarget(String newTarget) {
-    String reason;
-    if ((reason = Verifier.checkProcessingInstructionTarget(newTarget)) != null) {
-      throw new IllegalTargetException(newTarget, reason);
-    }
-
     target = newTarget;
   }
 
@@ -181,22 +171,12 @@ public final class ProcessingInstruction extends Content {
    * @return <code>ProcessingInstruction</code> - this PI modified.
    */
   public ProcessingInstruction setData(String data) {
-    String reason = Verifier.checkProcessingInstructionData(data);
-    if (reason != null) {
-      throw new IllegalDataException(data, reason);
-    }
-
     this.rawData = data;
     return this;
   }
 
   private void setData(Map<String, String> data) {
     String temp = toString(data);
-
-    String reason = Verifier.checkProcessingInstructionData(temp);
-    if (reason != null) {
-      throw new IllegalDataException(temp, reason);
-    }
 
     this.rawData = temp;
   }
@@ -217,14 +197,7 @@ public final class ProcessingInstruction extends Content {
 
   @Override
   public String toString() {
-    StringWriter out = new StringWriter();
-    try {
-      XMLOutputter.DEFAULT_PROCESSOR.process(out, Format.getRawFormat(), this);
-      out.flush();
-    }
-    catch (IOException ignore) {
-    }
-    return "[ProcessingInstruction: " + out + "]";
+    return "[ProcessingInstruction]";
   }
 
   @Override

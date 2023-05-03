@@ -52,102 +52,19 @@
 
  */
 
-package org.jdom.output.support;
+package org.jdom.output;
 
 import org.jdom.*;
-import org.jdom.output.Format;
 import org.jdom.output.Format.TextMode;
 import org.jdom.util.NamespaceStack;
 
-import javax.xml.transform.Result;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * <h2>Overview</h2>
- * <p>
- * This class is marked abstract even though all methods are fully implemented.
- * The <code>process*(...)</code> methods are public because they match the
- * XMLOutputProcessor interface but the remaining methods are all protected.
- * <p>
- * People who want to create a custom XMLOutputProcessor for XMLOutputter are
- * able to extend this class and modify any functionality they want. Before
- * sub-classing this you should first check to see if the {@link Format} class
- * can get you the results you want.
- * <p>
- * <b><i>Subclasses of this should have reentrant methods.</i></b> This is
- * easiest to accomplish simply by not allowing any instance fields. If your
- * sub-class has an instance field/variable, then it's probably broken.
- * <p>
- * <h2>The Stacks</h2>
- * <p>
- * One significant feature of this implementation is that it creates and
- * maintains both a {@link NamespaceStack} and {@link FormatStack} that are
- * managed in the
- * {@link #printElement(Writer, FormatStack, NamespaceStack, Element)} method.
- * The stacks are pushed and popped in that method only. They significantly
- * improve the performance and readability of the code.
- * <p>
- * The NamespaceStack is only sent through to the
- * {@link #printElement(Writer, FormatStack, NamespaceStack, Element)} and
- * {@link #printContent(Writer, FormatStack, NamespaceStack, Walker)} methods,
- * but the FormatStack is pushed through to all print* Methods.
- * <p>
- * <h2>Text Processing</h2>
- * <p>
- * In XML the concept of 'Text' can be loosely defined as anything that can be
- * found between an Element's start and end tags, excluding Comments and
- * Processing Instructions. When considered from a JDOM perspective, this means
- * {@link Text}, {@link CDATA} and {@link EntityRef} content. This will be
- * referred to as 'Text-like content'
- * <p>
- * XMLOutputter delegates the management and formatting of Content to a
- * Walker instance. See {@link Walker} and its various implementations for
- * details on how the Element content is processed.
- * <p>
- * Because the Walker interface specifies that Text/CDATA content may be
- * returned as either Text/CDATA instances or as formatted String values
- * this class sometimes uses printCDATA(...) and printText(...), and sometimes
- * uses the more direct {@link #textCDATA(Writer, String)} or
- * {@link #textRaw(Writer, String)} as
- * appropriate. In other words, subclasses should probably override these second
- * methods instead of the print methods.
- * <p>
- * <h2>Non-Text Content</h2>
- * <p>
- * Non-text content is processed via the respective print* methods. The usage
- * should be logical based on the method name.
- * <p>
- * The general observations are:
- * <ul>
- * <li>printElement - maintains the Stacks, prints the element open tags, with
- * attributes and namespaces. It checks to see whether the Element is text-only,
- * or has non-text content. If it is text-only there is no indent/newline
- * handling and it delegates to the correct text-type print method, otherwise it
- * delegates to printContent.
- * <li>printContent is called to output all lists of Content. It assumes that
- * all whitespace indentation/newlines are appropriate before it is called, but
- * it will ensure that padding is appropriate between the items in the list.
- * </ul>
- * <p>
- * <h2>Final Notes</h2> No methods actually write to the destination Writer
- * except the <code>write(...)</code> methods. Thus, all other methods do their
- * respective processing and delegate the actual destination output to the
- * {@link #write(Writer, char)} or {@link #write(Writer, String)} methods.
- * <p>
- * All Text-like content (printCDATA, printText, and printEntityRef) will
- * ultimately be output through the the text* methods (and no other content).
- * <p>
- *
- * @author Rolf Lear
- * @see XMLOutputter2
- * @see XMLOutputProcessor
- * @since JDOM2
- */
-public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implements XMLOutputProcessor {
+final class XmlOutputProcessorImpl extends AbstractOutputProcessor implements XMLOutputProcessor {
   /**
    * Simple constant for an open-CDATA
    */
@@ -264,21 +181,6 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * (non-Javadoc)
    *
    * @see org.jdom.output.XMLOutputProcessor#process(java.io.Writer,
-   * org.jdom.ProcessingInstruction, org.jdom.output.Format)
-   */
-  @Override
-  public void process(Writer out, Format format, ProcessingInstruction pi) throws IOException {
-    FormatStack stack = new FormatStack(format);
-    // Output PI verbatim, disregarding TrAX escaping PIs.
-    stack.setIgnoreTrAXEscapingPIs(true);
-    printProcessingInstruction(out, stack, pi);
-    out.flush();
-  }
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see org.jdom.output.XMLOutputProcessor#process(java.io.Writer,
    * org.jdom.EntityRef, org.jdom.output.Format)
    */
   @Override
@@ -303,7 +205,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param str The String to write (can be null).
    * @throws IOException if the out Writer fails.
    */
-  private void write(final Writer out, final String str) throws IOException {
+  private static void write(final Writer out, final String str) throws IOException {
     if (str == null) {
       return;
     }
@@ -317,39 +219,11 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param c   The char to write.
    * @throws IOException if the Writer fails.
    */
-  private void write(final Writer out, final char c) throws IOException {
+  private static void write(final Writer out, final char c) throws IOException {
     out.write(c);
   }
 
-  /*
-   * ========================================================================
-   * Support methods for Text-content formatting. Should all be protected. The
-   * following are used when printing Text-based data. Because of complicated
-   * multi-sequential text sometimes the requirements are odd. All Text
-   * content will be output using these methods, which is why there is the None
-   * version.
-   * ========================================================================
-   */
-
-  /**
-   * This will take the three pre-defined entities in XML 1.0 ('&lt;', '&gt;',
-   * and '&amp;' - used specifically in XML elements) as well as CR/NL and
-   * Quote characters which require escaping inside Attribute values and
-   * convert their character representation to the appropriate entity
-   * reference suitable for XML attribute content. Further, some special
-   * characters (e.g. characters that are not valid in the current encoding)
-   * are converted to escaped representations.
-   * <p>
-   * <b>Note:</b> If {@link FormatStack#getEscapeOutput()} is false then no
-   * escaping will happen.
-   *
-   * @param out    The destination Writer
-   * @param fstack The {@link FormatStack}
-   * @param value  <code>String</code> Attribute value to escape.
-   * @throws IOException          if the destination Writer fails.
-   * @throws IllegalDataException if an entity can not be escaped
-   */
-  private void attributeEscapedEntitiesFilter(final Writer out, final FormatStack fstack, final String value) throws IOException {
+  private static void attributeEscapedEntitiesFilter(final Writer out, final FormatStack fstack, final String value) throws IOException {
 
     if (!fstack.getEscapeOutput()) {
       // no escaping...
@@ -370,7 +244,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param str the String to write.
    * @throws IOException if the Writer fails.
    */
-  private void textRaw(final Writer out, final String str) throws IOException {
+  private static void textRaw(final Writer out, final String str) throws IOException {
     write(out, str);
   }
 
@@ -384,7 +258,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param ch  the char to write.
    * @throws IOException if the Writer fails.
    */
-  private void textRaw(final Writer out, final char ch) throws IOException {
+  private static void textRaw(final Writer out, final char ch) throws IOException {
     write(out, ch);
   }
 
@@ -395,7 +269,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param name the EntityRef's name.
    * @throws IOException if the Writer fails.
    */
-  private void textEntityRef(final Writer out, final String name) throws IOException {
+  private static void textEntityRef(final Writer out, final String name) throws IOException {
     textRaw(out, '&');
     textRaw(out, name);
     textRaw(out, ';');
@@ -408,7 +282,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param text the CDATA text
    * @throws IOException if the Writer fails.
    */
-  private void textCDATA(final Writer out, final String text) throws IOException {
+  private static void textCDATA(final Writer out, final String text) throws IOException {
     textRaw(out, CDATAPRE);
     textRaw(out, text);
     textRaw(out, CDATAPOST);
@@ -503,7 +377,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param fstack the FormatStack
    * @throws IOException if the destination Writer fails
    */
-  private void printDeclaration(final Writer out, final FormatStack fstack) throws IOException {
+  private static void printDeclaration(final Writer out, final FormatStack fstack) throws IOException {
 
     // Only print the declaration if it's not being omitted
     if (fstack.isOmitDeclaration()) {
@@ -538,7 +412,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param docType <code>DocType</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  private void printDocType(final Writer out, final FormatStack fstack,
+  private static void printDocType(final Writer out, final FormatStack fstack,
                             final DocType docType) throws IOException {
 
     final String publicID = docType.getPublicID();
@@ -575,58 +449,13 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
   }
 
   /**
-   * This will handle printing of a {@link ProcessingInstruction}.
-   *
-   * @param out    <code>Writer</code> to use.
-   * @param fstack the FormatStack
-   * @param pi     <code>ProcessingInstruction</code> to write.
-   * @throws IOException if the destination Writer fails
-   */
-  private void printProcessingInstruction(final Writer out,
-                                          final FormatStack fstack, final ProcessingInstruction pi)
-    throws IOException {
-    String target = pi.getTarget();
-    boolean piProcessed = false;
-
-    if (!fstack.isIgnoreTrAXEscapingPIs()) {
-      if (target.equals(Result.PI_DISABLE_OUTPUT_ESCAPING)) {
-        // special case... change the FormatStack
-        fstack.setEscapeOutput(false);
-        piProcessed = true;
-      }
-      else if (target.equals(Result.PI_ENABLE_OUTPUT_ESCAPING)) {
-        // special case... change the FormatStack
-        fstack.setEscapeOutput(true);
-        piProcessed = true;
-      }
-    }
-    if (!piProcessed) {
-      String rawData = pi.getData();
-
-      // Write <?target data?> or if no data then just <?target?>
-      if (!"".equals(rawData)) {
-        write(out, "<?");
-        write(out, target);
-        write(out, " ");
-        write(out, rawData);
-        write(out, "?>");
-      }
-      else {
-        write(out, "<?");
-        write(out, target);
-        write(out, "?>");
-      }
-    }
-  }
-
-  /**
    * This will handle printing of a {@link Comment}.
    *
    * @param out     <code>Writer</code> to use.
    * @param comment <code>Comment</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  private void printComment(final Writer out, final Comment comment) throws IOException {
+  private static void printComment(final Writer out, final Comment comment) throws IOException {
     write(out, "<!--");
     write(out, comment.getText());
     write(out, "-->");
@@ -639,7 +468,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param entity <code>EntotyRef</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  private void printEntityRef(final Writer out, final EntityRef entity) throws IOException {
+  private static void printEntityRef(final Writer out, final EntityRef entity) throws IOException {
     // EntityRefs are treated like text, not indented/newline content.
     textEntityRef(out, entity.getName());
   }
@@ -651,7 +480,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param cdata  <code>CDATA</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  private void printCDATA(final Writer out, final CDATA cdata) throws IOException {
+  private static void printCDATA(final Writer out, final CDATA cdata) throws IOException {
     // CDATAs are treated like text, not indented/newline content.
     textCDATA(out, cdata.getText());
   }
@@ -664,8 +493,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param text   <code>Text</code> to write.
    * @throws IOException if the destination Writer fails
    */
-  private void printText(final Writer out, final FormatStack fstack,
-                         final Text text) throws IOException {
+  private static void printText(final Writer out, final FormatStack fstack, final Text text) throws IOException {
     if (fstack.getEscapeOutput()) {
       textRaw(out, Format.escapeText(fstack.getEscapeStrategy(),
                                      fstack.getLineSeparator(), text.getText()));
@@ -844,10 +672,6 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
           case EntityRef:
             printEntityRef(out, (EntityRef)c);
             break;
-          case ProcessingInstruction:
-            printProcessingInstruction(out, fstack,
-                                       (ProcessingInstruction)c);
-            break;
           case Text:
             printText(out, fstack, (Text)c);
             break;
@@ -865,8 +689,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param ns     <code>Namespace</code> to print definition of
    * @throws IOException if the output fails
    */
-  private void printNamespace(final Writer out, final FormatStack fstack,
-                              final Namespace ns) throws IOException {
+  private static void printNamespace(final Writer out, final FormatStack fstack, final Namespace ns) throws IOException {
     final String prefix = ns.getPrefix();
     final String uri = ns.getURI();
 
@@ -888,8 +711,7 @@ public final class XmlOutputProcessorImpl extends AbstractOutputProcessor implem
    * @param attribute <code>Attribute</code> to output
    * @throws IOException if the output fails
    */
-  private void printAttribute(final Writer out, final FormatStack fstack,
-                              final Attribute attribute) throws IOException {
+  private static void printAttribute(final Writer out, final FormatStack fstack, final Attribute attribute) throws IOException {
 
     write(out, " ");
     write(out, attribute.getQualifiedName());

@@ -52,10 +52,9 @@
 
  */
 
-package org.jdom.output.support;
+package org.jdom.output;
 
 import org.jdom.Content;
-import org.jdom.Text;
 import org.jdom.Verifier;
 
 import java.util.List;
@@ -65,7 +64,7 @@ import java.util.List;
  *
  * @author Rolf Lear
  */
-final class WalkerTRIM_FULL_WHITE extends AbstractFormattedWalker {
+final class WalkerNORMALIZE extends AbstractFormattedWalker {
   /**
    * Create the Trimmed walker instance.
    *
@@ -73,47 +72,78 @@ final class WalkerTRIM_FULL_WHITE extends AbstractFormattedWalker {
    * @param fstack  The current stack.
    * @param escape  Whether Text values should be escaped.
    */
-  WalkerTRIM_FULL_WHITE(final List<? extends Content> content,
-                        final FormatStack fstack, final boolean escape) {
+  WalkerNORMALIZE(final List<? extends Content> content,
+                  final FormatStack fstack, final boolean escape) {
     super(content, fstack, escape);
+  }
+
+  private static boolean isSpaceFirst(String text) {
+    if (!text.isEmpty()) {
+      return Verifier.isXMLWhitespace(text.charAt(0));
+    }
+    return false;
+  }
+
+  private static boolean isSpaceLast(String text) {
+    final int tlen = text.length();
+    if (tlen > 0 && Verifier.isXMLWhitespace(text.charAt(tlen - 1))) {
+      return true;
+    }
+    return false;
   }
 
   @Override
   protected void analyzeMultiText(final MultiText mtext,
                                   final int offset, final int len) {
-    int ln = len;
-    while (--ln >= 0) {
-      final Content c = get(offset + ln);
-      if (c instanceof Text) {
-        // either Text or CDATA
-        if (!Verifier.isAllXMLWhitespace(c.getValue())) {
-          break;
-        }
-      }
-      else {
-        break;
-      }
-    }
-    if (ln < 0) {
-      // all whitespace.
-      return;
-    }
+    boolean needspace = false;
+    boolean between = false;
 
-    // some non-white, so return all, but merge the sequential Text items.
+    String ttext;
     for (int i = 0; i < len; i++) {
       final Content c = get(offset + i);
       switch (c.getCType()) {
         case Text:
-          mtext.appendText(Trim.NONE, c.getValue());
+          ttext = c.getValue();
+          if (Verifier.isAllXMLWhitespace(ttext)) {
+            if (between && !ttext.isEmpty()) {
+              needspace = true;
+            }
+          }
+          else {
+            if (between && (needspace || isSpaceFirst(ttext))) {
+              mtext.appendText(Trim.NONE, " ");
+            }
+            mtext.appendText(Trim.COMPACT, ttext);
+            between = true;
+            needspace = isSpaceLast(ttext);
+          }
           break;
         case CDATA:
-          mtext.appendCDATA(Trim.NONE, c.getValue());
+          ttext = c.getValue();
+          if (Verifier.isAllXMLWhitespace(ttext)) {
+            if (between && !ttext.isEmpty()) {
+              needspace = true;
+            }
+          }
+          else {
+            if (between && (needspace || isSpaceFirst(ttext))) {
+              mtext.appendText(Trim.NONE, " ");
+            }
+            mtext.appendCDATA(Trim.COMPACT, ttext);
+            between = true;
+            needspace = isSpaceLast(ttext);
+          }
           break;
         case EntityRef:
           // treat like any other content.
           // raw.
         default:
+          if (between && needspace) {
+            mtext.appendText(Trim.NONE, " ");
+          }
           mtext.appendRaw(c);
+          between = true;
+          needspace = false;
           break;
       }
     }

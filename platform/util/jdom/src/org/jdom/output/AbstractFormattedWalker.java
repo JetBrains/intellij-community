@@ -52,12 +52,10 @@
 
  */
 
-package org.jdom.output.support;
+package org.jdom.output;
 
 import org.jdom.CDATA;
 import org.jdom.Content;
-import org.jdom.output.EscapeStrategy;
-import org.jdom.output.Format;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -88,8 +86,7 @@ import java.util.NoSuchElementException;
  *
  * @author Rolf Lear
  */
-public abstract class AbstractFormattedWalker implements Walker {
-
+abstract class AbstractFormattedWalker implements Walker {
   /*
    * We use Text instances to return formatted text to the caller.
    * We do not need to validate the Text content... it is 'safe' to
@@ -315,7 +312,6 @@ public abstract class AbstractFormattedWalker implements Walker {
   private Content pending = null;
   private final Iterator<? extends Content> content;
   private final boolean alltext;
-  private final boolean allwhite;
   private final String newlineindent;
   private final String endofline;
   private final EscapeStrategy escape;
@@ -366,7 +362,7 @@ public abstract class AbstractFormattedWalker implements Walker {
    * @param fstack   the current FormatStack
    * @param doescape Whether Text values should be escaped.
    */
-  public AbstractFormattedWalker(final List<? extends Content> xx,
+  AbstractFormattedWalker(final List<? extends Content> xx,
                                  final FormatStack fstack, final boolean doescape) {
     super();
     this.fstack = fstack;
@@ -376,11 +372,9 @@ public abstract class AbstractFormattedWalker implements Walker {
     endofline = fstack.getLevelEOL();
     if (!content.hasNext()) {
       alltext = true;
-      allwhite = true;
     }
     else {
       boolean atext = false;
-      boolean awhite = false;
       pending = content.next();
       if (isTextLike(pending)) {
         // the first item in the list is Text-like, and we pre-check
@@ -392,7 +386,6 @@ public abstract class AbstractFormattedWalker implements Walker {
 
         if (pending == null) {
           atext = true;
-          awhite = mtsize == 0;
         }
         if (mtsize == 0) {
           // first content in list is ignorable.
@@ -400,7 +393,6 @@ public abstract class AbstractFormattedWalker implements Walker {
         }
       }
       alltext = atext;
-      allwhite = awhite;
     }
     hasnext = pendingmt != null || pending != null;
   }
@@ -594,11 +586,6 @@ public abstract class AbstractFormattedWalker implements Walker {
     }
 
     return mtdata[mtpos] == CDATATOKEN;
-  }
-
-  @Override
-  public final boolean isAllWhitespace() {
-    return allwhite;
   }
 
   private static boolean isTextLike(final Content c) {

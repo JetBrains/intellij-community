@@ -52,12 +52,10 @@
 
  */
 
-package org.jdom.output.support;
+package org.jdom.output;
 
 import org.jdom.*;
 import org.jdom.Content.CType;
-import org.jdom.output.DOMOutputter;
-import org.jdom.output.Format;
 import org.jdom.output.Format.TextMode;
 import org.jdom.util.NamespaceStack;
 import org.w3c.dom.Attr;
@@ -211,12 +209,6 @@ public abstract class AbstractDOMOutputProcessor extends
   }
 
   @Override
-  public org.w3c.dom.ProcessingInstruction process(org.w3c.dom.Document document, Format format,
-    ProcessingInstruction pi) {
-    return printProcessingInstruction(document, pi);
-  }
-
-  @Override
   public EntityReference process(org.w3c.dom.Document basedoc, Format format, EntityRef entity) {
     return printEntityRef(basedoc, entity);
   }
@@ -269,10 +261,6 @@ public abstract class AbstractDOMOutputProcessor extends
           case Element:
             n = printElement(fstack, nstack, basedoc, (Element)c);
             break;
-          case ProcessingInstruction:
-            n = printProcessingInstruction(basedoc,
-                                           (ProcessingInstruction)c);
-            break;
           default:
             // do nothing.
         }
@@ -283,25 +271,6 @@ public abstract class AbstractDOMOutputProcessor extends
     }
 
     return basedoc;
-  }
-
-  /**
-   * This will handle printing of a {@link ProcessingInstruction}.
-   *
-   * @param basedoc The org.w3c.dom.Document for creating DOM Nodes
-   * @param pi      <code>ProcessingInstruction</code> to write.
-   * @return The input JDOM ProcessingInstruction converted to a DOM
-   * ProcessingInstruction.
-   */
-  private static org.w3c.dom.ProcessingInstruction printProcessingInstruction(
-    final org.w3c.dom.Document basedoc,
-    final ProcessingInstruction pi) {
-    String target = pi.getTarget();
-    String rawData = pi.getData();
-    if (rawData == null || rawData.trim().length() == 0) {
-      rawData = "";
-    }
-    return basedoc.createProcessingInstruction(target, rawData);
   }
 
   /**
@@ -511,9 +480,6 @@ public abstract class AbstractDOMOutputProcessor extends
         return printElement(fstack, nstack, basedoc, (Element)content);
       case EntityRef:
         return printEntityRef(basedoc, (EntityRef)content);
-      case ProcessingInstruction:
-        return printProcessingInstruction(basedoc,
-                                          (ProcessingInstruction)content);
       case Text:
         return printText(basedoc, (Text)content);
       case DocType:

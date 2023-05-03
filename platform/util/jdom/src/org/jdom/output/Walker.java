@@ -52,7 +52,7 @@
 
  */
 
-package org.jdom.output.support;
+package org.jdom.output;
 
 import org.jdom.CDATA;
 import org.jdom.Content;
@@ -85,7 +85,7 @@ import java.util.NoSuchElementException;
  *
  * @author Rolf Lear
  */
-public interface Walker {
+interface Walker {
 
   /**
    * If all the content in this walker is empty, or if whatever content
@@ -98,15 +98,6 @@ public interface Walker {
    * @return true if there is no content, or all content is Text
    */
   boolean isAllText();
-
-  /**
-   * If all the content is Text-like ({@link #isAllText()} returns true), and
-   * additionally that any content is either Text or CDATA, and that the
-   * values of these Text/CDATA members are all XML Whitespace.
-   *
-   * @return true
-   */
-  boolean isAllWhitespace();
 
   /**
    * Behaves similarly to a regular Iterator

@@ -52,10 +52,8 @@
 
  */
 
-package org.jdom.output.support;
+package org.jdom.output;
 
-import org.jdom.output.EscapeStrategy;
-import org.jdom.output.Format;
 import org.jdom.output.Format.TextMode;
 
 import java.util.Arrays;
@@ -266,22 +264,6 @@ final class FormatStack {
   }
 
   /**
-   * @return the current depth's {@link Format#getIgnoreTrAXEscapingPIs()}
-   */
-  boolean isIgnoreTrAXEscapingPIs() {
-    return ignoreTrAXEscapingPIs[depth];
-  }
-
-  /**
-   * Set the current depth's {@link Format#getIgnoreTrAXEscapingPIs()}
-   *
-   * @param ignoreTrAXEscapingPIs the boolean value to set.
-   */
-  void setIgnoreTrAXEscapingPIs(boolean ignoreTrAXEscapingPIs) {
-    this.ignoreTrAXEscapingPIs[depth] = ignoreTrAXEscapingPIs;
-  }
-
-  /**
    * The escapeOutput flag can be set or unset. When set, Element text and
    * Attribute values are 'escaped' so that the output is valid XML. When
    * unset, the Element text and Attribute values are not escaped.
@@ -290,17 +272,6 @@ final class FormatStack {
    */
   boolean getEscapeOutput() {
     return escapeOutput[depth];
-  }
-
-  /**
-   * The escapeOutput flag can be set or unset. When set, Element text and
-   * Attribute values are 'escaped' so that the output is valid XML. When
-   * unset, the Element text and Attribute values are not escaped.
-   *
-   * @param escape what to set the current level's escapeOutput flag to.
-   */
-  void setEscapeOutput(boolean escape) {
-    escapeOutput[depth] = escape;
   }
 
   /**

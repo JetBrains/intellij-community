@@ -52,7 +52,7 @@
 
  */
 
-package org.jdom.output.support;
+package org.jdom.output;
 
 import org.jdom.Content;
 
@@ -129,10 +129,5 @@ final class WalkerPRESERVE implements Walker {
   @Override
   public boolean isCDATA() {
     return false;
-  }
-
-  @Override
-  public boolean isAllWhitespace() {
-    return alltext;
   }
 }

@@ -52,11 +52,9 @@
 
  */
 
-package org.jdom.output.support;
+package org.jdom.output;
 
 import org.jdom.*;
-import org.jdom.output.DOMOutputter;
-import org.jdom.output.Format;
 import org.w3c.dom.Attr;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.EntityReference;
@@ -167,20 +165,6 @@ public interface DOMOutputProcessor {
    */
   org.w3c.dom.Comment process(org.w3c.dom.Document basedoc,
                               Format format, Comment comment);
-
-  /**
-   * This will convert the <code>{@link ProcessingInstruction}</code> using
-   * the given DOM Document to create the resulting DOM ProcessingInstruction.
-   *
-   * @param basedoc The DOM document to use for the conversion
-   * @param format  <code>Format</code> instance specifying output style
-   * @param pi      <code>ProcessingInstruction</code> to format.
-   * @return The input JDOM ProcessingInstruction converted to a DOM
-   * ProcessingInstruction
-   */
-  org.w3c.dom.ProcessingInstruction process(
-    org.w3c.dom.Document basedoc, Format format,
-    ProcessingInstruction pi);
 
   /**
    * This will convert the <code>{@link EntityRef}</code> using the given DOM
