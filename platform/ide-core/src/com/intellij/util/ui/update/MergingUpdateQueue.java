@@ -518,12 +518,14 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   @TestOnly
   public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
     long deadline = System.nanoTime() + unit.toNanos(timeout);
+    restart(0); // to not wait for myMergingTimeSpan ms in tests
     myWaiterForMerge.waitForAllExecuted(timeout, unit);
     while (!isEmpty()) {
       long toWait = deadline - System.nanoTime();
       if (toWait < 0) {
         throw new TimeoutException();
       }
+      restart(0);
       myWaiterForMerge.waitForAllExecuted(toWait, TimeUnit.NANOSECONDS);
     }
   }
