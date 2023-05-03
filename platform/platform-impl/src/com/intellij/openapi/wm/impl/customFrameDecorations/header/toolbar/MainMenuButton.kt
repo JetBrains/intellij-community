@@ -35,8 +35,9 @@ import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-internal class MainMenuButton(private val expandableMenu: ExpandableMenu?) {
+internal class MainMenuButton {
 
+  var expandableMenu: ExpandableMenu? = null
   private val menuAction = ShowMenuAction()
   private var disposable: Disposable? = null
   private var shortcutsChangeConnection: MessageBusConnection? = null
@@ -135,7 +136,7 @@ internal class MainMenuButton(private val expandableMenu: ExpandableMenu?) {
 
     override fun actionPerformed(e: AnActionEvent) {
       if (expandableMenu?.isEnabled() == true) {
-        expandableMenu.switchState()
+        expandableMenu!!.switchState()
       } else {
         showPopup(e.dataContext)
       }
@@ -170,7 +171,7 @@ internal class MainMenuButton(private val expandableMenu: ExpandableMenu?) {
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
         if (expandableMenu?.isEnabled() == true) {
-          expandableMenu.switchState(actionToShow)
+          expandableMenu!!.switchState(actionToShow)
         } else {
           val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)

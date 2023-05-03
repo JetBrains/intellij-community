@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.ui.ClientProperty
@@ -41,13 +42,22 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
+  private val expandableMenu: ExpandableMenu?
 
   var layoutCallBack : LayoutCallBack? = null
 
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
-    mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton(null) else null
+    if (IdeRootPane.isMenuButtonInToolbar) {
+      mainMenuButton = MainMenuButton()
+      expandableMenu = ExpandableMenu(this)
+      mainMenuButton.expandableMenu = expandableMenu
+    }
+    else {
+      mainMenuButton = null
+      expandableMenu = null
+    }
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
   }
 
