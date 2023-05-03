@@ -33,29 +33,27 @@ import javax.swing.JPanel
 
 interface CombinedBlockId
 
-interface CombinedDiffBlock<ID: CombinedBlockId> : Disposable {
+interface CombinedDiffBlock<ID : CombinedBlockId> : Disposable {
   val id: ID
 
   val header: JComponent
+  val stickyHeader: JComponent
+
   val body: JComponent
   val component: JComponent
 
   fun updateBlockContent(newContent: CombinedDiffBlockContent) {}
 }
 
-interface CombinedDiffGlobalBlockHeaderProvider {
-  val globalHeader: JComponent
-}
-
 class CombinedDiffBlockContent(val viewer: FrameDiffTool.DiffViewer, val blockId: CombinedBlockId)
 
-interface CombinedDiffBlockFactory<ID: CombinedBlockId> {
+interface CombinedDiffBlockFactory<ID : CombinedBlockId> {
   companion object {
     private val EP_COMBINED_DIFF_BLOCK_FACTORY =
       ExtensionPointName<CombinedDiffBlockFactory<*>>("com.intellij.diff.tools.combined.diffBlockFactory")
 
     @Suppress("UNCHECKED_CAST")
-    fun <ID: CombinedBlockId> findApplicable(content: CombinedDiffBlockContent): CombinedDiffBlockFactory<ID>? {
+    fun <ID : CombinedBlockId> findApplicable(content: CombinedDiffBlockContent): CombinedDiffBlockFactory<ID>? {
       return EP_COMBINED_DIFF_BLOCK_FACTORY.findFirstSafe { it.isApplicable(content) } as? CombinedDiffBlockFactory<ID>
     }
   }
@@ -66,20 +64,19 @@ interface CombinedDiffBlockFactory<ID: CombinedBlockId> {
 
 class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
   override fun isApplicable(content: CombinedDiffBlockContent) = true //default factory
-  override fun createBlock(project: Project, content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock<CombinedPathBlockId> =
+  override fun createBlock(project: Project,
+                           content: CombinedDiffBlockContent,
+                           withBorder: Boolean): CombinedDiffBlock<CombinedPathBlockId> =
     with(content.blockId as CombinedPathBlockId) {
-      CombinedSimpleDiffBlock(project, this, content.viewer.component, withBorder, content.viewer is CombinedLazyDiffViewer)
+      CombinedSimpleDiffBlock(project, this, content.viewer.component, content.viewer is CombinedLazyDiffViewer)
     }
 }
 
 private class CombinedSimpleDiffHeader(project: Project,
                                        blockId: CombinedPathBlockId,
-                                       withBorder: Boolean,
                                        withPathOnly: Boolean) : BorderLayoutPanel() {
   init {
-    if (withBorder) {
-      border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    }
+    border = IdeBorderFactory.createBorder(SideBorder.TOP or SideBorder.BOTTOM)
 
     addToCenter(if (withPathOnly) buildPathComponent(project, blockId) else buildToolbar(project, blockId).component)
   }
@@ -170,22 +167,19 @@ data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus, v
 private class CombinedSimpleDiffBlock(project: Project,
                                       override val id: CombinedPathBlockId,
                                       initialContent: JComponent,
-                                      notFirstBlock: Boolean,
                                       isPathOnlyHeader: Boolean) :
   JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
-  CombinedDiffBlock<CombinedPathBlockId>, CombinedDiffGlobalBlockHeaderProvider {
+  CombinedDiffBlock<CombinedPathBlockId> {
 
-  private val pathOnlyHeader = CombinedSimpleDiffHeader(project, id, notFirstBlock, true)
-  private val headerWithToolbar = CombinedSimpleDiffHeader(project, id, notFirstBlock, false)
+  private val pathOnlyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, true)
+  private val headerWithToolbar: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
 
-  override val header = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
-  override val globalHeader = if (notFirstBlock) CombinedSimpleDiffHeader(project, id, false, false) else headerWithToolbar
-  override val body = Wrapper(initialContent)
+  override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
+  override val stickyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
+  override val body: Wrapper = Wrapper(initialContent)
 
   init {
-    if (notFirstBlock) {
-      add(header)
-    }
+    add(header)
     add(body)
   }
 

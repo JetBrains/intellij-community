@@ -32,7 +32,10 @@ import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ListenerUtil
+import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.BidirectionalMap
@@ -40,17 +43,18 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.NonNls
+import java.awt.Dimension
 import java.awt.Point
-import java.awt.Rectangle
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.*
 import javax.swing.JComponent
+import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
-import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataProvider {
@@ -67,6 +71,22 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     border = JBUI.Borders.empty()
     viewportBorder = JBUI.Borders.empty()
     viewport.addChangeListener(ViewportChangeListener())
+  }
+
+  private val stickyHeaderPanel: Wrapper = Wrapper().apply {
+    isOpaque = true
+  }
+
+  private val contentPanel: JComponent = object : JBLayeredPane() {
+    override fun getPreferredSize(): Dimension = scrollPane.preferredSize
+
+    override fun doLayout() {
+      scrollPane.setBounds(0, 0, width, height)
+    }
+  }.apply {
+    isFocusable = false
+    add(scrollPane, JLayeredPane.DEFAULT_LAYER, 0)
+    add(stickyHeaderPanel, JLayeredPane.POPUP_LAYER, 1)
   }
 
   private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = linkedMapOf()
@@ -144,7 +164,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     return diffBlock
   }
 
-  override fun getComponent(): JComponent = scrollPane
+  override fun getComponent(): JComponent = contentPanel
 
   override fun getPreferredFocusedComponent(): JComponent? = getCurrentDiffViewer()?.preferredFocusedComponent
 
@@ -173,7 +193,8 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   private inner class ViewportChangeListener : ChangeListener {
 
     override fun stateChanged(e: ChangeEvent) {
-      //runPreservingViewportContent {}
+      updateStickyHeader()
+
       visibleBlocksUpdateQueue.queue(object : Update(e) {
         override fun run() = notifyVisibleBlocksChanged()
         override fun canEat(update: Update): Boolean = true
@@ -260,10 +281,6 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       blockListeners.multicaster.blocksHidden(hiddenBlocks)
     }
 
-    if (blocksInViewport.isNotEmpty()) {
-      //updateGlobalBlockHeader(blocksInViewport, viewRect)
-    }
-
     val totalVisible = beforeViewport.filterNotNull() + blocksInViewport + afterViewport.filterNotNull()
 
     if (totalVisible.isNotEmpty()) {
@@ -314,22 +331,20 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     scrollPane.viewport.viewPosition = Point(newViewRect.x, newViewRect.y)
   }
 
-  private fun updateGlobalBlockHeader(visibleBlocks: List<CombinedDiffBlock<*>>, viewRect: Rectangle) {
-    val firstVisibleBlock = visibleBlocks.first()
-    val blockOnTop = firstVisibleBlock.component.bounds.y == viewRect.y
-    val previousBlockPosition = max((getBlockIndex(firstVisibleBlock.id) ?: -1) - 1, 0)
-    val firstBlock = diffBlocks.values.first()
-    val firstBlockComponent = firstBlock.component
-    val firstBlockHeader = firstBlock.header
-    val previousBlockHeader = (getBlockId(
-      previousBlockPosition)?.let { diffBlocks[it] } as? CombinedDiffGlobalBlockHeaderProvider)?.globalHeader
-    val firstVisibleBlockHeader = (firstVisibleBlock as? CombinedDiffGlobalBlockHeaderProvider)?.globalHeader
+  private fun updateStickyHeader() {
+    val viewRect = scrollPane.viewport.viewRect
+    val block = getAllBlocks().find { it.component.bounds.intersects(viewRect) } ?: return
+    val stickyHeader = block.stickyHeader
 
-    when {
-      blockOnTop -> scrollPane.setColumnHeaderView(previousBlockHeader)
-      firstBlockComponent.bounds.y == viewRect.y -> scrollPane.setColumnHeaderView(firstBlockHeader)
-      else -> scrollPane.setColumnHeaderView(firstVisibleBlockHeader)
-    }
+    val headerHeight = block.header.height
+    val headerHeightInViewport = min(block.component.bounds.maxY.toInt() - viewRect.bounds.minY.toInt(), headerHeight)
+    val stickyHeaderY = headerHeightInViewport - headerHeight
+
+    scrollPane.verticalScrollBar.add(JBScrollBar.LEADING, stickyHeader)
+
+    stickyHeaderPanel.setContent(stickyHeader)
+    stickyHeaderPanel.setBounds(0, stickyHeaderY, block.component.width, headerHeight)
+    stickyHeaderPanel.repaint()
   }
 
   internal fun addBlockListener(listener: BlockListener) {
