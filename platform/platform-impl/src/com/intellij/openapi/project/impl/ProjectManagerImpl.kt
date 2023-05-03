@@ -45,7 +45,7 @@ import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServicesAndCreateComponents
+import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServices
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -1187,7 +1187,13 @@ private suspend fun initProject(file: Path,
 
       rawProjectDeferred?.complete(project)
 
-      preloadServicesAndCreateComponents(project, preloadServices)
+      if (preloadServices) {
+        preloadServices(project)
+      }
+
+      launch {
+        project.createComponentsNonBlocking()
+      }
 
       if (!isTrusted.await()) {
         throw CancellationException("not trusted")

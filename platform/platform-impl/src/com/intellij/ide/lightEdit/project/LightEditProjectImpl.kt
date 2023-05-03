@@ -13,6 +13,7 @@ import com.intellij.openapi.project.impl.projectInitListeners
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndex
+import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Path
 
@@ -32,7 +33,10 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
     customizeRegisteredComponents()
     componentStore.setPath(projectPath, false, null)
     runUnderModalProgressIfIsEdt {
-      preloadServicesAndCreateComponents(project = this@LightEditProjectImpl, preloadServices = true)
+      preloadServices(this@LightEditProjectImpl)
+      launch {
+        this@LightEditProjectImpl.createComponentsNonBlocking()
+      }
       projectInitListeners {
         it.execute(this@LightEditProjectImpl)
       }

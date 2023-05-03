@@ -41,7 +41,6 @@ import com.intellij.util.messages.impl.MessageBusEx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -75,20 +74,14 @@ open class ProjectImpl(filePath: Path, projectName: String?)
     @JvmField
     val USED_TEST_NAMES = Key.create<String>("ProjectImpl.USED_TEST_NAMES")
 
-    internal fun CoroutineScope.preloadServicesAndCreateComponents(project: ProjectImpl, preloadServices: Boolean) {
-      if (preloadServices) {
-        // for light projects, preload only services that are essential
-        // ("await" means "project component loading activity is completed only when all such services are completed")
-        project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                                activityPrefix = "project ",
-                                syncScope = this,
-                                onlyIfAwait = project.isLight,
-                                asyncScope = project.asyncPreloadServiceScope)
-      }
-
-      launch {
-        project.createComponentsNonBlocking()
-      }
+    // for light projects, preload only services that are essential
+    // ("await" means "project component loading activity is completed only when all such services are completed")
+    internal fun CoroutineScope.preloadServices(project: ProjectImpl) {
+      project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                              activityPrefix = "project ",
+                              syncScope = this,
+                              onlyIfAwait = project.isLight,
+                              asyncScope = project.asyncPreloadServiceScope)
     }
   }
 

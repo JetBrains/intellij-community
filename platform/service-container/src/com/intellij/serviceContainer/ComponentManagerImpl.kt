@@ -37,7 +37,7 @@ import com.intellij.util.runSuppressing
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
@@ -70,7 +70,7 @@ private fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: Me
   }
 }
 
-@ApiStatus.Internal
+@Internal
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null,
@@ -83,14 +83,14 @@ abstract class ComponentManagerImpl(
   companion object {
     @JvmField
     @Volatile
-    @ApiStatus.Internal
+    @Internal
     var mainScope: CoroutineScope? = null
 
-    @ApiStatus.Internal
+    @Internal
     @JvmField val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    @ApiStatus.Internal
+    @Internal
     @JvmField val badWorkspaceComponents: Set<String> = java.util.Set.of(
       "jetbrains.buildServer.codeInspection.InspectionPassRegistrar",
       "jetbrains.buildServer.testStatus.TestStatusPassRegistrar",
@@ -98,7 +98,7 @@ abstract class ComponentManagerImpl(
     )
 
     // not as a file level function to avoid scope cluttering
-    @ApiStatus.Internal
+    @Internal
     fun createAllServices(componentManager: ComponentManagerImpl, requireEdt: Set<String>, requireReadAction: Set<String>) {
       for (o in componentManager.componentKeyToAdapter.values) {
         if (o !is ServiceComponentAdapter) {
@@ -465,7 +465,8 @@ abstract class ComponentManagerImpl(
   }
 
   @Suppress("DuplicatedCode")
-  protected suspend fun createComponentsNonBlocking() {
+  @Internal
+  suspend fun createComponentsNonBlocking() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 
     val activity = when (val activityNamePrefix = activityNamePrefix()) {
@@ -688,8 +689,8 @@ abstract class ComponentManagerImpl(
   suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): Deferred<T>? {
     val key = keyClass.name
     val adapter = componentKeyToAdapter.get(key) ?: return null
-    if (adapter !is ServiceComponentAdapter) {
-      throw RuntimeException("$adapter is not a service (key=$key)")
+    check(adapter is ServiceComponentAdapter) {
+      "$adapter is not a service (key=$key)"
     }
     return adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
   }
