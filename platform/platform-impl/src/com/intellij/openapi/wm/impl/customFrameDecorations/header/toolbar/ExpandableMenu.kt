@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceRangeToWithUntil")
+
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.ExpUiIcons
@@ -15,6 +17,7 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.Alarm
+import com.intellij.util.IJSwingUtilities
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -55,8 +58,16 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
     return SystemInfoRt.isWindows && Registry.`is`("ide.windows.main.menu.expand.horizontal")
   }
 
+  fun isShowing(): Boolean {
+    return expandedMenuBar != null
+  }
+
+  fun updateUI() {
+    IJSwingUtilities.updateComponentTreeUI(ideMenu)
+  }
+
   fun switchState(actionToShow: AnAction? = null) {
-    if (expandedMenuBar != null && actionToShow == null) {
+    if (isShowing() && actionToShow == null) {
       hideExpandedMenuBar()
       return
     }
@@ -119,7 +130,7 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
   }
 
   private fun hideExpandedMenuBar() {
-    if (expandedMenuBar != null) {
+    if (isShowing()) {
       rootPane?.layeredPane?.remove(expandedMenuBar)
       expandedMenuBar = null
 

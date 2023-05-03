@@ -48,12 +48,13 @@ internal class HeaderToolbarButtonLook(
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
     val scaledIcon = scaleIcon(adjustIconForHeader(icon))
-    super.paintIcon(g, actionButton, scaledIcon)
+    val iconPos = getIconPosition(actionButton, scaledIcon)
+    paintIconImpl(g, actionButton, scaledIcon, iconPos.x, iconPos.y)
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon, x: Int, y: Int) {
     val scaledIcon = scaleIcon(adjustIconForHeader(icon))
-    super.paintIcon(g, actionButton, scaledIcon, x, y)
+    paintIconImpl(g, actionButton, scaledIcon, x, y)
   }
 
   override fun paintDownArrow(g: Graphics?, actionButton: ActionButtonComponent?, originalIcon: Icon, arrowIcon: Icon) {
