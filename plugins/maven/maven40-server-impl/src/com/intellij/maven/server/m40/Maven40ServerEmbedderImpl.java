@@ -70,6 +70,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertRemoteRepositories;
+
 public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull private final DefaultPlexusContainer myContainer;
   @NotNull private final Settings myMavenSettings;
@@ -1513,31 +1515,28 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       .createArtifactWithClassifier(info.getGroupId(), info.getArtifactId(), info.getVersion(), info.getPackaging(), info.getClassifier());
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   @Override
   public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return new HashSet<>(repositories);
+    try {
+      return new HashSet<>(
+        convertRemoteRepositories(convertRepositories(new ArrayList<>(repositories))));
+    }
+    catch (Exception e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
   }
+
+
+
+
+
+
+
+
+
+
 
   @NotNull
   @Override
