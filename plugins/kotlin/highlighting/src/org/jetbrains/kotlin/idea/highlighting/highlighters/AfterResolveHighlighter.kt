@@ -36,8 +36,7 @@ internal abstract class AfterResolveHighlighter(protected val project: Project) 
     protected fun highlightName(element: PsiElement, attributesKey: TextAttributesKey, message: String? = null): HighlightInfo.Builder? {
         return if (project.isNameHighlightingEnabled && !element.textRange.isEmpty) {
             createInfoAnnotation(element, message, attributesKey)
-        }
-        else {
+        } else {
             null
         }
     }
@@ -45,8 +44,7 @@ internal abstract class AfterResolveHighlighter(protected val project: Project) 
     protected fun highlightName(textRange: TextRange, attributesKey: TextAttributesKey, message: String? = null): HighlightInfo.Builder? {
         return if (project.isNameHighlightingEnabled) {
             createInfoAnnotation(textRange, message, attributesKey)
-        }
-        else {
+        } else {
             null
         }
     }
