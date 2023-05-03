@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 @ApiStatus.Internal
 abstract class AbstractHighlightingVisitor(protected val holder: HighlightInfoHolder): KtVisitorVoid() {
     protected fun createInfoAnnotation(textRange: TextRange, message: String? = null, textAttributes: TextAttributesKey? = null) {
-        HighlightingFactory.createInfoAnnotation(holder, textRange, message, textAttributes)
+        HighlightingFactory.addInfoAnnotation(holder, textRange, message, textAttributes)
     }
 
     protected fun createInfoAnnotation(element: PsiElement, message: String? = null, textAttributes: TextAttributesKey) {
