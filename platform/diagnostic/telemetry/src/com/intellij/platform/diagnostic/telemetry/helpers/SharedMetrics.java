@@ -10,11 +10,13 @@ import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public abstract class SharedMetrics {
 
   public final Scope rootScopeName;

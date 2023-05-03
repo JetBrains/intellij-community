@@ -6,7 +6,9 @@ import io.opentelemetry.sdk.metrics.InstrumentType
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality
 import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.export.MetricExporter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class FilteredMetricsExporter(private val underlyingExporter: MetricExporter,
                               private val predicate: (MetricData) -> Boolean = { true }) : MetricExporter {
   override fun getAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality {

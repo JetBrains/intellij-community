@@ -13,11 +13,13 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
+@ApiStatus.Internal
 open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
                                             protected val otelSdkBuilder: OpenTelemetrySdkBuilder,
                                             protected val serviceName: String = "",

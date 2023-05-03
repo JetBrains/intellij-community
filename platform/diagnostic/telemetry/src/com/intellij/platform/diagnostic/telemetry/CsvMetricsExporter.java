@@ -40,7 +40,7 @@ import static java.nio.file.StandardOpenOption.*;
 public final class CsvMetricsExporter implements MetricExporter {
   private static final Logger LOG = Logger.getInstance(CsvMetricsExporter.class);
 
-  private static final String HTML_PLOTTER_NAME = "com/intellij/diagnostic/telemetry/impl/open-telemetry-metrics-plotter.html";
+  private static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
 
 
   private final @NotNull RollingFileSupplier writeToFileSupplier;

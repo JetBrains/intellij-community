@@ -31,6 +31,7 @@ private val SPAN_PROCESSOR_TYPE_LABEL = AttributeKey.stringKey("spanProcessorTyp
 private val SPAN_PROCESSOR_DROPPED_LABEL = AttributeKey.booleanKey("dropped")
 private val SPAN_PROCESSOR_TYPE_VALUE = BatchSpanProcessor::class.java.simpleName
 
+@Internal
 interface AsyncSpanExporter {
   suspend fun export(spans: Collection<SpanData>)
 

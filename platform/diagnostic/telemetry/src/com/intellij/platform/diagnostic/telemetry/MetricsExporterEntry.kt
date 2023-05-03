@@ -2,6 +2,8 @@
 package com.intellij.platform.diagnostic.telemetry
 
 import io.opentelemetry.sdk.metrics.export.MetricExporter
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
+@ApiStatus.Internal
 data class MetricsExporterEntry(val metrics: List<MetricExporter>, val duration: Duration)

@@ -3,6 +3,7 @@ package com.intellij.platform.diagnostic.telemetry
 
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The interface solves two problems:
@@ -10,6 +11,7 @@ import io.opentelemetry.api.trace.Tracer
  * — Provide a more flexible way to handle spans. In some cases we want to control how detailed OT information,
  *    and in this case the alternative signature can be used.
  */
+@ApiStatus.Internal
 interface IJTracer : Tracer {
   fun spanBuilder(spanName: String, level: TracerLevel): SpanBuilder
 }
