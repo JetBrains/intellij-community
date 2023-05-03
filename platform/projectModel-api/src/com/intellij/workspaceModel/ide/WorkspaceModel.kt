@@ -23,6 +23,9 @@ interface WorkspaceModel {
   /**
    * Flow of changes from workspace model. It has to be used for asynchronous event handling. To start receiving
    * emitted events, you need to call one of the terminal operations on it.
+   *
+   * This can be used as a direct migration from [WorkspaceModelChangeListener] to the non-blocking and non-write-action
+   *   approach. This flow will eventually become obsolete as we'll present more handy listeners for the workspace model.
    */
   @get:ApiStatus.Experimental
   val changesEventFlow: Flow<VersionedStorageChange>

@@ -179,6 +179,8 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   override suspend fun updateProjectModelAsync(description: String, updater: (MutableEntityStorage) -> Unit) {
     // TODO:: Make the logic smarter and avoid using WR if there are no subscribers via topic.
     //  Right now we don't have API to check how many subscribers for the topic we have
+
+    // In the version without write action, we'll need to replace write lock with an async mutex from the kotlin coroutines.
     ApplicationManager.getApplication().assertReadAccessNotAllowed()
     writeAction { updateProjectModel(description, updater) }
   }
