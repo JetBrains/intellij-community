@@ -87,7 +87,7 @@ sealed interface PluginAdvertiserService {
     includeIgnored: Boolean = false,
   )
 
-  fun fetch(
+  suspend fun fetch(
     customPlugins: List<PluginNode>,
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean = false,
@@ -114,13 +114,49 @@ open class PluginAdvertiserServiceImpl(
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean,
   ) {
+    val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
+
+    val descriptorsById = PluginManagerCore.buildPluginIdMap()
+    val pluginManagerFilters = PluginManagerFilters.getInstance()
+    val disabledDescriptors = plugins.asSequence()
+      .map { it.pluginId }
+      .mapNotNull { descriptorsById[it] }
+      .filterNot { it.isEnabled }
+      .filter { pluginManagerFilters.allowInstallingPlugin(it) }
+      .filterNot { it.isOnDemand }
+      .toList()
+
+    val suggestToInstall = if (plugins.isEmpty())
+      emptyList()
+    else
+      fetchPluginSuggestions(
+        pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
+        customPlugins = customPlugins,
+        org = pluginManagerFilters,
+      )
+
+    cs.launch(Dispatchers.EDT) {
+      notifyUser(
+        bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
+        suggestionPlugins = suggestToInstall,
+        disabledDescriptors = disabledDescriptors,
+        customPlugins = customPlugins,
+        featuresMap = featuresMap,
+        allUnknownFeatures = unknownFeatures,
+        dependencies = PluginFeatureCacheService.getInstance().dependencies,
+        includeIgnored = includeIgnored,
+      )
+    }
+  }
+
+  private suspend fun fetchFeatures(features: Collection<UnknownFeature>,
+                                    includeIgnored: Boolean): Pair<MutableSet<PluginData>, MultiMap<PluginId, UnknownFeature>> {
     val featuresMap = MultiMap.createSet<PluginId, UnknownFeature>()
-
     val plugins = mutableSetOf<PluginData>()
-    val dependencies = PluginFeatureCacheService.getInstance().dependencies
 
+    val dependencies = PluginFeatureCacheService.getInstance().dependencies
     val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
-    for (feature in unknownFeatures) {
+    for (feature in features) {
       coroutineContext.ensureActive()
       val featureType = feature.featureType
       val implementationName = feature.implementationName
@@ -154,80 +190,13 @@ open class PluginAdvertiserServiceImpl(
       }
     }
 
-    val descriptorsById = PluginManagerCore.buildPluginIdMap()
-    val pluginManagerFilters = PluginManagerFilters.getInstance()
-    val disabledDescriptors = plugins.asSequence()
-      .map { it.pluginId }
-      .mapNotNull { descriptorsById[it] }
-      .filterNot { it.isEnabled }
-      .filter { pluginManagerFilters.allowInstallingPlugin(it) }
-      .filterNot { it.isOnDemand }
-      .toList()
-
-    val suggestToInstall = if (plugins.isEmpty())
-      emptyList()
-    else
-      fetchPluginSuggestions(
-        pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
-        customPlugins = customPlugins,
-        org = pluginManagerFilters,
-      )
-
-    cs.launch(Dispatchers.EDT) {
-      notifyUser(
-        bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
-        suggestionPlugins = suggestToInstall,
-        disabledDescriptors = disabledDescriptors,
-        customPlugins = customPlugins,
-        featuresMap = featuresMap,
-        allUnknownFeatures = unknownFeatures,
-        dependencies = dependencies,
-        includeIgnored = includeIgnored,
-      )
-    }
+    return plugins to featuresMap
   }
 
-  override fun fetch(customPlugins: List<PluginNode>,
-                     unknownFeatures: Collection<UnknownFeature>,
-                     includeIgnored: Boolean): List<IdeaPluginDescriptor> {
-    val featuresMap = MultiMap.createSet<PluginId, UnknownFeature>()
-
-    val plugins = mutableSetOf<PluginData>()
-    val dependencies = PluginFeatureCacheService.getInstance().dependencies
-
-    val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
-    for (feature in unknownFeatures) {
-      val featureType = feature.featureType
-      val implementationName = feature.implementationName
-      val featurePluginData = PluginFeatureService.instance.getPluginForFeature(featureType, implementationName)
-
-      val installedPluginData = featurePluginData?.pluginData
-
-      fun putFeature(data: PluginData) {
-        val pluginId = data.pluginId
-        if (ignoredPluginSuggestionState.isIgnored(pluginId) && !includeIgnored) { // globally ignored
-          LOG.info("Plugin is ignored by user, suggestion will not be shown: $pluginId")
-          return
-        }
-
-        plugins += data
-        featuresMap.putValue(pluginId, featurePluginData?.displayName?.let { feature.withImplementationDisplayName(it) } ?: feature)
-      }
-
-      if (installedPluginData != null) {
-        putFeature(installedPluginData)
-      }
-      else if (featureType == DEPENDENCY_SUPPORT_FEATURE && dependencies != null) {
-        dependencies.get(implementationName).forEach(::putFeature)
-      }
-      else {
-        MarketplaceRequests.getInstance()
-          .getFeatures(featureType, implementationName)
-          .asSequence()
-          .mapNotNull { it.toPluginData() }
-          .forEach { putFeature(it) }
-      }
-    }
+  override suspend fun fetch(customPlugins: List<PluginNode>,
+                             unknownFeatures: Collection<UnknownFeature>,
+                             includeIgnored: Boolean): List<IdeaPluginDescriptor> {
+    val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
 
     if (plugins.isEmpty()) {
       return emptyList()
@@ -546,9 +515,9 @@ open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
   ) {
   }
 
-  override fun fetch(customPlugins: List<PluginNode>,
-                     unknownFeatures: Collection<UnknownFeature>,
-                     includeIgnored: Boolean): List<IdeaPluginDescriptor> {
+  override suspend fun fetch(customPlugins: List<PluginNode>,
+                             unknownFeatures: Collection<UnknownFeature>,
+                             includeIgnored: Boolean): List<IdeaPluginDescriptor> {
     return emptyList()
   }
 

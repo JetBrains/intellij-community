@@ -722,7 +722,7 @@ public final class PluginManagerConfigurable
 
                 if (parser.suggested) {
                   if (project != null) {
-                    result.descriptors.addAll(new PluginsAdvertiserStartupActivity().getSuggestedPlugins(project, customRepositoriesMap));
+                    result.descriptors.addAll(PluginsAdvertiserStartupActivity.getSuggestedPlugins(project, customRepositoriesMap));
                   }
                   return;
                 }
@@ -1210,7 +1210,7 @@ public final class PluginManagerConfigurable
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
                                  @NotNull Project project,
                                  Map<String, @NotNull List<PluginNode>> customMap) {
-    List<IdeaPluginDescriptor> plugins = new PluginsAdvertiserStartupActivity().getSuggestedPlugins(project, customMap);
+    List<IdeaPluginDescriptor> plugins = PluginsAdvertiserStartupActivity.getSuggestedPlugins(project, customMap);
     addGroup(groups, IdeBundle.message("plugins.configurable.suggested"), PluginsGroupType.SUGGESTED, "", plugins, group -> false);
   }
 
