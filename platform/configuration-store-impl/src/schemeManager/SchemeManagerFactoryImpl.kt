@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.throwIfNotEmpty
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -91,6 +92,9 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       try {
         processor(manager)
       }
+      catch (e: CancellationException) {
+        throw e
+      }
       catch (e: Throwable) {
         LOG.error("Cannot reload settings for ${manager.javaClass.name}", e)
       }
@@ -103,6 +107,9 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       for (registeredManager in managers) {
         try {
           registeredManager.save(errors)
+        }
+        catch (e: CancellationException) {
+          throw e
         }
         catch (e: Throwable) {
           errors.add(e)
