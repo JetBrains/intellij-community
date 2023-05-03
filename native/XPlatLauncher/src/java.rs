@@ -28,6 +28,13 @@ pub struct JvmLaunchParameters {
 }
 
 pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: Vec<String>) -> Result<()> {
+    #[cfg(target_family = "unix")]
+    {
+        // resetting stack overflow protection handler set by the runtime (`std/src/sys/unix/stack_overflow.rs`)
+        reset_signal_handler(libc::SIGBUS)?;
+        reset_signal_handler(libc::SIGSEGV)?;
+    }
+
     let java_home = java_home.to_path_buf();
 
     // JNI docs says that JVM should not be created on primordial thread
@@ -52,6 +59,18 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
     match run_event_loop(join_handle) {
         Ok(_) => Ok(()),
         Err(e) => Err(anyhow!("JVM thread panicked: {e:?}"))
+    }
+}
+
+#[cfg(target_family = "unix")]
+fn reset_signal_handler(signal: std::ffi::c_int) -> Result<()> {
+    unsafe {
+        let mut action: libc::sigaction = mem::zeroed();
+        action.sa_sigaction = libc::SIG_DFL;
+        match libc::sigaction(signal, &action, std::ptr::null_mut()) {
+            0 => Ok(()),
+            _ => bail!("sigaction({}): {}", signal, *(libc::__errno_location()))
+        }
     }
 }
 

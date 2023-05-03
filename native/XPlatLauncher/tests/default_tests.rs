@@ -209,4 +209,20 @@ mod tests {
         assert!(result.stderr.contains(exception), "Exception message ('{}') is missing: {:?}", exception, result);
         assert!(result.stderr.contains("at com.intellij.idea.Main.exception"), "Stacktrace is missing: {:?}", result);
     }
+
+    #[test]
+    fn crash_log_creation() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        let crash_log_path = test.project_dir.join("_jvm_error.log");
+        test.create_toolbox_vm_options(&format!("-XX:ErrorFile={}", crash_log_path.display()));
+
+        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_args(&["sigsegv"]));
+
+        assert!(!result.exit_status.success(), "Expected to fail: {:?}", result);
+        assert!(crash_log_path.exists(), "No crash log at {:?}: {:?}", crash_log_path, result);
+
+        let marker = "# A fatal error has been detected by the Java Runtime Environment:";
+        let content = fs::read_to_string(&crash_log_path).expect(&format!("Cannot read: {:?}", crash_log_path));
+        assert!(content.contains(marker), "Marker message ('{}') is not in the crash log:\n{}", marker, content);
+    }
 }
