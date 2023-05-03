@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.troubleshooting
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.DimensionService
@@ -11,10 +12,20 @@ import org.jdom.Element
 internal fun collectDimensionServiceDiagnosticsData(project: Project): String {
   return CompositeGeneralTroubleInfoCollector.collectInfo(
     project,
+    ProjectFrameTroubleInfoCollector(),
     WindowStateProjectServiceTroubleInfoCollector(),
     WindowStateApplicationServiceTroubleInfoCollector(),
     DimensionServiceTroubleInfoCollector()
   )
+}
+
+private class ProjectFrameTroubleInfoCollector : GeneralTroubleInfoCollector {
+  override fun getTitle() = "Project Frames"
+
+  override fun collectInfo(project: Project): String =
+    RecentProjectsManagerBase.getInstanceEx().state.additionalInfo.entries
+      .joinToString("\n") { entry -> "${entry.key}: ${entry.value.frame?.toString()}" }
+
 }
 
 private class WindowStateProjectServiceTroubleInfoCollector : GeneralTroubleInfoCollector {
