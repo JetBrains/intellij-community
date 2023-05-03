@@ -51,7 +51,7 @@ object PythonCommunityPluginModules {
       spec.mainJarName = "${name}.jar"
       spec.withModules(modules)
       spec.withGeneratedResources { targetDir, context ->
-        val output = targetDir.resolve("com/intellij/platform/diagnostic/telemetry/impl/helpers")
+        val output = targetDir.resolve("helpers")
         Files.createDirectories(output)
         copyDir(
           sourceDir = context.paths.communityHomeDir.resolve("python/helpers"), targetDir = output,
