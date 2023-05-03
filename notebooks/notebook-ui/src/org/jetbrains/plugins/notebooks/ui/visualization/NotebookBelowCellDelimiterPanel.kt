@@ -1,0 +1,76 @@
+package org.jetbrains.plugins.notebooks.ui.visualization
+
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.notebooks.ui.editor.ui.JupyterProgressBarUI
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.GridLayout
+import javax.swing.BorderFactory
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JProgressBar
+import kotlin.math.max
+
+class NotebookBelowCellDelimiterPanel() : JPanel(GridLayout(1, 1)) {
+  private val steadyUI = JupyterProgressBarUI()
+  private val progress = object : JProgressBar(0, 100) {
+    init {
+      setStopped()
+      setUI(steadyUI)
+    }
+
+    /** See [SteadyUIPanel] for explanation. */
+    override fun updateUI() {
+      setUI(steadyUI)
+    }
+  }
+
+  fun initialize(editor: EditorImpl, @Nls executionTimeDetails: String?, hasProgressBar: Boolean) {
+    val customHeight = if (executionTimeDetails != null) editor.notebookAppearance.EXECUTION_TIME_HEIGHT else editor.notebookAppearance.SPACER_HEIGHT
+    preferredSize = Dimension(preferredSize.width, customHeight)
+    background = editor.colorsScheme.defaultBackground
+
+    if (executionTimeDetails != null) {
+      val label = JLabel(executionTimeDetails)
+      // DS-4487
+      val labelSize = minOf(JBFont.small().size, editor.fontSize - 2).toFloat()
+      label.font = JBFont.label().deriveFont(max(1f, labelSize))
+      label.foreground = UIUtil.getLabelInfoForeground()
+      add(label, BorderLayout.WEST)
+    } else if (hasProgressBar) {
+      val notebookAppearance = editor.notebookAppearance
+      background = notebookAppearance.getCodeCellBackground(editor.colorsScheme)
+      border = BorderFactory.createEmptyBorder(notebookAppearance.SPACER_HEIGHT - notebookAppearance.PROGRESS_STATUS_HEIGHT, 0, 0, 7)
+      add(progress.apply {
+        setUI(steadyUI)
+      })
+    }
+  }
+
+  fun setProgressVisibility(showProgressBar: Boolean) {
+    EDT.assertIsEdt()
+    progress.isVisible = when {
+      showProgressBar -> {
+        progress.setRunning()
+        true
+      }
+      else -> {
+        progress.setStopped()
+        false
+      }
+    }
+  }
+}
+
+private fun JProgressBar.setRunning() {
+  isIndeterminate = true
+}
+
+private fun JProgressBar.setStopped() {
+  isIndeterminate = false
+  value = maximum
+}
