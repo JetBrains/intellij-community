@@ -3,5 +3,5 @@
 import platform.posix.usleep
 
 fun nativeMain() {
-    usleep(100)
+    usleep(100.toUInt())
 }
