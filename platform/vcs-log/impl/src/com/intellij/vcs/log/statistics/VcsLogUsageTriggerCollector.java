@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.trigger", 5);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.trigger", 6);
   private static final StringEventField CONTEXT = EventFields.String("context", List.of("history", "log"));
   private static final ClassEventField CLASS = EventFields.Class("class");
   public static final BooleanEventField PARENT_COMMIT = EventFields.Boolean("parent_commit");
