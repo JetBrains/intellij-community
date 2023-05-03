@@ -461,15 +461,10 @@ public final class JBUI {
 
       public static final class Split {
         public static final class Default {
-          public static @NotNull Color separatorColor() {
-            return JBColor.namedColor("Button.Split.default.separatorColor",
-                                      JBColor.namedColor("Blue8", 0x88ADF7).getRGB(),
-                                      JBColor.namedColor("Blue10", 0x83ACFC).getRGB());
-          }
+          public static final @NotNull Color SEPARATOR_COLOR =
+            JBColor.namedColor("Button.Split.default.separatorColor", 0x88ADF7, 0x83ACFC);
 
-          public static @NotNull Color iconColor() {
-            return JBColor.namedColor("Button.Split.default.iconColor", JBColor.namedColor("Grey14", 0xFFFFFF));
-          }
+          public static final @NotNull Color ICON_COLOR = JBColor.namedColor("Button.Split.default.iconColor", 0xFFFFFF);
         }
       }
     }

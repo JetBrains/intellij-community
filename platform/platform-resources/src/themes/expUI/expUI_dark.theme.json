@@ -181,6 +181,13 @@
         "endBorderColor": "Blue6",
         "focusedBorderColor": "Grey1",
         "shadowColor": "#00000000"
+      },
+
+      "Split": {
+        "default": {
+          "iconColor": "Grey14",
+          "separatorColor": "Blue10"
+        }
       }
     },
 

@@ -59,7 +59,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   protected open fun paintArrow(g: Graphics2D, b: AbstractButton) {
     if (ExperimentalUI.isNewUI()) {
       val icon = if (b.isEnabled) {
-        if (isDefaultButton(b)) toStrokeIcon(AllIcons.General.ChevronDown, JBUI.CurrentTheme.Button.Split.Default.iconColor())
+        if (isDefaultButton(b)) toStrokeIcon(AllIcons.General.ChevronDown, JBUI.CurrentTheme.Button.Split.Default.ICON_COLOR)
         else AllIcons.General.ChevronDown
       }
       else getDisabledIcon(AllIcons.General.ChevronDown)
@@ -111,7 +111,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     c as AbstractButton
     val defButton = isDefaultButton(c)
     if (ExperimentalUI.isNewUI()) {
-      if (defButton && c.isEnabled) return JBUI.CurrentTheme.Button.Split.Default.separatorColor()
+      if (defButton && c.isEnabled) return JBUI.CurrentTheme.Button.Split.Default.SEPARATOR_COLOR
       return UIManager.getColor("OptionButton.separatorColor") ?: (mainButton.border as DarculaButtonPainter).getBorderPaint(c, false)
     }
 
