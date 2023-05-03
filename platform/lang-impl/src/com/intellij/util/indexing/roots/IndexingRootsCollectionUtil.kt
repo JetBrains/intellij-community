@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
@@ -38,6 +39,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
 
@@ -167,6 +169,36 @@ private fun <T> toList(value: Collection<T>): List<T> {
   return if (value.isEmpty()) emptyList() else ArrayList(value)
 }
 
+private fun toRootList(value: Collection<VirtualFile>): List<VirtualFile> {
+  if (value.size < 2) {
+    if (value is List<VirtualFile>) return value
+    return if (value.isEmpty()) emptyList() else ArrayList(value)
+  }
+
+  val pathMap = TreeMap<String, VirtualFile>(OSAgnosticPathUtil.COMPARATOR)
+  for (file in value) {
+    val path = FileUtil.toSystemIndependentName(file.path)
+    if (!isIncluded(pathMap, path)) {
+      pathMap[path] = file
+      while (true) {
+        val excludedPath = pathMap.higherKey(path)
+        if (excludedPath != null && OSAgnosticPathUtil.startsWith(excludedPath, path)) {
+          pathMap.remove(excludedPath)
+        }
+        else {
+          break
+        }
+      }
+    }
+  }
+  return pathMap.values.toList()
+}
+
+private fun isIncluded(existingFiles: NavigableMap<String, VirtualFile>, path: String): Boolean {
+  val suggestedCoveringRoot = existingFiles.floorKey(path)
+  return suggestedCoveringRoot != null && OSAgnosticPathUtil.startsWith(path, suggestedCoveringRoot)
+}
+
 internal class WorkspaceIndexingRootsBuilder {
   private val moduleRoots: MultiMap<Module, VirtualFile> = MultiMap.create()
   private val descriptions: MutableCollection<IndexingRootsDescription> = mutableListOf()
@@ -289,9 +321,9 @@ internal class WorkspaceIndexingRootsBuilder {
   fun addIteratorsFromRoots(iterators: MutableList<IndexableFilesIterator>,
                             libraryOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
                             storage: EntityStorage) {
-    val initialIterators = java.util.ArrayList<IndexableFilesIterator>()
+    val initialIterators = ArrayList<IndexableFilesIterator>()
     for ((module, roots) in moduleRoots.entrySet()) {
-      initialIterators.add(ModuleIndexableFilesIteratorImpl(module, toList(roots), true))
+      initialIterators.add(ModuleIndexableFilesIteratorImpl(module, toRootList(roots), true))
     }
     for (description in descriptions) {
       when (description) {
@@ -307,6 +339,7 @@ internal class WorkspaceIndexingRootsBuilder {
         is EntityExternalRootsDescription<*> -> iterators.addAll(description.createIterators())
       }
     }
+    iterators.addAll(0, initialIterators)
   }
 
   fun <E : WorkspaceEntity> registerEntitiesFromContributor(contributor: WorkspaceFileIndexContributor<E>,
