@@ -3133,6 +3133,34 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  }" +
                  "}",
                  replace(in, "'_Instance?.'_MethodCall('_arguments*)", "$Instance$.$MethodCall$($arguments$)", true));
+    String in2 = """
+      class X {
+        void x() {
+          System.out.println("" + Some.x());
+        }
+        
+        static class Some {
+          int x() {
+            return 1;
+          }
+        }
+      }
+      """;
+    assertEquals("copy unmatched qualifiers",
+                 """
+                   class X {
+                     void x() {
+                       System.out.println(Some.x());
+                     }
+                                      
+                     static class Some {
+                       int x() {
+                         return 1;
+                       }
+                     }
+                   }
+                   """,
+                 replace(in2, "System.out.println(\"\"+'_x());", "System.out.println($x$());", true));
   }
 
   public void testKeepModifierFormatting() {
