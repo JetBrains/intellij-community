@@ -6,9 +6,12 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ToolWindowEventSource
@@ -23,8 +26,9 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
+import javax.swing.JComponent
 
-internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
+internal class SquareStripeButton (val toolWindow: ToolWindowImpl) :
   ActionButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, { JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() }) {
   companion object {
     fun createMoveGroup() = ToolWindowMoveAction.Group()
@@ -40,6 +44,10 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
       }
     })
     MouseDragHelper.setComponentDraggable(this, true)
+  }
+
+  override fun setLook(look: ActionButtonLook?) {
+    if (look is SquareStripeButtonLook) super.setLook(look)
   }
 
   override fun updateUI() {
@@ -89,7 +97,7 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
       .setInitialDelay(0)
       .setHideDelay(0)
       .installOn(this)
-    HelpTooltip.setMasterPopupOpenCondition(this) { !(parent as AbstractDroppableStripe).isDroppingButton() }
+    HelpTooltip.setMasterPopupOpenCondition(this) { !((parent as? AbstractDroppableStripe)?.isDroppingButton() ?: false) }
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
@@ -137,12 +145,16 @@ private class HideAction(private val toolWindow: ToolWindowImpl)
   }
 }
 
-private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware {
+private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware, CustomComponentAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return SquareStripeButton(window)
+  }
 
   override fun isSelected(e: AnActionEvent): Boolean {
     e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(e.presentation)
+    e.presentation.isVisible = window.isShowStripeButton
     return window.isVisible
   }
 
@@ -164,3 +176,4 @@ private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleA
     }
   }
 }
+
