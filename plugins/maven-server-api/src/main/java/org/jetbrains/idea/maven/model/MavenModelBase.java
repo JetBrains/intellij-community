@@ -45,6 +45,12 @@ public class MavenModelBase implements Serializable {
     }
   }
 
+  public void setProperties(Map<String, String> newMap) {
+    Properties newProperties = new Properties();
+    newProperties.putAll(newMap);
+    setProperties(newProperties);
+  }
+
   public List<MavenPlugin> getPlugins() {
     return myPlugins;
   }
