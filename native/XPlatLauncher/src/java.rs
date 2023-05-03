@@ -69,7 +69,7 @@ fn reset_signal_handler(signal: std::ffi::c_int) -> Result<()> {
         action.sa_sigaction = libc::SIG_DFL;
         match libc::sigaction(signal, &action, std::ptr::null_mut()) {
             0 => Ok(()),
-            _ => bail!("sigaction({}): {}", signal, *(libc::__errno_location()))
+            _ => bail!("sigaction({}): {}", signal, std::io::Error::last_os_error())
         }
     }
 }
