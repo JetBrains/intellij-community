@@ -524,8 +524,10 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public static @Nullable AbstractTreeBuilder getBuilderFor(@NotNull JTree tree) {
-    Reference<AbstractTreeBuilder> ref = (Reference)tree.getClientProperty(TREE_BUILDER);
-    return SoftReference.dereference(ref);
+    Reference<?> ref = (Reference)tree.getClientProperty(TREE_BUILDER);
+    Object real = SoftReference.dereference(ref);
+    if (real instanceof AbstractTreeBuilder) return (AbstractTreeBuilder)real;
+    return null;
   }
 
   public final @Nullable <T> Object accept(@NotNull Class<?> nodeClass, @NotNull TreeVisitor<T> visitor) {
