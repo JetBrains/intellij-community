@@ -5,7 +5,6 @@ import com.intellij.credentialStore.OneTimeString
 import com.intellij.credentialStore.createSecureRandom
 import com.intellij.credentialStore.generateBytes
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.getOrCreate
 import com.intellij.util.io.toByteArray
 import org.bouncycastle.crypto.SkippingStreamCipher
 import org.bouncycastle.crypto.engines.ChaCha7539Engine
@@ -67,7 +66,7 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
   internal val rootGroup: KdbxGroup
 
   init {
-    val rootElement = rootElement.getOrCreate(KdbxDbElementNames.root)
+    val rootElement = rootElement.getOrCreateChild(KdbxDbElementNames.root)
     val groupElement = rootElement.getChild(KdbxDbElementNames.group)
     if (groupElement == null) {
       rootGroup = createGroup(this, null)
@@ -86,9 +85,9 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
     val kdbxHeader = KdbxHeader(secureRandom)
     kdbxHeader.writeKdbxHeader(outputStream)
 
-    val metaElement = rootElement.getOrCreate("Meta")
-    metaElement.getOrCreate("HeaderHash").text = Base64.getEncoder().encodeToString(kdbxHeader.headerHash)
-    metaElement.getOrCreate("MemoryProtection").getOrCreate("ProtectPassword").text = "True"
+    val metaElement = rootElement.getOrCreateChild("Meta")
+    metaElement.getOrCreateChild("HeaderHash").text = Base64.getEncoder().encodeToString(kdbxHeader.headerHash)
+    metaElement.getOrCreateChild("MemoryProtection").getOrCreateChild("ProtectPassword").text = "True"
 
     kdbxHeader.createEncryptedStream(credentials.key, outputStream).writer().use {
       ProtectedXmlWriter(createSalsa20StreamCipher(kdbxHeader.protectedStreamKey)).printElement(it, rootElement, 0)
@@ -136,7 +135,7 @@ internal fun ensureElements(element: Element, childElements: Map<Array<String>, 
     if (result == null) {
       var currentElement = element
       for (elementName in elementPath) {
-        currentElement = currentElement.getOrCreate(elementName)
+        currentElement = currentElement.getOrCreateChild(elementName)
       }
       currentElement.text = value.value
     }

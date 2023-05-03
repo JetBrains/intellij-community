@@ -17,13 +17,9 @@ import java.io.IOException
 import java.io.InputStream
 import java.lang.ref.SoftReference
 
+@Deprecated(message = "Use getOrCreateChild", replaceWith = ReplaceWith("getOrCreateChild"), DeprecationLevel.ERROR)
 fun Element.getOrCreate(@NonNls name: String): Element {
-  var element = getChild(name)
-  if (element == null) {
-    element = Element(name)
-    addContent(element)
-  }
-  return element
+  return getOrCreateChild(name)
 }
 
 fun Element.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {

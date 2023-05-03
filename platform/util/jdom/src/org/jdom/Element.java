@@ -1437,13 +1437,20 @@ public class Element extends Content implements Parent, Serializable {
    * If no elements exist for the specified name and namespace, null is
    * returned.
    *
-   * @param cname local name of child element to match
+   * @param cname local name of a child element to match
    * @param ns    <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
    * @return the first matching child element, or null if not found
    */
   public Element getChild(String cname, Namespace ns) {
-    Iterator<Element> iterator = content.getView(new ElementFilter(cname, ns)).iterator();
-    return iterator.hasNext() ? iterator.next() : null;
+    for (Content child : content) {
+      if (child instanceof Element) {
+        Element element = (Element)child;
+        if (element.name.equals(cname) && element.namespace.equals(ns)) {
+          return element;
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -1455,8 +1462,17 @@ public class Element extends Content implements Parent, Serializable {
    * @param cname local name of child element to match
    * @return the first matching child element, or null if not found
    */
-  public Element getChild(String cname) {
+  public final Element getChild(String cname) {
     return getChild(cname, Namespace.NO_NAMESPACE);
+  }
+
+  public final Element getOrCreateChild(String name) {
+    Element child = getChild(name, Namespace.NO_NAMESPACE);
+    if (child == null) {
+      child = new Element(name);
+      content.add(child);
+    }
+    return child;
   }
 
   /**
