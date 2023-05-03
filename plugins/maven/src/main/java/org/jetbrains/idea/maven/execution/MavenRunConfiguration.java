@@ -18,6 +18,7 @@ import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
+import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
@@ -529,7 +530,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         );
 
       processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
-      return new DefaultExecutionResult(consoleView, processHandler, new DefaultActionGroup());
+      DefaultExecutionResult res = new DefaultExecutionResult(consoleView, processHandler, new DefaultActionGroup());
+      addRestartAction(res);
+      return res;
     }
 
     public ExecutionResult doRunExecute(@NotNull Executor executor,
@@ -562,7 +565,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
           new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment(), eventProcessor.getParsingContext());
         res.setRestartActions(resumeAction);
       }
+      addRestartAction(res);
       return res;
+    }
+
+    private static void addRestartAction(DefaultExecutionResult res) {
+      res.setRestartActions(new JvmToggleAutoTestAction());
     }
 
     @NotNull
