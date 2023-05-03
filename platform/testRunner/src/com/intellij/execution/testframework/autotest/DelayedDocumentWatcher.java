@@ -65,7 +65,7 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
     this(project, delayMillis, it -> modificationStampConsumer.consume(it), null, it -> changedFileFilter.value(it));
   }
 
-  DelayedDocumentWatcher(@NotNull Project project,
+  public DelayedDocumentWatcher(@NotNull Project project,
                          int delayMillis,
                          @NotNull AbstractAutoTestManager autoTestManager,
                          @Nullable Predicate<? super VirtualFile> changedFileFilter) {
