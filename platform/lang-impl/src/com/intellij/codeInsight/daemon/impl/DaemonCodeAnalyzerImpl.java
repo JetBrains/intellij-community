@@ -101,7 +101,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private final PassExecutorService myPassExecutorService;
   // Timestamp of myUpdateRunnable which it's needed to start (in System.nanoTime() sense)
   // May be later than the actual ScheduledFuture sitting in the myAlarm queue.
-  // When it's so happens that the future has started sooner than myScheduledUpdateStart, it will re-schedule itself for later.
+  // When it happens that the future has started sooner than myScheduledUpdateStart, it will re-schedule itself for later.
   private long myScheduledUpdateTimestamp; // guarded by this
   private volatile boolean completeEssentialHighlightingRequested;
   private final AtomicInteger daemonCancelEventCount = new AtomicInteger();
@@ -756,7 +756,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   /**
    * Collects HighlightInfos intersecting with a certain offset.
-   * If there are several Infos, they're combined into HighlightInfoComposite and returned as a single object.
+   * If there are several HighlightInfos, they're combined into HighlightInfoComposite and returned as a single object.
    * Several options are available to adjust the collecting strategy
    *
    * @param document document in which the collecting is performed
@@ -912,86 +912,89 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     @Override
     public void run() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      Project project = myProject;
-      DaemonCodeAnalyzerImpl dca;
-      if (project == null ||
-          project.isDefault() ||
-          !project.isInitialized() ||
-          project.isDisposed() ||
-          LightEdit.owns(project) ||
-          (dca = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).myDisposed) {
-        return;
-      }
-      if (PowerSaveMode.isEnabled()) {
-        // to show correct "power save" traffic light icon
-        DaemonListeners.getInstance(project).repaintTrafficLightIconForAllEditors();
-        return;
-      }
-
-      synchronized (dca) {
-        long actualDelay = dca.myScheduledUpdateTimestamp - System.nanoTime();
-        if (actualDelay > 0) {
-           // started too soon (there must've been some typings after we'd scheduled this; need to re-schedule)
-          dca.scheduleUpdateRunnable(actualDelay);
-          return;
-        }
-      }
-
-      Collection<? extends FileEditor> activeEditors = dca.getSelectedEditors();
-      boolean updateByTimerEnabled = dca.isUpdateByTimerEnabled();
-      if (PassExecutorService.LOG.isDebugEnabled()) {
-        PassExecutorService.log(null, null, "Update Runnable. myUpdateByTimerEnabled:",
-                                updateByTimerEnabled, " something disposed:",
-                                PowerSaveMode.isEnabled() || !myProject.isInitialized(), " activeEditors:", activeEditors);
-      }
-      if (!updateByTimerEnabled) return;
-
-      if (activeEditors.isEmpty()) return;
-
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        // makes no sense to start from within write action - will cancel anyway
-        // we'll restart when the write action finish
-        return;
-      }
-      if (dca.myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
-        // restart when everything committed
-        dca.myPsiDocumentManager.performLaterWhenAllCommitted(this);
-        return;
-      }
-
-      try {
-        boolean submitted = false;
-        for (FileEditor fileEditor : activeEditors) {
-          VirtualFile virtualFile = getVirtualFile(fileEditor);
-          PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
-          if (psiFile == null) continue;
-          submitted |= dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
-        }
-        if (!submitted) {
-          // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
-          dca.stopProcess(true, "Couldn't create session for "+activeEditors);
-        }
-      }
-      catch (ProcessCanceledException ignored) {
-      }
-    }
-
-    private static VirtualFile getVirtualFile(@NotNull FileEditor fileEditor) {
-      VirtualFile virtualFile = fileEditor.getFile();
-      for (BackedVirtualFileProvider provider : BackedVirtualFileProvider.EP_NAME.getExtensionList()) {
-        VirtualFile replacedVirtualFile = provider.getReplacedVirtualFile(virtualFile);
-        if (replacedVirtualFile != null) {
-          virtualFile = replacedVirtualFile;
-          break;
-        }
-      }
-      return virtualFile;
+      runUpdate(myProject, this);
     }
 
     private void clearFieldsOnDispose() {
       myProject = null;
     }
+  }
+
+  private static void runUpdate(Project project, @NotNull UpdateRunnable updateRunnable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    DaemonCodeAnalyzerImpl dca;
+    if (project == null ||
+        project.isDefault() ||
+        !project.isInitialized() ||
+        project.isDisposed() ||
+        LightEdit.owns(project) ||
+        (dca = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).myDisposed) {
+      return;
+    }
+    if (PowerSaveMode.isEnabled()) {
+      // to show the correct "power save" traffic light icon
+      DaemonListeners.getInstance(project).repaintTrafficLightIconForAllEditors();
+      return;
+    }
+
+    synchronized (dca) {
+      long actualDelay = dca.myScheduledUpdateTimestamp - System.nanoTime();
+      if (actualDelay > 0) {
+         // started too soon (there must've been some typings after we'd scheduled this; need to re-schedule)
+        dca.scheduleUpdateRunnable(actualDelay);
+        return;
+      }
+    }
+
+    Collection<? extends FileEditor> activeEditors = dca.getSelectedEditors();
+    boolean updateByTimerEnabled = dca.isUpdateByTimerEnabled();
+    if (PassExecutorService.LOG.isDebugEnabled()) {
+      PassExecutorService.log(null, null, "Update Runnable. myUpdateByTimerEnabled:",
+                              updateByTimerEnabled, " something disposed:",
+                              PowerSaveMode.isEnabled() || !project.isInitialized(), " activeEditors:", activeEditors);
+    }
+    if (!updateByTimerEnabled) return;
+
+    if (activeEditors.isEmpty()) return;
+
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      // makes no sense to start from within write action - will cancel anyway
+      // we'll restart when the write action finish
+      return;
+    }
+    if (dca.myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+      // restart when everything committed
+      dca.myPsiDocumentManager.performLaterWhenAllCommitted(updateRunnable);
+      return;
+    }
+
+    try {
+      boolean submitted = false;
+      for (FileEditor fileEditor : activeEditors) {
+        VirtualFile virtualFile = getVirtualFile(fileEditor);
+        PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
+        if (psiFile == null) continue;
+        submitted |= dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
+      }
+      if (!submitted) {
+        // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
+        dca.stopProcess(true, "Couldn't create session for "+activeEditors);
+      }
+    }
+    catch (ProcessCanceledException ignored) {
+    }
+  }
+
+  private static VirtualFile getVirtualFile(@NotNull FileEditor fileEditor) {
+    VirtualFile virtualFile = fileEditor.getFile();
+    for (BackedVirtualFileProvider provider : BackedVirtualFileProvider.EP_NAME.getExtensionList()) {
+      VirtualFile replacedVirtualFile = provider.getReplacedVirtualFile(virtualFile);
+      if (replacedVirtualFile != null) {
+        virtualFile = replacedVirtualFile;
+        break;
+      }
+    }
+    return virtualFile;
   }
 
   /**
