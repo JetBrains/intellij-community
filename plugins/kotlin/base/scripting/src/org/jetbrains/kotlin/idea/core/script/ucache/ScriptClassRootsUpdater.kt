@@ -159,6 +159,7 @@ abstract class ScriptClassRootsUpdater(
             invalidated = false
 
             if (syncUpdateRequired || isUnitTestMode()) {
+                concurrentUpdates.incrementAndGet()
                 syncUpdateRequired = false
                 updateSynchronously()
             } else {
@@ -175,6 +176,7 @@ abstract class ScriptClassRootsUpdater(
             scheduledUpdate?.cancel()
 
             if (!disposable.disposed) {
+                concurrentUpdates.incrementAndGet()
                 scheduledUpdate = BackgroundTaskUtil.submitTask(disposable) {
                     doUpdate()
                 }
@@ -249,6 +251,7 @@ abstract class ScriptClassRootsUpdater(
             }
         } finally {
             scheduledUpdate = null
+            concurrentUpdates.decrementAndGet()
         }
     }
 
