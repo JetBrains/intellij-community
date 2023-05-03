@@ -156,17 +156,24 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
 
   protected void createStdProjectFolders(String subdir) {
     if (!subdir.isEmpty()) subdir += "/";
+
     var folders = arrayOfNotNull(
-      subdir + "src/main/java",
-      subdir + "src/main/resources",
-      maven4orNull(subdir + "src/main/resources-filtered"),
-      subdir + "src/test/java",
-      subdir + "src/test/resources",
-      maven4orNull(subdir + "src/test/resources-filtered")
+      "src/main/java",
+      "src/main/resources",
+      maven4orNull("src/main/resources-filtered"),
+      "src/test/java",
+      "src/test/resources",
+      maven4orNull("src/test/resources-filtered")
     );
-    createProjectSubDirs(folders);
+
+    createProjectSubDirs(subdir, folders);
   }
 
+  private void createProjectSubDirs(String subdir, String... relativePaths) {
+    for (String path : relativePaths) {
+      createProjectSubDir(subdir + path);
+    }
+  }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
     List<String> actual = new ArrayList<>();
