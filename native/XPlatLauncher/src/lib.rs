@@ -107,11 +107,9 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-    let result = java::run_jvm_and_event_loop(&jre_home, vm_options, args.to_vec());
+    java::run_jvm_and_event_loop(&jre_home, vm_options, args.to_vec()).context("Cannot start the runtime")?;
 
-    log::logger().flush();
-
-    result
+    Ok(())
 }
 
 #[macro_export]

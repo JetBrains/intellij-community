@@ -38,12 +38,10 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
             match intellij_main_thread(&java_home, vm_options, args) {
                 Ok(_) => {
                     info!("JVM thread has exited.");
-                    log::logger().flush();
                     std::process::exit(0);
                 }
                 Err(e) => {
                     error!("{e:?}");
-                    log::logger().flush();
                     std::process::exit(1);
                 }
             }
