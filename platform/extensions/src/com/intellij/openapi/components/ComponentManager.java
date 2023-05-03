@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -124,7 +125,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @ApiStatus.Experimental
   default @NotNull <T> List<T> getServices(@NotNull Class<T> serviceClass, ClientKind client) {
     T service = getService(serviceClass);
-    return service != null ? Collections.singletonList(service) : Collections.emptyList();
+    return ContainerUtil.createMaybeSingletonList(service);
   }
 
   default @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {

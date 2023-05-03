@@ -2202,7 +2202,8 @@ public final class ContainerUtil {
   @Contract(pure = true)
   @Unmodifiable
   public static @NotNull <T> List<T> createMaybeSingletonList(@Nullable T element) {
-    return element == null ? emptyList() : Collections.singletonList(element);
+    //noinspection SSBasedInspection
+    return element == null ? Collections.emptyList() : Collections.singletonList(element);
   }
 
   /**

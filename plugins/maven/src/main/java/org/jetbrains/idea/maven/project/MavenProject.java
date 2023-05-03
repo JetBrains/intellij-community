@@ -1055,7 +1055,7 @@ public class MavenProject {
     List<Element> configurations = getCompileExecutionConfigurations();
     if(!configurations.isEmpty()) return configurations;
     Element configuration = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
-    return configuration == null ? Collections.emptyList() : Collections.singletonList(configuration);
+    return ContainerUtil.createMaybeSingletonList(configuration);
   }
 
   public @NotNull Properties getProperties() {
