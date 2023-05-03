@@ -4,7 +4,9 @@ package com.intellij.credentialStore.kdbx
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.inputStream
+import com.intellij.util.io.sha2_512
 import org.bouncycastle.crypto.SkippingStreamCipher
+import org.bouncycastle.crypto.engines.ChaCha7539Engine
 import org.bouncycastle.crypto.engines.Salsa20Engine
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
@@ -35,7 +37,13 @@ private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: In
   }
   val element = JDOMUtil.load(resultInputStream)
   element.getChild(KdbxDbElementNames.root)?.let { rootElement ->
-    XmlProtectedValueTransformer(createSalsa20StreamCipher(kdbxHeader.protectedStreamKey)).processEntries(rootElement)
+    val streamCipher: SkippingStreamCipher = if (kdbxHeader.protectedStreamAlgorithm == KdbxHeader.ProtectedStreamAlgorithm.CHA_CHA) {
+      createChaCha20StreamCipher(kdbxHeader.protectedStreamKey)
+    }
+    else {
+      createSalsa20StreamCipher(kdbxHeader.protectedStreamKey)
+    }
+    XmlProtectedValueTransformer(streamCipher).processEntries(rootElement)
   }
   return KeePassDatabase(element)
 }
@@ -64,6 +72,18 @@ private val SALSA20_IV = byteArrayOf(-24, 48, 9, 75, -105, 32, 93, 42)
 internal fun createSalsa20StreamCipher(key: ByteArray): SkippingStreamCipher {
   val streamCipher = Salsa20Engine()
   val keyParameter = KeyParameter(DigestUtil.sha256().digest(key))
-  streamCipher.init(true /* doesn't matter, Salsa20 encryption and decryption is completely symmetrical */, ParametersWithIV(keyParameter, SALSA20_IV))
+  // `forEncryption` doesn't matter, Salsa20 encryption and decryption is completely symmetrical
+  streamCipher.init(true, ParametersWithIV(keyParameter, SALSA20_IV))
+  return streamCipher
+}
+
+internal fun createChaCha20StreamCipher(key: ByteArray): SkippingStreamCipher {
+  val streamCipher = ChaCha7539Engine()
+  val keyHash = sha2_512().digest(key)
+  // For ChaCha20, the StreamKey value is hashed with SHA-512.
+  // The first 32 bytes of the result are taken as the encryption key, the next 12 bytes as nonce.
+  val keyParameter = KeyParameter(keyHash.copyOf(32))
+  // `forEncryption` doesn't matter, ChaCha encryption and decryption is completely symmetrical
+  streamCipher.init(true, ParametersWithIV(keyParameter, keyHash.copyOfRange(32, 32 + 12)))
   return streamCipher
 }

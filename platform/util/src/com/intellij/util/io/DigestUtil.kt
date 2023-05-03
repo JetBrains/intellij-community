@@ -33,7 +33,7 @@ object DigestUtil {
   fun sha256(): MessageDigest = cloneDigest(sha2_256)
 
   @JvmStatic
-  fun sha512(): MessageDigest = cloneDigest(sha2_512)
+  fun sha512(): MessageDigest = sha2_512()
 
   @JvmStatic
   fun digestToHash(digest: MessageDigest) = bytesToHex(digest.digest())
@@ -105,6 +105,8 @@ private val sha3_512: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { 
 private fun getMessageDigest(algorithm: String): MessageDigest {
   return MessageDigest.getInstance(algorithm, sunSecurityProvider)
 }
+
+fun sha2_512(): MessageDigest = cloneDigest(sha2_512)
 
 fun sha3_224(): MessageDigest = cloneDigest(sha3_224)
 

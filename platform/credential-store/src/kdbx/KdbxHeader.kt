@@ -55,8 +55,6 @@ private const val SIG2 = 0xB54BFB67.toInt()
 
 private const val FILE_VERSION_32 = 0x00030001
 
-internal fun createProtectedStreamKey(random: SecureRandom) = random.generateBytes(32)
-
 private object HeaderType {
   const val END: Byte = 0
   const val COMMENT: Byte = 1
@@ -79,6 +77,7 @@ private fun verifyFileVersion(input: LittleEndianDataInputStream): Boolean {
   return input.readInt() and FILE_VERSION_CRITICAL_MASK <= FILE_VERSION_32 and FILE_VERSION_CRITICAL_MASK
 }
 
+// todo use kdbx 4 - https://palant.info/2023/03/29/documenting-keepass-kdbx4-file-format/
 internal class KdbxHeader() {
   constructor(inputStream: InputStream) : this() {
     readKdbxHeader(inputStream)
@@ -88,7 +87,8 @@ internal class KdbxHeader() {
     masterSeed = random.generateBytes(32)
     transformSeed = random.generateBytes(32)
     encryptionIv = random.generateBytes(16)
-    protectedStreamKey = createProtectedStreamKey(random)
+    // 64 bytes for ChaCha20
+    protectedStreamKey = random.generateBytes(64)
   }
   /**
    * Ordinal 0 represents uncompressed and 1 GZip compressed
@@ -101,7 +101,7 @@ internal class KdbxHeader() {
    * The ordinals represent various types of encryption that may be applied to fields within the unencrypted data
    */
   enum class ProtectedStreamAlgorithm {
-    NONE, ARC_FOUR, SALSA_20
+    NONE, ARC_FOUR, SALSA_20, CHA_CHA
   }
 
   // the cipher in use
@@ -117,7 +117,9 @@ internal class KdbxHeader() {
   private var encryptionIv: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
   var protectedStreamKey: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
     private set
-  private var protectedStreamAlgorithm = ProtectedStreamAlgorithm.SALSA_20
+
+  var protectedStreamAlgorithm: ProtectedStreamAlgorithm = ProtectedStreamAlgorithm.CHA_CHA
+    private set
 
   /* these bytes appear in cipher text immediately following the header */
   var streamStartBytes = ByteArray(32)
@@ -141,7 +143,10 @@ internal class KdbxHeader() {
    * and use the supplied output stream to write encrypted data.
    */
   fun createEncryptedStream(digest: ByteArray, outputStream: OutputStream): OutputStream {
-    val finalKeyDigest = getFinalKeyDigest(digest, masterSeed, transformSeed, transformRounds)
+    val finalKeyDigest = getFinalKeyDigest(key = digest,
+                                           masterSeed = masterSeed,
+                                           transformSeed = transformSeed,
+                                           transformRounds = transformRounds)
     val cipher = createChipper(forEncryption = true, keyData = finalKeyDigest, ivData = encryptionIv)
     val cipherOutputStream = CipherOutputStream(outputStream, cipher)
     cipherOutputStream.write(streamStartBytes)
@@ -263,7 +268,7 @@ internal class KdbxHeader() {
     output.write(streamStartBytes)
 
     output.writeByte(HeaderType.INNER_RANDOM_STREAM_ID.toInt())
-    output.writeShort(4)
+    output.writeShort(Int.SIZE_BYTES)
     output.writeInt(protectedStreamAlgorithm.ordinal)
 
     output.writeByte(HeaderType.END.toInt())

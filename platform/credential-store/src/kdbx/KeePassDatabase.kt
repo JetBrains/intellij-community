@@ -20,6 +20,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 
+@Suppress("ConstPropertyName")
 internal object KdbxDbElementNames {
   const val group = "Group"
   const val entry = "Entry"
@@ -54,7 +55,7 @@ private fun initCipherRandomly(secureRandom: SecureRandom, engine: SkippingStrea
 
 // we should on each save change protectedStreamKey for security reasons (as KeeWeb also does)
 // so, this requirement (is it really required?) can force us to re-encrypt all passwords on save
-class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
+class KeePassDatabase internal constructor(private val rootElement: Element = createEmptyDatabase()) {
   private var secureStringCipher = lazy {
     createRandomlyInitializedChaCha7539Engine(createSecureRandom())
   }
@@ -90,12 +91,12 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
     metaElement.getOrCreateChild("MemoryProtection").getOrCreateChild("ProtectPassword").text = "True"
 
     kdbxHeader.createEncryptedStream(credentials.key, outputStream).writer().use {
-      ProtectedXmlWriter(createSalsa20StreamCipher(kdbxHeader.protectedStreamKey)).printElement(it, rootElement, 0)
+      ProtectedXmlWriter(createChaCha20StreamCipher(kdbxHeader.protectedStreamKey)).printElement(it, rootElement, 0)
     }
 
     // should we init secureStringCipher if now we have secureRandom?
     // on first glance yes, because creating SkippingStreamCipher is very fast and not memory hungry, and creating SecureRandom is a cost operation,
-    // but no - no need to init because if save called, it means that database is dirty for some reasons already...
+    // but no - no need to init because if save called, it means that database is dirty for some reason already...
     // but yes - because maybe database is dirty due to change some unprotected value (url, user name).
     if (secureStringCipher.isInitialized()) {
       initCipherRandomly(secureRandom, secureStringCipher.value)

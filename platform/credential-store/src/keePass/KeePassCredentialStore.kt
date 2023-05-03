@@ -28,18 +28,20 @@ fun getDefaultMasterPasswordFile(): Path = getDefaultKeePassBaseDirectory().reso
  * preloadedMasterKey [MasterKey.value] will be cleared
  */
 internal class KeePassCredentialStore(internal val dbFile: Path, private val masterKeyStorage: MasterKeyFileStorage, preloadedDb: KeePassDatabase? = null) : BaseKeePassCredentialStore() {
-  constructor(dbFile: Path, masterKeyFile: Path) : this(dbFile, MasterKeyFileStorage(masterKeyFile), null)
+  constructor(dbFile: Path, masterKeyFile: Path) : this(dbFile = dbFile,
+                                                        masterKeyStorage = MasterKeyFileStorage(masterKeyFile),
+                                                        preloadedDb = null)
 
   private val isNeedToSave: AtomicBoolean
 
   override var db: KeePassDatabase = if (preloadedDb == null) {
     isNeedToSave = AtomicBoolean(false)
-    when {
-      dbFile.exists() -> {
-        val masterPassword = masterKeyStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true)
-        loadKdbx(dbFile, KdbxPassword.createAndClear(masterPassword))
-      }
-      else -> KeePassDatabase()
+    if (dbFile.exists()) {
+      val masterPassword = masterKeyStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true)
+      loadKdbx(dbFile, KdbxPassword.createAndClear(masterPassword))
+    }
+    else {
+      KeePassDatabase()
     }
   }
   else {
@@ -85,7 +87,7 @@ internal class KeePassCredentialStore(internal val dbFile: Path, private val mas
       }
     }
     catch (e: Throwable) {
-      // schedule save again
+      // schedule a save again
       isNeedToSave.set(true)
       logger<KeePassCredentialStore>().error("Cannot save password database", e)
     }
@@ -112,7 +114,7 @@ internal class KeePassCredentialStore(internal val dbFile: Path, private val mas
   @TestOnly
   fun setMasterPassword(masterKey: MasterKey, secureRandom: SecureRandom) {
     // KdbxPassword hashes value, so, it can be cleared before file write (to reduce time when master password exposed in memory)
-    saveDatabase(dbFile, db, masterKey, masterKeyStorage, secureRandom)
+    saveDatabase(dbFile = dbFile, db = db, masterKey = masterKey, masterKeyStorage = masterKeyStorage, secureRandom = secureRandom)
   }
 
   override fun markDirty() {
