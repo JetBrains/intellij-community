@@ -1,14 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ToolWindowAnchor.*
-import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.MouseDragHelper
@@ -154,6 +152,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     val startPoint = Point(startScreenPoint).also { SwingUtilities.convertPointFromScreen(it, event.component) }
     val relativePoint = RelativePoint(event.component, startPoint)
     val toolWindow = getToolWindow() ?: return
+
+    overlayStripesIfHidden(toolWindow, true)
+
     val clickedComponent = getComponentFromDragSourcePane(relativePoint)
     val decorator = if (toolWindow.isVisible) toolWindow.decorator else null
 
@@ -192,6 +193,14 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     dragImageDialog?.isVisible = true
     addDropTargetHighlighter(dragSourcePane)
     dragSourcePane.buttonManager.startDrag()
+  }
+
+  private fun overlayStripesIfHidden(toolWindow: ToolWindowImpl, show: Boolean) {
+    if (UISettings.getInstance().hideToolStripes) {
+      for (pane in toolWindow.toolWindowManager.getToolWindowPanes()) {
+        pane.setStripesOverlaid(show)
+      }
+    }
   }
 
   private fun relocate(event: MouseEvent) {
@@ -385,6 +394,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private fun stopDrag() {
     val window = getToolWindow()
+    window?.let { overlayStripesIfHidden(it, false) }
     getStripeButtonForToolWindow(window)?.isVisible = true
     dragSourcePane.buttonManager.stopDrag()
     lastDropTargetPane?.let { removeDropTargetHighlighter(it) }
