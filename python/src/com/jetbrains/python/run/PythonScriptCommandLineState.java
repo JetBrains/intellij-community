@@ -210,7 +210,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
    * @see com.intellij.terminal.ProcessHandlerTtyConnector
    */
   private boolean emulateTerminal() {
-    return myConfig.emulateTerminal() && !PythonSdkUtil.isRemote(getSdk());
+    return myConfig.emulateTerminal();
   }
 
   @Override
