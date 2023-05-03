@@ -511,9 +511,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private val findKeyStroke = KeymapUtil.getKeyStroke(am.getAction("Find").shortcutSet)
 
   override fun afterShow() {
-    if (!isNewUI) {
-      selectPreferred()
-    }
+    selectPreferred()
     traverseNodesAndExpand()
     if (treeStep.isSpeedSearchEnabled) {
       installSpeedSearchActions()
