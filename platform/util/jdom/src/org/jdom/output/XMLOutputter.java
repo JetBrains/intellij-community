@@ -1213,7 +1213,7 @@ public class XMLOutputter implements Cloneable {
    * @throws IllegalArgumentException if an entity can not be escaped
    */
   public String escapeElementEntities(String str) {
-    /**
+    /*
      * Whether output escaping is enabled for the being processed
      * Element - default is <code>true</code>
      */

@@ -697,7 +697,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
 
     if (!shouldStickToEnd) {
-      ((ScrollingModelEx)editor.getScrollingModel()).accumulateViewportChanges();
+      editor.getScrollingModel().accumulateViewportChanges();
     }
     Collection<ConsoleViewContentType> contentTypes = new HashSet<>();
     List<Pair<String, ConsoleViewContentType>> contents = new ArrayList<>();
@@ -728,7 +728,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     finally {
       if (!shouldStickToEnd) {
-        ((ScrollingModelEx)editor.getScrollingModel()).flushViewportChanges();
+        editor.getScrollingModel().flushViewportChanges();
       }
     }
     if (!contentTypes.isEmpty()) {

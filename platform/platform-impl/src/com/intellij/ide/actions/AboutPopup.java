@@ -467,7 +467,7 @@ public final class AboutPopup {
       private int fontHeight;
       private Font font;
 
-      public class OverflowException extends Exception { }
+      public static class OverflowException extends Exception { }
 
       TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
         this.xBase = xBase;

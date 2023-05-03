@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
@@ -180,7 +180,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
       return this;
     }
 
-    protected PsiElementListCellRenderer.ItemMatchers getItemMatchers(@NotNull JList<?> list, @Nullable PsiItemWithPresentation value) {
+    private PsiElementListCellRenderer.ItemMatchers getItemMatchers(@NotNull JList<?> list, @Nullable PsiItemWithPresentation value) {
       if (value == null) return new PsiElementListCellRenderer.ItemMatchers(null, null);
       return delegateRenderer.getItemMatchers(list, value.getItem());
     }

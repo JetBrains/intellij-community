@@ -280,10 +280,7 @@ public class Maven40ModelConverter {
       doConvert(object, "", result);
       return result;
     }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
+    catch (IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
   }

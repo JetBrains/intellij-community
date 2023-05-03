@@ -103,9 +103,9 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   }
 
   @Override
-  protected final void startTask(@NotNull Task task,
-                                 @NotNull ProgressIndicator indicator,
-                                 @Nullable Runnable continuation) {
+  protected void startTask(@NotNull Task task,
+                           @NotNull ProgressIndicator indicator,
+                           @Nullable Runnable continuation) {
     ProgressManagerListener listener = getProjectManagerListener();
     try {
       listener.beforeTaskStart(task, indicator);
@@ -144,9 +144,9 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   }
 
   @Override
-  protected final void finishTask(@NotNull Task task,
-                                  boolean canceled,
-                                  @Nullable Throwable error) {
+  protected void finishTask(@NotNull Task task,
+                            boolean canceled,
+                            @Nullable Throwable error) {
     ProgressManagerListener listener = getProjectManagerListener();
     try {
       listener.beforeTaskFinished(task);

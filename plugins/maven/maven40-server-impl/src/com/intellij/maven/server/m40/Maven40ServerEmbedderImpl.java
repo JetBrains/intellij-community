@@ -1014,30 +1014,23 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
     projectBuildingRequest.setResolveDependencies(false);
 
-    try {
-      if (files.size() == 1) {
-        buildSinglePom(builder, buildingResults, projectBuildingRequest, files.iterator().next());
+    if (files.size() == 1) {
+      buildSinglePom(builder, buildingResults, projectBuildingRequest, files.iterator().next());
+    }
+    else {
+      try {
+        buildingResults = builder.build(new ArrayList<>(files), false, projectBuildingRequest);
       }
-      else {
-        try {
-          buildingResults = builder.build(new ArrayList<>(files), false, projectBuildingRequest);
-        }
-        catch (ProjectBuildingException e) {
-          for (ProjectBuildingResult result : e.getResults()) {
-            if (result.getProject() != null) {
-              buildingResults.add(result);
-            }
-            else {
-              buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
-            }
+      catch (ProjectBuildingException e) {
+        for (ProjectBuildingResult result : e.getResults()) {
+          if (result.getProject() != null) {
+            buildingResults.add(result);
+          }
+          else {
+            buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
           }
         }
       }
-    }
-    finally {
-/*      if (modelInterpolator instanceof CustomMaven3ModelInterpolator2 && savedLocalRepository != null) {
-        ((CustomMaven3ModelInterpolator2)modelInterpolator).setLocalRepository(savedLocalRepository);
-      }*/
     }
     return buildingResults;
   }

@@ -1555,7 +1555,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       while (child != null) {
         lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, marker.myBuilder, marker);
 
-        if (child instanceof StartMarker && child.myBuilder.isCollapsed((StartMarker)child)) {
+        if (child instanceof StartMarker && child.myBuilder.isCollapsed(child)) {
           int lastIndex = child.getEndIndex();
           insertLeaf(child.getTokenType(), marker.myBuilder, child.myLexemeIndex, lastIndex, true, marker);
         }

@@ -30,7 +30,7 @@ public class InvertedNameIndexBenchmark {
     @Param({"1000", "2000", "4000", "8000", "16000"})
     public int SAME_NAME_FILES_COUNT;
 
-    public final int nameId = 42;
+    public static final int nameId = 42;
     public int[] fileIds;
 
     public final InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
