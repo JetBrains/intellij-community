@@ -1,5 +1,0 @@
-# Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-# TODO: take a look at ./community/platform/diagnostic/telemetry/src/com/intellij/platform/diagnostic/telemetry/TelemetryTracer.kt
-# For some reason that service TraceManager cannot be found by ServiceLoader there
-# Here should be registered default implementation: com.intellij.platform.diagnostic.telemetry.TelemetryTracerDefault
-com.intellij.platform.diagnostic.telemetry.impl.TraceManager

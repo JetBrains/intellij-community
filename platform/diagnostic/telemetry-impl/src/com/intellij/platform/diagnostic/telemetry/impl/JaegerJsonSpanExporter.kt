@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.telemetry
+package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.sdk.trace.data.SpanData

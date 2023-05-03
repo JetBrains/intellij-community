@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry
 
+import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedSpansProcessor
-import com.intellij.openapi.util.ShutDownTracker
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
@@ -13,7 +13,6 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -71,14 +70,7 @@ open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineSc
     ShutDownTracker.getInstance().registerShutdownTask(meterProvider::shutdown)
   }
 
-  open fun getDefaultSpanExporters(): List<AsyncSpanExporter> {
-    val traceFile = System.getProperty("idea.diagnostic.opentelemetry.file")
-
-    if (traceFile != null) {
-      spanExporters.add(JaegerJsonSpanExporter(Path.of(traceFile), serviceName, serviceVersion, serviceNamespace))
-    }
-    return spanExporters
-  }
+  open fun getDefaultSpanExporters(): List<AsyncSpanExporter> = spanExporters
 
   open fun getDefaultMetricsExporters(): List<MetricsExporterEntry> {
     metricsReportingPath ?: return emptyList()
