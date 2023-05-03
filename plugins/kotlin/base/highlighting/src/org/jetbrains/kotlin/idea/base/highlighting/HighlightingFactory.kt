@@ -5,10 +5,11 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 
 object HighlightingFactory {
-    fun createInfoAnnotation(holder: HighlightInfoHolder, textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
+    fun createInfoAnnotation(holder: HighlightInfoHolder, textRange: TextRange, message: @NlsSafe String?, textAttributes: TextAttributesKey?) {
         val info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
         if (message != null) info.descriptionAndTooltip(message)
         info.range(textRange)
