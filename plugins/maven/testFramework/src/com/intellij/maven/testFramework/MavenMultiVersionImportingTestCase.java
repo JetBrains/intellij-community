@@ -115,44 +115,32 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     return isMaven4() ? value : null;
   }
 
-  private List<String> defaultResources() {
-    return isMaven4() ? List.of("src/main/resources", "src/main/resources-filtered") : List.of("src/main/resources");
+  private String[] defaultResources() {
+    return arrayOfNotNull("src/main/resources", maven4orNull("src/main/resources-filtered"));
   }
 
-  private List<String> defaultTestResources() {
-    return isMaven4() ? List.of("src/test/resources", "src/test/resources-filtered") : List.of("src/test/resources");
+  private String[] defaultTestResources() {
+    return arrayOfNotNull("src/test/resources",  maven4orNull("src/test/resources-filtered"));
   }
 
   protected void assertDefaultResources(String moduleName, String... additionalSources) {
-    var expectedList = new ArrayList<String>();
-    expectedList.addAll(defaultResources());
-    expectedList.addAll(Arrays.asList(additionalSources));
-    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    var expectedSources = ArrayUtil.mergeArrays(defaultResources(), additionalSources);
     assertResources(moduleName, expectedSources);
   }
 
   protected void assertDefaultTestResources(String moduleName, String... additionalSources) {
-    var expectedList = new ArrayList<String>();
-    expectedList.addAll(defaultTestResources());
-    expectedList.addAll(Arrays.asList(additionalSources));
-    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    var expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), additionalSources);
     assertTestResources(moduleName, expectedSources);
   }
 
   protected void assertDefaultResources(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... additionalSources) {
-    var expectedList = new ArrayList<String>();
-    expectedList.addAll(defaultResources());
-    expectedList.addAll(Arrays.asList(additionalSources));
-    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    var expectedSources = ArrayUtil.mergeArrays(defaultResources(), additionalSources);
     ContentEntry contentRoot = getContentRoot(moduleName);
     doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expectedSources);
   }
 
   protected void assertDefaultTestResources(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... additionalSources) {
-    var expectedList = new ArrayList<String>();
-    expectedList.addAll(defaultTestResources());
-    expectedList.addAll(Arrays.asList(additionalSources));
-    var expectedSources = ArrayUtil.toStringArray(expectedList);
+    var expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), additionalSources);
     ContentEntry contentRoot = getContentRoot(moduleName);
     doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expectedSources);
   }
