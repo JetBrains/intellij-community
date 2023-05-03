@@ -48,12 +48,26 @@ envs {
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
 
-  def djangoTrunkOnly  = System.getProperty("djangoTrunkOnly") ?: false
+  def djangoTrunkOnly = System.getProperty("djangoTrunkOnly") ?: false
 
-  if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
-    zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
-    shouldUseZipsFromRepository = isWindows
+
+  if (isWindows) {
+    // On Windows you almost always want to use cache server except you are outside of JB
+    def zipRepositoryURL = new URL(
+      System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", "https://repo.labs.intellij.net/pycharm/python-archives-windows/"))
+    try {
+      zipRepositoryURL.getContent()
+    }
+    catch (Exception ignored) {
+      zipRepositoryURL = null
+      System.err.println("Cache server is only accessible from JB network. Will try to build python from scratch. Use cache if possible")
+    }
+    if (zipRepositoryURL != null) {
+      zipRepository = zipRepositoryURL
+      shouldUseZipsFromRepository = true
+    }
   }
+
   Boolean shouldUseCondaInterpreters = System.getenv().getOrDefault("PYCHARM_USE_CONDA", "false").toBoolean()
 
   Closure createPython = { String pythonName,
