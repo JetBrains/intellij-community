@@ -116,11 +116,15 @@ internal open class FirCallableCompletionContributor(
         val extensionChecker = object : ExtensionApplicabilityChecker {
             /**
              * Cached applicability results for callable extension symbols.
+             * The cache lifetime doesn't exceed the lifetime of a single completion session.
              *
              * If an extension is applicable but some of its type parameters are substituted to error types, then multiple calls to
-             * [checkExtensionIsSuitable] produce unequal substitutors, and subsequently unequal signatures, because error types are
-             * considered equal only if their underlying types are referentially equal, so we need to use [cache] in order to avoid
-             * unexpected unequal signatures.
+             * [KtAnalysisSession.checkExtensionIsSuitable] produce unequal substitutors, and subsequently unequal signatures, because
+             * error types are considered equal only if their underlying types are referentially equal, so we need to use [cache] in order
+             * to avoid unexpected unequal signatures.
+             *
+             * The cache also helps to avoid recalculation of applicability for extensions which are suggested twice:
+             * the first time while processing the scope context and the second time while processing callables from indexes.
              */
             private val cache: MutableMap<KtCallableSymbol, KtExtensionApplicabilityResult> = mutableMapOf()
 

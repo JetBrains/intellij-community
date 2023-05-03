@@ -45,7 +45,6 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         if (symbol !is KtClassLikeSymbol) return ImportStrategy.DoNothing
 
         val classId = symbol.classIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
-        if (classId.isAlreadyImported()) return ImportStrategy.DoNothing
         return ImportStrategy.InsertFqNameAndShorten(classId)
     }
 

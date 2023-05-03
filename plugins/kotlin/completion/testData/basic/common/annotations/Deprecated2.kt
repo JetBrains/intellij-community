@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 @Deprecate<caret>
 fun foo() { }
 

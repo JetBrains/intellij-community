@@ -172,6 +172,21 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/defaultImports/InsertCallableFqNameWhenNameClash.kt");
             }
 
+            @TestMetadata("InsertClassFqNameWhenNameClash.kt")
+            public void testInsertClassFqNameWhenNameClash() throws Exception {
+                runTest("../completion/testData/handlers/basic/defaultImports/InsertClassFqNameWhenNameClash.kt");
+            }
+
+            @TestMetadata("InsertFullyQualifiedClassName.kt")
+            public void testInsertFullyQualifiedClassName() throws Exception {
+                runTest("../completion/testData/handlers/basic/defaultImports/InsertFullyQualifiedClassName.kt");
+            }
+
+            @TestMetadata("InsertShortClassName.kt")
+            public void testInsertShortClassName() throws Exception {
+                runTest("../completion/testData/handlers/basic/defaultImports/InsertShortClassName.kt");
+            }
+
             @TestMetadata("StringFakeConstructor.kt")
             public void testStringFakeConstructor() throws Exception {
                 runTest("../completion/testData/handlers/basic/defaultImports/StringFakeConstructor.kt");

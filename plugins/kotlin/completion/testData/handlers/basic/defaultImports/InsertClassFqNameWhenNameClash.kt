@@ -1,9 +1,10 @@
-// FIR_COMPARISON
 // FIR_IDENTICAL
+// FIR_COMPARISON
+
 class SortedSet
 
 fun test(set: SortedSet) {
-  val a = java.util.SortedSet
+    val a = SortedSe<caret>
 }
 
 // ELEMENT: SortedSet
