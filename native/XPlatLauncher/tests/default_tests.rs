@@ -224,5 +224,8 @@ mod tests {
         let marker = "# A fatal error has been detected by the Java Runtime Environment:";
         let content = fs::read_to_string(&crash_log_path).expect(&format!("Cannot read: {:?}", crash_log_path));
         assert!(content.contains(marker), "Marker message ('{}') is not in the crash log:\n{}", marker, content);
+
+        // preserving disk space on build agents
+        assert!(content.contains("No core dump will be written"), "Warning: a core dump was created:\n{}", content);
     }
 }
