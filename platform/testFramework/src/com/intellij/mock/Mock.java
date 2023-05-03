@@ -249,6 +249,11 @@ public final class Mock {
     }
 
     @Override
+    public boolean closeFileWithChecks(@NotNull VirtualFile file, @NotNull EditorWindow window) {
+      return true;
+    }
+
+    @Override
     public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
       return null;
     }

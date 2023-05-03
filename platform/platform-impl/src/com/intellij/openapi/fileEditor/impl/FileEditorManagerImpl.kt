@@ -68,6 +68,7 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -730,19 +731,40 @@ open class FileEditorManagerImpl(
       }
     }
 
+  /**
+   * This method runs pre-close checks (e.g. confirmation dialogs) before closing the window
+   * @return true if the window was closed; false otherwise
+   */
   @RequiresEdt
-  internal fun closeFile(window: EditorWindow, composite: EditorComposite) {
-    openFileSetModificationCount.increment()
+  internal fun closeFile(window: EditorWindow, composite: EditorComposite, runChecks: Boolean): Boolean {
     val file = composite.file
+    if (runChecks && !canCloseFile(file)) return false
+
+    openFileSetModificationCount.increment()
     CommandProcessor.getInstance().executeCommand(project, {
       window.closeFile(file = file, composite = composite)
     }, IdeBundle.message("command.close.active.editor"), null)
     removeSelectionRecord(file, window)
+    return true
+  }
+
+  /**
+   * Runs pre-close checks on virtual file
+   * @return true if all the checks were successfully passed and the file can be closed
+   */
+  private fun canCloseFile(file: VirtualFile): Boolean {
+    val checks = VirtualFilePreCloseCheck.extensionPoint.extensionsIfPointIsRegistered
+    return checks.all { it.canCloseFile(file) }
+  }
+
+  @RequiresEdt
+  override fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean {
+    return closeFile(window = window, composite = window.getComposite(file) ?: return false, runChecks = true)
   }
 
   @RequiresEdt
   override fun closeFile(file: VirtualFile, window: EditorWindow) {
-    closeFile(window = window, composite = window.getComposite(file) ?: return)
+    closeFile(window = window, composite = window.getComposite(file) ?: return, runChecks = false)
   }
 
   override fun closeFile(file: VirtualFile) {

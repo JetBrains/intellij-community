@@ -72,6 +72,14 @@ abstract class FileEditorManagerEx : FileEditorManager() {
    */
   abstract fun closeFile(file: VirtualFile, window: EditorWindow)
 
+  /**
+   * Close editors for the file opened in a particular window.
+   * This method runs some checks before closing the window. E.g. confirmation dialog that can prevent the window from closing
+   * @param file file to be closed. Cannot be null.
+   * @return true if the window was closed; false otherwise
+   */
+  abstract fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean
+
   abstract fun unsplitWindow()
 
   abstract fun unsplitAllWindow()

@@ -360,6 +360,11 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     closeFile(file)
   }
 
+  override fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean {
+    closeFile(file)
+    return true
+  }
+
   override fun getSelectedFiles(): Array<VirtualFile> {
     if (!isCurrentlyUnderLocalId) {
       val clientManager = clientFileEditorManager ?: return VirtualFile.EMPTY_ARRAY
