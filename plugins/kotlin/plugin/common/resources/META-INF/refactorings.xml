@@ -35,6 +35,9 @@
     <refactoring.moveMemberHandler
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinMemberHandler"/>
+    <refactoring.moveInnerHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.MoveKotlinInnerHandler"/>
 
   </extensions>
 
