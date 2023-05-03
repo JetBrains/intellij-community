@@ -67,11 +67,13 @@ public class Maven40ServerImpl extends MavenServerBase {
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 MavenExplicitProfiles explicitProfiles,
-                                                Collection<String> alwaysOnProfiles,
-                                                MavenToken token) throws RemoteException {
+                                                Collection<String> alwaysOnProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
-
-    // TODO: implement
-    return new ProfileApplicationResult(model, MavenExplicitProfiles.NONE);
+    try {
+      return Maven40ProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
   }
 }

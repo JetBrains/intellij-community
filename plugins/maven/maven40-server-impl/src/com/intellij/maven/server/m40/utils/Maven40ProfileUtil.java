@@ -10,17 +10,131 @@ import org.apache.maven.model.interpolation.StringVisitorModelInterpolator;
 import org.apache.maven.model.path.DefaultPathTranslator;
 import org.apache.maven.model.path.DefaultUrlNormalizer;
 import org.apache.maven.model.path.PathTranslator;
+import org.apache.maven.model.profile.DefaultProfileActivationContext;
+import org.apache.maven.model.profile.DefaultProfileInjector;
+import org.apache.maven.model.profile.activation.JdkVersionProfileActivator;
+import org.apache.maven.model.profile.activation.OperatingSystemProfileActivator;
+import org.apache.maven.model.profile.activation.ProfileActivator;
+import org.apache.maven.model.profile.activation.PropertyProfileActivator;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.MavenServerConfigUtil;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.server.ProfileApplicationResult;
 
 import java.io.File;
 import java.util.*;
 
 public final class Maven40ProfileUtil {
+  public static ProfileApplicationResult applyProfiles(MavenModel model,
+                                                       File basedir,
+                                                       MavenExplicitProfiles explicitProfiles,
+                                                       Collection<String> alwaysOnProfiles) {
+    Model nativeModel = Maven40ModelConverter.toNativeModel(model);
+
+    Collection<String> enabledProfiles = explicitProfiles.getEnabledProfiles();
+    Collection<String> disabledProfiles = explicitProfiles.getDisabledProfiles();
+    List<Profile> activatedPom = new ArrayList<>();
+    List<Profile> activatedExternal = new ArrayList<>();
+    List<Profile> activeByDefault = new ArrayList<>();
+
+    List<Profile> rawProfiles = nativeModel.getProfiles();
+    List<Profile> expandedProfilesCache = null;
+    List<Profile> deactivatedProfiles = new ArrayList<>();
+
+    for (int i = 0; i < rawProfiles.size(); i++) {
+      Profile eachRawProfile = rawProfiles.get(i);
+
+      if (disabledProfiles.contains(eachRawProfile.getId())) {
+        deactivatedProfiles.add(eachRawProfile);
+        continue;
+      }
+
+      boolean shouldAdd = enabledProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
+
+      Activation activation = eachRawProfile.getActivation();
+      if (activation != null) {
+        if (activation.isActiveByDefault()) {
+          activeByDefault.add(eachRawProfile);
+        }
+
+        // expand only if necessary
+        if (expandedProfilesCache == null) {
+          DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
+          DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
+          StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer);
+          expandedProfilesCache = doInterpolate(interpolator, nativeModel, basedir).getProfiles();
+        }
+        Profile eachExpandedProfile = expandedProfilesCache.get(i);
+
+        ModelProblemCollector collector = new ModelProblemCollector() {
+          @Override
+          public void add(ModelProblemCollectorRequest request) {
+          }
+        };
+        DefaultProfileActivationContext context = new DefaultProfileActivationContext();
+        for (ProfileActivator eachActivator : getProfileActivators(basedir)) {
+          try {
+            if (eachActivator.isActive(eachExpandedProfile, context, collector)) {
+              shouldAdd = true;
+              break;
+            }
+          }
+          catch (Exception e) {
+            MavenServerGlobals.getLogger().warn(e);
+          }
+        }
+      }
+
+      if (shouldAdd) {
+        if (MavenConstants.PROFILE_FROM_POM.equals(eachRawProfile.getSource())) {
+          activatedPom.add(eachRawProfile);
+        }
+        else {
+          activatedExternal.add(eachRawProfile);
+        }
+      }
+    }
+
+    List<Profile> activatedProfiles = new ArrayList<>(activatedPom.isEmpty() ? activeByDefault : activatedPom);
+    activatedProfiles.addAll(activatedExternal);
+
+    for (Profile each : activatedProfiles) {
+      new DefaultProfileInjector().injectProfile(nativeModel, each, null, null);
+    }
+
+    return new ProfileApplicationResult(Maven40ModelConverter.convertModel(nativeModel, null),
+                                        new MavenExplicitProfiles(collectProfilesIds(activatedProfiles),
+                                                                  collectProfilesIds(deactivatedProfiles))
+    );
+  }
+
+  private static ProfileActivator[] getProfileActivators(File basedir) {
+    PropertyProfileActivator sysPropertyActivator = new PropertyProfileActivator();
+    /*
+    DefaultContext context = new DefaultContext();
+    context.put("SystemProperties", MavenServerUtil.collectSystemProperties());
+    try {
+      sysPropertyActivator.contextualize(context);
+    }
+    catch (ContextException e) {
+      MavenServerGlobals.getLogger().error(e);
+      return new ProfileActivator[0];
+    }
+    */
+
+    return new ProfileActivator[]{
+      // TODO: implement
+      //new MyFileProfileActivator(basedir),
+      sysPropertyActivator,
+      new JdkVersionProfileActivator(),
+      new OperatingSystemProfileActivator()};
+  }
+
   public static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
     // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
     // parent's profiles do not contain settings' profiles.
