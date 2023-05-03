@@ -42,6 +42,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
+import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.util.IconUtil
@@ -87,7 +88,7 @@ interface RunConfigurationTemplateProvider {
 }
 
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
-open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) :
+open class RunManagerImpl @NonInjectable constructor(val project: Project, sharedStreamProvider: StreamProvider?) :
   RunManagerEx(), PersistentStateComponent<Element>, Disposable, SettingsSavingComponent {
   companion object {
     const val CONFIGURATION: String = "configuration"
@@ -123,6 +124,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       return true
     }
   }
+
+  constructor(project: Project) : this(project = project, sharedStreamProvider = null)
 
   private val lock = ReentrantReadWriteLock()
 
