@@ -5,9 +5,9 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -19,11 +19,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
 
 final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Override
@@ -51,10 +50,7 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
     }
 
     @Override
-    public void doCollectInformation(@NotNull ProgressIndicator progress) {}
-
-    @Override
-    public void doApplyInformationToEditor() {
+    public void doCollectInformation(@NotNull ProgressIndicator progress) {
       HighlightInfo info = null;
       final InplaceChangeSignature currentRefactoring = InplaceChangeSignature.getCurrentRefactoring(myEditor);
       if (currentRefactoring != null) {
@@ -77,8 +73,12 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
         builder.registerFix(action, null, null, null, null);
         info = builder.createUnconditionally();
       }
-      Collection<HighlightInfo> infos = info != null ? Collections.singletonList(info) : Collections.emptyList();
-      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+      BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(),
+                                                               ContainerUtil.createMaybeSingletonList(info), getColorsScheme(), getId());
+    }
+
+    @Override
+    public void doApplyInformationToEditor() {
     }
   }
 }
