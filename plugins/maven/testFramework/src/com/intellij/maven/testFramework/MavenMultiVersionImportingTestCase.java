@@ -123,6 +123,10 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     return arrayOfNotNull("src/test/resources",  maven4orNull("src/test/resources-filtered"));
   }
 
+  private String[] allDefaultResources() {
+    return ArrayUtil.mergeArrays(defaultResources(), defaultTestResources());
+  }
+
   protected void assertDefaultResources(String moduleName, String... additionalSources) {
     var expectedSources = ArrayUtil.mergeArrays(defaultResources(), additionalSources);
     assertResources(moduleName, expectedSources);
@@ -157,13 +161,9 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   protected void createStdProjectFolders(String subdir) {
     if (!subdir.isEmpty()) subdir += "/";
 
-    var folders = arrayOfNotNull(
+    var folders = ArrayUtil.mergeArrays(allDefaultResources(),
       "src/main/java",
-      "src/main/resources",
-      maven4orNull("src/main/resources-filtered"),
-      "src/test/java",
-      "src/test/resources",
-      maven4orNull("src/test/resources-filtered")
+      "src/test/java"
     );
 
     createProjectSubDirs(subdir, folders);
