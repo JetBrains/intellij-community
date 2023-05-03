@@ -34,7 +34,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
-use log::{debug, error, LevelFilter, warn};
+use log::{debug, LevelFilter, warn};
 use serde::{Deserialize, Serialize};
 
 #[cfg(target_os = "windows")]
@@ -80,19 +80,6 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Executable: {exe_path:?}");
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
-
-    // lets the panic on JVM thread crash the launcher (or not?)
-    let orig_hook = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |panic_info| {
-        error!("{panic_info:?}");
-        // TODO: crash on JVM thread
-        // for l in &loggers {
-        //     l.flush()
-        // }
-
-        orig_hook(panic_info);
-        std::process::exit(1);
-    }));
 
     debug!("** Preparing launch configuration");
     let configuration = get_configuration(remote_dev, &exe_path).context("Cannot detect a launch configuration")?;
