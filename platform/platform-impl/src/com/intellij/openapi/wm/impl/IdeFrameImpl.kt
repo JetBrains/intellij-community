@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
@@ -12,6 +13,7 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.mac.foundation.MacUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -20,6 +22,8 @@ import java.awt.Graphics
 import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Window
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -32,6 +36,12 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     @JvmStatic
     val activeFrame: Window?
       get() = getFrames().firstOrNull { it.isActive }
+
+    private val LOG: Logger = Logger.getInstance("ide.frame.events")
+  }
+
+  init {
+    addComponentListener(EventLogger())
   }
 
   var frameHelper: FrameHelper? = null
@@ -146,4 +156,35 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   override fun notifyProjectActivation() {
     getFrameHelper(this)?.notifyProjectActivation()
   }
+
+  private inner class EventLogger : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent) {
+      logBounds("resized")
+    }
+
+    override fun componentMoved(e: ComponentEvent) {
+      logBounds("moved")
+    }
+
+    private fun logBounds(action: String) {
+      if (!LOG.isDebugEnabled) {
+        return // avoid unnecessary string formatting
+      }
+      val windowBounds = bounds
+      val gc = graphicsConfiguration ?: return
+      val mode = gc.device?.displayMode ?: return
+      val scale = JBUIScale.sysScale(gc)
+      val screenBounds = gc.bounds
+      LOG.debug(
+        "IDE frame '${frameHelper?.project?.name}' $action; " +
+        "frame bounds: ${windowBounds.toDebugString()}; " +
+        "resolution: ${mode.width}x${mode.height}; " +
+        "scale: $scale; " +
+        "screen bounds: ${screenBounds.toDebugString()}"
+      )
+    }
+  }
+
+  private fun Rectangle.toDebugString() =  "${width}x${height} @ ($x,$y)"
+
 }
