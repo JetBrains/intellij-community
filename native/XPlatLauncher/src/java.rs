@@ -6,7 +6,6 @@ use std::path::{Path, PathBuf};
 use std::thread::JoinHandle;
 
 use anyhow::{anyhow, bail, Context, Result};
-use jni::errors::Error;
 use jni::objects::{JObject, JValue};
 use log::{debug, error, info};
 
@@ -28,6 +27,7 @@ pub struct JvmLaunchParameters {
 }
 
 pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: Vec<String>) -> Result<()> {
+    debug!("Preparing a JVM environment");
     #[cfg(target_family = "unix")]
     {
         // resetting stack overflow protection handler set by the runtime (`std/src/sys/unix/stack_overflow.rs`)
@@ -36,24 +36,42 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
     }
 
     let java_home = java_home.to_path_buf();
+    let (tx, rx) = std::sync::mpsc::channel();
 
     // JNI docs says that JVM should not be created on primordial thread
-    // See Chapter 5: The Invocation API
-    let join_handle = thread::spawn(move || {
-        debug!("Trying to spin up VM and call IntelliJ main from non-primordial thread");
-        unsafe {
-            match intellij_main_thread(&java_home, vm_options, args) {
-                Ok(_) => {
-                    info!("JVM thread has exited.");
-                    std::process::exit(0);
-                }
-                Err(e) => {
-                    error!("{e:?}");
-                    std::process::exit(1);
-                }
+    // (https://docs.oracle.com/en/java/javase/17/docs/specs/jni/invocation.html#creating-the-vm)
+    debug!("Starting a JVM thread");
+    let join_handle = thread::Builder::new().spawn(move || {
+        debug!("JVM thread started [{:?}]", thread::current().id());
+
+        let jni_env_result = prepare_jni_env(&java_home, vm_options);
+        let jni_env = match jni_env_result {
+            Ok(jni_env) => {
+                tx.send(None).unwrap();
+                jni_env
             }
-        }
-    });
+            Err(e) => {
+                tx.send(Some(e)).unwrap();
+                return;
+            }
+        };
+
+        match call_intellij_main(jni_env, args) {
+            Ok(_) => {
+                info!("JVM thread has exited.");
+                std::process::exit(0);
+            }
+            Err(e) => {
+                error!("{e:?}");
+                std::process::exit(1);
+            }
+        };
+    })?;
+
+    debug!("Waiting for a JVM to be loaded");
+    if let Some(e) = rx.recv()? {
+        return Err(e);
+    }
 
     // macOS reserves the primordial thread for the GUI event loop
     match run_event_loop(join_handle) {
@@ -74,20 +92,7 @@ fn reset_signal_handler(signal: std::ffi::c_int) -> Result<()> {
     }
 }
 
-unsafe fn intellij_main_thread(java_home: &Path, vm_options: Vec<String>, args: Vec<String>) -> Result<()> {
-    debug!("Preparing JNI env");
-    let jni_env = unsafe {
-        prepare_jni_env(&java_home, vm_options)?
-    };
-
-    debug!("Calling main");
-    call_intellij_main(jni_env, args)
-}
-
-unsafe fn prepare_jni_env(
-    java_home: &Path,
-    vm_options: Vec<String>
-) -> Result<jni::JNIEnv<'static>> {
+fn prepare_jni_env(java_home: &Path, vm_options: Vec<String>) -> Result<jni::JNIEnv<'static>> {
     // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
     // in load_libjvm().
     let work_dir = env::current_dir().context("Failed to get current directory")?;
@@ -98,10 +103,7 @@ unsafe fn prepare_jni_env(
     debug!("libjvm resolved as {libjvm_path:?}");
 
     debug!("Loading libjvm");
-    let libjvm = unsafe {
-        load_libjvm(libjvm_path)?
-    };
-    debug!("libjvm loaded");
+    let libjvm = load_libjvm(libjvm_path)?;
 
     debug!("Getting JNI_CreateJavaVM symbol from libjvm");
     let create_jvm_call:
@@ -165,7 +167,7 @@ pub fn call_intellij_main(mut jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Re
         Ok(_) => {}
         Err(e) => {
             match e {
-                Error::JavaException => {
+                jni::errors::Error::JavaException => {
                     jni_env.exception_describe()?;
                     Err(e)
                 }
@@ -178,7 +180,7 @@ pub fn call_intellij_main(mut jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Re
 }
 
 #[cfg(target_os = "windows")]
-unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
+fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
     // TODO: pass the bin
     let jbr_bin = libjvm_path.parent_or_err()?.parent_or_err()?;
 
@@ -199,7 +201,7 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
 }
 
 #[cfg(target_family = "unix")]
-unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
+fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
     let path_ref = Some(libjvm_path.as_os_str());
     let flags = libloading::os::unix::RTLD_LAZY;
     unsafe { libloading::os::unix::Library::open(path_ref, flags).map(From::from) }

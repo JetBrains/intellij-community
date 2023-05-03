@@ -211,6 +211,19 @@ mod tests {
     }
 
     #[test]
+    fn reporting_vm_creation_failures() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-XX:+UseG1GC\n-XX:+UseZGC\n");
+
+        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+
+        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+
+        let error_marker = "Cannot start the IDE";
+        assert!(result.stderr.contains(error_marker), "Error message ('{}') is missing: {:?}", error_marker, result);
+    }
+
+    #[test]
     fn crash_log_creation() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         let crash_log_path = test.project_dir.join("_jvm_error.log");
