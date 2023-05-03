@@ -4,9 +4,9 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.ExpUiIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -25,7 +25,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-private const val ALPHA = (255 * 0.8).toInt()
+private const val ALPHA = (255 * 0.6).toInt()
 private const val MENU_HIDE_DELAY = 300
 
 internal class ExpandableMenu(private val frameHeader: FrameHeader) {
@@ -89,18 +89,29 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
     updateColor()
     layeredPane.add(expandedMenuBar!!, (JLayeredPane.DEFAULT_LAYER - 2) as Any)
 
+    // First menu usage has no selection in menu. Fix it by invokeLater
+    ApplicationManager.getApplication().invokeLater {
+      selectMenu(actionToShow)
+    }
+  }
+
+  private fun selectMenu(action: AnAction? = null) {
     var menu = ideMenu.getMenu(0)
-    if (actionToShow != null) {
+    if (action != null) {
       for (i in 0..ideMenu.menuCount - 1) {
         val m = ideMenu.getMenu(i)
-        if (m.mnemonic == actionToShow.templatePresentation.mnemonic) {
+        if (m.mnemonic == action.templatePresentation.mnemonic) {
           menu = m
           break
         }
       }
     }
+
     val subElements = menu.popupMenu.subElements
-    if (subElements.isNotEmpty()) {
+    if (action == null || subElements.isEmpty()) {
+      MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu)
+    }
+    else {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu, menu.popupMenu, subElements[0])
     }
   }
@@ -138,8 +149,7 @@ internal class ExpandableMenu(private val frameHeader: FrameHeader) {
     }
   }
 
-  private inner class CloseExpandedMenuAction : DumbAwareAction(
-    IdeBundle.messagePointer("main.toolbar.expanded.menu.close"), ExpUiIcons.General.Close) {
+  private inner class CloseExpandedMenuAction : DumbAwareAction(ExpUiIcons.General.Close) {
 
     override fun actionPerformed(e: AnActionEvent) {
       hideExpandedMenuBar()
