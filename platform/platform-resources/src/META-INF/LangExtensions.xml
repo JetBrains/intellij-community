@@ -129,8 +129,8 @@
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
-    <registryKey defaultValue="false" key="indexing.use.indexable.files.index" restartRequired="true"
-                 description="Create separate index to determine fileset to index; needs `indexing.enable.entity.provider.based.indexing` and `platform.projectModel.workspace.model.file.index` enabled to become enabled"/>
+    <registryKey defaultValue="true" key="indexing.use.indexable.files.index" restartRequired="true"
+                 description="Create separate index to determine fileset to index; needs `indexing.enable.entity.provider.based.indexing` enabled to become enabled"/>
 
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
