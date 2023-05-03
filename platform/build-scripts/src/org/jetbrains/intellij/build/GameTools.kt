@@ -69,7 +69,7 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
     val classPaths = getClassPaths()
 
     if (os == OsFamily.WINDOWS) {
-      map["class_path"] = "CLASS_PATH=\"" + classPaths.joinToString(";") { "%IDE_HOME%\\${it}" } + "\""
+      map["class_path"] = "SET CLASS_PATH=\"" + classPaths.joinToString(";") { "%IDE_HOME%\\${it}" } + "\""
       map["vm_options"] = "${context.productProperties.baseFileName}64.exe"
       map["base_name"] = "game_tools"
     }
