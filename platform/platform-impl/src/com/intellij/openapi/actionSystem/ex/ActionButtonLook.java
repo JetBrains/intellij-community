@@ -151,6 +151,10 @@ public abstract class ActionButtonLook {
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
+    paintIconImpl(g, actionButton, icon, x, y);
+  }
+
+  protected void paintIconImpl(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
     icon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, x, y);
   }
 
@@ -189,7 +193,7 @@ public abstract class ActionButtonLook {
     }
   }
 
-  private static Point getIconPosition(ActionButtonComponent actionButton, Icon icon) {
+  protected static Point getIconPosition(ActionButtonComponent actionButton, Icon icon) {
     Rectangle rect = new Rectangle(actionButton.getWidth(), actionButton.getHeight());
     Insets i = actionButton.getInsets();
     JBInsets.removeFrom(rect, i);

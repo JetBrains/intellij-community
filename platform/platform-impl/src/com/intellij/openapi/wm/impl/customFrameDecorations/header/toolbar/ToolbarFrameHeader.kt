@@ -184,6 +184,9 @@ internal class ToolbarFrameHeader(frame: JFrame) : FrameHeader(frame), UISetting
     super.updateUI()
     if (parent != null) {
       updateToolbarFromMode()
+      if (!expandableMenu.isShowing()) {
+        expandableMenu.updateUI()
+      }
     }
   }
 
