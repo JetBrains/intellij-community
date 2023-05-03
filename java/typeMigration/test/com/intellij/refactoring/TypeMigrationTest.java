@@ -68,6 +68,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFirstParamType("m", myFactory.createTypeFromText("Integer[]", null));
   }
 
+  public void testIntVararg2LongArray() {
+    doTestFirstParamType("two", myFactory.createTypeFromText("long[]", null));
+  }
+
   public void testInt2Array() {
     doTestReturnType("x", "int[][]");
   }

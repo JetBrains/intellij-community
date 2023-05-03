@@ -35,6 +35,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -977,7 +978,7 @@ public class TypeMigrationLabeler {
         if (argumentList != null) {
           final PsiExpression[] expressions = argumentList.getExpressions();
           if (checkNumberOfArguments) {
-            if (migrationType instanceof PsiArrayType) {
+            if (migrationType instanceof PsiArrayType && MethodCallUtils.isVarArgCall(call)) {
               convertExpression(expressions[index], migrationType, sourceType, false, method);
               continue;
             }
