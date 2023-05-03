@@ -26,8 +26,6 @@ import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
@@ -54,12 +52,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.importing.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-import org.junit.Assume;
 
 import java.io.File;
 import java.util.*;
@@ -70,7 +63,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForFuture;
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
-import static java.util.Collections.emptySet;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
@@ -195,100 +187,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
   }
 
-  protected void assertContentRoots(String moduleName, String... expectedRoots) {
-    List<String> actual = new ArrayList<>();
-    for (ContentEntry e : getContentRoots(moduleName)) {
-      actual.add(e.getUrl());
-    }
-    assertUnorderedPathsAreEqual(actual, ContainerUtil.map(expectedRoots, root -> VfsUtilCore.pathToUrl(root)));
-  }
-
-  protected void assertGeneratedSources(String moduleName, String... expectedSources) {
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    List<ContentFolder> folders = new ArrayList<>();
-    for (SourceFolder folder : contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
-      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaSourceRootType.SOURCE);
-      assertNotNull(properties);
-      if (properties.isForGeneratedSources()) {
-        folders.add(folder);
-      }
-    }
-    doAssertContentFolders(contentRoot, folders, expectedSources);
-  }
-
-  protected void assertSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, expectedSources);
-  }
-
-  protected void assertContentRootSources(String moduleName, String contentRoot, String... expectedSources) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.SOURCE), expectedSources);
-  }
-
-  protected void assertResources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
-  }
-
-  protected void assertContentRootResources(String moduleName, String contentRoot, String... expectedSources) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.RESOURCE), expectedSources);
-  }
-
-  protected void assertTestSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaSourceRootType.TEST_SOURCE, expectedSources);
-  }
-
-  protected void assertContentRootTestSources(String moduleName, String contentRoot, String... expectedSources) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.TEST_SOURCE), expectedSources);
-  }
-
-  protected void assertTestResources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, expectedSources);
-  }
-
-  protected void assertContentRootTestResources(String moduleName, String contentRoot, String... expectedSources) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.TEST_RESOURCE), expectedSources);
-  }
-
-  protected void assertExcludes(String moduleName, String... expectedExcludes) {
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), expectedExcludes);
-  }
-
-  protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, Arrays.asList(root.getExcludeFolders()), expectedExcudes);
-  }
-
-  protected void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expected);
-  }
-
   protected MavenProjectsTree getProjectsTree() {
     return myProjectsManager.getProjectsTree();
-  }
-
-  private static void doAssertContentFolders(ContentEntry e,
-                                             final List<? extends ContentFolder> folders,
-                                             String... expected) {
-    List<String> actual = new ArrayList<>();
-    for (ContentFolder f : folders) {
-      String rootUrl = e.getUrl();
-      String folderUrl = f.getUrl();
-
-      if (folderUrl.startsWith(rootUrl)) {
-        int length = rootUrl.length() + 1;
-        folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
-      }
-
-      actual.add(folderUrl);
-    }
-
-    assertSameElements("Unexpected list of folders in content root " + e.getUrl(),
-                       actual, Arrays.asList(expected));
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {
@@ -489,30 +389,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void assertNotMavenizedModule(final String name) {
     assertFalse(MavenProjectsManager.getInstance(myProject).isMavenizedModule(getModule(name)));
-  }
-
-  private ContentEntry getContentRoot(String moduleName) {
-    ContentEntry[] ee = getContentRoots(moduleName);
-    List<String> roots = new ArrayList<>();
-    for (ContentEntry e : ee) {
-      roots.add(e.getUrl());
-    }
-
-    String message = "Several content roots found: [" + StringUtil.join(roots, ", ") + "]";
-    assertEquals(message, 1, ee.length);
-
-    return ee[0];
-  }
-
-  private ContentEntry getContentRoot(String moduleName, String path) {
-    ContentEntry[] roots = getContentRoots(moduleName);
-    for (ContentEntry e : roots) {
-      if (e.getUrl().equals(VfsUtilCore.pathToUrl(path))) return e;
-    }
-    throw new AssertionError("content root not found in module " + moduleName + ":" +
-                             "\nExpected root: " + path +
-                             "\nExisting roots:" +
-                             "\n" + StringUtil.join(roots, it -> " * " + it.getUrl(), "\n"));
   }
 
   public ContentEntry[] getContentRoots(String moduleName) {
