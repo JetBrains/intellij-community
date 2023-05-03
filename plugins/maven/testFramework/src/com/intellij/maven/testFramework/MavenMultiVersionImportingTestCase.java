@@ -123,7 +123,7 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     return arrayOfNotNull("src/test/resources",  maven4orNull("src/test/resources-filtered"));
   }
 
-  private String[] allDefaultResources() {
+  protected String[] allDefaultResources() {
     return ArrayUtil.mergeArrays(defaultResources(), defaultTestResources());
   }
 
@@ -173,6 +173,13 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     for (String path : relativePaths) {
       createProjectSubDir(subdir + path);
     }
+  }
+
+  protected void assertRelativeContentRoots(String moduleName, String... expectedRelativeRoots) {
+    var expectedRoots = Arrays.stream(expectedRelativeRoots)
+      .map(root -> getProjectPath() + ("".equals(root) ? "" : "/" + root))
+      .toArray(String[]::new);
+    assertContentRoots(moduleName, expectedRoots);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {

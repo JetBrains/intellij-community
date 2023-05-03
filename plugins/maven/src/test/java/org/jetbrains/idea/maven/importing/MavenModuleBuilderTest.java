@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.RunAll;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -362,22 +363,19 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
     if (supportsImportOfNonExistingFolders()) {
-      assertContentRoots("project",
-                         getProjectPath() + "/src/main/java",
-                         getProjectPath() + "/src/main/resources",
-                         getProjectPath() + "/src/test/java",
-                         getProjectPath() + "/src/test/resources"
-      );
+      var contentRoots = ArrayUtil.mergeArrays(allDefaultResources(),
+                                               "src/main/java",
+                                               "src/test/java");
+      assertRelativeContentRoots("project", contentRoots);
     }
     else {
-      assertContentRoots("project",
-                         getProjectPath() + "/src/main/java",
-                         getProjectPath() + "/src/main/resources",
-                         getProjectPath() + "/src/test/java"
+      assertRelativeContentRoots("project",
+                                 "src/main/java",
+                                 "src/main/resources",
+                                 "src/test/java"
       );
     }
-    assertContentRoots("module",
-                       getProjectPath());
+    assertRelativeContentRoots("module", "");
 
     MavenProject module = MavenProjectsManager.getInstance(myProject).findProject(getModule("module"));
 
