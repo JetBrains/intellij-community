@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -114,38 +115,40 @@ open class PluginAdvertiserServiceImpl(
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean,
   ) {
-    val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
+    cs.launch(Dispatchers.IO) {
+      val (plugins, featuresMap) = fetchFeatures(unknownFeatures, includeIgnored)
 
-    val descriptorsById = PluginManagerCore.buildPluginIdMap()
-    val pluginManagerFilters = PluginManagerFilters.getInstance()
-    val disabledDescriptors = plugins.asSequence()
-      .map { it.pluginId }
-      .mapNotNull { descriptorsById[it] }
-      .filterNot { it.isEnabled }
-      .filter { pluginManagerFilters.allowInstallingPlugin(it) }
-      .filterNot { it.isOnDemand }
-      .toList()
+      val descriptorsById = PluginManagerCore.buildPluginIdMap()
+      val pluginManagerFilters = PluginManagerFilters.getInstance()
+      val disabledDescriptors = plugins.asSequence()
+        .map { it.pluginId }
+        .mapNotNull { descriptorsById[it] }
+        .filterNot { it.isEnabled }
+        .filter { pluginManagerFilters.allowInstallingPlugin(it) }
+        .filterNot { it.isOnDemand }
+        .toList()
 
-    val suggestToInstall = if (plugins.isEmpty())
-      emptyList()
-    else
-      fetchPluginSuggestions(
-        pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
-        customPlugins = customPlugins,
-        org = pluginManagerFilters,
-      )
+      val suggestToInstall = if (plugins.isEmpty())
+        emptyList()
+      else
+        fetchPluginSuggestions(
+          pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
+          customPlugins = customPlugins,
+          org = pluginManagerFilters,
+        )
 
-    cs.launch(Dispatchers.EDT) {
-      notifyUser(
-        bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
-        suggestionPlugins = suggestToInstall,
-        disabledDescriptors = disabledDescriptors,
-        customPlugins = customPlugins,
-        featuresMap = featuresMap,
-        allUnknownFeatures = unknownFeatures,
-        dependencies = PluginFeatureCacheService.getInstance().dependencies,
-        includeIgnored = includeIgnored,
-      )
+      launch(Dispatchers.EDT) {
+        notifyUser(
+          bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
+          suggestionPlugins = suggestToInstall,
+          disabledDescriptors = disabledDescriptors,
+          customPlugins = customPlugins,
+          featuresMap = featuresMap,
+          allUnknownFeatures = unknownFeatures,
+          dependencies = PluginFeatureCacheService.getInstance().dependencies,
+          includeIgnored = includeIgnored,
+        )
+      }
     }
   }
 
